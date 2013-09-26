@@ -307,6 +307,9 @@ class purchase_order(osv.osv):
         '''
         Avoid the saving of a PO with non service products on Service PO
         '''
+        # UTP-871 : Remove check of service
+        return True
+
         if isinstance(ids, (int, long)):
             ids = [ids]
         categ = {'transport': _('Transport'),
@@ -692,10 +695,11 @@ class purchase_order(osv.osv):
         Check analytic distribution.
         '''
         for order in self.browse(cr, uid, ids, context=context):
-            if order.categ in ['transport', 'service']:
-                ch_res = self.onchange_categ(cr, uid, [order.id], order.categ, order.warehouse_id.id, order.cross_docking_ok, order.location_id.id, context=context)
-                if ch_res.get('warning', {}).get('message', False):
-                    raise osv.except_osv(_('Error'), ch_res.get('warning', {}).get('message', ''))
+            # UTP-871 : Remove the service check on order validation
+#            if order.categ in ['transport', 'service']:
+#                ch_res = self.onchange_categ(cr, uid, [order.id], order.categ, order.warehouse_id.id, order.cross_docking_ok, order.location_id.id, context=context)
+#                if ch_res.get('warning', {}).get('message', False):
+#                    raise osv.except_osv(_('Error'), ch_res.get('warning', {}).get('message', ''))
             pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('in_search', '=', order.partner_id.partner_type)], context=context)
             if order.pricelist_id.id not in pricelist_ids:
                 raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
@@ -775,10 +779,11 @@ class purchase_order(osv.osv):
         move_obj = self.pool.get('stock.move')
             
         for order in self.browse(cr, uid, ids, context=context):
-            if order.categ in ['transport', 'service']:
-                ch_res = self.onchange_categ(cr, uid, [order.id], order.categ, order.warehouse_id.id, order.cross_docking_ok, order.location_id.id, context=context)
-                if ch_res.get('warning', {}).get('message', False):
-                    raise osv.except_osv(_('Error'), ch_res.get('warning', {}).get('message', ''))
+            # UTP-871 : Remove the service check on order validation
+#            if order.categ in ['transport', 'service']:
+#                ch_res = self.onchange_categ(cr, uid, [order.id], order.categ, order.warehouse_id.id, order.cross_docking_ok, order.location_id.id, context=context)
+#                if ch_res.get('warning', {}).get('message', False):
+#                    raise osv.except_osv(_('Error'), ch_res.get('warning', {}).get('message', ''))
             if not order.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             todo = []
@@ -2244,12 +2249,11 @@ class purchase_order_line(osv.osv):
             other_lines = self.search(cr, uid, domain)
             for l in self.browse(cr, uid, other_lines):
                 all_qty += l.product_qty 
-        
+
         res = super(purchase_order_line, self).product_id_change(cr, uid, ids, pricelist, product, all_qty, uom,
                                                                  partner_id, date_order, fiscal_position, 
                                                                  date_planned, name, price_unit, notes)
-        
-        # Remove the warning message if the product has no staged pricelist
+
 #        if res.get('warning'):
 #            supplier_info = self.pool.get('product.supplierinfo').search(cr, uid, [('product_id', '=', product)])
 #            product_pricelist = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('suppinfo_id', 'in', supplier_info)])
@@ -2335,6 +2339,17 @@ class purchase_order_line(osv.osv):
             res['value'].update({'price_unit': 0.00, 'old_price_unit': 0.00})
         elif not product and not comment and not nomen_manda_0:
             res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})
+
+
+        if context and context.get('categ') and product:
+            # Check consistency of product
+            consistency_message = self.pool.get('product.product').check_consistency(cr, uid, product, context.get('categ'), context=context)
+            if consistency_message:
+                res.setdefault('warning', {})
+                res['warning'].setdefault('title', 'Warning')
+                res['warning'].setdefault('message', '')
+
+                res['warning']['message'] = '%s \n %s' % (res.get('warning', {}).get('message', ''), consistency_message)
         
         return res
 
@@ -2484,6 +2499,51 @@ class product_product(osv.osv):
         'purchase_type': fields.function(_get_purchase_type, fnct_search=_src_purchase_type, type='boolean', string='Purchase type', method=True, store=False),
     }
     
+    def check_consistency(self, cr, uid, product_id, category, context=None):
+        '''
+        Check the consistency of product according to category
+        '''
+        context = context or {}
+        display_message = False
+
+        # No check for Other
+        if category == 'other':
+            return False
+
+        product = self.read(cr, uid, product_id, ['nomen_manda_0', 'type', 'transport_ok'], context=context)
+        transport_product = product['transport_ok']
+        product_type = product['type']
+        main_type = product['nomen_manda_0'][0]
+
+        if category == 'medical':
+            try:
+                med_nomen = self.pool.get('product.nomenclature').search(cr, uid, [('level', '=', 0), ('name', '=', 'MED')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('MED nomenclature Main Type not found'))
+
+            if main_type != med_nomen:
+                display_message = True
+
+        if category == 'log':
+            try:
+                log_nomen = self.pool.get('product.nomenclature').search(cr, uid, [('level', '=', 0), ('name', '=', 'LOG')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('LOG nomenclature Main Type not found'))
+
+            if main_type != log_nomen:
+                display_message = True
+
+        if category == 'service' and product_type != 'service':
+           display_message = True
+
+        if category == 'transport' and (product_type != 'service' or not transport_product):
+            display_message = True
+
+        if display_message:
+            return 'Warning you are about to add a product which does not conform to this PO’s order category, do you wish to proceed ?'
+        else:
+            return False
+
 product_product()
 
 class account_invoice(osv.osv):
