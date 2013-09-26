@@ -404,8 +404,8 @@ class msf_doc_import_accounting(osv.osv_memory):
             self.write(cr, uid, ids, {'message': message, 'state': wiz_state, 'progression': 100.0})
 
             # Close cursor
-            cr.commit()
             if not from_yml:
+                cr.commit()
                 cr.close()
         except osv.except_osv as osv_error:
             cr.rollback()
