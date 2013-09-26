@@ -406,7 +406,7 @@ class product_attributes(osv.osv):
                                       store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
                                              'product.status': (_get_product_status, ['no_storage'], 10),
                                              'product.international.status': (_get_international_status, ['no_storage'], 10),}),
-        'available_for_restriction': fields.function(_get_dummy, fnct_search=_src_available_for_restriction, methode=True, type='boolean',
+        'available_for_restriction': fields.function(_get_dummy, fnct_search=_src_available_for_restriction, method=True, type='boolean',
                                                  store=False, string='Available for the partner', readonly=True),
     }
     

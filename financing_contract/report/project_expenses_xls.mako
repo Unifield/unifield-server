@@ -480,8 +480,8 @@
 </Cell>
 </Row>
 
-
-% for code in getLines(o):
+<!-- UF-2150: Sort lines by code -->
+% for code in sorted(getLines(o)):
 % for line in getLines2()[code]:
 
 <Row>

@@ -39,6 +39,9 @@ class one2many_budget_lines(fields.one2many):
         for budget in obj.read(cr, uid, ids, ['display_type']):
             res[budget['id']] = []
             display_type[budget['id']] = budget['display_type']
+            # Override display_type if we come from a report
+            if context.get('report', False) and context.get('granularity', False):
+                display_type[budget['id']] = context.get('granularity')
 
         budget_line_obj = obj.pool.get('msf.budget.line')
         budget_line_ids = budget_line_obj.search(cr, uid, [('budget_id', 'in', ids)])
@@ -313,7 +316,7 @@ class msf_budget_line(osv.osv):
         'budget_id': fields.many2one('msf.budget', 'Budget', ondelete='cascade'),
         'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type', '!=', 'view')]),
         'destination_id': fields.many2one('account.analytic.account', 'Destination', domain=[('category', '=', 'DEST')]),
-        'name': fields.function(_get_name, method=True, store=False, string="Name", type="char", readonly="True"),
+        'name': fields.function(_get_name, method=True, store=False, string="Name", type="char", readonly="True", size=512),
         'budget_values': fields.char('Budget Values (list of float to evaluate)', size=256),
         'budget_amount': fields.function(_get_total_amounts, method=True, store=False, string="Budget amount", type="float", readonly="True", multi="all"),
         'actual_amount': fields.function(_get_total_amounts, method=True, store=False, string="Actual amount", type="float", readonly="True", multi="all"),
@@ -325,8 +328,11 @@ class msf_budget_line(osv.osv):
         'line_type': fields.selection([('view','View'),
                                        ('normal','Normal'),
                                        ('destination', 'Destination')], 'Line type', required=True),
+        'account_code': fields.related('account_id', 'code', type='char', string='Account code', size=64, store=True),
     }
-    
+
+    _order = 'account_code asc, line_type desc'
+
     _defaults = {
         'line_type': 'normal',
     }

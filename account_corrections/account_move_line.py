@@ -62,8 +62,8 @@ class account_move_line(osv.osv):
             # False if move is posted
             if ml.move_id.state != 'posted':
                 res[ml.id] = False
-            # False if account is tax, payables or receivables
-            if ml.account_id.user_type.code in ['tax', 'payables', 'receivables']:
+            # False if account type code (User type) is set as non correctible
+            if ml.account_id.user_type.not_correctible is True:
                 res[ml.id] = False
             # False if line have been corrected
             if ml.corrected:

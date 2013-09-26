@@ -131,6 +131,7 @@
                     <newline/>
                     <field name="file" filename="filename"/>
                     <field name="filename" invisible="1"/>
+                    <field name="date_format"/>
                     <group colspan="4" col="2">
                         <button string="Cancel" special="cancel" icon="gtk-cancel"/>
                         <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
