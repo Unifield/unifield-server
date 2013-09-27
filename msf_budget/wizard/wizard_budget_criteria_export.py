@@ -36,9 +36,10 @@ class wizard_budget_criteria_export(osv.osv_memory):
     }
     
     _defaults = {
-        'commitment': True,
-        'breakdown': 'year',
-        'granularity': 'all',
+            'commitment': lambda *a: True,
+        'breakdown': lambda *a: 'year',
+        'granularity': lambda *a: 'all',
+        'period_id': lambda *a: False,
     }
 
 

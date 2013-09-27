@@ -53,7 +53,7 @@
       - sequence: 10
         min_qty: 0.00
         name: res_partner_supplier_0
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create an invoice with an amount of 400 EUR, a description "Food for staff" and the 6101 Expense Account
 -

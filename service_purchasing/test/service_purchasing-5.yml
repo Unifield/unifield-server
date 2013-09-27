@@ -22,7 +22,7 @@
       - sequence: 10
         min_qty: 0.00
         name: partner_A
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   Product B
 -
@@ -32,7 +32,7 @@
       - sequence: 10
         min_qty: 0.00
         name: partner_A
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   Create a Sale Order
 -

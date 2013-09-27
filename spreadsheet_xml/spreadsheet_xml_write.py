@@ -60,6 +60,11 @@ class SpreadsheetReport(WebKitParser):
 
     def create(self, cr, uid, ids, data, context=None):
         a = super(SpreadsheetReport, self).create(cr, uid, ids, data, context)
+        # This permit to test XLS report generation with tools.tests_reports without given some warning
+        # Cf. tools/tests_reports.py:89
+        if context and context.get('from_yml', False) and context.get('from_yml') is True:
+            return (a[0], 'foobar')
+
         return (a[0], 'xls')
 
 

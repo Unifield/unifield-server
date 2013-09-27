@@ -325,7 +325,23 @@ class purchase_order(osv.osv):
                     raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Service\' product. You can purchase only \'Service\' products on a \'Service\' purchase order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
                     return False
                 
-        return True                    
+        return True
+
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check restriction on products
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        line_obj = self.pool.get('purchase.order.line')
+        res = True
+
+        for order in self.browse(cr, uid, ids, context=context):
+            res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in order.order_line], context=context)
+
+        return res
+
 
     def default_get(self, cr, uid, fields, context=None):
         '''
@@ -377,7 +393,9 @@ class purchase_order(osv.osv):
             # we need to update the location_id because it is readonly and so does not pass in the vals of create and write
             vals = self._get_location_id(cr, uid, vals,  warehouse_id=vals.get('warehouse_id', order.warehouse_id.id), context=context)
 
-        return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
+        res = super(purchase_order, self).write(cr, uid, ids, vals, context=context)
+
+        return res
     
     def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, categ, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
         '''
@@ -469,7 +487,19 @@ class purchase_order(osv.osv):
         
         if part:
             partner_obj = self.pool.get('res.partner')
+            product_obj = self.pool.get('product.product')
             partner = partner_obj.browse(cr, uid, part)
+            if ids:
+                # Check the restrction of product in lines
+                if ids:
+                    product_obj = self.pool.get('product.product')
+                    for order in self.browse(cr, uid, ids):
+                        for line in order.order_line:
+                            if line.product_id:
+                                res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': part})
+                                if test:
+                                    res.setdefault('value', {}).update({'partner_address_id': False})
+                                    return res
             if partner.partner_type in ('internal', 'esc'):
                 res['value']['invoice_method'] = 'manual'
             elif ids and partner.partner_type == 'intermission':
@@ -1724,7 +1754,7 @@ class purchase_order_merged_line(osv.osv):
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
         'name': fields.function(_get_name, method=True, type='char', string='Name', store=False),
     }
-
+    
     def create(self, cr, uid, vals, context=None):
         '''
         Set the line number to 0
@@ -1749,7 +1779,9 @@ class purchase_order_merged_line(osv.osv):
                     self.pool.get('purchase.order.line').write(cr, uid, [po_line.id], {'price_unit': vals['price_unit'],
                                                                                        'old_price_unit': vals['price_unit']}, context=new_context)
 
-        return super(purchase_order_merged_line, self).write(cr, uid, ids, vals, context=context)
+        res = super(purchase_order_merged_line, self).write(cr, uid, ids, vals, context=context)
+
+        return res
 
     def _update(self, cr, uid, id, po_line_id, product_qty, price=0.00, context=None, no_update=False):
         '''
@@ -1905,12 +1937,31 @@ class purchase_order_line(osv.osv):
                 change_price_ok = line.change_price_ok
                 c = context.copy()
                 c.update({'change_price_ok': change_price_ok})
+                noraise_ctx = context.copy()
+                noraise_ctx.update({'noraise': True})
                 # Need removing the merged_id link before update the merged line because the merged line
                 # will be removed if it hasn't attached PO line
-                self.write(cr, uid, [line.id], {'merged_id': False}, context=context)
+                self.write(cr, uid, [line.id], {'merged_id': False}, context=noraise_ctx)
                 res_merged = merged_line_obj._update(cr, uid, merged_id, line.id, -line.product_qty, line.price_unit, context=c)
 
         return vals
+    
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check if there is restriction on lines
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not context:
+            context = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.order_id and line.order_id.partner_id and line.order_id.state != 'done' and line.product_id:
+                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'partner_id': line.order_id.partner_id.id}, context=context):
+                    return False
+
+        return True
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -2000,6 +2051,9 @@ class purchase_order_line(osv.osv):
         if not 'move_dest_id' in default:
             default.update({'move_dest_id': False})
 
+        if not 'procurement_id' in default:
+            default.update({'procurement_id': False})
+
         default.update({'sync_order_line_db_id': False})
         return super(purchase_order_line, self).copy_data(cr, uid, id, default=default, context=context)
 
@@ -2027,7 +2081,9 @@ class purchase_order_line(osv.osv):
         if 'price_unit' in vals:
             vals.update({'old_price_unit': vals.get('price_unit')})
 
-        return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
+        res = super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
+
+        return res
 
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -2168,6 +2224,10 @@ class purchase_order_line(osv.osv):
         all_qty = qty
         suppinfo_obj = self.pool.get('product.supplierinfo')
         partner_price = self.pool.get('pricelist.partnerinfo')
+        product_obj = self.pool.get('product.product')
+
+        if not context:
+            context = {}
 
         # If the user modify a line, remove the old quantity for the total quantity
         if ids:
@@ -2203,6 +2263,12 @@ class purchase_order_line(osv.osv):
             currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
         else:
             currency_id = func_curr_id
+
+        if product and partner_id:
+            # Test the compatibility of the product with a the partner of the order
+            res, test = product_obj._on_change_restriction_error(cr, uid, product, field_name='product_id', values=res, vals={'partner_id': partner_id}, context=context)
+            if test:
+                return res
         
         # Update the old price value        
         res['value'].update({'product_qty': qty})

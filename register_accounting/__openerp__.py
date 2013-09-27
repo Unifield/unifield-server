@@ -85,6 +85,7 @@
         'test/import_invoice.yml',
         'test/import_invoice_rate_before_import.yml',
         'test/down_payments.yml',
+        'test/fully_report.yml',
     ],
     "installable": True,
     "active": False

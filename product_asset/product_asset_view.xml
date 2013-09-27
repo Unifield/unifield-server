@@ -44,6 +44,7 @@
 							<group colspan="2" col="2">
 								<separator string="Asset" colspan="2" />
 								<field name="name" />
+								<field name="instance_id" />
 								<field name="asset_type_id" />
 								<field name="description" />
 								<field name="product_id" on_change="onChangeProductId(product_id)"
@@ -122,6 +123,7 @@
 			<field name="arch" type="xml">
 				<tree string="Asset Forms">
 					<field name="name" />
+					<field name="instance_id" />
 					<field name="asset_type_id" />
 					<field name="product_id" />
 					<field name="brand" />
