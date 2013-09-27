@@ -36,7 +36,9 @@
         'account_view.xml',
     ],
     "demo_xml" : [],
-    "test": [],
+    "test": [
+        'test/10_data.yml',
+    ],
     "installable": True,
     "active": False
 }

@@ -1,0 +1,299 @@
+-
+  In order to make tests, I create some elements in accounting.
+-
+  I create a fiscalyear
+-
+  !record {model: account.fiscalyear, id: fiscalyear0}:
+    code: !eval "'FY%s'% (datetime.now().year)"
+    company_id: base.main_company
+    date_start: !eval "'%s-01-01' %(datetime.now().year)"
+    date_stop: !eval "'%s-12-31' %(datetime.now().year)"
+    name: !eval "'Fiscal Year %s' %(datetime.now().year)"
+-
+  I create the period 01
+-
+  !record {model: account.period, id: period_1}:
+    company_id: base.main_company
+    date_start: !eval time.strftime('%Y-01-01')
+    date_stop: !eval time.strftime('%Y-01-31')
+    fiscalyear_id: fiscalyear0
+    name: JANUARY
+    special: 0
+    number: 1
+-
+  I create the period 02
+-
+  !record {model: account.period, id: period_2}:
+    company_id: base.main_company
+    date_start: !eval time.strftime('%Y-02-01')
+    date_stop: !eval time.strftime('%Y-02-28') # WARNING: bisextil year doesn't work here
+    fiscalyear_id: fiscalyear0
+    name: FEBRUARY
+    special: 0
+    number: 2
+-
+  I create the period 03
+-
+  !record {model: account.period, id: period_3}:
+    company_id: base.main_company
+    date_start: !eval time.strftime('%Y-03-01')
+    date_stop: !eval time.strftime('%Y-03-31')
+    fiscalyear_id: fiscalyear0
+    name: MARCH
+    special: 0
+    number: 3
+-
+  I create an Expense account type.
+-
+  !record {model: account.account.type, id: type_expense}:
+    close_method: unreconciled
+    code: expense
+    name: Expense
+    sign: 1
+-
+  I create a Debt account type.
+-
+  !record {model: account.account.type, id: type_debt}:
+    close_method: balance
+    code: debt
+    name: debt
+    sign: 1
+-
+  I create a reconciliable 4000 debt account
+-
+  !record {model: account.account, id: account_4000}:
+    name: 4000 account
+    code: '4000'
+    type: other
+    user_type: type_debt
+    type_for_register: none
+    company_id: base.main_company
+    currency_mode: current
+    activation_date: !eval time.strftime('%Y-01-01')
+    reconcile: 1
+-
+  I create a 6303 expense account
+-
+  !record {model: account.account, id: account_6303}:
+    name: 6303 account
+    code: '6303'
+    type: other
+    user_type: type_expense
+    type_for_register: none
+    company_id: base.main_company
+    currency_mode: current
+    activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_support
+    destination_ids: [analytic_distribution.analytic_account_destination_support]
+-
+  I create a 6400 expense account
+-
+  !record {model: account.account, id: account_6400}:
+    name: 6400 account
+    code: '6400'
+    type: other
+    user_type: type_expense
+    type_for_register: none
+    company_id: base.main_company
+    currency_mode: current
+    activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_support
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
+-
+  I create a 6401 expense account
+-
+  !record {model: account.account, id: account_6401}:
+    name: 6401 account
+    code: '6401'
+    type: other
+    user_type: type_expense
+    type_for_register: none
+    company_id: base.main_company
+    currency_mode: current
+    activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_operation
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_national_staff]
+-
+  I create a 6412 expense account
+-
+  !record {model: account.account, id: account_6412}:
+    name: 6412 account
+    code: '6412'
+    type: other
+    user_type: type_expense
+    type_for_register: none
+    company_id: base.main_company
+    currency_mode: current
+    activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_support
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
+-
+  I create an analytic journal for HQ entries
+-
+  !record {model: account.analytic.journal, id: analytic_journal_hq}:
+    code: ahq
+    name: Analytic HQ Journal
+    type: hq
+-
+  I create a HQ Journal
+-
+  !record {model: account.journal, id: journal_hq}:
+    code: hq
+    company_id: base.main_company
+    name: HQ Journal
+    type: hq
+    allow_date: 0
+    analytic_journal_id: analytic_journal_hq
+-
+  I update company to have 4000 account as hq default counterpart
+-
+  !python {model: res.company}: |
+    assert self.write(cr, uid, [ref('base.main_company')], {'counterpart_hq_entries_default_account': ref('account_4000')}) == ref('base.main_company'), "Setting up company HQ counterpart (%) failed!" % ref('account_4000')
+-
+  I create a link between 6400 expense account and Operation destination
+-
+  !record {model: account.destination.link, id: tuple_6400_operation}:
+    account_id: account_6400
+    destination_id: analytic_distribution.analytic_account_destination_operation
+-
+  I create a link between 6400 expense account and Support destination
+-
+  !record {model: account.destination.link, id: tuple_6400_support}:
+    account_id: account_6400
+    destination_id: analytic_distribution.analytic_account_destination_support
+-
+  I create a link between 6401 expense account and Operation destination
+-
+  !record {model: account.destination.link, id: tuple_6401_operation}:
+    account_id: account_6401
+    destination_id: analytic_distribution.analytic_account_destination_operation
+-
+  I create a link between 6401 expense account and National Staff destination
+-
+  !record {model: account.destination.link, id: tuple_6401_nat}:
+    account_id: account_6401
+    destination_id: analytic_distribution.analytic_account_destination_national_staff
+-
+  I create a link between 6412 expense account and Operation destination
+-
+  !record {model: account.destination.link, id: tuple_6412_operation}:
+    account_id: account_6412
+    destination_id: analytic_distribution.analytic_account_destination_operation
+-
+  I create a link between 6412 expense account and Support destination
+-
+  !record {model: account.destination.link, id: tuple_6412_support}:
+    account_id: account_6412
+    destination_id: analytic_distribution.analytic_account_destination_support
+-
+  I create a link between 6303 expense account and Support destination
+-
+  !record {model: account.destination.link, id: tuple_6303_support}:
+    account_id: account_6303
+    destination_id: analytic_distribution.analytic_account_destination_support
+-
+  I create CC1 analytic account
+-
+  !record {model: account.analytic.account, id: cc1}:
+    name: Cost Center 1
+    code: CC1
+    type: normal
+    category: OC
+    date_start: !eval time.strftime('%Y-01-01')
+-
+  I create FP1 analytic account
+-
+  !record {model: account.analytic.account, id: fp1}:
+    name: Funding Pool 1
+    code: FP1
+    category: FUNDING
+    date_start: !eval time.strftime('%Y-01-01')
+    cost_center_ids: [cc1]
+    tuple_destination_account_ids: [tuple_6400_operation, tuple_6400_support, tuple_6401_operation, tuple_6401_nat, tuple_6412_operation, tuple_6412_support, tuple_6303_support]
+-
+  I add a new FX rate for EUR, CHF and BIF for the first day of this year
+-
+  !python {model: res.currency.rate}: |
+    import time
+    cur_obj = self.pool.get('res.currency')
+    for el in [('EUR', 1.0), ('CHF', 1.386), ('BIF', 226.0)]:
+      c_ids = cur_obj.search(cr, uid, [('name', 'ilike', el[0]), ('active', 'in', ['f', 't'])])
+      for c in c_ids:
+        rate_vals = {
+          'currency_id': c,
+          'name': time.strftime('%Y-01-01'),
+          'rate': el[1],
+        }
+        self.create(cr, uid, rate_vals, context={})
+        cur_obj.write(cr, uid, c, {'active': True}, context={})
+-
+  I activate all needed destination analytic account
+-
+  !python {model: account.analytic.account}: |
+    import time
+    self.write(cr, uid, [ref('analytic_distribution.analytic_account_destination_support'), ref('analytic_distribution.analytic_account_destination_operation'), ref('analytic_distribution.analytic_account_destination_national_staff'), ref('analytic_distribution.analytic_account_msf_private_funds')], {'date_start': time.strftime('%Y-01-01')})
+-
+  I open the HQ Entries Import wizard and set a test file
+-
+  !python {model: hq.entries.import}: |
+    # needed imports
+    import addons, base64, time, logging
+    # prepare some values
+    context = {'lang': u'en_MF', 'tz': False, 'client': 'web', 'department_id': False}
+    # fetch file path
+    filename = 'hq_entries.csv'
+    file_path = addons.get_module_resource('account_hq_entries','test','files', filename)
+    # read file to give it to the wizard
+    file = open(file_path, 'r')
+    # replace all old date by those in this year
+    file_replaced = file.read().replace('2013', time.strftime('%Y'))
+    file64 = base64.b64encode(file_replaced)
+    # create wizard with right values
+    wiz_id = self.create(cr, uid, {
+      'file': file64,
+      'filename': filename,
+    }, context=context)
+    # launch wizard validation
+    res = self.button_validate(cr, uid, [wiz_id], context)
+    assert res != False, "An error occured during HQ entries validation."
+    message = res.get('context', False) and res.get('context').get('message', False) and res.get('context').get('message') or False
+    res_id = res.get('res_id', False)
+    assert res_id != False, "No confirmation wizard found!"
+    wizard_obj = self.pool.get('hr.payroll.import.confirmation')
+    wiz = wizard_obj.browse(cr, uid, [res_id], context=context)[0]
+    if wiz.nberrors != 0:
+      logging.getLogger('tests').log(logging.TEST, 'Error(s): \n%s' % wiz.errors)
+    assert wiz.nberrors == 0, "%s errors found!" % wiz.nberrors
+    assert wiz.total == 14, "All lines did not be imported. Total: %s" % wiz.total
+    assert wiz.state == 'hq', "Wrong wizard state: %s. Expected: 'hq'" % wiz.state
+-
+  I check that all entries are in valid state.
+-
+  !python {model: hq.entries}: |
+    line_ids = self.search(cr, uid, [])
+    assert len(line_ids) == 14, "Should be only 14 lines! Current: %s" % len(line_ids)
+    errors = False
+    for line in self.browse(cr, uid, line_ids, context={}):
+      assert line.analytic_state == 'valid', "Line %s is invalid (%s). Account: %s Amount: %s" % (line.id or '', line.analytic_state or '', line.account_id.code or '', line.amount or 0.0)
+-
+  I validate all HQ Entries
+-
+  !python {model: hq.entries.validation.wizard}: |
+    # The wizard only takes active_ids that are in context. So we search all HQ Entries, put them into context and launch the process!
+    hq_ids = self.pool.get('hq.entries').search(cr, uid, [])
+    wiz_id = self.create(cr, uid, {}, context={'active_ids': hq_ids})
+    self.validate(cr, uid, [wiz_id], context={'active_ids': hq_ids})
+-
+  I test HQ entries import result
+-
+  !python {model: account.move}: |
+    res_ids = self.search(cr, uid, [('journal_id.type', '=', 'hq')])
+    # WARNING WARNING WARNING
+    # WARNING: TODO: 
+    # - 2 moves on 09/01/2013
+    # - 5 line_ids on a move that is in EUR + 08/01/2013
+    # - 4 move in BIF currency
+    # - 1 move in CHF
+    # - 2 moves in EUR
+    # WARNING WARNING WARNING
+    assert len(res_ids) == 7, "Expect 7 moves in HQ Journal. Current: %s" % len(res_ids)

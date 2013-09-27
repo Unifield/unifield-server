@@ -26,6 +26,7 @@ from osv import fields
 from time import strftime
 from tools.translate import _
 from lxml import etree
+import netsvc
 
 class hq_entries_validation_wizard(osv.osv_memory):
     _name = 'hq.entries.validation.wizard'
@@ -312,6 +313,7 @@ class hq_entries(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
+        logger = netsvc.Logger()
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
@@ -346,17 +348,20 @@ class hq_entries(osv.osv):
                 cc = self.pool.get('account.analytic.account').browse(cr, uid, line.cost_center_id.id, context={'date': line.date})
                 if cc and cc.filter_active is False:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: inactive CC (%s)') % (line.id or '', cc.code or ''))
                     continue
             if line.destination_id:
                 dest = self.pool.get('account.analytic.account').browse(cr, uid, line.destination_id.id, context={'date': line.date})
                 if dest and dest.filter_active is False:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: inactive DEST (%s)') % (line.id or '', dest.code or ''))
                     continue
             # G Check
             if line.analytic_id:
                 fp = self.pool.get('account.analytic.account').browse(cr, uid, line.analytic_id.id, context={'date': line.document_date})
                 if fp and fp.filter_active is False:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: inactive FP (%s)') % (line.id or '', fp.code or ''))
                     continue
             # if just a cost center, it's also valid! (CASE 1/)
             if not line.analytic_id and not line.destination_id:
@@ -367,31 +372,37 @@ class hq_entries(osv.osv):
             #### END OF CASES
             if not line.cost_center_id:
                 res[line.id] = 'invalid'
+                logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: No CC') % (line.id or ''))
                 continue
             if line.analytic_id and not line.destination_id: # CASE 2/
                 # D Check, except B check
                 if line.cost_center_id.id not in [x.id for x in line.analytic_id.cost_center_ids] and line.analytic_id.id != fp_id:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: CC (%s) not found in FP (%s)') % (line.id or '', line.cost_center_id.code or '', line.analytic_id.code or ''))
                     continue
             elif not line.analytic_id and line.destination_id: # CASE 3/
                 # E Check
                 account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
                 if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue
             else: # CASE 4/
                 # C Check, except B
                 if (line.account_id.id, line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in line.analytic_id.tuple_destination_account_ids] and line.analytic_id.id != fp_id:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: Tuple Account/DEST (%s/%s) not found in FP (%s)') % (line.id or '', line.account_id.code or '', line.destination_id.code or '', line.analytic_id.code or ''))
                     continue
                 # D Check, except B check
                 if line.cost_center_id.id not in [x.id for x in line.analytic_id.cost_center_ids] and line.analytic_id.id != fp_id:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: CC (%s) not found in FP (%s)') % (line.id or '', line.cost_center_id.code or '', line.analytic_id.code or ''))
                     continue
                 # E Check
                 account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
                 if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue
         return res
 
