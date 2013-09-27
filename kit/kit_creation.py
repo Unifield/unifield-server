@@ -1193,7 +1193,7 @@ class stock_move(osv.osv):
             # hidden_state
             result[obj.id].update({'hidden_state': obj.state})
             # hidden_prodlot_id
-            result[obj.id].update({'hidden_prodlot_id': obj.prodlot_id.id})
+            result[obj.id].update({'hidden_prodlot_id': obj.lot_check})
             # hidden_exp_check
             result[obj.id].update({'hidden_exp_check': obj.exp_check})
             # hidden_asset_check
