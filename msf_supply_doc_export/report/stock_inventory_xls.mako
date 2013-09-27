@@ -69,7 +69,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.location_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.prod_lot_id or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.prod_lot_id.name or '')|x}</Data></Cell>
         % if line.expiry_date != 'False'.replace(' ', ''):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.expiry_date|n}T00:00:00.000</Data></Cell>
         % else:

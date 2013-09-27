@@ -226,6 +226,9 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         batch = batch_ids[0]
                 elif batch:
                     expiry = batch_obj.browse(cr, uid, batch, context=context).life_date
+                    if row.cells[4].date != expiry:
+                        error_list.append(_('The expiry date %s is not the same as the expiry date of the batch %s, so the expiry date taken is the one of the batch') % (expiry, row.cells[3].data))
+                        comment += _('The expiry date %s is not the same as the expiry date of the batch %s, so the expiry date taken is the one of the batch.\n') % (expiry, row.cells[3].data)
 
             # Quantity
             p_qty = row.cells[5].data
@@ -380,10 +383,12 @@ class stock_inventory_line(osv.osv):
 
         if hidden_batch_management_mandatory and not batch:
             comment += _('Batch is missing.\n')
-        if hidden_perishable_mandatory and not batch:
+        if hidden_perishable_mandatory and not expiry:
             comment += _('Expiry date is missing.\n')
 
         if not comment:
+            if vals.get('comment'):
+                comment = vals.get('comment')
             vals.update({'comment': comment, 'to_correct_ok': False})
         else:
             vals.update({'comment': comment, 'to_correct_ok': True})
@@ -412,7 +417,7 @@ class stock_inventory_line(osv.osv):
             comment += _('Location is missing.\n')
         if hidden_batch_management_mandatory and not batch:
             comment += _('Batch is missing.\n')
-        if hidden_perishable_mandatory and not batch:
+        if hidden_perishable_mandatory and not expiry:
             comment += _('Expiry date is missing.\n')
 
         if not comment:
