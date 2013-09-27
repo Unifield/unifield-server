@@ -226,7 +226,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         batch = batch_ids[0]
                 elif batch:
                     expiry = batch_obj.browse(cr, uid, batch, context=context).life_date
-                    if row.cells[4].date != expiry:
+                    if row.cells[4].data != expiry:
                         error_list.append(_('The expiry date %s is not the same as the expiry date of the batch %s, so the expiry date taken is the one of the batch') % (expiry, row.cells[3].data))
                         comment += _('The expiry date %s is not the same as the expiry date of the batch %s, so the expiry date taken is the one of the batch.\n') % (expiry, row.cells[3].data)
 
