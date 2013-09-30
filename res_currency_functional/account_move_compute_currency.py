@@ -57,6 +57,35 @@ class account_move_compute_currency(osv.osv):
                     res[move.id] = False
         return res
 
+    def _search_currency(self, cr, uid, obj, name, args, context=None):
+        """
+        Search move in which lines have the given currency
+        """
+        # Prepare some elements
+        newargs = []
+        if not context:
+            context = {}
+        if not args:
+            return newargs
+        sql_base = """
+        SELECT ml.id FROM account_move ml, account_move_line aml
+        WHERE aml.move_id = ml.id
+        AND aml.currency_id"""
+        for arg in args:
+            if args[0] and args[0][1] and args[0][1] in ['in', '='] and args[0][2]:
+                # create SQL request
+                sql = sql_base + ' in %s\nGROUP BY ml.id'
+                second = args[0][2]
+                # execute it and fetch result
+                if isinstance(second, (int, long)):
+                    second = [second]
+                cr.execute(sql, (tuple(second),))
+                res = cr.fetchall()
+                newargs.append(('id', 'in', [x and x[0] for x in res]))
+            else:
+                newargs.append(arg)
+        return newargs
+
     def onchange_journal_id(self, cr, uid, ids, journal_id=False, context=None):
         """
         Change currency_id regarding journal.
@@ -83,7 +112,7 @@ class account_move_compute_currency(osv.osv):
 
     _columns = {
         'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
-        'currency_id': fields.function(_get_currency, method=True, type="many2one", relation="res.currency", string='Book. Currency', help="The optional other currency if it is a multi-currency entry."),
+        'currency_id': fields.function(_get_currency, fnct_search=_search_currency, method=True, type="many2one", relation="res.currency", string='Book. Currency', help="The optional other currency if it is a multi-currency entry."),
         'manual_currency_id': fields.many2one('res.currency', "Book. Currency"),
         'book_amount': fields.function(_book_amount_compute, method=True, string='Book Amount', digits_compute=dp.get_precision('Account'), type='float'),
         'block_manual_currency_id': fields.boolean("Block manual currency field", help="Block manual currency field if journal have a currency."),
