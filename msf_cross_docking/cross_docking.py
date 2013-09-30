@@ -219,21 +219,23 @@ class procurement_order(osv.osv):
         '''
         When you run the scheduler and you have a sale order line with type = make_to_order,
         we modify the location_id to set 'cross docking' of the purchase order created in mirror
-        But if the sale_order is an Internal Request we do want "Cross docking" but "Input" as location_id
+        But if the sale_order is an Internal Request we don't want "Cross docking" but "Input" as location_id (i.e. the location of the warehouse_id)
         '''
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         stock_loc_obj = self.pool.get('stock.location')
         sol_obj = self.pool.get('sale.order.line')
         procurement = kwargs['procurement']
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         sol_ids = sol_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         if len(sol_ids) and setup.allocation_setup != 'unallocated':
-            if not sol_obj.browse(cr, uid, sol_ids, context=context)[0].order_id.procurement_request:
+            browse_so = sol_obj.browse(cr, uid, sol_ids, context=context)[0].order_id
+            if not browse_so.procurement_request:
                 values.update({'cross_docking_ok': True, 'location_id': stock_loc_obj.get_cross_docking_location(cr, uid)})
+            values.update({'priority': browse_so.priority, 'categ': browse_so.categ})
         return values
 
 procurement_order()
@@ -393,6 +395,11 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
         assert values is not None, 'missing values'
         if context is None:
             context = {}
+        
+        # UF-1617: If the case comes from the sync_message, then just return the values, not the wizard stuff
+        if context.get('sync_message_execution', False):
+            return values
+        
         if isinstance(ids, (int, long)):
             ids = [ids]
         # take ids of the wizard from the context.

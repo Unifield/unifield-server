@@ -117,6 +117,7 @@
                         <attribute name="hide_delete_button">1</attribute>
                     </xpath>
                     <field name="ref" position="replace">
+	                    <field name="instance_id"/>
                         <field name="type" />
                         <field name="life_date" />
                     </field>
@@ -207,7 +208,8 @@
             		</field>
             		
             		<field name="name" position="replace">
-            			<field name="name" colspan="4" attrs="{'readonly': [('type', '=', 'internal')]}" />
+            			<field name="name" colspan="2" attrs="{'readonly': [('type', '=', 'internal')]}" />
+	          			<field name="instance_id" colspan="2" />
             		</field>
             		
             		<field name="date" position="replace">
@@ -509,6 +511,7 @@
 
                     <xpath expr="/tree//field[@name='product_id']" position="attributes">
                         <attribute name="domain">[('type', 'not in', ('consu', 'service', 'service_recep'))]</attribute>
+                        <attribute name="context">{'available_for_restriction': {'location_id': location_id}, 'search_default_not_restricted': 1}</attribute>
                     </xpath>
 
 	           		<field name="prod_lot_id" position="replace">
