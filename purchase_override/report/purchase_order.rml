@@ -22,6 +22,10 @@
     </template>
 
     <stylesheet>
+        <blockTableStyle id="Origin">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+        </blockTableStyle>
         <blockTableStyle id="OrderInformations">
             <blockAlignment value="LEFT" />
             <blockVAlign value="MIDDLE" />
@@ -91,11 +95,27 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="772.0" style="OrderInformations">
+        <blockTable colWidths="72.0,700.0" style="Origin">
             <tr>
                 <td>
-                    <para style="TextInformation">Origin ref. : [[ objects[0].origin[:248] ]]</para>
+                    <para style="TextInformation">Origin ref. :</para>
                 </td>
+                <td>
+                    <para style="TextInformation">[[ getOrigin(objects[0].origin, 5)[0] ]]</para>
+                </td>
+            </tr>
+            <tr>
+                [[ repeatIn(getOrigin(objects[0].origin, 5)[1:], 'orig') ]]
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ orig ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td> </td>
+                <td> </td>
             </tr>
         </blockTable>
 
@@ -526,7 +546,7 @@
         </blockTable>
 
         <blockTable colWidths="20.0,62.5,62.5,290.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
-            <tr>
+            <tr >
                 <td>
                     <para style="Lines"><i>Line</i></para>
                 </td>
