@@ -38,6 +38,7 @@
     "demo_xml" : [],
     "test": [
         'test/10_data.yml',
+        'test/20_sort_by_date.yml',
     ],
     "installable": True,
     "active": False
