@@ -91,6 +91,13 @@
             <font color="white"> </font>
         </para>
 
+        <blockTable colWidths="772.0" style="OrderInformations">>
+            <tr>
+                <td>
+                    <para style="TextInformation">Origin ref. : [[ objects[0].origin[:248] ]]</para>
+                </td>
+            </tr>
+        </blockTable>
         <blockTable colWidths="150.0,5.5,150.0,5.5,150.0,5.5,150.0,5.5,150.0" style="OrderInformations">
             <tr>
                 <td>
@@ -123,7 +130,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Origin ref. : [[ objects[0].origin[:64] ]]</para>
+                    <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
