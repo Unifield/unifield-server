@@ -557,8 +557,8 @@ class orm_template(object):
     def __export_row(self, cr, uid, row, fields, context=None):
         if context is None:
             context = {}
-            
-        sync_context = context.get('sync_context')
+
+        sync_context = context.get('sync_update_creation')
 
         def check_type(field_type):
             if field_type == 'float':
@@ -617,8 +617,9 @@ class orm_template(object):
                     elif f[i] == 'id':
                         model_data = self.pool.get('ir.model.data')
                         data_ids = model_data.search(cr, uid, [('model', '=', r._table_name), ('res_id', '=', r['id'])])
+                        data_ids = map(lambda ref_id: ref_id.id, filter(lambda ref: ref.module == 'sd', model_data.browse(cr, uid, data_ids))) or data_ids
                         if len(data_ids):
-                            d = model_data.read(cr, uid, data_ids, ['name', 'module'])[0]
+                            d = model_data.read(cr, uid, data_ids[0], ['name', 'module'])
                             if d['module']:
                                 r = '%s.%s' % (d['module'], d['name'])
                             else:
@@ -692,7 +693,7 @@ class orm_template(object):
                     if isinstance(r, browse_record):
                         
                         # add support for reference fields
-                        if cols and cols._type == 'reference':
+                        if cols and cols._type == 'reference' and (sync_context or context.get('import_comp')):
                             row_id = r.id
                             model = r._name
                             xml_id = r._get_xml_ids(cr, uid, [row_id]).get(row_id, '')
@@ -934,6 +935,7 @@ class orm_template(object):
             data = pickle.load(file(config.get('import_partial')))
             original_value = data.get(filename, 0)
 
+        from osv import except_osv
         position = 0
         while position<len(datas):
             res = {}
@@ -948,6 +950,8 @@ class orm_template(object):
                 id = ir_model_data_obj._update(cr, uid, self._name,
                      current_module, res, mode=mode, xml_id=xml_id,
                      noupdate=noupdate, res_id=res_id, context=context)
+            except except_osv, e:
+                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e.value), '')
             except Exception, e:
                 return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e), '')
 
@@ -2185,11 +2189,11 @@ class orm_memory(orm_template):
                         continue
                     
                     if order_column._classic_read:
-                        getter = lambda d, i: d[1][order_field]
+                        getter = lambda d, i: len(d) > 1 and d[1].get(order_field) or False
                     elif order_column._type == 'many2one':
                         if sort_raw_id:
                             # uppon read, many2one sorting is done directly on 'id'
-                            getter = lambda d, i: d[1][order_field]
+                            getter = lambda d, i: len(d) > 1 and d[1].get(order_field) or False
                         else:
                             # use the fact the read follow object standard _parent_order/_order to get many2one ordered
                             dest_model = self.pool.get(order_column._obj)
@@ -2201,7 +2205,7 @@ class orm_memory(orm_template):
                             if dest_ids_has_false:
                                 ordered_ids.insert(0, False) # false is always first
                             order_info[order_field] = ordered_ids
-                            getter = lambda d, i: i[order_field].index(d[1][order_field] or False)
+                            getter = lambda d, i: i.get(order_field) and len(d) > 1 and d[1].get(order_field) and i.get(order_field).index(d[1].get(order_field)) or False
                 else:
                     raise NotImplementedError()
                 order_parts_getters.append((getter, order_direction))
@@ -2317,6 +2321,7 @@ class orm_memory(orm_template):
 class orm(orm_template):
     _sql_constraints = []
     _table = None
+    _all_columns = {}
     _protected = ['read', 'write', 'create', 'default_get', 'perm_read', 'unlink', 'fields_get', 'fields_view_get', 'search', 'name_get', 'distinct_field_get', 'name_search', 'copy', 'import_data', 'search_count', 'exists']
     __logger = logging.getLogger('orm')
     __schema = logging.getLogger('orm.schema')
@@ -2467,7 +2472,7 @@ class orm(orm_template):
         while field in current_table._inherit_fields and not field in current_table._columns:
             parent_model_name = current_table._inherit_fields[field][0]
             parent_table = self.pool.get(parent_model_name)
-            self._inherits_join_add(parent_model_name, query)
+            current_table._inherits_join_add(parent_model_name, query)
             current_table = parent_table
         return '"%s".%s' % (current_table._table, field)
 
@@ -3069,11 +3074,23 @@ class orm(orm_template):
         for table in self._inherits:
             res.update(self.pool.get(table)._inherit_fields)
             for col in self.pool.get(table)._columns.keys():
-                res[col] = (table, self._inherits[table], self.pool.get(table)._columns[col])
+                res[col] = (table, self._inherits[table], self.pool.get(table)._columns[col], table)
             for col in self.pool.get(table)._inherit_fields.keys():
-                res[col] = (table, self._inherits[table], self.pool.get(table)._inherit_fields[col][2])
+                res[col] = (table, self._inherits[table], self.pool.get(table)._inherit_fields[col][2], self.pool.get(table)._inherit_fields[col][3])
         self._inherit_fields = res
+        self._all_columns = self._get_column_infos()
         self._inherits_reload_src()
+
+    def _get_column_infos(self):
+        """Returns a dict mapping all fields names (direct fields and
+           inherited field via _inherits) to a ``column_info`` struct
+           giving detailed columns """
+        result = {}
+        for k, (parent, m2o, col, original_parent) in self._inherit_fields.iteritems():
+            result[k] = fields.column_info(k, col, parent, m2o, original_parent)
+        for k, col in self._columns.iteritems():
+            result[k] = fields.column_info(k, col)
+        return result
 
     def _inherits_check(self):
         for table, field_name in self._inherits.items():
@@ -3551,7 +3568,8 @@ class orm(orm_template):
         self._check_concurrency(cr, ids, context)
         self.pool.get('ir.model.access').check(cr, user, self._name, 'write', context=context)
 
-        result = self._store_get_values(cr, user, ids, vals.keys(), context) or []
+        #result = self._store_get_values(cr, user, ids, vals.keys(), context) or []
+        result = []
 
         # No direct update of parent_left/right
         vals.pop('parent_left', None)
@@ -3707,26 +3725,35 @@ class orm(orm_template):
                         cr.execute('update '+self._table+' set parent_right=parent_right+%s where parent_right>=%s', (distance, position))
                         cr.execute('update '+self._table+' set parent_left=parent_left-%s, parent_right=parent_right-%s where parent_left>=%s and parent_left<%s', (pleft-position+distance, pleft-position+distance, pleft+distance, pright+distance))
 
-        result += self._store_get_values(cr, user, ids, vals.keys(), context)
-        result.sort()
 
-        done = {}
-        for order, object, ids_to_update, fields_to_recompute in result:
-            key = (object, tuple(fields_to_recompute))
-            done.setdefault(key, {})
-            # avoid to do several times the same computation
-            todo = []
-            for id in ids_to_update:
-                if id not in done[key]:
-                    done[key][id] = True
-                    todo.append(id)
-            self.pool.get(object)._store_set_values(cr, user, todo, fields_to_recompute, context)
+        if not context.get('no_store_function', False) or isinstance(context['no_store_function'], list) and self._name not in context['no_store_function']:
+            self._call_store_function(cr, user, ids, keys=vals.keys(), result=result, context=context)
 
         wf_service = netsvc.LocalService("workflow")
         for id in ids:
             wf_service.trg_write(user, self._name, id, cr)
         return True
 
+    def _call_store_function(self, cr, uid, ids, keys=None, result=None, bypass=True, context=None):
+        if result is None:
+            result = []
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        done = []
+
+        result += self._store_get_values(cr, uid, ids, keys, context)
+        result.sort()
+        for order, object, ids, fields2 in result:
+            if bypass and context.get('bypass_store_function') and (object, fields2) in context['bypass_store_function']:
+                continue
+            if not (object, ids, fields2) in done:
+                self.pool.get(object)._store_set_values(cr, uid, ids, fields2, context)
+                done.append((object, ids, fields2))
+        return True
     #
     # TODO: Should set perm to user.xxx
     #
@@ -3768,7 +3795,7 @@ class orm(orm_template):
         upd_todo = []
         for v in vals.keys():
             if v in self._inherit_fields:
-                (table, col, col_detail) = self._inherit_fields[v]
+                (table, col, col_detail, original_parent) = self._inherit_fields[v]
                 tocreate[table][v] = vals[v]
                 del vals[v]
             else:
@@ -3889,14 +3916,8 @@ class orm(orm_template):
             result += self._columns[field].set(cr, self, id_new, field, vals[field], user, rel_context) or []
         self._validate(cr, user, [id_new], context)
 
-        if not context.get('no_store_function', False):
-            result += self._store_get_values(cr, user, [id_new], vals.keys(), context)
-            result.sort()
-            done = []
-            for order, object, ids, fields2 in result:
-                if not (object, ids, fields2) in done:
-                    self.pool.get(object)._store_set_values(cr, user, ids, fields2, context)
-                    done.append((object, ids, fields2))
+        if not context.get('no_store_function', False) or isinstance(context['no_store_function'], list) and self._name not in context['no_store_function']:
+            self._call_store_function(cr, user, id_new, keys=vals.keys(), result=result, context=context)
 
         if self._log_create and not (context and context.get('no_store_function', False)):
             message = self._description + \
@@ -4170,7 +4191,7 @@ class orm(orm_template):
                 order_direction = order_split[1].strip() if len(order_split) == 2 else ''
                 inner_clause = None
                 if order_field == 'id':
-                    order_by_clause = '"%s"."%s"' % (self._table, order_field)
+                    inner_clause = '"%s"."%s"' % (self._table, order_field)
                 elif order_field in self._columns:
                     order_column = self._columns[order_field]
                     if order_column._classic_read:
@@ -4180,7 +4201,7 @@ class orm(orm_template):
                     else:
                         continue # ignore non-readable or "non-joinable" fields
                 elif order_field in self._inherit_fields:
-                    parent_obj = self.pool.get(self._inherit_fields[order_field][0])
+                    parent_obj = self.pool.get(self._inherit_fields[order_field][3])
                     order_column = parent_obj._columns[order_field]
                     if order_column._classic_read:
                         inner_clause = self._inherits_join_calc(order_field, query)
@@ -4276,13 +4297,18 @@ class orm(orm_template):
         context_wo_lang = context.copy()
         if 'lang' in context:
             del context_wo_lang['lang']
-        data = self.read(cr, uid, [id,], context=context_wo_lang)
+
+        fields = self.fields_get(cr, uid, context=context)
+        to_read = []
+        for f in fields:
+            if 'function' not in fields[f]:
+                to_read.append(f)
+        data = self.read(cr, uid, [id,], to_read, context=context_wo_lang)
         if data:
             data = data[0]
         else:
             raise IndexError( _("Record #%d of %s not found, cannot copy!") %( id, self._name))
 
-        fields = self.fields_get(cr, uid, context=context)
         for f in fields:
             ftype = fields[f]['type']
 
@@ -4292,7 +4318,8 @@ class orm(orm_template):
             if f in default:
                 data[f] = default[f]
             elif 'function' in fields[f]:
-                del data[f]
+                if f in data:
+                    del data[f]
             elif ftype == 'many2one':
                 try:
                     data[f] = data[f] and data[f][0]
@@ -4324,8 +4351,13 @@ class orm(orm_template):
         for parent_column in ['parent_left', 'parent_right']:
             data.pop(parent_column, None)
 
-        for v in self._inherits:
-            del data[self._inherits[v]]
+        # remove _inherits field's from data recursively, missing parents will
+        # be created by create() (so that copy() copy everything).
+        def remove_ids(inherits_dict):
+            for parent_table in inherits_dict:
+                del data[inherits_dict[parent_table]]
+                remove_ids(self.pool.get(parent_table)._inherits)
+        remove_ids(self._inherits)
         return data
 
     def copy_translations(self, cr, uid, old_id, new_id, context=None):
