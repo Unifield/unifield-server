@@ -1112,9 +1112,7 @@ class stock_production_lot(osv.osv):
                  'life_date': False,
                  }
     
-    _sql_constraints = [('name_uniq', 'unique (product_id,name)', 'For a given product, the batch number must be unique.'),
-                        ]
-
+    # UF-2148: Removed the name unique constraint here, and use only the constraint with 3 attrs: name, prod and instance
     _constraints = [(_check_batch_type_integrity,
                     'You can\'t create a standard batch number for a product which is not batch mandatory. If the product is perishable, the system will create automatically an internal batch number on reception/inventory.',
                     ['Type', 'Product']),
