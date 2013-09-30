@@ -1365,7 +1365,7 @@ class sale_order_line(osv.osv):
             self.pool.get('sale.order').write(cr, uid, [context.get('sale_id')], data, context=context)
 
         default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
-        if not context.get('from_yml_test', False):
+        if not context.get('from_yml_test', False) or context.get('update_mode') in ['init', 'update']:
             default_data.update({'product_uom_qty': 0.00, 'product_uos_qty': 0.00})
         sale_id = context.get('sale_id', [])
         if not sale_id:
