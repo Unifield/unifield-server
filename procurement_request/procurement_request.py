@@ -484,7 +484,7 @@ class procurement_request_line(osv.osv):
         value = {}
         domain = {}
         if not product_id:
-            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order', 'comment_ok': False, 'cost_price': False, 'price_subtotal': False}
+            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order', 'comment_ok': False, 'cost_price': False, 'price_subtotal': False, 'product_uom_qty': 0.00, 'product_uos_qty': 0.00}
             domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
         elif product_id:
             product = product_obj.browse(cr, uid, product_id)
@@ -493,7 +493,7 @@ class procurement_request_line(osv.osv):
             if test:
                 return res
             value = {'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 
-                     'type': product.procure_method, 'comment_ok': True, 'cost_price': product.standard_price}
+                     'type': product.procure_method, 'comment_ok': True, 'cost_price': product.standard_price,}
             if value['type'] != 'make_to_stock':
                 value.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
             uom_val = uom_obj.read(cr, uid, [product.uom_id.id], ['category_id'])
