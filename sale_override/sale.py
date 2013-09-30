@@ -1327,11 +1327,14 @@ class sale_order_line(osv.osv):
                 res['value'].update({'type': type})
             else:
                 res.update({'value':{'type': type}})
+            res['value'].update({'product_uom_qty': qty, 'product_uos_qty': qty})
         elif not product:
             if 'value' in res:
                 res['value'].update({'type': 'make_to_order'})
             else:
                 res.update({'value':{'type': 'make_to_order'}})
+            res['value'].update({'product_uom_qty': 0.00, 'product_uos_qty': 0.00})
+
         return res
 
     def default_get(self, cr, uid, fields, context=None):
@@ -1362,6 +1365,7 @@ class sale_order_line(osv.osv):
             self.pool.get('sale.order').write(cr, uid, [context.get('sale_id')], data, context=context)
 
         default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
+        default_data.update({'product_uom_qty': 0.00, 'product_uos_qty': 0.00})
         sale_id = context.get('sale_id', [])
         if not sale_id:
             return default_data
