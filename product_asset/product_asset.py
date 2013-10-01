@@ -240,7 +240,8 @@ class product_asset(osv.osv):
                  'arrival_date': lambda *a: time.strftime('%Y-%m-%d'),
                  'receipt_place': 'Country/Project/Activity',
     }
-    _sql_constraints = [('name_uniq', 'unique(name, instance_id)', 'Asset Code must be unique per instance!'),
+    # UF-2148: use this constraint with 3 attrs: name, prod and instance 
+    _sql_constraints = [('asset_name_uniq', 'unique(name, product_id, instance_id)', 'Asset Code must be unique per instance and per product!'),
                         ]
     _order = 'name desc'
     
