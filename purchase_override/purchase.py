@@ -2533,10 +2533,10 @@ class product_product(osv.osv):
             if main_type != log_nomen:
                 display_message = True
 
-        if category == 'service' and product_type != 'service':
+        if category == 'service' and product_type != 'service_recep':
            display_message = True
 
-        if category == 'transport' and (product_type != 'service' or not transport_product):
+        if category == 'transport' and (product_type != 'service_recep' or not transport_product):
             display_message = True
 
         if display_message:
