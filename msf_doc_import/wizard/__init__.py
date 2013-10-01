@@ -68,4 +68,4 @@ import wizard_import_fo_line
 import wizard_import_ir_line
 import wiz_common_import
 import wizard_import_tender_line
-
+import wizard_delete_lines

@@ -14,7 +14,7 @@
                         <group name="import" string="Import Lines" colspan="4">
                             <field name="file_to_import" colspan="2" />
                             <button name="import_file" string="Import lines" icon="gtk-execute" colspan="1" type="object" />
-                            <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" confirm="Are you sure that you want to remove all lines?"/>
+                            <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
                         </group>
                     </xpath>
                 </data>

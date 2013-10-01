@@ -15,7 +15,7 @@
                     <field name="real_file_to_import" colspan="2" attrs="{'invisible': [('composition_type', '=', 'theoretical')]}" />
                     <button name="import_file_real" string="Import lines" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible': [('composition_type', '=', 'theoretical')]}" />
                     <button name="import_file" string="Import lines" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible': [('composition_type', '!=', 'theoretical')]}"/>
-                    <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" colspan="1" type="object" confirm="Are you sure that you want to remove all lines?" invisible="1"/>
+                    <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" colspan="1" type="object" />
                     <field name="hide_column_error_ok" invisible="1" colspan="1" />
                 </group>
                 </xpath>

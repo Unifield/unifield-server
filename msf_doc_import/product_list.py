@@ -116,15 +116,30 @@ Product Code*, Product Description*, Comment""" % line_num))
         '''
         if not context:
             context = {}
+
         if isinstance(ids, (int, long)):
             ids = [ids]
-        vals = {}
-        vals['product_ids'] = []
+
         for list in self.browse(cr, uid, ids, context=context):
-            for var in list.product_ids:
-                vals['product_ids'].append((2, var.id))
-            self.write(cr, uid, ids, vals, context=context)
-        return True
+            if not list.product_ids:
+                raise osv.except_osv(_('Error'), _('No line to remove'))
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.delete.product.list.line',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': dict(context, active_id=ids[0])}
+
+#        if isinstance(ids, (int, long)):
+#            ids = [ids]
+#        vals = {}
+#        vals['product_ids'] = []
+#        for list in self.browse(cr, uid, ids, context=context):
+#            for var in list.product_ids:
+#                vals['product_ids'].append((2, var.id))
+#            self.write(cr, uid, ids, vals, context=context)
+#        return True
         
 product_list()
 

@@ -276,14 +276,26 @@ Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Asset, Ba
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        vals = {}
-        vals['composition_item_ids'] = []
-        for line in self.browse(cr, uid, ids, context=context):
-            line_browse_list = line.composition_item_ids
-            for var in line_browse_list:
-                vals['composition_item_ids'].append((2, var.id))
-            self.write(cr, uid, ids, vals, context=context)
-        return True
+
+        for kit in self.browse(cr, uid, ids, context=context):
+            if not kit.composition_item_ids:
+                raise osv.except_osv(_('Error'), _('No line to remove'))
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.delete.kit.line',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': dict(context, active_id=ids[0], composition_type='theoretical')}
+
+#        vals = {}
+#        vals['composition_item_ids'] = []
+#        for line in self.browse(cr, uid, ids, context=context):
+#            line_browse_list = line.composition_item_ids
+#            for var in line_browse_list:
+#                vals['composition_item_ids'].append((2, var.id))
+#            self.write(cr, uid, ids, vals, context=context)
+#        return True
 
 composition_kit()
 
