@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="wizard_delete_lines_form_view" model="ir.ui.view">
+            <field name="name">wizard.delete.lines.form.view</field>
+            <field name="model">wizard.delete.lines</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Delete lines">
+                    <field name="initial_doc_id" invisible="True" />
+                    <field name="initial_doc_type" invisible="True" />
+                    <field name="to_remove_type" invisible="True" />
+                    <field name="linked_field_name" invisible="True" />
+                    <separator colspan="4" string="Lines to remove" />
+                    <field name="line_ids" colspan="4" nolabel="1" context="{'from_delete_wizard': True}" />
+                    <separator colspan="4" string="Actions" />
+                    <group colspan="4" col="4" >
+                        <label> </label>
+                        <button special="cancel" icon="gtk-cancel" string="Close window" />
+                        <button name="remove_selected_lines" type="object" icon="gtk-execute" string="Remove selected lines" />
+                        <button name="remove_all_lines" type="object" icon="gtk-execute" string="Remove all lines" confirm="Are you sure that you want to remove all lines?" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_composition_item_delete_wizard" model="ir.ui.view">
+            <field name="name">view.composition.item.delete.wizard</field>
+            <field name="model">composition.item</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <tree string="Theoretical Items" noteditable="True">
+                    <field name="item_module" />
+                    <field name="item_product_id" />
+                    <field name="item_qty" />
+                    <field name="item_uom_id" />
+                    <field name="item_asset_id" />
+                    <field name="item_lot" />
+                    <field name="item_exp" />
+                </tree>
+            </field>
+        </record>
+
+    </data>
+</openerp>

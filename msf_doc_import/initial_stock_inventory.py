@@ -129,23 +129,6 @@ class initial_stock_inventory(osv.osv):
         (_check_active_product, "You cannot confirm this stock inventory because it contains a line with an inactive product", ['order_line', 'state'])
     ]
 
-    #def button_remove_lines(self, cr, uid, ids, context=None):
-    #    '''
-    #    Remove lines
-    #    '''
-    #    if context is None:
-    #        context = {}
-    #    if isinstance(ids, (int, long)):
-    #        ids = [ids]
-    #    vals = {}
-    #    vals['order_line'] = []
-    #    for line in self.browse(cr, uid, ids, context=context):
-    #        line_browse_list = line.order_line
-    #        for var in line_browse_list:
-    #            vals['order_line'].append((2, var.id))
-    #        self.write(cr, uid, ids, vals, context=context)
-    #    return True'''
-
     def import_file(self, cr, uid, ids, context=None):
         '''
         Import lines form file
@@ -384,23 +367,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s : %s')% (plural, message))
         return True
 
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        '''
-        Remove lines
-        '''
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        vals = {}
-        vals['inventory_line_id'] = []
-        for line in self.browse(cr, uid, ids, context=context):
-            line_browse_list = line.inventory_line_id
-            for var in line_browse_list:
-                vals['inventory_line_id'].append((2, var.id))
-            self.write(cr, uid, ids, vals, context=context)
-        return True
-        
 initial_stock_inventory()
 
 class initial_stock_inventory_line(osv.osv):

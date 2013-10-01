@@ -26,7 +26,7 @@
                 <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="before" >
                 <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                     <button name="wizard_import_po_line" string="Import lines" icon="gtk-dnd" col="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
-                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" invisible="1" confirm="Are you sure that you want to remove all the lines of this Purchase order?"/>
+                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
                     <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0"/>
                 </group>
                 <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'confirmed')]}"/>
