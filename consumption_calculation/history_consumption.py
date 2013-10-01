@@ -590,8 +590,6 @@ class product_product(osv.osv):
                     hist_domain.append(('name', '=', order_field))
                     hist_ids = hist_obj.search(cr, uid, hist_domain, offset=offset, limit=limit, order='value %s' % order_direction, context=context)
                     res = list(x['product_id'][0] for x in hist_obj.read(cr, uid, hist_ids, ['product_id'], context=context))
-                    # Need to reverse to have the good order
-                    res.reverse()
                     break
 
         return res
@@ -609,6 +607,19 @@ class product_history_consumption_product(osv.osv):
         'value': fields.float(digits=(16,2), string='Value', select=1),
         'cons_type': fields.selection([('amc', 'AMC'), ('fmc', 'FMC')], string='Consumption type'),
     }
+
+    def read(self, cr, uid, ids, fields, context=None, load='_classic_read'):
+        '''
+        Return the result in the same order as given in ids
+        '''
+        res = super(product_history_consumption_product, self).read(cr, uid, ids, fields, context=context, load=load)
+
+        res_final = [None]*len(ids)
+        for r in res:
+            r_index = ids.index(r['id'])
+            res_final[r_index] = r
+
+        return res_final
 
 product_history_consumption_product()
 
