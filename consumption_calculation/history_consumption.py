@@ -490,6 +490,7 @@ class product_product(osv.osv):
 
         if context is None:
             context = {}
+
         if context.get('history_cons', False):
             res = super(product_product, self).read(cr, uid, ids, vals, context=context, load=load)
 
@@ -585,12 +586,13 @@ class product_product(osv.osv):
                 order_split = order_part.strip().split(' ')
                 order_field = order_split[0]
                 order_direction = order_split[1].strip() if len(order_split) == 2 else ''
-                if order_field not in self._columns:
+                if order_field != 'id' and order_field not in self._columns and order_field not in self._inherit_fields:
                     hist_domain.append(('name', '=', order_field))
-                    hist_ids = hist_obj.search(cr, uid, hist_domain, order='value %s' % order_direction, context=context)
-                    res = list(x.product_id.id for x in hist_obj.browse(cr, uid, hist_ids, context=context))
+                    hist_ids = hist_obj.search(cr, uid, hist_domain, offset=offset, limit=limit, order='value %s' % order_direction, context=context)
+                    res = list(x['product_id'][0] for x in hist_obj.read(cr, uid, hist_ids, ['product_id'], context=context))
+                    # Need to reverse to have the good order
+                    res.reverse()
                     break
-
 
         return res
 
