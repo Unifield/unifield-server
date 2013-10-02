@@ -101,7 +101,7 @@ class account_analytic_line(osv.osv):
         """
         for aal in self.browse(cr, uid, ids):
             if aal.document_date and aal.date and aal.date < aal.document_date:
-                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+                raise osv.except_osv(_('Error'), _('Posting date (%s) should be later than Document Date (%s).') % (aal.date, aal.document_date))
         return True
 
     def create(self, cr, uid, vals, context=None):
@@ -116,7 +116,7 @@ class account_analytic_line(osv.osv):
                 logging.getLogger('init').info('AAL: set document_date')
                 vals['document_date'] = strftime('%Y-%m-%d')
         if vals.get('document_date', False) and vals.get('date', False) and vals.get('date') < vals.get('document_date'):
-            raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+            raise osv.except_osv(_('Error'), _('Posting date (%s) should be later than Document Date (%s).') % (vals.get('date', False), vals.get('document_date', False)))
         return super(account_analytic_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
