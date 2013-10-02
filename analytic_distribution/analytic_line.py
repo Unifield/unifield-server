@@ -101,17 +101,28 @@ class analytic_line(osv.osv):
             context = {}
         # Prepare some values
         res = {}
+        period_obj = self.pool.get('account.period')
         for al in self.browse(cr, uid, ids, context):
             res[al.id] = False
-            if al.commitment_line_id and al.commitment_line_id.commit_id and al.commitment_line_id.commit_id.period_id:
-                res[al.id] = al.commitment_line_id.commit_id.period_id.id
-            elif al.move_id and al.move_id.period_id:
-                res[al.id] = al.move_id.period_id.id
+            # UTP-943: Since this ticket, we search period regarding analytic line posting date.
+            period_ids = period_obj.get_period_from_date(cr, uid, date=al.date)
+            if period_ids:
+                res[al.id] = period_ids[0]
         return res
 
     def _search_period_id(self, cr, uid, obj, name, args, context=None):
         """
-        Search period
+        Search period regarding date.
+        First fetch period date_start and date_stop.
+        Then check that analytic line have a posting date bewteen these two date.
+        Finally do this check as "OR" for each given period.
+        Examples:
+        - Just january:
+        ['&', ('date', '>=', '2013-01-01'), ('date', '<=', '2013-01-31')]
+        - January + February:
+        ['|', '&', ('date', '>=', '2013-01-01'), ('date', '<=', '2013-01-31'), '&', ('date', '>=', '2013-02-01'), ('date', '<=', '2013-02-28')]
+        - January + February + March
+        ['|', '|', '&', ('date', '>=', '2013-01-01'), ('date', '<=', '2013-01-31'), '&', ('date', '>=', '2013-02-01'), ('date', '<=', '2013-02-28'), '&', ('date', '>=', '2013-03-01'), ('date', '<=', '2013-03-31')]
         """
         # Checks
         if not context:
@@ -119,11 +130,20 @@ class analytic_line(osv.osv):
         if not args:
             return []
         new_args = []
+        period_obj = self.pool.get('account.period')
         for arg in args:
             if len(arg) == 3 and arg[1] in ['=', 'in']:
-                new_args.append('|')
-                new_args.append(('move_id.period_id', arg[1], arg[2]))
-                new_args.append(('commitment_line_id.commit_id.period_id', arg[1], arg[2]))
+                periods = arg[2]
+                if isinstance(periods, (int, long)):
+                    periods = [periods]
+                if len(periods) > 1:
+                    for i in range(len(periods) - 1):
+                        new_args.append('|')
+                for p_id in periods:
+                    period = period_obj.browse(cr, uid, [p_id])[0]
+                    new_args.append('&')
+                    new_args.append(('date', '>=', period.date_start))
+                    new_args.append(('date', '<=', period.date_stop))
         return new_args
 
     _columns = {

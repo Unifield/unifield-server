@@ -92,7 +92,7 @@
     assert cc_corrected.date == time.strftime('%Y-02-04'), "Wrong date on analytic line. Should be %s. Current: %s" % (time.strftime('%Y-02-04'), cc_corrected.date)
     assert cc_corrected.cost_center_id.id == ref('analytic_cc2'), "An error occured during CC change from CC1 to CC2. Current: %s" % cc_corrected.cost_center_id.name
     all_p_ids = period_obj.search(cr, uid, [])
-    assert cc_corrected.period_id.number == 1, "Wrong period. Should be 1. Current: %s" % cc_corrected.period_id.number
+    assert cc_corrected.period_id.number == 2, "Wrong period. Should be 2. Current: %s" % cc_corrected.period_id.number
 -
   I close february period (mission-closed) and change CC2 to on a date in february
 -
