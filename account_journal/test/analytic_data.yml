@@ -46,9 +46,9 @@
   I create an analytic account attached to OC (Operation Center) named Kenya
 -
   !record {model: account.analytic.account, id: analytic_account_kenya}:
-    name: "Kenya"
+    name: "Kenya_test"
     currency_id: 1
-    code: KEN
+    code: KENTEST
     type: normal
     category: OC
     parent_id: analytic_distribution.analytic_account_project

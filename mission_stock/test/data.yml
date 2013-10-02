@@ -41,9 +41,9 @@
   We create also a new Unifield instance which is not a local instance
 -
   !record {model: account.analytic.account, id: analytic_account_kenya}:
-    name: "Kenya"
+    name: "Kenya_test"
     currency_id: 1
-    code: KEN
+    code: KENTEST
     type: normal
     category: OC
     parent_id: analytic_distribution.analytic_account_project
