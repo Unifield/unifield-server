@@ -35,7 +35,36 @@
                         </group>
                     </group>
                     <notebook colspan="4">
-                    	<page string="Composition Items">
+                        <page string="Composition Items">
+                            <separator colspan="4" string="Product filters" />
+                            <field name="sublist_id"
+                                attrs="{'readonly': [('i_nomen_manda_0', '!=', False)]}" colspan="4" />
+                            <group colspan="4" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
+                                <field name="i_nomen_manda_0"
+                                    domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                                    widget="selection"
+                                    on_change="onChangeSearchNomenclature(0, 'mandatory', i_nomen_manda_0, i_nomen_manda_1, i_nomen_manda_2, i_nomen_manda_3, False)"
+                                    />
+                                <field name="i_nomen_manda_1"
+                                    domain="[('id', '=', 0)]"
+                                    widget="selection"
+                                    get_selection="get_nomen"
+                                    on_change="onChangeSearchNomenclature(1, 'mandatory', i_nomen_manda_0, i_nomen_manda_1, i_nomen_manda_2, i_nomen_manda_3, False)"
+                                    />
+                                <field name="i_nomen_manda_2"
+                                    domain="[('id', '=', 0)]"
+                                    widget="selection"
+                                    get_selection="get_nomen"
+                                    on_change="onChangeSearchNomenclature(2, 'mandatory', i_nomen_manda_0, i_nomen_manda_1, i_nomen_manda_2, i_nomen_manda_3, False)"
+                                    />
+                                <field name="i_nomen_manda_3"
+                                    domain="[('id', '=', 0)]"
+                                    widget="selection"
+                                    get_selection="get_nomen"
+                                    on_change="onChangeSearchNomenclature(3, 'mandatory', i_nomen_manda_0, i_nomen_manda_1, i_nomen_manda_2, i_nomen_manda_3, False)"
+                                    />
+                            </group>
+                            <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                     		<field name="composition_item_ids" mode="tree,form" nolabel="True" widget="one2many_list" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="4">
                     			<form string="Theoretical Kit Item">
 				                    <group col="6" colspan="4">
