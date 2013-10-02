@@ -43,7 +43,7 @@ DOCUMENT_DATA = {'product.list': ('product.list.line', 'list_id', 'product_ids')
                  'tender': ('tender.line', 'tender_id', 'tender_line_ids'),
                  'sale.order': ('sale.order.line', 'order_id', 'order_line'),
                  'supplier.catalogue': ('supplier.catalogue.line', 'catalogue_id', 'line_ids'),
-                 'stock.picking': ('stock.mvoe', 'picking_id', 'move_lines'),
+                 'stock.picking': ('stock.move', 'picking_id', 'move_lines'),
                  'stock.warehouse.automatic.supply': ('stock.warehouse.automatic.supply.line', 'supply_id', 'line_ids'),
                  'stock.warehouse.order.cycle': ('stock.warehouse.order.cycle.line', 'order_cycle_id', 'product_id'),
                  'threshold.value': ('threshold.value.line', 'threshold_value_id', 'line_ids'),
