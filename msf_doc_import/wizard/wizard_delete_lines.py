@@ -53,39 +53,39 @@ DOCUMENT_DATA = {'product.list': ('product.list.line', 'list_id', 'product_ids')
                  'monthly.review.consumption': ('monthly.review.consumption.line', 'mrc_id', 'line_ids'),}
 
 
-class document_remove_line(osv.osv):
-    """
-    This object is a dummy object used to have only one method to remove
-    lines from multiple objects.
-    Some other objects inherit from this object to avoid multiple overriding of
-    the button_remove_lines method.
-    """
+#class document_remove_line(osv.osv):
+#    """
+#    This object is a dummy object used to have only one method to remove
+#    lines from multiple objects.
+#    Some other objects inherit from this object to avoid multiple overriding of
+#    the button_remove_lines method.
+#    """
+#
+#    _name = 'document.remove.line'
 
-    _name = 'document.remove.line'
+def brl(self, cr, uid, ids, context=None):
+    '''
+    Call the wizard to remove lines
+    '''
+    context = context or {}
 
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        '''
-        Call the wizard to remove lines
-        '''
-        context = context or {}
+    if isinstance(ids, (int, long)):
+        ids = [ids]
 
-        if isinstance(ids, (int, long)):
-            ids = [ids]
+    # If there is no line to remove.
+    for obj in self.browse(cr, uid, ids, context=context):
+        if not obj[DOCUMENT_DATA.get(self._name)[2]]:
+            raise osv.except_osv(_('Error'), _('No line to remove'))
 
-        # If there is no line to remove.
-        for obj in self.browse(cr, uid, ids, context=context):
-            if not obj[DOCUMENT_DATA.get(self._name)[2]]:
-                raise osv.except_osv(_('Error'), _('No line to remove'))
+    # Return the wizard to display lines to remove
+    return {'type': 'ir.actions.act_window',
+            'res_model': 'wizard.delete.lines',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': dict(context, active_id=ids[0], active_model=self._name)}
 
-        # Return the wizard to display lines to remove
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.delete.lines',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'context': dict(context, active_id=ids[0], active_model=self._name)}
-
-document_remove_line()
+#document_remove_line()
 
 
 #### DOCUMENT INHERITANCE ####
@@ -112,72 +112,128 @@ Documents which inherit from document.remove.line:
 
 class product_list(osv.osv):
     _name = 'product.list'
-    _inherit = ['product.list', 'document.remove.line']
+    _inherit = 'product.list'
+#    _inherit = ['product.list', 'document.remove.line']
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
 
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
-    _inherit = ['purchase.order', 'document.remove.line']
+    _inherit = 'purchase.order'
+#    _inherit = ['purchase.order', 'document.remove.line']
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
 
 
 class composition_kit(osv.osv):
     _name = 'composition.kit'
-    _inherit = ['composition.kit', 'document.remove.line']
+    _inherit = 'composition.kit'
+#    _inherit = ['composition.kit', 'document.remove.line']
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
 
 
 class tender(osv.osv):
     _name = 'tender'
-    _inherit = ['tender', 'document.remove.line']
+    _inherit = 'tender'
+#    _inherit = ['tender', 'document.remove.line']
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
 
 
 class sale_order(osv.osv):
     _name = 'sale.order'
-    _inherit = ['sale.order', 'document.remove.line']
+    _inherit = 'sale.order'
+#    _inherit = ['sale.order', 'document.remove.line']
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
 
 
 class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
-    _inherit = ['supplier.catalogue', 'document.remove.line']
+    _inherit = 'supplier.catalogue'
+#    _inherit = ['supplier.catalogue', 'document.remove.line']
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
 
 
 class stock_picking(osv.osv):
     _name = 'stock.picking'
-    _inherit = ['stock.picking', 'document.remove.line']
+    _inherit = 'stock.picking'
+#    _inherit = ['stock.picking', 'document.remove.line']
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
 
 
 class stock_warehouse_automatic_supply(osv.osv):
     _name = 'stock.warehouse.automatic.supply'
-    _inherit = ['stock.warehouse.automatic.supply', 'document.remove.line']
+    _inherit = 'stock.warehouse.automatic.supply'
+#    _inherit = ['stock.warehouse.automatic.supply', 'document.remove.line']
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
 
 
 class stock_warehouse_order_cycle(osv.osv):
     _name = 'stock.warehouse.order.cycle'
-    _inherit = ['stock.warehouse.order.cycle', 'document.remove.line']
+    _inherit = 'stock.warehouse.order.cycle'
+#    _inherit = ['stock.warehouse.order.cycle', 'document.remove.line']
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
 
 
 class threshold_value(osv.osv):
     _name = 'threshold.value'
-    _inherit = ['threshold.value', 'document.remove.line']
+    _inherit = 'threshold.value'
+#    _inherit = ['threshold.value', 'document.remove.line']
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
 
 
 class stock_inventory(osv.osv):
     _name = 'stock.inventory'
-    _inherit = ['stock.inventory', 'document.remove.line']
+    _inherit = 'stock.inventory'
+#    _inherit = ['stock.inventory', 'document.remove.line']
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
 
 
 class initial_stock_inventory(osv.osv):
     _name = 'initial.stock.inventory'
-    _inherit = ['initial.stock.inventory', 'document.remove.line']
+    _inherit = 'initial.stock.inventory'
+#    _inherit = ['initial.stock.inventory', 'document.remove.line']
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
 
 
 class real_average_consumption(osv.osv):
     _name = 'real.average.consumption'
-    _inherit = ['real.average.consumption', 'document.remove.line']
+    _inherit = 'real.average.consumption'
+#    _inherit = ['real.average.consumption', 'document.remove.line']
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
 
 
 class monthly_review_consumption(osv.osv):
     _name = 'monthly.review.consumption'
-    _inherit = ['monthly.review.consumption', 'document.remove.line']
+    _inherit = 'monthly.review.consumption'
+#    _inherit = ['monthly.review.consumption', 'document.remove.line']
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
 
 
 ## Object initializations ##
