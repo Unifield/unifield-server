@@ -102,30 +102,7 @@ class product_list(osv.osv):
             context = {}
             
         for l in self.browse(cr, uid, ids, context=context):
-            product_ids = []
-            products = []
-
-            nom = False
-            # Get all products for the defined nomenclature
-            if l.nomen_manda_3:
-                nom = l.nomen_manda_3.id
-                field = 'nomen_manda_3'
-            elif l.nomen_manda_2:
-                nom = l.nomen_manda_2.id
-                field = 'nomen_manda_2'
-            elif l.nomen_manda_1:
-                nom = l.nomen_manda_1.id
-                field = 'nomen_manda_1'
-            elif l.nomen_manda_0:
-                nom = l.nomen_manda_0.id
-                field = 'nomen_manda_0'
-            if nom:
-                product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
-
-            # Get all products for the defined list
-            if l.sublist_id:
-                for line in l.sublist_id.product_ids:
-                    product_ids.append(line.name.id)
+            product_ids = self.pool.get('data.tools').get_product_from_list_nomen(cr, uid, l, context=context)
 
             # Check if products in already existing lines are in domain
             products = []

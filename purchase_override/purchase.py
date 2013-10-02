@@ -345,30 +345,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         for order in self.browse(cr, uid, ids, context=context):
-            product_ids = []
-            products = []
-
-            nom = False
-            # Get all products for the defined nomenclature
-            if order.nomen_manda_3:
-                nom = order.nomen_manda_3.id
-                field = 'nomen_manda_3'
-            elif order.nomen_manda_2:
-                nom = order.nomen_manda_2.id
-                field = 'nomen_manda_2'
-            elif order.nomen_manda_1:
-                nom = order.nomen_manda_1.id
-                field = 'nomen_manda_1'
-            elif order.nomen_manda_0:
-                nom = order.nomen_manda_0.id
-                field = 'nomen_manda_0'
-            if nom:
-                product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
-
-            # Get all products for the defined list
-            if order.sublist_id:
-                for line in order.sublist_id.product_ids:
-                    product_ids.append(line.name.id)
+            product_ids = self.pool.get('data.tools').get_product_from_list_nomen(cr, uid, order, context=context)
 
             # Check if products in already existing lines are in domain
             products = []

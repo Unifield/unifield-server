@@ -256,6 +256,38 @@ class data_tools(osv.osv):
         
         return True
 
+
+    def get_product_from_list_nomen(self, cr, uid, obj, context=None):
+        '''
+        Return the list of products according to list or nomenclature
+        '''
+        context = context or {}
+        product_ids = []
+
+        nom = False
+        # Get all products for the defined nomenclature
+        if obj.nomen_manda_3:
+            nom = report.nomen_manda_3.id
+            field = 'nomen_manda_3'
+        elif obj.nomen_manda_2:
+            nom = report.nomen_manda_2.id
+            field = 'nomen_manda_2'
+        elif obj.nomen_manda_1:
+            nom = report.nomen_manda_1.id
+            field = 'nomen_manda_1'
+        elif obj.nomen_manda_0:
+            nom = report.nomen_manda_0.id
+            field = 'nomen_manda_0'
+        if nom:
+            product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
+
+        # Get all products for the defined list
+        if obj.sublist_id:
+            for line in obj.sublist_id.product_ids:
+                product_ids.append(line.name.id)
+
+        return product_ids
+
 data_tools()
 
 

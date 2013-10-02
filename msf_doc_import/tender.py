@@ -326,7 +326,7 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
                 product_id = vals.get('product_id')
                 product_uom = vals.get('product_uom')
                 res = self.onchange_uom(cr, uid, False, product_id, product_uom, context=context)
-                if res and res['warning']:
+                if res and res.get('warning'):
                     message += res['warning']['message']
             if message:
                 raise osv.except_osv(_('Warning !'), _(message))
