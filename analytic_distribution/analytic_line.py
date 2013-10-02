@@ -273,6 +273,10 @@ class analytic_line(osv.osv):
         # Prepare some value
         account = self.pool.get('account.analytic.account').browse(cr, uid, [account_id], context)[0]
         context.update({'from': 'mass_reallocation'}) # this permits reallocation to be accepted when rewrite analaytic lines
+        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction')])
+        correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
+        if not correction_journal_id:
+            raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
         # Process lines
         for aline in self.browse(cr, uid, ids, context=context):
             if account.category in ['OC', 'DEST']:
@@ -290,10 +294,12 @@ class analytic_line(osv.osv):
                 # else reverse line before recreating them with right values
                 else:
                     # First reverse line
-                    self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], posting_date=date)
+                    rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], posting_date=date)
+                    # UTP-943: Shoud have a correction journal on these lines
+                    self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'journal_id': correction_journal_id})
                     # then create new lines
                     self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
-                        'source_date': aline.source_date or aline.date}, context=context)
+                        'source_date': aline.source_date or aline.date, 'journal_id': correction_journal_id}, context=context)
                     # finally flag analytic line as reallocated
                     self.pool.get('account.analytic.line').write(cr, uid, [aline.id], {'is_reallocated': True})
             else:

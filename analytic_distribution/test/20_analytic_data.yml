@@ -1,4 +1,11 @@
 -
+  I create an analytic Correction Journal
+-
+  !record {model: account.analytic.journal, id: analytic_journal_correction}:
+    name: Analytic Correction Journal
+    code: ACOR
+    type: correction
+-
   I create an Expense Account Type.
 -
   !record {model: account.account.type, id: account_account_type_expense0}:
