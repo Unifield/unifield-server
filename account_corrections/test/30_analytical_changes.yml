@@ -155,19 +155,19 @@
     assert len(original_ids) == 1, "Should have only 1 original line. Current: %s" % len(original_ids)
     original = ana_obj.browse(cr, uid, original_ids)[0]
     assert original.period_id.number == 2, "Wrong period number: %s. Expected: 2" % original.period_id.number
-    # check the correction one
-    logging.getLogger('tests').log(logging.TEST, 'I check the correction one.')
-    correction_ids = ana_obj.search(cr, uid, [('general_account_id', '=', ref('account_6101')), ('amount_currency', '=', 375.0), ('cost_center_id', '=', ref('analytic_cc2'))])
-    assert len(correction_ids) == 1, "Should have only 1 correction line. Current: %s" % len(correction_ids)
-    correction = ana_obj.browse(cr, uid, correction_ids)[0]
-    assert correction.date == second_date, "Wrong date on COR line: %s. Expected: %s" % (correction.date, second_date)
-    assert correction.period_id.number == 3, "Wrong period number: %s. Expected: 3" % correction.period_id.number
-    assert correction.journal_id.type == 'correction', "Wrong journal type: %s. Expected: correction." % correction.journal_id.type
     # check the reverse one
     logging.getLogger('tests').log(logging.TEST, 'I check the reverse one.')
-    reverse_ids = ana_obj.search(cr, uid, [('general_account_id', '=', ref('account_6101')), ('amount_currency', '=', -375.0), ('cost_center_id', '=', ref('analytic_cc1'))])
+    reverse_ids = ana_obj.search(cr, uid, [('general_account_id', '=', ref('account_6101')), ('amount_currency', '=', 375.0), ('cost_center_id', '=', ref('analytic_cc2')), ('is_reversal', '=', True)])
     assert len(reverse_ids) == 1, "Should have only 1 reverse line. Current: %s" % len(reverse_ids)
     reverse = ana_obj.browse(cr, uid, reverse_ids)[0]
-    assert reverse.date == second_date, "Wrong date on REV line: %s. Expected: %s" % (reverse.date, second_date)
+    assert reverse.date == second_date, "Wrong date on REV line (%s): %s. Expected: %s" % (reverse.name, reverse.date, second_date)
     assert reverse.period_id.number == 3, "Wrong period number: %s. Expected: 3" % reverse.period_id.number
     assert reverse.journal_id.type == 'correction', "Wrong journal type: %s. Expected: correction." % reverse.journal_id.type
+    # check the correction one
+    logging.getLogger('tests').log(logging.TEST, 'I check the correction one.')
+    correction_ids = ana_obj.search(cr, uid, [('general_account_id', '=', ref('account_6101')), ('amount_currency', '=', -375.0), ('cost_center_id', '=', ref('analytic_cc1'))])
+    assert len(correction_ids) == 1, "Should have only 1 correction line. Current: %s" % len(correction_ids)
+    correction = ana_obj.browse(cr, uid, correction_ids)[0]
+    assert correction.date == second_date, "Wrong date on COR line (%s): %s. Expected: %s" % (correction.name, correction.date, second_date)
+    assert correction.period_id.number == 3, "Wrong period number: %s. Expected: 3" % correction.period_id.number
+    assert correction.journal_id.type == 'correction', "Wrong journal type: %s. Expected: correction." % correction.journal_id.type

@@ -264,13 +264,14 @@ class analytic_line(osv.osv):
                     fieldname = 'destination_id'
                 # if period is not closed, so override line.
                 if period and period.state not in ['done', 'mission-closed']:
-                    # Update account
-                    self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': date, 
+                    # Update account # Date: UTP-943 speak about original date for non closed periods
+                    self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': aline.date, 
                         'source_date': aline.source_date or aline.date}, context=context)
                 # else reverse line before recreating them with right values
                 else:
                     # First reverse line
-                    self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id])
+                    rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id])
+                    self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'date': date})
                     # then create new lines
                     self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
                         'source_date': aline.source_date or aline.date}, context=context)
