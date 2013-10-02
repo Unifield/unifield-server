@@ -1095,7 +1095,7 @@ class purchase_order_line(osv.osv):
         """
         if context is None:
             context = {}
-                 
+
         # call super
         result = super(purchase_order_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'form':

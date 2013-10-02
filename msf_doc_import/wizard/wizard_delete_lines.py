@@ -27,6 +27,16 @@ from tools.translate import _
 # DOCUMENT DATA dict : {'document.model': ('document.line.model',
 #                                          'field linked to document.model on document.line.model',
 #                                          'field linked to document.line.model on document.model)}
+"""
+This dictionnary is used by the document.remove.line and wizard.delete.lines
+objects to get the different relation between a parent document and its lines.
+
+The dictionnary keys are the parent document model and the values of the dict
+are a tuple with information in this order :
+    * model of the line for the parent document
+    * field of the line that link the line to its parent
+    * field of the parent that contains the lines
+"""
 DOCUMENT_DATA = {'product.list': ('product.list.line', 'list_id', 'product_ids'),
                  'composition.kit': ('composition.item', 'item_kit_id', 'composition_item_ids'),
                  'purchase.order': ('purchase.order.line', 'order_id', 'order_line'),
