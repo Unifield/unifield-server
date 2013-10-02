@@ -273,6 +273,11 @@ class purchase_order(osv.osv):
         'po_from_fo': fields.function(_is_po_from_fo, method=True, type='boolean', string='Is PO from FO ?',),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
+		'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
+		'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
+		'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
+		'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
     }
     
     _defaults = {
@@ -326,6 +331,94 @@ class purchase_order(osv.osv):
                     return False
                 
         return True
+    
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
+
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
+		
+    def fill_lines(self, cr, uid, ids, context=None):
+        '''
+        Fill all lines according to defined nomenclature level and sublist
+        '''
+        if context is None:
+            context = {}
+        for order in self.browse(cr, uid, ids, context=context):
+            product_ids = []
+            products = []
+
+            nom = False
+            # Get all products for the defined nomenclature
+            if order.nomen_manda_3:
+                nom = order.nomen_manda_3.id
+                field = 'nomen_manda_3'
+            elif order.nomen_manda_2:
+                nom = order.nomen_manda_2.id
+                field = 'nomen_manda_2'
+            elif order.nomen_manda_1:
+                nom = order.nomen_manda_1.id
+                field = 'nomen_manda_1'
+            elif order.nomen_manda_0:
+                nom = order.nomen_manda_0.id
+                field = 'nomen_manda_0'
+            if nom:
+                product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
+
+            # Get all products for the defined list
+            if order.sublist_id:
+                for line in order.sublist_id.product_ids:
+                    product_ids.append(line.name.id)
+
+            # Check if products in already existing lines are in domain
+            products = []
+            for line in order.order_line:
+                if line.product_id.id in product_ids:
+                    products.append(line.product_id.id)
+                else:
+                    self.pool.get('purchase.order.line').unlink(cr, uid, line.id, context=context)
+
+            for product_data in self.pool.get('product.product').read(cr, uid, product_ids, ['uom_id', 'name'], context=context):
+                # Check if the product is not already on the PO
+                if product_data['id'] not in products:
+                    values = {'order_id': ids[0],
+                              'product_id': product_data['id'],
+                              'product_uom': product_data['uom_id'][0],
+                              'product_qty': 1.00,
+                              'price_unit': 0.00}
+                    line_vals = self.pool.get('purchase.order.line').product_id_on_change(cr, uid, False, 
+                                                                                          order.pricelist_id.id, 
+                                                                                          product_data['id'], 
+                                                                                          1.00, 
+                                                                                          product_data['uom_id'][0],
+                                                                                          order.partner_id.id,
+                                                                                          order.date_order,
+                                                                                          order.fiscal_position,
+                                                                                          time.strftime('%Y-%m-%d'),
+                                                                                          product_data['name'],
+                                                                                          0.00,
+                                                                                          '',
+                                                                                          order.state,
+                                                                                          0.00,
+                                                                                          False,
+                                                                                          '',
+                                                                                          context)
+                    values.update(line_vals['value'])
+                    self.pool.get('purchase.order.line').create(cr, uid, values, context=context)
+
+        self.write(cr, uid, ids, {'sublist_id': False,
+                                  'nomen_manda_0': False,
+                                  'nomen_manda_1': False,
+                                  'nomen_manda_2': False,
+                                  'nomen_manda_3': False}, context=context)
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'target': 'dummy',
+                'context': context}
 
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''

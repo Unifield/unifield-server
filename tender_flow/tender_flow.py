@@ -111,7 +111,12 @@ class tender(osv.osv):
                 'internal_state': fields.selection([('draft', 'Draft'),('updated', 'Rfq Updated'), ], string="Internal State", readonly=True),
                 'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',),
                 'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product'),
-               'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
+                'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
+                'sublist_id': fields.many2one('product.list', string='List/Sublist'),
+                'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
+                'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
+                'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
+                'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
                 }
     
     _defaults = {'categ': 'other',
@@ -126,6 +131,14 @@ class tender(osv.osv):
                  }
     
     _order = 'name desc'
+
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
+
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
+                
+
 
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
