@@ -69,7 +69,7 @@ class account_analytic_line(osv.osv):
         'exported': lambda *a: False,
     }
 
-    def reverse(self, cr, uid, ids, context=None):
+    def reverse(self, cr, uid, ids, posting_date=strftime('%Y-%m-%d'), context=None):
         """
         Reverse an analytic line:
          - keep date as source_date
@@ -84,7 +84,7 @@ class account_analytic_line(osv.osv):
             vals = {
                 'name': self.join_without_redundancy(al.name, 'REV'),
                 'amount': al.amount * -1,
-                'date': strftime('%Y-%m-%d'),
+                'date': posting_date,
                 'source_date': al.source_date or al.date,
                 'reversal_origin': al.id,
                 'amount_currency': al.amount_currency * -1,

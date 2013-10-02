@@ -202,9 +202,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         for line in to_reverse:
             # reverse the line
             to_reverse_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
-            rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids)
             # UTP-943: Set wizard date as date for REVERSAL AND CORRECTION lines
-            self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'date': wizard.date})
+            self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids, posting_date=wizard.date)
             # Mark old lines as non reallocatable (ana_ids): why reverse() don't set this flag ?
             self.pool.get('account.analytic.line').write(cr, uid, to_reverse_ids, {'is_reallocated': True,})
             # update the distrib line

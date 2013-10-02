@@ -154,6 +154,8 @@
     original_ids = ana_obj.search(cr, uid, [('general_account_id', '=', ref('account_6101')), ('amount_currency', '=', -375.0), ('cost_center_id', '=', ref('analytic_cc2'))])
     assert len(original_ids) == 1, "Should have only 1 original line. Current: %s" % len(original_ids)
     original = ana_obj.browse(cr, uid, original_ids)[0]
+    assert original.date == time.strftime('%Y-02-04'), "Wrong date on original line (%s): %s. Expected: %s" % (original.name, original.date, time.strftime('%Y-02-04'))
+    assert original.journal_id.type != 'correction', "Journal should NOT be correction type. Current: %s" % original.journal_id.type
     assert original.period_id.number == 2, "Wrong period number: %s. Expected: 2" % original.period_id.number
     # check the reverse one
     logging.getLogger('tests').log(logging.TEST, 'I check the reverse one.')

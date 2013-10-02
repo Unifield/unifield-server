@@ -270,8 +270,7 @@ class analytic_line(osv.osv):
                 # else reverse line before recreating them with right values
                 else:
                     # First reverse line
-                    rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id])
-                    self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'date': date})
+                    self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], posting_date=date)
                     # then create new lines
                     self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
                         'source_date': aline.source_date or aline.date}, context=context)

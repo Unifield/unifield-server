@@ -163,10 +163,10 @@
     import time
     self.write(cr, uid, [ref('analytic_distribution.analytic_account_destination_support'), ref('analytic_distribution.analytic_account_destination_operation'), ref('analytic_distribution.analytic_account_destination_national_staff'), ref('analytic_distribution.analytic_account_msf_private_funds')], {'date_start': time.strftime('%Y-01-01')})
 -
-  I rewrite on periods to have the right number
+  I overwrite periods to have the right number
 -
   !python {model: account.period}: |
     import datetime
     period_ids = self.search(cr, uid, [], order='date_start, name')
     for p in self.browse(cr, uid, period_ids):
-      self.write(cr, uid, [p.id], {'number': datetime.datetime.strptime(p.date_start, '%Y-%m-%d').strftime('%m')})
+      self.write(cr, uid, [p.id], {'number': int(datetime.datetime.strptime(p.date_start, '%Y-%m-%d').strftime('%m'))})
