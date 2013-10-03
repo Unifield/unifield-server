@@ -135,7 +135,7 @@ class purchase_order_line(osv.osv):
             # update the name (comment) of order line
             # the 'name' is no more the get_name from product, but instead
             # the name of product
-            productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'])
+            productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
             vals.update({'name':productObj.name})
             vals.update({'default_code':productObj.default_code})
             vals.update({'default_name':productObj.name})
@@ -376,7 +376,7 @@ class sale_order_line(osv.osv):
             # update the name (comment) of order line
             # the 'name' is no more the get_name from product, but instead
             # the name of product
-            productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'])
+            productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
             vals.update({'name':productObj.name})
             vals.update({'default_code':productObj.default_code})
             vals.update({'default_name':productObj.name})

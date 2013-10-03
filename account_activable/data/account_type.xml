@@ -28,6 +28,7 @@
             <field name="code">receivables</field>
             <field name="report_type">asset</field>
             <field name="close_method">none</field>
+            <field name="not_correctible" eval="True"/>
         </record>
         
         <record id="account.account_type_cash_moves" model="account.account.type">
@@ -63,6 +64,7 @@
             <field name="code">payables</field>
             <field name="report_type">asset</field>
             <field name="close_method">none</field>
+            <field name="not_correctible" eval="True"/>
         </record>
         
         <record id="account.account_type_expense" model="account.account.type">

@@ -73,15 +73,15 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # Override CC on open period, otherwise reverse line
                 if oline.cost_center_id.id != nline.cost_center_id.id:
                     # if period is open, do an override, except if FP needs to reverse the line
-                    if period.state != 'done' and oline.id not in to_reverse:
+                    if period.state not in ['done', 'mission-closed'] and oline.id not in to_reverse:
                         to_override[oline.id].append(('cost_center_id', nline.cost_center_id.id))
-                    elif period.state == 'done':
+                    elif period.state in ['done', 'mission-closed']:
                         to_reverse.append(oline.id)
                 # Only reverse line if destination have changed
                 if oline.destination_id.id != nline.destination_id.id:
-                    if period.state != 'done' and oline.id not in to_reverse:
+                    if period.state not in ['done', 'mission-closed'] and oline.id not in to_reverse:
                         to_override[oline.id].append(('destination_id', nline.destination_id.id))
-                    elif period.state == 'done':
+                    elif period.state in ['done', 'mission-closed']:
                         to_reverse.append(oline.id)
                 # Override line if percentage have changed
                 if oline.percentage != nline.percentage and oline.id not in to_reverse:
@@ -134,7 +134,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         to_delete = []
         to_reverse = []
         old_line_ok = []
-        period_closed = ml.period_id and ml.period_id.state and ml.period_id.state == 'done' or False
+        period_closed = ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or False
 
         for wiz_line in self.pool.get('analytic.distribution.wizard.fp.lines').browse(cr, uid, wiz_line_ids):
             if not wiz_line.distribution_line_id or wiz_line.distribution_line_id.id not in old_line_ids:

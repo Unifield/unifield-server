@@ -502,6 +502,9 @@ class stock_picking(osv.osv):
                               }
                     if 'product_price' in partial:
                         values.update({'price_unit': partial['product_price']})
+                    elif 'product_uom' in partial and partial['product_uom'] != move.product_uom.id:
+                        new_price = self.pool.get('product.uom')._compute_price(cr, uid, move.product_uom.id, move.price_unit, partial['product_uom'])
+                        values.update({'price_unit': new_price})
                     values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
                     compute_average = pick.type == 'in' and product.cost_method == 'average' and not move.location_dest_id.cross_docking_location_ok
                     if values.get('location_dest_id'):
@@ -695,6 +698,10 @@ class stock_picking(osv.osv):
             # clean the picking object - removing lines with 0 qty - force unlink
             # this should not be a problem as IN moves are not referenced by other objects, only OUT moves are referenced
             # no need of skipResequencing as the picking cannot be draft
+
+            # UF-1617: get the sync_message case            
+            sync_in = context.get('sync_message_execution', False)
+            
             for move in pick.move_lines:
                 if not move.product_qty and move.state not in ('done', 'cancel'):
                     done_moves.remove(move.id)
@@ -704,20 +711,31 @@ class stock_picking(osv.osv):
             if backorder_id:
                 # done moves go to new picking object
                 move_obj.write(cr, uid, done_moves, {'picking_id': backorder_id}, context=context)
-                wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
-                # Then we finish the good picking
-                self.write(cr, uid, [pick.id], {'backorder_id': backorder_id,'cd_from_bo':values.get('cd_from_bo',False)}, context=context)
-                self.action_move(cr, uid, [backorder_id])
-                wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
-                wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
+                
+                if not sync_in:
+                    wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
+                    # Then we finish the good picking
+                    self.write(cr, uid, [pick.id], {'backorder_id': backorder_id,'cd_from_bo':values.get('cd_from_bo',False)}, context=context)
+                    self.action_move(cr, uid, [backorder_id])
+                    wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
+                    wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
+                else:
+                    # UF-1617: when it is from the sync, then just send the IN to shipped, then return the backorder_id
+                    wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_shipped', cr)
+                    return backorder_id
             else:
-                self.action_move(cr, uid, [pick.id], context)
-                wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
+                if sync_in: # if it's from sync, then we just send the pick to become Available Shipped, not completely close!
+                    self.write(cr, uid, [pick.id], {'state': 'shipped'}, context=context)
+                    return pick.id
+                else:
+                    self.action_move(cr, uid, [pick.id], context)
+                    wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
                 
             for move, out_move in backlinks:
                 if move in done_moves:
                     move_obj.write(cr, uid, [move], {'state': 'done'}, context=context)
-                    move_obj.action_assign(cr, uid, [out_move])
+                    if not sync_in:
+                        move_obj.action_assign(cr, uid, [out_move])
                     pick_moves.append(out_move)
             
             # update the out version

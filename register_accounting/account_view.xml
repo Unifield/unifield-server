@@ -85,9 +85,9 @@
                                         <field name="invoice_id" invisible="1"/>
                                         <field name="number_imported_invoice"  invisible="1"/>
                                         <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}" 
-                                            string="Open invoice" type="object" icon="gtk-index" context="context"/>
+                                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
                                         <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}" 
-                                            string="Open invoice" type="object" icon="gtk-index" context="context"/>
+                                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
                                         <field name="is_down_payment" invisible="1"/>
                                         <button name="button_down_payment" string="Down payment" type="object" 
                                             icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
@@ -127,7 +127,7 @@
                                         <field name="invoice_id" invisible="1"/>
                                         <field name="number_imported_invoice"  invisible="1"/>
                                         <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}" 
-                                            string="Open invoice" type="object" icon="gtk-index" context="context"/>
+                                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
                                         <field name="reconciled"/>
                                         <field name="state" readonly="True"/>
                                         <field name="from_import_cheque_id" invisible="1"/>
@@ -224,9 +224,9 @@
                                         <field name="invoice_id" invisible="1"/>
                                         <field name="number_imported_invoice"  invisible="1"/>
                                         <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}" 
-                                            string="Open invoice" type="object" icon="gtk-index" context="context"/>
+                                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
                                         <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}"
-                                            string="Open invoices" type="object" icon="gtk-index" context="context"/>
+                                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
                                         <field name="is_down_payment" invisible="1"/>
                                         <button name="button_down_payment" string="Down payment" type="object" 
                                             icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
@@ -266,7 +266,7 @@
                                         <field name="invoice_id" invisible="1"/>
                                         <field name="number_imported_invoice"  invisible="1"/>
                                         <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}" 
-                                            string="Open invoice" type="object" icon="gtk-index" context="context"/>
+                                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
                                         <separator colspan="4" string="Notes"/>
                                         <field colspan="4" name="note" nolabel="1"/>
                                         <field name="state" readonly="True"/>
@@ -689,9 +689,9 @@
                                     <field name="invoice_id" invisible="1"/>
                                     <field name="number_imported_invoice"  invisible="1"/>
                                     <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}" 
-                                        string="Open invoice" type="object" icon="gtk-index" context="context"/>
+                                        string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
                                     <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}" 
-                                        string="Open invoices" type="object" icon="gtk-index" context="context"/>
+                                        string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
                                     <field name="is_down_payment" invisible="1"/>
                                     <button name="button_down_payment" string="Down payment" type="object" 
                                         icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
@@ -729,7 +729,7 @@
                                     <field name="direct_invoice" invisible="1"/>
                                     <field name="invoice_id" invisible="1"/>
                                     <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}" 
-                                            string="Open invoice" type="object" icon="gtk-index" context="context"/>
+                                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
                                     <field name="number_imported_invoice"  invisible="1"/>
                                     <field name="reconciled"/>
                                     <field name="state" readonly="True"/>

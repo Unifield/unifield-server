@@ -359,6 +359,7 @@ class create_picking(osv.osv_memory):
                                                              'product_uom': move.product_uom.id,
                                                              'prodlot_id': move.prodlot_id.id,
                                                              'asset_id': move.asset_id.id,
+                                                             'line_number': move.line_number,
                                                              'composition_list_id': move.composition_list_id.id,
                                                              'move_id': move.move_id.id,
                                                              'qty_per_pack': move.qty_per_pack,
@@ -595,6 +596,7 @@ class create_picking(osv.osv_memory):
                                                                                    'product_qty': move.quantity,
                                                                                    'product_uom': move.product_uom.id,
                                                                                    'prodlot_id': move.prodlot_id.id,
+                                                                                   'line_number': move.line_number,
                                                                                    'location_id': move.location_id.id,
                                                                                    'asset_id': move.asset_id.id,
                                                                                    'composition_list_id': move.composition_list_id.id,
@@ -691,6 +693,7 @@ class create_picking(osv.osv_memory):
                                                                                'product_uom': move.product_uom.id,
                                                                                'prodlot_id': move.prodlot_id.id,
                                                                                'location_id': move.location_id.id,
+                                                                               'line_number': move.line_number,
                                                                                'asset_id': move.asset_id.id,
                                                                                'composition_list_id': move.composition_list_id.id,
                                                                                })
@@ -781,6 +784,7 @@ class create_picking(osv.osv_memory):
                                                                'product_uom': move.product_uom.id,
                                                                'prodlot_id': move.prodlot_id.id,
                                                                'asset_id': move.asset_id.id,
+                                                               'line_number': move.line_number,
                                                                'composition_list_id': move.composition_list_id.id,
                                                                'qty_to_return': move.qty_to_return,
                                                                }
@@ -939,7 +943,7 @@ class create_picking(osv.osv_memory):
         if missing_weight:
             return False
         return True
-        
+
     def do_ppl2(self, cr, uid, ids, context=None):
         '''
         - update partial_datas_ppl1

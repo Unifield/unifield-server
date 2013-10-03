@@ -22,6 +22,11 @@
 from osv import fields, osv
 import re
 from tools.translate import _
+from lxml import etree
+import logging
+import re
+import tools
+from os import path
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
@@ -34,10 +39,108 @@ class product_section_code(osv.osv):
     }
 product_section_code()
 
+class product_status(osv.osv):
+    _name = "product.status"
+    _columns = {
+        'code': fields.char('Code', size=256),
+        'name': fields.char('Name', size=256, required=True),
+        'no_external': fields.boolean(string='External partners orders'),
+        'no_esc': fields.boolean(string='ESC partners orders'),
+        'no_internal': fields.boolean(string='Internal partners orders'),
+        'no_consumption': fields.boolean(string='Consumption'),
+        'no_storage': fields.boolean(string='Storage'),
+    }
+
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ids_p = self.pool.get('product.product').search(cr, uid, [('state','in',ids)])
+        if ids_p:
+            raise osv.except_osv(_('Error'), _('You cannot delete this status because it\'s used at least in one product'))
+        return super(product_status, self).unlink(cr, uid, ids, context=context)
+
+product_status()
+
+class product_international_status(osv.osv):
+    _name = "product.international.status"
+    _columns = {
+        'code': fields.char('Code', size=256),
+        'name': fields.char('Name', size=256, required=True),
+        'no_external': fields.boolean(string='External partners orders'),
+        'no_esc': fields.boolean(string='ESC partners orders'),
+        'no_internal': fields.boolean(string='Internal partners orders'),
+        'no_consumption': fields.boolean(string='Consumption'),
+        'no_storage': fields.boolean(string='Storage'),
+    }
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Raise an error if the status is used in a product
+        ids_p = self.pool.get('product.product').search(cr, uid, [('international_status','in',ids)])
+        if ids_p:
+            raise osv.except_osv(_('Error'), _('You cannot delete this product creator because it\'s used at least in one product'))
+
+        # Raise an error if the status is ITC or Temporary because there are used in some product.product methods
+        tmp_int_1 = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1')
+        int_1 = tmp_int_1[1] or False
+        tmp_int_5 = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_5')
+        int_5 = tmp_int_5[1] or False
+
+        if int_1 and int_1 in ids:
+            raise osv.except_osv(_('Error'), _('You cannot remove the \'ITC\' international status because it\'s a system value'))
+        if int_5 and int_5 in ids:
+            raise osv.except_osv(_('Error'), _('You cannot remove the \'Temporary\' international status because it\'s a system value'))
+
+        return super(product_international_status, self).unlink(cr, uid, ids, context=context)
+
+product_international_status()
+
+class product_heat_sensitive(osv.osv):
+    _name = "product.heat_sensitive"
+    _columns = {
+        'code': fields.char('Code', size=256),
+        'name': fields.char('Name', size=256, required=True),
+    }
+
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ids_p = self.pool.get('product.product').search(cr, uid, [('heat_sensitive_item','in',ids)])
+        if ids_p:
+            raise osv.except_osv(_('Error'), _('You cannot delete this heat sensitive because it\'s used at least in one product'))
+        return super(product_heat_sensitive, self).unlink(cr, uid, ids, context=context)
+
+product_heat_sensitive()
+
+class product_cold_chain(osv.osv):
+    _name = "product.cold_chain"
+    _columns = {
+        'code': fields.char('Code', size=256),
+        'name': fields.char('Name', size=256, required=True),
+    }
+
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ids_p = self.pool.get('product.product').search(cr, uid, [('cold_chain','in',ids)])
+        if ids_p:
+            raise osv.except_osv(_('Error'), _('You cannot delete this cold chain because it\'s used at least in one product'))
+        return super(product_cold_chain, self).unlink(cr, uid, ids, context=context)
+
+product_cold_chain()
+
 class product_supply_source(osv.osv):
     _name = "product.supply.source"
     _rec_name = 'source'
-
+    
     _columns = {
         'source': fields.char('Supply source', size=32),
     }
@@ -46,8 +149,8 @@ product_supply_source()
 class product_justification_code(osv.osv):
     _name = "product.justification.code"
     _columns = {
-        'code': fields.char('Justification Code', size=32, translate=True),
-        'description': fields.char('Justification Description', size=256),
+        'code': fields.char('Justification Code', size=32, required=True, translate=True),
+        'description': fields.char('Justification Description', size=256, required=True),
     }
     
     def name_get(self, cr, user, ids, context=None):
@@ -87,9 +190,25 @@ class product_country_restriction(osv.osv):
     
 product_country_restriction()
 
+class product_template(osv.osv):
+    _inherit = 'product.template'
+
+    _columns = {
+        'state': fields.many2one('product.status', 'Status', help="Tells the user if he can use the product or not."),
+    }
+
+product_template()
 
 class product_attributes(osv.osv):
     _inherit = "product.product"
+
+    def init(self, cr):
+        if hasattr(super(product_attributes, self), 'init'):
+            super(product_attributes, self).init(cr)
+        logging.getLogger('init').info('HOOK: module product_attributes: loading product_attributes_data.xml')
+        pathname = path.join('product_attributes', 'product_attributes_data.xml')
+        file = tools.file_open(pathname)
+        tools.convert_xml_import(cr, 'product_attributes', file, {}, mode='init', noupdate=False)
     
     def _get_nomen(self, cr, uid, ids, field_name, args, context=None):
         res = {}
@@ -139,6 +258,63 @@ class product_attributes(osv.osv):
                 return []
             
         return [('id', 'in', ids)]
+
+    def _get_restriction(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+
+        for product in self.browse(cr, uid, ids, context=context):
+            res[product.id] = {'no_external': product.state.no_external or product.international_status.no_external or False,
+                               'no_esc': product.state.no_esc or product.international_status.no_esc or False,
+                               'no_internal': product.state.no_internal or product.international_status.no_internal or False,
+                               'no_consumption': product.state.no_consumption or product.international_status.no_consumption or False,
+                               'no_storage': product.state.no_storage or product.international_status.no_storage or False}
+
+        return res
+
+    def _get_product_status(self, cr, uid, ids, context=None):
+        return self.pool.get('product.product').search(cr, uid, [('state', 'in', ids)], context=context)
+
+    def _get_international_status(self, cr, uid, ids, context=None):
+        return self.pool.get('product.product').search(cr, uid, [('international_status', 'in', ids)], context=context)
+    
+    def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for id in ids:
+            res[id] = False
+        return res
+    
+    # This method is here because the following domain didn't work on field order/purchase order lines
+    # [('no_internal', '=', parent.partner_type != 'internal'), ('no_external', '=', parent.partner_type != 'external'),('no_esc', '=', parent.partner_type != 'esc'),
+    def _src_available_for_restriction(self, cr, uid, obj, name, args, context=None):
+        '''
+        Search available products for the partner given in args
+        '''
+        if not context:
+            context = {}
+            
+        for arg in args:
+            if arg[0] == 'available_for_restriction' and arg[1] == '=' and arg[2]:
+                if isinstance(arg[2], dict) and arg[2].get('location_id'):
+                    # Compute the constraint if a location is passed in vals
+                    location = self.pool.get('stock.location').browse(cr, uid, arg[2].get('location_id'), context=context)
+                    bef_scrap_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+                    if location.usage != 'inventory' and not location.destruction_location and (not bef_scrap_id or location.id != bef_scrap_id):
+                        return [('no_storage', '=', False)]
+
+                if arg[2] == 'external':
+                    return [('no_external', '=', False)]
+                elif arg[2] == 'esc':
+                    return [('no_esc', '=', False)]
+                elif arg[2] in ('internal', 'intermission', 'section'):
+                    return [('no_internal', '=', False)]
+                elif arg[2] == 'consumption':
+                    return [('no_consumption', '=', False)]
+                elif arg[2] == 'storage':
+                    return [('no_storage', '=', False)]
+                elif arg[2] in ('picking', 'tender'):
+                    return [('no_external', '=', False), ('no_internal', '=', False), ('no_esc', '=', False)]
+        
+        return []
     
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
@@ -146,15 +322,8 @@ class product_attributes(osv.osv):
         'description2': fields.text('Description 2'),
         'old_code' : fields.char('Old code', size=64),
         'new_code' : fields.char('New code', size=64),
-        'international_status': fields.selection([('itc','ITC'),('esc', 'ESC'),('hq', 'HQ'),('local','Local'),('temp','Temporary')], 
-                                                 string='Product Creator', required=True),
-        'state': fields.selection([('',''),
-            ('draft','Introduction'),
-            ('sellable','Normal'),
-            ('transfer','Transfer'),
-            ('end_alternative','End of Life (alternative available)'),
-            ('end','End of Life (not supplied anymore)'),
-            ('obsolete','Warning list')], 'Status', help="Tells the user if he can use the product or not."),
+
+        'international_status': fields.many2one('product.international.status', 'Product Creator', required=True),
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),
@@ -178,30 +347,17 @@ class product_attributes(osv.osv):
             ('l2','L2'),
             ('l3','L3'),
             ('l4','L4')], 'Library'),
+
         'supply_source_ids': fields.many2many('product.supply.source','product_supply_source_rel','product_id','supply_source_id','Supply Source'),
+
         'sublist' : fields.char('Sublist', size=64),
         'composed_kit': fields.boolean('Kit Composed of Kits/Modules'),
         'options_ids': fields.many2many('product.product','product_options_rel','product_id','product_option_id','Options'),
-        'heat_sensitive_item': fields.selection([('',''),
-            ('KR','Keep refrigerated but not cold chain (+2 to +8°C) for transport'),
-            ('*','Keep Cool'),
-            ('**','Keep Cool, airfreight'),
-            ('***','Cold chain, 0° to 8°C strict')], string='Temperature sensitive item'),
-        'cold_chain': fields.selection([('',''),
-            ('3*','3* Cold Chain * - Keep Cool: used for a kit containing cold chain module or item(s)'),
-            ('6*0','6*0 Cold Chain *0 - Problem if any window blue'),
-            ('7*0F','7*0F Cold Chain *0F - Problem if any window blue or Freeze-tag = ALARM'),
-            ('8*A','8*A Cold Chain *A - Problem if B, C and/or D totally blue'),
-            ('9*AF','9*AF Cold Chain *AF - Problem if B, C and/or D totally blue or Freeze-tag = ALARM'),
-            ('10*B','10*B Cold Chain *B - Problem if C and/or D totally blue'),
-            ('11*BF','11*BF Cold Chain *BF - Problem if C and/or D totally blue or Freeze-tag = ALARM'),
-            ('12*C','12*C Cold Chain *C - Problem if D totally blue'),
-            ('13*CF','13*CF Cold Chain *CF - Problem if D totally blue or Freeze-tag = ALARM'),
-            ('14*D','14*D Cold Chain *D - Store and transport at -25°C (store in deepfreezer, transport with dry-ice)'),
-            ('15*F','15*F Cold Chain *F - Cannot be frozen: check Freeze-tag '),
-            ('16*25','16*25 Cold Chain *25 - Must be kept below 25°C (but not necesseraly in cold chain)'),
-            ('17*25F','17*25F Cold Chain *25F - Must be kept below 25°C and cannot be frozen: check  Freeze-tag '),
-            ], 'Cold Chain'),
+
+        'heat_sensitive_item': fields.many2one('product.heat_sensitive', 'Temperature sensitive item',),
+        'cold_chain': fields.many2one('product.cold_chain', 'Cold Chain',),
+        'show_cold_chain': fields.boolean('Show cold chain'),
+
         'sterilized': fields.selection([('yes', 'Yes'), ('no', 'No')], string='Sterile'),
         'single_use': fields.selection([('yes', 'Yes'),('no', 'No')], string='Single Use'),
         'justification_code_id': fields.many2one('product.justification.code', 'Justification Code'),
@@ -230,10 +386,37 @@ class product_attributes(osv.osv):
                              type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
         'controlled_substance': fields.boolean(string='Controlled substance'),
         'uom_category_id': fields.related('uom_id', 'category_id', string='Uom Category', type='many2one', relation='product.uom.categ'),
+        'no_external': fields.function(_get_restriction, method=True, type='boolean', string='External partners orders', readonly=True, multi='restriction',
+                                       store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
+                                              'product.status': (_get_product_status, ['no_external'], 10),
+                                              'product.international.status': (_get_international_status, ['no_external'], 10),}),
+        'no_esc': fields.function(_get_restriction, method=True, type='boolean', string='ESC partners orders', readonly=True, multi='restriction',
+                                  store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
+                                         'product.status': (_get_product_status, ['no_esc'], 10),
+                                         'product.international.status': (_get_international_status, ['no_esc'], 10),}),
+        'no_internal': fields.function(_get_restriction, method=True, type='boolean', string='Internal partners orders', readonly=True, multi='restriction',
+                                       store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
+                                              'product.status': (_get_product_status, ['no_internal'], 10),
+                                              'product.international.status': (_get_international_status, ['no_internal'], 10),}),
+        'no_consumption': fields.function(_get_restriction, method=True, type='boolean', string='Comsumption', readonly=True, multi='restriction',
+                                          store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
+                                                 'product.status': (_get_product_status, ['no_consumption'], 10),
+                                                 'product.international.status': (_get_international_status, ['no_consumption'], 10),}),
+        'no_storage': fields.function(_get_restriction, method=True, type='boolean', string='Storage', readonly=True, multi='restriction',
+                                      store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
+                                             'product.status': (_get_product_status, ['no_storage'], 10),
+                                             'product.international.status': (_get_international_status, ['no_storage'], 10),}),
+        'available_for_restriction': fields.function(_get_dummy, fnct_search=_src_available_for_restriction, method=True, type='boolean',
+                                                 store=False, string='Available for the partner', readonly=True),
     }
     
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(product_attributes, self).default_get(cr, uid, fields, context=context)
+        id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1') and self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1')[1] or 1
+        res.update({'international_status': id })
+        return res
+
     _defaults = {
-        'international_status': 'itc',
         'duplicate_ok': True,
         'perishable': False,
         'batch_management': False,
@@ -264,9 +447,169 @@ class product_attributes(osv.osv):
 
         return True
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        '''
+        Add a filter if the 'available_for_restriction' attribute is passed on context
+        '''
+        if not context:
+            context = {}
+
+        res = super(product_attributes, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+        if view_type == 'search' and context.get('available_for_restriction'):
+            context.update({'search_default_not_restricted': 1})
+            root = etree.fromstring(res['arch'])
+            # xpath of fields to be modified
+            xpath = '//filter[@string="Service with Reception"]'
+            fields = root.xpath(xpath)
+
+            if not fields:
+                return res
+
+            state_index = root.index(fields[0])
+            new_separator = """<separator orientation="vertical" />"""
+            sep_form = etree.fromstring(new_separator)
+            arg = context.get('available_for_restriction')
+            if isinstance(arg, str):
+                arg = '\'%s\'' % arg
+            new_filter = """<filter string="Only not forbidden" name="not_restricted" icon="terp-accessories-archiver-minus" domain="[('available_for_restriction','=',%s)]" />""" % arg
+            #generate new xml form$
+            new_form = etree.fromstring(new_filter)
+            # instert new form just after state index position
+            root.insert(state_index+1, new_form)
+            root.insert(state_index+1, sep_form)
+            # generate xml back to string
+            res['arch'] = etree.tostring(root)
+
+        return res
+
+    def _test_restriction_error(self, cr, uid, ids, vals={}, context=None):
+        '''
+        Builds and returns an error message according to the constraints
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not context:
+            context = {}
+        
+        error = False
+        error_msg = ''
+        constraints = []
+        sale_obj = vals.get('obj_type') == 'sale.order'
+
+        # Compute the constraint if a partner is passed in vals 
+        if vals.get('partner_id'):
+            partner_obj = self.pool.get('res.partner')
+            partner_type = partner_obj.browse(cr, 
+                                              uid, 
+                                              vals.get('partner_id'), 
+                                              context=context).partner_type
+            if partner_type == 'external':
+                constraints.append('external')
+            elif partner_type == 'esc':
+                constraints.append('esc')
+            elif partner_type in ('internal', 'intermission', 'section'):
+                constraints.append('internal')
+
+        # Compute the constraint if a location is passed in vals
+        if vals.get('location_id'):
+            location = self.pool.get('stock.location').browse(cr, uid, vals.get('location_id'), context=context)
+            bef_scrap_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+            if location.usage != 'inventory' and not location.destruction_location and (not bef_scrap_id or location.id != bef_scrap_id):
+                constraints.append('storage')
+
+        # Compute constraints if constraints is passed in vals
+        if vals.get('constraints'):
+            if isinstance(vals.get('constraints'), list):
+                constraints.extend(vals.get('constraints'))
+            elif isinstance(vals.get('constraints'), str):
+                constraints.append(vals.get('constraints'))
+
+        for product in self.browse(cr, uid, ids, context=context):
+            msg = ''
+            st_cond = True
+
+            if product.no_external and product.no_esc and product.no_internal and 'picking' in constraints:
+                error = True
+                msg = _('be exchanged')
+                st_cond = product.state.no_external or product.state.no_esc or product.state.no_internal
+            elif product.no_external and 'external' in constraints:
+                error = True
+                msg = _('be %s externally' % (sale_obj and _('shipped') or _('purchased')))
+                st_cond = product.state.no_external
+            elif product.no_esc and 'esc' in constraints:
+                error = True
+                msg = _('be %s ESC' % (sale_obj and _('shipped to') or _('purchased at')))
+                st_cond = product.state.no_esc
+            elif product.no_internal and 'internal' in constraints:
+                error = True
+                msg = _('be supplied/exchanged internally')
+                st_cond = product.state.no_internal
+            elif product.no_consumption and 'consumption' in constraints:
+                error = True
+                msg = _('be consumed internally')
+                st_cond = product.state.no_consumption
+            elif product.no_storage and 'storage' in constraints:
+                error = True
+                msg = _('be stored anymore')
+                st_cond = product.state.no_storage
+
+            if error:
+                # Build the error message
+                st_type = st_cond and _('status') or _('product creator')
+                st_name = st_cond and product.state.name or product.international_status.name
+
+                error_msg = _('The product [%s] %s gets the %s \'%s\' and consequently can\'t %s') % (product.default_code,
+                                                                                                      product.name,
+                                                                                                      st_type,
+                                                                                                      st_name, 
+                                                                                                      msg)
+        if context.get('noraise'):
+            error = False
+
+        return error, error_msg
+
+    def _get_restriction_error(self, cr, uid, ids, vals={}, context=None):
+        '''
+        Raise an error if the product is not compatible with the order
+        '''
+        res, error_msg = self._test_restriction_error(cr, uid, ids, vals=vals, context=context)
+
+        if res:
+            raise osv.except_osv(_('Error'), error_msg)
+            return False
+
     _constraints = [
         (_check_uom_category, _('There are some stock moves with this product on the system. So you should keep the same UoM category than these stock moves.'), ['uom_id', 'uom_po_id']),
     ]
+    
+    def _on_change_restriction_error(self, cr, uid, ids, *args, **kwargs):
+        '''
+        Update the message on on_change of product
+        '''
+        field_name = kwargs.get('field_name')
+        values = kwargs.get('values')
+        vals = kwargs.get('vals')
+        context = kwargs.get('context')
+
+        res, error_msg = self._test_restriction_error(cr, uid, ids, vals=vals, context=context)
+
+        result = values.copy()
+
+        if res:
+            result.setdefault('value', {})[field_name] = False
+            result.setdefault('warning', {})['title'] = _('Warning')
+            result.setdefault('warning', {})['message'] = error_msg
+
+        return result, res
+
+
+    def onchange_heat(self, cr, uid, ids, heat, context=None):
+        heat_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_1')[1]
+        if not heat or heat == heat_id:
+            return {'value': {'show_cold_chain':False}}
+        return {'value': {'show_cold_chain':True}}
 
     def _check_gmdn_code(self, cr, uid, ids, context=None):
         int_pattern = re.compile(r'^\d*$')
@@ -623,7 +966,7 @@ class product_attributes(osv.osv):
         if batch_management:
             return {'value': {'perishable': True}}
         return {}
-    
+
     def copy(self, cr, uid, id, default=None, context=None):
         product_xxx = self.search(cr, uid, [('default_code', '=', 'XXX')])
         if product_xxx:
@@ -631,11 +974,13 @@ class product_attributes(osv.osv):
         product2copy = self.read(cr, uid, [id], ['default_code', 'name'])[0]
         if default is None:
             default = {}
+        temp_status = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]
+        
         copy_pattern = _("%s (copy)")
         copydef = dict(name=(copy_pattern % product2copy['name']),
                        default_code="XXX",
                        # we set international_status to "temp" so that it won't be synchronized with this status
-                       international_status='temp',
+                       international_status=temp_status,
                        # we do not duplicate the o2m objects
                        asset_ids=False,
                        prodlot_ids=False,
@@ -662,7 +1007,6 @@ class product_attributes(osv.osv):
     ]
 
 product_attributes()
-
 
 class product_deactivation_error(osv.osv_memory):
     _name = 'product.deactivation.error'

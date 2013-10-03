@@ -198,6 +198,8 @@ class stock_picking(osv.osv):
         if context.get('out',False):
             return {'type': 'ir.actions.act_window_close'}
 
+        self._check_restriction_line(cr, uid, ids, context=context)
+
         certif = False
         for pick in self.browse(cr, uid, ids, context=context):
             if pick.type in ['in','out']:

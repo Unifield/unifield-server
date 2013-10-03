@@ -83,6 +83,10 @@ class stock_picking(osv.osv):
             invoice_vals.update({'journal_id': journal_ids[0], 'account_id': account_id, 'is_inkind_donation': True,})
         if picking and picking.partner_id and picking.partner_id.partner_type == 'intermission':
             invoice_vals.update({'is_intermission': True})
+
+        if picking and picking.type == 'in' and picking.partner_id and (not picking.partner_id.property_account_payable or not picking.partner_id.property_account_receivable):
+            raise osv.except_osv(_('Error'), _('Partner of this incoming shipment has no account set. Please set appropriate accounts (receivable and payable) in order to process this IN'))
+
         return invoice_vals
 
     def action_invoice_create(self, cr, uid, ids, journal_id=False, group=False, type='out_invoice', context=None):

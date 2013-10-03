@@ -339,7 +339,34 @@ class sourcing_line(osv.osv):
                 if line.supplier and line.supplier.partner_type in ('external', 'esc'):
                     raise osv.except_osv(_('Warning'), _("You can't Source to an '%s' partner if you don't have product.") % (line.supplier.partner_type == 'external' and 'External' or 'ESC'))
 
+            if line.state not in ('draft', 'cancel') and line.product_id and line.supplier:
+                # Check product constraints (no external supply, no storage...)
+                check_fnct = self.pool.get('product.product')._get_restriction_error
+                self._check_product_constraints(cr, uid, line.type, line.po_cft, line.product_id.id, line.supplier.id, check_fnct, context=context)
+
         return True
+
+    
+    def _check_product_constraints(self, cr, uid, line_type='make_to_order', po_cft='po', product_id=False, partner_id=False, check_fnct=False, *args, **kwargs):
+        '''
+        Check product constraints (no extenal supply, no storage...)
+        '''
+        if not check_fnct:
+            check_fnct = self.pool.get('product.product')._get_restriction_error
+
+        vals = {}
+        if line_type == 'make_to_order' and product_id and (po_cft == 'cft' or partner_id):
+            if po_cft == 'cft':
+                vals = {'constraints': ['external']}
+            elif partner_id:
+                vals = {'partner_id': partner_id}
+        elif line_type == 'make_to_stock' and product_id:
+            vals = {'constraints': ['storage']}
+
+        if product_id:
+            return check_fnct(cr, uid, product_id, vals, *args, **kwargs)
+        
+        return '', False
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
@@ -437,7 +464,7 @@ class sourcing_line(osv.osv):
         self._check_line_conditions(cr, uid, ids, context)
         return res
     
-    def onChangePoCft(self, cr, uid, id, po_cft, order_id=False, context=None):
+    def onChangePoCft(self, cr, uid, id, po_cft, order_id=False, partner_id=False, context=None):
         '''
         '''
         warning = {}
@@ -452,12 +479,30 @@ class sourcing_line(osv.osv):
             if po_cft == 'cft':
                 # tender does not allow supplier selection
                 value = {'supplier': False}
-        return {'warning': warning, 'value': value}
+
+
+        if id and isinstance(id, list):
+            id = id[0]
+
+        res = {'value': value, 'warning': warning}
+        
+        line = self.browse(cr, uid, id, context=context)
+        partner_id = 'supplier' in value and value['supplier'] or partner_id
+        if id and partner_id and line.product_id:
+            check_fnct = self.pool.get('product.product')._on_change_restriction_error
+            res, error = self._check_product_constraints(cr, uid, line.type, value.get('po_cft', line.po_cft), line.product_id.id, partner_id, check_fnct, field_name='po_cft', values=res, vals={'partner_id': partner_id}, context=context)
+            if error:
+                return res
+
+        return res
     
     def onChangeType(self, cr, uid, id, type, context=None):
         '''
         if type == make to stock, change pocft to False
         '''
+        if not context:
+            context = {}
+
         value = {}
         message = {}
         if id:
@@ -470,6 +515,18 @@ class sourcing_line(osv.osv):
 
         if type == 'make_to_stock':
             value.update({'po_cft': False})
+
+            if id and isinstance(id, list):
+                id = id[0]
+
+            res = {'value': value, 'warning': message}
+            if id:
+                line = self.browse(cr, uid, id, context=context)
+                check_fnct = self.pool.get('product.product')._on_change_restriction_error
+                if line.product_id:
+                    res, error = self._check_product_constraints(cr, uid, type, line.po_cft, line.product_id.id, False, check_fnct, field_name='type', values=res, vals={'constraints': ['storage']}, context=context)
+                    if error:
+                        return res
     
         return {'value': value, 'warning': message}
     
@@ -498,6 +555,18 @@ class sourcing_line(osv.osv):
         estDeliveryDate = estDeliveryDate + relativedelta(days=int(daysToAdd))
         
         result['value'].update({'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d')})
+
+        if id and isinstance(id, list):
+            id = id[0]
+
+        line = self.browse(cr, uid, id, context=context)
+        value = result['value']
+        partner_id = 'supplier' in value and value['supplier'] or supplier
+        if id and partner_id and line.product_id:
+            check_fnct = self.pool.get('product.product')._on_change_restriction_error
+            result, error = self._check_product_constraints(cr, uid, line.type, value.get('po_cft', line.po_cft), line.product_id.id, partner_id, check_fnct, field_name='supplier', values=result, vals={'partner_id': partner_id}, context=context)
+            if error:
+                return result
 
         return result
     
@@ -742,6 +811,17 @@ class sale_order(osv.osv):
         self.pool.get('sourcing.line').unlink(cr, uid, idsToDelete, context)
         
         return super(sale_order, self).unlink(cr, uid, ids, context)
+
+    def action_cancel(self, cr, uid, ids, context=None):
+        '''
+        Don't check line integrity
+        '''
+        if not context:
+            context = {}
+
+        context.update({'no_check_line': True})
+
+        return super(sale_order, self).action_cancel(cr, uid, ids, context=context)
     
     def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -1136,6 +1216,8 @@ class procurement_order(osv.osv):
         
         - allow to modify the data for purchase order line creation
         '''
+        if not context:
+            context = {}
         line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         origin_line = False
         if 'procurement' in kwargs:
@@ -1144,18 +1226,23 @@ class procurement_order(osv.osv):
                 origin_line = self.pool.get('sale.order.line').browse(cr, uid, order_line_ids[0])
                 line.update({'origin': origin_line.order_id.name, 'product_uom': origin_line.product_uom.id, 'product_qty': origin_line.product_uom_qty})
         if line.get('price_unit', False) == False:
+            cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
             if 'pricelist' in kwargs:
                 if 'procurement' in kwargs and 'partner_id' in context:
                     procurement = kwargs['procurement']
                     pricelist = kwargs['pricelist']
                     st_price = self.pool.get('product.pricelist').price_get(cr, uid, [pricelist.id], procurement.product_id.id, procurement.product_qty, context['partner_id'], {'uom': line.get('product_uom', procurement.product_id.uom_id.id)})[pricelist.id]
-                cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                 st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, kwargs['pricelist'].currency_id.id, st_price, round=False, context=context)
             if not st_price:
                 product = self.pool.get('product.product').browse(cr, uid, line['product_id'])
                 st_price = product.standard_price
+                if 'pricelist' in kwargs:
+                    st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, kwargs['pricelist'].currency_id.id, st_price, round=False, context=context)
+                elif 'partner_id' in context:
+                    partner = self.pool.get('res.partner').browse(cr, uid, context['partner_id'], context=context)
+                    st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, partner.property_product_pricelist_purchase.currency_id.id, st_price, round=False, context=context)
                 if origin_line:
-                    st_price = self.pool.get('product.uom')._compute_price(cr, uid, product.uom_id.id, product.standard_price, to_uom_id=origin_line.product_uom.id)
+                    st_price = self.pool.get('product.uom')._compute_price(cr, uid, product.uom_id.id, st_price or product.standard_price, to_uom_id=origin_line.product_uom.id)
             line.update({'price_unit': st_price})
 
         return line
@@ -1180,6 +1267,7 @@ class procurement_order(osv.osv):
         po_obj = self.pool.get('purchase.order')
         procurement = kwargs['procurement']
         values = kwargs['values']
+        priority_sorted = {'emergency': 1, 'priority': 2, 'normal': 3}
         # Make the line as price changed manually to do not raise an error on purchase order line creation
 #        if 'order_line' in values and len(values['order_line']) > 0 and len(values['order_line'][0]) > 2 and 'price_unit' in values['order_line'][0][2]:
 #            values['order_line'][0][2].update({'change_price_manually': True})
@@ -1259,10 +1347,19 @@ class procurement_order(osv.osv):
             origins = set([po.origin, procurement.origin, procurement.tender_id and procurement.tender_id.name])
             # Add different origin on 'Source document' field if the origin is nat already listed
             origin = ';'.join(o for o in list(origins) if o and (not po.origin or o == po.origin or o not in po.origin))
-            self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': origin}, context=context)
+            write_values = {'origin': origin}
+
+            # update categ and prio if they are different from the existing po one's.
+            if values.get('categ') and values['categ'] != po.categ:
+                write_values['categ'] = 'other'
+            if values.get('priority') and values['priority'] in priority_sorted.keys() and values['priority']!= po.priority:
+                if priority_sorted[values['priority']] < priority_sorted[po.priority]:
+                    write_values['priority'] = values['priority']
+
+            self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], write_values, context=dict(context, import_in_progress=True))
             
             if location_id:
-                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'location_id': location_id, 'cross_docking_ok': False}, context=context)
+                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'location_id': location_id, 'cross_docking_ok': False}, context=dict(context, import_in_progress=True))
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
             return purchase_ids[0]
         else:
