@@ -244,7 +244,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                     r_account = False
                     r_destination = False
                     r_cc = False
-                    r_document_date = False
+                    # UTP-766: Do not use Document date column, but wizard's one as document date for each line
+                    #r_document_date = False
                     current_line_num = num + base_num
                     # Fetch all XML row values
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
@@ -289,15 +290,16 @@ class msf_doc_import_accounting(osv.osv_memory):
                         money[line[cols['Booking Currency']]]['credit'] += line[cols['Booking Credit']]
                         r_credit = line[cols['Booking Credit']]
                     # Check document/posting dates
-                    if not line[cols['Document Date']]:
-                        errors.append(_('Line %s. No document date specified!') % (current_line_num,))
-                        continue
+                    # UTP-766: Do not use Document date column, but wizard's one
+                    #if not line[cols['Document Date']]:
+                    #    errors.append(_('Line %s. No document date specified!') % (current_line_num,))
+                    #    continue
                     # UTP-766: Do not use Posting date column, but wizard's one
-                    if line[cols['Document Date']] > date:
-                        errors.append(_("Line %s. Document date '%s' should be inferior or equal to given Posting date '%s'.") % (current_line_num, line[cols['Document Date']], date,))
-                        continue
+                    #if line[cols['Document Date']] > date:
+                    #    errors.append(_("Line %s. Document date '%s' should be inferior or equal to given Posting date '%s'.") % (current_line_num, line[cols['Document Date']], date,))
+                    #    continue
                     # Fetch document date
-                    r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
+                    #r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
                     # Check G/L account
                     if not line[cols['G/L Account']]:
                         errors.append(_('Line %s. No G/L account specified!') % (current_line_num,))
@@ -356,7 +358,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         'credit': r_credit or 0.0,
                         'cost_center_id': r_cc or False,
                         'destination_id': r_destination or False,
-                        'document_date': r_document_date or False,
+                        'document_date': date or False, #r_document_date or False,
                         'date': date or False,
                         'currency_id': r_currency or False,
                         'wizard_id': wiz.id,

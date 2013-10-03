@@ -638,12 +638,34 @@
 -
   !python {model: account.move.line}: |
     # we check that all move line are valid
-    import time
+    import time, logging
+    wizard_date = time.strftime('%Y-02-19')
+    am_obj = self.pool.get('account.move')
     aml_ids = self.search(cr, uid, [('date', '=', time.strftime('%Y-02-19')), ('journal_id.type', '=', 'migration')])
     assert len(aml_ids) != 0, "No migration line found!"
     assert len(aml_ids) == 102, "Wrong lines number. Expected 102. Current: %s" % len(aml_ids)
-    for aml in self.read(cr, uid, aml_ids, ['name', 'account_id', 'state', 'analytic_distribution_state']):
+    move_ids = []
+    for aml in self.read(cr, uid, aml_ids, ['name', 'account_id', 'state', 'analytic_distribution_state', 'date', 'document_date', 'move_id']):
       # then we check that account move is valid
+      if not move_ids or aml.get('move_id', False)[0] not in move_ids:
+        move_ids.append(aml.get('move_id', False)[0])
       account = self.pool.get('account.account').browse(cr, uid, [aml.get('account_id')[0]])
       assert aml.get('state', False) == 'valid', "AML invalid state. Account code: %s. Analytic distribution state: %s" % (account.code or '', aml.get('analytic_distribution_state'))
       assert aml.get('analytic_distribution_state', False) == 'valid', "Analytic distribution invalid for this account: %s" % account.code or ''
+      assert aml.get('date', False) == wizard_date, "Wrong posting date for JI: %s. Expected: %s" % (aml.get('date', False), wizard_date)
+      assert aml.get('document_date', False) == wizard_date, "Wrong document date for JI: %s. Expected: %s" % (aml.get('document_date', False), wizard_date)
+    # I check the move
+    logging.getLogger('tests').log(logging.TEST, "I check that we have only one JE")
+    assert len(move_ids) == 1, "We should only have 1 JE. Current: %s" % len(move_ids)
+    move = am_obj.browse(cr, uid, move_ids)[0]
+    assert move.date == wizard_date, "Wrong date for JE: %s. Expected: %s" % (move.date, wizard_date)
+    assert move.document_date == wizard_date, "Wrong document date for JE: %s. Expected: %s" % (move.document_date, wizard_date)
+    # I validate the move and check that date and document date are ok for move and move lines
+    logging.getLogger('tests').log(logging.TEST, "I validate the JE and check document/posting dates. Should be both %s" % wizard_date)
+    am_obj.post(cr, uid, move_ids)
+    move = am_obj.browse(cr, uid, move_ids)[0] # update move browse
+    assert move.date == wizard_date, "Wrong date for JE: %s. Expected: %s" % (move.date, wizard_date)
+    assert move.document_date == wizard_date, "Wrong document date for JE: %s. Expected: %s" % (move.document_date, wizard_date)
+    for line in move.line_id:
+      assert line.date == wizard_date, "Wrong date for JI: %s. Expected: %s" % (line.date, wizard_date)
+      assert line.document_date == wizard_date, "Wrong document date for JI: %s. Expected: %s" % (line.document_date, wizard_date)
