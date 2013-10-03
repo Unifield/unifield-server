@@ -2076,7 +2076,7 @@ class purchase_order_line(osv.osv):
         
         if not context.get('update_merge'):
             for line in ids:
-                vals = self._update_merged_line(cr, uid, line, vals, context=dict(context, skipResequencing=True))
+                vals = self._update_merged_line(cr, uid, line, vals, context=dict(context, skipResequencing=True, noraise=True))
 
         if 'price_unit' in vals:
             vals.update({'old_price_unit': vals.get('price_unit')})
