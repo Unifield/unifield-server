@@ -115,7 +115,7 @@
 
             if (options.length == 0){
                 error_display(_('Please select fields to export...'));
-                return;
+                return 0;
             }
 
             var fields2 = [];
@@ -128,15 +128,17 @@
         }
 
         function do_export(form){
-            do_pre_submit();
+            pre = do_pre_submit();
             if (jQuery('#export_format').val() == 'excel') {
                 file_name = "data.xls";
             } else {
                 file_name = "data.csv";
             }
-            jQuery(idSelector(form)).attr('action', openobject.http.getURL(
-                '/openerp/impex/export_data/'+file_name)
-            ).submit();
+            if (pre != 0) {
+                jQuery(idSelector(form)).attr('action', openobject.http.getURL(
+                    '/openerp/impex/export_data/'+file_name)
+                ).submit();
+            }
 
         }
 
@@ -243,7 +245,7 @@
                                         <option value="default">${_('Default view fields')}</option>
                                     % endif
                                     % for export in existing_exports:
-                                        <option value="${export['id']}">${export['name']}</option>
+                                        <option value="${export['id']}" ${'selected=selected' if export_id == export['id'] else ''}>${export['name']}</option>
                                     % endfor
                                 </select>
                                 <a class="button-a" href="#" onclick="delete_listname(); return false;"

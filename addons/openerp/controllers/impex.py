@@ -145,19 +145,23 @@ class ImpEx(SecuredController):
         default = []
         if params._terp_listheaders:
             default = [x.split(',',1) for x in params._terp_listheaders]
-        elif kw.get('_terp_fields2') and kw.get('fields'):
+        elif kw.get('_terp_fields2') and kw.get('fields') and params.fields2:
             default = []
             for i in range(0, len(kw.get('fields'))):
                 if import_compat=='1' and '/' in kw.get('fields')[i] and kw.get('fields')[i].split('/')[-1] not in ('id', '.id'):
                     continue
                 default.append([kw['fields'][i], params.fields2[i]])
 
+        export_id = False
+        if '_export_id' in kw and kw['_export_id']:
+            export_id = int(kw['_export_id'])
+
         if params.model == 'product.product':
             default = [x for x in default if x[0] not in product_remove_fields]
         default = simplejson.dumps(default)
         return dict(existing_exports=existing_exports, model=params.model, ids=params.ids, ctx=ctx,
                     search_domain=params.search_domain, source=params.source,
-                    tree=tree, import_compat=import_compat, default=default, export_format=export_format, all_records=all_records)
+                    tree=tree, import_compat=import_compat, default=default, export_format=export_format, all_records=all_records, export_id=export_id)
 
     @expose()
     def save_exp(self, **kw):
@@ -171,7 +175,13 @@ class ImpEx(SecuredController):
         if selected_list and name:
             if isinstance(selected_list, basestring):
                 selected_list = [selected_list]
-            proxy.create({'name' : name, 'resource' : params.model, 'export_fields' : [(0, 0, {'name' : f}) for f in selected_list]})
+            exp_id = proxy.create({'name' : name, 'resource' : params.model, 'export_fields' : [(0, 0, {'name' : f}) for f in selected_list]})
+            kw['_export_id'] = exp_id
+            kw['_terp_listheaders'] = []
+            f_proxy = rpc.RPCProxy('ir.model.fields')
+            f_ids = f_proxy.search([('name', 'in', selected_list), ('model', '=', params.model)])
+            for f in f_proxy.read(f_ids, ['name', 'field_description']):
+                kw['_terp_listheaders'].append('%s, %s' % (f['name'], f['field_description']))
 
         raise redirect('/openerp/impex/exp', **kw)
 
