@@ -46,57 +46,59 @@ class hq_report_oca(report_sxw.report_sxw):
             if len(mapping_ids) > 0:
                 mapping = mapping_obj.browse(cr, uid, mapping_ids[0], context=context)
                 return mapping.mapping_value
-        return ""
+        return "0"
 
     def create_counterpart(self, cr, uid, line, counterpart_date):
         pool = pooler.get_pool(cr.dbname)
         # method to create counterpart line
-        return ["",
-                "",
-                "",
+        return line[:2] + \
+               ["20750",
+                "0",
+                "0",
                 counterpart_date,
-                counterpart_date,
-                "20750",
-                "",
-                line[8],
+                line[6],
                 line[7],
                 line[9],
-                ""] + line [11:]
+                line[8]] + line[10:]
     
-    def create_subtotal(self, cr, uid, line_key, line_debit, counterpart_date, country_code):
+    def create_subtotal(self, cr, uid, line_key, line_debit, line_functional_debit, counterpart_date, country_code, sequence_number):
         pool = pooler.get_pool(cr.dbname)
         # method to create subtotal + counterpart line
-        if len(line_key) > 2 and line_debit != 0.0:
-            return [["",
-                     "Subtotal - " + line_key[0] + " - " + line_key[1] + " - " + line_key[2] + " - " + counterpart_date[-4:],
-                     "",
-                     counterpart_date,
-                     counterpart_date,
+        if len(line_key) > 2 and line_debit != 0.0 and line_functional_debit != 0.0:
+            return [["01",
+                     country_code,
                      line_key[0],
-                     "",
+                     "0",
+                     "0",
+                     counterpart_date,
+                     line_key[1],
+                     line_debit / line_functional_debit,
                      line_debit > 0 and round(line_debit, 2) or "0.00",
                      line_debit > 0 and "0.00" or round(-line_debit, 2),
-                     line_key[1],
-                     "",
-                     "01",
-                     country_code]
-                    ,["",
-                      "",
-                     "",
+                     sequence_number,
+                     "Subtotal - " + line_key[0] + " - " + line_key[1] + " - " + line_key[2] + " - " + counterpart_date[-4:],
+                     "0",
                      counterpart_date,
-                     counterpart_date,
-                     "20750",
-                     "",
-                     line_debit > 0 and "0.00" or round(-line_debit, 2),
-                     line_debit > 0 and round(line_debit, 2) or "0.00",
-                     line_key[1],
-                     "",
-                     "01",
-                     country_code]]
+                     "0"]
+                    ,["01",
+                      country_code,
+                      "20750",
+                      "0",
+                      "0",
+                      counterpart_date,
+                      line_key[1],
+                      line_debit / line_functional_debit,
+                      line_debit > 0 and "0.00" or round(-line_debit, 2),
+                      line_debit > 0 and round(line_debit, 2) or "0.00",
+                      sequence_number,
+                      "Automatic counterpart for " + line_key[0] + " - " + line_key[1] + " - " + line_key[2] + " - " + counterpart_date[-4:],
+                      "0",
+                      counterpart_date,
+                      "0"]]
         
     def create(self, cr, uid, ids, data, context=None):
         pool = pooler.get_pool(cr.dbname)
-        # Create the header
+        
         first_header = ['Proprietary Instance',
                         'Journal Code',
                         'Entry Sequence',
@@ -118,54 +120,30 @@ class hq_report_oca(report_sxw.report_sxw):
                         'Functional Currency',
                         'Exchange Rate']
         
-        second_header = ['Integration Ref.',
-                         'Document Date',
-                         'Posting Date',
-                         'Cost Centre',
-                         'G/L Account',
-                         'Booking Currency',
-                         'Booking Amount',
-                         'Exchange Rate',
-                         'Entry Sequence',
-                         'Description',
-                         'Reference',
-                         'Destination']
-        
-        third_header = ['Entry Sequence',
-                        'Description',
-                        'Reference',
-                        'Document Date',
-                        'Posting Date',
-                        'G/L Account',
-                        'Third Parties',
-                        'Booking Debit',
-                        'Booking Credit',
-                        'Booking Currency',
-                        'Exchange Rate',
-                        'Company',
-                        'Country Code']
-        
         # Initialize lists: one for the first report...
         first_result_lines = []
         # ...one for the second report...
         second_result_lines = []
         # ...and subdivisions for the third report.
-        third_result_lines = []
+        third_report = []
         account_lines = []
         account_lines_debit = {}
+        account_lines_functional_debit = {}
         # General variables
         period = pool.get('account.period').browse(cr, uid, data['form']['period_id'])
-        period_name = period and period.code or ""
+        period_name = period and period.code or "0"
         counterpart_date = period and period.date_stop and \
                            datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').date().strftime('%d/%m/%Y') or ""
-        integration_ref = ""
-        country_code = ""
+        integration_ref = "0"
+        country_code = "0"
+        move_prefix = "0"
         if len(data['form']['instance_ids']) > 0:
             parent_instance = pool.get('msf.instance').browse(cr, uid, data['form']['instance_ids'][0], context=context)
             if parent_instance:
                 country_code = self.translate_country(cr, uid, pool, parent_instance)
                 if period and period.date_start:
                     integration_ref = parent_instance.code[:2] + period.date_start[5:7]
+                    move_prefix = parent_instance.move_prefix[:2]
         
         move_line_ids = pool.get('account.move.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                        ('instance_id', 'in', data['form']['instance_ids']),
@@ -177,7 +155,7 @@ class hq_report_oca(report_sxw.report_sxw):
             account = move_line.account_id
             currency = move_line.currency_id
             func_currency = move_line.functional_currency_id
-            rate = ""
+            rate = "0.00"
             if func_currency:
                 cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(move_line.functional_currency_id.id, move_line.date))
                 if cr.rowcount:
@@ -206,29 +184,33 @@ class hq_report_oca(report_sxw.report_sxw):
             first_result_lines.append(formatted_data)
             
             # For third report: add to corresponding sub
-            if account.is_settled_at_hq:
-                expat_employee = ""
+            if not account.shrink_entries_for_hq:
+                expat_employee = "0"
                 # Expat employees are the only third party in this report
                 if move_line.partner_txt and move_line.employee_id and move_line.employee_id.employee_type == 'ex':
                     expat_employee = move_line.partner_txt[:5]
-                other_formatted_data = [move_line.move_id and move_line.move_id.name or "",
-                                        move_line.name,
-                                        move_line.ref,
-                                        datetime.datetime.strptime(move_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
-                                        datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
-                                        account and account.code or "",
-                                        expat_employee,
+                other_formatted_data = ["01",
+                                        country_code,
+                                        account and account.code or "0",
+                                        "0",
+                                        "0",
+                                        move_line.date and datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
+                                        currency and currency.name or "0",
+                                        rate,
                                         round(move_line.debit_currency, 2),
                                         round(move_line.credit_currency, 2),
-                                        currency and currency.name or "",
-                                        rate,
-                                        "01",
-                                        country_code]
+                                        move_line.move_id and move_line.move_id.name or "0",
+                                        move_line.name or "0",
+                                        expat_employee,
+                                        move_line.document_date and datetime.datetime.strptime(move_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
+                                        move_line.ref or "0"]
                 account_lines.append(other_formatted_data)
             else:
                 if (account.code, currency.name, period_name) not in account_lines_debit:
                     account_lines_debit[(account.code, currency.name, period_name)] = 0.0
+                    account_lines_functional_debit[(account.code, currency.name, period_name)] = 0.0
                 account_lines_debit[(account.code, currency.name, period_name)] += (move_line.debit_currency - move_line.credit_currency)
+                account_lines_functional_debit[(account.code, currency.name, period_name)] += (move_line.debit - move_line.credit)
         
         analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
@@ -268,40 +250,52 @@ class hq_report_oca(report_sxw.report_sxw):
             first_result_lines.append(formatted_data)
             
             # Add to second report (expenses only)
-            other_formatted_data = [integration_ref,
-                                    datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
-                                    datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
-                                    analytic_line.cost_center_id and analytic_line.cost_center_id.code or "",
-                                    account and account.code + " " + account.name or "",
-                                    currency and currency.name or "",
+            other_formatted_data = [integration_ref ,
+                                    analytic_line.document_date and datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
+                                    "0",
+                                    "0",
+                                    analytic_line.cost_center_id and analytic_line.cost_center_id.code or "0",
+                                    "1",
+                                    account and account.code + " " + account.name or "0",
+                                    currency and currency.name or "0",
                                     analytic_line.amount_currency and round(-analytic_line.amount_currency, 2) or "0.00",
+                                    "0",
                                     rate,
-                                    analytic_line.move_id and analytic_line.move_id.move_id and analytic_line.move_id.move_id.name or "",
-                                    analytic_line.name or "",
-                                    analytic_line.ref or "",
-                                    analytic_line.destination_id and analytic_line.destination_id.code or ""]
+                                    analytic_line.date and datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
+                                    analytic_line.move_id and analytic_line.move_id.move_id and analytic_line.move_id.move_id.name or "0",
+                                    "0",
+                                    analytic_line.name or "0",
+                                    analytic_line.ref or "0",
+                                    analytic_line.destination_id and analytic_line.destination_id.code or "0"]
             second_result_lines.append(other_formatted_data)
         
         first_result_lines = sorted(first_result_lines, key=lambda line: line[2])
         first_report = [first_header] + first_result_lines
         
-        second_result_lines = sorted(second_result_lines, key=lambda line: line[8])
-        second_report = [second_header] + second_result_lines    
+        second_report = sorted(second_result_lines, key=lambda line: line[12])
         
-        for line in sorted(account_lines, key=lambda line: line[0]):
-            third_result_lines.append(line)
-            third_result_lines.append(self.create_counterpart(cr, uid, line,
+        for line in sorted(account_lines, key=lambda line: line[10]):
+            third_report.append(line)
+            third_report.append(self.create_counterpart(cr, uid, line,
                                                           counterpart_date))
         
+        sequence_index = 1
         for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
+            # create the sequence number for those lines
+            sequence_number = move_prefix + "-" + \
+                              period.date_start[5:7] + "-" + \
+                              period.date_start[:4] + "-" + \
+                              key[0] + "-" + \
+                              key[1]
+                
             subtotal_lines = self.create_subtotal(cr, uid, key,
                                                   account_lines_debit[key],
+                                                  account_lines_functional_debit[key],
                                                   counterpart_date,
-                                                  country_code)
+                                                  country_code,
+                                                  sequence_number)
             if subtotal_lines:
-                third_result_lines += subtotal_lines
-                
-        third_report = [third_header] + third_result_lines    
+                third_report += subtotal_lines
         
         zip_buffer = StringIO.StringIO()
         first_fileobj = NamedTemporaryFile('w+b', delete=False)

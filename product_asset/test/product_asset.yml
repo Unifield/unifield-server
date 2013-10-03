@@ -127,7 +127,7 @@
     weight_net: 0.0
     subtype: asset
     asset_type_id: product_asset_type_0
-    international_status: itc
+    international_status: product_attributes.int_1
 -
 
   I create an asset

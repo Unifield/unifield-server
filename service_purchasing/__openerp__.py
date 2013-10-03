@@ -43,6 +43,7 @@
              'test/service_purchasing-5.yml',
              'test/service_purchasing-6.yml',
              'test/service_purchasing-7.yml',
+             'test/check_stock_move.yml',
              ],
     'installable': True,
 }

@@ -72,9 +72,9 @@ class product_product(osv.osv):
         """
         if context is None:
             context = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.type in ('consu', 'service', 'service_recep') and obj.procure_method != 'make_to_order':
-                raise osv.except_osv(_('Error'), _('You must select on order procurement method for %s products.') % (obj.type=='consu' and 'Non-stockable' or 'Service'))
+        for obj in self.read(cr, uid, ids, ['type', 'procure_method'], context=context):
+            if obj['type'] in ('consu', 'service', 'service_recep') and obj['procure_method'] != 'make_to_order':
+                raise osv.except_osv(_('Error'), _('You must select on order procurement method for %s products.') % (obj['type']=='consu' and 'Non-stockable' or 'Service'))
         return True
     
     _constraints = [
@@ -225,22 +225,33 @@ class stock_move(osv.osv):
         """
         if context is None:
             context = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.type in ('service_recep', 'service'):
-                if obj.picking_id and obj.picking_id.type == 'in':
-                    if not obj.location_dest_id.service_location and not obj.location_dest_id.cross_docking_location_ok:
-                        raise osv.except_osv(_('Error'), _('Service Products must have Service or Cross Docking Location as Destination Location.'))
-                elif obj.picking_id and obj.picking_id.type == 'internal':
-                    if not obj.location_id.cross_docking_location_ok:
-                        raise osv.except_osv(_('Error'), _('Service Products must have Cross Docking Location as Source Location.'))
-                    if not obj.location_dest_id.service_location:
-                        raise osv.except_osv(_('Error'), _('Service Products must have Service Location as Destination Location.'))
-                elif obj.picking_id and obj.picking_id.type == 'out' and obj.picking_id.subtype in ('standard', 'picking'):
-                    if not obj.location_id.cross_docking_location_ok:
-                        raise osv.except_osv(_('Error'), _('Service Products must have Cross Docking Location as Source Location.'))
-            elif obj.location_dest_id.service_location or obj.location_id.service_location:
-                raise osv.except_osv(_('Error'), _('Service Location cannot be used for non Service Products.'))
+        if ids:
+            cr.execute("""select 
+                count(pick.type = 'in' and t.type in ('service_recep', 'service') and not dest.service_location and not dest.cross_docking_location_ok or NULL),
+                count(pick.type = 'internal' and not src.cross_docking_location_ok and t.type in ('service_recep', 'service') or NULL),
+                count(pick.type = 'internal' and not dest.service_location and t.type in ('service_recep', 'service') or NULL),
+                count(t.type in ('service_recep', 'service') and pick.type = 'out' and pick.subtype in ('standard', 'picking') and not src.cross_docking_location_ok or NULL),
+                count(t.type not in ('service_recep', 'service') and (dest.service_location or src.service_location ) or NULL)
+                from stock_move m
+                left join stock_picking pick on m.picking_id = pick.id
+                left join product_product p on m.product_id = p.id
+                left join product_template t on p.product_tmpl_id = t.id
+                left join stock_location src on m.location_id = src.id
+                left join stock_location dest on m.location_dest_id = dest.id
+            where m.id in %s""", (tuple(ids),))
+            for c in cr.fetchall():
+                if c[0]:
+                    raise osv.except_osv(_('Error'), _('Service Products must have Service or Cross Docking Location as Destination Location.'))
+                if c[1]:
+                    raise osv.except_osv(_('Error'), _('Service Products must have Cross Docking Location as Source Location.'))
+                if c[2]:
+                    raise osv.except_osv(_('Error'), _('Service Products must have Service Location as Destination Location.'))
+                if c[3]:
+                    raise osv.except_osv(_('Error'), _('Service Products must have Cross Docking Location as Source Location.'))
+                if c[4]:
+                    raise osv.except_osv(_('Error'), _('Service Location cannot be used for non Service Products.'))
         return True
+
     
     _constraints = [
         (_check_constaints_service, 'You cannot select Service Location as Source Location.', []),

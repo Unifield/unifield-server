@@ -123,6 +123,7 @@ class create_picking(osv.osv_memory):
                 'asset_id': move.asset_id.id, 
                 'composition_list_id': move.composition_list_id.id,
                 'quantity_ordered' : move.product_qty,
+                'uom_ordered': move.product_uom.id,
                 'product_uom' : move.product_uom.id, 
                 'prodlot_id' : move.prodlot_id.id, 
                 'move_id' : move.id,
@@ -358,6 +359,7 @@ class create_picking(osv.osv_memory):
                                                              'product_uom': move.product_uom.id,
                                                              'prodlot_id': move.prodlot_id.id,
                                                              'asset_id': move.asset_id.id,
+                                                             'line_number': move.line_number,
                                                              'composition_list_id': move.composition_list_id.id,
                                                              'move_id': move.move_id.id,
                                                              'qty_per_pack': move.qty_per_pack,
@@ -466,6 +468,7 @@ class create_picking(osv.osv_memory):
         - the production lot is mandatory only if it is the validation stage
         '''
         prod_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
         memory_move_obj = self.pool.get('stock.move.memory.picking')
         lot_obj = self.pool.get('stock.production.lot')
         # flag to detect missing prodlot
@@ -508,9 +511,10 @@ class create_picking(osv.osv_memory):
                                 prodlot_integrity.update({lot.id: {}})
                             if loc_id not in prodlot_integrity[lot.id]:
                                 prodlot_integrity[lot.id].update({loc_id: 0.00})
-                            prodlot_integrity[lot.id][loc_id] += list_data['product_qty']
+                            product_qty = uom_obj._compute_qty(cr, uid, list_data['product_uom'], list_data['product_qty'], lot.product_id.uom_id.id)
+                            prodlot_integrity[lot.id][loc_id] += product_qty
 
-                            if lot.stock_available < list_data['product_qty']:
+                            if lot.stock_available < product_qty:
                                 uom = self.pool.get('product.uom').browse(cr, uid, list_data['product_uom']).name
                                 raise osv.except_osv(_('Processing Error'), \
                                 _('Processing quantity %d %s for %s is larger than the available quantity in Batch Number %s (%d) !')\
@@ -592,6 +596,7 @@ class create_picking(osv.osv_memory):
                                                                                    'product_qty': move.quantity,
                                                                                    'product_uom': move.product_uom.id,
                                                                                    'prodlot_id': move.prodlot_id.id,
+                                                                                   'line_number': move.line_number,
                                                                                    'location_id': move.location_id.id,
                                                                                    'asset_id': move.asset_id.id,
                                                                                    'composition_list_id': move.composition_list_id.id,
@@ -688,6 +693,7 @@ class create_picking(osv.osv_memory):
                                                                                'product_uom': move.product_uom.id,
                                                                                'prodlot_id': move.prodlot_id.id,
                                                                                'location_id': move.location_id.id,
+                                                                               'line_number': move.line_number,
                                                                                'asset_id': move.asset_id.id,
                                                                                'composition_list_id': move.composition_list_id.id,
                                                                                })
@@ -778,6 +784,7 @@ class create_picking(osv.osv_memory):
                                                                'product_uom': move.product_uom.id,
                                                                'prodlot_id': move.prodlot_id.id,
                                                                'asset_id': move.asset_id.id,
+                                                               'line_number': move.line_number,
                                                                'composition_list_id': move.composition_list_id.id,
                                                                'qty_to_return': move.qty_to_return,
                                                                }
@@ -936,7 +943,7 @@ class create_picking(osv.osv_memory):
         if missing_weight:
             return False
         return True
-        
+
     def do_ppl2(self, cr, uid, ids, context=None):
         '''
         - update partial_datas_ppl1

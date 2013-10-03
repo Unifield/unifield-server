@@ -157,12 +157,27 @@ class journal_items_corrections(osv.osv_memory):
     _name = 'wizard.journal.items.corrections'
     _description = 'Journal items corrections wizard'
 
+    def _get_from_register(self, cr, uid, ids, field_name, arg, context):
+        """
+        Return true if the line comes from a journal entry that have links to a register line
+        """
+        res = {}
+        for wiz in self.browse(cr, uid, ids, context):
+            res[wiz.id] = False
+            if wiz.move_line_id.move_id and wiz.move_line_id.move_id.line_id:
+                for ml_line in wiz.move_line_id.move_id.line_id:
+                    if ml_line.statement_id:
+                        res[wiz.id] = True
+                        break
+        return res
+
     _columns = {
         'date': fields.date(string="Correction date", states={'open':[('required', True)]}),
         'move_line_id': fields.many2one('account.move.line', string="Move Line", required=True, readonly=True),
         'to_be_corrected_ids': fields.one2many('wizard.journal.items.corrections.lines', 'wizard_id', string='', help='Line to be corrected'),
         'state': fields.selection([('draft', 'Draft'), ('open', 'Open')], string="state"),
         'from_donation': fields.boolean('From Donation account?'),
+        'from_register': fields.function(_get_from_register, type='boolean', string='From register?', method=True, store=False),
     }
 
     _defaults = {
@@ -251,27 +266,28 @@ class journal_items_corrections(osv.osv_memory):
             res += 4
         return res
 
-    def action_reverse(self, cr, uid, ids, context=None):
-        """
-        Do a reverse from the lines attached to this wizard
-        NB: The reverse is done on the first correction journal found (type = 'correction')
-        """
-        # Verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Verify that date is superior to line's date
-        for wiz in self.browse(cr, uid, ids, context=context):
-            if wiz.move_line_id and wiz.move_line_id.date:
-                if not wiz.date >= wiz.move_line_id.date:
-                    raise osv.except_osv(_('Warning'), _('Please insert a correction date from the entry date onwards.'))
-        # Retrieve values
-        wizard = self.browse(cr, uid, ids[0], context=context)
-        aml_obj = self.pool.get('account.move.line')
-        # Do reverse
-        res, move_ids = aml_obj.reverse_move(cr, uid, [wizard.move_line_id.id], wizard.date, context=context)
-        return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
+    # UF-2056: Delete reverse button
+#    def action_reverse(self, cr, uid, ids, context=None):
+#        """
+#        Do a reverse from the lines attached to this wizard
+#        NB: The reverse is done on the first correction journal found (type = 'correction')
+#        """
+#        # Verifications
+#        if not context:
+#            context = {}
+#        if isinstance(ids, (int, long)):
+#            ids = [ids]
+#        # Verify that date is superior to line's date
+#        for wiz in self.browse(cr, uid, ids, context=context):
+#            if wiz.move_line_id and wiz.move_line_id.date:
+#                if not wiz.date >= wiz.move_line_id.date:
+#                    raise osv.except_osv(_('Warning'), _('Please insert a correction date from the entry date onwards.'))
+#        # Retrieve values
+#        wizard = self.browse(cr, uid, ids[0], context=context)
+#        aml_obj = self.pool.get('account.move.line')
+#        # Do reverse
+#        res, move_ids = aml_obj.reverse_move(cr, uid, [wizard.move_line_id.id], wizard.date, context=context)
+#        return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
 
     def action_confirm(self, cr, uid, ids, context=None, distrib_id=False):
         """

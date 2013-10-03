@@ -10,7 +10,8 @@
                 <separator string="Select a new Product - The UoM is restricted" colspan="4"/>
                 <field name="old_product_id" colspan="4" />
                 <field name="old_uom_id" />
-                <field name="new_product_id" domain="[('uom_id', '=', old_uom_id)]" colspan="4" />
+                <field name="old_uom_category_id" invisible="1" />
+                <field name="new_product_id" domain="[('uom_category_id', '=', old_uom_category_id)]" colspan="4" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}" />
                 <field name="change_reason" colspan="4" attrs="{'required': [('new_product_id', '!=', False)]}"/>
                 <group colspan="2" />
                 <button name="cancel" string="_Cancel"

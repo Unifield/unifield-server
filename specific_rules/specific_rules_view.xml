@@ -117,6 +117,7 @@
                         <attribute name="hide_delete_button">1</attribute>
                     </xpath>
                     <field name="ref" position="replace">
+	                    <field name="instance_id"/>
                         <field name="type" />
                         <field name="life_date" />
                     </field>
@@ -207,7 +208,8 @@
             		</field>
             		
             		<field name="name" position="replace">
-            			<field name="name" colspan="4" attrs="{'readonly': [('type', '=', 'internal')]}" />
+            			<field name="name" colspan="2" attrs="{'readonly': [('type', '=', 'internal')]}" />
+	          			<field name="instance_id" colspan="2" />
             		</field>
             		
             		<field name="date" position="replace">
@@ -482,6 +484,15 @@
                     <xpath expr="/form//field[@name='inventory_line_id']/tree//field[@name='product_id']" position="attributes">
                         <attribute name="domain">[('type', 'not in', ('consu', 'service', 'service_recep'))]</attribute>
                     </xpath>
+                    
+                    <xpath expr="//tree/field[@name='product_uom']" position="attributes">
+                        <attribute name="on_change">onchange_uom_qty(product_uom, product_qty)</attribute>
+                    </xpath>
+                    
+                    <xpath expr="//tree/field[@name='product_qty']" position="attributes">
+                        <attribute name="on_change">onchange_uom_qty(product_uom, product_qty)</attribute>
+                    </xpath>
+
 
             </field>
         </record>
@@ -500,6 +511,7 @@
 
                     <xpath expr="/tree//field[@name='product_id']" position="attributes">
                         <attribute name="domain">[('type', 'not in', ('consu', 'service', 'service_recep'))]</attribute>
+                        <attribute name="context">{'available_for_restriction': {'location_id': location_id}, 'search_default_not_restricted': 1}</attribute>
                     </xpath>
 
 	           		<field name="prod_lot_id" position="replace">
@@ -636,11 +648,25 @@
         	<field name="type">form</field>
         	<field name="inherit_id" ref="procurement.view_warehouse_orderpoint_form" />
         	<field name="arch" type="xml">
-        		<data>        			
+        		<data>   
+        		
+					<xpath expr="//field[@name='product_id']" position="attributes">
+                        <attribute name="on_change">onchange_product_id(product_id, product_uom, product_min_qty, product_max_qty)</attribute>
+                    </xpath>
+        		     			
         			<xpath expr="/form//field[@name='product_uom']" position="attributes">
-        				<attribute name="on_change">onchange_uom(product_id, product_uom)</attribute>
+        				<attribute name="on_change">onchange_uom_qty(product_id, product_uom, product_min_qty, product_max_qty)</attribute>
         				<attribute name="domain">[('uom_by_product', '=', product_id)]</attribute>
         			</xpath>
+        			
+        			<xpath expr="//field[@name='product_min_qty']" position="attributes">
+                        <attribute name="on_change">onchange_uom_qty(product_id, product_uom, product_min_qty, product_max_qty)</attribute>
+                    </xpath>
+
+                    <xpath expr="//field[@name='product_max_qty']" position="attributes">
+                        <attribute name="on_change">onchange_uom_qty(product_id, product_uom, product_min_qty, product_max_qty)</attribute>
+                    </xpath>
+        			
         		</data>
         	</field>
         </record>

@@ -154,7 +154,7 @@ class res_currency(osv.osv):
         '''
         pricelist_obj = self.pool.get('product.pricelist')
         version_obj = self.pool.get('product.pricelist.version')
-        
+
         if isinstance(ids, (int, long)):
             ids = [ids]
         

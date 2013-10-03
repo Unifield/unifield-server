@@ -78,6 +78,9 @@ class wizard_import_fo_line(osv.osv_memory):
         line_with_error = []
         vals = {'order_line': []}
         
+        context_sol_create = context.copy()
+        context_sol_create['no_store_function'] = ['sale.order.line']
+        created_line = []
         for wiz_browse in self.browse(cr, uid, ids, context):
             fo_browse = wiz_browse.fo_id
             fo_id = fo_browse.id
@@ -154,6 +157,13 @@ class wizard_import_fo_line(osv.osv_memory):
                     uom_value = {}
                     uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
+
+                    # Check round of qty according to UoM
+                    if qty_value['product_qty'] and uom_value['uom_id']:
+                        round_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_value['uom_id'], qty_value['product_qty'], 'product_qty')
+                        if round_qty.get('warning', {}).get('message'):
+                            to_write.update({'product_uom_qty': round_qty['value']['product_qty']})
+                            message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
     
                     # Cell 4: Price
                     price_value = {}
@@ -195,10 +205,14 @@ class wizard_import_fo_line(osv.osv_memory):
                         cr.rollback()
                         continue
 
+                    # Check product restrictions
+                    if p_value.get('default_code') and fo_browse.partner_id:
+                        product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'partner_id': fo_browse.partner_id.id}, context=dict(context, noraise=False))
+ 
                     # write order line on FO
                     vals['order_line'].append((0, 0, to_write))
                     if sale_obj._check_service(cr, uid, fo_id, vals, context=context):
-                        sale_line_obj.create(cr, uid, to_write, context=context)
+                        created_line.append(sale_line_obj.create(cr, uid, to_write, context=context_sol_create))
                         if to_write['error_list']:
                             lines_to_correct += 1
                         percent_completed = float(line_num)/float(total_line_num-1)*100.0
@@ -226,6 +240,7 @@ class wizard_import_fo_line(osv.osv_memory):
                     if not context.get('yml_test', False):
                         cr.commit()
         
+            sale_line_obj._call_store_function(cr, uid, created_line, keys=None, result=None, bypass=False, context=context)
             error_log += '\n'.join(error_list)
             if error_log:
                 error_log = _("Reported errors for ignored lines : \n") + error_log

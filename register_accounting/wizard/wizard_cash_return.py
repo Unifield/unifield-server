@@ -291,7 +291,7 @@ class wizard_cash_return(osv.osv_memory):
 
         return move_line_id
 
-    def create_st_line_from_move_line(self, cr, uid, ids, register_id=None, move_id=None, move_line_id=None, context=None):
+    def create_st_line_from_move_line(self, cr, uid, ids, register_id=None, move_id=None, move_line_id=None, invoice_id=None, context=None):
         """
         Create a statement line from a move line and then link it to the move line
         """
@@ -335,6 +335,9 @@ class wizard_cash_return(osv.osv_memory):
             'from_cash_return': True, # this permits to disable the return function on the statement line
             'sequence_for_reference': seq,
         }
+        # Add invoice link if exists
+        if invoice_id:
+            vals.update({'invoice_id': invoice_id,})
 
         # Create the statement line with vals
         st_line_id = absl_obj.create(cr, uid, vals, context=context)
@@ -583,7 +586,7 @@ class wizard_cash_return(osv.osv_memory):
         curr_date = wizard.date
         if wizard.display_invoice:
             for inv_move_line_data in inv_move_line_ids:
-                inv_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, inv_move_line_data[0], context=context)
+                inv_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, inv_move_line_data[0], invoice_id=inv_move_line_data[1], context=context)
                 # search the invoice move line that come from invoice
                 invoice_move_id = self.pool.get('account.invoice').read(cr, uid, inv_move_line_data[1], ['move_id'], context=context).get('move_id', None)
                 inv_move_line_account_id = move_line_obj.read(cr, uid, inv_move_line_data[0], ['account_id'], context=context).get('account_id', None)

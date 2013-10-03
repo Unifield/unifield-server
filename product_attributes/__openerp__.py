@@ -36,6 +36,7 @@
     ],
     'update_xml': [
         'product_attributes_view.xml',
+        'product_attributes_data.xml',
     ],
     'demo_xml': [
         'product_remove_demo.xml',

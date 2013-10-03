@@ -42,7 +42,7 @@
       - sequence: 10
         min_qty: 0.00
         name: partner_A
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   Product B
 -
@@ -52,7 +52,7 @@
       - sequence: 10
         min_qty: 0.00
         name: partner_A
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   Product C
 -
@@ -63,7 +63,7 @@
       - sequence: 10
         min_qty: 0.00
         name: partner_A
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   Product D
 -
@@ -73,7 +73,7 @@
       - sequence: 10
         min_qty: 0.00
         name: partner_A
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   Product E
 -
@@ -84,7 +84,7 @@
       - sequence: 10
         min_qty: 0.00
         name: partner_A
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I edit all the journals to include the proprietary instance
 -

@@ -10,8 +10,8 @@
             <form string="Confirmation">
                 <field name="txt" nolabel="1" colspan="4" />
                 <group colspan="4" col="2">
-                    <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
                     <button string="Cancel" special="cancel" icon="gtk-cancel" />
+                    <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
                 </group>
             </form>
         </field>

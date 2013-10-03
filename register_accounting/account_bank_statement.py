@@ -92,12 +92,13 @@ class account_journal(osv.osv):
         if not context:
             context = {}
         dom = [('type', 'in', ['cash', 'bank', 'cheque'])]
-        if not args or not context.get('curr'):
+        if not args or not context.get('curr') or not context.get('journal'):
             return dom
         if args[0][2]:
             t = self.pool.get('account.account').read(cr, uid, args[0][2], ['type_for_register'])
+            # UF-1972: Do not display itself for transfer in same currency. If another currency, itself is not shown.
             if t['type_for_register'] == 'transfer_same':
-                return dom+[('currency', 'in', [context['curr']])]
+                return dom+[('currency', 'in', [context['curr']]), ('id', 'not in', [context['journal']])]
             elif t['type_for_register'] == 'transfer':
                 return dom+[('currency', 'not in', [context['curr']])]
         return dom
@@ -1215,7 +1216,14 @@ class account_bank_statement_line(osv.osv):
                 if st_line.transfer_amount:
                     move_line_values.update({'transfer_amount': st_line.transfer_amount or 0.0})
             # Write move line object for other line
-            acc_move_line_obj.write(cr, uid, [other_line.id], move_line_values, context=context)
+            # UTP-407: Add new message for temp posted register line if you change account and that it's not valid with analytic distribution
+            try:
+                acc_move_line_obj.write(cr, uid, [other_line.id], move_line_values, context=context)
+            except osv.except_osv, e:
+                msg = e.value
+                if 'account_id' in values and st_line.state == 'temp' and other_line.analytic_distribution_state == 'invalid':
+                    msg = _('The account modification required makes the analytic distribution previously defined invalid; please perform the account modification through the analytic distribution wizard')
+                raise osv.except_osv(e.name, msg)
             # Update analytic distribution lines
             analytic_amount = acc_move_line_obj.read(cr, uid, [other_line.id], ['amount_currency'], context=context)[0].get('amount_currency', False)
             if analytic_amount:
@@ -1358,7 +1366,7 @@ class account_bank_statement_line(osv.osv):
                         amount_to_write = sign * amount
                     # create a new move_line corresponding to this invoice move line
                     aml_vals = {
-                        'name': invoice_move_line.invoice.number,
+                        'name': invoice_move_line.invoice.number or st_line.first_move_line_id.name or '', # UTP-793 fix
                         'move_id': move_ids[0],
                         'partner_id': invoice_move_line.partner_id.id,
                         'account_id': st_line.account_id.id,
@@ -1505,7 +1513,7 @@ class account_bank_statement_line(osv.osv):
         state = self._get_state(cr, uid, ids, context=context).values()[0]
         # Verify that the statement line isn't in hard state
         if state  == 'hard':
-            if values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or 'from_correction' in context:
+            if values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or 'from_correction' in context or context.get('sync_update_execution', False):
                 return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
             raise osv.except_osv(_('Warning'), _('You cannot write a hard posted entry.'))
         # First update amount
@@ -1572,6 +1580,12 @@ class account_bank_statement_line(osv.osv):
             'transfer_currency': False,
             'down_payment_id': False,
         })
+        # Copy analytic distribution if exists
+        line = self.browse(cr, uid, [id], context=context)[0]
+        if line.analytic_distribution_id:
+            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, line.analytic_distribution_id.id, {}, context=context)
+            if new_distrib_id:
+                default.update({'analytic_distribution_id': new_distrib_id})
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
     def update_analytic_lines(self, cr, uid, ids, distrib=False, context=None):
@@ -1812,12 +1826,21 @@ class account_bank_statement_line(osv.osv):
         """
         Open the attached invoice
         """
+        cash_return = False
         for st_line in self.browse(cr, uid, ids, context=context):
-            if not st_line.direct_invoice or not st_line.invoice_id:
+            if not st_line.invoice_id:
                 raise osv.except_osv(_('Warning'), _('No invoice founded.'))
+            if st_line.from_cash_return:
+                cash_return = True
+        invoice = self.browse(cr, uid, ids[0], context=context).invoice_id
+        view_name = 'direct_supplier_invoice_form'
+        name = _('Supplier Direct Invoice')
+        if cash_return:
+            view_name = 'invoice_supplier_form_2'
+            name = _('Supplier Invoice')
         # Search the customized view we made for Supplier Invoice (for * Register's users)
         irmd_obj = self.pool.get('ir.model.data')
-        view_ids = irmd_obj.search(cr, uid, [('name', '=', 'direct_supplier_invoice_form'), ('model', '=', 'ir.ui.view')])
+        view_ids = irmd_obj.search(cr, uid, [('name', '=', view_name), ('model', '=', 'ir.ui.view')])
         # Préparation de l'élément permettant de trouver la vue à  afficher
         if view_ids:
             view = irmd_obj.read(cr, uid, view_ids[0])
@@ -1826,20 +1849,20 @@ class account_bank_statement_line(osv.osv):
             raise osv.except_osv(_('Error'), _("View not found."))
         context.update({
             'active_id': ids[0],
-            'type': 'in_invoice',
-            'journal_type': 'purchase',
+            'type': invoice.type,
+            'journal_type': invoice.journal_id.type,
             'active_ids': ids,
             'from_register': True,
             })
         return {
-            'name': "Supplier Direct Invoice",
+            'name': name,
             'type': 'ir.actions.act_window',
             'res_model': 'account.invoice',
             'target': 'new',
             'view_mode': 'form',
             'view_type': 'form',
             'view_id': view_id,
-            'res_id': self.browse(cr, uid, ids[0], context=context).invoice_id.id,
+            'res_id': invoice.id,
             'context': context,
         }
 
@@ -2041,7 +2064,8 @@ class ir_values(osv.osv):
                 or v[1] == 'Cash Inventory' and context['journal_type'] == 'cash' \
                 or v[1] == 'Open Advances' and context['journal_type'] == 'cash' \
                 or v[1] == 'Cheque Inventory' and context['journal_type'] == 'cheque' \
-                or v[1] == 'Liquidity Position' and context['journal_type'] != 'cheque':
+                or v[1] == 'Liquidity Position' and context['journal_type'] != 'cheque' \
+                or v[1] == 'Full Report' and context['journal_type'] in ['bank', 'cash', 'cheque']:
                     new_act.append(v)
             values = new_act
         return values

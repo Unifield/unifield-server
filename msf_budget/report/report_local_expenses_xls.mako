@@ -84,8 +84,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     month_list = []
     if data and data.get('form'):
         if data.get('form').get('breakdown') and data.get('form').get('breakdown') == 'month':
-            nb_of_columns = 3 + data.get('form').get('month_stop')
-            month_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][0:data.get('form').get('month_stop')]
+            nb_of_columns = 4 + data.get('form').get('month_stop') - data.get('form').get('month_start')
+            month_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][data.get('form').get('month_start') - 1:data.get('form').get('month_stop')]
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />

@@ -48,5 +48,14 @@
         <menuitem id="country_export_mapping_menu" name="Country Code Mapping" parent="account.account_account_menu"
                 action="country_export_mapping_action" />
         
+        <act_window name="Import Mappings"
+            res_model="wizard.import.mapping"
+            src_model="country.export.mapping"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            empty_ids="1"
+            id="action_import_country_mappings"/>
+        
     </data>
 </openerp>

@@ -261,6 +261,15 @@ class purchase_order(osv.osv):
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s: %s') % (plural, message))
         return True
 
+    def check_condition(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for var in self.browse(cr, uid, ids, context=context):
+            if not var.from_sync and var.partner_type != 'external':
+                raise osv.except_osv(_('Warning !'), _("""You can\'t cancel the PO because it may have already been synchronized, 
+                the cancellation should then come from the supplier instance (and synchronize down to the requestor instance)."""))
+        return True
+
 purchase_order()
 
 
@@ -336,7 +345,7 @@ class purchase_order_line(osv.osv):
                                                     nomen_manda_0=False, comment=False, context=context)
                         if not context.get('po_integration'):
                             price_unit = res.get('value', {}).get('price_unit', False)
-                            text_error += _('We use the price mechanism to compute the Price Unit.')
+                            text_error += _('\n We use the price mechanism to compute the Price Unit.')
                         uom = res.get('value', {}).get('product_uom', False)
                         warning_msg = res.get('warning', {}).get('message', '')
                         text_error += '\n %s' % warning_msg
@@ -353,6 +362,11 @@ class purchase_order_line(osv.osv):
                         uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
                         text_error += _('\n It wasn\'t possible to update the UoM with the product\'s one because the former wasn\'t either defined.')
                         to_write.update({'product_uom': uom, 'text_error': text_error})
+
+                # Check product line restrictions
+                if product and po.partner_id:
+                    self.pool.get('product.product')._get_restriction_error(cr, uid, [product], {'partner_id': po.partner_id.id}, context=dict(context, noraise=False))
+                
         return to_write
 
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
@@ -366,15 +380,8 @@ class purchase_order_line(osv.osv):
         product_id = to_write['product_id']
         uom_id = to_write['product_uom']
         if uom_id and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, uom_id, context=context)
-            if product.uom_id.category_id.id != uom.category_id.id:
-                # this is inspired by onchange_uom in specific_rules>specific_rules.py
-                text_error += _("""\n You have to select a product UOM in the same category than the UOM of the product.
-                The category of the UoM of the product is '%s' whereas the category of the UoM you have chosen is '%s'.
-                """) % (product.uom_id.category_id.name, uom.category_id.name)
+            if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, uom_id, context):
+                text_error += _("""\n You have to select a product UOM in the same category than the UOM of the product.""")
                 return to_write.update({'text_error': text_error,
                                         'to_correct_ok': True})
         elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1] and product_id:
