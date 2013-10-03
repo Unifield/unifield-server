@@ -79,11 +79,7 @@ class product_list(osv.osv):
         'product_ids': fields.one2many('product.list.line', 'list_id', string='Products'),
         'old_product_ids': fields.one2many('old.product.list.line', 'list_id', string='Old Products'),
         'nb_products': fields.function(_get_nb_products, method=True, type='integer', string='# of products'),
-        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
-        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
-        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
-        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+        
     }
     
     _defaults = {
@@ -93,43 +89,6 @@ class product_list(osv.osv):
     _sql_constraints = [
         ('name_uniq', 'unique (name)', 'A list or sublist with the same name already exists in the system!')
     ]
-    
-    def fill_lines(self, cr, uid, ids, context=None):
-        '''
-        Fill all lines according to defined nomenclature level and sublist
-        '''
-        if context is None:
-            context = {}
-            
-        for l in self.browse(cr, uid, ids, context=context):
-            product_ids = self.pool.get('data.tools').get_product_from_list_nomen(cr, uid, l, context=context)
-
-            # Check if products in already existing lines are in domain
-            products = []
-            for line in l.product_ids:
-                if line.product_id.id in product_ids:
-                    products.append(line.product_id.id)
-                else:
-                    self.pool.get('product.list.line').unlink(cr, uid, line.id, context=context)
-
-            for product in product_ids:
-                if product not in products:
-                    self.pool.get('product.list.line').create(cr, uid, {'list_id': ids[0],
-                                                                        'name': product}, context=context)
-        
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'product.list',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'res_id': ids[0],
-                'target': 'dummy',
-                'context': context}
-        
-    def get_nomen(self, cr, uid, id, field):
-        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
-
-    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
-        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
 
     def change_product_line(self, cr, uid, ids, context=None):
         '''

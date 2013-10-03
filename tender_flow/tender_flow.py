@@ -111,12 +111,7 @@ class tender(osv.osv):
                 'internal_state': fields.selection([('draft', 'Draft'),('updated', 'Rfq Updated'), ], string="Internal State", readonly=True),
                 'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',),
                 'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product'),
-                'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
-                'sublist_id': fields.many2one('product.list', string='List/Sublist'),
-                'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
-                'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
-                'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
-                'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+               'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
                 }
     
     _defaults = {'categ': 'other',
@@ -131,60 +126,6 @@ class tender(osv.osv):
                  }
     
     _order = 'name desc'
-
-    def get_nomen(self, cr, uid, id, field):
-        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
-
-    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
-        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
-                
-    def fill_lines(self, cr ,uid, ids, context=None):
-        '''
-        Fill all lines according to defined nomenclature level and sublist
-        '''
-        if context is None:
-            context = {}
-
-        for tender in self.browse(cr, uid, ids, context=context):
-            product_ids = self.pool.get('data.tools').get_product_from_list_nomen(cr, uid, tender, context=context)
-
-            # Check if products in already existing lines are in domain
-            products = []
-            for line in tender.tender_line_ids:
-                if line.product_id.id in product_ids:
-                    products.append(line.product_id.id)
-                else:
-                    self.pool.get('tender.line').unlink(cr, uid, line.id, context=context)
-
-            for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
-                # Check if the product is not already on the report
-                if product.id not in products:
-                    values = {'tender_id': ids[0],
-                              'product_id': product.id,
-                              'product_uom_id': product.uom_id.id,
-                              'product_qty': 0.00}
-                    values.update(self.pool.get('tender.line').on_product_change(cr, uid, False, 
-                                                                                     product.id, 
-                                                                                     product.uom_id.id, 
-                                                                                     0.00, 
-                                                                                     context=None).get('value',{}))
-                    self.pool.get('tender.line').create(cr, uid, values, context=context)
-
-
-        self.write(cr, uid, ids, {'sublist_id': False,
-                                  'nomen_manda_0': False,
-                                  'nomen_manda_1': False,
-                                  'nomen_manda_2': False,
-                                  'nomen_manda_3': False,}, context=context)
-
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'tender',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'res_id': ids[0],
-                'target': 'dummy',
-                'context': context}
-                    
 
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
@@ -701,7 +642,7 @@ class tender_line(osv.osv):
         '''
         Check round of qty according to the UoM
         '''
-        res = {'value': {}}
+        res = {}
 
         if qty:
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'qty', result=res)

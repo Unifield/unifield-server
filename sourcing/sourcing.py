@@ -1154,10 +1154,6 @@ class sale_order_line(osv.osv):
         '''
         if not context:
             context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
         context.update({'fromSaleOrderLine': True})
         idsToDelete = []
         for orderLine in self.browse(cr, uid, ids, context):

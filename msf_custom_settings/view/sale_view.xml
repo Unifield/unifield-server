@@ -20,9 +20,9 @@
                     <xpath expr="/form/group/field[@name='order_type']" position="attributes">
                         <attribute name="on_change">onchange_order_type(order_type, partner_id)</attribute>
                     </xpath>
-                    <xpath expr="/form/notebook/page/group[3]" position="replace" >
+                    <xpath expr="/form/notebook/page/group[2]" position="replace" >
                     </xpath>
-                    <xpath expr="/form/notebook/page[@string='Sales Order']/group[3]" position="replace" >
+                    <xpath expr="/form/notebook/page[@string='Sales Order']/group[2]" position="replace" >
                     </xpath>
                     <xpath expr="/form/notebook" position="after" >
                             <group col="13" colspan="10">

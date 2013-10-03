@@ -742,11 +742,6 @@ class composition_kit(osv.osv):
                 'nomen_sub_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 4', fnct_search=_search_nomen_s, multi="nom_s"),
                 'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
                 'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
-                'sublist_id': fields.many2one('product.list', string='List/Sublist'),
-                'i_nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
-                'i_nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
-                'i_nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
-                'i_nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
                 }
     
     _defaults = {'composition_creation_date': lambda *a: time.strftime('%Y-%m-%d'),
@@ -761,68 +756,6 @@ class composition_kit(osv.osv):
                  }
     
     _order = 'composition_creation_date desc'
-
-    def fill_lines(self, cr, uid, ids, context=None):
-        '''
-        Fill all lines according to defined nomenclature level and sublist
-        '''
-        if context is None:
-            context = {}
-
-        for kit in self.browse(cr, uid, ids, context=context):
-            product_ids = []
-            products = []
-
-            nom = False
-            # Get all products for the defined nomenclature
-            if kit.i_nomen_manda_3:
-                nom = kit.i_nomen_manda_3.id
-                field = 'nomen_manda_3'
-            elif kit.i_nomen_manda_2:
-                nom = kit.i_nomen_manda_2.id
-                field = 'nomen_manda_2'
-            elif kit.i_nomen_manda_1:
-                nom = kit.i_nomen_manda_1.id
-                field = 'nomen_manda_1'
-            elif kit.i_nomen_manda_0:
-                nom = kit.i_nomen_manda_0.id
-                field = 'nomen_manda_0'
-            if nom:
-                product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
-
-            # Get all products for the defined list
-            if kit.sublist_id:
-                for line in kit.sublist_id.product_ids:
-                    product_ids.append(line.name.id)
-
-            # Check if products in already existing lines are in domain
-            for line in kit.composition_item_ids:
-                if line.item_product_id.id in product_ids:
-                    products.append(line.item_product_id.id)
-                else:
-                    self.pool.get('composition.item').unlink(cr, uid, line.id, context=context)
-
-            for product_data in self.pool.get('product.product').read(cr, uid, product_ids, ['uom_id'], context=context):
-                if product_data['id'] not in products:
-                    self.pool.get('composition.item').create(cr, uid, {'item_kit_id': ids[0],
-                                                                       'item_product_id': product_data['id'],
-                                                                       'item_qty': 0.00,
-                                                                       'item_uom_id': product_data['uom_id'][0]}, context=context)
-                                                                       
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'composition.kit',
-                'view_type': 'form',
-                'view_model': 'form',
-                'res_id': ids[0],
-                'target': 'dummy',
-                'context': context}
-
-    def get_nomen(self, cr, uid, id, field):
-        field = field[2:]
-        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
-
-#    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
-#        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
     
     def _composition_kit_constraint(self, cr, uid, ids, context=None):
         '''

@@ -11,9 +11,9 @@
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/form/notebook/page/group[3]" position="replace">
+                    <xpath expr="/form/notebook/page/group[2]" position="replace">
                     </xpath>
-                    <xpath expr="/form/notebook/page[@string='Purchase Order']/group[3]" position="replace" >
+                    <xpath expr="/form/notebook/page[@string='Purchase Order']/group[2]" position="replace" >
                     </xpath>
                     <!-- We change the positions of the supplier information fields -->
                     <xpath expr="/form//field[@name='internal_type']" position="replace" >
