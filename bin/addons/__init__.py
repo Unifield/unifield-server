@@ -785,9 +785,10 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
                 # Set new modules and dependencies
                 modobj.write(cr, 1, [mid], {'state': 'installed', 'latest_version': ver})
                 cr.commit()
-                # Update translations for all installed languages
-                modobj.update_translations(cr, 1, [mid], None)
-                cr.commit()
+                if not tools.config.options['nopo']:
+                    # Update translations for all installed languages
+                    modobj.update_translations(cr, 1, [mid], None)
+                    cr.commit()
 
             package.state = 'installed'
             # execute the selected functions

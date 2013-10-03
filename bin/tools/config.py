@@ -63,6 +63,7 @@ class configmanager(object):
             'overwrite_existing_translations': False,
             'load_language': None,
             'language': None,
+            'nopo': None,
             'pg_path': None,
             'admin_passwd': 'admin',
             'csv_internal_sep': ',',
@@ -221,6 +222,8 @@ class configmanager(object):
             "Option '-l' is mandatory in case of importation"
             )
 
+        group.add_option("--nopo", dest="nopo", action="store_true",
+                         default=False, help="Do not reload po files")
         group.add_option('--load-language', dest="load_language",
                          help="specifies the languages for the translations you want to be loaded")
         group.add_option('-l', "--language", dest="language",
@@ -318,7 +321,7 @@ class configmanager(object):
                 self.options[arg] = getattr(opt, arg)
 
         keys = [
-            'language', 'translate_out', 'translate_in', 'overwrite_existing_translations',
+            'language', 'nopo', 'translate_out', 'translate_in', 'overwrite_existing_translations',
             'debug_mode', 'smtp_ssl', 'load_language',
             'stop_after_init', 'logrotate', 'without_demo', 'netrpc', 'xmlrpc', 'syslog',
             'list_db', 'xmlrpcs',
