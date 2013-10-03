@@ -272,7 +272,7 @@ class ir_values(osv.osv):
                         new_act.append(v)
                 values = new_act
                 
-        elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'stock.picking' in [x[0] for x in models] and context.get('picking_type', False) != 'incoming_shipment':
+        elif (context.get('_terp_view_name') or context.get('picking_type')) and key == 'action' and key2 == 'client_print_multi' and 'stock.picking' in [x[0] for x in models] and context.get('picking_type', False) != 'incoming_shipment':
             new_act = []
             Picking_Tickets = trans_obj.tr_view(cr, 'Picking Tickets', context)
             Picking_Ticket = trans_obj.tr_view(cr, 'Picking Ticket', context)
@@ -282,10 +282,10 @@ class ir_values(osv.osv):
             Delivery_Order = trans_obj.tr_view(cr, 'Delivery Order', context)
             Internal_Moves = trans_obj.tr_view(cr, 'Internal Moves', context)
             for v in values:
-                if v[2]['report_name'] == 'picking.ticket' and context['_terp_view_name'] in (Picking_Tickets, Picking_Ticket) and context.get('picking_screen', False)\
-                or v[2]['report_name'] == 'pre.packing.list' and context['_terp_view_name'] in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
-                or v[2]['report_name'] == 'labels' and context['_terp_view_name'] in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order]\
-                or v[2]['report_name'] in ('internal.move.xls', 'internal.move') and context['_terp_view_name'] in [Internal_Moves]:
+                if '_terp_view_name' in context and v[2]['report_name'] == 'picking.ticket' and context['_terp_view_name'] in (Picking_Tickets, Picking_Ticket) and context.get('picking_screen', False)\
+                or '_terp_view_name' in context and v[2]['report_name'] == 'pre.packing.list' and context['_terp_view_name'] in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
+                or '_terp_view_name' in context and v[2]['report_name'] == 'labels' and context['_terp_view_name'] in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order]\
+                or v[2]['report_name'] in ('internal.move.xls', 'internal.move') and (('_terp_view_name' in context and context['_terp_view_name'] in [Internal_Moves]) or context.get('picking_type') == 'internal_move'):
                     new_act.append(v)
                 values = new_act
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'shipment' in [x[0] for x in models]:

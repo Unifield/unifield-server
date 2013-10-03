@@ -1589,7 +1589,7 @@ class ir_values(osv.osv):
                                     'tree_but_open': []}
         
         internal_accepted_values = {'client_action_multi': [],
-                                    'client_print_multi': ['Labels', 'Internal Move Excel Export', 'Internal Move'],
+                                    'client_print_multi': ['Internal Move Excel Export', 'Internal Move'],
                                     'client_action_relate': [],
                                     'tree_but_action': [],
                                     'tree_but_open': []}
@@ -1605,7 +1605,7 @@ class ir_values(osv.osv):
                                     'client_action_relate': [''],
                                     'tree_but_action': [],
                                     'tree_but_open': []}
-        
+
         if 'stock.move' in [x[0] for x in models]:
             new_values = []
             Destruction_Report = trans_obj.tr_view(cr, 'Destruction Report', context)
@@ -1634,6 +1634,7 @@ class ir_values(osv.osv):
             for v in values:
                 if key == 'action' and v[1] in picking_accepted_values[key2]:
                     new_values.append(v)
+
         return new_values
 
 ir_values()
