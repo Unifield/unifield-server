@@ -18,7 +18,7 @@
                     <!-- <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" /> -->
                 </xpath>
                 <xpath expr="/form/notebook/page/field[@name='order_line']/tree" position="attributes" >
-                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True</attribute>
+                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True;orange:product_qty == 0.00</attribute>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Notes']/field[@name='notes']" position="before">
                     <field name="import_in_progress" readonly="1" invisible="0" />
@@ -28,6 +28,7 @@
                     <button name="wizard_import_po_line" string="Import lines" icon="gtk-dnd" col="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                     <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
                     <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" context="{'rfq_ok': rfq_ok}"/>
+                    <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
                 </group>
                 <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'confirmed')]}"/>
                 <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'confirmed')]}"/>

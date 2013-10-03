@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import osv
+from osv import fields
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import base64
 from tools.translate import _
@@ -99,3 +100,123 @@ class wiz_common_import(osv.osv_memory):
         return file_values
 
 wiz_common_import()
+
+
+class wizard_common_import_line(osv.osv_memory):
+    _name = 'wizard.common.import.line'
+
+    def open_wizard(self, cr, uid, parent_id, parent_model, line_model, context=None):
+        '''
+        Open the wizard
+        '''
+        context = context or {}
+
+        wiz_id = self.create(cr, uid, {'parent_id': parent_id,
+                                       'parent_model': parent_model,
+                                       'line_model': line_model}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': self._name,
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context}
+
+    _columns = {
+        'parent_id': fields.integer(string='ID of the parent document'),
+        'parent_model': fields.char(size=128, string='Model of the parent document'),
+        'line_model': fields.char(size=128, string='Model of the line document'),
+        'product_ids': fields.many2many('product.product', 'product_add_in_line_rel',
+                                        'wiz_id', 'product_id', string='Products'),
+    }
+
+    def fill_lines(self, cr, uid, ids, context=None):
+        '''
+        Fill the line of attached document
+        '''
+        context = context or {}
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+
+        fields_to_read = ['parent_id', 
+                          'parent_model',
+                          'line_model',
+                          'product_ids']
+
+        for wiz in self.read(cr, uid, ids, fields_to_read, context=context):
+            parent_id = wiz['parent_id']
+            parent_obj = self.pool.get(wiz['parent_model'])
+            line_obj = self.pool.get(wiz['line_model'])
+            product_ids = wiz['product_ids']
+
+            line_obj.create_multiple_lines(cr, uid, parent_id, product_ids, context=context)
+                                        
+        return {'type': 'ir.actions.act_window_close'}
+
+wizard_common_import_line()
+
+
+class purchase_order_line(osv.osv):
+    _inherit = 'purchase.order.line'
+
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
+        '''
+        Create lines according to product in list
+        '''
+        p_obj  = self.pool.get('product.product')
+        po_obj = self.pool.get('purchase.order')
+
+        context = context or {}
+        product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
+
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price'], context=context):
+            po_data = po_obj.read(cr, uid, parent_id, ['pricelist_id', 'partner_id', 'date_order',
+                                                       'fiscal_position', 'state'], context=context)
+
+            values = {'order_id': parent_id,
+                      'product_id': p_data['id'],
+                      'product_uom': p_data['uom_id'][0],
+                      'price_unit': p_data['standard_price'],
+                      'old_price_unit': p_data['standard_price'],}
+            
+            values.update(self.product_id_on_change(cr, uid, False,
+                                                    po_data['pricelist_id'][0], # Pricelist
+                                                    values['product_id'], # Product
+                                                    1.00, # Product Qty - Use 1.00 to compute the price according to supplier catalogue
+                                                    values['product_uom'], # UoM
+                                                    po_data['partner_id'][0], # Supplier
+                                                    po_data['date_order'], # Date order
+                                                    po_data['fiscal_position'], # Fiscal position
+                                                    po_data['date_order'], # Date planned
+                                                    '', # Name
+                                                    values['price_unit'], # Price unit
+                                                    '', # Notes
+                                                    po_data['state'], # State
+                                                    values['old_price_unit'], # Old price unit
+                                                    False, # Nomen_manda_0
+                                                    '', # Comment
+                                                    context=context).get('value', {}))
+            # Set the quantity to 0.00
+            values.update({'product_qty': 0.00})
+
+            self.create(cr, uid, values, context=dict(context, noraise=True, import_in_progress=True))
+
+        return True
+
+purchase_order_line()
+
+
+class purchase_order(osv.osv):
+    _inherit = 'purchase.order'
+
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to open multiple lines
+        '''
+        context = context or {}
+
+        return self.pool.get('wizard.common.import.line').\
+                open_wizard(cr, uid, ids[0], 'purchase.order', 'purchase.order.line', context=context)
+
+
+purchase_order()

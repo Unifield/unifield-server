@@ -1980,7 +1980,7 @@ class purchase_order_line(osv.osv):
         if order_id.rfq_ok:
             vals.update({'change_price_manually': True})
         else:
-            if vals.get('product_qty', 0.00) == 0.00:
+            if vals.get('product_qty', 0.00) == 0.00 and not context.get('noraise'):
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
         
         order_id = vals.get('order_id')
@@ -2071,13 +2071,13 @@ class purchase_order_line(osv.osv):
 #            ids = [x.id for x in ids]
             
         for line in self.browse(cr, uid, ids, context=context):
-            if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok:
+            if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok and not context.get('noraise'):
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
         
         if not context.get('update_merge'):
             for line in ids:
                 vals = self._update_merged_line(cr, uid, line, vals, context=dict(context, skipResequencing=True))
-                
+
         if 'price_unit' in vals:
             vals.update({'old_price_unit': vals.get('price_unit')})
 
@@ -2199,9 +2199,9 @@ class purchase_order_line(osv.osv):
         'change_price_ok': lambda *a: True,
     }
     
-    _sql_constraints = [
-        ('product_qty_check', 'CHECK( product_qty > 0 )', 'Product Quantity must be greater than zero.'),
-    ]
+#    _sql_constraints = [
+#        ('product_qty_check', 'CHECK( product_qty > 0 )', 'Product Quantity must be greater than zero.'),
+#    ]
     
     def product_uom_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
