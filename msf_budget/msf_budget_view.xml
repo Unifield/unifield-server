@@ -11,6 +11,8 @@
                     <field name="name" colspan="1"/>
                     <field name="code" colspan="1"/>
                     <field name="fiscalyear_id"/>
+                    <field name="cost_center_id"/>
+                    <field name="instance_type"/>
                     <field name="state"/>
                     <field name="decision_moment_id"/>
                     <field name="version"/>
@@ -29,6 +31,11 @@
                        <filter string="Draft" icon="terp-document-new" domain="[('state','=','draft')]" help="Draft Budgets"/>
                        <filter name="validated" string="Validated" icon="terp-camera_test" domain="[('state','=','valid')]" help="Validated Budgets" />
                        <separator orientation="vertical"/>
+                       <filter name='hq' string="HQ" domain="[('instance_type', '=', 'section')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a HQ instance." icon="terp-go-home"/>
+                       <filter name='coordo' string="Coordo" domain="[('instance_type', '=', 'coordo')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a Coordo instance." icon="terp-go-home"/>
+                       <filter name='project' string="Project" domain="[('instance_type', '=', 'project')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a Project instance." icon="terp-go-home"/>
+                       <separator orientation="vertical"/>
+                       <newline/>
                        <field name="name" select="1"/>
                        <field name="code" select="1" />
                        <field name="cost_center_id"/>
