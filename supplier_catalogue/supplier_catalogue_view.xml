@@ -49,6 +49,37 @@
                         <field name="import_error_ok" invisible="1"/>
                         <field name="text_error" colspan="4" attrs="{'invisible': [('import_error_ok', '=', False)]}" nolabel="1"/>
                     </group>
+                    
+                    <group colspan="4" col="6">
+						<separator colspan="6" string="Product filters" />
+						<field name="sublist_id" attrs="{'readonly': [('nomen_manda_0', '!=', False)]}" colspan="3" />
+						<group colspan="3" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
+							<field name="nomen_manda_0"
+								   domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+								   widget="selection"
+								   on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+								   />
+							<field name="nomen_manda_1"
+								   domain="[('id','=', 0)]"
+								   widget="selection"
+								   get_selection="get_nomen"
+								   on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+								   />
+							<field name="nomen_manda_2"
+								   domain="[('id','=', 0)]"
+								   widget="selection"
+								   get_selection="get_nomen"
+								   on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+								   />
+							<field name="nomen_manda_3"
+								   domain="[('id','=', 0)]"
+								   widget="selection"
+								   get_selection="get_nomen"
+								   on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+								   />
+						</group>
+						<button colspan="6" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
+					</group>
     
 					<notebook colspan="4">
 						<page string="Products">

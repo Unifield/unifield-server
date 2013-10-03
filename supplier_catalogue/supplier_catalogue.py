@@ -264,6 +264,11 @@ class supplier_catalogue(osv.osv):
         'filename_template': fields.char(string='Template', size=256),
         'import_error_ok': fields.boolean('Display file with error'), 
         'text_error': fields.text('Text Error', readonly=True),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
     }
     
     _defaults = {
@@ -285,6 +290,57 @@ class supplier_catalogue(osv.osv):
         return True
     
     _constraints = [(_check_period, 'The \'To\' date mustn\'t be younger than the \'From\' date !', ['period_from', 'period_to'])]
+    
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
+
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
+        
+    def fill_lines(self, cr, uid, ids, context=None):
+        '''
+        Fill all lines according to defined nomenclature level and sublist
+        '''
+        line_obj = self.pool.get('supplier.catalogue.line')
+        
+        if context is None:
+            context = {}
+        for catalogue in self.browse(cr, uid, ids, context=context):
+            product_ids = self.pool.get('data.tools').get_product_from_list_nomen(cr, uid, catalogue, context=context)
+
+            # Check if products in already existing lines are in domain
+            products = []
+            for line in catalogue.line_ids:
+                if line.product_id.id in product_ids:
+                    products.append(line.product_id.id)
+                else:
+                    line_obj.unlink(cr, uid, line.id, context=context)
+
+            for product_data in self.pool.get('product.product').read(cr, uid, product_ids, ['uom_id', 'name', 'standard_price'], context=context):
+                # Check if the product is not already on the PO
+                if product_data['id'] not in products:
+                    values = {'catalogue_id': ids[0],
+                              'product_id': product_data['id'],
+                              'line_uom_id': product_data['uom_id'][0],
+                              'min_qty': 1.00,
+                              'min_order_qty': 0.00,
+                              'unit_price': product_data['standard_price']}
+                    values.update(line_obj.product_change(cr, uid, False, product_data['id'], 0.00, 0.00))
+                    line_obj.create(cr, uid, values, context=context)
+
+        self.write(cr, uid, ids, {'sublist_id': False,
+                                  'nomen_manda_0': False,
+                                  'nomen_manda_1': False,
+                                  'nomen_manda_2': False,
+                                  'nomen_manda_3': False}, context=context)
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'supplier.catalogue',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'target': 'dummy',
+                'context': context}
     
     def open_lines(self, cr, uid, ids, context=None):
         '''
