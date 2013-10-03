@@ -580,9 +580,9 @@ class product_attributes(osv.osv):
             raise osv.except_osv(_('Error'), error_msg)
             return False
 
-    _constraints = [
-        (_check_uom_category, _('There are some stock moves with this product on the system. So you should keep the same UoM category than these stock moves.'), ['uom_id', 'uom_po_id']),
-    ]
+#    _constraints = [
+#        (_check_uom_category, _('There are some stock moves with this product on the system. So you should keep the same UoM category than these stock moves.'), ['uom_id', 'uom_po_id']),
+#    ]
     
     def _on_change_restriction_error(self, cr, uid, ids, *args, **kwargs):
         '''
@@ -657,8 +657,8 @@ class product_attributes(osv.osv):
         if product_uom_categ:
             uom_categ = 'uom_id' in vals and vals['uom_id'] and self.pool.get('product.uom').browse(cr, uid, vals['uom_id'], context=context).category_id.id or False
             uos_categ = 'uom_po_id' in vals and vals['uom_po_id'] and self.pool.get('product.uom').browse(cr, uid, vals['uom_po_id'], context=context).category_id.id or False
-
-            if uom_categ not in product_uom_categ or uos_categ not in product_uom_categ:
+        
+            if (uom_categ and uom_categ not in product_uom_categ) or (uos_categ and uos_categ not in product_uom_categ):
                 raise osv.except_osv(_('Error'), _('You cannot choose an UoM which is not in the same UoM category of default UoM'))
 
         return res
