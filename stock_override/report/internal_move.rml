@@ -106,7 +106,7 @@
                     <para style="HeaderRight">Actual Receipt Date :</para>
                 </td>
                 <td>
-                    <para style="Header">[[ formatLang(picking.date, datetime=True) ]]</para>
+                    <para style="Header">[[ formatLang(picking.date, date_time=True) ]]</para>
                 </td>
             </tr>
             <tr>
@@ -126,7 +126,7 @@
                     <para style="HeaderRight">Expected Move Date :</para>
                 </td>
                 <td>
-                    <para style="Header">[[ formatLang(picking.min_date, datetime=True) ]]</para>
+                    <para style="Header">[[ formatLang(picking.min_date, date_time=True) ]]</para>
                 </td>
             </tr>
             <tr>
@@ -232,7 +232,7 @@
                     <para style="Line">[[ line.location_dest_id.name ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ formatLang(line.date, datetime=True) ]]</para>
+                    <para style="Line">[[ formatLang(line.date, date_time=True) ]]</para>
                 </td>
             </tr>
         </blockTable>
