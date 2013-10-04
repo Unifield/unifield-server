@@ -12,14 +12,15 @@
                     <field name="initial_doc_type" invisible="True" />
                     <field name="to_remove_type" invisible="True" />
                     <field name="linked_field_name" invisible="True" />
+                    <field name="qty_field" invisible="True" />
                     <separator colspan="4" string="Lines to remove" />
                     <field name="line_ids" colspan="4" nolabel="1" context="{'from_delete_wizard': True}" />
                     <separator colspan="4" string="Actions" />
                     <group colspan="4" col="4" >
-                        <label> </label>
                         <button special="cancel" icon="gtk-cancel" string="Close window" />
                         <button name="remove_selected_lines" type="object" icon="gtk-execute" string="Remove selected lines" />
                         <button name="remove_all_lines" type="object" icon="gtk-execute" string="Remove all lines" confirm="Are you sure that you want to remove all lines?" />
+                        <button name="remove_empty_lines" type="object" icon="gtk-execute" string="Remove Qty=0 lines" attrs="{'invisible': [('qty_field', '=', False)]}" />
                     </group>
                 </form>
             </field>

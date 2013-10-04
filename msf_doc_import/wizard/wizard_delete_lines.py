@@ -37,20 +37,20 @@ are a tuple with information in this order :
     * field of the line that link the line to its parent
     * field of the parent that contains the lines
 """
-DOCUMENT_DATA = {'product.list': ('product.list.line', 'list_id', 'product_ids'),
-                 'composition.kit': ('composition.item', 'item_kit_id', 'composition_item_ids'),
-                 'purchase.order': ('purchase.order.line', 'order_id', 'order_line'),
-                 'tender': ('tender.line', 'tender_id', 'tender_line_ids'),
-                 'sale.order': ('sale.order.line', 'order_id', 'order_line'),
-                 'supplier.catalogue': ('supplier.catalogue.line', 'catalogue_id', 'line_ids'),
-                 'stock.picking': ('stock.move', 'picking_id', 'move_lines'),
-                 'stock.warehouse.automatic.supply': ('stock.warehouse.automatic.supply.line', 'supply_id', 'line_ids'),
-                 'stock.warehouse.order.cycle': ('stock.warehouse.order.cycle.line', 'order_cycle_id', 'product_id'),
-                 'threshold.value': ('threshold.value.line', 'threshold_value_id', 'line_ids'),
-                 'stock.inventory': ('stock.inventory.line', 'inventory_id', 'inventory_line_id'),
-                 'initial.stock.inventory': ('initial.stock.inventory.line', 'inventory_id', 'inventory_line_id'),
-                 'real.average.consumption': ('real.average.consumption.line', 'rac_id', 'line_ids'),
-                 'monthly.review.consumption': ('monthly.review.consumption.line', 'mrc_id', 'line_ids'),}
+DOCUMENT_DATA = {'product.list': ('product.list.line', 'list_id', 'product_ids', ''),
+                 'composition.kit': ('composition.item', 'item_kit_id', 'composition_item_ids', 'item_qty'),
+                 'purchase.order': ('purchase.order.line', 'order_id', 'order_line', 'product_qty'),
+                 'tender': ('tender.line', 'tender_id', 'tender_line_ids', 'qty'),
+                 'sale.order': ('sale.order.line', 'order_id', 'order_line', 'product_uom_qty'),
+                 'supplier.catalogue': ('supplier.catalogue.line', 'catalogue_id', 'line_ids', 'min_qty'),
+                 'stock.picking': ('stock.move', 'picking_id', 'move_lines', 'product_qty'),
+                 'stock.warehouse.automatic.supply': ('stock.warehouse.automatic.supply.line', 'supply_id', 'line_ids', 'product_qty'),
+                 'stock.warehouse.order.cycle': ('stock.warehouse.order.cycle.line', 'order_cycle_id', 'product_id', ''),
+                 'threshold.value': ('threshold.value.line', 'threshold_value_id', 'line_ids', ''),
+                 'stock.inventory': ('stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty'),
+                 'initial.stock.inventory': ('initial.stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty'),
+                 'real.average.consumption': ('real.average.consumption.line', 'rac_id', 'line_ids', 'product_qty'),
+                 'monthly.review.consumption': ('monthly.review.consumption.line', 'mrc_id', 'line_ids', ''),}
 
 
 #class document_remove_line(osv.osv):
@@ -270,6 +270,7 @@ class wizard_delete_lines(osv.osv_memory):
         'initial_doc_type': fields.char(size=128, string='Model of the initial document', required=True),
         'to_remove_type': fields.char(size=128, string='Model of the lines', required=True),
         'linked_field_name': fields.char(size=128, string='Field name of the link between lines and original doc', required=True),
+        'qty_field': fields.char(size=128, string='Qty field used to select only empty lines'),
         # The line_ids field is a text field, but the content of this field is
         # the result of the many2many field creation (like [(6,0,[IDS])]).
         # On the remove_selected_lines method, we parse this content to get
@@ -293,8 +294,15 @@ class wizard_delete_lines(osv.osv_memory):
             res['initial_doc_type'] = context.get('active_model')
             res['to_remove_type'] = DOCUMENT_DATA.get(context.get('active_model'))[0]
             res['linked_field_name'] = DOCUMENT_DATA.get(context.get('active_model'))[1]
+            res['qty_field'] = DOCUMENT_DATA.get(context.get('active_model'))[3]
 
         return res
+
+    def remove_empty_lines(self, cr, uid, ids, context=None):
+        '''
+        Remove only empty lines
+        '''
+        return self.remove_all_lines(cr, uid, ids, context=context, remove_only_empty=True)
 
     def remove_selected_lines(self, cr, uid, ids, context=None):
         '''
@@ -317,7 +325,7 @@ class wizard_delete_lines(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
-    def remove_all_lines(self, cr, uid, ids, context=None):
+    def remove_all_lines(self, cr, uid, ids, context=None, remove_only_empty=False):
         '''
         Remove all lines of the initial document
         '''
@@ -326,8 +334,14 @@ class wizard_delete_lines(osv.osv_memory):
             ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
+            if remove_only_empty and not wiz.qty_field:
+                raise osv.except_osv(_('Error'), _('The remove empty lines is not available for this document'))
+
             line_obj = self.pool.get(wiz.to_remove_type)
-            line_ids = line_obj.search(cr, uid, [(wiz.linked_field_name, '=', wiz.initial_doc_id)], context=context)
+            if remove_only_empty:
+                line_ids = line_obj.search(cr, uid, [(wiz.linked_field_name, '=', wiz.initial_doc_id), (wiz.qty_field, '=', 0.00)], context=context)
+            else:
+                line_ids = line_obj.search(cr, uid, [(wiz.linked_field_name, '=', wiz.initial_doc_id)], context=context)
             line_obj.unlink(cr, uid, line_ids, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
