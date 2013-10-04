@@ -43,9 +43,12 @@
             var form = document.forms['view_form'];
             form.action = '/openerp/impex/save_exp';
             var options = openobject.dom.get('fields').options;
+            var fields2 = [];
             forEach(options, function(o){
                 o.selected = true;
+                fields2 = fields2.concat('"' + o.text + '"');
             });
+            openobject.dom.get('_terp_fields2').value = '[' + fields2.join(',') + ']';
             form.submit();
         }
 

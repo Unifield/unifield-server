@@ -177,13 +177,8 @@ class ImpEx(SecuredController):
                 selected_list = [selected_list]
             exp_id = proxy.create({'name' : name, 'resource' : params.model, 'export_fields' : [(0, 0, {'name' : f}) for f in selected_list]})
             kw['_export_id'] = exp_id
-            kw['_terp_listheaders'] = []
-            f_proxy = rpc.RPCProxy('ir.model.fields')
-            f_ids = f_proxy.search([('name', 'in', selected_list), ('model', '=', params.model)])
-            for f in f_proxy.read(f_ids, ['name', 'field_description']):
-                kw['_terp_listheaders'].append('%s, %s' % (f['name'], f['field_description']))
-
-        raise redirect('/openerp/impex/exp', **kw)
+        return self.exp(**kw)
+        #raise redirect('/openerp/impex/exp', **kw)
 
     @expose()
     def delete_listname(self, **kw):
