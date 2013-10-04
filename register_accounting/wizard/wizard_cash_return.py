@@ -491,7 +491,7 @@ class wizard_cash_return(osv.osv_memory):
         self.verify_date(cr, uid, ids, context=context)
         # retrieve some values
         if wizard.initial_amount != wizard.total_amount:
-            raise osv.except_osv(_('Warning'), _('Initial advance amount does not match the amount you justified. First correct. Then press Compute button'))
+            raise osv.except_osv(_('Warning'), _('Initial advance amount (%s) does not match the amount you justified (%s). First correct. Then press Compute button') % (wizard.initial_amount, wizard.total_amount))
         #if not wizard.invoice_line_ids and not wizard.advance_line_ids:
         #     raise osv.except_osv(_('Warning'), _('Please give some data or click on Cancel.'))
         # All exceptions passed. So let's go doing treatments on data !
