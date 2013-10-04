@@ -479,7 +479,7 @@ class wizard_register_import(osv.osv_memory):
             cr.close()
         except Exception as e:
             cr.rollback()
-            self.write(cr, uid, ids, {'message': _("An error occured: %s") % (e and e.args and e.args[0] or '', ''), 'state': 'done', 'progression': 100.0})
+            self.write(cr, uid, ids, {'message': _("An error occured: %s") % (e and e.args and e.args[0] or ''), 'state': 'done', 'progression': 100.0})
             cr.close()
         return True
 
