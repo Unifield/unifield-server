@@ -210,7 +210,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             # Expiry date
             if row.cells[4].data:
                 if row.cells[4].type == 'datetime':
-                    expiry = row.cells[4].data
+                    expiry = row.cells[4].data.strftime('%Y-%m-%d')
                 else:
                     error_list.append(_('The date format was not good so we took the date from the parent.'))
                     to_correct_ok = True
@@ -224,9 +224,9 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         error_list.append(_('No batch found for the expiry date %s.' % expiry))
                     else:
                         batch = batch_ids[0]
-                elif batch:
-                    expiry = batch_obj.browse(cr, uid, batch, context=context).life_date
-                    if row.cells[4].data.strftime('%Y-%m-%d') != expiry:
+                elif expiry and batch:
+                    b_expiry = batch_obj.browse(cr, uid, batch, context=context).life_date
+                    if expiry != b_expiry:
                         err_exp_message = _('Expiry date inconsistent with %s') % row.cells[3].data
                         error_list.append(err_exp_message)
                         comment += err_exp_message
