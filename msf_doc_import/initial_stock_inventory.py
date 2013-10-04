@@ -255,8 +255,11 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     comment += _('Batch is missing.\n')
                 if hidden_perishable_mandatory and not expiry:
                     comment += _('Expiry date is missing.\n')
-                if not hidden_batch_management_mandatory and not hidden_perishable_mandatory:
+                if not hidden_perishable_mandatory and not hidden_batch_management_mandatory and batch:
+                    comment += _('This product is not Batch Number managed.')
                     batch = False
+                if not hidden_perishable_mandatory and expiry:
+                    comment += _('This product is not Expiry Date managed.')
                     expiry = False
             else:
                 product_uom = self.pool.get('product.uom').search(cr, uid, [], context=context)[0]
