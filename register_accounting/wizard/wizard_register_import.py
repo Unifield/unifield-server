@@ -256,9 +256,12 @@ class wizard_register_import(osv.osv_memory):
                 cur = self.pool.get('res.currency').browse(cr, uid, currency_ids, context)
                 if not cur or not cur[0] or not cur[0].active:
                     raise osv.except_osv(_('Error'), _('Currency %s is not active!') % (cur.name))
+                # Check that currency is the same as register's one
+                if wiz.register_id.currency.id not in currency_ids:
+                    raise osv.except_osv(_('Erorr'), _("Wrong currency: %s. Register's one: %s") % (cur[0].name, wiz.register_id.currency.name))
                 # Search registers that correspond to this instance, journal's code and currency and check that our register is in the list
                 register_ids = self.pool.get('account.bank.statement').search(cr, uid, [('instance_id', 'in', instance_ids), ('journal_id', 'in', journal_ids), ('currency', 'in', currency_ids)])
-                if not register_ids or not wiz.register_id.id in register_ids:
+                if not register_ids or wiz.register_id.id not in register_ids:
                     raise osv.except_osv(_('Error'), _("The given register does not correspond to register's information from the file. Instance code: %s. Journal's code: %s. Currency code: %s.") % (wiz.register_id.instance_id.code, wiz.register_id.journal_id.code, wiz.register_id.currency.name))
                 # Don't read the fourth line
                 rows.next()
