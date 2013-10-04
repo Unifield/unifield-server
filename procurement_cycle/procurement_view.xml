@@ -98,6 +98,7 @@
                                 <field name="available_stock" />
                                 <field name="expiry_before" />
                                 <field name="qty_to_order" />
+                                <field name="required_date" />
                                 <field name="supplier_id" />
                         	</tree>
                         </field>

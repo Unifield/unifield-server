@@ -80,7 +80,7 @@
 	                <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('compute_method', '=', False)]}"/>
 	                
                     <group colspan="4" col="4" attrs="{'invisible': [('compute_method', '=', False)]}">
-                        <button colspan="4" icon="gtk-reload" string="Refresh values" type="object" name="dummy" />
+                        <button colspan="4" icon="gtk-execute" string="Refresh values" type="object" name="dummy" />
                         <field name="line_ids" nolabel="1" colspan="4" attrs="{'invisible': [('compute_method', '!=', 'computed')]}" context="{'rule_id': active_id}">
                             <tree string="Products" editable="top">
                                 <field name="product_id" domain="[('list_ids', '=', parent.sublist_id), ('type', 'not in', ['service', 'service_recep', 'consu'])]"
@@ -92,6 +92,7 @@
                                 <field name="real_stock" />
                                 <field name="available_stock" />
                                 <field name="expiry_before" />
+                                <field name="required_date" />
                                 <field name="supplier_id" />
                                 <field name="threshold_value" readonly="1" />
                                 <field name="fake_threshold_value" invisible="1" />

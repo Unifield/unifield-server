@@ -371,13 +371,14 @@ class threshold_value_line(osv.osv):
                         'safety_time': line.threshold_value_id.safety_month}
             expiry_product_qty = product_obj.get_expiry_qty(cr, uid, line.product_id.id, location_id, False, d_values, context=dict(context, location=location_id, compute_child=True))
 
-            qty_to_order = proc_obj._compute_quantity(cr, uid, False, line.product_id, line.threshold_value_id.location_id.id, d_values, context=dict(context, from_date=from_date, to_date=to_date))
+            qty_to_order, req_date = proc_obj._compute_quantity(cr, uid, False, line.product_id, line.threshold_value_id.location_id.id, d_values, context=dict(context, from_date=from_date, to_date=to_date, get_data=True))
 
             res[line.id] = {'consumption': consu,
                             'real_stock': stock_product.qty_available,
                             'available_stock': stock_product.virtual_available,
                             'expiry_before': expiry_product_qty,
                             'supplier_id': stock_product.seller_id.id,
+                            'required_date': req_date,
                             }
 
         return res
@@ -406,6 +407,7 @@ class threshold_value_line(osv.osv):
         'available_stock': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Available stock', multi='data', readonly=True),
         'expiry_before': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Exp. before consumption', multi='data', readonly=True),
         'supplier_id': fields.function(_get_data, method=True, type='many2one', relation='res.partner', string='Supplier', multi='data', readonly=True),
+        'required_date': fields.function(_get_data, method=True, type='date', string='Required by date', multi='data', readonly=True),
     }
     
     def _check_uniqueness(self, cr, uid, ids, context=None):

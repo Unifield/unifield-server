@@ -23,6 +23,7 @@ from osv import osv
 from datetime import datetime
 from tools.translate import _
 from mx.DateTime import RelativeDate
+from mx.DateTime import RelativeDateTime
 from mx.DateTime import now
 from mx.DateTime import Parser
 
@@ -223,9 +224,21 @@ Created documents : \n'''
         available_qty = self.get_available(cr, uid, product.id, location_id, monthly_consumption, d_values)
         
         qty_to_order = (delivery_leadtime * monthly_consumption) + (order_coverage * monthly_consumption) - available_qty
-        
-        return round(self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, qty_to_order, product.uom_id.id), 2)
-        
+
+        if not context.get('get_data', False):        
+            res = round(self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, qty_to_order, product.uom_id.id), 2)
+        else:
+            delta = 0
+            if monthly_consumption:
+                delta = available_qty / monthly_consumption * 30
+
+            if delta <= 0.00:
+                req_date = now().strftime('%Y-%m-%d')
+            else:
+                req_date = (now() + RelativeDateTime(days=delta)).strftime('%Y-%m-%d')
+            res = round(self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, qty_to_order, product.uom_id.id), 2), req_date
+
+        return res
         
     def get_available(self, cr, uid, product_id, location_id, monthly_consumption, d_values=None, context=None):
         '''
