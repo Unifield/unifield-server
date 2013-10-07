@@ -28,10 +28,7 @@
                     </group>
                     <newline />
                     <field name="progression" widget="progressbar" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="4" />
-                    <group col="4" colspan="4">
-                      <field name="message" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="2"/>
-                      <label string="" colspan="2"/>
-                    </group>
+                    <field name="message" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" widget="text"/>
                     <newline/>
                     <button name="button_update" type="object" string="Update" icon="gtk-refresh" attrs="{'invisible': [('state', '!=', 'inprogress')]}"/>
                     <newline />
