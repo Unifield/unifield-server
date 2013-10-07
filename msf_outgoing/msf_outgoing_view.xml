@@ -1159,7 +1159,7 @@
 			<field name="model">shipment</field>
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
-				<tree string="Shipment" hide_new_button="1" hide_delete_button="1" colors="blue:state in ['draft'];grey:state in ['cancel'];red:state not in ['cancel', 'done'] and shipment_expected_date &lt; current_date;black:state in ['done'];green: state in ['delivered']">
+                <tree string="Shipment" hide_new_button="1" hide_delete_button="1" colors="blue:state in ['draft'] and (shipment_expected_date &gt; current_date or shipment_expected_date == current_date);grey:state in ['cancel'];red:state not in ['cancel', 'done'] and shipment_expected_date &lt; current_date;black:state in ['done'];green: state in ['delivered']">
 					<field name="name"/>
 					<field name="partner_id2"/>
 					<field name="address_id"/>
