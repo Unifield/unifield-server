@@ -155,7 +155,7 @@
         </record>
 
         <record id="account.action_account_analytic_account_tree2" model="ir.actions.act_window">
-            <field name="name">Chart of Analytic Accounts</field>
+            <field name="name">Balance by analytic account</field>
             <field name="res_model">account.analytic.account</field>
             <field name="view_type">tree</field>
             <field name="view_id" ref="view_account_analytic_account_tree_coa"/>

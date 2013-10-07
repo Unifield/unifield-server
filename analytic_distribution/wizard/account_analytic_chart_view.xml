@@ -29,5 +29,27 @@
             </field>
         </record>
 
+    <!--
+         Redefine Chart of Analytic Accounts to "Balance by analytic accounts" (actions, menus, etc.)
+    -->
+
+        <record id="account.action_account_analytic_chart" model="ir.actions.act_window">
+          <field name="name">Balance by analytic accounts</field>
+          <field name="type">ir.actions.act_window</field>
+          <field name="res_model">account.analytic.chart</field>
+          <field name="view_type">form</field>
+          <field name="view_mode">form</field>
+          <field name="view_id" ref="view_account_analytic_chart"/>
+          <field name="target">new</field>
+        </record>
+
+        <menuitem
+          name="Balance by analytic accounts"
+          parent="account.menu_finance_charts"
+          action="account.action_account_analytic_chart"
+          id="account.menu_action_analytic_account_tree2"
+          icon="STOCK_INDENT"
+          groups="analytic.group_analytic_accounting" sequence="20"/>
+
     </data>
 </openerp>
