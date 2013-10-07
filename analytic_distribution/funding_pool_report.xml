@@ -11,6 +11,18 @@
         menu="True"
         header="False"/>
 
+      <report
+        id="account_analytic_chart_export"
+        string="Account analytic chart export"
+        model="account.analytic.account"
+        name="account.analytic.chart.export"
+        file="analytic_distribution/report/report_account_analytic_chart_export.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="False"
+      />
+
     </data>
 </openerp>
 

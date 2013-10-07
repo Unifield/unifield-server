@@ -46,6 +46,7 @@
         'test/20_analytic_data.yml',
         'test/30_check_dates.yml',
         'test/bug_1681.yml',
+        'test/40_check_report.yml',
     ],
     'demo_xml': [
     ],

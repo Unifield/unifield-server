@@ -26,6 +26,7 @@ from tools.translate import _
 from lxml import etree
 from tools.misc import flatten
 from destination_tools import many2many_sorted, many2many_notlazy
+import decimal_precision as dp
 
 class analytic_account(osv.osv):
     _name = "account.analytic.account"
@@ -115,7 +116,77 @@ class analytic_account(osv.osv):
                 else:
                     newargs.append(('id', '!=', intermission))
         return newargs
-    
+
+    # @@@override analytic.analytic
+    def _debit_credit_bal_qtty(self, cr, uid, ids, name, arg, context=None):
+        res = {}
+        if context is None:
+            context = {}
+        # use different criteria regarding analytic account category!
+        account_type = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {}
+            for field in name:
+                res[line.id].update({field: False})
+            if line.category:
+                if not line.category in account_type:
+                    account_type[line.category] = []
+                account_type[line.category].append(line.id)
+        for cat in account_type:
+            default_field = 'account_id'
+            if cat == 'DEST':
+                default_field = 'destination_id'
+            elif cat == 'OC':
+                default_field = 'cost_center_id'
+            child_ids = tuple(self.search(cr, uid, [('parent_id', 'child_of', account_type[cat])]))
+            for i in child_ids:
+                res[i] =  {}
+                for n in name:
+                    res[i][n] = 0.0
+
+            #if not child_ids:
+            #    return res
+
+            where_date = ''
+            where_clause_args = [tuple(child_ids)]
+            if context.get('from_date', False):
+                where_date += " AND l.date >= %s"
+                where_clause_args  += [context['from_date']]
+            if context.get('to_date', False):
+                where_date += " AND l.date <= %s"
+                where_clause_args += [context['to_date']]
+            # UF-1713: Add currency arg
+            if context.get('currency_id', False):
+                where_date += " AND l.currency_id = %s"
+                where_clause_args += [context['currency_id']]
+            cr.execute("""
+                  SELECT a.id,
+                         sum(
+                             CASE WHEN l.amount > 0
+                             THEN l.amount
+                             ELSE 0.0
+                             END
+                              ) as debit,
+                         sum(
+                             CASE WHEN l.amount < 0
+                             THEN -l.amount
+                             ELSE 0.0
+                             END
+                              ) as credit,
+                         COALESCE(SUM(l.amount),0) AS balance,
+                         COALESCE(SUM(l.unit_amount),0) AS quantity
+                  FROM account_analytic_account a
+                      LEFT JOIN account_analytic_line l ON (a.id = l.""" + default_field  + """)
+                  WHERE a.id IN %s
+                  """ + where_date + """
+                  GROUP BY a.id""", where_clause_args)
+            for ac_id, debit, credit, balance, quantity in cr.fetchall():
+                res[ac_id] = {'debit': debit, 'credit': credit, 'balance': balance, 'quantity': quantity}
+            tmp_res = super(analytic_account, self)._compute_level_tree(cr, uid, ids, child_ids, res, ['debit', 'credit', 'balance', 'quantity'], context)
+            res.update(tmp_res)
+        return res
+    # @@@end
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=1),
         'code': fields.char('Code', size=24),
@@ -135,6 +206,7 @@ class analytic_account(osv.osv):
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active analytic accounts",),
         'hide_closed_fp': fields.function(_get_active, fnct_search=_search_closed_by_a_fp, type="boolean", method=True, store=False, string="Linked to a soft/hard closed contract?"),
         'intermission_restricted': fields.function(_get_fake, fnct_search=_search_intermission_restricted, type="boolean", method=True, store=False, string="Domain to restrict intermission cc"),
+        'balance': fields.function(_debit_credit_bal_qtty, method=True, type='float', string='Balance', digits_compute=dp.get_precision('Account'), multi='debit_credit_bal_qtty'),
     }
 
     _defaults ={
@@ -260,7 +332,9 @@ class analytic_account(osv.osv):
             for arg in args2:
                 ids.append(arg[1])
             args.append(('id', 'in', ids))
-        
+        # UF-1713: Active/inactive functionnality was missing.
+        if context and 'filter_inactive' in context and context['filter_inactive']:
+            args.append(('filter_active', '=', context['filter_inactive']))
         # Tuple Account/Destination search
         for i, arg in enumerate(args):
             if arg[0] and arg[0] == 'tuple_destination':
@@ -410,6 +484,36 @@ class analytic_account(osv.osv):
                 if contract.state in ['soft_closed', 'hard_closed']:
                     res.append(aa.id)
         return res
+
+    def get_analytic_line(self, cr, uid, ids, context=None):
+        """
+        Return analytic lines list linked to the given analytic accounts
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        default_field = 'account_id'
+        for aaa in self.browse(cr, uid, ids):
+            if aaa.category == 'OC':
+                default_field = 'cost_center_id'
+            elif aaa.category == 'DEST':
+                default_field = 'destination_id'
+        # Prepare some values
+        domain = [(default_field, 'child_of', ids)]
+        context.update({default_field: context.get('active_id')})
+        return {
+            'name': _('Analytic Journal Items'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.analytic.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
+
 
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

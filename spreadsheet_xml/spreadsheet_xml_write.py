@@ -64,10 +64,7 @@ class SpreadsheetReport(WebKitParser):
         # Cf. tools/tests_reports.py:89
         if context and context.get('from_yml', False) and context.get('from_yml') is True:
             return (a[0], 'foobar')
-
         return (a[0], 'xls')
-
-
 
 class SpreadsheetCreator(object):
     def __init__(self, title, headers, datas):

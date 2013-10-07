@@ -8,12 +8,26 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="account.account_analytic_chart_view"/>
             <field name="arch" type="xml">
-                <label string="(Keep empty to open the current situation)" position="after">
-                    <separator string="Inactive accounts" colspan="4"/>
-                    <field name="show_inactive"/>
-                </label>
+                <data>
+                    <xpath expr="//separator[@string='Select the Period for Analysis']" position="before">
+                        <field name="fiscalyear" on_change="onchange_fiscalyear(fiscalyear)"/>
+                    </xpath>
+                    <xpath expr="//label[@string='(Keep empty to open the current situation)']" position="after">
+                        <separator string="Inactive accounts" colspan="4"/>
+                        <field name="show_inactive"/>
+                        <newline/>
+                        <separator string="Currency" colspan="4"/>
+                        <field name="currency_id"/>
+                    </xpath>
+                    <xpath expr="/form/group[1]" position="after">
+                        <group colspan="4" col="2">
+                            <label string="" colspan="1"/>
+                            <button icon="gtk-print" string="Export" name="button_export" type="object" colspan="1"/>
+                        </group>
+                    </xpath>
+                </data>
             </field>
         </record>
-        
+
     </data>
 </openerp>
