@@ -349,6 +349,24 @@ class account_analytic_line(osv.osv):
 
 account_analytic_line()
 
+class account_move_line(osv.osv):
+    _inherit = 'account.move.line'
+    
+    def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
+        # Do workflow if line is coming from sync, is now reconciled and it has an unpaid invoice
+        if context.get('sync_update_execution') and 'reconcile_id' in vals and vals['reconcile_id']:
+            invoice_ids = []
+            for line in self.browse(cr, uid, ids, context=context):
+                if line.invoice and line.invoice.state != 'paid':
+                    invoice_ids.append(line.invoice.id)
+            if self.pool.get('account.invoice').test_paid(cr, uid, invoice_ids):
+                self.pool.get('account.invoice').confirm_paid(cr, uid, invoice_ids)
+                
+        return res
+
+account_move_line()
+
 class funding_pool_distribution_line(osv.osv):
     _inherit = 'funding.pool.distribution.line'
     
