@@ -25,6 +25,36 @@
                 </data>
             </field>
         </record>
-        
+
+        <record id="view_account_coa" model="ir.ui.view">
+            <field name="name">account.coa.form</field>
+            <field name="model">account.coa</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Chart of accounts">
+                    <field name="fiscalyear"/>
+                    <field name="show_inactive"/>
+                    <group colspan="4" col="6">
+                        <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                        <button icon="terp-gtk-go-back-rtl" string="Open Charts" name="button_validate" type="object"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_account_coa" model="ir.actions.act_window">
+            <field name="name">Chart of Accounts</field>
+            <field name="res_model">account.coa</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_account_coa"/>
+            <field name="target">new</field>
+            <field name="help">Display your company chart of accounts per fiscal year and filter by period. Have a complete tree view fo all journal items per account code by clicking on an account.</field>
+        </record>
+
+        <menuitem icon="STOCK_INDENT" action="action_account_coa"
+          id="menu_action_account_coa_tree2"
+          parent="account.menu_finance_charts" sequence="30"/>
+
     </data>
 </openerp>
