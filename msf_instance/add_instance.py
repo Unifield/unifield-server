@@ -306,6 +306,19 @@ class account_move_line(osv.osv):
             vals['instance_id'] = journal.instance_id.id
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
 
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        """
+        Filtering regarding context
+        """
+        if not context:
+            context = {}
+        if context.get('instance_ids'):
+            instance_ids = context.get('instance_ids')
+            if isinstance(instance_ids, (int, long)):
+                instance_ids = [instance_ids]
+            args.append(('instance_id', 'in', instance_ids))
+        return super(account_move_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+
 account_move_line()
 
 class account_bank_statement(osv.osv):

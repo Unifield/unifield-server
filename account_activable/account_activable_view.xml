@@ -109,5 +109,21 @@
         <!-- Menus -->
         <menuitem action="action_account_activable_form" id="account.menu_action_account_form" parent="account.account_account_menu"/>
 
+      <!--
+          Reports
+      -->
+
+        <report
+            id="account_chart_export"
+            string="Account chart export"
+            model="account.account"
+            name="account.chart.export"
+            file="account_activable/report/report_account_chart_export.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+
     </data>
 </openerp>

@@ -8,10 +8,21 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="account.view_account_chart"/>
             <field name="arch" type="xml">
-                <field name="period_to" position="after">
-                    <separator string="Inactive accounts" colspan="4"/>
-                    <field name="show_inactive"/>
-                </field>
+                <data>
+                    <xpath expr="/form//field[@name='period_to']" position="after">
+                        <separator string="Inactive accounts" colspan="4"/>
+                        <field name="show_inactive"/>
+                        <newline/>
+                        <separator string="Currency" colspan="4"/>
+                        <field name="currency_id"/>
+                    </xpath>
+                    <xpath expr="/form/group[2]" position="after">
+                        <group colspan="4" col="2">
+                            <label string="" colspan="1"/>
+                            <button icon="gtk-print" string="Export" name="button_export" type="object" colspan="1"/>
+                        </group>
+                    </xpath>
+                </data>
             </field>
         </record>
         

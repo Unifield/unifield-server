@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2012 TeMPO Consulting, MSF
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,5 +19,18 @@
 #
 ##############################################################################
 
-import wizard_add_cost_centers
-import account_chart
+import time
+import csv
+import StringIO
+import pooler
+from report import report_sxw
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+
+class report_account_chart_export(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        if not context:
+            context = {}
+        super(report_account_chart_export, self).__init__(cr, uid, name, context=context)
+
+SpreadsheetReport('report.account.chart.export','account.account','addons/account_activable/report/report_account_chart_export.mako', parser=report_account_chart_export)
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

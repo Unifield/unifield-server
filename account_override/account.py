@@ -26,6 +26,7 @@ from osv import fields
 from tools.translate import _
 from time import strftime
 import datetime
+import decimal_precision as dp
 
 class account_account(osv.osv):
     _name = "account.account"
@@ -68,6 +69,33 @@ class account_account(osv.osv):
                 arg.append(('inactivation_date', '<=', cmp_date))
         return arg
 
+    def _compute(self, cr, uid, ids, field_names, arg=None, context=None, query='', query_params=()):
+        """
+        Add criteria regarding context (for chart of account)
+        """
+        if not context:
+            context = {}
+        if 'balance' in field_names:
+            link = " "
+            if context.get('currency_id', False):
+                if query:
+                    link = " AND "
+                query += link + 'currency_id = %s'
+                query_params += tuple([context.get('currency_id')])
+            link = " "
+            if context.get('instance_ids', False):
+                if query:
+                    link = " AND "
+                instance_ids = context.get('instance_ids')
+                if isinstance(instance_ids, (int, long)):
+                    instance_ids = [instance_ids]
+                if len(instance_ids) == 1:
+                    query += link + 'instance_id = %s'
+                else:
+                    query += link + 'instance_id in %s'
+                query_params += tuple(instance_ids)
+        return super(account_account, self).__compute(cr, uid, ids, field_names, arg, context, query, query_params)
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'), 
@@ -78,6 +106,7 @@ class account_account(osv.osv):
             """),
         'is_settled_at_hq': fields.boolean("Settled at HQ"),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
+        'balance': fields.function(_compute, digits_compute=dp.get_precision('Account'), method=True, string='Balance', multi='balance'),
     }
 
     _defaults = {
