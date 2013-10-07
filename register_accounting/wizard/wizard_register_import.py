@@ -258,7 +258,7 @@ class wizard_register_import(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _('Currency %s is not active!') % (cur.name))
                 # Check that currency is the same as register's one
                 if wiz.register_id.currency.id not in currency_ids:
-                    raise osv.except_osv(_('Erorr'), _("Wrong currency: %s. Register's one: %s") % (cur[0].name, wiz.register_id.currency.name))
+                    raise osv.except_osv(_(''), _("the import's currency is %s whereas the register's currency is %s") % (cur[0].name, wiz.register_id.currency.name))
                 # Search registers that correspond to this instance, journal's code and currency and check that our register is in the list
                 register_ids = self.pool.get('account.bank.statement').search(cr, uid, [('instance_id', 'in', instance_ids), ('journal_id', 'in', journal_ids), ('currency', 'in', currency_ids)])
                 if not register_ids or wiz.register_id.id not in register_ids:
@@ -478,7 +478,7 @@ class wizard_register_import(osv.osv_memory):
             cr.close()
         except osv.except_osv as osv_error:
             cr.rollback()
-            self.write(cr, uid, ids, {'message': _("An error occured. %s: %s") % (osv_error.name, osv_error.value), 'state': 'done', 'progression': 100.0})
+            self.write(cr, uid, ids, {'message': _("An error occured %s: %s") % (osv_error.name, osv_error.value), 'state': 'done', 'progression': 100.0})
             cr.close()
         except Exception as e:
             cr.rollback()

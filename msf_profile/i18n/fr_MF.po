@@ -41346,8 +41346,8 @@ msgstr "Période du calcul"
 #: code:addons/msf_doc_import/account.py:413
 #: code:addons/register_accounting/wizard/wizard_register_import.py:465
 #, python-format
-msgid "An error occured. %s: %s"
-msgstr "Une erreur est survenue. %s: %s"
+msgid "An error occured %s: %s"
+msgstr "Une erreur est survenue %s: %s"
 
 #. module: base_setup
 #: field:base.setup.config,installed_users:0
@@ -71665,6 +71665,12 @@ msgstr "Afficher les instances ?"
 #: view:purchase.report:0
 msgid "Not Invoice"
 msgstr "Pas de Facture"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:261
+#, python-format
+msgid "the import's currency is %s whereas the register's currency is %s"
+msgstr "la monnaie d'import est %s tandis que celle du Registre est %s"
 
 #~ msgid "Your template should looks like this:"
 #~ msgstr "Votre template devrait ressembler à :"
