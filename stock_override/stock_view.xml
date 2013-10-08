@@ -326,7 +326,7 @@
                                 context="{'reason_type_id': reason_type_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
                                 on_change="onchange_move()"
                                 >
-                                <tree colors="grey:scrapped == True; red: inactive_product == True" string="Stock Moves" noteditable="fake_state=='assigned'" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
+                                <tree colors="grey:scrapped == True; red: inactive_product == True or expired_lot == True" string="Stock Moves" noteditable="fake_state=='assigned'" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
                                     <field name="line_number"/>
                                     <field name="product_id" />
                                     <field name="composition_list_id"/>
@@ -355,6 +355,7 @@
                                     <field name="ssl_check" invisible="True"/>
                                     <field name="dg_check"/>
                                     <field name="np_check"/>
+                                    <field name="expired_lot" invisible="1" />
                                     <field name="inactive_product" invisible="1" />
                     				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                 </tree>

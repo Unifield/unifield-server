@@ -872,7 +872,23 @@ class stock_move(osv.osv):
                 res[line.id] = {'inactive_product': True,
                                 'inactive_error': _('The product in line is inactive !')}
                 
-        return res  
+        return res
+
+    def _is_expired_lot(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the lot of stock move is expired
+        '''
+        res = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for move in self.browse(cr, uid, ids, context=context):
+            res[move.id] = False
+            if move.prodlot_id and move.prodlot_id.is_expired:
+                res[move.id] = True
+
+        return res
 
     _columns = {
         'price_unit': fields.float('Unit Price', digits_compute=dp.get_precision('Picking Price Computation'), help="Technical field used to record the product cost set by the user during a picking confirmation (when average price costing method is used)"),
@@ -890,6 +906,7 @@ class stock_move(osv.osv):
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
         'inventory_ids': fields.many2many('stock.inventory', 'stock_inventory_move_rel', 'move_id', 'inventory_id', 'Created Moves'),
+        'expired_lot': fields.function(_is_expired_lot, method=True, type='boolean', string='Lot expired', store=False),
         }
 
     _defaults = {
@@ -1085,7 +1102,9 @@ class stock_move(osv.osv):
                     # if the batch is outdated, we remove it
                     if not context.get('yml_test', False):
                         if move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= datetime.today():
-                            self.write(cr, uid, move.id, {'prodlot_id': False}, context)
+                            # Don't remove the batch if the move is a chained move
+                            if not self.search(cr, uid, [('move_dest_id', '=', move.id)], context=context):
+                                self.write(cr, uid, move.id, {'prodlot_id': False}, context)
             elif move.state == 'confirmed':
                 # we remove the prodlot_id in case that the move is not available
                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)
