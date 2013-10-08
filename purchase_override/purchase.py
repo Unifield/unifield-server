@@ -2443,8 +2443,9 @@ class purchase_order_group(osv.osv_memory):
     
     _columns = {
         'po_value_id': fields.many2one('purchase.order', string='Template PO', help='All values in this PO will be used as default values for the merged PO'),
+        'unmatched_categ': fields.boolean(string='Unmatched categories'),
     }
-    
+
     def default_get(self, cr, uid, fields, context=None):
         res = super(purchase_order_group, self).default_get(cr, uid, fields, context=context)
         if context.get('active_model','') == 'purchase.order' and len(context['active_ids']) < 2:
@@ -2452,6 +2453,13 @@ class purchase_order_group(osv.osv_memory):
             _('Please select multiple order to merge in the list view.'))
             
         res['po_value_id'] = context['active_ids'][-1]
+
+        categories = set()
+        for po in self.pool.get('purchase.order').read(cr, uid, context['active_ids'], ['categ'], context=context):
+            categories.add(po['categ'])
+
+        if len(categories) > 1:
+            res['unmatched_categ'] = True
         
         return res
     
