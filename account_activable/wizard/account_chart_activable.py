@@ -27,6 +27,8 @@ class account_chart_activable(osv.osv_memory):
     _columns = {
         'show_inactive': fields.boolean('Show inactive accounts'),
         'currency_id': fields.many2one('res.currency', 'Currency'),
+        'period_from': fields.many2one('account.period', 'From'),
+        'period_to': fields.many2one('account.period', 'To'),
     }
 
     def account_chart_open_window(self, cr, uid, ids, context=None):

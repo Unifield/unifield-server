@@ -9,6 +9,13 @@
             <field name="inherit_id" ref="account.view_account_chart"/>
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/form//field[@name='target_move']" position="before">
+                        <newline/>
+                    </xpath>
+                    <xpath expr="/form//field[@name='period_from']" position="replace">
+                        <field name="period_from"/>
+                        <newline/>
+                    </xpath>
                     <xpath expr="/form//field[@name='period_to']" position="after">
                         <separator string="Inactive accounts" colspan="4"/>
                         <field name="show_inactive"/>

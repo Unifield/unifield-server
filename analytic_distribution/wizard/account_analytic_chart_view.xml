@@ -9,15 +9,19 @@
             <field name="inherit_id" ref="account.account_analytic_chart_view"/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="//separator[@string='Select the Period for Analysis']" position="before">
+                    <xpath expr="//separator[@string='Select the Period for Analysis']" position="replace">
                         <field name="fiscalyear" on_change="onchange_fiscalyear(fiscalyear)"/>
+                        <separator string="Periods"/>
                     </xpath>
-                    <xpath expr="//label[@string='(Keep empty to open the current situation)']" position="after">
+                    <xpath expr="//label[@string='(Keep empty to open the current situation)']" position="replace">
                         <separator string="Inactive accounts" colspan="4"/>
                         <field name="show_inactive"/>
                         <newline/>
                         <separator string="Currency" colspan="4"/>
                         <field name="currency_id"/>
+                    </xpath>
+                    <xpath expr="/form//button[@name='analytic_account_chart_open_window']" position="attributes">
+                        <attribute name="icon">terp-gtk-go-back-rtl</attribute>
                     </xpath>
                     <xpath expr="/form/group[1]" position="after">
                         <group colspan="4" col="2">
