@@ -19,6 +19,7 @@
 #
 ##############################################################################
 
+import datetime
 from osv import fields, osv
 
 class account_analytic_chart(osv.osv_memory):
@@ -27,6 +28,10 @@ class account_analytic_chart(osv.osv_memory):
         'show_inactive': fields.boolean('Show inactive accounts'),
         'currency_id': fields.many2one('res.currency', 'Currency', help="Only display items from the given currency"),
         'fiscalyear': fields.many2one('account.fiscalyear', 'Fiscal year', help = 'Keep empty for all open fiscal years'),
+    }
+
+    _defaults = {
+        'fiscalyear': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), False, c),
     }
 
     def onchange_fiscalyear(self, cr, uid, ids, fiscalyear_id=False, context=None):
@@ -107,6 +112,7 @@ class account_analytic_coa(osv.osv_memory):
 
     _defaults = {
         'show_inactive': lambda *a: False,
+        'fiscalyear': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), False, c),
     }
 
     def button_validate(self, cr, uid, ids, context=None):

@@ -54,7 +54,8 @@ class account_chart_activable(osv.osv_memory):
         return result
 
     _defaults = {
-        'show_inactive': lambda *a: False
+        'show_inactive': lambda *a: False,
+        'fiscalyear': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), False, c),
     }
 
     def button_export(self, cr, uid, ids, context=None):
@@ -93,6 +94,7 @@ class account_coa(osv.osv_memory):
 
     _defaults = {
         'show_inactive': lambda *a: False,
+        'fiscalyear': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), False, c),
     }
 
     def button_validate(self, cr, uid, ids, context=None):
