@@ -612,7 +612,7 @@ class stock_move(osv.osv):
 
         if todo:
             # we cancel availability
-            self.cancel_assign(cr, uid, todo, context=context)
+            todo = self.cancel_assign(cr, uid, todo, context=context)
             # we rechech availability
             self.action_assign(cr, uid, todo)
             

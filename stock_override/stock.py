@@ -1067,6 +1067,37 @@ class stock_move(osv.osv):
                 self.write(cr, uid, ids, {'location_id': line.location_id.location_id.id})
         return True
 
+    def cancel_assign(self, cr, uid, ids, context=None):
+        res = super(stock_move, self).cancel_assign(cr, uid, ids, context=context)
+        res = []
+
+        fields_to_read = ['picking_id', 'product_id', 'product_uom', 'location_id',
+                          'product_qty', 'product_uos_qty', 'location_dest_id', 
+                          'prodlot_id', 'asset_id', 'composition_list_id', 'line_number']
+
+        for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
+            search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
+
+            for f in fields_to_read:
+                if f in ('product_qty', 'product_uos_qty'):
+                    continue
+                d = move_data[f]
+                if isinstance(move_data[f], tuple):
+                    d = move_data[f][0]
+                search_domain.append((f, '=', d))
+
+            move_ids = self.search(cr, uid, search_domain, context=context)
+            if move_ids:
+                move = self.browse(cr, uid, move_ids[0], context=context)
+                res.append(move.id)
+                self.write(cr, uid, [move.id], {'product_qty': move.product_qty + move_data['product_qty'],
+                                                'product_uos_qty': move.product_uos_qty + move_data['product_uos_qty']}, context=context)
+
+                self.write(cr, uid, [move_data['id']], {'state': 'draft'}, context=context)
+                self.unlink(cr, uid, move_data['id'], context=context)
+
+        return res
+
     def _hook_copy_stock_move(self, cr, uid, res, move, done, notdone):
         while res:
             r = res.pop(0)
