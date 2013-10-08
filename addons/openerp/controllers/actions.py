@@ -188,7 +188,7 @@ def execute_report(name, **data):
 
         if 'id' in datas and 'model' in datas and datas['id'] and datas['model']:
             doc_name = rpc.RPCProxy(datas['model']).read(datas['id'], ['name'])['name']
-            report_name = '%s %s' % (report_name, doc_name)
+            report_name = doc_name
 
         cherrypy.response.headers['Content-Disposition'] = 'filename="' + report_name + '.' + report_type + '"'
 
