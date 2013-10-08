@@ -2455,6 +2455,18 @@ purchase_order_group()
 class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
+
+    def _product_price(self, cr, uid, ids, field_name, args, context=None):
+        res = super(product_product, self)._product_price(cr, uid, ids, field_name, args, context=context)
+
+        for product in res:
+            if res[product] == 0.00:
+                try:
+                    res[product] = self.pool.get('product.product').read(cr, uid, [product], ['standard_price'], context=context)[0]['standard_price']
+                except:
+                    pass
+
+        return res
     
     def _get_purchase_type(self, cr, uid, ids, field_name, args, context=None):
         res = {}
@@ -2481,7 +2493,9 @@ class product_product(osv.osv):
         return res
 
     _columns = {
+
         'purchase_type': fields.function(_get_purchase_type, fnct_search=_src_purchase_type, type='boolean', string='Purchase type', method=True, store=False),
+        'price': fields.function(_product_price, method=True, type='float', string='Pricelist', digits_compute=dp.get_precision('Sale Price')),
     }
     
 product_product()
