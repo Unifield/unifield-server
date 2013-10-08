@@ -31,11 +31,12 @@
                 <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" expand_button="1">
                     <field name="code"/>
                     <field name="name"/>
-                    <field name="note"/>
-                    <field name="type"/>
-                    <field name="user_type"/>
-                    <field name="activation_date"/>
-                    <field name="inactivation_date"/>
+                    <field name="note" invisible="1"/>
+                    <field name="type" invisible="1"/>
+                    <field name="user_type" invisible="1"/>
+                    <field name="balance"/>
+                    <field name="activation_date" invisible="1"/>
+                    <field name="inactivation_date" invisible="1"/>
                     <field name="parent_id" invisible="1"/>
                 </tree>
             </field>
@@ -124,24 +125,6 @@
             auto="False"
             menu="False"
          />
-
-    <!--
-         Redefine "Chart of Accounts" to "Balance by accounts" (actions and menus)
-    -->
-
-        <record id="account.action_account_chart" model="ir.actions.act_window">
-          <field name="name">Balance by accounts</field>
-          <field name="res_model">account.chart</field>
-          <field name="view_type">form</field>
-          <field name="view_mode">tree,form</field>
-          <field name="view_id" ref="view_account_chart_activable"/>
-          <field name="target">new</field>
-          <field name="help">Display your company chart of accounts per fiscal year and filter by period. Have a complete tree view of all journal items per account code by clicking on an account.</field>
-        </record>
-
-        <menuitem icon="STOCK_INDENT" action="account.action_account_chart"
-              id="account.menu_action_account_tree2"
-                  parent="account.menu_finance_charts" string="Balance by accounts"/>
 
     </data>
 </openerp>

@@ -145,7 +145,7 @@
             <field name="priority" eval="20"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='activation_date']" position="before">
-                    <field name="is_not_hq_correctible"/>
+                    <field name="is_not_hq_correctible" invisible="1"/>
                 </xpath>
             </field>
         </record>
