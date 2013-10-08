@@ -51,5 +51,43 @@
           icon="STOCK_INDENT"
           groups="analytic.group_analytic_accounting" sequence="20"/>
 
+    <!--
+         New Chart of Analytic Accounts
+    -->
+
+        <record id="account_analytic_coa_view" model="ir.ui.view">
+            <field name="name">Chart of Analytic Accounts</field>
+            <field name="model">account.analytic.coa</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Analytic Account Charts">
+                    <field name="fiscalyear"/>
+                    <field name="show_inactive"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" string="Open Charts" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_account_analytic_coa" model="ir.actions.act_window">
+          <field name="name">Chart of analytic accounts</field>
+          <field name="type">ir.actions.act_window</field>
+          <field name="res_model">account.analytic.coa</field>
+          <field name="view_type">form</field>
+          <field name="view_mode">form</field>
+          <field name="view_id" ref="account_analytic_coa_view"/>
+          <field name="target">new</field>
+        </record>
+
+        <menuitem
+          name="Chart of analytic accounts"
+          parent="account.menu_finance_charts"
+          action="action_account_analytic_coa"
+          id="menu_action_account_analytic_coa"
+          icon="STOCK_INDENT"
+          sequence="40"/>
+
     </data>
 </openerp>

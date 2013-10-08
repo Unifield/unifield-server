@@ -98,4 +98,51 @@ class account_analytic_chart(osv.osv_memory):
 
 account_analytic_chart()
 
+class account_analytic_coa(osv.osv_memory):
+    _name = 'account.analytic.coa'
+    _columns = {
+        'fiscalyear': fields.many2one('account.fiscalyear', 'Fiscalyear'),
+        'show_inactive': fields.boolean('Show inactive accounts'),
+    }
+
+    _defaults = {
+        'show_inactive': lambda *a: False,
+    }
+
+    def button_validate(self, cr, uid, ids, context=None):
+        """
+        Open a chart of analytic account as a tree/tree
+        """
+        # Some checks
+        if not context:
+            context = {}
+        # Prepare some values
+        mod_obj = self.pool.get('ir.model.data')
+        act_obj = self.pool.get('ir.actions.act_window')
+        period_obj = self.pool.get('account.period')
+        fy_obj = self.pool.get('account.fiscalyear')
+        data = self.read(cr, uid, ids, [], context=context)[0]
+        # Set period_from/to if fiscalyear given
+        if data['fiscalyear']:
+            periods = self.pool.get('account.analytic.chart').onchange_fiscalyear(cr, uid, ids, data['fiscalyear'], context)
+            if 'value' in periods:
+                data.update(periods.get('value'))
+        # Create result
+        result = mod_obj.get_object_reference(cr, uid, 'account', 'action_account_analytic_account_tree2')
+        id = result and result[1] or False
+        result = act_obj.read(cr, uid, [id], context=context)[0]
+        result['periods'] = []
+        if data.get('period_from', False) and data.get('period_to', False):
+            result['periods'] = period_obj.build_ctx_periods(cr, uid, data['period_from'], data['period_to'])
+        result['context'] = str({'fiscalyear': data['fiscalyear'], 'periods': result['periods']})
+        if data['fiscalyear']:
+            result['name'] += ': ' + fy_obj.read(cr, uid, [data['fiscalyear']], context=context)[0]['code']
+        # Set context regarding show_inactive field
+        context['filter_inactive'] = not data['show_inactive']
+        # Display FP on result
+        context['display_fp'] = True
+        result['context'] = unicode(context)
+        return result
+
+account_analytic_coa()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
