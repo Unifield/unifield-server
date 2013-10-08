@@ -186,9 +186,13 @@ def execute_report(name, **data):
 
         report_name = report_name.replace('Print ', '')
 
-        if 'id' in datas and 'model' in datas and datas['id'] and datas['model']:
-            doc_name = rpc.RPCProxy(datas['model']).read(datas['id'], ['name'])['name']
-            report_name = doc_name
+        if ids and datas.get('model'):
+            doc_name = ''
+            for str_name in rpc.RPCProxy(datas['model']).read(ids, ['name']):
+                doc_name = '%s%s_' % (doc_name, str_name['name'])
+            report_name = doc_name[:-1]
+        elif datas.get('context', {}).get('_terp_view_name'):
+            report_name = datas['context']['_terp_view_name']
 
         cherrypy.response.headers['Content-Disposition'] = 'filename="' + report_name + '.' + report_type + '"'
 
