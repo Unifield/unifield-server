@@ -44,6 +44,8 @@ class account_move_line_activable(osv.osv):
             context = {}
         if context.get('currency_id'):
             args.append(('currency_id', '=', context.get('currency_id')))
+        if context.get('move_state'):
+            args.append(('move_state', '=', context.get('move_state')))
         return super(account_move_line_activable, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
 account_move_line_activable()

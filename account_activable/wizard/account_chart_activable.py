@@ -31,6 +31,7 @@ class account_chart_activable(osv.osv_memory):
         'period_to': fields.many2one('account.period', 'To'),
         'target_move': fields.selection([('posted', 'Posted Entries'),
                                          ('all', 'All Entries'),
+                                         ('draft', 'Unposted Entries'),
                                         ], 'Move status', required = True),
     }
 
@@ -43,6 +44,12 @@ class account_chart_activable(osv.osv_memory):
         context['filter_inactive_accounts'] = not data['show_inactive']
         if data['currency_id']:
             context['currency_id'] = data['currency_id']
+        # Search regarding move state. Delete original 'state' one
+        if 'state' in context:
+            del context['state']
+        if data['target_move']:
+            if data['target_move'] != 'all':
+                context['move_state'] = data['target_move']
         result['context'] = unicode(context)
         return result
 
@@ -65,6 +72,8 @@ class account_chart_activable(osv.osv_memory):
                 context.update({'currency_id': wiz.currency_id.id,})
             if wiz.instance_ids:
                 context.update({'instance_ids': [x.id for x in wiz.instance_ids],})
+            if wiz.target_move and wiz.target_move != 'all':
+                context.update({'move_state': wiz.target_move})
             account_ids = self.pool.get('account.account').search(cr, uid, args, context=context)
         datas = {'ids': account_ids, 'context': context} # context permit balance to be processed regarding context's elements
         return {
