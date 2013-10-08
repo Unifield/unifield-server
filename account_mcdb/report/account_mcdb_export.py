@@ -106,8 +106,19 @@ class account_line_csv_export(osv.osv_memory):
                 #functional_currency_id
                 csv_line.append(ml.functional_currency_id and ml.functional_currency_id.name and ml.functional_currency_id.name.encode('utf-8') or '')
             else:
-                #output amount (debit/credit) regarding booking currency
-                amount = currency_obj.compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
+                #UTP-936: Treat the conversion differently for the move lines with journal type "Currency Adjustement", name=MT
+                func_amount = ml.amount_currency
+                original_currency = ml.currency_id.id
+                if ml.journal_id.type == 'cur_adj':
+                    #UTP-936: In case of MT journal, the conversion is from functional currency to output currency                    
+                    original_currency = ml.functional_currency_id.id
+                    if ml.debit:
+                        func_amount = ml.debit
+                    elif ml.credit:
+                        func_amount = -ml.credit
+
+                # Perform the conversion from original currency to selected currency                    
+                amount = currency_obj.compute(cr, uid, original_currency, currency_id, func_amount, round=True, context=context)
                 if amount < 0.0:
                     csv_line.append(0.0)
                     csv_line.append(abs(amount) or 0.0)
