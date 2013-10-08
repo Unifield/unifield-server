@@ -186,9 +186,10 @@ def execute_report(name, **data):
 
         report_name = report_name.replace('Print ', '')
 
-        if ids and datas.get('model'):
+        if ids and datas.get('id') and datas.get('model'):
             doc_name = ''
-            for str_name in rpc.RPCProxy(datas['model']).read(ids, ['name']):
+            # Only 5 first document name on report name to avoid too long report name
+            for str_name in rpc.RPCProxy(datas['model']).read(ids[0:5], ['name']):
                 doc_name = '%s%s_' % (doc_name, str_name['name'])
             report_name = doc_name[:-1]
         elif datas.get('context', {}).get('_terp_view_name'):
