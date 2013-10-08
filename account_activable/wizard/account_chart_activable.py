@@ -26,9 +26,12 @@ class account_chart_activable(osv.osv_memory):
     _inherit = "account.chart"
     _columns = {
         'show_inactive': fields.boolean('Show inactive accounts'),
-        'currency_id': fields.many2one('res.currency', 'Currency'),
+        'currency_id': fields.many2one('res.currency', 'Currency', help="Only display items from the given currency"),
         'period_from': fields.many2one('account.period', 'From'),
         'period_to': fields.many2one('account.period', 'To'),
+        'target_move': fields.selection([('posted', 'Posted Entries'),
+                                         ('all', 'All Entries'),
+                                        ], 'Move status', required = True),
     }
 
     def account_chart_open_window(self, cr, uid, ids, context=None):

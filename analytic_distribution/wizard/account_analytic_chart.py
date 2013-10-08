@@ -25,7 +25,7 @@ class account_analytic_chart(osv.osv_memory):
     _inherit = "account.analytic.chart"
     _columns = {
         'show_inactive': fields.boolean('Show inactive accounts'),
-        'currency_id': fields.many2one('res.currency', 'Currency'),
+        'currency_id': fields.many2one('res.currency', 'Currency', help="Only display items from the given currency"),
         'fiscalyear': fields.many2one('account.fiscalyear', 'Fiscal year', help = 'Keep empty for all open fiscal years'),
     }
 
