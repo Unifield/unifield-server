@@ -103,10 +103,10 @@
                     <para style="Header">[[ picking.origin ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">Actual Receipt Date :</para>
+                    <para style="HeaderRight">Actual Shippel Date :</para>
                 </td>
                 <td>
-                    <para style="Header">[[ formatLang(picking.date, datetime=True) ]]</para>
+                    <para style="Header">[[ formatLang(picking.date, date_time=True) ]]</para>
                 </td>
             </tr>
             <tr>
@@ -123,10 +123,10 @@
                     <para style="Header">[[ picking.address_id and get_address(picking.address_id.id) or '' ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">Expected Move Date :</para>
+                    <para style="HeaderRight">Expected Shipped Date :</para>
                 </td>
                 <td>
-                    <para style="Header">[[ formatLang(picking.min_date, datetime=True) ]]</para>
+                    <para style="Header">[[ formatLang(picking.min_date, date_time=True) ]]</para>
                 </td>
             </tr>
             <tr>
@@ -193,7 +193,7 @@
                     <para style="LHeader">Destination Location</para>
                 </td>
                 <td>
-                    <para style="LHeader">Actual Move Date</para>
+                    <para style="LHeader">Actual Shipped Date</para>
                 </td>
             </tr>
             <tr>
@@ -232,7 +232,7 @@
                     <para style="Line">[[ line.location_dest_id.name ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ formatLang(line.date, datetime=True) ]]</para>
+                    <para style="Line">[[ formatLang(line.date, date_time=True) ]]</para>
                 </td>
             </tr>
         </blockTable>
