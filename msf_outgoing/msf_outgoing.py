@@ -2278,6 +2278,8 @@ class stock_picking(osv.osv):
                     move.write(vals, context=context)
                     if move.product_qty == 0.00:
                         move.action_done(context=context)
+                    if move.backmove_id and move.backmove_id.product_qty == 0.00:
+                        move_obj.write(cr, uid, [move.backmove_id.id], {'state': 'done'}, context=context)
                 elif move.product_qty != 0.00:
                     vals.update({'picking_id': new_pick_id,
                                  'product_qty': move.product_qty,})
@@ -2309,6 +2311,7 @@ class stock_picking(osv.osv):
                     # Set the stock move to done with 0.00 qty
                     move_obj.write(cr, uid, [move.id], {'product_qty': 0.00,
                                                         'state': keep_move[move.id] and move.state or 'done'}, context=context)
+
                     new_lines.append(new_move_id)
 
             if pick_to_check:
