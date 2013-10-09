@@ -989,7 +989,7 @@ class stock_move(osv.osv):
                                         needed_qty -= selected_qty
                                         dict_for_create = {}
                                         dict_for_create = values.copy()
-                                        dict_for_create.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id'], 'line_number': move.line_number})
+                                        dict_for_create.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id'], 'line_number': move.line_number, 'move_cross_docking_ok': move.move_cross_docking_ok})
                                         self.create(cr, uid, dict_for_create, context)
                                         self.write(cr, uid, move.id, {'product_qty': needed_qty})
                     # if the batch is outdated, we remove it
