@@ -103,7 +103,7 @@
                     <para style="Header">[[ picking.origin ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">Actual Shippel Date :</para>
+                    <para style="HeaderRight">Actual Shipped Date :</para>
                 </td>
                 <td>
                     <para style="Header">[[ formatLang(picking.date, date_time=True) ]]</para>
