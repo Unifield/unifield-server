@@ -143,7 +143,6 @@ class account_account(osv.osv):
             # INNER JOIN (VALUES (id1), (id2), (id3), ...) AS tmp (id)
             # ON l.account_id = tmp.id
             # or make _get_children_and_consol return a query and join on that
-            print filters, prefilters
             request = ("SELECT l.account_id as id, " +\
                        ', '.join(map(mapping.__getitem__, field_names)) +
                        " FROM account_move_line l, account_move m" +\
