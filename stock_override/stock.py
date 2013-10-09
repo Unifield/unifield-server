@@ -1093,6 +1093,27 @@ class stock_move(osv.osv):
                 self.write(cr, uid, [move.id], {'product_qty': move.product_qty + move_data['product_qty'],
                                                 'product_uos_qty': move.product_uos_qty + move_data['product_uos_qty']}, context=context)
 
+                # Update all link objects
+                proc_ids = self.pool.get('procurement.order').search(cr, uid, [('move_id', '=', move_data['id'])], context=context)
+                if proc_ids:
+                    self.pool.get('procurement.order').write(cr, uid, proc_ids, {'move_id': move.id}, context=context)
+
+                pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('move_dest_id', '=', move_data['id'])], context=context)
+                if pol_ids:
+                    self.pool.get('purchase.order.line').write(cr, uid, pol_ids, {'move_dest_id': move.id}, context=context)
+
+                move_dest_ids = self.search(cr, uid, [('move_dest_id', '=', move_data['id'])], context=context)
+                if move_dest_ids:
+                    self.write(cr, uid, move_dest_ids, {'move_dest_id': move.id}, context=context)
+
+                backmove_ids = self.search(cr, uid, [('bakcmove_id', '=', move_data['id'])], context=context)
+                if backmove_ids:
+                    self.write(cr, uid, backmove_ids, {'backmove_id': move.id}, context=context)
+
+                pack_backmove_ids = self.search(cr, uid, [('backmove_packing_id', '=', move_data['id'])], context=context)
+                if pack_backmove_ids:
+                    self.write(cr, uid, pack_backmove_ids, {'backmove_packing_id': move.id}, context=context)
+
                 self.write(cr, uid, [move_data['id']], {'state': 'draft'}, context=context)
                 self.unlink(cr, uid, move_data['id'], context=context)
 
