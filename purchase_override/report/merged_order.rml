@@ -3,7 +3,7 @@
 
     <template pageSize="(842.0,595.0)" title="Purchase Order" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
-            <frame id="first" x1="30.0" y1="0.0" width="772" height="520" />
+            <frame id="first" x1="30.0" y1="10.0" width="772" height="520" />
 
         <pageGraphics>
             <drawString x="35" y="560.0">PURCHASE ORDER ([[ getSel(objects[0], 'order_type') ]])</drawString>
@@ -91,17 +91,17 @@
     <story>
 
         <para style="Standard">[[ setLang(objects[0].partner_id.lang) ]]</para>
-        <para style="Standard">
-            <font color="white"> </font>
-        </para>
 
-        <blockTable colWidths="72.0,700.0" style="Origin">
+        <blockTable colWidths="72.0,600.0,100.0" style="Origin">
             <tr>
                 <td>
                     <para style="TextInformation">Origin ref. :</para>
                 </td>
                 <td>
                     <para style="TextInformation">[[ getOrigin(objects[0].origin, 5)[0] ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
                 </td>
             </tr>
             <tr>
@@ -112,8 +112,12 @@
                 <td>
                     <para style="TextInformation">[[ orig ]]</para>
                 </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
             </tr>
             <tr>
+                <td> </td>
                 <td> </td>
                 <td> </td>
             </tr>
