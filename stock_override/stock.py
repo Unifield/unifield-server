@@ -1106,7 +1106,7 @@ class stock_move(osv.osv):
                 if move_dest_ids:
                     self.write(cr, uid, move_dest_ids, {'move_dest_id': move.id}, context=context)
 
-                backmove_ids = self.search(cr, uid, [('bakcmove_id', '=', move_data['id'])], context=context)
+                backmove_ids = self.search(cr, uid, [('backmove_id', '=', move_data['id'])], context=context)
                 if backmove_ids:
                     self.write(cr, uid, backmove_ids, {'backmove_id': move.id}, context=context)
 
