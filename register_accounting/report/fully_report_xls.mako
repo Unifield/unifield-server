@@ -419,8 +419,8 @@
         <Cell ss:StyleID="centre">
           <Data ss:Type="String">${line.ref or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="number_centre_bold">
-          <Data ss:Type="Number">${line.account_id.code|x}</Data>
+        <Cell ss:StyleID="left_bold">
+          <Data ss:Type="String">${line.account_id.code + ' ' + line.account_id.name|x}</Data>
         </Cell>
         <Cell ss:StyleID="left_bold">
           <Data ss:Type="String">${(line.partner_id and line.partner_id.name or line.transfer_journal_id and line.transfer_journal_id.name or line.employee_id and line.employee_id.name or '')|x}</Data>
@@ -483,8 +483,8 @@
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.name or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="number_centre">
-          <Data ss:Type="Number">${inv_line.account_id and inv_line.account_id.code or ''|x}</Data>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${inv_line.account_id and inv_line.account_id.code + ' ' + inv_line.account_id.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
           <Data ss:Type="String"></Data>
@@ -556,8 +556,8 @@
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${imp_inv_line.name or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="number_centre">
-          <Data ss:Type="Number">${imp_inv_line.account_id and imp_inv_line.account_id.code or ''|x}</Data>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${imp_inv_line.account_id and imp_inv_line.account_id.code + ' ' + imp_inv_line.account_id.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
           <Data ss:Type="String"></Data>
