@@ -626,6 +626,7 @@
         <Footer x:Margin="0"/>
         <PageMargins x:Bottom="0.40" x:Left="0.40" x:Right="0.40" x:Top="0.40"/>
       </PageSetup>
+      <FitToPage/>
       <Print>
         <ValidPrinterInfo/>
         <PaperSizeIndex>9</PaperSizeIndex>
