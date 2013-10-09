@@ -16,12 +16,14 @@
                         <field name="period_from"/>
                         <newline/>
                     </xpath>
-                    <xpath expr="/form//field[@name='period_to']" position="after">
+                    <xpath expr="/form/group[2]" position="before">
                         <separator string="Inactive accounts" colspan="4"/>
                         <field name="show_inactive"/>
                         <newline/>
                         <separator string="Currency" colspan="4"/>
                         <field name="currency_id"/>
+                        <newline/>
+                        <field name="output_currency_id"/>
                     </xpath>
                     <xpath expr="/form/group[2]" position="after">
                         <group colspan="4" col="2">
@@ -50,6 +52,90 @@
         <menuitem icon="STOCK_INDENT" action="account.action_account_chart"
               id="account.menu_action_account_tree2"
                   parent="account.menu_finance_charts" string="Balance by accounts"/>
+
+    <!--
+      Renew account move line tree when you come from balance by accounts and chart of accounts wizards
+    -->
+        <record id="inherit_view_move_line_tree" model="ir.ui.view">
+          <field name="name">inherit.move.line.tree</field>
+          <field name="model">account.move.line</field>
+          <field name="type">tree</field>
+          <field name="inherit_id" ref="account.view_move_line_tree"/>
+          <field name="priority" eval="6"/>
+          <field name="arch" type="xml">
+            <data>
+              <!-- Delete field that are not in the right order -->
+              <xpath expr="/tree/field[@name='move_id']" position="replace">
+                <!-- Nothing -->
+              </xpath>
+              <xpath expr="/tree/field[@name='ref']" position="replace">
+                <!-- Nothing -->
+              </xpath>
+              <xpath expr="/tree/field[@name='invoice']" position="replace">
+                <!-- Nothing -->
+              </xpath>
+              <xpath expr="/tree/field[@name='name']" position="replace">
+                <!-- Nothing -->
+              </xpath>
+              <xpath expr="/tree/field[@name='partner_id']" position="replace">
+                <!-- Nothing -->
+              </xpath>
+              <xpath expr="/tree/field[@name='journal_id']" position="replace">
+                <!-- Nothing -->
+              </xpath>
+              <xpath expr="/tree/field[@name='debit']" position="replace">
+                <!-- Nothing -->
+              </xpath>
+              <xpath expr="/tree/field[@name='credit']" position="replace">
+                <!-- Nothing -->
+              </xpath>
+              <xpath expr="/tree/field[@name='account_tax_id']" position="replace">
+                <!-- Nothing -->
+              </xpath>
+              <xpath expr="/tree/field[@name='analytic_account_id']" position="replace">
+                <!-- Nothing -->
+              </xpath>
+              <xpath expr="/tree/field[@name='amount_currency']" position="replace">
+                <!-- Nothing -->
+              </xpath>
+              <!-- Then reorder -->
+              <xpath expr="/tree/field[@name='date']" position="before">
+                <field name="journal_id"/>
+                <field name="move_id"/>
+                <field name="name"/>
+                <field name="ref"/>
+                <field name="document_date"/>
+              </xpath>
+              <xpath expr="/tree/field[@name='account_id']" position="after">
+                <field name="partner_txt"/>
+              </xpath>
+              <xpath expr="/tree/field[@name='currency_id']" position="before">
+                <field name="debit_currency"/>
+                <field name="credit_currency"/>
+              </xpath>
+              <xpath expr="/tree/field[@name='currency_id']" position="after">
+                <field name="debit"/>
+                <field name="credit"/>
+                <field name="functional_currency_id"/>
+              </xpath>
+              <!-- Finally add missing ones -->
+              <xpath expr="/tree/field[@name='reconcile_partial_id']" position="replace">
+                <field name="output_amount_debit"/>
+                <field name="output_amount_credit"/>
+                <field name="output_currency"/>
+              </xpath>
+            </data>
+          </field>
+        </record>
+
+    <!-- Change name of result to "Balance by accounts" instead of "Chart of accounts" -->
+        <record id="account.action_account_tree" model="ir.actions.act_window">
+          <field name="name">Balance by accounts</field>
+          <field name="res_model">account.account</field>
+          <field name="view_type">tree</field>
+          <field name="view_id" ref="account.view_account_tree"/>
+          <field name="domain">[('parent_id','=',False)]</field>
+        </record>
 
     <!--
       New Chart of Accounts menu/action/view

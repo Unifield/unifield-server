@@ -33,6 +33,7 @@ class account_chart_activable(osv.osv_memory):
                                          ('all', 'All Entries'),
                                          ('draft', 'Unposted Entries'),
                                         ], 'Move status', required = True),
+        'output_currency_id': fields.many2one('res.currency', 'Output currency', help="Add a new column that display lines amounts in the given currency"),
     }
 
     def account_chart_open_window(self, cr, uid, ids, context=None):
@@ -50,6 +51,8 @@ class account_chart_activable(osv.osv_memory):
         if data['target_move']:
             if data['target_move'] != 'all':
                 context['move_state'] = data['target_move']
+        if data['output_currency_id']:
+            context['output_currency_id'] = data['output_currency_id']
         result['context'] = unicode(context)
         return result
 
@@ -75,6 +78,8 @@ class account_chart_activable(osv.osv_memory):
                 context.update({'instance_ids': [x.id for x in wiz.instance_ids],})
             if wiz.target_move and wiz.target_move != 'all':
                 context.update({'move_state': wiz.target_move})
+            if wiz.output_currency_id:
+                context.update({'output_currency_id': wiz.output_currency_id.id})
             account_ids = self.pool.get('account.account').search(cr, uid, args, context=context)
         datas = {'ids': account_ids, 'context': context} # context permit balance to be processed regarding context's elements
         return {

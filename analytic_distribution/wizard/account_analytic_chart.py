@@ -28,6 +28,7 @@ class account_analytic_chart(osv.osv_memory):
         'show_inactive': fields.boolean('Show inactive accounts'),
         'currency_id': fields.many2one('res.currency', 'Currency', help="Only display items from the given currency"),
         'fiscalyear': fields.many2one('account.fiscalyear', 'Fiscal year', help = 'Keep empty for all open fiscal years'),
+        'output_currency_id': fields.many2one('res.currency', 'Output currency', help="Add a new column that display lines amounts in the given currency"),
     }
 
     _defaults = {
@@ -72,7 +73,9 @@ class account_analytic_chart(osv.osv_memory):
         if data['currency_id']:
             context['currency_id'] = data['currency_id']
         if data['fiscalyear']:
-            result['name'] += ':' + self.pool.get('account.fiscalyear').read(cr, uid, [data['fiscalyear']], context=context)[0]['code']
+            result['name'] += ': ' + self.pool.get('account.fiscalyear').read(cr, uid, [data['fiscalyear']], context=context)[0]['code']
+        if data['output_currency_id']:
+            context['output_currency_id'] = data['output_currency_id']
         # Display FP on result
         context['display_fp'] = True
         result['context'] = unicode(context)
@@ -93,6 +96,8 @@ class account_analytic_chart(osv.osv_memory):
                 context.update({'currency_id': wiz.currency_id.id,})
             if wiz.instance_ids:
                 context.update({'instance_ids': [x.id for x in wiz.instance_ids],})
+            if wiz.output_currency_id:
+                context.update({'output_currency_id': wiz.output_currency_id.id})
             account_ids = self.pool.get('account.analytic.account').search(cr, uid, args, context=context)
         datas = {'ids': account_ids, 'context': context} # context permit balance to be processed regarding context's elements
         return {
