@@ -631,7 +631,6 @@
         <PaperSizeIndex>9</PaperSizeIndex>
         <Scale>60</Scale>
       </Print>
-      <ShowPageBreakZoom/>
       <PageBreakZoom>70</PageBreakZoom>
       <DoNotDisplayGridlines/>
     </WorksheetOptions>
