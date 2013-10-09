@@ -35,6 +35,12 @@ import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 
+_HEADER_TYPE = {type('char'): 'string',
+                type(1): 'number',
+                type(1.00): 'number',
+                type(long(1)): 'number',
+                type(now()): 'datetime'}
+
 class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
     _description = 'Supplier catalogue'
@@ -332,15 +338,28 @@ class supplier_catalogue(osv.osv):
         Export lines with errors in a file.
         Warning: len(columns_header) == len(lines_not_imported)
         """
-        columns_header = [('Product code*', 'string'), ('Product description', 'string'), ('Product UoM*', 'string'),
-                          ('Min Quantity*', 'number'), ('Unit Price*', 'number'), ('Rounding', 'number'), ('Min Order Qty', 'number'),
-                          ('Comment', 'string')]
+#        columns_header = [('Product code*', 'string'), ('Product description', 'string'), ('Product UoM*', 'string'),
+#                          ('Min Quantity*', 'number'), ('Unit Price*', 'number'), ('Rounding', 'number'), ('Min Order Qty', 'number'),
+#                          ('Comment', 'string')]
+        columns_header = []
         lines_not_imported = [] # list of list
+        date_fields = []
+        t_dt = type(now())
         for line in kwargs.get('line_with_error'):
+            # Compute headers
+            if len(line) > len(columns_header):
+                for f in line[len(columns_header):]:
+                    columns_header.append(('Col', _HEADER_TYPE.get(type(f), 'string')))
+
+            for f in line:
+                if type(f) == t_dt:
+                    line[line.index(f)] = f.strftime('%Y-%m-%d %H:%M:%S')
+
             if len(line) < len(columns_header):
                 lines_not_imported.append(line + ['' for x in range(len(columns_header)-len(line))])
             else:
                 lines_not_imported.append(line)
+
         files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
         vals = {'data': base64.encodestring(files_with_error.get_xml(['decode.utf8'])),
                 'filename': 'Lines_Not_Imported.xls',
@@ -426,7 +445,7 @@ class supplier_catalogue(osv.osv):
                             uom_id = uom_ids[0]
                     except Exception:
                          uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
-                         error_list_line.append(_("The UoM '%s' was not found.") % uom_name)
+                         error_list_line.append(_("The UoM '%s' was not found.") % p_uom)
                          to_correct_ok = True
                 #[utp-129]: check consistency of uom
                 # I made the check on uom_id according to the constraint _check_uom in unifield-addons/product/product.py (l.744) so that we keep the consistency even when we create a supplierinfo directly from the product
