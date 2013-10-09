@@ -444,3 +444,31 @@ class batch_number(osv.osv):
         return get_valid_xml_name('batch_numer', (batch.instance_id.code or 'noinstance'), (batch.name or 'noname'))
     
 batch_number()
+
+class ir_model_access(osv.osv):
+    """
+    UF-2146 To allow synchronisation of ir.model.access, must have same sd ref across all instances
+    """
+    _inherit = "ir.model.access"
+    
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        ima = self.browse(cr, uid, res_id)
+        return get_valid_xml_name(
+                  'ir_model_access', 
+                  self.pool.get('ir.model').get_sd_ref(cr, uid, ima.model_id.id),
+                  ima.name
+                )
+    
+ir_model_access()
+
+class ir_model(osv.osv):
+    """
+    UF-2146 sd ref for ir.model to be included in sd ref of ir.model.access
+    """
+    _inherit = 'ir.model'
+    
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        model = self.browse(cr, uid, res_id)
+        return get_valid_xml_name('ir_model', model.model)
+
+ir_model()

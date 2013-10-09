@@ -29,7 +29,6 @@ MODELS_TO_IGNORE = [
                     'ir.module.module',
                     'ir.ui.view',
                     'ir.module.repository',
-                    'ir.model',
                     'ir.model.data',
                     'ir.model.fields',
                     'ir.ui.view_sc',
