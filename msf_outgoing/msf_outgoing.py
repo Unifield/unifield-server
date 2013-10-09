@@ -2163,6 +2163,7 @@ class stock_picking(osv.osv):
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+        moves_states = {}
         for obj in self.browse(cr, uid, ids, context=context):
             # the convert function should only be called on draft picking ticket
             assert obj.subtype == 'picking' and obj.state == 'draft', 'the convert function should only be called on draft picking ticket objects'
@@ -2187,6 +2188,8 @@ class stock_picking(osv.osv):
                 if move.product_qty == 0.0:
                     vals = {'state': 'done'}
                 else:
+                    # Save the state of this stock move to set it before action_assign()
+                    moves_states.setdefault(move.state, []).append(move.id)
                     vals = {'state': 'draft'}
                 # If the move comes from a DPO, don't change the destination location
                 if not move.dpo_id:
@@ -2206,6 +2209,10 @@ class stock_picking(osv.osv):
 
             # trigger workflow (confirm picking)
             self.draft_force_assign(cr, uid, [obj.id])
+
+            for s in moves_states:
+                self.pool.get('stock.move').write(cr, uid, moves_states[s], {'state': s}, context=context)
+
             # check availability
             self.action_assign(cr, uid, [obj.id], context=context)
         
