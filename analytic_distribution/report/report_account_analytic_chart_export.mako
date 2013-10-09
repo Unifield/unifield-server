@@ -17,8 +17,8 @@
   <WindowWidth>19020</WindowWidth>
   <WindowTopX>120</WindowTopX>
   <WindowTopY>60</WindowTopY>
-  <ProtectStructure>True</ProtectStructure>
-  <ProtectWindows>True</ProtectWindows>
+  <ProtectStructure>False</ProtectStructure>
+  <ProtectWindows>False</ProtectWindows>
  </ExcelWorkbook>
  <Styles>
    <Style ss:ID="header">
