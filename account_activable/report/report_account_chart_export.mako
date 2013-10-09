@@ -49,12 +49,7 @@
   <Row>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Code')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Name')}</Data></Cell>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Note')}</Data></Cell>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Type')}</Data></Cell>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Internal Type')}</Data></Cell>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Type for specific treatment')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Balance')}</Data></Cell>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Can not be corrected on HQ entries')}</Data></Cell>
   </Row>
 % for o in objects:
   <Row>
@@ -65,22 +60,7 @@
       <Data ss:Type="String">${o.name or ''|x}</Data>
     </Cell>
     <Cell>
-      <Data ss:Type="String">${o.note or ''|x}</Data>
-    </Cell>
-    <Cell>
-      <Data ss:Type="String">${o.user_type and o.user_type.name or ''|x}</Data>
-    </Cell>
-    <Cell>
-      <Data ss:Type="String">${o.type and getSel(o, 'type') or ''|x}</Data>
-    </Cell>
-    <Cell>
-      <Data ss:Type="String">${o.type_for_register and getSel(o, 'type_for_register') or ''|x}</Data>
-    </Cell>
-    <Cell>
       <Data ss:Type="Number" ss:Style="number">${o.balance or '0.0'|x}</Data>
-    </Cell>
-    <Cell>
-      <Data ss:Type="String">${o.is_not_hq_correctible and _('True') or _('False')|x}</Data>
     </Cell>
   </Row>
 % endfor

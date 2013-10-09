@@ -49,8 +49,6 @@
   <Row>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Code')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Name')}</Data></Cell>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Note')}</Data></Cell>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Type')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Category')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Parent')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Balance')}</Data></Cell>
@@ -63,12 +61,6 @@
     </Cell>
     <Cell>
       <Data ss:Type="String">${o.name or ''|x}</Data>
-    </Cell>
-    <Cell>
-      <Data ss:Type="String">${o.description or ''|x}</Data>
-    </Cell>
-    <Cell>
-      <Data ss:Type="String">${o.type or ''|x}</Data>
     </Cell>
     <Cell>
       <Data ss:Type="String">${o.category and getSel(o, 'category') or ''|x}</Data>
