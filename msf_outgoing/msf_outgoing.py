@@ -2203,7 +2203,7 @@ class stock_picking(osv.osv):
                         pick_moves[pick.id].setdefault(m.backmove_id.id, True)
 
         return pick_moves
-    
+
     def convert_to_standard(self, cr, uid, ids, context=None):
         '''
         check of back orders exists, if not, convert to standard: change subtype to standard, and trigger workflow
@@ -2280,6 +2280,7 @@ class stock_picking(osv.osv):
                         move.action_done(context=context)
                     if move.backmove_id and move.backmove_id.product_qty == 0.00:
                         move_obj.write(cr, uid, [move.backmove_id.id], {'state': 'done'}, context=context)
+                        move_obj.update_linked_documents(cr, uid, move.backmove_id.id, move.id, context=context)
                 elif move.product_qty != 0.00:
                     vals.update({'picking_id': new_pick_id,
                                  'product_qty': move.product_qty,})
@@ -2288,25 +2289,7 @@ class stock_picking(osv.osv):
 
                     # Update all linked objects to avoid close of related documents
                     if move.id in keep_move and keep_move[move.id]:
-                        proc_ids = self.pool.get('procurement.order').search(cr, uid, [('move_id', '=', move.id)], context=context)
-                        if proc_ids:
-                            self.pool.get('procurement.order').write(cr, uid, proc_ids, {'move_id': new_move_id}, context=context)
-                            
-                        pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('move_dest_id', '=', move.id)], context=context)
-                        if pol_ids:
-                            self.pool.get('purchase.order.line').write(cr, uid, pol_ids, {'move_dest_id': new_move_id}, context=context)
-                            
-                        move_dest_ids = move_obj.search(cr, uid, [('move_dest_id', '=', move.id)], context=context)
-                        if move_dest_ids:
-                            move_obj.write(cr, uid, move_dest_ids, {'move_dest_id': new_move_id}, context=context)
-                        
-                        backmove_ids = move_obj.search(cr, uid, [('backmove_id', '=', move.id)], context=context)
-                        if backmove_ids:
-                            move_obj.write(cr, uid, backmove_ids, {'backmove_id': new_move_id}, context=context)
-                        
-                        pack_backmove_ids = move_obj.search(cr, uid, [('backmove_packing_id', '=', move.id)], context=context)
-                        if pack_backmove_ids:
-                            move_obj.write(cr, uid, pack_backmove_ids, {'backmove_packing_id': new_move_id}, context=context)
+                        move_obj.update_linked_documents(cr, uid, move.id, new_move_id, context=context)
 
                     # Set the stock move to done with 0.00 qty
                     move_obj.write(cr, uid, [move.id], {'product_qty': 0.00,
@@ -2352,6 +2335,9 @@ class stock_picking(osv.osv):
         data_obj = self.pool.get('ir.model.data')
 
         move_to_update = []
+        
+        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
+        view_id = view_id and view_id[1] or False
 
         for out in self.browse(cr, uid, ids, context=context):
             if out.state in ('cancel', 'done'):
@@ -2359,7 +2345,6 @@ class stock_picking(osv.osv):
 
             # log a message concerning the conversion
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
-            self.log(cr, uid, out.id, _('The Delivery order (%s) has been converted to draft Picking Ticket (%s).')%(out.name, new_name))
 
             # change subtype and name
             default_vals = {'name': new_name,
@@ -2374,14 +2359,14 @@ class stock_picking(osv.osv):
 
             self.write(cr, uid, [out.id], default_vals, context=context)
 
+            self.log(cr, uid, out.id, _('The Delivery order (%s) has been converted to draft Picking Ticket (%s).')%(out.name, new_name), context={'view_id': view_id, 'picking_type': 'picking'})
+
             for move in out.move_lines:
                 move_to_update.append(move.id)
 
         pack_loc_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
         move_obj.write(cr, uid, move_to_update, {'location_dest_id': pack_loc_id}, context=context)
 
-        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
-        view_id = view_id and view_id[1] or False
         context.update({'picking_type': 'picking'})
         return {'name': _('Picking Tickets'),
                 'view_mode': 'form,tree',
@@ -3275,6 +3260,37 @@ class stock_move(osv.osv):
                 wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
         
         return res
+
+    def update_linked_documents(self, cr, uid, ids, new_id, context=None):
+        '''
+        Update the linked documents of a stock move to another one
+        '''
+        context = context or {}
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+
+        for move_id in ids:
+            proc_ids = self.pool.get('procurement.order').search(cr, uid, [('move_id', '=', move_id)], context=context)
+            if proc_ids:
+                self.pool.get('procurement.order').write(cr, uid, proc_ids, {'move_id': new_id}, context=context)
+                            
+            pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('move_dest_id', '=', move_id)], context=context)
+            if pol_ids:
+                self.pool.get('purchase.order.line').write(cr, uid, pol_ids, {'move_dest_id': new_id}, context=context)
+                            
+            move_dest_ids = self.search(cr, uid, [('move_dest_id', '=', move_id)], context=context)
+            if move_dest_ids:
+                self.write(cr, uid, move_dest_ids, {'move_dest_id': new_id}, context=context)
+                        
+            backmove_ids = self.search(cr, uid, [('backmove_id', '=', move_id)], context=context)
+            if backmove_ids:
+                self.write(cr, uid, backmove_ids, {'backmove_id': new_id}, context=context)
+                       
+            pack_backmove_ids = self.search(cr, uid, [('backmove_packing_id', '=', move_id)], context=context)
+            if pack_backmove_ids:
+                self.write(cr, uid, pack_backmove_ids, {'backmove_packing_id': new_id}, context=context)
+
+        return True
+
 
 stock_move()
 
