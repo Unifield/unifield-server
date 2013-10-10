@@ -875,29 +875,22 @@ class account_bank_statement_line(osv.osv):
         ids = context.get('active_ids')
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Fetch all registers
-        st_ids = []
+        # Check which move_id to use
         move_ids = []
-        for absl in self.read(cr, uid, ids, ['statement_id', 'move_ids']):
-            if absl.get('statement_id', False):
-                st_id = absl.get('statement_id')
-                if isinstance(st_id, (int, long)):
-                    if st_id not in st_ids:
-                        st_ids.append(st_id)
-                else:
-                    if st_id[0] not in st_ids:
-                        st_ids.append(st_id[0])
-            if absl.get('move_ids', False):
-                move_id = absl.get('move_ids')
-                if isinstance(move_id, (int, long)):
-                    if move_id not in move_ids:
-                        move_ids.append(move_id)
-                else:
-                    if move_id[0] not in move_ids:
-                        move_ids.append(move_id[0])
+        for absl in self.browse(cr, uid, ids):
+            # Default ones (direct link to register lines)
+            if absl.move_ids:
+                for m in absl.move_ids:
+                    if m.id not in move_ids:
+                        move_ids.append(m.id)
+            # Those from pending payments
+            if absl.imported_invoice_line_ids:
+                for ml in absl.imported_invoice_line_ids:
+                    if ml.move_id and ml.move_id.id not in move_ids:
+                        move_ids.append(ml.move_id.id)
         # Search valid ids
-        domain = [('account_id.category', '=', 'FUNDING'), ('move_id.statement_id', 'in', st_ids), ('move_id.move_id', 'in', move_ids)]
-        context.update({'display_fp': True})
+        domain = [('account_id.category', '=', 'FUNDING'), ('move_id.move_id', 'in', move_ids)]
+        context.update({'display_fp': True}) # to display "Funding Pool" column name instead of "Analytic account"
         return {
             'name': _('Analytic Journal Items'),
             'type': 'ir.actions.act_window',
