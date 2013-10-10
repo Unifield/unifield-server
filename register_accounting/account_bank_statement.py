@@ -862,6 +862,53 @@ class account_bank_statement_line(osv.osv):
             return open_register_view(self, cr, uid, st_line.statement_id.id)
         raise osv.except_osv(_('Warning'), _('You have to select some line to return to a register.'))
 
+    def get_analytic_lines(self, cr, uid, ids, context=None):
+        """
+        Give all analytic lines linked to the given register line(s)
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not 'active_ids' in context or not context.get('active_ids', False):
+            raise osv.except_osv(_('Error'), _('No line selected!'))
+        # Use right register line IDS
+        ids = context.get('active_ids')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Fetch all registers
+        st_ids = []
+        move_ids = []
+        for absl in self.read(cr, uid, ids, ['statement_id', 'move_ids']):
+            if absl.get('statement_id', False):
+                st_id = absl.get('statement_id')
+                if isinstance(st_id, (int, long)):
+                    if st_id not in st_ids:
+                        st_ids.append(st_id)
+                else:
+                    if st_id[0] not in st_ids:
+                        st_ids.append(st_id[0])
+            if absl.get('move_ids', False):
+                move_id = absl.get('move_ids')
+                if isinstance(move_id, (int, long)):
+                    if move_id not in move_ids:
+                        move_ids.append(move_id)
+                else:
+                    if move_id[0] not in move_ids:
+                        move_ids.append(move_id[0])
+        # Search valid ids
+        domain = [('account_id.category', '=', 'FUNDING'), ('move_id.statement_id', 'in', st_ids), ('move_id.move_id', 'in', move_ids)]
+        context.update({'display_fp': True})
+        return {
+            'name': _('Analytic Journal Items'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.analytic.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
+
     def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
         """
         Create move from the register line

@@ -42,6 +42,7 @@
             Account bank statement lines
         -->
 
+        <!-- Return to the register linked to the given line -->
         <record id="action_return_to_register" model="ir.actions.server">
             <field name="name">Return to register</field>
             <field name="model_id" ref="model_account_bank_statement_line"/>
@@ -54,6 +55,22 @@
             <field name="model">account.bank.statement.line</field>
             <field name="name">Return to register</field>
             <field eval="'ir.actions.server,%d'%action_return_to_register" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+        <!-- Display all Analytic Lines attached to given Register Lines -->
+        <record id="action_analytic_register_lines" model="ir.actions.server">
+            <field name="name">Analytic Lines</field>
+            <field name="model_id" ref="model_account_bank_statement_line"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_analytic_lines(context=context)</field>
+        </record>
+
+        <record id="ir_open_analytic_register_lines" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.bank.statement.line</field>
+            <field name="name">Analytic Lines</field>
+            <field eval="'ir.actions.server,%d'%action_analytic_register_lines" name="value"/>
             <field eval="True" name="object"/>
         </record>
 
