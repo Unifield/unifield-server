@@ -58,9 +58,7 @@ class ir_ui_view(osv.osv):
         view_id = super(ir_ui_view, self).create(cr, uid, vals, context=context)
         view = self.browse(cr, 1, view_id)
         model_id = self.pool.get('ir.model').search(cr, 1, [('model','=',view.model)])
-        if not model_id:
-            logging.getLogger(self._name).warn('No model found for model name %s, so cannot generate button access rules for view_id %s' % (view.model, view_id))
-        else:
+        if model_id:
             try:
                 buttons = self.parse_view(vals['arch'], model_id[0], view_id)
             except (ValueError, etree.XMLSyntaxError) as e:
@@ -140,9 +138,6 @@ class ir_ui_view(osv.osv):
                         if rules_search.count(id):
                             rules_search.remove(id)
                     rules_pool.write(cr, 1, rules_search, {'active':0})
-                else:
-                    logging.getLogger(self._name).warn('No model found for model name %s, so cannot generate button access rules for view_id %s' % (view.model, view.id))
-        
         
         # perform the final writes to the views    
         return super(ir_ui_view, self).write(cr, uid, ids, vals, context=context) 
@@ -196,7 +191,6 @@ class ir_ui_view(osv.osv):
             existing_rule_search = rules_pool.search(cr, uid, [('name','=',button['name']), ('view_id','=',button['view_id'])])
             if not existing_rule_search:
                 rules_pool.create(cr, uid, button)
-            else:
-                logging.getLogger(self._name).warn('Existing Button Access Rule found for name %s and view %s' % (button['name'], button['view_id']))    
-    
+ 
 ir_ui_view()
+

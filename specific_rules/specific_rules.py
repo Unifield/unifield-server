@@ -1082,6 +1082,23 @@ class stock_production_lot(osv.osv):
                 res[batch_id] = False
 
         return res
+
+    def _is_expired(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns True if the lot is expired
+        '''
+        res = {}
+        context = context or {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for batch in self.read(cr, uid, ids, ['life_date'], context=context):
+            res[batch['id']] = False
+            if batch['life_date'] < time.strftime('%Y-%m-%d'):
+                res[batch['id']] = True
+
+        return res
     
     _columns = {'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
                 # readonly is True, the user is only allowed to create standard lots - internal lots are system-created
@@ -1104,6 +1121,7 @@ class stock_production_lot(osv.osv):
                 'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
                 'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
                 'delete_ok': fields.function(_get_delete_ok, method=True, string='Possible deletion ?', type='boolean', readonly=True),
+                'is_expired': fields.function(_is_expired, method=True, string='Expired ?', type='boolean', store=False, readonly=True),
                 }
     
     _defaults = {'type': 'standard',
@@ -1112,9 +1130,7 @@ class stock_production_lot(osv.osv):
                  'life_date': False,
                  }
     
-    _sql_constraints = [('name_uniq', 'unique (product_id,name)', 'For a given product, the batch number must be unique.'),
-                        ]
-
+    # UF-2148: Removed the name unique constraint here, and use only the constraint with 3 attrs: name, prod and instance
     _constraints = [(_check_batch_type_integrity,
                     'You can\'t create a standard batch number for a product which is not batch mandatory. If the product is perishable, the system will create automatically an internal batch number on reception/inventory.',
                     ['Type', 'Product']),

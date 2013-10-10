@@ -185,6 +185,10 @@
                 <separator orientation="vertical" />
                 <field name="name"/>
                 <field name="job_id" widget="selection"/>
+                <newline/>
+                <field name="destination_id" domain="[('category','=','DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
+                <field name="cost_center_id" domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
+                <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open')]"/>
                 <newline />
                 <group expand="0" string="Group By...">
                     <filter string="Job" icon="terp-gtk-select-all" domain="[]" context="{'group_by':'job_id'}"/>
