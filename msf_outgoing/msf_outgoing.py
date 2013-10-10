@@ -2287,7 +2287,7 @@ class stock_picking(osv.osv):
                     new_move_id = move_obj.copy(cr, uid, move.id, vals, context=context)
 
                     # Update all linked objects to avoid close of related documents
-                    if keep_move[move.id]:
+                    if move.id in keep_move and keep_move[move.id]:
                         proc_ids = self.pool.get('procurement.order').search(cr, uid, [('move_id', '=', move.id)], context=context)
                         if proc_ids:
                             self.pool.get('procurement.order').write(cr, uid, proc_ids, {'move_id': new_move_id}, context=context)
@@ -2310,7 +2310,7 @@ class stock_picking(osv.osv):
 
                     # Set the stock move to done with 0.00 qty
                     move_obj.write(cr, uid, [move.id], {'product_qty': 0.00,
-                                                        'state': keep_move[move.id] and move.state or 'done'}, context=context)
+                                                        'state': move.id in keep_move and keep_move[move.id] and move.state or 'done'}, context=context)
 
                     new_lines.append(new_move_id)
 
