@@ -878,12 +878,18 @@ class account_bank_statement_line(osv.osv):
         # Check which move_id to use
         move_ids = []
         for absl in self.browse(cr, uid, ids):
-            # Default ones (direct link to register lines)
             if absl.move_ids:
+                # Default ones (direct link to register lines)
                 for m in absl.move_ids:
                     if m.id not in move_ids:
                         move_ids.append(m.id)
-            # Those from pending payments
+                    # Those from cash advance return (we should use the reconciliation to find the return and its expenses)
+                    for ml in m.line_id:
+                        if ml.reconcile_id and ml.reconcile_id.line_id:
+                            for line in ml.reconcile_id.line_id:
+                                if line.move_id and line.move_id.id and line.move_id.id not in move_ids:
+                                    move_ids.append(line.move_id.id)
+            # Those from pending payments (imported_invoice_line_ids are move_line)
             if absl.imported_invoice_line_ids:
                 for ml in absl.imported_invoice_line_ids:
                     if ml.move_id and ml.move_id.id not in move_ids:
