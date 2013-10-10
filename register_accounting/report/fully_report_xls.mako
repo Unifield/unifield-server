@@ -274,10 +274,10 @@
     </WorksheetOptions>
   </Worksheet>
 % for o in objects:
-  <Names>
-    <NamedRange ss:Name="Print_Titles" ss:RefersTo="=!R11"/>
-  </Names>
   <Worksheet ss:Name="${o.period_id.name|x}, ${o.journal_id.code|x}">
+    <Names>
+      <NamedRange ss:Name="Print_Titles" ss:RefersTo="=!R11"/>
+    </Names>
     <Table>
       <Column ss:Width="95.9527"/>
       <Column ss:Width="70" ss:Span="1"/>
