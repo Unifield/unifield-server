@@ -116,16 +116,16 @@
                     <para style="Header">[[ get_selection(req, 'state') ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">Location Requestor :</para>
-                </td>
-                <td>
-                    <para style="Header">[[ req.location_requestor_id and get_name('stock.location', req.location_requestor_id.id) or '' ]]</para>
-                </td>
-                <td>
                     <para style="HeaderRight">Requested date :</para>
                 </td>
                 <td>
                     <para style="Header">[[ formatLang(req.delivery_requested_date, date=True) ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderRight">Location Requestor :</para>
+                </td>
+                <td>
+                    <para style="Header">[[ req.location_requestor_id and get_name('stock.location', req.location_requestor_id.id) or '' ]]</para>
                 </td>
             </tr>
             <tr>
