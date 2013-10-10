@@ -2340,6 +2340,59 @@ class stock_picking(osv.osv):
                     'target': 'crush',
                     'context': context,
                     }
+
+    def convert_to_pick(self, cr, uid, ids, context=None):
+        '''
+        Change simple OUTs to draft Picking Tickets
+        '''
+        context = context or {}
+
+        # Objects
+        move_obj = self.pool.get('stock.move')
+        data_obj = self.pool.get('ir.model.data')
+
+        move_to_update = []
+
+        for out in self.browse(cr, uid, ids, context=context):
+            if out.state in ('cancel', 'done'):
+                raise osv.except_osv(_('Error'), _('You cannot convert %s delivery orders') % (out.state == 'cancel' and _('Canceled') or _('Done')))
+
+            # log a message concerning the conversion
+            new_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
+            self.log(cr, uid, out.id, _('The Delivery order (%s) has been converted to draft Picking Ticket (%s).')%(out.name, new_name))
+
+            # change subtype and name
+            default_vals = {'name': new_name,
+                            'subtype': 'picking',
+                            'converted_to_standard': False,
+                            'state': 'draft',
+                            'sequence_id': self.create_sequence(cr, uid, {'name':new_name,
+                                                                          'code':new_name,
+                                                                          'prefix':'',
+                                                                          'padding':2}, context=context)
+                           }
+
+            self.write(cr, uid, [out.id], default_vals, context=context)
+
+            for move in out.move_lines:
+                move_to_update.append(move.id)
+
+        pack_loc_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
+        move_obj.write(cr, uid, move_to_update, {'location_dest_id': pack_loc_id}, context=context)
+
+        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
+        view_id = view_id and view_id[1] or False
+        context.update({'picking_type': 'picking'})
+        return {'name': _('Picking Tickets'),
+                'view_mode': 'form,tree',
+                'view_id': [view_id],
+                'view_type': 'form',
+                'res_model': 'stock.picking',
+                'res_id': out.id,
+                'type': 'ir.actions.act_window',
+                'target': 'crush',
+                'context': context}
+
     
     def create_picking(self, cr, uid, ids, context=None):
         '''

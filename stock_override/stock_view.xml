@@ -934,6 +934,7 @@
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>
                                 <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                 <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
+                                <button name="convert_to_pick" states="draft,confirmed,assigned" string="Convert to Picking Ticket" type="object" icon="gtk-convert" />
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward" help="Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available"/>
                                 <field name="certificate_donation" invisible="1"/>
