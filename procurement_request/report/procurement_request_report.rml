@@ -102,18 +102,18 @@
                     <para style="Header">[[ formatLang(req.date_order, date=True) ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">Warehouse :</para>
-                </td>
-                <td>
-                    <para style="Header">[[ req.warehouse_id and get_name('stock.warehouse', req.warehouse_id.id) or '' ]]</para>
-                </td>
-            </tr>
-            <tr>
-                <td>
                     <para style="HeaderRight">Requestor :</para>
                 </td>
                 <td>
                     <para style="Header">[[ req.requestor ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="HeaderRight">State :</para>
+                </td>
+                <td>
+                    <para style="Header">[[ get_selection(req, 'state') ]]</para>
                 </td>
                 <td>
                     <para style="HeaderRight">Location Requestor :</para>
@@ -142,10 +142,10 @@
                     <para style="Header">[[ req.functional_currency_id and get_name('res.currency', req.functional_currency_id.id) or '' ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight"> </para>
+                    <para style="HeaderRight">Warehouse :</para>
                 </td>
                 <td>
-                    <para style="Header"> </para>
+                    <para style="Header">[[ req.warehouse_id and get_name('stock.warehouse', req.warehouse_id.id) or '' ]]</para>
                 </td>
             </tr>
         </blockTable>
