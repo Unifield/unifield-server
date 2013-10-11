@@ -77,7 +77,9 @@ class analytic_line(osv.osv):
 
     def _get_entry_sequence(self, cr, uid, ids, field_names, args, context=None):
         """
-        Give right entry sequence. Either move_id.move_id.name or commitment_line_id.commit_id.name
+        Give right entry sequence. Either move_id.move_id.name,
+        or commitment_line_id.commit_id.name, or
+        if the line was imported, the stored name
         """
         if not context:
             context = {}
@@ -88,6 +90,8 @@ class analytic_line(osv.osv):
                 res[l.id] = l.move_id.move_id.name
             elif l.commitment_line_id:
                 res[l.id] = l.commitment_line_id.commit_id.name
+            elif l.imported_commitment:
+                res[l.id] = l.imported_entry_sequence
         return res
 
     def _get_period_id(self, cr, uid, ids, field_name, args, context=None):
@@ -107,6 +111,8 @@ class analytic_line(osv.osv):
                 res[al.id] = al.commitment_line_id.commit_id.period_id.id
             elif al.move_id and al.move_id.period_id:
                 res[al.id] = al.move_id.period_id.id
+            elif al.imported_commitment:
+                res[al.id] = al.imported_period_id.id
         return res
 
     def _search_period_id(self, cr, uid, obj, name, args, context=None):
@@ -122,8 +128,13 @@ class analytic_line(osv.osv):
         for arg in args:
             if len(arg) == 3 and arg[1] in ['=', 'in']:
                 new_args.append('|')
+                new_args.append('|')
                 new_args.append(('move_id.period_id', arg[1], arg[2]))
                 new_args.append(('commitment_line_id.commit_id.period_id', arg[1], arg[2]))
+                new_args.append('&')
+                new_args.append(('imported_commitment', '=', True))
+                new_args.append(('imported_period_id', arg[1], arg[2]))
+                
         return new_args
 
     _columns = {
@@ -139,10 +150,14 @@ class analytic_line(osv.osv):
             help="Indicates the Journal Type of the Analytic journal item"),
         'entry_sequence': fields.function(_get_entry_sequence, method=True, type='text', string="Entry Sequence", readonly=True, store=True),
         'period_id': fields.function(_get_period_id, fnct_search=_search_period_id, method=True, string="Period", readonly=True, type="many2one", relation="account.period", store=False),
+        'imported_commitment': fields.boolean(string="From imported commitment?"),
+        'imported_entry_sequence': fields.text("Imported Entry Sequence"),
+        'imported_period_id': fields.many2one('account.period', string="Imported Period"),
     }
 
     _defaults = {
         'from_write_off': lambda *a: False,
+        'imported_commitment': lambda *a: False,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
