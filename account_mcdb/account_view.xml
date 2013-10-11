@@ -10,6 +10,12 @@
             <field name="arch" type="xml">
                 <tree string="Account Entries" min_rows="100" hide_new_button="1">
                     <field name="instance_id"/>
+                    <field name="is_corrigible" invisible="1"/>
+                    <field name="have_an_historic" invisible="1"/>
+                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard" 
+                        attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
+                    <button name="button_open_corrections" type="object" string="Open corrections history" 
+                        attrs="{'invisible': [('have_an_historic', '=', False)]}" icon="terp-mail-"/>
                     <field name="journal_id"/>
                     <field name="move_id"/>
                     <field name="name"/>
