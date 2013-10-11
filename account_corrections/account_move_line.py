@@ -256,7 +256,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Update context to inform wizard we come from a correction wizard
         context.update({'from_correction': True,})
         return {
-            'name': "Accounting Corrections Wizard",
+            'name': _("Accounting Corrections Wizard (from Journal Items)"),
             'type': 'ir.actions.act_window',
             'res_model': 'wizard.journal.items.corrections',
             'target': 'new',

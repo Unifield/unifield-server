@@ -32,7 +32,11 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Journal items corrections Wizard">
-                    <field name="move_line_id" invisible="1" colspan="1"/>
+                    <separator string="Information"/>
+                    <newline/>
+                    <field name="move_line_id" colspan="6" widget="one2many" nolabel="1"/>
+                    <newline/>
+                    <separator string="Correction"/>
                     <field name="date" on_change="onchange_date(date)"/>
                     <field name="from_donation" invisible="1"/>
                     <newline/>
@@ -63,9 +67,12 @@
                             attrs="{'invisible': [('state', '!=', 'correction')], 'required': [('state', '=', 'correction')]}"/>
                         <newline/>
                     </xpath>
-                    <xpath expr="/form//button[@name='button_confirm']" position="replace">
-                        <button name="button_confirm" string="Save" type="object" icon="gtk-ok" colspan="1" attrs="{'invisible': [('state', '=', 'correction')], 'readonly': [('is_writable', '=', False)]}"/>
-                        <button name="button_confirm" string="Correct it!" type="object" icon="gtk-edit" colspan="1" attrs="{'invisible': [('state', '!=', 'correction')]}"/>
+                    <xpath expr="/form//field[@name='state']" position="before">
+                        <group colspan="4" attrs="{'invisible': [('state', '!=', 'correction')]}">
+                            <label string="" colspan="2"/>
+                            <button name="button_cancel" string='Cancel' type='object' icon='gtk-cancel' colspan="1"/>
+                            <button name="button_confirm" string="Correct it" type="object" icon="gtk-edit" colspan="1" attrs="{'readonly': [('is_writable', '=', False)]}"/>
+                        </group>
                     </xpath>
                 </data>
             </field>

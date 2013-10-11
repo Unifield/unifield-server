@@ -54,6 +54,7 @@ class account_analytic_line(osv.osv):
         'is_reversal': fields.boolean('Is a reversal line?'),
         'is_reallocated': fields.boolean('Have been reallocated?'),
         'journal_id': fields.many2one('account.analytic.journal', 'Journal Code', required=True, ondelete='restrict', select=True, readonly=True),
+        'journal_type': fields.related('journal_id', 'type', 'Journal type', readonly=True),
         'date': fields.date('Posting Date', required=True, select=True, readonly=True),
         'document_date': fields.date('Document Date', readonly=True, required=True),
         'move_id': fields.many2one('account.move.line', 'Entry Sequence', ondelete='restrict', select=True, readonly=True, domain="[('account_id.user_type.code', 'in', ['expense', 'income'])]"), # UF-1719: Domain added for search view
