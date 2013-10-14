@@ -72,7 +72,7 @@ class hq_report_oca(report_sxw.report_sxw):
                      "0",
                      counterpart_date,
                      line_key[1],
-                     line_debit / line_functional_debit,
+                     round(line_debit / line_functional_debit, 5),
                      line_debit > 0 and round(line_debit, 2) or "0.00",
                      line_debit > 0 and "0.00" or round(-line_debit, 2),
                      sequence_number,
@@ -88,7 +88,7 @@ class hq_report_oca(report_sxw.report_sxw):
                       "0",
                       counterpart_date,
                       line_key[1],
-                      line_debit / line_functional_debit,
+                      round(line_debit / line_functional_debit, 5),
                       line_debit > 0 and "0.00" or round(-line_debit, 2),
                       line_debit > 0 and round(line_debit, 2) or "0.00",
                       sequence_number,
@@ -158,10 +158,15 @@ class hq_report_oca(report_sxw.report_sxw):
             currency = move_line.currency_id
             func_currency = move_line.functional_currency_id
             rate = "0.00"
-            if func_currency:
+            if currency and func_currency:
                 cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(move_line.functional_currency_id.id, move_line.date))
                 if cr.rowcount:
-                    rate = cr.fetchall()[0][0]
+                    func_rate = cr.fetchall()[0][0]
+                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, move_line.date))
+                if cr.rowcount:
+                    curr_rate = cr.fetchall()[0][0]
+                if func_rate != 0.00:
+                    rate = round(curr_rate / func_rate, 5)
             # For first report: as if
             formatted_data = [move_line.instance_id and move_line.instance_id.code or "",
                               journal and journal.code or "",
