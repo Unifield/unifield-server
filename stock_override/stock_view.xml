@@ -310,7 +310,7 @@
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
-                            <field name="min_date" string="Expected Move Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}"
+                            <field name="min_date" string="Expected Move Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel', 'import'])]}"
                             		on_change="change_min_date()" required="1"/>
                             <field name="min_date_manually" invisible="1" />
                        </group>
@@ -326,7 +326,7 @@
                                 context="{'reason_type_id': reason_type_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
                                 on_change="onchange_move()"
                                 >
-                                <tree colors="grey:scrapped == True; red: inactive_product == True or expired_lot == True" string="Stock Moves" noteditable="fake_state=='assigned'" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
+                                <tree colors="grey:scrapped == True; red: inactive_product or to_correct_ok or expired_lot" string="Stock Moves" noteditable="fake_state=='assigned'" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
                                     <field name="line_number"/>
                                     <field name="product_id" />
                                     <field name="composition_list_id"/>
@@ -357,6 +357,7 @@
                                     <field name="np_check"/>
                                     <field name="expired_lot" invisible="1" />
                                     <field name="inactive_product" invisible="1" />
+                                    <field name="to_correct_ok" invisible="1" />
                     				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                 </tree>
 
@@ -452,10 +453,13 @@
                             </field>
                             <group col="10" colspan="4">
                                 <field name="state" readonly="1"/>
+                                <field name="has_draft_moves" invisible="1" />
+                                <!-- <button name="return_to_state" string="Return to initial state" states="import" icon="gtk-execute" type="object" />-->
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>
-                                <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
+                                <button name="draft_force_assign" states="draft,confirmed,assigned" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': ['|', '&amp;', ('state', 'in', ['done', 'cancel', 'import']), ('state', '!=', 'draft'), ('has_draft_moves', '=', False)]}" />
                                 <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                <button name="change_all_location" string="Change All locations" icon="gtk-execute" type="object" states="draft,confirmed,assigned" />
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
                                 <field name="certificate_donation" invisible="1"/>
                                 <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>

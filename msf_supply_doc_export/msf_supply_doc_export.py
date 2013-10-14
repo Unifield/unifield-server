@@ -211,6 +211,24 @@ class real_composition_kit_xls(WebKitParser):
 real_composition_kit_xls('report.real.composition.kit.xls', 'composition.kit', 'addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako')
 
 
+class internal_move_xls(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header = " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(internal_move_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(internal_move_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+internal_move_xls('report.internal.move.xls', 'stock.picking', 'addons/msf_supply_doc_export/report/report_internal_move_xls.mako')
+
+
 class ir_values(osv.osv):
     """
     we override ir.values because we need to filter where the button to print report is displayed (this was also done in register_accounting/account_bank_statement.py)
@@ -254,7 +272,7 @@ class ir_values(osv.osv):
                         new_act.append(v)
                 values = new_act
                 
-        elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'stock.picking' in [x[0] for x in models] and context.get('picking_type', False) != 'incoming_shipment':
+        elif (context.get('_terp_view_name') or context.get('picking_type')) and key == 'action' and key2 == 'client_print_multi' and 'stock.picking' in [x[0] for x in models] and context.get('picking_type', False) != 'incoming_shipment':
             new_act = []
             Picking_Tickets = trans_obj.tr_view(cr, 'Picking Tickets', context)
             Picking_Ticket = trans_obj.tr_view(cr, 'Picking Ticket', context)
@@ -262,10 +280,12 @@ class ir_values(osv.osv):
             Pre_Packing_List = trans_obj.tr_view(cr, 'Pre-Packing List', context)
             Delivery_Orders = trans_obj.tr_view(cr, 'Delivery Orders', context)
             Delivery_Order = trans_obj.tr_view(cr, 'Delivery Order', context)
+            Internal_Moves = trans_obj.tr_view(cr, 'Internal Moves', context)
             for v in values:
-                if v[2]['report_name'] == 'picking.ticket' and context['_terp_view_name'] in (Picking_Tickets, Picking_Ticket) and context.get('picking_screen', False)\
-                or v[2]['report_name'] == 'pre.packing.list' and context['_terp_view_name'] in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
-                or v[2]['report_name'] == 'labels' and context['_terp_view_name'] in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order]:
+                if '_terp_view_name' in context and v[2]['report_name'] == 'picking.ticket' and context['_terp_view_name'] in (Picking_Tickets, Picking_Ticket) and context.get('picking_screen', False)\
+                or '_terp_view_name' in context and v[2]['report_name'] == 'pre.packing.list' and context['_terp_view_name'] in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
+                or '_terp_view_name' in context and v[2]['report_name'] == 'labels' and context['_terp_view_name'] in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order]\
+                or v[2]['report_name'] in ('internal.move.xls', 'internal.move') and (('_terp_view_name' in context and context['_terp_view_name'] in [Internal_Moves]) or context.get('picking_type') == 'internal_move'):
                     new_act.append(v)
                 values = new_act
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'shipment' in [x[0] for x in models]:
