@@ -1283,17 +1283,29 @@ class procurement_order(osv.osv):
             purchase_domain.append(('order_type', '=', 'direct'))
         else:
             purchase_domain.append(('order_type', '!=', 'direct'))
-        
-        if partner.po_by_project == 'project' or procurement.po_cft == 'dpo':
-            sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
-            if sale_line_ids:
-                line = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context)
+
+        line = None
+        sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
+        if sale_line_ids:
+            line = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context)
+
+        if partner.po_by_project in ('project', 'category_project') or (procurement.po_cft == 'dpo' and partner.po_by_project == 'all'):
+            if line:
                 if line.procurement_request:
                     customer_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
                 else:
                     customer_id = line.order_id.partner_id.id 
                 values.update({'customer_id': customer_id})
                 purchase_domain.append(('customer_id', '=', customer_id))
+
+        # Isolated requirements => One PO for one IR/FO
+        if partner.po_by_project == 'isolated':
+            purchase_domain.append(('origin', '=', procurement.origin))
+
+        # Category requirements => Search a PO with the same category than the IR/FO category
+        if partner.po_by_project in ('category_project', 'category'):
+            if line:
+                purchase_domain.append(('categ', '=', line.order_id.categ))
         
         # if we are updating the sale order from the corresponding on order purchase order
         # the purchase order to merge the new line to is locked and provided in the procurement
