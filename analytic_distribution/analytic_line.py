@@ -182,12 +182,12 @@ class analytic_line(osv.osv):
             if date < account.date_start or (account.date != False and date >= account.date):
                 if 'from' not in context or context.get('from') != 'mass_reallocation':
                     raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (account.name or '',))
-            if 'cost_center_id' in vals:
+            if vals.get('cost_center_id', False):
                 cc = account_obj.browse(cr, uid, vals['cost_center_id'], context=context)
                 if date < cc.date_start or (cc.date != False and date >= cc.date):
                     if 'from' not in context or context.get('from') != 'mass_reallocation':
                         raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (cc.name or '',))
-            if 'destination_id' in vals:
+            if vals.get('destination_id', False):
                 dest = account_obj.browse(cr, uid, vals['destination_id'], context=context)
                 if date < dest.date_start or (dest.date != False and date >= dest.date):
                     if 'from' not in context or context.get('from') != 'mass_reallocation':
