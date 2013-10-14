@@ -139,7 +139,8 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
-                  <field name="account_id" colspan="2" attrs="{'readonly': [('state', '=', 'blocked')]}"/><label string="" colspan="2"/>
+                    <field name="account_id" colspan="2" attrs="{'readonly': [('state', '=', 'blocked')]}"/>
+                    <label string="" colspan="2"/>
                     <newline/>
                     <field name="date" colspan="2" /><label string="" colspan="2"/>
                     <newline/>
