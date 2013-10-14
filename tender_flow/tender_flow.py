@@ -517,7 +517,7 @@ class tender(osv.osv):
                     price_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('currency_id', '=', line.currency_id.id)], context=context)
                     if price_ids:
                         pricelist = price_ids[0]
-                po_values = {'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + ';' + tender.name,
+                po_values = {'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + '; ' + tender.name,
                              'partner_id': line.supplier_id.id,
                              'partner_address_id': address_id,
                              'location_id': tender.location_id.id,

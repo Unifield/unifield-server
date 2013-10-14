@@ -1321,7 +1321,7 @@ class procurement_order(osv.osv):
             
         if procurement.tender_id:
             if values.get('origin'):
-                values['origin'] = '%s;%s' % (values['origin'], procurement.tender_id.name)
+                values['origin'] = '%s; %s' % (values['origin'], procurement.tender_id.name)
             else:
                 values['origin'] = procurement.tender_id.name
         
