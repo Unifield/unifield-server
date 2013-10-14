@@ -150,10 +150,10 @@
 -
   I create an analytic account attached to OC (Operation Center) named Kenya
 -
-  !record {model: account.analytic.account, id: analytic_account_kenya}:
-    name: "Kenya_test"
+  !record {model: account.analytic.account, id: analytic_account_kenya3}:
+    name: "Kenya3"
     currency_id: 1
-    code: KENTEST
+    code: KEN3
     type: normal
     category: OC
     parent_id: analytic_distribution.analytic_account_project
@@ -174,15 +174,15 @@
 -
   I create an FP analytic account named Kenya AIDS attached to Kenya CC
 -
-  !record {model: account.analytic.account, id: analytic_account_fp_kenya_aids}:
+  !record {model: account.analytic.account, id: analytic_account_fp_kenya_aids2}:
     name: "Kenya AIDS"
     currency_id: 1
-    code: KENA
+    code: KENA2
     type: normal
     category: FUNDING
     parent_id: analytic_distribution.analytic_account_funding_pool
     date: !eval "'%s-01-01' %(datetime.now().year + 2)"
-    cost_center_ids: [analytic_account_kenya]
+    cost_center_ids: [analytic_account_kenya3]
     tuple_destination_account_ids: [tuple_support_6101]
 -
   I create a global analytical distribution
@@ -208,7 +208,7 @@
     amount: 0.0
     percentage: 25.0
     currency_id: 1
-    analytic_id: analytic_account_kenya
+    analytic_id: analytic_account_kenya3
     distribution_id: global_distrib_1
     destination_id: analytic_distribution.analytic_account_destination_support
 -
@@ -231,8 +231,8 @@
     amount: 0.0
     percentage: 25.0
     currency_id: 1
-    analytic_id: analytic_account_fp_kenya_aids
-    cost_center_id: analytic_account_kenya
+    analytic_id: analytic_account_fp_kenya_aids2
+    cost_center_id: analytic_account_kenya3
     destination_id: analytic_distribution.analytic_account_destination_support
     distribution_id: global_distrib_1
 -
@@ -240,18 +240,18 @@
 -
   !record {model: msf.instance, id: proj1}:
     level: project
-    code: PROJ1
+    code: PROJ12 # take another name than other test
     mission: Mission Test
-    instance: Proj. instance
-    name: Project 1
+    instance: Project instance
+    name: Project 12 # idem that code field
     target_cost_center_ids:
-      - cost_center_id: analytic_account_kenya
+      - cost_center_id: analytic_account_kenya3
         is_target: True
         is_top_cost_center: True
         is_po_fo_cost_center: True
     state: active
-    move_prefix: TEST
-    reconcile_prefix: T1
+    move_prefix: MPT # should be different from other tests!
+    reconcile_prefix: T2 # idem that move_prefix field
 -
   Activate the local instance
 -
@@ -272,3 +272,12 @@
     user = self.pool.get('res.users').browse(cr, uid, uid)
     all_journal_ids = self.search(cr, uid, [])
     self.write(cr, uid, all_journal_ids, {'instance_id': user.company_id.instance_id.id})
+-
+  I overwrite periods to have the right number and open them
+-
+  !python {model: account.period}: |
+    import datetime
+    period_ids = self.search(cr, uid, [], order='date_start, name')
+    for p in self.browse(cr, uid, period_ids):
+      self.write(cr, uid, [p.id], {'number': int(datetime.datetime.strptime(p.date_start, '%Y-%m-%d').strftime('%m'))})
+    self.action_set_state(cr, uid, period_ids, {'state': 'open'})

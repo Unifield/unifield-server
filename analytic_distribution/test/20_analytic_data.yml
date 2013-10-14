@@ -75,12 +75,12 @@
     parent_id: analytic_distribution.analytic_account_project
     date: !eval "'%s-01-01' %(datetime.now().year + 2)"
 -
-  I create an analytic account attached to OC (Operation Center) named Kenya
+  I create a CC analytic account attached to OC (Operation Center)
 -
-  !record {model: account.analytic.account, id: analytic_account_kenya}:
-    name: "Kenya_test"
+  !record {model: account.analytic.account, id: analytic_cc}:
+    name: "CC"
     currency_id: 1
-    code: KENTEST
+    code: CC
     type: normal
     category: OC
     parent_id: analytic_distribution.analytic_account_project
@@ -109,7 +109,7 @@
     category: FUNDING
     parent_id: analytic_distribution.analytic_account_funding_pool
     date: !eval "'%s-01-01' %(datetime.now().year + 2)"
-    cost_center_ids: [analytic_account_kenya]
+    cost_center_ids: [analytic_cc]
     tuple_destination_account_ids: [tuple_support_6101, tuple_support_6102]
 -
   I create a global analytical distribution
@@ -135,7 +135,7 @@
     amount: 0.0
     percentage: 25.0
     currency_id: 1
-    analytic_id: analytic_account_kenya
+    analytic_id: analytic_cc
     distribution_id: global_distrib_1
     destination_id: analytic_distribution.analytic_account_destination_support
 -
@@ -159,7 +159,7 @@
     percentage: 25.0
     currency_id: 1
     analytic_id: analytic_account_fp_kenya_aids
-    cost_center_id: analytic_account_kenya
+    cost_center_id: analytic_cc
     destination_id: analytic_distribution.analytic_account_destination_support
     distribution_id: global_distrib_1
 -
@@ -224,7 +224,7 @@
   I create CC1 analytic account without any ending date (begin from 3 of this month)
 -
   !record {model: account.analytic.account, id: cc1}:
-    name: Cost Center 1
+    name: "Cost Center 1"
     code: CC1
     type: normal
     category: OC
@@ -249,6 +249,24 @@
     category: OC
     date_start: !eval "'%s-%s-15' % (datetime.now().year + 10, datetime.now().month)"
 -
+  I create CC4 analytic account without any ending date (begin from 3 of this month)
+-
+  !record {model: account.analytic.account, id: cc4}:
+    name: "Cost Center 4"
+    code: CC4
+    type: normal
+    category: OC
+    date_start: !eval "'%s-03-03' % (datetime.now().year)"
+-
+  I create CC5 analytic account without any ending date (begin from 15 of this month)
+-
+  !record {model: account.analytic.account, id: cc5}:
+    name: Cost Center 5
+    code: CC5
+    type: normal
+    category: OC
+    date_start: !eval "'%s-03-15' % (datetime.now().year)"
+-
   I create FP1 analytic account
 -
   !record {model: account.analytic.account, id: fp1}:
@@ -258,7 +276,7 @@
     category: FUNDING
     date_start: !eval "'%s-%s-03' % (datetime.now().year + 10, datetime.now().month)"
     date: !eval "'%s-%s-10' % (datetime.now().year + 10, datetime.now().month)"
-    cost_center_ids: [cc1, cc2, cc3]
+    cost_center_ids: [cc1, cc2, cc3, cc4, cc5]
     tuple_destination_account_ids: [tuple_operation_6101, tuple_operation_6102]
 -
   I create an analytic distribution.
@@ -316,13 +334,13 @@
   I create distrib_4 analytic distribution.
 -
   !record {model: analytic.distribution, id: distrib_4}:
-    name: Distribution for checking dates, valid dates
+    name: Distribution for checking reverse and correction
 -
   I add some lines to this distribution. First CC.
 -
   !record {model: cost.center.distribution.line, id: cost_center_4}:
     name: CC Line 1
-    analytic_id: cc1
+    analytic_id: cc4
     destination_id: analytic_account_destination_operation
     distribution_id: distrib_4
     percentage: 100.0
@@ -335,7 +353,7 @@
     analytic_id: analytic_account_msf_private_funds
     destination_id: analytic_account_destination_operation
     distribution_id: distrib_4
-    cost_center_id: cc1
+    cost_center_id: cc4
     percentage: 100.0
     currency_id: base.EUR
 -

@@ -46,9 +46,9 @@
   I create an analytic account attached to OC (Operation Center) named Kenya
 -
   !record {model: account.analytic.account, id: analytic_account_kenya}:
-    name: "Kenya_test"
+    name: "Kenya"
     currency_id: 1
-    code: KENTEST
+    code: KEN
     type: normal
     category: OC
     parent_id: analytic_distribution.analytic_account_project
@@ -130,3 +130,12 @@
     cost_center_id: analytic_account_kenya
     destination_id: analytic_distribution.analytic_account_destination_support
     distribution_id: global_distrib_1
+-
+  I overwrite periods with right number and open them
+-
+  !python {model: account.period}: |
+    import datetime
+    period_ids = self.search(cr, uid, [], order='date_start, name')
+    for p in self.browse(cr, uid, period_ids):
+      self.write(cr, uid, [p.id], {'number': int(datetime.datetime.strptime(p.date_start, '%Y-%m-%d').strftime('%m'))})
+    self.action_set_state(cr, uid, period_ids, {'state': 'draft'})
