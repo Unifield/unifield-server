@@ -1642,8 +1642,14 @@ class account_bank_statement_line(osv.osv):
             elif absl.state == "temp" and postype == "temp":
                 raise osv.except_osv(_('Warning'), _('You can\'t temp re-post a temp posted entry !'))
 
-            # Analytic distribution
-            # Check analytic distribution presence
+            # Some checks
+            ## Journal presence for transfers cases - because of UF-1982 migration without journals
+            if absl.account_id.type_for_register in ['transfer', 'transfer_same'] and not absl.transfer_journal_id:
+                raise osv.except_osv(_('Error'), _('Please give a transfer journal!'))
+            ## Employee presence for operational advance
+            if absl.account_id.type_for_register == 'advance' and not absl.employee_id:
+                raise osv.except_osv(_('Error'), _('Please give an employee!'))
+            ## Analytic distribution presence
             if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
                 raise osv.except_osv(_('Error'), _('Analytic distribution is mandatory for this line: %s') % (absl.name or '',))
             # Check analytic distribution validity
