@@ -1266,8 +1266,24 @@ stock moves which are already processed : '''
                 for pick_id in todo3:
                     wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
                     wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
-            
+
         return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
+
+    def need_counterpart(self, cr, uid, ids, context=None):
+        res = True
+        for po in self.browse(cr, uid, ids, context=context):
+            if (po.order_type == 'loan' and not po.loan_id and po.partner_id.partner_type in ('internal', 'intermission')) or po.is_a_counterpart:
+                res = False
+
+        return res
+
+    def go_to_loan_done(self, cr, uid, ids, context=None):
+        res = False
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.order_type not in ('loan', 'direct') or po.loan_id or (po.order_type == 'loan' and po.partner_id.partner_type in ('internal', 'intermission')):
+                res = True
+
+        return res
     
     def action_sale_order_create(self, cr, uid, ids, context=None):
         '''

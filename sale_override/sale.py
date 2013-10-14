@@ -55,8 +55,10 @@ class sale_order(osv.osv):
         if context.get('from_button'):
             default.update({'is_a_counterpart': False})
         
-        default.update({'loan_id': False,
-                        'order_policy': 'picking',
+        if 'loan_id' not in default:
+            default.update({'loan_id': False})
+
+        default.update({'order_policy': 'picking',
                         'active': True})
 
         if not context.get('keepClientOrder', False):
@@ -534,6 +536,7 @@ class sale_order(osv.osv):
                         fo_name = so.name + '-' + selec_name
                         split_id = self.copy(cr, uid, so.id, {'name': fo_name,
                                                               'order_line': [],
+                                                              'loan_id': so.loan_id and so.loan_id.id or False,
                                                               'delivery_requested_date': so.delivery_requested_date,
                                                               'split_type_sale_order': fo_type,
                                                               'ready_to_ship_date': line.order_id.ready_to_ship_date,
@@ -541,6 +544,10 @@ class sale_order(osv.osv):
                         # log the action of split
                         self.log(cr, uid, split_id, _('The %s split %s has been created.')%(selec_name, fo_name))
                         split_fo_dic[fo_type] = split_id
+                        # For loans, change the subflow
+                        if fo_type == 'stock_split_sale_order':
+                            po_ids = self.pool.get('purchase.order').search(cr, uid, [('loan_id', '=', so.id)], context=context)
+                            netsvc.LocalService("workflow").trg_change_subflow(uid, 'purchase.order', po_ids, 'sale.order', [so.id], split_id, cr)
                 # copy the line to the split Fo - the state is forced to 'draft' by default method in original add-ons
                 # -> the line state is modified to sourced when the corresponding procurement is created in action_ship_proc_create
                 new_context = dict(context, keepDateAndDistrib=True, keepLineNumber=True, no_store_function=True)
