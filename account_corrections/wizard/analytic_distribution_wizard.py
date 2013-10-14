@@ -220,6 +220,13 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'percentage': line.percentage,
                     'destination_id': line.destination_id.id,
                 })
+            # UTP-943: Check that new ana line is on an open period
+            correction_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wizard.date)
+            if not correction_period_ids:
+                raise osv.except_osv(_('Error'), _('No period found for the given date: %s') % (wizard.date,))
+            for cp in self.pool.get('account.period').browse(cr, uid, correction_period_ids):
+                if cp.state != 'draft':
+                    raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
             # Create the new ana line
             cor_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name)
             for distrib_id in cor_ids:

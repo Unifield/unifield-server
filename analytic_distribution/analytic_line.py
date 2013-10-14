@@ -297,6 +297,13 @@ class analytic_line(osv.osv):
                     rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], posting_date=date)
                     # UTP-943: Shoud have a correction journal on these lines
                     self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'journal_id': correction_journal_id})
+                    # UTP-943: Check that period is open
+                    correction_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date, context=context)
+                    if not correction_period_ids:
+                        raise osv.except_osv(_('Error'), _('No period found for this date: %s') % (date,))
+                    for p in self.pool.get('account.period').browse(cr, uid, correction_period_ids, context=context):
+                        if p.state != 'draft':
+                            raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (p.name,))
                     # then create new lines
                     self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
                         'source_date': aline.source_date or aline.date, 'journal_id': correction_journal_id}, context=context)
