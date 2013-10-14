@@ -1268,6 +1268,11 @@ class stock_picking(osv.osv):
                     view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_search')[1]
             except ValueError:
                 pass
+        if not view_id and context.get('pick_type') == 'incoming' and view_type == 'tree':
+            try:
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_tree')[1]
+            except ValueError:
+                pass
 
         return super(stock_picking, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
     
