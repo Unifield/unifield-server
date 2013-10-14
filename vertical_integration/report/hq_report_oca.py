@@ -48,14 +48,14 @@ class hq_report_oca(report_sxw.report_sxw):
                 return mapping.mapping_value
         return "0"
 
-    def create_counterpart(self, cr, uid, line, counterpart_date):
+    def create_counterpart(self, cr, uid, line):
         pool = pooler.get_pool(cr.dbname)
         # method to create counterpart line
         return line[:2] + \
                ["20750",
                 "0",
                 "0",
-                counterpart_date,
+                line[5],
                 line[6],
                 line[7],
                 line[9],
@@ -76,7 +76,7 @@ class hq_report_oca(report_sxw.report_sxw):
                      line_debit > 0 and round(line_debit, 2) or "0.00",
                      line_debit > 0 and "0.00" or round(-line_debit, 2),
                      sequence_number,
-                     "Subtotal - " + line_key[0] + " - " + line_key[1] + " - " + line_key[2] + " - " + counterpart_date[-4:],
+                     "Subtotal - " + line_key[0] + " - " + line_key[1] + " - " + line_key[2],
                      "0",
                      counterpart_date,
                      "0"]
@@ -197,9 +197,10 @@ class hq_report_oca(report_sxw.report_sxw):
                                         move_line.date and datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
                                         currency and currency.name or "0",
                                         rate,
-                                        round(move_line.debit_currency, 2),
-                                        round(move_line.credit_currency, 2),
+                                        move_line.debit_currency != 0.0 and round(move_line.debit_currency, 2) or "",
+                                        move_line.credit_currency != 0.0 and round(move_line.credit_currency, 2) or "",
                                         move_line.move_id and move_line.move_id.name or "0",
+                                        "",
                                         move_line.name or "0",
                                         expat_employee,
                                         move_line.document_date and datetime.datetime.strptime(move_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
@@ -276,8 +277,7 @@ class hq_report_oca(report_sxw.report_sxw):
         
         for line in sorted(account_lines, key=lambda line: line[10]):
             third_report.append(line)
-            third_report.append(self.create_counterpart(cr, uid, line,
-                                                          counterpart_date))
+            third_report.append(self.create_counterpart(cr, uid, line))
         
         sequence_index = 1
         for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
