@@ -24521,6 +24521,12 @@ msgid "SMS Message"
 msgstr "Message SMS"
 
 #. module: msf_audittrail
+#: code:addons/msf_audittrail/audittrail.py:214
+#, python-format
+msgid "Track changes"
+msgstr "Suivi des Modifications"
+
+#. module: msf_audittrail
 #: model:ir.actions.act_window,name:msf_audittrail.action_audittrail_view_log
 msgid "Track changes"
 msgstr "Suivi des Modifications"
@@ -27388,6 +27394,7 @@ msgstr "Book. Debit"
 
 #. module: msf_audittrail
 #: field:audittrail.log.line,field_description:0
+#: field:audittrail.log.line,trans_field_description:0
 msgid "Field Description"
 msgstr "Description du Champ"
 
