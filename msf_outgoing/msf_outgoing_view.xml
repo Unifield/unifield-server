@@ -144,7 +144,7 @@
 			<field name="model">stock.picking</field>
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
-				<tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Picking Tickets">
+				<tree colors="blue:state in ('draft') and min_date &gt;= current_date;grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Picking Tickets">
 					<field name="name"/>
 					<field name="partner_id2" />
 					<field name="backorder_id" />
@@ -154,7 +154,8 @@
 					<field name="overall_qty" invisible="True" />
 					<field name="date"/>
 					<field name="min_date" string="Expected Pick Date" />
-					<field name="state"/>
+                    <field name="state"/>
+                    <field name="line_state" />
 					<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add"/>
 					<button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"/>
 				</tree>
@@ -328,8 +329,9 @@
 									</group>
 								</form>
 							</field>
-							<group col="13" colspan="4">
-								<field name="state" readonly="1"/>
+							<group col="14" colspan="4">
+                                <field name="state" readonly="1"/>
+                                <field name="line_state" readonly="1" attrs="{'invisible': [('state', '!=', 'draft')]}" nolabel="1" />
 								<field name="flow_type" />
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"/>
                                 <field name="has_draft_moves" invisible="1" />
@@ -377,11 +379,17 @@
 						<field name="name"/>
 						<field name="partner_id2" />
 						<field name="origin"/>
-						<newline />
+                        <newline />
 						<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" />
 						<field name="date" />
 						<field name="min_date" />
-					</group>
+                    </group>
+                    <newline />
+                    <group string="State of lines" col="8" colspan="4">
+                        <filter icon="gtk-no" name="line_not_available" string="Not available" domain="[('line_state', '=', 'confirmed')]" />
+                        <filter icon="gtk-dialog-question" name="line_mixed" string="Partially available" domain="[('line_state', '=', 'mixed')]" />
+                        <filter icon="gtk-yes" name="line_available" string="Available" domain="[('line_state', '=', 'assigned')]" />
+                    </group>
 					<newline/>
 					<group expand="0" string="Group By..." colspan="4" col="8">
 						<filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
@@ -905,7 +913,7 @@
 			<field name="model">stock.picking</field>
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
-				<tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Packing">
+				<tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Packing">
 					<field name="name"/>
 					<field name="partner_id2"/>
 					<field name="origin"/>
@@ -1154,7 +1162,7 @@
 			<field name="model">shipment</field>
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
-				<tree string="Shipment" hide_new_button="1" hide_delete_button="1" colors="blue:state in ['draft'];grey:state in ['cancel'];red:state not in ['cancel', 'done'] and shipment_expected_date &lt; current_date;black:state in ['done'];green: state in ['delivered']">
+                <tree string="Shipment" hide_new_button="1" hide_delete_button="1" colors="blue:state in ['draft'] and (shipment_expected_date &gt; current_date or shipment_expected_date == current_date);grey:state in ['cancel'];red:state not in ['cancel', 'done'] and shipment_expected_date &lt; current_date;black:state in ['done'];green: state in ['delivered']">
 					<field name="name"/>
 					<field name="partner_id2"/>
 					<field name="address_id"/>
