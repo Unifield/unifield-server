@@ -117,6 +117,7 @@
             <field name="res_model">account.analytic.line</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
+            <field name="domain">[('account_id.category', '=', 'FUNDING')]</field>
             <field name="context">{'search_default_engagements': 1, 'display_fp': True}</field>
         </record>
 

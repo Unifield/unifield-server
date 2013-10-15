@@ -373,7 +373,7 @@ class account_move_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Search valid ids
-        domain = [('move_id', 'in', ids)]
+        domain = [('move_id', 'in', ids), ('account_id.category', '=', 'FUNDING')]
         context.update({'display_fp': True})
         return {
             'name': _('Journal Entries'),
