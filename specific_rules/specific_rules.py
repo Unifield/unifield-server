@@ -1360,6 +1360,7 @@ class stock_inventory(osv.osv):
         '''
         prodlot_obj = self.pool.get('stock.production.lot')
         product_obj = self.pool.get('product.product')
+        line_ids = []
         # treat the needed production lot
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.inventory_line_id:
@@ -1398,6 +1399,9 @@ class stock_inventory(osv.osv):
                             prodlot_id = prodlot_ids[0]
                         # update the line
                         line.write({'prod_lot_id': prodlot_id,},)
+                line_ids.append(line.id)
+
+        self.pool.get('%s.line' % (self._name)).write(cr, uid, line_ids, {'comment': ''}, context=context)
         
         # super function after production lot creation - production lot are therefore taken into account at stock move creation
         result = super(stock_inventory, self).action_confirm(cr, uid, ids, context=context)      

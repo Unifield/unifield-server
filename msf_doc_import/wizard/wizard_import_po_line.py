@@ -75,6 +75,7 @@ class wizard_import_po_line(osv.osv_memory):
         currency_obj = self.pool.get('res.currency')
         purchase_obj = self.pool.get('purchase.order')
         purchase_line_obj = self.pool.get('purchase.order.line')
+        categ_log = False
         line_with_error = []
         vals = {'order_line': []}
         
@@ -238,6 +239,10 @@ class wizard_import_po_line(osv.osv_memory):
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     if not context.get('yml_test', False):
                         cr.commit()
+
+            categ_log = purchase_obj.onchange_categ(cr, uid, [po_id], po_browse.categ, po_browse.warehouse_id.id, po_browse.cross_docking_ok, po_browse.location_id.id, context=context).get('warning', {}).get('message', '').upper()
+            categ_log = categ_log.replace('THIS', 'THE')
+
         
         error_log += '\n'.join(error_list)
         if error_log:
@@ -245,6 +250,7 @@ class wizard_import_po_line(osv.osv_memory):
         end_time = time.time()
         total_time = str(round(end_time-start_time)) + _(' second(s)')
         final_message = _(''' 
+%s
 Importation completed in %s!
 # of imported lines : %s on %s lines
 # of ignored lines: %s
@@ -252,7 +258,7 @@ Importation completed in %s!
 %s
 
 %s
-''') % (total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
+''') % (categ_log, total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
 #        try:
         wizard_vals = {'message': final_message, 'state': 'done'}
         if line_with_error:

@@ -517,7 +517,7 @@ class tender(osv.osv):
                     price_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('currency_id', '=', line.currency_id.id)], context=context)
                     if price_ids:
                         pricelist = price_ids[0]
-                po_values = {'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + ';' + tender.name,
+                po_values = {'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + '; ' + tender.name,
                              'partner_id': line.supplier_id.id,
                              'partner_address_id': address_id,
                              'location_id': tender.location_id.id,
@@ -697,7 +697,7 @@ class tender_line(osv.osv):
                 'func_total_price': fields.function(_get_total_price, method=True, type='float', string="Func. Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
                 'func_currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Func. Cur.', multi='total'),
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
-                'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
+                'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="char", string="Related Line Number", readonly=True,),
                 'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
                 'comment': fields.char(size=128, string='Comment'),
                 }

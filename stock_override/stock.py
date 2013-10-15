@@ -185,6 +185,7 @@ class stock_picking(osv.osv):
             ('shipped', 'Available Shipped'), #UF-1617: new state of IN for partial shipment
             ('done', 'Closed'),
             ('cancel', 'Cancelled'),
+            ('import', 'Import in progress'),
             ], 'State', readonly=True, select=True,
             help="* Draft: not confirmed yet and will not be scheduled until confirmed\n"\
                  "* Confirmed: still waiting for the availability of products\n"\
@@ -204,6 +205,8 @@ class stock_picking(osv.osv):
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False),
         'fake_type': fields.selection([('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], 'Shipping Type', required=True, select=True, help="Shipping type specify, goods coming in or going out."),
         'shipment_ref': fields.char(string='Ship Reference', size=256, readonly=True), #UF-1617: indicating the reference to the SHIP object at supplier
+        'move_lines': fields.one2many('stock.move', 'picking_id', 'Internal Moves', states={'done': [('readonly', True)], 'cancel': [('readonly', True)], 'import': [('readonly', True)]}),
+        'state_before_import': fields.char(size=64, string='State before import', readonly=True),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
@@ -344,6 +347,21 @@ class stock_picking(osv.osv):
         
         return {'value': v,
                 'domain': d}
+
+    def return_to_state(self, cr, uid, ids, context=None):
+        '''
+        Return to initial state if the picking is 'Import in progress'
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for pick in self.browse(cr, uid, ids, context=context):
+            self.write(cr, uid, [pick.id], {'state': pick.state_before_import}, context=context)
+
+        return True
     
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
@@ -619,6 +637,18 @@ class stock_picking(osv.osv):
         
         return move_ids
 
+    def draft_force_assign(self, cr, uid, ids, context=None):
+        '''
+        Confirm all stock moves
+        '''
+        res = super(stock_picking, self).draft_force_assign(cr, uid, ids)
+
+        move_obj = self.pool.get('stock.move')
+        move_ids = move_obj.search(cr, uid, [('state', '=', 'draft'), ('picking_id', 'in', ids)], context=context)
+        move_obj.action_confirm(cr, uid, move_ids, context=context)
+
+        return res
+
     def is_invoice_needed(self, cr, uid, sp=None):
         """
         Check if invoice is needed. Cases where we do not need invoice:
@@ -798,6 +828,23 @@ class stock_picking(osv.osv):
         
         return True
 
+    def change_all_location(self, cr, uid, ids, context=None):
+        '''
+        Launch the wizard to change all destination location of stock moves
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'change.dest.location',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': self.pool.get('change.dest.location').create(cr, uid, {'picking_id': ids[0]}, context=context),
+                'context': context,
+                'target': 'new'}
 
 stock_picking()
 
@@ -905,9 +952,11 @@ class stock_move(osv.osv):
         'processed_stock_move': fields.boolean(string='Processed Stock Move'),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
+        'to_correct_ok': fields.boolean(string='Line to correct'),
+        'text_error': fields.text(string='Error', readonly=True),
         'inventory_ids': fields.many2many('stock.inventory', 'stock_inventory_move_rel', 'move_id', 'inventory_id', 'Created Moves'),
         'expired_lot': fields.function(_is_expired_lot, method=True, type='boolean', string='Lot expired', store=False),
-        }
+    }
 
     _defaults = {
         'location_dest_id': _default_location_destination,
@@ -1603,13 +1652,13 @@ class ir_values(osv.osv):
                                     'tree_but_open': []}
         
         internal_accepted_values = {'client_action_multi': [],
-                                    'client_print_multi': ['Labels'],
+                                    'client_print_multi': ['Internal Move Excel Export', 'Internal Move'],
                                     'client_action_relate': [],
                                     'tree_but_action': [],
                                     'tree_but_open': []}
         
         delivery_accepted_values = {'client_action_multi': [],
-                                    'client_print_multi': ['Labels'],
+                                    'client_print_multi': ['Labels', 'Delivery Order'],
                                     'client_action_relate': [''],
                                     'tree_but_action': [],
                                     'tree_but_open': []}
@@ -1619,7 +1668,7 @@ class ir_values(osv.osv):
                                     'client_action_relate': [''],
                                     'tree_but_action': [],
                                     'tree_but_open': []}
-        
+
         if 'stock.move' in [x[0] for x in models]:
             new_values = []
             Destruction_Report = trans_obj.tr_view(cr, 'Destruction Report', context)
@@ -1648,6 +1697,7 @@ class ir_values(osv.osv):
             for v in values:
                 if key == 'action' and v[1] in picking_accepted_values[key2]:
                     new_values.append(v)
+
         return new_values
 
 ir_values()
