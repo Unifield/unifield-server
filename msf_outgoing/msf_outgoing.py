@@ -1249,7 +1249,7 @@ class stock_picking(osv.osv):
     _inherit = 'stock.picking'
     _name = 'stock.picking'
 
-    def fields_view_get(self, cr, uid, view_id, view_type, context=None, toolbar=False, submenu=False):
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         Set the appropriate search view according to the context
         '''
@@ -2312,7 +2312,7 @@ class stock_picking(osv.osv):
             data_obj = self.pool.get('ir.model.data')
             view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
             view_id = view_id and view_id[1] or False
-            context.update({'picking_type': 'delivery_order'})
+            context.update({'picking_type': 'delivery_order', 'view_id': view_id})
             return {'name':_("Delivery Orders"),
                     'view_mode': 'form,tree',
                     'view_id': [view_id],
