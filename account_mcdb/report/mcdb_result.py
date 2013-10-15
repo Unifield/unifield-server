@@ -142,6 +142,17 @@ class account_analytic_line_report_xls(SpreadsheetReport):
 
 account_analytic_line_report_xls('report.account.analytic.line_xls','account.analytic.line','addons/account_mcdb/report/report_account_analytic_line_xls.mako')
 
+class account_analytic_line_free_report_xls(SpreadsheetReport):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        super(account_analytic_line_free_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(account_analytic_line_free_report_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+account_analytic_line_free_report_xls('report.account.analytic.line.free_xls','account.analytic.line','addons/account_mcdb/report/report_account_analytic_line_free_xls.mako')
+
 class account_bank_statement_line_report(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
