@@ -27,6 +27,28 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
+<Style ss:ID="ssBorderTotal">
+<Alignment ss:Vertical="Center" ss:WrapText="1" ss:Horizontal="Right"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<Font ss:Bold="1"/>
+</Style>
+<Style ss:ID="ssBorderNumber">
+<Font ss:Bold="1"/>
+<NumberFormat ss:Format="#,##0.00"/>
+<Alignment ss:Vertical="Center" ss:WrapText="1" ss:Horizontal="Right"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<Font ss:Bold="1"/>
+</Style>
 <Style ss:ID="ssBorderDate">
 <Alignment ss:Vertical="Center" ss:WrapText="1"/>
 <Borders>
@@ -49,28 +71,41 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
-<%
-    max = 19
-    if data and data.get('context') and data.get('context').get('display_fp'):
-        max = 21
-%>
-<Table ss:ExpandedColumnCount="${max}" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
-x:FullRows="1">
-% for x in range(0,max):
+<Table ss:ExpandedColumnCount="19" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1" x:FullRows="1">
+% for x in range(0,19):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
 <Row>
 % for header in [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Document Date'), _('Posting Date'), _('Period'), _('G/L Account'), _('Ana. Account'), _('Third Party'), _('Book. Amount'), _('Book. Currency'), _('Func. Amount'), _('Func. Currency'), _('Output Amount'), _('Output Currency'), _('Reversal Origin'), _('Entry status')]:
-    % if header == _('Ana. Account') and data.get('context') and data.get('context').get('display_fp'):
-        <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Destination')}</Data></Cell>
-        <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
-        <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Funding Pool')}</Data></Cell>
-    % else:
-        <Cell ss:StyleID="ssH"><Data ss:Type="String">${header}</Data></Cell>
-    % endif
+    <Cell ss:StyleID="ssH"><Data ss:Type="String">${header}</Data></Cell>
 % endfor
 </Row>
+<%
+  previous = False
+  total = 0.0
+  grand_total = 0.0
+%>
 % for o in sorted(objects, key=lambda x: x.account_id and x.account_id.code and x.account_id.code):
+<%
+  grand_total += o.amount
+%>
+% if not previous:
+<%
+  previous = o.account_id.id
+%>
+% endif
+% if previous != o.account_id.id:
+<Row>
+  <Cell ss:StyleID="ssBorderTotal" ss:MergeAcross="13"><Data ss:Type="String">${_('Subtotal')} </Data></Cell>
+  <Cell ss:StyleID="ssBorderNumber"><Data ss:Type="Number">${total}</Data></Cell>
+</Row>
+<%
+  total = 0.0
+%>
+% endif
+<%
+  total += o.amount
+%>
 <Row>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.instance_id and o.instance_id.code or '')|x}</Data>
@@ -111,14 +146,6 @@ x:FullRows="1">
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${"%s - %s" % (o.general_account_id and o.general_account_id.code or '', o.general_account_id and o.general_account_id.name or '')|x}</Data>
 </Cell>
-% if data and data.get('context') and data.get('context').get('display_fp'):
-<Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.destination_id and o.destination_id.code or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.cost_center_id and o.cost_center_id.code or '')|x}</Data>
-</Cell>
-% endif
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.account_id and o.account_id.code or '')|x}</Data>
 </Cell>
@@ -150,9 +177,21 @@ x:FullRows="1">
         <Data ss:Type="String">${(o.move_state and getSel(o, 'move_state') or '')|x}</Data>
 </Cell>
 </Row>
+<%
+  previous = o.account_id.id
+%>
 % endfor
+<!-- Last subtotal and GRAND TOTAL -->
+<Row>
+  <Cell ss:StyleID="ssBorderTotal" ss:MergeAcross="13"><Data ss:Type="String">${_('Subtotal')} </Data></Cell>
+  <Cell ss:StyleID="ssBorderNumber"><Data ss:Type="Number">${total}</Data></Cell>
+</Row>
+<Row>
+  <Cell ss:StyleID="ssBorderTotal" ss:MergeAcross="13"><Data ss:Type="String">${_('Total')} </Data></Cell>
+  <Cell ss:StyleID="ssBorderNumber"><Data ss:Type="Number">${grand_total}</Data></Cell>
+</Row>
 </Table>
-<AutoFilter x:Range="R1C1:R1C${max}" xmlns="urn:schemas-microsoft-com:office:excel">
+<AutoFilter x:Range="R1C1:R1C19" xmlns="urn:schemas-microsoft-com:office:excel">
 </AutoFilter>
 </Worksheet>
 </Workbook>
