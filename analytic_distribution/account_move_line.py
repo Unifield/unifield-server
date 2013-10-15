@@ -363,7 +363,7 @@ class account_move_line(osv.osv):
 
     def get_analytic_move_lines(self, cr, uid, ids, context=None):
         """
-        Return all analytic lines attached to move lines
+        Return FP analytic lines attached to move lines
         """
         # Some verifications
         if not context:
@@ -376,7 +376,7 @@ class account_move_line(osv.osv):
         domain = [('move_id', 'in', ids), ('account_id.category', '=', 'FUNDING')]
         context.update({'display_fp': True})
         return {
-            'name': _('Journal Entries'),
+            'name': _('Analytic lines (FP) from Journal Items'),
             'type': 'ir.actions.act_window',
             'res_model': 'account.analytic.line',
             'view_type': 'form',
@@ -386,6 +386,55 @@ class account_move_line(osv.osv):
             'target': 'current',
         }
 
+    def get_analytic_move_free1_lines(self, cr, uid, ids, context=None):
+        """
+        Return FREE1 analytic lines attached to move lines
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if 'active_ids' in context:
+            ids = context.get('active_ids')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Search valid ids
+        domain = [('move_id', 'in', ids), ('account_id.category', '=', 'FREE1')]
+        context.update({'display_fp': False})
+        return {
+            'name': _('Analytic Lines (Free 1) from Journal Items'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.analytic.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
+
+    def get_analytic_move_free2_lines(self, cr, uid, ids, context=None):
+        """
+        Return FREE2 analytic lines attached to move lines
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if 'active_ids' in context:
+            ids = context.get('active_ids')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Search valid ids
+        domain = [('move_id', 'in', ids), ('account_id.category', '=', 'FREE2')]
+        context.update({'display_fp': False})
+        return {
+            'name': _('Analytic Lines (Free 2) from Journal Items'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.analytic.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
 
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
