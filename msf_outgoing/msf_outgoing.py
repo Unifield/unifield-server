@@ -2215,6 +2215,10 @@ class stock_picking(osv.osv):
 
             # check availability
             self.action_assign(cr, uid, [obj.id], context=context)
+
+            if 'assigned' in moves_states:
+                # Add an empty write to display the 'Process' button on OUT
+                self.write(cr, uid, [obj.id], {'state': 'assigned'}, context=context)
         
             # TODO which behavior
             data_obj = self.pool.get('ir.model.data')
