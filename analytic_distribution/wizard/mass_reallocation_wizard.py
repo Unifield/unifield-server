@@ -26,6 +26,7 @@ from osv import fields
 from tools.translate import _
 from collections import defaultdict
 from time import strftime
+from lxml import etree
 
 class mass_reallocation_verification_wizard(osv.osv_memory):
     _name = 'mass.reallocation.verification.wizard'
@@ -114,7 +115,7 @@ class mass_reallocation_wizard(osv.osv_memory):
     _description = 'Mass Reallocation Wizard'
 
     _columns = {
-        'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True, domain="[('category', 'in', ['OC', 'FUNDING', 'FREE1', 'FREE2']), ('type', '!=', 'view')]"),
+        'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True),
         'date': fields.date('Posting date', required=True),
         'line_ids': fields.many2many('account.analytic.line', 'mass_reallocation_rel', 'wizard_id', 'analytic_line_id', 
             string="Analytic Journal Items", required=True),
@@ -127,6 +128,28 @@ class mass_reallocation_wizard(osv.osv_memory):
         'display_fp': lambda *a: False,
         'date': lambda *a: strftime('%Y-%m-%d'),
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Change domain for mass reallocation wizard to filter free1/free2 if we are in this case.
+        Otherwise only accept OC/Dest/FP.
+        """
+        view = super(mass_reallocation_wizard, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type == 'form' and context and context.get('active_ids', False):
+            ids = context.get('active_ids')
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            first_line = self.pool.get('account.analytic.line').browse(cr, uid, ids)[0]
+            domain = "[('category', 'in', ['OC', 'FUNDING', 'DEST']), ('type', '!=', 'view')]"
+            for free in ['FREE1', 'FREE2']:
+                if first_line.account_id and first_line.account_id.category == free:
+                    domain = "[('category', '=', '" + free + "'), ('type', '!=', 'view')]"
+            tree = etree.fromstring(view['arch'])
+            fields = tree.xpath("/form/field[@name='account_id']")
+            for field in fields:
+                field.set('domain', domain)
+            view['arch'] = etree.tostring(tree)
+        return view
 
     def default_get(self, cr, uid, fields=None, context=None):
         """
