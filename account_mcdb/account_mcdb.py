@@ -204,6 +204,16 @@ class account_mcdb(osv.osv):
             res.update({'value': {'display_in_output_currency' : False}})
         return res
 
+    def onchange_analytic_axis(self, cr, uid, ids, analytic_axis, context=None):
+        """
+        Clean up Cost Center / Destination / Funding Pool / Free 1 and Free 2 frames
+        """
+        vals = {}
+        if not analytic_axis:
+            return {}
+        vals.update({'analytic_account_fp_ids': False, 'analytic_account_cc_ids': False, 'analytic_account_dest_ids': False, 'analytic_account_f1_ids': False, 'analytic_account_f2_ids': False})
+        return {'value': vals}
+
     def button_validate(self, cr, uid, ids, context=None):
         """
         Validate current forms and give result
