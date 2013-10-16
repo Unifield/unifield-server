@@ -183,11 +183,11 @@ class hq_entries_import_wizard(osv.osv_memory):
                 })
             if employee.free1_id:
                 vals.update({
-                    'free1_id': employee.free1_id.id,
+                    'free_1_id': employee.free1_id.id,
                 })
             if employee.free2_id:
                 vals.update({
-                    'free2_id': employee.free2_id.id,
+                    'free_2_id': employee.free2_id.id,
                 })
         # Fetch currency
         if booking_currency:
