@@ -681,11 +681,12 @@ receivable, item have not been corrected, item have not been reversed and accoun
             move_obj.post(cr, uid, [move_id], context=context)
             # Change analytic lines that come from:
             #- initial move line: is_reallocated is True
-            #- reversal move line: is_reversal is True
+            #- reversal move line: is_reversal is True + initial analytic line
             #- correction line: change is_reallocated and is_reversal to False
             #- old reversal line: reset is_reversal to True (lost previously in validate())
+            initial_al_ids = al_obj.search(cr, uid, [('move_id', '=', ml.id)])
             search_datas = [(ml.id, {'is_reallocated': True}),
-                            (rev_line_id, {'is_reversal': True}),
+                            (rev_line_id, {'is_reversal': True, 'reversal_origin': initial_al_ids[0]}),
                             (correction_line_id, {'is_reallocated': False, 'is_reversal': False})]
             # If line is already a correction, take the previous reversal move line id
             # (UF_1234: otherwise, the reversal is not set correctly)
