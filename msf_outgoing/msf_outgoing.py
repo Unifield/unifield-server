@@ -2365,6 +2365,9 @@ class stock_picking(osv.osv):
                            }
 
             self.write(cr, uid, [out.id], default_vals, context=context)
+            wf_service = netsvc.LocalService("workflow")
+            wf_service.trg_validate(uid, 'stock.picking', out.id, 'convert_to_picking_ticket', cr)
+            # we force availability
 
             self.log(cr, uid, out.id, _('The Delivery order (%s) has been converted to draft Picking Ticket (%s).')%(out.name, new_name), context={'view_id': view_id, 'picking_type': 'picking'})
 
@@ -2905,7 +2908,7 @@ class stock_picking(osv.osv):
             'target': 'crush',
             'context': context,
         }
-    
+
     def action_cancel(self, cr, uid, ids, context=None):
         '''
         override cancel state action from the workflow
@@ -3288,9 +3291,9 @@ class stock_move(osv.osv):
             if move_dest_ids:
                 self.write(cr, uid, move_dest_ids, {'move_dest_id': new_id}, context=context)
                         
-            backmove_ids = self.search(cr, uid, [('backmove_id', '=', move_id)], context=context)
-            if backmove_ids:
-                self.write(cr, uid, backmove_ids, {'backmove_id': new_id}, context=context)
+            #backmove_ids = self.search(cr, uid, [('backmove_id', '=', move_id)], context=context)
+            #if backmove_ids:
+            #    self.write(cr, uid, backmove_ids, {'backmove_id': new_id}, context=context)
                        
             pack_backmove_ids = self.search(cr, uid, [('backmove_packing_id', '=', move_id)], context=context)
             if pack_backmove_ids:
@@ -3439,7 +3442,7 @@ class sale_order(osv.osv):
             proc = self.pool.get('procurement.order').browse(cr, uid, [proc_id], context=context)
             pick_id = proc and proc[0] and proc[0].move_id and proc[0].move_id.picking_id and proc[0].move_id.picking_id.id or False
             if pick_id:
-                wf_service.trg_validate(uid, 'stock.picking', [pick_id], 'button_confirm', cr)
+                wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
 
                 # We also do a first 'check availability': cancel then check
                 pick_obj.cancel_assign(cr, uid, [pick_id], context)
