@@ -3355,7 +3355,7 @@ class sale_order(osv.osv):
             proc = self.pool.get('procurement.order').browse(cr, uid, [proc_id], context=context)
             pick_id = proc and proc[0] and proc[0].move_id and proc[0].move_id.picking_id and proc[0].move_id.picking_id.id or False
             if pick_id:
-                wf_service.trg_validate(uid, 'stock.picking', [pick_id], 'button_confirm', cr)
+                wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
 
                 # We also do a first 'check availability': cancel then check
                 pick_obj.cancel_assign(cr, uid, [pick_id], context)
@@ -3423,13 +3423,13 @@ class sale_order(osv.osv):
             if self.pool.get('product.product').browse(cr, uid, move_data['product_id']).type == 'service_recep':
                 move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
             
-            if 'sale_line_id' in move_data and move_data['sale_line_id']:
-                sale_line = self.pool.get('sale.order.line').browse(cr, uid, move_data['sale_line_id'], context=context)
-                if sale_line.type == 'make_to_order':
-                    move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
-                    move_data['move_cross_docking_ok'] = True
-                    # Update the stock.picking
-                    self.pool.get('stock.picking').write(cr, uid, move_data['picking_id'], {'cross_docking_ok': True}, context=context)
+        if 'sale_line_id' in move_data and move_data['sale_line_id']:
+            sale_line = self.pool.get('sale.order.line').browse(cr, uid, move_data['sale_line_id'], context=context)
+            if sale_line.type == 'make_to_order':
+                move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+                move_data['move_cross_docking_ok'] = True
+                # Update the stock.picking
+                self.pool.get('stock.picking').write(cr, uid, move_data['picking_id'], {'cross_docking_ok': True}, context=context)
 
         move_data['state'] = 'confirmed'
         return move_data

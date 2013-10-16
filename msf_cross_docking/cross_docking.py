@@ -253,7 +253,8 @@ class procurement_order(osv.osv):
         sol_ids = sol_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         if len(sol_ids) and setup.allocation_setup != 'unallocated':
             browse_so = sol_obj.browse(cr, uid, sol_ids, context=context)[0].order_id
-            if not browse_so.procurement_request:
+            req_loc = browse_so.location_requestor_id
+            if not (browse_so.procurement_request and req_loc and req_loc.usage != 'customer'):
                 values.update({'cross_docking_ok': True, 'location_id': stock_loc_obj.get_cross_docking_location(cr, uid)})
             values.update({'priority': browse_so.priority, 'categ': browse_so.categ})
         return values

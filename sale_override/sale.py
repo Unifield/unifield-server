@@ -808,7 +808,8 @@ class sale_order(osv.osv):
         if line.order_id.manually_corrected:
             return False
         if line.order_id.procurement_request:
-            if line.type == 'make_to_order':
+            # Create OUT lines for MTO lines with an external CU as requestor location 
+            if line.type == 'make_to_order' and line.order_id.location_requestor_id.usage != 'customer':
                 result = False
         # result = result and not line.order_id.procurement_request => the proc request can have pick and move
         return result
