@@ -2284,7 +2284,7 @@ class stock_picking(osv.osv):
                         move.action_done(context=context)
                     keep_backmove = move_obj.search(cr, uid, [('backmove_id', '=', move.backmove_id.id)], context=context)
                     if move.backmove_id and move.backmove_id.product_qty == 0.00:
-                        keep_backmove = move_obj.search(cr, uid, [('backmove_id', '=', move.backmove_id.id), ('state', 'not in', ('done', 'cancel')], context=context)
+                        keep_backmove = move_obj.search(cr, uid, [('backmove_id', '=', move.backmove_id.id), ('state', 'not in', ('done', 'cancel'))], context=context)
                         if not keep_backmove:
                             move_obj.write(cr, uid, [move.backmove_id.id], {'state': 'done'}, context=context)
                             move_obj.update_linked_documents(cr, uid, move.backmove_id.id, move.id, context=context)
