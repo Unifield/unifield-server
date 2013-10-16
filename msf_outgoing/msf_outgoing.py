@@ -2239,6 +2239,7 @@ class stock_picking(osv.osv):
                             'move_lines': [],
                             'subtype': 'standard',
                             'converted_to_standard': True,
+                            'backorder_id': False,
                            }
 
             new_pick_id = False
@@ -2264,6 +2265,7 @@ class stock_picking(osv.osv):
                     vals = {'state': 'done'}
                 else:
                     vals = {'state': 'draft'}
+                vals.update({'backmove_id': False})
                 # If the move comes from a DPO, don't change the destination location
                 if not move.dpo_id:
                     vals.update({'location_dest_id': obj.warehouse_id.lot_output_id.id})
@@ -2280,9 +2282,12 @@ class stock_picking(osv.osv):
                     move.write(vals, context=context)
                     if move.product_qty == 0.00:
                         move.action_done(context=context)
+                    keep_backmove = move_obj.search(cr, uid, [('backmove_id', '=', move.backmove_id.id)], context=context)
                     if move.backmove_id and move.backmove_id.product_qty == 0.00:
-                        move_obj.write(cr, uid, [move.backmove_id.id], {'state': 'done'}, context=context)
-                        move_obj.update_linked_documents(cr, uid, move.backmove_id.id, move.id, context=context)
+                        keep_backmove = move_obj.search(cr, uid, [('backmove_id', '=', move.backmove_id.id)], context=context)
+                        if all(x.state in ('done', 'cancel') for x in move_obj.browse(cr, uid, keep_backmove, context=context)):
+                            move_obj.write(cr, uid, [move.backmove_id.id], {'state': 'done'}, context=context)
+                            move_obj.update_linked_documents(cr, uid, move.backmove_id.id, move.id, context=context)
                 elif move.product_qty != 0.00:
                     vals.update({'picking_id': new_pick_id,
                                  'product_qty': move.product_qty,})
