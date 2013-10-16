@@ -100,6 +100,8 @@ class account_mcdb(osv.osv):
         'display_funding_pool': fields.boolean('Display funding pools?'),
         'display_cost_center': fields.boolean('Display cost centers?'),
         'display_destination': fields.boolean('Display destinations?'),
+        'display_free1': fields.boolean('Display Free 1?'),
+        'display_free2': fields.boolean('Display Free 2?'),
         'user': fields.many2one('res.users', "User"),
     }
 
