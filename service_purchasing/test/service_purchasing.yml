@@ -233,9 +233,7 @@
     try:
       po.write({'categ':'service'}, context=context)
     except except_osv as e:
+      assert False, 'The constraint about Purchase Order of type Category Service with not only Service with Reception Products has been triggered'
       # ok the constraint is triggered
-      pass
-    else:
-      assert False, 'The constraint about Purchase Order of type Category Service with not only Service with Reception Products has not been triggered'
       
     

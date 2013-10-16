@@ -559,6 +559,7 @@ class kit_creation(osv.osv):
         # objects
         move_obj = self.pool.get('stock.move')
         loc_obj = self.pool.get('stock.location')
+        prodlot_obj = self.pool.get('stock.production.lot')
         data_tools_obj = self.pool.get('data.tools')
         # load data into the context
         data_tools_obj.load_common_data(cr, uid, ids, context=context)
@@ -610,6 +611,10 @@ class kit_creation(osv.osv):
                     if data[product_id]['object'].perishable: # perishable for perishable or batch management
                         # the product is batch management we use the FEFO list
                         for loc in res['fefo']:
+                            # we ignore the batch that are outdated
+                            expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
+                            if datetime.strptime(expired_date, "%Y-%m-%d") < datetime.today():
+                                continue
                             # as long all needed are not fulfilled
                             if needed_qty > 0.0:
                                 # we treat the available qty from FEFO list corresponding to needed quantity
@@ -641,6 +646,27 @@ class kit_creation(osv.osv):
                                 move_obj.create(cr, uid, values, context=context)
                                 # we reset original move flag
                                 original_flag = False
+                        if needed_qty:
+                            values = {'kit_creation_id_stock_move': obj.id,
+                                      'name': data[product_id]['object'].name,
+                                      'picking_id': obj.internal_picking_id_kit_creation.id,
+                                      'product_uom': uom_id,
+                                      'product_id': product_id,
+                                      'date_expected': context['common']['date'],
+                                      'date': context['common']['date'],
+                                      'product_qty': needed_qty,
+                                      'prodlot_id': False,
+                                      'location_id': loc['location_id'],
+                                      'location_dest_id': context['common']['kitting_id'],
+                                      'state': 'confirmed', # not available
+                                      'reason_type_id': context['common']['reason_type_id'],
+                                      'to_consume_id_stock_move': data[product_id]['uoms'][uom_id]['to_consume_id'],
+                                      'original_from_process_stock_move': original_flag,
+                                      }
+                            move_obj.create(cr, uid, values, context=context)
+                            # we reset original move flag
+                            original_flag = False
+
                     else:
                         # the product is not batch management, we use locations in id order
                         for loc in sorted(res.keys()):

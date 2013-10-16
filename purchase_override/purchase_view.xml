@@ -270,9 +270,10 @@
                 <data>
                     <xpath expr="/form//field[@name='product_id']" position="replace">
                         <field name="product_id" colspan="4" 
-                            context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1" 
+                            context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" 
                             on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)"
-                            domain="[('purchase_type', '=', parent.categ)]" />
+                            />
+                        <!-- domain="[('purchase_type', '=', parent.categ)] />" -->
                     </xpath>
 
                     <xpath expr="/form//field[@name='price_unit']" position="replace">
@@ -308,10 +309,20 @@
                     <group colspan="4">
                         <field name="po_value_id" readonly="1" colspan="2" />
                         <newline />
+                        <field name="unmatched_categ" invisible="1" />
                         <html colspan="4">
                             <p>All information of the PO template will be written in the new PO,</p>
                             <p>except the Delivery Requested date which will be the earliest date of all POs.</p>
                         </html>
+                        <newline />
+                        <group colspan="4" col="4" attrs="{'invisible': [('unmatched_categ', '=', False)]}">
+                            <html colspan="4">
+                                <p style="margin-top:10px;padding-left:5px;border-style:solid;border-width:1px;background-color:#F0EBA4;border-radius:5px;">
+                                    <span style="font-weight:bold">WARNING: </span>
+                                    <span>The category of the new PO  is not consistent with the category of the other POs being merged</span>
+                                </p>
+                            </html>
+                        </group>
                     </group>
                  </xpath>
             </field>

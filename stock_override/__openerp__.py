@@ -43,6 +43,7 @@
         "wizard/stock_analyze_view_view.xml",
         "security/ir.model.access.csv",
         "wizard/stock_partial_move_view.xml",
+        "wizard/change_dest_location_view.xml",
         "wizard/stock_card_view.xml",
         ],
     'test': ['test/chained_nomen_loc.yml'],

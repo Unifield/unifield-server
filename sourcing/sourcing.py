@@ -1283,17 +1283,29 @@ class procurement_order(osv.osv):
             purchase_domain.append(('order_type', '=', 'direct'))
         else:
             purchase_domain.append(('order_type', '!=', 'direct'))
-        
-        if partner.po_by_project == 'project' or procurement.po_cft == 'dpo':
-            sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
-            if sale_line_ids:
-                line = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context)
+
+        line = None
+        sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
+        if sale_line_ids:
+            line = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context)
+
+        if partner.po_by_project in ('project', 'category_project') or (procurement.po_cft == 'dpo' and partner.po_by_project == 'all'):
+            if line:
                 if line.procurement_request:
                     customer_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
                 else:
                     customer_id = line.order_id.partner_id.id 
                 values.update({'customer_id': customer_id})
                 purchase_domain.append(('customer_id', '=', customer_id))
+
+        # Isolated requirements => One PO for one IR/FO
+        if partner.po_by_project == 'isolated':
+            purchase_domain.append(('origin', '=', procurement.origin))
+
+        # Category requirements => Search a PO with the same category than the IR/FO category
+        if partner.po_by_project in ('category_project', 'category'):
+            if line:
+                purchase_domain.append(('categ', '=', line.order_id.categ))
         
         # if we are updating the sale order from the corresponding on order purchase order
         # the purchase order to merge the new line to is locked and provided in the procurement
@@ -1309,15 +1321,19 @@ class procurement_order(osv.osv):
             
         if procurement.tender_id:
             if values.get('origin'):
-                values['origin'] = '%s;%s' % (values['origin'], procurement.tender_id.name)
+                values['origin'] = '%s; %s' % (values['origin'], procurement.tender_id.name)
             else:
                 values['origin'] = procurement.tender_id.name
         
         # Set the analytic distribution on PO line if an analytic distribution is on SO line or SO    
         sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         location_id = False
+        categ = False
         if sol_ids:
             sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
+            if sol.order_id:
+                categ = sol.order_id.categ
+
             if sol.analytic_distribution_id:
                 new_analytic_distribution_id = self.pool.get('analytic.distribution').copy(cr, uid, 
                                                     sol.analytic_distribution_id.id, context=context)
@@ -1358,8 +1374,15 @@ class procurement_order(osv.osv):
 
             self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], write_values, context=dict(context, import_in_progress=True))
             
+            po_values = {}
+            if categ and po.categ != categ:
+                po_values.update({'categ': 'other'})
+
             if location_id:
-                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'location_id': location_id, 'cross_docking_ok': False}, context=dict(context, import_in_progress=True))
+                po_values.update({'location_id': location_id, 'cross_docking_ok': False})
+
+            if po_values:
+                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], po_values, context=dict(context, import_in_progress=True))
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
             return purchase_ids[0]
         else:
@@ -1378,6 +1401,8 @@ class procurement_order(osv.osv):
                 if warehouse_id:
                     input_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id[0], context=context).lot_input_id.id
                     values.update({'location_id': input_id,})
+            if categ:
+                values.update({'categ': categ})
             purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
             return purchase_id
     

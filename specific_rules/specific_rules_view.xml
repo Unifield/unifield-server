@@ -115,6 +115,7 @@
                     <xpath expr="/tree" position="attributes">
                         <attribute name="string">Batch numbers</attribute>
                         <attribute name="hide_delete_button">1</attribute>
+                        <attribute name="colors">red:life_date &lt; current_date</attribute>
                     </xpath>
                     <field name="ref" position="replace">
 	                    <field name="instance_id"/>
