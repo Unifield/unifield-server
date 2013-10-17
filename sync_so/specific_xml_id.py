@@ -418,7 +418,10 @@ class product_product(osv.osv):
     
     def create(self, cr, uid, vals, context=None):
         if 'xmlid_code' not in vals or not vals['xmlid_code']:
-            vals['xmlid_code'] = vals['hidden_code'] 
+            if vals['default_code']:
+                vals['xmlid_code'] = vals['default_code']
+            else:
+                vals['xmlid_code'] = "EMPTY_CODE"
             
         exist = self.search(cr, uid, [('xmlid_code', '=', vals['xmlid_code'])], context=context)
         if exist: # if the value exist for xml_name, then just add a suffix to differentiate them, no constraint unique required here
