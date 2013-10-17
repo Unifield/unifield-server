@@ -251,6 +251,18 @@
                   name="Address Book"
                   parent="purchase.menu_purchase_config_purchase" />
 
+        <record id="res_partner_address_list_view" model="ir.ui.view">
+            <field name="name">res.partner.address.list.view</field>
+            <field name="model">res.partner.address</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="base.view_partner_address_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="/tree//field[@name='name']" position="after">
+                    <field name="street" />
+                </xpath>
+            </field>
+        </record>
+
         <record id="action_supplier_address_form" model="ir.actions.act_window">
             <field name="name">Addresses</field>
             <field name="type">ir.actions.act_window</field>
