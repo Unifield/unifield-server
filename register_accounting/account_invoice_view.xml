@@ -39,9 +39,7 @@
                                 address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" 
                                 name="invoice_line" nolabel="1">
                                 <tree editable="bottom" string="Invoice lines" colors="blue:inactive_product == False and analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid') or inactive_product == True;black:inactive_product == False and analytic_distribution_state in ('none')">
-                                    <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, 
-                                        parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, 
-                                        {'company_id': parent.company_id})"/>
+                                    <field name="name"/>
                                     <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), 
                                         ('type', '&lt;&gt;', 'view')]" name="account_id" on_change="onchange_account_id(parent.fiscal_position,account_id)"/>
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
@@ -55,7 +53,9 @@
                                     <field name="price_unit"/>
                                      <!-- Removed if subtotal is set -->
                                     <field name="price_subtotal"/>
-                                    <field name="name"/>
+                                    <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, 
+                                        parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, 
+                                        {'company_id': parent.company_id})"/>
                                     <field invisible="True" name="uos_id"/>
                                     <field invisible="1" name="inactive_product"/>
                                 </tree>
@@ -130,9 +130,7 @@
                                 address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" 
                                 name="invoice_line" nolabel="1" attrs="{'readonly': [('state', 'not in', ['draft', 'open']), ('is_direct_invoice', '=', True)]}">
                                 <tree editable="bottom" string="Invoice lines" colors="blue:inactive_product == False and analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid') or inactive_product == True;black:inactive_product == False and analytic_distribution_state in ('none')">
-                                    <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, 
-                                        parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, 
-                                        {'company_id': parent.company_id})"/>
+                                    <field name="name"/>
                                     <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), 
                                         ('type', '&lt;&gt;', 'view')]" name="account_id" on_change="onchange_account_id(parent.fiscal_position,account_id)"/>
                                     <button name="button_analytic_distribution_from_direct_inv_line" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
@@ -146,7 +144,9 @@
                                     <field name="price_unit"/>
                                      <!-- Removed if subtotal is set -->
                                     <field name="price_subtotal"/>
-                                    <field name="name"/>
+                                    <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, 
+                                        parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, 
+                                        {'company_id': parent.company_id})"/>
                                     <field invisible="True" name="uos_id"/>
                                     <field name="inactive_product" invisible="1" />
                                     <field name="inactive_error" />
