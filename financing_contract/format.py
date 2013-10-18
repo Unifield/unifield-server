@@ -159,7 +159,7 @@ class account_destination_link(osv.osv):
 
         exclude = {}
         for line in ctr_obj.browse(cr, uid, id_toread).actual_line_ids:
-            if context.get('active_id', False) and line.id != context['active_id']:
+            if not context.get('active_id', False) or line.id != context['active_id']:
                 for account_destination in line.account_destination_ids:
                     exclude[account_destination.id] = True
                 for account_quadruplet in line.account_quadruplet_ids:
@@ -186,7 +186,7 @@ class account_destination_link(osv.osv):
 
         exclude = {}
         for line in ctr_obj.browse(cr, uid, id_toread).actual_line_ids:
-            if context.get('active_id', False) and line.id != context['active_id']:
+            if not context.get('active_id', False) or line.id != context['active_id']:
                 for account_destination in line.account_destination_ids:
                     exclude[account_destination.id] = True
                 for account_quadruplet in line.account_quadruplet_ids:

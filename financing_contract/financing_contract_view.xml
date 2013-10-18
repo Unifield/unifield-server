@@ -156,8 +156,7 @@
                 <field name="arch" type="xml">
                     <tree string="Account/Destination/Funding Pool/Cost Centre" colors="grey:used_in_contract" notselectable="used_in_contract">
                         <field name="format_id" invisible="1"/>
-                        <field name="account_id"/>
-                        <field name="destination_id"/>
+                        <field name="account_destination_name"/>
                         <field name="funding_pool_id"/>
                         <field name="cost_center_id"/>
                         <field name="used_in_contract" invisible='1'/>
@@ -171,8 +170,7 @@
 	            <field name="type">search</field>
 	            <field name="arch" type="xml">
 	                <search string="Search Account/Destination/Funding Pool/Cost Centre">
-                        <field name="account_id"/>
-                        <field name="destination_id"/>
+                        <field name="account_destination_name"/>
                         <field name="funding_pool_id"/>
                         <field name="cost_center_id"/>
 	                </search>

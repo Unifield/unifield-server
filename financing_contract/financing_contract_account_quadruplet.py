@@ -86,12 +86,11 @@ class financing_contract_account_quadruplet(osv.osv):
         'account_destination_id': fields.many2one('account.destination.link', 'Account/Destination'),
         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Centre'),
         'funding_pool_id': fields.many2one('account.analytic.account', 'Funding Pool'),
-        'account_id': fields.related('account_destination_id', 'account_id', type='many2one', relation='account.account', string='Account', size=64, store=True),
-        'destination_id': fields.related('account_destination_id', 'destination_id', type='many2one', relation='account.analytic.account', string='Destination', size=64, store=True),
+        'account_destination_name': fields.related('account_destination_id', 'name', type='char', relation='account.account', string='Account', size=64, store=True),
         'used_in_contract': fields.function(_get_used_in_contract, method=True, type='boolean', string='Used', fnct_search=_search_used_in_contract),
     }
     
-    _order = 'account_id asc, destination_id asc, funding_pool_id asc, cost_center_id asc'
+    _order = 'account_destination_name asc, funding_pool_id asc, cost_center_id asc'
     
 financing_contract_account_quadruplet()
 
