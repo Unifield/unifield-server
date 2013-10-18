@@ -91,7 +91,7 @@
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='fiscal_position']" position="after">
                         <field name="invoice_address_id"
-                            domain="[('inv_address', 'in', [dest_partner_id, company_id])]"
+                            domain="[('inv_address', 'in', [company_id])]"
                             context="contact_display='partner_address'"
                             attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}"
                             />
