@@ -107,6 +107,7 @@ def xmlid_to_sdref(xmlid):
 
 
 
+# TODO deprecated, should disappear
 def sync_log(obj, message=None, level='debug', ids=None, data=None, traceback=False):
     if not hasattr(obj, '_logger'):
         raise Exception("No _logger specified for object %s!" % obj._name)
