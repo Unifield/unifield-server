@@ -93,6 +93,8 @@ class split_purchase_order_line_wizard(osv.osv_memory):
         po_line_obj = self.pool.get('purchase.order.line')
         so_line_obj = self.pool.get('sale.order.line')
         so_obj = self.pool.get('sale.order')
+        move_obj = self.pool.get('stock.move')
+        proc_obj = self.pool.get('procurement.order')
 
         # Some verifications
         if context is None:
@@ -123,7 +125,9 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 #    we create a Fo line by copying related Fo line. we then execute procurement creation function, and process the procurement
                 #    the merge into the actual Po is forced
                 # if Internal Request, we do not update corresponding Internal Request
-                if split.corresponding_so_line_id_split_po_line_wizard and split.impact_so_split_po_line_wizard and not split.corresponding_so_id_split_po_line_wizard.procurement_request:
+                link_wiz = split.corresponding_so_line_id_split_po_line_wizard
+                external_ir = not link_wiz.order_id.procurement_request or link_wiz.order_id.location_requestor_id.usage == 'customer'
+                if split.corresponding_so_line_id_split_po_line_wizard and split.impact_so_split_po_line_wizard and external_ir:
                     # copy the original sale order line, reset po_cft to 'po' (we don't want a new tender if any)
                     so_copy_data = {'line_number': split.corresponding_so_line_id_split_po_line_wizard.line_number, # the Fo is not draft anyway, following sequencing policy, split Fo line maintains original one
                                     'po_cft': 'po',
@@ -143,12 +147,30 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                     # and force merge the line to this po (even if it is not draft anymore)
                     new_data_so = so_line_obj.read(cr, uid, [new_so_line_id], ['procurement_id'], context=context)
                     new_proc_id = new_data_so[0]['procurement_id'][0]
+
+                    if external_ir and split.purchase_line_id and split.purchase_line_id.move_dest_id:
+                        move = move_obj.browse(cr, uid, split.purchase_line_id.move_dest_id.id, context=context)
+                        new_move_id = move_obj.copy(cr, uid, move.id, {'product_qty': split.new_line_qty,
+                                                                       'product_uos_qty': split.new_line_qty,
+                                                                       'sale_line_id': new_so_line_id}, context=context)
+                        move_obj.action_confirm(cr, uid, [new_move_id], context=context)
+
+                        move_obj.write(cr, uid, [move.id], {'product_qty': move.product_qty - split.new_line_qty,
+                                                            'product_uos_qty': move.product_qty - split.new_line_qty}, context=context)
+
+                        proc_move_id = proc_obj.read(cr, uid, new_proc_id, ['move_id'], context=context)['move_id'][0]
+                        move_obj.write(cr, uid, proc_move_id, {'state': 'draft'}, context=context)
+                        move_obj.unlink(cr, uid, proc_move_id, context=context)
+                        proc_obj.write(cr, uid, [new_proc_id], {'close_move': False, 'move_id': new_move_id}, context=context)
+
                     wf_service.trg_validate(uid, 'procurement.order', new_proc_id, 'button_check', cr)
                     # if original po line is confirmed, we action_confirm new line
                     if split.purchase_line_id.state == 'confirmed':
                         # the correct line number according to new line number policy is set in po_line_values_hook of order_line_number/order_line_number.py/procurement_order
                         new_po_ids = po_line_obj.search(cr, uid, [('procurement_id', '=', new_proc_id)], context=context)
                         po_line_obj.action_confirm(cr, uid, new_po_ids, context=context)
+                 #       po_line_obj.write(cr, uid, [split.purchase_line_id.id], {'move_dest_id': new_move_id}, context=context)
+
                 else:
                     # 2) the check box impact corresponding Fo is not check or does not apply (po from scratch or from replenishment),
                     #    a new line is simply created

@@ -121,6 +121,8 @@ class sale_order(osv.osv):
         # Analytic distribution verification
         ana_obj = self.pool.get('analytic.distribution')
         for so in self.browse(cr, uid, ids, context=context):
+            if so.procurement_request:
+                continue
             for line in so.order_line:
                 # Search intermission
                 intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
