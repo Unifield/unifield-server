@@ -349,6 +349,24 @@ class account_analytic_line(osv.osv):
 
 account_analytic_line()
 
+class account_move_line(osv.osv):
+    _inherit = 'account.move.line'
+    
+    def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
+        # Do workflow if line is coming from sync, is now reconciled and it has an unpaid invoice
+        if context.get('sync_update_execution') and 'reconcile_id' in vals and vals['reconcile_id']:
+            invoice_ids = []
+            for line in self.browse(cr, uid, ids, context=context):
+                if line.invoice and line.invoice.state != 'paid':
+                    invoice_ids.append(line.invoice.id)
+            if self.pool.get('account.invoice').test_paid(cr, uid, invoice_ids):
+                self.pool.get('account.invoice').confirm_paid(cr, uid, invoice_ids)
+                
+        return res
+
+account_move_line()
+
 class funding_pool_distribution_line(osv.osv):
     _inherit = 'funding.pool.distribution.line'
     
@@ -424,3 +442,25 @@ class product_product(osv.osv):
         return res
 
 product_product()
+
+class product_asset(osv.osv):
+    
+    _inherit = "product.asset"
+    
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        asset = self.browse(cr, uid, res_id)
+        #UF-2148: use the xmlid_name for building the xml for this object
+        return get_valid_xml_name('product_asset', (asset.instance_id.code or 'noinstance'), (asset.product_id.code or 'noprod'), (asset.xmlid_name or 'noname'))
+    
+product_asset()
+
+class batch_number(osv.osv):
+    _inherit = "stock.production.lot"
+    
+    #UF-1617: unique xml id for batch number with instance id
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        batch = self.browse(cr, uid, res_id)
+        #UF-2148: use the xmlid_name for building the xml for this object
+        return get_valid_xml_name('batch_numer', (batch.instance_id.code or 'noinstance'), (batch.product_id.code or 'noprod'), (batch.xmlid_name or 'noname'))
+    
+batch_number()
