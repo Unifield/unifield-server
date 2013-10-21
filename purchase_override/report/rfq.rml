@@ -170,7 +170,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].company_id.partner_id.name ]]</para>
+                    <para style="TextInformation">[[ objects[0].rfq_delivery_address and objects[0].rfq_delivery_address.partner_id and objects[0].rfq_delivery_address.partner_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
