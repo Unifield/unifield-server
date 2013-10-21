@@ -199,7 +199,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].street or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].rfq_delivery_address and objects[0].rfq_delivery_address.street ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -228,7 +228,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].street2 or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].rfq_delivery_address and objects[0].rfq_delivery_address.street2 ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -257,7 +257,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].zip or '' ]] [[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].city or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].rfq_delivery_address and '%s %s' % (objects[0].rfq_delivery_address.zip objects[0].rfq_delivery_address.city) or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -286,7 +286,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].country_id and objects[0].company_id.partner_id.address[0].country_id.name or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].rfq_delivery_address and objects[0].rfq_delivery_address.country_id and objects[0].rfq_delivery_address.country_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -315,7 +315,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].phone or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].rfq_delivery_address and objects[0].rfq_delivery_address.phone ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -344,7 +344,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].email or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].rfq_delivery_address and objects[0].rfq_delivery_address.email ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
