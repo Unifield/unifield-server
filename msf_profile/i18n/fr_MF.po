@@ -73332,3 +73332,22 @@ msgstr "Importer des lignes de registre"
 #: view:wizard.register.import:0
 msgid "The import template is:"
 msgstr "Le template d'import est : "
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:66
+#, python-format
+msgid "Proprietary instance's code"
+msgstr "Code de l'instance propriétaire"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:66
+#, python-format
+msgid "Journal's code"
+msgstr "Code du journal"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:66
+#, python-format
+msgid "Currency's code"
+msgstr "Code de la monnaie"
+
