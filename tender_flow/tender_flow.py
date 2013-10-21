@@ -111,6 +111,7 @@ class tender(osv.osv):
                 'internal_state': fields.selection([('draft', 'Draft'),('updated', 'Rfq Updated'), ], string="Internal State", readonly=True),
                 'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',),
                 'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product'),
+                'delivery_address': fields.many2one('res.partner.address', string='Delivery address', required=True),
                'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
                 }
     
@@ -126,6 +127,22 @@ class tender(osv.osv):
                  }
     
     _order = 'name desc'
+
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Set default data
+        '''
+        # Object declaration
+        partner_obj = self.pool.get('res.partner')
+        user_obj = self.pool.get('res.users')
+
+        res = super(tender, self).default_get(cr, uid, fields, context=context)
+
+        # Get the delivery address
+        company = user_obj.browse(cr, uid, uid, context=context).company_id
+        res['delivery_address'] = partner_obj.address_get(cr, uid, company.partner_id.id, ['delivery'])['delivery']
+
+        return res
 
     def _check_tender_from_fo(self, cr, uid, ids, context=None):
         if not context:
@@ -256,7 +273,7 @@ class tender(osv.osv):
                 raise osv.except_osv(_('Warning !'), _('You must select at least one product!'))
             for supplier in tender.supplier_ids:
                 # create a purchase order for each supplier
-                address_id = partner_obj.address_get(cr, uid, [supplier.id], ['delivery'])['delivery']
+                address_id = partner_obj.address_get(cr, uid, [supplier.id], ['default'])['default']
                 if not address_id:
                     raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!')%(supplier.name,))
                 pricelist_id = supplier.property_product_pricelist_purchase.id
@@ -274,6 +291,7 @@ class tender(osv.osv):
                           'priority': tender.priority,
                           'details': tender.details,
                           'delivery_requested_date': tender.requested_date,
+                          'rfq_delivery_address': tender.delivery_address and tender.delivery_address.id or False,
                           }
                 # create the rfq - dic is udpated for default partner_address_id at purchase.order level
                 po_id = po_obj.create(cr, uid, values, context=dict(context, partner_id=supplier.id, rfq_ok=True))
@@ -494,7 +512,7 @@ class tender(osv.osv):
                                                                }))
                     
                 # fill data corresponding to po creation
-                address_id = partner_obj.address_get(cr, uid, [line.supplier_id.id], ['delivery'])['delivery']
+                address_id = partner_obj.address_get(cr, uid, [line.supplier_id.id], ['default'])['default']
                 pricelist = line.supplier_id.property_product_pricelist_purchase.id,
                 if line.currency_id:
                     price_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('currency_id', '=', line.currency_id.id)], context=context)
@@ -514,6 +532,7 @@ class tender(osv.osv):
                              'warehouse_id': tender.warehouse_id.id,
                              'details': tender.details,
                              'delivery_requested_date': tender.requested_date,
+                             'dest_address_id': tender.delivery_address.id,
                              }
                 data[line.supplier_id.id].update(po_values)
             
@@ -878,6 +897,7 @@ class purchase_order(osv.osv):
                 return False
         return True
     _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
+                'rfq_delivery_address': fields.many2one('res.partner.address', string='Delivery address'),
                 'origin_tender_id': fields.many2one('tender', string='Tender', readonly=True),
                 'rfq_ok': fields.boolean(string='Is RfQ ?'),
                 'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Closed'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
@@ -893,6 +913,22 @@ class purchase_order(osv.osv):
         (_check_valid_till,
             'You must specify a Valid Till date.',
             ['valid_till']),]
+
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Set default data
+        '''
+        # Object declaration
+        partner_obj = self.pool.get('res.partner')
+        user_obj = self.pool.get('res.users')
+
+        res = super(purchase_order, self).default_get(cr, uid, fields, context=context)
+
+        # Get the delivery address
+        company = user_obj.browse(cr, uid, uid, context=context).company_id
+        res['rfq_delivery_address'] = partner_obj.address_get(cr, uid, company.partner_id.id, ['delivery'])['delivery']
+
+        return res
 
     def create(self, cr, uid, vals, context=None):
         '''
