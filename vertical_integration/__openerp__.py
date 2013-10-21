@@ -1,10 +1,8 @@
-#!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    Copyright (C) 2011 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -21,14 +19,27 @@
 #
 ##############################################################################
 
-import res_currency
-import account
-import invoice
-import account_voucher
-import account_move_line
-import account_analytic_line
-import account_bank_statement
-import report
-import wizard
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+{
+    "name" : "Vertical Integration",
+    "version" : "1.0",
+    "author" : "MSF, TeMPO Consulting",
+    "description" : """
+    Add HQ exports of finance data for all sections
+    """,
+    "website": "http://unifield.msf.org",
+    "depends" : ["base", "account", "msf_instance"],
+    "category" : "Generic Modules/Accounting",
+    "init_xml" : [],
+    "demo_xml" : [],
+    "update_xml" : [
+        'security/ir.model.access.csv',
+        'account_export_mapping_view.xml',
+        'country_export_mapping_view.xml',
+        'account_report.xml',
+        'wizard/wizard_hq_report_ocg_view.xml',
+        'wizard/wizard_hq_report_oca_view.xml',
+    ],
+    'test': [],
+    'installable': True,
+    'active': False,
+}
