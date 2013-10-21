@@ -1245,10 +1245,15 @@ class account_move_line(osv.osv):
         journal_obj = self.pool.get('account.journal')
         if context is None:
             context = {}
+        move_date = False
         if vals.get('move_id', False):
-            company_id = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['company_id']).get('company_id', False)
-            if company_id:
-                vals['company_id'] = company_id[0]
+            move_data = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['company_id', 'date'])
+            if move_data.get('company_id'):
+                vals['company_id'] = move_data['company_id'][0]
+            move_date = move_data.get('date')
+            if not vals.get('date') and move_date:
+                vals['date'] = move_date
+
         self._check_date(cr, uid, vals, context, check)
         if ('account_id' in vals) and not account_obj.read(cr, uid, vals['account_id'], ['active'])['active']:
             raise osv.except_osv(_('Bad account!'), _('You can not use an inactive account!'))
@@ -1391,6 +1396,8 @@ class account_move_line(osv.osv):
 
         if check and ((not context.get('no_store_function')) or journal.entry_posted):
             tmp = move_obj.validate(cr, uid, [vals['move_id']], context)
+            if vals.get('date') and vals.get('date') != move_date:
+                move_obj.write(cr, uid, [vals['move_id']], {'date': vals.get('date')}, context)
             if journal.entry_posted and tmp:
                 move_obj.button_validate(cr,uid, [vals['move_id']], context)
         return result
