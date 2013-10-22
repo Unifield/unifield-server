@@ -219,7 +219,9 @@ class stock_picking(osv.osv):
         '''
         Check if the stock picking contains a line with an inactive products
         '''
+        product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
         inactive_lines = self.pool.get('stock.move').search(cr, uid, [('product_id.active', '=', False),
+                                                                      ('product_id', '!=', product_tbd),
                                                                       ('picking_id', 'in', ids),
                                                                       ('picking_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
         
@@ -258,7 +260,8 @@ class stock_picking(osv.osv):
             for move in pick.move_lines:
                 if move.state == 'done' and move.product_qty != 0:
                     raise osv.except_osv(_('Error'), _('You cannot cancel picking because stock move is in done state !'))
-        return True    
+        return True
+
     
     def create(self, cr, uid, vals, context=None):
         '''
@@ -909,13 +912,14 @@ class stock_move(osv.osv):
         Fill the error message if the product of the line is inactive
         '''
         res = {}
+        product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
         if isinstance(ids,(int, long)):
             ids = [ids]
         
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'inactive_product': False,
                             'inactive_error': ''}
-            if line.picking_id and line.picking_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
+            if line.picking_id and line.picking_id.state not in ('cancel', 'done') and line.product_id and line.product_id.id != product_tbd and not line.product_id.active:
                 res[line.id] = {'inactive_product': True,
                                 'inactive_error': _('The product in line is inactive !')}
                 
@@ -930,10 +934,14 @@ class stock_move(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
         for move in self.browse(cr, uid, ids, context=context):
-            res[move.id] = False
+            res[move.id] = {'expired_lot': False, 'product_tbd': False}
             if move.prodlot_id and move.prodlot_id.is_expired:
-                res[move.id] = True
+                res[move.id]['expired_lot'] = True
+
+            if move.product_id.id == product_tbd:
+                res[move.id]['product_tbd'] = True
 
         return res
 
@@ -955,7 +963,8 @@ class stock_move(osv.osv):
         'to_correct_ok': fields.boolean(string='Line to correct'),
         'text_error': fields.text(string='Error', readonly=True),
         'inventory_ids': fields.many2many('stock.inventory', 'stock_inventory_move_rel', 'move_id', 'inventory_id', 'Created Moves'),
-        'expired_lot': fields.function(_is_expired_lot, method=True, type='boolean', string='Lot expired', store=False),
+        'expired_lot': fields.function(_is_expired_lot, method=True, type='boolean', string='Lot expired', store=False, multi='attribute'),
+        'product_tbd': fields.function(_is_expired_lot, method=True, type='boolean', string='TbD', store=False, multi='attribute'),
     }
 
     _defaults = {
@@ -964,6 +973,15 @@ class stock_move(osv.osv):
         'inactive_product': False,
         'inactive_error': lambda *a: '',
     }
+
+    def force_assign(self, cr, uid, ids, context=None):
+        product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
+
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.product_id.id == product_tbd and move.from_wkf_line:
+                ids.pop(ids.index(move.id))
+
+        return super(stock_move, self).force_assign(cr, uid, ids, context=context)
 
     def _uom_constraint(self, cr, uid, ids, context=None):
         for obj in self.browse(cr, uid, ids, context=context):

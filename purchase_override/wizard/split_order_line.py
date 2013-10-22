@@ -145,13 +145,14 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                     # and force merge the line to this po (even if it is not draft anymore)
                     # run the procurement, the make_po function detects the link to original po
                     # and force merge the line to this po (even if it is not draft anymore)
-                    new_data_so = so_line_obj.read(cr, uid, [new_so_line_id], ['procurement_id'], context=context)
+                    new_data_so = so_line_obj.read(cr, uid, [new_so_line_id], ['procurement_id', 'line_number'], context=context)
                     new_proc_id = new_data_so[0]['procurement_id'][0]
 
                     if external_ir and split.purchase_line_id and split.purchase_line_id.move_dest_id:
                         move = move_obj.browse(cr, uid, split.purchase_line_id.move_dest_id.id, context=context)
                         new_move_id = move_obj.copy(cr, uid, move.id, {'product_qty': split.new_line_qty,
                                                                        'product_uos_qty': split.new_line_qty,
+                                                                       'line_number': new_data_so[0]['line_number'],
                                                                        'sale_line_id': new_so_line_id}, context=context)
                         move_obj.action_confirm(cr, uid, [new_move_id], context=context)
 
@@ -160,8 +161,8 @@ class split_purchase_order_line_wizard(osv.osv_memory):
 
                         proc_move_id = proc_obj.read(cr, uid, new_proc_id, ['move_id'], context=context)['move_id'][0]
                         move_obj.write(cr, uid, proc_move_id, {'state': 'draft'}, context=context)
-                        move_obj.unlink(cr, uid, proc_move_id, context=context)
                         proc_obj.write(cr, uid, [new_proc_id], {'close_move': False, 'move_id': new_move_id}, context=context)
+                        move_obj.unlink(cr, uid, proc_move_id, context=context)
 
                     wf_service.trg_validate(uid, 'procurement.order', new_proc_id, 'button_check', cr)
                     # if original po line is confirmed, we action_confirm new line
@@ -190,7 +191,6 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                     # if original po line is confirmed, we action_confirm new line
                     if split.purchase_line_id.state == 'confirmed':
                         po_line_obj.action_confirm(cr, uid, [new_line_id], context=context)
-                
         return {'type': 'ir.actions.act_window_close'}
 
     def line_qty_change(self, cr, uid, ids, original_qty, new_line_qty, context=None):
