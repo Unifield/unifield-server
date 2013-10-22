@@ -761,7 +761,7 @@ class ir_model_data(osv.osv):
                         'res_id': res_id,
                         'noupdate': noupdate
                         },context=context)
-                    if model_obj._inherits:
+                    if model_obj._inherits and not context.get('sync_update_execution', False):
                         for table in model_obj._inherits:
                             inherit_id = model_obj.browse(cr, uid,
                                     res_id,context=context)[model_obj._inherits[table]]
@@ -775,7 +775,7 @@ class ir_model_data(osv.osv):
         if xml_id:
             if res_id:
                 self.loads[(module, xml_id)] = (model, res_id)
-                if model_obj._inherits:
+                if model_obj._inherits and not context.get('sync_update_execution', False):
                     for table in model_obj._inherits:
                         inherit_field = model_obj._inherits[table]
                         inherit_id = model_obj.read(cr, uid, res_id,
