@@ -83,7 +83,7 @@ class account_move_compute_currency(osv.osv):
                 res = cr.fetchall()
                 newargs.append(('id', 'in', [x and x[0] for x in res]))
             else:
-                newargs.append(arg)
+                raise osv.except_osv(_('Error'), _('Operator not supported.'))
         return newargs
 
     def onchange_journal_id(self, cr, uid, ids, journal_id=False, context=None):
@@ -112,7 +112,7 @@ class account_move_compute_currency(osv.osv):
 
     _columns = {
         'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
-        'currency_id': fields.function(_get_currency, fnct_search=_search_currency, method=True, type="many2one", relation="res.currency", string='Book. Currency', help="The optional other currency if it is a multi-currency entry."),
+        'currency_id': fields.function(_get_currency, method=True, type="many2one", relation="res.currency", string='Book. Currency', help="The optional other currency if it is a multi-currency entry."),
         'manual_currency_id': fields.many2one('res.currency', "Book. Currency"),
         'book_amount': fields.function(_book_amount_compute, method=True, string='Book Amount', digits_compute=dp.get_precision('Account'), type='float'),
         'block_manual_currency_id': fields.boolean("Block manual currency field", help="Block manual currency field if journal have a currency."),
