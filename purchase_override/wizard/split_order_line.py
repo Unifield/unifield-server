@@ -126,7 +126,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 #    the merge into the actual Po is forced
                 # if Internal Request, we do not update corresponding Internal Request
                 link_wiz = split.corresponding_so_line_id_split_po_line_wizard
-                external_ir = link_wiz and link_wiz.order_id and not link_wiz.order_id.procurement_request or link_wiz.order_id.location_requestor_id.usage == 'customer'
+                external_ir = link_wiz and link_wiz.order_id and (not link_wiz.order_id.procurement_request or link_wiz.order_id.location_requestor_id.usage == 'customer')
                 if split.corresponding_so_line_id_split_po_line_wizard and split.impact_so_split_po_line_wizard and external_ir:
                     # copy the original sale order line, reset po_cft to 'po' (we don't want a new tender if any)
                     so_copy_data = {'line_number': split.corresponding_so_line_id_split_po_line_wizard.line_number, # the Fo is not draft anyway, following sequencing policy, split Fo line maintains original one
