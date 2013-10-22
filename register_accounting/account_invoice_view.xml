@@ -38,7 +38,7 @@
                             <field colspan="4" default_get="{'check_total': check_total, 'address_invoice_id': 
                                 address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" 
                                 name="invoice_line" nolabel="1">
-                                <tree editable="bottom" string="Invoice lines" colors="blue:inactive_product == False and analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid') or inactive_product == True;black:inactive_product == False and analytic_distribution_state in ('none')">
+                                <tree editable="bottom" string="Invoice lines" colors="red:analytic_distribution_state == 'invalid' or inactive_product == True;black:inactive_product == False and analytic_distribution_state in ('none','valid')">
                                     <field name="name"/>
                                     <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), 
                                         ('type', '&lt;&gt;', 'view')]" name="account_id" on_change="onchange_account_id(parent.fiscal_position,account_id)"/>
@@ -129,7 +129,7 @@
                             <field colspan="4" default_get="{'check_total': check_total, 'address_invoice_id': 
                                 address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" 
                                 name="invoice_line" nolabel="1" attrs="{'readonly': [('state', 'not in', ['draft', 'open']), ('is_direct_invoice', '=', True)]}">
-                                <tree editable="bottom" string="Invoice lines" colors="blue:inactive_product == False and analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid') or inactive_product == True;black:inactive_product == False and analytic_distribution_state in ('none')">
+                                <tree editable="bottom" string="Invoice lines">
                                     <field name="name"/>
                                     <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), 
                                         ('type', '&lt;&gt;', 'view')]" name="account_id" on_change="onchange_account_id(parent.fiscal_position,account_id)"/>
