@@ -403,10 +403,9 @@ class financing_contract_format_line(osv.osv):
                 'format_id': destination_format_id,
                 'parent_id': parent_id,
                 'line_type': browse_source_line.line_type,
+                'account_quadruplet_ids': [(6, 0, [])],
             }
-            account_destination_ids = []
-            for account_destination in browse_source_line.account_destination_ids:
-                account_destination_ids.append(account_destination.id)
+            account_destination_ids = [account_destination.id for account_destination in browse_source_line.account_destination_ids]
             format_line_vals['account_destination_ids'] = [(6, 0, account_destination_ids)]
             parent_line_id = self.pool.get('financing.contract.format.line').create(cr, uid, format_line_vals, context=context)
             for child_line in browse_source_line.child_ids:

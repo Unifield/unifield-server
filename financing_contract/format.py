@@ -97,7 +97,7 @@ class financing_contract_format(osv.osv):
         
     def write(self, cr, uid, ids, vals, context=None):
         # Only for CC; FPs and Accts/Dests are edited in their objects
-        if 'cost_center_ids' in vals:
+        if 'cost_center_ids' in vals and len(vals['cost_center_ids']) > 0:
             quad_obj = self.pool.get('financing.contract.account.quadruplet')
             
             # Compare "before" and "after" in order to delete/create quadruplets

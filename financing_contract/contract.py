@@ -245,7 +245,9 @@ class financing_contract_contract(osv.osv):
         default = default.copy()
         default['code'] = (contract['code'] or '') + '(copy)'
         default['name'] = (contract['name'] or '') + '(copy)'
-        # Copy lines manually
+        # Copy lines manually but remove CCs and FPs
+        default['funding_pool_ids'] = []
+        default['cost_center_ids'] = []
         default['actual_line_ids'] = []
         copy_id = super(financing_contract_contract, self).copy(cr, uid, id, default, context=context)
         copy = self.browse(cr, uid, copy_id, context=context)
