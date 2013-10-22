@@ -60,6 +60,8 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Search Journal Items">
+                    <filter name="inactive" icon="gtk-dialog-error" domain="[('analytic_state', '!=', 'valid')]" string="Invalid"/>
+                    <separator orientation="vertical"/>
                     <field name="employee_id" select="1"/>
                     <field name="account_id" select="1"/>
                 </search>
