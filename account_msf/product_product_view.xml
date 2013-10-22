@@ -33,5 +33,16 @@
             </field>
         </record>
 
+        <record id="view_category_property_search" model="ir.ui.view">
+            <field name="name">product.category.property.search</field>
+            <field name="model">product.category</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Products Categories">
+                    <field name="name" select="1"/>
+                </search>
+            </field>
+        </record>
+
     </data>
 </openerp>
