@@ -1061,7 +1061,7 @@ stock moves which are already processed : '''
                     # write the line
                     sol_obj.write(cr, uid, sol_ids, fields_dic, context=ctx)
 
-                    if sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage == 'customer' and line.procurement_id.move_id:
+                    if sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage == 'customer' and line.procurement_id.move_id and not line.procurement_id.move_id.processed_stock_move:
                         out_move_id = line.procurement_id.move_id
                         if out_move_id.state == 'assigned':
                             move_obj.cancel_assign(cr, uid, [out_move_id.id])

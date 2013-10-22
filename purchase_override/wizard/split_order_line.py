@@ -150,16 +150,22 @@ class split_purchase_order_line_wizard(osv.osv_memory):
 
                     if external_ir and split.purchase_line_id and split.purchase_line_id.move_dest_id:
                         move = move_obj.browse(cr, uid, split.purchase_line_id.move_dest_id.id, context=context)
-                        new_move_id = move_obj.copy(cr, uid, move.id, {'product_qty': split.new_line_qty,
-                                                                       'product_uos_qty': split.new_line_qty,
-                                                                       'line_number': new_data_so[0]['line_number'],
-                                                                       'sale_line_id': new_so_line_id}, context=context)
-                        move_obj.action_confirm(cr, uid, [new_move_id], context=context)
-
-                        move_obj.write(cr, uid, [move.id], {'product_qty': move.product_qty - split.new_line_qty,
-                                                            'product_uos_qty': move.product_qty - split.new_line_qty}, context=context)
-
                         proc_move_id = proc_obj.read(cr, uid, new_proc_id, ['move_id'], context=context)['move_id'][0]
+                        new_move_id = move.id
+
+                        if move.product_qty > split.new_line_qty:
+                            new_move_id = move_obj.copy(cr, uid, move.id, {'product_qty': split.new_line_qty,
+                                                                           'product_uos_qty': split.new_line_qty,
+                                                                           'line_number': new_data_so[0]['line_number'],
+                                                                           'sale_line_id': new_so_line_id}, context=context)
+                            move_obj.action_confirm(cr, uid, [new_move_id], context=context)
+
+                            move_obj.write(cr, uid, [move.id], {'product_qty': move.product_qty - split.new_line_qty,
+                                                                'product_uos_qty': move.product_qty - split.new_line_qty}, context=context)
+                        else:
+                            # No update of OUT when IN is received to avoid more qty than expected
+                            move_obj.write(cr, uid, [move.id], {'processed_stock_move': True}, context=context)
+    
                         move_obj.write(cr, uid, proc_move_id, {'state': 'draft'}, context=context)
                         proc_obj.write(cr, uid, [new_proc_id], {'close_move': False, 'move_id': new_move_id}, context=context)
                         move_obj.unlink(cr, uid, proc_move_id, context=context)
