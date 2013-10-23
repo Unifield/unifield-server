@@ -38,6 +38,7 @@ class kit_report(report_sxw.rml_parse):
         '''
         Return the name of the obj_id with the name_get method
         '''
+        print obj, obj_id, self.pool.get(obj).name_get(self.cr, self.uid, [obj_id])[0][1]
         return self.pool.get(obj).name_get(self.cr, self.uid, [obj_id])[0][1]
 
     def get_selection(self, o, field):

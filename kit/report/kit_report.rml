@@ -177,7 +177,7 @@
                         <para style="Line">[[ item.item_asset_id and get_name('product.asset', item.item_asset_id.id) or '' ]]</para>
                     </td>
                     <td>
-                        <para style="Line">[[ item.item_lot and get_name('stock.production.lot', item.item_lot.id) or '' ]]</para>
+                        <para style="Line">[[ item.item_lot ]]</para>
                     </td>
                     <td>
                         <para style="Line">[[ formatLang(item.item_exp, date=True) ]]</para>
