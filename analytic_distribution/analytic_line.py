@@ -269,11 +269,13 @@ class analytic_line(osv.osv):
                         'source_date': aline.source_date or aline.date}, context=context)
                 # else reverse line before recreating them with right values
                 else:
-                    # First reverse line
-                    self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id])
+                    # First reverse line (last_corrected_id should be False in case you reverse a line that have been already corrected)
+                    rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id])
+                    self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'is_reversal': True, 'reversal_origin': aline.id, 'last_corrected_id': False})
                     # then create new lines
-                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
+                    cor_ids = self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
                         'source_date': aline.source_date or aline.date}, context=context)
+                    self.pool.get('account.analytic.line').write(cr, uid, cor_ids, {'last_corrected_id': aline.id})
                     # finally flag analytic line as reallocated
                     self.pool.get('account.analytic.line').write(cr, uid, [aline.id], {'is_reallocated': True})
             else:

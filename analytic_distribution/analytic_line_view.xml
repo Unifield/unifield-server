@@ -13,8 +13,8 @@
                 <data>
                     <xpath expr="/tree/field[@name='journal_id']" position='before'>
                         <field name="is_reallocated" invisible="1"/>
-                        <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" 
-                            icon="terp-mail-" colspan="2"/>
+                        <field name="last_corrected_id" invisible="1"/>
+                        <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False), ('last_corrected_id', '=', False)]}" icon="terp-mail-" colspan="2" name="button_open_analytic_corrections" type="object"/>
                     </xpath>
                     <xpath expr="/tree/field[@name='move_id']" position='replace'>
                         <field name="entry_sequence"/>

@@ -202,9 +202,11 @@ class analytic_distribution_wizard(osv.osv_memory):
         for line in to_reverse:
             # reverse the line
             to_reverse_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
-            self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids)
+            reversed_ids = self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids[0])
+            # Add reversal origin link (to not loose it). last_corrected_id is to prevent case where you do a reverse a line that have been already corrected
+            self.pool.get('account.analytic.line').write(cr, uid, [reversed_ids[0]], {'reversal_origin': to_reverse_ids[0], 'last_corrected_id': False})
             # Mark old lines as non reallocatable (ana_ids): why reverse() don't set this flag ?
-            self.pool.get('account.analytic.line').write(cr, uid, to_reverse_ids, {'is_reallocated': True,})
+            self.pool.get('account.analytic.line').write(cr, uid, [to_reverse_ids[0]], {'is_reallocated': True,})
             # update the distrib line
             name = False
             if to_reverse_ids:
@@ -217,7 +219,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'destination_id': line.destination_id.id,
                 })
             # Create the new ana line
-            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name)
+            ret = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name)
+            # Add link to first analytic lines
+            for ret_id in ret:
+                self.pool.get('account.analytic.line').write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0]})
 
         for line in to_override:
             # update the ana line

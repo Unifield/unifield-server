@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from tools.misc import flatten
 
 class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
@@ -31,6 +32,7 @@ class account_analytic_line(osv.osv):
 
     _columns = {
         'is_corrigible': fields.related('move_id', 'is_corrigible', string='Is correctible?', type="boolean", readonly=True),
+        'last_corrected_id': fields.many2one('account.analytic.line', string="Last corrected entry", readonly=True),
     }
 
     def button_corrections(self, cr, uid, ids, context=None):
@@ -73,6 +75,98 @@ class account_analytic_line(osv.osv):
             'res_id': [wizard],
             'context': context,
         }
+
+    def get_corrections_history(self, cr, uid, ids, context=None):
+        """
+        Give for each line their history by using "move_id and reversal_origin" field to browse lines
+        Return something like that: 
+            {id1: [line_id, another_line_id], id2: [a_line_id, other_line_id]}
+        """
+        # Verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        move_obj = self.pool.get('account.move')
+        # Browse all given lines
+        for aml in self.browse(cr, uid, ids, context=context):
+            upstream_line_ids = []
+            downstream_line_ids = []
+            # Get upstream move lines
+            line = aml
+            while line != None:
+                if line:
+                    # Add line to result
+                    upstream_line_ids.append(line.id)
+                    # Add reversal line to result
+                    reversal_ids = self.search(cr, uid, [('reversal_origin', '=', line.id), ('is_reversal', '=', True)], context=context)
+                    if reversal_ids:
+                        upstream_line_ids.append(reversal_ids)
+                if line.last_corrected_id:
+                    line = line.last_corrected_id
+                else:
+                    line = None
+            # Get downstream move lines
+            sline_ids = [aml.id]
+            while sline_ids != None:
+                operator = 'in'
+                if len(sline_ids) == 1:
+                    operator = '='
+                search_ids = self.search(cr, uid, [('last_corrected_id', operator, sline_ids)], context=context)
+                if search_ids:
+                    # Add line to result
+                    downstream_line_ids.append(search_ids)
+                    # Add reversal line to result
+                    for dl in self.browse(cr, uid, search_ids, context=context):
+                        reversal_ids = self.search(cr, uid, [('reversal_origin', '=', dl.id), ('is_reversal', '=', True)], context=context)
+                        downstream_line_ids.append(reversal_ids)
+                    sline_ids = search_ids
+                else:
+                    sline_ids = None
+            # Add search result to res
+            res[str(aml.id)] = list(set(flatten(upstream_line_ids) + flatten(downstream_line_ids))) # downstream_line_ids needs to be simplify with flatten
+        return res
+
+    def button_open_analytic_corrections(self, cr, uid, ids, context=None):
+        """
+        Open a wizard that contains all analytic lines linked to this one.
+        """
+        # Verification
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        domain_ids = []
+        # Search ids to be open
+        res_ids = self.get_corrections_history(cr, uid, ids, context=context)
+        # For each ids, add elements to the domain
+        for el in res_ids:
+            domain_ids.append(res_ids[el])
+        # If no result, just display selected ids
+        if not domain_ids:
+            domain_ids = ids
+        # Create domain
+        domain = [('id', 'in', flatten(domain_ids))]
+        # Update context
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Display the result
+        return {
+            'name': "History Analytic Line",
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.analytic.line',
+            'target': 'new',
+            'view_type': 'form',
+            'view_mode': 'tree',
+            'context': context,
+            'domain': domain,
+        }
+        return True
 
 account_analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

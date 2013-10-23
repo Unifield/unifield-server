@@ -600,6 +600,13 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Abort process if this move line was corrected before
             if ml.corrected:
                 continue
+            # If this line was already been corrected, check the first analytic line ID (but not the first first analytic line)
+            first_analytic_line_id = False
+            first_ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', '=', ml.id)])
+            if first_ana_ids:
+                first_ana = self.pool.get('account.analytic.line').browse(cr, uid, first_ana_ids)[0]
+                if first_ana.last_corrected_id:
+                    first_analytic_line_id = first_ana.last_corrected_id.id
             # Retrieve right journal
             journal_id = j_corr_id
 
@@ -687,14 +694,17 @@ receivable, item have not been corrected, item have not been reversed and accoun
             initial_al_ids = al_obj.search(cr, uid, [('move_id', '=', ml.id)])
             search_datas = [(ml.id, {'is_reallocated': True}),
                             (rev_line_id, {'is_reversal': True, 'reversal_origin': initial_al_ids[0]}),
-                            (correction_line_id, {'is_reallocated': False, 'is_reversal': False})]
+                            (correction_line_id, {'is_reallocated': False, 'is_reversal': False, 'last_corrected_id': initial_al_ids[0]})]
             # If line is already a correction, take the previous reversal move line id
             # (UF_1234: otherwise, the reversal is not set correctly)
             if ml.corrected_line_id:
                 old_reverse_ids = self.search(cr, uid, [('reversal_line_id', '=', ml.corrected_line_id.id)])
                 if len(old_reverse_ids) > 0:
-                    search_datas += [(old_reverse_ids[0], {'is_reversal': True})]
+                    search_datas += [(old_reverse_ids[0], {'is_reversal': True, 'reversal_origin': first_analytic_line_id})]
             for search_data in search_datas:
+                # keep initial analytic line as corrected line if it the 2nd or more correction on this line
+                if ml.corrected_line_id and search_data[0] == ml.id and first_analytic_line_id:
+                    search_data[1].update({'last_corrected_id': first_analytic_line_id})
                 search_ids = al_obj.search(cr, uid, [('move_id', '=', search_data[0])])
                 if search_ids:
                     al_obj.write(cr, uid, search_ids, search_data[1])

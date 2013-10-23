@@ -55,7 +55,7 @@
             <field name="arch" type="xml">
                 <tree string="Analytic Journal Items" min_rows="100" editable="bottom" noteditable="1" hide_delete_button="1" hide_new_button="1">
                     <field name="is_reallocated" invisible="1"/>
-                    <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2"/>
+                    <button string="Have been reallocated?" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2" name="button_open_analytic_corrections" type="object"/>
                     <field name="instance_id"/>
                     <field name="is_reversal" invisible="1"/>
                     <field name="journal_type" invisible="1"/>
