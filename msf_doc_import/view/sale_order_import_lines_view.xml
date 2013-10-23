@@ -52,9 +52,10 @@
                                         background-color: #F0EBA4;
                                         font-weight: bold;
                                         text-transform: uppercase;
+                                        width: 98%;
                                     }
 
-                                    #error_message_unifield p, span
+                                    #error_message_unifield p, #error_message_unifield span
                                     {
                                         height: 1em;
                                         min-height: 1em;
@@ -67,7 +68,7 @@
 
                                 <div id="error_message_unifield">
                                     <field name="text_error" nolabel="1" readonly="1" colspan="4" attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}" />
-                                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" nolabel="1" colspan="4"/>
+                                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" nolabel="1" colspan="6"/>
                                 </div>
                            </html>
                        </group>

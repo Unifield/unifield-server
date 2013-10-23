@@ -11,7 +11,7 @@
                 <form>
                     <field name="to_correct_ok" invisible="1"/>
 					<field name="inactive_product" invisible="1" />
-                    <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
+                    <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}" readonly="1">
                             <html>
                                 <style>
                                     #error_message_unifield 
@@ -33,7 +33,7 @@
                                         text-transform: uppercase;
                                     }
 
-                                    #error_message_unifield p,span
+                                    #error_message_unifield p, #error_message_unifield span
                                     {
                                         height: 1em;
                                         min-height: 1em;
@@ -41,6 +41,11 @@
                                         font-weight: bold;
                                         text-transform: uppercase;
                                         padding: 5px;
+                                    }
+
+                                    #error_message_unifield .grip
+                                    {
+                                        visibility: hidden;
                                     }
                                 </style>
 
