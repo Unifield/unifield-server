@@ -16,6 +16,7 @@
                     <xpath expr="/form//field[@name='name']" position="replace">
                         <field name="name" required="1" />
                     </xpath>
+
                     <!-- UF-1846: we hide the product_uos_qty and product_uos that were displayed after the user right installation -->
                     <xpath expr="/form//field[@name='order_line']/form//field[@name='product_uos_qty']" position="attributes">
                          <attribute name="invisible">1</attribute>
@@ -96,11 +97,18 @@
                     <!-- <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='order_policy']" position="replace">
                         <field name="order_policy" on_change="shipping_policy_change(order_policy, order_type, partner_id, 'order_policy')"/>
                     </xpath> -->
+                    <xpath expr="/form//field[@name='order_line']/tree" position="attributes">
+                        <attribute name="hide_delete_button">True</attribute>
+                    </xpath>
+
                     <xpath expr="/form/notebook//tree/field[@name='price_subtotal']" position="after">
-			<field name="state" invisible="1" />
+                        <field name="state" invisible="1" />
+                        <field name="fake_state" invisible="1" />
                         <button string="Split line" icon="terp-stock_effects-object-colorize" 
 				name="open_split_wizard" type="object" 
-				attrs="{'invisible': [('state', 'in', ('sourced', 'confirmed', 'done', 'cancel', 'exception'))]}" />
+                attrs="{'invisible': [('state', 'in', ('sourced', 'confirmed', 'done', 'cancel', 'exception'))]}" />
+                        <button string="Delete" icon="gtk-del" type="object" name="ask_unlink"
+                attrs="{'invisible': [('state', 'in', ('sourced', 'confirmed', 'done', 'cancel', 'exception'))]}" />
                     </xpath>
 
                     <xpath expr="/form/notebook//field[@name='incoterm']" position="attributes">
@@ -437,6 +445,35 @@
             <delete id="base.menu_action_res_bank_form" model="ir.ui.menu" />
             used in useability_dashboard_and_menu/menu/supply_config_menu.xml
 -->
+
+        <record id="sale_order_line_unlink_wizard" model="ir.ui.view">
+            <field name="name">sale.order.line.unlink.wizard</field>
+            <field name="model">sale.order.line.unlink.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Unlink Field Order Line">
+                    <label colspan="4" string="Do you wish to re-source this line ?" />
+                    <label> </label>
+                    <button colspan="1" type="object" icon="gtk-cancel" name="close_window" string="Close window" />
+                    <button colspan="1" type="object" icon="gtk-execute" name="resource_line" string="Yes" />
+                    <button colspan="1" type="object" icon="gtk-execute" name="cancel_fo_line" string="No" />
+                </form>
+            </field>
+        </record>
+
+        <record id="sale_order_unlink_wizard" model="ir.ui.view">
+            <field name="name">sale.order.unlink.wizard</field>
+            <field name="model">sale.order.unlink.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Unlink Field Order">
+                    <label colspan="4" string="You removed all lines of this field order, would you cancel it ?" />
+                    <label> </label>
+                    <button colspan="2" type="object" icon="gtk-execute" name="cancel_fo" string="Yes" />
+                    <button colspan="1" type="object" icon="gtk-cancel" name="close_window" string="No" />
+                </form>
+            </field>
+        </record>
 
 
 
