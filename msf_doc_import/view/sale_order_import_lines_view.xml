@@ -31,6 +31,7 @@
                     <newline/>
                     <field name="to_correct_ok" readonly="1" invisible="1"/>
                     <field name="show_msg_ok" readonly="1" invisible="1"/>
+                    <field name="inactive_product" invisible="1" />
                     <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
                             <html>
                                 <style>
@@ -65,7 +66,6 @@
                                 </style>
 
                                 <div id="error_message_unifield">
-									<field name="inactive_product" invisible="1" />
                                     <field name="text_error" nolabel="1" readonly="1" colspan="4" attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}" />
                                     <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" nolabel="1" colspan="4"/>
                                 </div>
