@@ -29,7 +29,7 @@ class procurement_batch_cron(osv.osv):
     _inherit = 'ir.cron'
     
     _columns = {
-        'name': fields.char(size=64, string='Name'),
+        'name': fields.char(size=64, string='Name', required=True),
         'type': fields.selection([('standard', 'POs creation Batch (from orders)'), ('rules', 'POs creation Batch (replenishment rules)')], string='Type', required=True),
         'request_ids': fields.one2many('res.request', 'batch_id', string='Associated Requests', readonly=True),
         'cron_ids': fields.one2many('ir.cron', 'batch_id', string='Associated Cron tasks'),
