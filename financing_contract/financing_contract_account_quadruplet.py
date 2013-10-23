@@ -86,11 +86,25 @@ class financing_contract_account_quadruplet(osv.osv):
         'account_destination_id': fields.many2one('account.destination.link', 'Account/Destination'),
         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Centre'),
         'funding_pool_id': fields.many2one('account.analytic.account', 'Funding Pool'),
-        'account_destination_name': fields.related('account_destination_id', 'name', type='char', relation='account.account', string='Account', size=64, store=True),
+        'account_destination_name': fields.char('Account', size=64),
         'used_in_contract': fields.function(_get_used_in_contract, method=True, type='boolean', string='Used', fnct_search=_search_used_in_contract),
     }
     
     _order = 'account_destination_name asc, funding_pool_id asc, cost_center_id asc'
+    
+    def create(self, cr, uid, vals, context=None):
+        if 'account_destination_id' in vals:
+            account_destination = self.pool.get('account.destination.link').browse(cr, uid, vals['account_destination_id'], context=context)
+            if account_destination.account_id and account_destination.destination_id:
+                vals['account_destination_name'] = account_destination.account_id.code + " " + account_destination.destination_id.code
+        return super(financing_contract_account_quadruplet, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'account_destination_id' in vals:
+            account_destination = self.pool.get('account.destination.link').browse(cr, uid, vals['account_destination_id'], context=context)
+            if account_destination.account_id and account_destination.destination_id:
+                vals['account_destination_name'] = account_destination.account_id.code + " " + account_destination.destination_id.code
+        return super(financing_contract_account_quadruplet, self).write(cr, uid, ids, vals, context=context)
     
 financing_contract_account_quadruplet()
 
