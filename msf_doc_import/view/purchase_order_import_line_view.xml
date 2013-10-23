@@ -69,7 +69,7 @@
                                         text-transform: uppercase;
                                     }
 
-                                    #error_message_unifield p
+                                    #error_message_unifield p,span
                                     {
                                         height: 1em;
                                         min-height: 1em;
