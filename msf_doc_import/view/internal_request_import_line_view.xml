@@ -11,7 +11,7 @@
                 <form>
                     <field name="to_correct_ok" invisible="1"/>
 					<field name="inactive_product" invisible="1" />
-                    <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}" readonly="1">
+                    <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
                             <html>
                                 <style>
                                     #error_message_unifield 
