@@ -1273,10 +1273,10 @@ stock moves which are already processed : '''
         return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
 
     def need_counterpart(self, cr, uid, ids, context=None):
-        res = True
+        res = False
         for po in self.browse(cr, uid, ids, context=context):
-            if (po.order_type == 'loan' and not po.loan_id and po.partner_id.partner_type in ('internal', 'intermission')) or po.is_a_counterpart:
-                res = False
+            if po.order_type == 'loan' and not po.loan_id and not po.is_a_counterpart and po.partner_id.partner_type not in ('internal', 'intermission'):
+                res = True
 
         return res
 
