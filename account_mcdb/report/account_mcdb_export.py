@@ -68,7 +68,8 @@ class account_line_csv_export(osv.osv_memory):
         # Sort items
         ids.sort()
         # Then write lines
-        for ml in self.pool.get('account.move.line').browse(cr, uid, ids, context=context):
+        account_move_line_obj = self.pool.get('account.move.line')
+        for ml in account_move_line_obj.browse(cr, uid, ids, context=context):
             csv_line = []
             #instance_id (Proprietary Instance)
             csv_line.append(ml.instance_id and ml.instance_id.code and ml.instance_id.code.encode('utf-8') or '')
@@ -106,19 +107,8 @@ class account_line_csv_export(osv.osv_memory):
                 #functional_currency_id
                 csv_line.append(ml.functional_currency_id and ml.functional_currency_id.name and ml.functional_currency_id.name.encode('utf-8') or '')
             else:
-                #UTP-936: Treat the conversion differently for the move lines with journal type "Currency Adjustement", name=MT
-                func_amount = ml.amount_currency
-                original_currency = ml.currency_id.id
-                if ml.journal_id.type == 'cur_adj':
-                    #UTP-936: In case of MT journal, the conversion is from functional currency to output currency                    
-                    original_currency = ml.functional_currency_id.id
-                    if ml.debit:
-                        func_amount = ml.debit
-                    elif ml.credit:
-                        func_amount = -ml.credit
-
-                # Perform the conversion from original currency to selected currency                    
-                amount = currency_obj.compute(cr, uid, original_currency, currency_id, func_amount, round=True, context=context)
+                #UTP-936: Now call the common method to calculate the output values
+                amount = account_move_line_obj.calculate_output(cr, uid, currency_id, ml, context)
                 if amount < 0.0:
                     csv_line.append(0.0)
                     csv_line.append(abs(amount) or 0.0)
