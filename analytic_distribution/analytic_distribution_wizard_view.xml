@@ -144,25 +144,25 @@
                     <field name="date" colspan="2" /><label string="" colspan="2"/>
                     <newline/>
                     <field name="display_fp" invisible="1"/>
-                    <separator string="Remaining lines"/>
+                    <separator string="Items to check"/>
                     <newline/>
                     <field name="line_ids" nolabel="1" colspan="4" context="{'display_fp': display_fp}"/>
                     <newline/>
-                    <separator string="Non eligible lines"/>
+                    <separator string="Items not considered in reallocation"/>
                     <newline/>
                     <label string="A line is non-eligible regarding these criteria:" align="0.0"/>
                     <newline/>
-                    <label string="- Line comes from a commitment" align="0.0"/>
+                    <label string="- Commitmens" align="0.0"/>
                     <newline/>
-                    <label string="- Line has been analytically reallocated" align="0.0"/>
+                    <label string="- Items already reallocated" align="0.0"/>
                     <newline/>
-                    <label string="- Line is a reversal" align="0.0"/>
+                    <label string="- Reversals" align="0.0"/>
                     <newline/>
-                    <label string="- Line has been used in an engagement journal" align="0.0"/>
+                    <label string="- Items from engagement journal" align="0.0"/>
                     <newline/>
-                    <label string="- Line comes from a write-off" align="0.0"/>
+                    <label string="- Write-off" align="0.0"/>
                     <newline/>
-                    <label string="- Line comes from a unposted journal entry" align="0.0"/>
+                    <label string="- Unposted items" align="0.0"/>
                     <newline/>
                     <html>
                         <br />
@@ -209,11 +209,11 @@
                     <newline/>
                     <field name="date"/>
                     <newline/>
-                    <separator string="Allocatable lines"/>
+                    <separator string="Allocatable items"/>
                     <newline/>
                     <field name="process_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
                     <newline/>
-                    <separator string="Lines in error"/>
+                    <separator string="Items excluded from reallocation"/>
                     <newline/>
                     <field name="error_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
                     <newline />
