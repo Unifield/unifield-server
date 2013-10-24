@@ -1754,6 +1754,17 @@ class account_bank_statement_line(osv.osv):
         """
         return self.posting(cr, uid, ids, 'temp', context=context)
 
+    def button_analytic_lines(self, cr, uid, ids, context=None):
+        """
+        Give analytic lines linked to the given register lines
+        """
+        if not context:
+            context = {}
+        # Update context
+        context.update({'active_ids': ids})
+        # Return result of action named "Analytic Lines" on register lines
+        return self.get_analytic_lines(cr, uid, ids, context=context)
+
     def unlink(self, cr, uid, ids, context=None):
         """
         Permit to delete some account_bank_statement_line. But do some treatments on temp posting lines and do nothing for hard posting lines.
