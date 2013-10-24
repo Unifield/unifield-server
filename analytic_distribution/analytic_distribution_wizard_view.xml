@@ -152,13 +152,11 @@
                     <newline/>
                     <label string="A line is non-eligible regarding these criteria:" align="0.0"/>
                     <newline/>
-                    <label string="- Commitmens" align="0.0"/>
+                    <label string="- Commitments" align="0.0"/>
                     <newline/>
                     <label string="- Items already reallocated" align="0.0"/>
                     <newline/>
                     <label string="- Reversals" align="0.0"/>
-                    <newline/>
-                    <label string="- Items from engagement journal" align="0.0"/>
                     <newline/>
                     <label string="- Write-off" align="0.0"/>
                     <newline/>
