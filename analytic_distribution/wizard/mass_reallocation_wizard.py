@@ -53,8 +53,8 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         'error_ids': fields.many2many('account.analytic.line', 'mass_reallocation_error_rel', 'wizard_id', 'analytic_line_id', string="Errors", readonly=True),
         'other_ids': fields.many2many('account.analytic.line', 'mass_reallocation_non_supported_rel', 'wizard_id', 'analytic_line_id', string="Non supported", readonly=True),
         'process_ids': fields.many2many('account.analytic.line', 'mass_reallocation_process_rel', 'wizard_id', 'analytic_line_id', string="Allocatable", readonly=True),
-        'nb_error': fields.function(_get_total, string="Lines in error", type='integer', method=True, store=False, multi="mass_reallocation_check"),
-        'nb_process': fields.function(_get_total, string="Allocatable lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
+        'nb_error': fields.function(_get_total, string="Items excluded from reallocation", type='integer', method=True, store=False, multi="mass_reallocation_check"),
+        'nb_process': fields.function(_get_total, string="Allocatable items", type='integer', method=True, store=False, multi="mass_reallocation_check"),
         'nb_other': fields.function(_get_total, string="Excluded lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
         'display_fp': fields.boolean('Display FP'),
     }
