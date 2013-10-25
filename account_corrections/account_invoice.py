@@ -57,7 +57,7 @@ class account_invoice_line(osv.osv):
     }
 
     _defaults = {
-        'is_corrected': lambda *a: True,
+        'is_corrected': lambda *a: False,
     }
 
     def button_open_analytic_lines(self, cr, uid, ids, context=None):
