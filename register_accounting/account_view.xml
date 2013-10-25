@@ -465,16 +465,19 @@
                         <filter string="Open" domain="[('state', '=', 'open')]" icon="terp-camera_test" name="open"/>
                         <filter string="Closed" domain="[('state','=','confirm')]" icon="terp-dialog-close" name="confirm"/>
                         <separator orientation="vertical"/>
-                        <field name="date"/>
+                        <field name="instance_id"/>
                         <field name="name"/>
+                        <newline/>
+                        <field name="period_id"/>
                         <field name="journal_id" widget='selection' domain="[('type', '=', 'cash')]" />
                     </group>
                     <newline/>
-                    <group expand="0" string="Group By...">
+                    <group expand="1" string="Group By...">
                         <filter string="Journal" context="{'group_by': 'journal_id'}" icon="terp-folder-orange"/>
                         <filter string="State" context="{'group_by': 'state'}" icon="terp-stock_effects-object-colorize"/>
                         <separator orientation="vertical"/>
                         <filter string="Period" context="{'group_by': 'period_id'}" icon="terp-go-month"/>
+                        <filter string="Instance" context="{'group_by': 'instance_id'}" icon="terp-stage"/>
                     </group>
                 </search>
             </field>
@@ -539,17 +542,19 @@
                         <filter string="Open" domain="[('state', '=', 'open')]" icon="terp-camera_test" name="open"/>
                         <filter string="Closed" domain="[('state','=','confirm')]" icon="terp-dialog-close" name="confirm"/>
                         <separator orientation="vertical"/>
+                        <field name="instance_id"/>
                         <field name="name"/>
-                        <field name="date"/>
+                        <newline/>
                         <field name="period_id"/>
                         <field name="journal_id" widget="selection" domain="[('type', '=', 'bank')]" />
                     </group>
                     <newline/>
-                    <group expand="0" string="Group By...">
+                    <group expand="1" string="Group By...">
                         <filter string="Journal" context="{'group_by': 'journal_id'}" icon="terp-folder-orange"/>
                         <filter string="State" context="{'group_by': 'state'}" icon="terp-stock_effects-object-colorize"/>
                         <separator orientation="vertical"/>
                         <filter string="Period" context="{'group_by': 'period_id'}" icon="terp-go-month"/>
+                        <filter string="Instance" context="{'group_by': 'instance_id'}" icon="terp-stage"/>
                     </group>
                 </search>
             </field>
@@ -571,6 +576,21 @@
             </field>
         </record>
 
+        <record id="action_view_bank_statement_search" model="ir.actions.server">
+          <field name="name">Bank Registers</field>
+          <field name="model_id" ref="model_account_bank_statement"/>
+          <field name="state">code</field>
+          <field name="code">action = obj.get_statement(st_type='bank', context=context)</field>
+        </record>
+
+        <record id="account.menu_bank_statement_tree" model="ir.ui.menu">
+          <field name="name">Bank Registers</field>
+          <field name="sequence" eval="7"/>
+          <field name="parent_id" ref="account.menu_finance_bank_and_cash"/>
+          <field name="icon">STOCK_EXECUTE</field>
+          <field name="action" ref="action_view_bank_statement_search"/>
+        </record>
+
         <record id="action_bank_statement_periodic_tree" model="ir.actions.act_window">
             <field name="name">Bank Statements</field>
             <field name="res_model">account.bank.statement</field>
@@ -588,19 +608,20 @@
            res_model="account.bank.statement"
            src_model="account.journal"/>
 
-    <!-- Cash Register context modification to display only open cash register by default -->
+    <!-- Cash Register context modification to display only open cash register by default and to display default instance -->
+        <record id="action_view_cash_statement_search" model="ir.actions.server">
+          <field name="name">Cash Registers</field>
+          <field name="model_id" ref="model_account_bank_statement"/>
+          <field name="state">code</field>
+          <field name="code">action = obj.get_statement(st_type='cash', context=context)</field>
+        </record>
 
-        <record id="account.action_view_bank_statement_tree" model="ir.actions.act_window">
-            <field name="name">Cash Registers</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">account.bank.statement</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form,graph</field>
-            <field name="view_id" ref="view_cash_statement_tree"/>
-            <field name="search_view_id" ref="account.view_account_bank_statement_filter"/>
-            <field name="domain">[('journal_id.type', '=', 'cash')]</field>
-            <field name="context">{'journal_type':'cash', 'search_default_open': 1}</field>
-            <field name="help">A Cash Register allows you to manage cash entries in your cash journals. This feature provides an easy way to follow up cash payments on a daily basis. You can enter the coins that are in your cash box, and then post entries when money comes in or goes out of the cash box.</field>
+        <record id="account.journal_cash_move_lines" model="ir.ui.menu">
+          <field name="name">Cash Registers</field>
+          <field name="sequence" eval="10"/>
+          <field name="parent_id" ref="account.menu_finance_bank_and_cash"/>
+          <field name="icon">STOCK_EXECUTE</field>
+          <field name="action" ref="action_view_cash_statement_search"/>
         </record>
 
     <!-- Modification to display bank_statement_tree -->
@@ -624,8 +645,6 @@
             <field name="view_id" ref="account.account_cash_statement_graph"/>
             <field name="act_window_id" ref="account.action_view_bank_statement_tree"/>
         </record>
-
-        <menuitem string="Bank Registers" action="account.action_bank_statement_tree" id="account.menu_bank_statement_tree" parent="account.menu_finance_bank_and_cash" sequence="7"/>
 
     <!-- Cheque Register View -->
         <record id="view_cheque_register_form" model="ir.ui.view">
@@ -782,17 +801,19 @@
                         <filter string="Open" domain="[('state', '=', 'open')]" icon="terp-camera_test" name="open"/>
                         <filter string="Closed" domain="[('state','=','confirm')]" icon="terp-dialog-close" name="confirm"/>
                         <separator orientation="vertical"/>
+                        <field name="instance_id"/>
                         <field name="name"/>
-                        <field name="date"/>
+                        <newline/>
                         <field name="period_id"/>
                         <field name="journal_id" widget="selection" domain="[('type', '=', 'cheque')]" />
                     </group>
                     <newline/>
-                    <group expand="0" string="Group By...">
+                    <group expand="1" string="Group By...">
                         <filter string="Journal" context="{'group_by': 'journal_id'}" icon="terp-folder-orange"/>
                         <filter string="State" context="{'group_by': 'state'}" icon="terp-stock_effects-object-colorize"/>
                         <separator orientation="vertical"/>
                         <filter string="Period" context="{'group_by': 'period_id'}" icon="terp-go-month"/>
+                        <filter string="Instance" context="{'group_by': 'instance_id'}" icon="terp-stage"/>
                     </group>
                 </search>
             </field>
@@ -811,6 +832,13 @@
                  The starting balance will be proposed automatically and the closing balance is to be found on your statement.</field>
         </record>
 
+        <record id="action_view_cheque_statement_search" model="ir.actions.server">
+          <field name="name">Cheque Registers</field>
+          <field name="model_id" ref="model_account_bank_statement"/>
+          <field name="state">code</field>
+          <field name="code">action = obj.get_statement(st_type='cheque', context=context)</field>
+        </record>
+
         <record model="ir.actions.act_window.view" id="action_cheque_register_tree_cheque">
             <field name="sequence" eval="10"/>
             <field name="view_mode">tree</field>
@@ -826,8 +854,13 @@
         </record>
 
     <!-- Cheque Register Menu -->
-        <menuitem string="Cheque Registers" action="action_cheque_register_tree" id="menu_cash_register" 
-            parent="account.menu_finance_bank_and_cash" sequence="7"/>
+        <record id="menu_cash_register" model="ir.ui.menu">
+          <field name="name">Cheque Registers</field>
+          <field name="sequence" eval="7"/>
+          <field name="parent_id" ref="account.menu_finance_bank_and_cash"/>
+          <field name="icon">STOCK_EXECUTE</field>
+          <field name="action" ref="action_view_cheque_statement_search"/>
+        </record>
 
     <!-- Account View -->
         <record id="inherit_view_account_form" model="ir.ui.view">
