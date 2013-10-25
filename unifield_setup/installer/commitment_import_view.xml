@@ -41,7 +41,7 @@
 
     <record id="commitment_import_setup_todo" model="ir.actions.todo">
         <field name="action_id" ref="action_commitment_import_setup"/>
-        <field name="sequence">26</field>
+        <field name="sequence">6</field>
         <field name="restart">always</field>
     </record>
   </data>

@@ -127,7 +127,7 @@ class import_commitment_wizard(osv.osv_memory):
                     if third_party:
                         vals.update({'imported_partner_txt': third_party})
                         # Search if 3RD party exists as partner
-                        partner_ids = self.pool.get('res.partner').search(cr, uid, [('|'), ('name', '=', third_party), ('partner_type', '=', 'esc')])
+                        partner_ids = self.pool.get('res.partner').search(cr, uid, [('&'), ('name', '=', third_party), ('partner_type', '=', 'esc')])
                         if not len(partner_ids) > 0:
                             raise osv.except_osv(_('Error'), _('No ESC partner found for code %s !') % (third_party))
                     else:
@@ -143,7 +143,7 @@ class import_commitment_wizard(osv.osv_memory):
                         raise osv.except_osv(_('Error'), _('No booking currency found!'))
                     # Fetch amount
                     if booking_amount:
-                        vals.update({'amount_currency': booking_amount})
+                        vals.update({'amount_currency': -float(booking_amount)})
                     else:
                         raise osv.except_osv(_('Error'), _('No booking amount found!'))
                     

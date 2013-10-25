@@ -34,7 +34,7 @@ class commitment_import_setup(osv.osv_memory):
     }
 
     _defaults = {
-        'import_commitments': lambda *a: False,
+        'import_commitments': lambda *a: True,
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -60,6 +60,9 @@ class commitment_import_setup(osv.osv_memory):
         line_obj = self.pool.get('account.analytic.line')
         
         setup_id = setup_obj.get_config(cr, uid)
+        
+        # Get import menu reference
+        menu_ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'menu_import_commitment')[1]
             
         if payload.import_commitments != setup_id.import_commitments:
             if payload.import_commitments:
@@ -67,6 +70,8 @@ class commitment_import_setup(osv.osv_memory):
                 journal_obj.create(cr, uid, {'name': 'Engagement - intl orders',
                                              'code': 'ENGI',
                                              'type': 'engagement'})
+                
+                self.pool.get('ir.ui.menu').write(cr, uid, menu_ids, {'active': True}, context=context)
             else:
                 #If de-activated, remove analytic items from the journal + the journal
                 journal_ids = journal_obj.search(cr, uid, [('code', '=', 'ENGI')], context=context)
@@ -74,6 +79,8 @@ class commitment_import_setup(osv.osv_memory):
                     line_ids = line_obj.search(cr, uid, [('imported_commitment', '=', True)], context=context)
                     line_obj.unlink(cr, uid, line_ids, context=context),
                     journal_obj.unlink(cr, uid, journal_ids, context=context)
+                    
+                self.pool.get('ir.ui.menu').write(cr, uid, menu_ids, {'active': False}, context=context)
                     
         setup_obj.write(cr, uid, [setup_id.id], {'import_commitments': payload.import_commitments}, context=context)
 
