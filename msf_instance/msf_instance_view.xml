@@ -323,7 +323,7 @@
             <field name='model'>account.bank.statement</field>
             <field name="type">form</field>
             <field name='inherit_id' ref='register_accounting.inherit_view_bank_statement_form' />
-            <field name="priority" eval="20"/>
+            <field name="priority" eval="60"/>
             <field name="arch" type="xml">
                 <data>
 	                <xpath expr="/form//field[@name='journal_id']" position="before">
@@ -338,7 +338,7 @@
             <field name='model'>account.bank.statement</field>
             <field name="type">form</field>
             <field name='inherit_id' ref='register_accounting.inherit_view_bank_statement_form2' />
-            <field name="priority" eval="20"/>
+            <field name="priority" eval="61"/>
             <field name="arch" type="xml">
                 <data>
 	                <xpath expr="/form//field[@name='journal_id']" position="before">
@@ -353,6 +353,7 @@
             <field name='model'>account.bank.statement</field>
             <field name="type">form</field>
             <field name='inherit_id' ref='register_accounting.view_cheque_register_form'/>
+            <field name="priority" eval="62"/>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form//field[@name='journal_id']" position="before">
@@ -366,7 +367,7 @@
             <field name="name">account.bank.statement.instance.tree</field>
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
-            <field name="priority" eval="16"/>
+            <field name="priority" eval="35"/>
             <field name='inherit_id' ref='account.view_bank_statement_tree' />
             <field name="arch" type="xml">
                 <xpath expr="/tree/field[@name='name']" position="before">
@@ -379,7 +380,7 @@
             <field name="name">account.cash.statement.instance.tree</field>
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
-            <field name="priority" eval="16"/>
+            <field name="priority" eval="36"/>
             <field name='inherit_id' ref='register_accounting.view_cash_statement_tree' />
             <field name="arch" type="xml">
                 <xpath expr="/tree/field[@name='name']" position="before">
@@ -392,7 +393,7 @@
             <field name="name">account.cheque.register.instance.tree</field>
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
-            <field name="priority" eval="16"/>
+            <field name="priority" eval="37"/>
             <field name='inherit_id' ref='register_accounting.view_cheque_register_tree' />
             <field name="arch" type="xml">
                 <xpath expr="/tree/field[@name='name']" position="before">

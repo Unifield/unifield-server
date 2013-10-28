@@ -157,7 +157,7 @@
             <field name='model'>account.bank.statement</field>
             <field name="type">form</field>
             <field name='inherit_id' ref='account.view_bank_statement_form2' />
-            <field name="priority" eval="20"/>
+            <field name="priority" eval="21"/>
             <field name="arch" type="xml">
                 <xpath expr="/form" position="replace">
                     <form string="Statement" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
@@ -512,8 +512,9 @@
             <field name="name">account.bank.statement.tree</field>
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
+            <field name="priority" eval="18"/>
             <field name="arch" type="xml">
-                <tree colors="red:balance_end_real!=balance_end;blue:state=='draft' and (balance_end_real==balance_end);black:state in ('open')" 
+                <tree colors="red:balance_end_real!=msf_calculated_balance;blue:state=='draft' and (balance_end_real==msf_calculated_balance);black:state in ('confirm')" 
                 string="Register" hide_new_button="1" hide_delete_button="1">
                     <field name="name"/>
                     <field name="date"/>
@@ -535,6 +536,7 @@
             <field name="name">account.bank.statement.search</field>
             <field name="model">account.bank.statement</field>
             <field name="type">search</field>
+            <field name="priority" eval="25"/>
             <field name="arch" type="xml">
                 <search string="Search Bank Statements">
                     <group col="8" colspan="4">
@@ -561,21 +563,6 @@
         </record>
 
     <!--Bank Statement modification to change "Bank Statement" into "Bank Statement" -->
-
-        <record id="account.action_bank_statement_tree" model="ir.actions.act_window">
-            <field name="name">Bank Registers</field>
-            <field name="res_model">account.bank.statement</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form,graph</field>
-            <field name="domain">[('journal_id.type', '=', 'bank')]</field>
-            <field name="context">{'journal_type':'bank', 'search_default_open': 1}</field>
-            <field name="search_view_id" ref="view_bank_statement_search"/>
-            <field name="help">A bank statement is a summary of all financial transactions occurring over a given period of time on a deposit account, 
-                a credit card or any other type of financial account. The starting balance will be proposed automatically and the closing balance is 
-                to be found on your statement. When you are in the Payment column of a line, you can press F1 to open the reconciliation form.
-            </field>
-        </record>
-
         <record id="action_view_bank_statement_search" model="ir.actions.server">
           <field name="name">Bank Registers</field>
           <field name="model_id" ref="model_account_bank_statement"/>
@@ -651,6 +638,7 @@
             <field name='name'>view.cheque.register.form</field>
             <field name='model'>account.bank.statement</field>
             <field name="type">form</field>
+            <field name="priority" eval="28"/>
             <field name="arch" type="xml">
                 <form string="Cheque Register" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                     <group col="7" colspan="4">
@@ -773,8 +761,9 @@
             <field name="name">account.cheque.register.tree</field>
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
+            <field name="priority" eval="27"/>
             <field name="arch" type="xml">
-                <tree colors="red:balance_end_real!=balance_end and state=='draft';blue:state=='draft';black:state=='confirm'" 
+                <tree colors="blue:state=='draft';black:state=='confirm'" 
                     string="Register" hide_new_button="1" hide_delete_button="1">
                     <field name="name"/>
                     <field name="date"/>
@@ -820,37 +809,11 @@
         </record>
 
     <!-- Cheque Register Actions -->
-        <record id="action_cheque_register_tree" model="ir.actions.act_window">
-            <field name="name">Cheque Registers</field>
-            <field name="res_model">account.bank.statement</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="domain">[('journal_id.type', '=', 'cheque')]</field>
-            <field name="context">{'journal_type':'cheque', 'search_default_open': 1}</field>
-            <field name="search_view_id" ref="view_cheque_register_search"/>
-            <field name="help">A cheque register is a summary of all financial transactions occurring over a given period of time on a cheque account.
-                 The starting balance will be proposed automatically and the closing balance is to be found on your statement.</field>
-        </record>
-
         <record id="action_view_cheque_statement_search" model="ir.actions.server">
           <field name="name">Cheque Registers</field>
           <field name="model_id" ref="model_account_bank_statement"/>
           <field name="state">code</field>
           <field name="code">action = obj.get_statement(st_type='cheque', context=context)</field>
-        </record>
-
-        <record model="ir.actions.act_window.view" id="action_cheque_register_tree_cheque">
-            <field name="sequence" eval="10"/>
-            <field name="view_mode">tree</field>
-            <field name="view_id" ref="view_cheque_register_tree"/>
-            <field name="act_window_id" ref="action_cheque_register_tree"/>
-        </record>
-
-        <record model="ir.actions.act_window.view" id="action_cheque_register_form_cheque">
-            <field name="sequence" eval="20"/>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="view_cheque_register_form"/>
-            <field name="act_window_id" ref="action_cheque_register_tree"/>
         </record>
 
     <!-- Cheque Register Menu -->

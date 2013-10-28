@@ -568,30 +568,49 @@ class account_bank_statement(osv.osv):
             'active_ids': False, # idem that active_id
         })
         st_help = "A bank statement is a summary of all financial transactions occurring over a given period of time on a deposit account, a credit card or any other type of financial account. The starting balance will be proposed automatically and the closing balance is to be found on your statement. When you are in the Payment column of a line, you can press F1 to open the reconciliation form."
+        tree_module = 'account'
+        tree_view = 'view_bank_statement_tree'
         search_module = 'register_accounting'
         search_view = 'view_bank_statement_search'
         name = _('Bank Registers')
+        res_module = 'register_accounting'
+        res_view = 'inherit_view_bank_statement_form'
         if st_type == 'cheque':
             name = _('Cheque Registers')
+            tree_module = 'register_accounting'
+            tree_view = 'view_cheque_register_tree'
             search_module = 'register_accounting'
             search_view = 'view_cheque_register_search'
+            res_module = 'register_accounting'
+            res_view = 'view_cheque_register_form'
             st_help = "A cheque register is a summary of all financial transactions occurring over a given period of time on a cheque account. \
 The starting balance will be proposed automatically and the closing balance is to be found on your statement."
         elif st_type == 'cash':
             name = _('Cash Registers')
+            tree_module = 'register_accounting'
+            tree_view = 'view_cash_statement_tree'
             search_module = 'account'
             search_view = 'view_account_bank_statement_filter'
+            res_module = 'register_accounting'
+            res_view = 'inherit_view_bank_statement_form2'
             st_help = "A Cash Register allows you to manage cash entries in your cash journals. This feature provides an easy way to follow up cash payments on a daily basis. You can enter the coins that are in your cash box, and then post entries when money comes in or goes out of the cash box."
+        # Search views
+        tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, tree_module, tree_view)
+        tree_view_id = tree_view_id and tree_view_id[1] or False
         search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, search_module, search_view)
         search_view_id = search_view_id and search_view_id[1] or False
+        res_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, res_module, res_view)
+        res_id = res_id and res_id[1] or False
         # Return the search view
         return {
             'name': name,
             'type': 'ir.actions.act_window',
             'res_model': 'account.bank.statement',
             'view_type': 'form',
-            'view_mode': 'tree,form,graph',
+            'view_mode': 'tree,form',
+            'view_id': [tree_view_id],
             'search_view_id': search_view_id,
+            'views': [(tree_view_id, 'tree'), (res_id, 'form')],
             'context': context,
             'domain': domain,
             'target': 'current',
