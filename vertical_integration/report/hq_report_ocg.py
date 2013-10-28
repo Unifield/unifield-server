@@ -128,7 +128,8 @@ class hq_report_ocg(report_sxw.report_sxw):
                          'Third Parties',
                          'Booking Debit',
                          'Booking Credit',
-                         'Booking Currency']
+                         'Booking Currency',
+                         'Field Activity']
         
         # Initialize lists: one for the first report...
         first_result_lines = []
@@ -154,16 +155,16 @@ class hq_report_ocg(report_sxw.report_sxw):
             account = move_line.account_id
             currency = move_line.currency_id
             # For first report: as if
-            formatted_data = [move_line.instance_id and move_line.instance_id.code or "",
-                              journal and journal.code or "",
-                              move_line.move_id and move_line.move_id.name or "",
-                              move_line.name,
-                              move_line.ref,
-                              datetime.datetime.strptime(move_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
-                              datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
-                              move_line.period_id and move_line.period_id.code or "",
-                              self.translate_account(cr, uid, pool, account),
-                              account and account.code + " " + account.name,
+            formatted_data = [move_line.instance_id and move_line.instance_id.code or "",             
+                              journal and journal.code or "",                                         
+                              move_line.move_id and move_line.move_id.name or "",                     
+                              move_line.name,                                                         
+                              move_line.ref,                                                          
+                              datetime.datetime.strptime(move_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),  
+                              datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),           
+                              move_line.period_id and move_line.period_id.code or "",                                     
+                              self.translate_account(cr, uid, pool, account),                         
+                              account and account.code + " " + account.name,                          
                               "",
                               "",
                               "",
@@ -205,30 +206,37 @@ class hq_report_ocg(report_sxw.report_sxw):
             currency = analytic_line.currency_id
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
-                              analytic_line.journal_id and analytic_line.journal_id.code or "",
-                              analytic_line.move_id and analytic_line.move_id.move_id and analytic_line.move_id.move_id.name or "",
-                              analytic_line.name or "",
-                              analytic_line.ref or "",
-                              datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
-                              datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
-                              analytic_line.period_id and analytic_line.period_id.code or "",
-                              account and account.code,
-                              account and account.code + " " + account.name or "",
-                              analytic_line.destination_id and analytic_line.destination_id.code or "",
-                              analytic_line.cost_center_id and analytic_line.cost_center_id.code or "",
-                              analytic_line.account_id and analytic_line.account_id.code or "",
-                              analytic_line.partner_txt or "",
-                              analytic_line.amount_currency > 0 and "0.00" or round(-analytic_line.amount_currency, 2),
-                              analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or "0.00",
-                              currency and currency.name or "",
-                              analytic_line.amount > 0 and "0.00" or round(-analytic_line.amount, 2),
-                              analytic_line.amount > 0 and round(analytic_line.amount, 2) or "0.00",
-                              analytic_line.functional_currency_id and analytic_line.functional_currency_id.name or ""]
+                              analytic_line.journal_id and analytic_line.journal_id.code or "",                                       
+                              analytic_line.move_id and analytic_line.move_id.move_id and analytic_line.move_id.move_id.name or "",   
+                              analytic_line.name or "",                                                                               
+                              analytic_line.ref or "",                                                                                
+                              datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),        
+                              datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),                 
+                              analytic_line.period_id and analytic_line.period_id.code or "",                                         
+                              account and account.code,                                                                               
+                              account and account.code + " " + account.name or "",                                                    
+                              analytic_line.destination_id and analytic_line.destination_id.code or "",                               
+                              analytic_line.cost_center_id and analytic_line.cost_center_id.code or "",                               
+                              analytic_line.account_id and analytic_line.account_id.code or "",                                       
+                              analytic_line.partner_txt or "",                                                                        
+                              analytic_line.amount_currency > 0 and "0.00" or round(-analytic_line.amount_currency, 2),               
+                              analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or "0.00",                
+                              currency and currency.name or "",                                                                       
+                              analytic_line.amount > 0 and "0.00" or round(-analytic_line.amount, 2),                                 
+                              analytic_line.amount > 0 and round(analytic_line.amount, 2) or "0.00",                                  
+                              analytic_line.functional_currency_id and analytic_line.functional_currency_id.name or ""]               
             first_result_lines.append(formatted_data)
             
             if (journal.code, journal.id, currency.id) not in main_lines:
                 main_lines[(journal.code, journal.id, currency.id)] = []
-            main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + formatted_data[11:12] + formatted_data[13:17])
+                
+        cost_center = formatted_data[11][:5] or " "
+        field_activity = formatted_data[11][6:] or " "
+        #main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + formatted_data[11:12] + formatted_data[13:17])
+        
+        main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + [cost_center] + formatted_data[13:17] + [field_activity])
+        #main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + [department_info] + [formatted_data[12]] + formatted_data[13:17] + [department_info])
+        
         
         first_result_lines = sorted(first_result_lines, key=lambda line: line[2])
         first_report = [first_header] + first_result_lines
