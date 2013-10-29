@@ -294,11 +294,11 @@
         <td>
           <para style="terp_tblheader_General">DESCRIPTION</para>
         </td>
-        <td>
-          <para style="terp_tblheader_General_Right">Quantity</para>
+         <td>
+          <para style="terp_tblheader_General_Right">Account</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Right">Account</para>
+          <para style="terp_tblheader_General_Right">Quantity</para>
         </td>
         <td>
           <para style="terp_tblheader_General_Right">Unit Price</para>
@@ -316,11 +316,10 @@
             <para style="terp_default_9">[[ l.name ]]</para>
           </td>
           <td>
-            <para style="terp_default_Right_9">[[ l.quantity ]] [[ (l.uos_id and l.uos_id.name) or '' ]]</para>
-            
+            <para style="terp_default_Right_9">[[ l.account_id and l.account_id.code or '' ]]</para>
           </td>
           <td>
-            <para style="terp_default_Right_9">[[ l.account_id and l.account_id.code or '' ]]</para>
+            <para style="terp_default_Right_9">[[ l.quantity ]] [[ (l.uos_id and l.uos_id.name) or '' ]]</para>
           </td>
           <td>
             <para style="terp_default_Right_9">[[ l.price_unit or '0.00' ]]</para>
