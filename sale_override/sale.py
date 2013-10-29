@@ -1261,12 +1261,11 @@ class sale_order_line(osv.osv):
             if line['order_id'][0] not in sale_ids:
                 sale_ids.append(line['order_id'][0])
 
+        self.unlink(cr, uid, ids, context=context)
 
         for order in self.pool.get('sale.order').read(cr, uid, sale_ids, ['order_line'], context=context):
             if len(order['order_line']) == 0:
                 res = self.pool.get('sale.order.unlink.wizard').ask_unlink(cr, uid, order['id'], context=context)
-        
-        self.unlink(cr, uid, ids, context=context)
 
         return res or {'type': 'ir.actions.act_window_close'}
 
@@ -1602,6 +1601,9 @@ class sale_order_line_unlink_wizard(osv.osv_memory):
         '''
         context = context or {}
 
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         for wiz in self.browse(cr, uid, ids, context=context):
             return self.pool.get('sale.order.line').ask_order_unlink(cr, uid, [wiz.order_line_id.id], context=context)
 
@@ -1612,6 +1614,9 @@ class sale_order_line_unlink_wizard(osv.osv_memory):
         Resource the FO line and display the FO form
         '''
         context = context or {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
             self.pool.get('sale.order.line').add_resource_line(cr, uid, wiz.order_line_id.id, False, wiz.order_line_id.product_uom_qty, context=context)
@@ -1654,6 +1659,9 @@ class sale_order_unlink_wizard(osv.osv_memory):
         Cancel the FO and display the FO form
         '''
         context = context or {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
             self.pool.get('sale.order').action_cancel(cr, uid, [wiz.order_id.id], context=context)
