@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -20,28 +20,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
-{
-    "name" : "HQ Entries",
-    "version" : "0.1",
-    "description" : "HQ records integration",
-    "author" : "MSF - TeMPO Consulting",
-    "category" : "Tools",
-    "depends" : ["base", "account", "analytic", "account_journal", "account_corrections", "analytic_distribution"],
-    "init_xml" : [],
-    "update_xml" : [
-        'security/ir.model.access.csv',
-        'res_company_view.xml',
-        'wizard/hq_entries_validation_view.xml',
-        'account_view.xml',
-    ],
-    "demo_xml" : [],
-    "test": [
-        'test/10_data.yml',
-        'test/20_sort_by_date.yml',
-    ],
-    "installable": True,
-    "active": False
-}
+import account_export_mapping
+import country_export_mapping
+import report
+import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

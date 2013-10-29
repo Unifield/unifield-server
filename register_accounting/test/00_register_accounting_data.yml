@@ -265,6 +265,34 @@
     default_destination_id: analytic_distribution.analytic_account_destination_operation
     destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
 -
+  I create a 6270 Expense Account.
+-
+  !record {model: account.account, id: account_6270}:
+    code: '6270'
+    company_id: base.main_company
+    currency_mode: current
+    name: 6270 account
+    type: other
+    user_type: account_account_type_expense0
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_operation
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
+-
+  I create a 6301 Expense Account.
+-
+  !record {model: account.account, id: account_6301}:
+    code: '6301'
+    company_id: base.main_company
+    currency_mode: current
+    name: 6301 account
+    type: other
+    user_type: account_account_type_expense0
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_operation
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
+-
   I create a X2110 Expense Account.
 -
   !record {model: account.account, id: account_account_expense1}:

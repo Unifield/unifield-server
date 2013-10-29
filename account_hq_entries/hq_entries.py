@@ -26,11 +26,12 @@ from osv import fields
 from time import strftime
 from tools.translate import _
 from lxml import etree
+import netsvc
 
 class hq_entries_validation_wizard(osv.osv_memory):
     _name = 'hq.entries.validation.wizard'
 
-    def create_move(self, cr, uid, ids, period_id=False, currency_id=False):
+    def create_move(self, cr, uid, ids, period_id=False, currency_id=False, date=None):
         """
         Create a move with given hq entries lines
         Return created lines (except counterpart lines)
@@ -42,6 +43,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('Period is missing!'))
         if not currency_id:
             raise osv.except_osv(_('Error'), _('Currency is missing!'))
+        if not date:
+            date = strftime('%Y-%m-%d')
         # Prepare some values
         res = {}
         counterpart_account_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.counterpart_hq_entries_default_account and \
@@ -52,7 +55,6 @@ class hq_entries_validation_wizard(osv.osv_memory):
         private_fund_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         if ids:
             # prepare some values
-            current_date = strftime('%Y-%m-%d')
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'hq'),
                                                                             ('is_current_instance', '=', True)])
             if not journal_ids:
@@ -60,7 +62,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
             journal_id = journal_ids[0]
             # create move
             move_id = self.pool.get('account.move').create(cr, uid, {
-                'date': current_date,
+                'date': date,
+                'document_date': date,
                 'journal_id': journal_id,
                 'period_id': period_id,
             })
@@ -68,15 +71,9 @@ class hq_entries_validation_wizard(osv.osv_memory):
             total_credit = 0
             
             # Check if document_date is the same as all lines
-            document_date = False
-            same_document_date = True
             for line in self.pool.get('hq.entries').read(cr, uid, ids, ['date', 'free_1_id', 'free_2_id', 'name', 'amount', 'account_id_first_value', 
                 'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id', 'destination_id', 'document_date', 
                 'destination_id_first_value', 'ref']):
-                if not document_date:
-                    document_date = line.get('document_date', False)
-                if line.get('document_date', False) and line.get('document_date') != document_date:
-                    same_document_date = False
                 account_id = line.get('account_id_first_value', False) and line.get('account_id_first_value')[0] or False
                 if not account_id:
                     raise osv.except_osv(_('Error'), _('An account is missing!'))
@@ -145,16 +142,14 @@ class hq_entries_validation_wizard(osv.osv_memory):
             account_ids = self.pool.get('account.account').search(cr, uid, [('id', '=', counterpart_account_id)])
             if account_ids:
                 counterpart_vals.update({'account_id': account_ids[0],})
-            # date
-            counterpart_date = self.pool.get('account.period').get_date_in_period(cr, uid, current_date, period_id)
             # vals
             counterpart_vals.update({
                 'period_id': period_id,
                 'journal_id': journal_id,
                 'move_id': move_id,
-                'date': counterpart_date,
-                'date_maturity': counterpart_date,
-                'document_date': counterpart_date,
+                'date': date,
+                'date_maturity': date,
+                'document_date': date,
                 'name': 'HQ Entry Counterpart',
                 'currency_id': currency_id,
             })
@@ -166,11 +161,6 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 counterpart_credit = abs(total_debit - total_credit)
             counterpart_vals.update({'debit_currency': counterpart_debit, 'credit_currency': counterpart_credit,})
             self.pool.get('account.move.line').create(cr, uid, counterpart_vals, context={}, check=False)
-            # If ALL LINES have SAME DOCUMENT DATE, give this document date to the journal entry (move)
-            if counterpart_date != document_date:
-                same_document_date = False
-            if same_document_date:
-                self.pool.get('account.move').write(cr, uid, [move_id], {'document_date': document_date})
             # Post move
             self.pool.get('account.move').post(cr, uid, [move_id])
         return res
@@ -208,7 +198,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
             if line.analytic_state != 'valid':
                 raise osv.except_osv(_('Warning'), _('Invalid analytic distribution!'))
             if not line.user_validated:
-                to_write.setdefault(line.currency_id.id, {}).setdefault(line.period_id.id, []).append(line.id)
+                to_write.setdefault(line.currency_id.id, {}).setdefault(line.period_id.id, {}).setdefault(line.date, []).append(line.id)
 
                 if line.account_id.id != line.account_id_first_value.id:
                     if line.cost_center_id.id != line.cost_center_id_first_value.id or line.destination_id.id != line.destination_id_first_value.id:
@@ -221,11 +211,12 @@ class hq_entries_validation_wizard(osv.osv_memory):
         all_lines = {}
         for currency in to_write:
             for period in to_write[currency]:
-                lines = to_write[currency][period]
-                write = self.create_move(cr, uid, lines, period, currency)
-                all_lines.update(write)
-                if write:
-                    self.pool.get('hq.entries').write(cr, uid, write.keys(), {'user_validated': True}, context=context)
+                for date in to_write[currency][period]:
+                    lines = to_write[currency][period][date]
+                    write = self.create_move(cr, uid, lines, period, currency, date)
+                    all_lines.update(write)
+                    if write:
+                        self.pool.get('hq.entries').write(cr, uid, write.keys(), {'user_validated': True}, context=context)
 
         for line in account_change:
             corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
@@ -312,6 +303,7 @@ class hq_entries(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
+        logger = netsvc.Logger()
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
@@ -346,17 +338,20 @@ class hq_entries(osv.osv):
                 cc = self.pool.get('account.analytic.account').browse(cr, uid, line.cost_center_id.id, context={'date': line.date})
                 if cc and cc.filter_active is False:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: inactive CC (%s)') % (line.id or '', cc.code or ''))
                     continue
             if line.destination_id:
                 dest = self.pool.get('account.analytic.account').browse(cr, uid, line.destination_id.id, context={'date': line.date})
                 if dest and dest.filter_active is False:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: inactive DEST (%s)') % (line.id or '', dest.code or ''))
                     continue
             # G Check
             if line.analytic_id:
                 fp = self.pool.get('account.analytic.account').browse(cr, uid, line.analytic_id.id, context={'date': line.document_date})
                 if fp and fp.filter_active is False:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: inactive FP (%s)') % (line.id or '', fp.code or ''))
                     continue
             # if just a cost center, it's also valid! (CASE 1/)
             if not line.analytic_id and not line.destination_id:
@@ -367,31 +362,37 @@ class hq_entries(osv.osv):
             #### END OF CASES
             if not line.cost_center_id:
                 res[line.id] = 'invalid'
+                logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: No CC') % (line.id or ''))
                 continue
             if line.analytic_id and not line.destination_id: # CASE 2/
                 # D Check, except B check
                 if line.cost_center_id.id not in [x.id for x in line.analytic_id.cost_center_ids] and line.analytic_id.id != fp_id:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: CC (%s) not found in FP (%s)') % (line.id or '', line.cost_center_id.code or '', line.analytic_id.code or ''))
                     continue
             elif not line.analytic_id and line.destination_id: # CASE 3/
                 # E Check
                 account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
                 if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue
             else: # CASE 4/
                 # C Check, except B
                 if (line.account_id.id, line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in line.analytic_id.tuple_destination_account_ids] and line.analytic_id.id != fp_id:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: Tuple Account/DEST (%s/%s) not found in FP (%s)') % (line.id or '', line.account_id.code or '', line.destination_id.code or '', line.analytic_id.code or ''))
                     continue
                 # D Check, except B check
                 if line.cost_center_id.id not in [x.id for x in line.analytic_id.cost_center_ids] and line.analytic_id.id != fp_id:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: CC (%s) not found in FP (%s)') % (line.id or '', line.cost_center_id.code or '', line.analytic_id.code or ''))
                     continue
                 # E Check
                 account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
                 if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue
         return res
 

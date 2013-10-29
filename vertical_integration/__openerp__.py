@@ -1,10 +1,8 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    Copyright (C) 2011 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -22,26 +20,26 @@
 ##############################################################################
 
 {
-    "name" : "HQ Entries",
-    "version" : "0.1",
-    "description" : "HQ records integration",
-    "author" : "MSF - TeMPO Consulting",
-    "category" : "Tools",
-    "depends" : ["base", "account", "analytic", "account_journal", "account_corrections", "analytic_distribution"],
+    "name" : "Vertical Integration",
+    "version" : "1.0",
+    "author" : "MSF, TeMPO Consulting",
+    "description" : """
+    Add HQ exports of finance data for all sections
+    """,
+    "website": "http://unifield.msf.org",
+    "depends" : ["base", "account", "msf_instance"],
+    "category" : "Generic Modules/Accounting",
     "init_xml" : [],
+    "demo_xml" : [],
     "update_xml" : [
         'security/ir.model.access.csv',
-        'res_company_view.xml',
-        'wizard/hq_entries_validation_view.xml',
-        'account_view.xml',
+        'account_export_mapping_view.xml',
+        'country_export_mapping_view.xml',
+        'account_report.xml',
+        'wizard/wizard_hq_report_ocg_view.xml',
+        'wizard/wizard_hq_report_oca_view.xml',
     ],
-    "demo_xml" : [],
-    "test": [
-        'test/10_data.yml',
-        'test/20_sort_by_date.yml',
-    ],
-    "installable": True,
-    "active": False
+    'test': [],
+    'installable': True,
+    'active': False,
 }
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -50,7 +50,7 @@
             <field name='type'>tree</field>
             <field name='arch' type='xml'>
                 <tree string="Invoice Lines">
-                    <field name="date" />
+                    <field name="document_date" />
                     <field name="reference" />
                     <field name="communication" />
                     <field name="account_id" />
@@ -66,7 +66,7 @@
             <field name='type'>form</field>
             <field name='arch' type='xml'>
                 <form string="Invoice Lines">
-                    <field name="date" />
+                    <field name="document_date" />
                     <field name="reference" />
                     <field name="communication" />
                     <field name="account_id" />
@@ -82,7 +82,7 @@
             <field name='type'>tree</field>
             <field name='arch' type='xml'>
                 <tree editable="bottom" string="Advance Lines" colors="red:display_analytic_button and not analytic_distribution_id">
-                    <field name="date" />
+                    <field name="document_date" />
                     <field name="description" />
                     <field name="account_id" domain="[('type', '&lt;&gt;', 'view')]"/>
                     <field name="partner_id" domain="[('supplier', '=', 'True')]"/>
@@ -103,7 +103,7 @@
             <field name='type'>form</field>
             <field name='arch' type='xml'>
                 <form string="Advance Lines">
-                    <field name="date" />
+                    <field name="document_date" />
                     <field name="description" />
                     <field name="account_id" />
                     <field name="partner_id" />
