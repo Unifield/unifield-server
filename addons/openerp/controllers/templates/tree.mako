@@ -44,7 +44,8 @@
                             % endfor
                         </select>
                         % if tree.expand_button:
-                            <button onclick="TREEVIEW.current.expand_all(); return false" title="${_('Expand all tree elements.')}">${_('Expand all')}</button>
+                            <button onclick="TREEVIEW.current.expand_all(); return false" title="${_('Expand all tree elements.')}" id="expand_button">${_('Expand all')}</button>
+                            <button onclick="TREEVIEW.current.collapse_all(); return false" title="${_('Collapse all tree elements.')}" style="display: none;" id="collapse_button">${_('Collapse all')}</button>
                         % endif
                     </div>
                     % endif

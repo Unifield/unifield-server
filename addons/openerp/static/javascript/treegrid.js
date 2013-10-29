@@ -221,9 +221,18 @@ TreeGrid.prototype = {
     },
     
     expand_all: function() {
-    	this.options.expandall = true;
-    	this.render();
-    }
+        this.options.expandall = true;
+        this.render();
+        $('#collapse_button').toggle()
+        $('#expand_button').toggle()
+    },
+
+    collapse_all: function() {
+        this.options.expandall = false;
+        this.render();
+        $('#expand_button').toggle()
+        $('#collapse_button').toggle()
+    },
     
 };
 
