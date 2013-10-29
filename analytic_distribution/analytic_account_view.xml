@@ -142,7 +142,7 @@
             <field name="type">tree</field>
             <field name="field_parent">child_complete_ids</field>
             <field name="arch" type="xml">
-                <tree string="Analytic account" colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" toolbar="1" expand_button="1">
+                <tree string="Analytic account" colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" toolbar="1" expand_button="1" nolink="1">
                     <field name="name"/>
                     <field name="code"/>
                     <field name="description"/>
