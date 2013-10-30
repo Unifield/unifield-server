@@ -936,7 +936,7 @@ class kit_creation_to_consume(osv.osv):
         # gather the line number from the sequence
         kit_creation = self.pool.get('kit.creation').browse(cr, uid, vals['kit_creation_id_to_consume'], context)
         sequence = kit_creation.to_consume_sequence_id
-        line = sequence.get_id(test='id', context=context)
+        line = sequence.get_id(code_or_id='id', context=context)
         vals.update({'line_number_to_consume': line})
         result = super(kit_creation_to_consume, self).create(cr, uid, vals, context=context)
         return result
