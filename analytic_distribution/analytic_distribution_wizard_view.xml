@@ -150,7 +150,7 @@
                     <newline/>
                     <separator string="Items not considered in reallocation"/>
                     <newline/>
-                    <label string="A line is non-eligible regarding these criteria:" align="0.0"/>
+                    <label string="Criteria used to exclude specific types of items from the reallocation perimeter." align="0.0"/>
                     <newline/>
                     <label string="- Commitments" align="0.0"/>
                     <newline/>
