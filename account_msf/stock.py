@@ -38,8 +38,14 @@ class stock_picking(osv.osv):
         # Modify the product UoM and the quantity of line according to move attributes
         values = {'uos_id': move_line.product_uom.id,
                   'quantity': move_line.product_qty}
+
         if move_line.price_unit:
             values.update({'price_unit': move_line.price_unit})
+
+        # UTP-220: As now the price can be changed when making the reception, the system still needs to keep the PO price in the invoice!
+        # Finance may decide to change later, but for instance, this is not agreed by Finance. Check UTP-220 for further info
+        if move_line.purchase_line_id:
+            values.update({'price_unit': move_line.purchase_line_id.price_unit})
 
         self.pool.get('account.invoice.line').write(cr, uid, [invoice_line_id], values)
 
