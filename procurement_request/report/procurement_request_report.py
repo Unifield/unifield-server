@@ -19,8 +19,26 @@
 #
 ##############################################################################
 
-import procurement_request
-import wizard
-import report
+from report import report_sxw
+from report_webkit.webkit_report import WebKitParser
+
+import pooler
+import time
+
+class procurement_request_report(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context):
+        super(procurement_request_report, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+            'get_name': self.get_name,
+        })
+
+    def get_name(self, obj, obj_id):
+        '''
+        Return the name of the obj_id with the name_get method
+        '''
+        return self.pool.get(obj).name_get(self.cr, self.uid, [obj_id])[0][1]
+
+report_sxw.report_sxw('report.procurement.request.report','sale.order','addons/procurement_request/report/procurement_request_report.rml',parser=procurement_request_report, header=False)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
