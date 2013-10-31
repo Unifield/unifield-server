@@ -56,7 +56,7 @@
                                 </field>
                             </page>
                             <page string="Reporting lines">
-                                <field name="format_id" invisible="1"/>
+                                <field name="format_id" invisible="1" required="0"/>
                                 <field colspan="4" name="actual_line_ids" nolabel="1" context="{'reporting_type': reporting_type, 'contract_id': active_id}" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}">
                                     <tree string="Reporting lines" colors="blue:line_type in ('view')">
                                         <field name="code"/>
@@ -209,7 +209,7 @@
                         <separator string="Dates"/>
                         <notebook colspan="4">
                             <page string="Reporting lines">
-                                <field name="format_id" invisible="1"/>
+                                <field name="format_id" invisible="1" required="0"/>
                                 <field colspan="4" name="actual_line_ids" nolabel="1" context="{'donor_id': active_id}">
                                     <tree string="Reporting lines" colors="black:line_type in ('normal');blue:line_type in ('view')">
                                         <field name="code"/>

@@ -63,6 +63,30 @@ class procurement_request(osv.osv):
         
         return res
 
+    def _amount_by_type(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        Compute the amount of line by type of procurement
+        '''
+        line_obj = self.pool.get('sale.order.line')
+
+        res = {}
+
+        for id in ids:
+            res[id] = {'purchase_amount': 0.00, 'stock_amount': 0.00, 'proc_amount': 0.00}
+
+        line_ids = line_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
+
+        for line_data in line_obj.read(cr, uid, line_ids, ['product_uom_qty', 'cost_price', 'order_id', 'type'], context=context):
+            order_id = line_data['order_id'][0]
+            line_amount = line_data['product_uom_qty']*line_data['cost_price']
+            res[order_id]['proc_amount'] += line_amount
+            if line_data['type'] == 'make_to_stock':
+                res[order_id]['stock_amount'] += line_amount
+            else:
+                res[order_id]['purchase_amount'] += line_amount
+
+        return res
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         Returns the procurement request search view instead of default sale order search view
@@ -116,6 +140,24 @@ class procurement_request(osv.osv):
                 'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
             },
             multi='sums', help="The total amount."),
+        'purchase_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Purchase Total',
+            store = {
+                'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
+                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
+            },
+            multi='by_type', help="The amount of lines sourced on order"),
+        'stock_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total',
+            store = {
+                'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
+                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
+            },
+            multi='by_type', help="The amount of lines sourced from stock"),
+        'proc_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total',
+            store = {
+                'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
+                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
+            },
+            multi='by_type', help="The amount of lines sourced from stock"),
         'state': fields.selection(SALE_ORDER_STATE_SELECTION, 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
         'name': fields.char('Order Reference', size=64, required=True, readonly=True, select=True),
     }

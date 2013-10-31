@@ -133,12 +133,26 @@ class res_partner(osv.osv):
                 'transport_2_lt': fields.integer('3rd Transport Lead Time'),
                 'transport_2': fields.selection(selection=TRANSPORT_TYPE, string='3nd Mode of Transport'),
                 'default_delay': fields.function(_calc_dellay, method=True, type='integer', string='Supplier Lead Time (computed)', multi="seller_delay"),
-                'po_by_project': fields.selection([('all', 'All requirements'), ('project', 'Requirements by Project')], string='Order creation mode',
-                                          help='''When option “all requirements” is set for 
-                                        a given supplier, the system will create a PO that merge all requirements
-                                        for this supplier. If option “requirements by project” is set, the POs will
-                                        be created by original requestor (customer of the SO origin), meaning
-                                        system creates one PO by project for this supplier.'''),
+                'po_by_project': fields.selection([
+                                            ('all', 'All requirements'), 
+                                            ('project', 'Requirements by Project'),
+                                            ('category', 'Requirements by Category'),
+                                            ('category_project', 'Requirements by Category and Project'),
+                                            ('isolated', 'Requirements by Order')], 
+                                            string='Order creation mode',
+                                              help='''When option “All requirements” is set for 
+                                            a given supplier, the system will create a PO that merge all requirements
+                                            for this supplier. 
+                                            If option “Requirements by Project” is set, the POs will
+                                            be created by original requestor (customer of the SO origin), meaning
+                                            system creates one PO by project for this supplier.
+                                            If option "Requirements by Category" is set, the system will create a PO
+                                            that merge all requirements by category for this supplier.
+                                            If option "Requirements by Category and Project" is set, the system
+                                            will create a PO that merge only the requirements of one customer
+                                            and one category.
+                                            If option "Requirements by Order" is set, the system will create a PO
+                                            that merge lines coming from the same FO/IR.'''),
                 }
     
     _defaults = {'zone': 'national',
