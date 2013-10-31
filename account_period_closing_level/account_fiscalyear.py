@@ -63,6 +63,35 @@ class account_fiscalyear(osv.osv):
                 })
         return True
 
-account_fiscalyear()
+    def create(self, cr, uid, vals, context=None):
+        """
+        When creating new fiscalyear, we should add a new sequence for each journal. This is to have the right sequence number on journal items lines, etc.
+        """
+        # Check some elements
+        if not context:
+            context = {}
+        # First default behaviour
+        res = super(account_fiscalyear, self).create(cr, uid, vals, context=context)
+        # Prepare some values
+        current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
+        name = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.name
+        # Then sequence creation on all journals
+        journal_ids = self.pool.get('account.journal').search(cr, uid, [('instance_id', '=', current_instance_id)])
+        for journal in self.pool.get('account.journal').browse(cr, uid, journal_ids, context=context):
+            # create a new sequence for this journal and attach it to it
+            seq = {
+                'name': name,
+                'code': journal.code.lower(),
+                'active': True,
+                # UF-433: sequence is now only the number, no more prefix
+                #'prefix': "%(year)s%(month)s-" + name + "-" + code + "-",
+                'prefix': "%s" % str(vals['date_start'])[2:4], # take last 2 number of fiscalyear
+                'padding': 4,
+                'number_increment': 1
+            }
+            sequence_id = self.pool.get('ir.sequence').create(cr, uid, seq)
+            self.pool.get('account.sequence.fiscalyear').create(cr, uid, {'sequence_id': sequence_id, 'fiscalyear_id': res, 'sequence_main_id': journal.sequence_id and journal.sequence_id.id or False,})
+        return res
 
+account_fiscalyear()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

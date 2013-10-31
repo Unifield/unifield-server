@@ -156,28 +156,45 @@ class account_journal(osv.osv):
         if context is None:
             context = {}
 
-        # Create associated sequence
+        # Prepare some values
         seq_pool = self.pool.get('ir.sequence')
         seq_typ_pool = self.pool.get('ir.sequence.type')
+        seq_fiscal_pool = self.pool.get('account.sequence.fiscalyear')
         name = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.name
         code = vals['code'].lower()
+        fy_ids = self.pool.get('account.fiscalyear').search(cr, uid, [('state', '=', 'draft')])
         types = {
             'name': name,
             'code': code
         }
         seq_typ_pool.create(cr, uid, types)
-        seq = {
+        main_seq = {
             'name': name,
             'code': code,
             'active': True,
             # UF-433: sequence is now only the number, no more prefix
             #'prefix': "%(year)s%(month)s-" + name + "-" + code + "-",
             'prefix': "",
-            'padding': 6,
+            'padding': 4,
             'number_increment': 1
         }
-        vals['sequence_id'] = seq_pool.create(cr, uid, seq)
-        
+        vals['sequence_id'] = seq_pool.create(cr, uid, main_seq)
+        if fy_ids:
+            for fy in self.pool.get('account.fiscalyear').browse(cr, uid, fy_ids, context=context):
+                # Create associated sequence
+                fy_id = fy.id
+                seq = {
+                    'name': name,
+                    'code': code,
+                    'active': True,
+                    # UF-433: sequence is now only the number, no more prefix
+                    #'prefix': "%(year)s%(month)s-" + name + "-" + code + "-",
+                    'prefix': "%s" % str(fy.date_start)[2:4], # take last 2 number of fiscalyear
+                    'padding': 4,
+                    'number_increment': 1
+                }
+                sequence_id = seq_pool.create(cr, uid, seq)
+                seq_fiscal_pool.create(cr, uid, {'sequence_id': sequence_id, 'fiscalyear_id': fy_id, 'sequence_main_id': vals['sequence_id'],})
         # View is set by default, since every journal will display the same thing
         obj_data = self.pool.get('ir.model.data')
         data_id = obj_data.search(cr, uid, [('model','=','account.journal.view'), ('name','=','account_journal_view')])
