@@ -490,7 +490,7 @@ class stock_picking(osv.osv):
         res = super(stock_picking, self)._hook_create_sync_messages(cr, uid, ids, context=context)
         for pick in self.browse(cr, uid, ids, context=context):
             partner = pick.partner_id
-            if not partner or partner.partner_type != 'internal':
+            if not partner or partner.partner_type == 'external':
                 return True
             
             list_batch = []
@@ -513,7 +513,7 @@ class stock_picking(osv.osv):
             for item in list_batch:
                 self.create_message_with_object_and_partner(cr, uid, 1001, item, partner.name, context)
 
-            # for each new batch number object and for each partner, create messages and put into the queue for sending on next sync round
+            # for each new asset object and for each partner, create messages and put into the queue for sending on next sync round
             for item in list_asset:
                 self.create_message_with_object_and_partner(cr, uid, 1002, item, partner.name, context)
 
