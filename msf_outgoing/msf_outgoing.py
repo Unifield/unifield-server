@@ -2295,7 +2295,7 @@ class stock_picking(osv.osv):
                     new_move_id = move_obj.copy(cr, uid, move.id, vals, context=context)
 
                     # Update all linked objects to avoid close of related documents
-                    if move.id in keep_move and keep_move[move.id]:
+                    if move.id not in keep_move or not keep_move[move.id]:
                         move_obj.update_linked_documents(cr, uid, move.id, new_move_id, context=context)
 
                     # Set the stock move to done with 0.00 qty
@@ -3291,9 +3291,9 @@ class stock_move(osv.osv):
             if move_dest_ids:
                 self.write(cr, uid, move_dest_ids, {'move_dest_id': new_id}, context=context)
                         
-            #backmove_ids = self.search(cr, uid, [('backmove_id', '=', move_id)], context=context)
-            #if backmove_ids:
-            #    self.write(cr, uid, backmove_ids, {'backmove_id': new_id}, context=context)
+            backmove_ids = self.search(cr, uid, [('backmove_id', '=', move_id)], context=context)
+            if backmove_ids:
+                self.write(cr, uid, backmove_ids, {'backmove_id': new_id}, context=context)
                        
             pack_backmove_ids = self.search(cr, uid, [('backmove_packing_id', '=', move_id)], context=context)
             if pack_backmove_ids:
