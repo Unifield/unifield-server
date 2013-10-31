@@ -43,7 +43,7 @@ purchase_order_line_sync()
 
 class purchase_order_sync(osv.osv):
     _inherit = "purchase.order"
-    _logger = logging.getLogger('purchase.order')
+    _logger = logging.getLogger('------sync.purchase.order')
     
     
     _columns = {
@@ -125,6 +125,10 @@ class purchase_order_sync(osv.osv):
         if proc_ids:
             self.pool.get('procurement.order').write(cr, uid, proc_ids, {'purchase_id': res_id}, context=context)
             netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', proc_ids, 'purchase.order', order_ids, res_id, cr)
+
+        fo_ids = self.pool.get('sale.order').search(cr, uid, [('loan_id', '=', po_id)], context=context)
+        if fo_ids:
+            netsvc.LocalService("workflow").trg_change_subflow(uid, 'sale.order', fo_ids, 'purchase.order', [po_id], res_id, cr)
         
         # after created this splitted PO, pass it to the confirmed, as the split SO has been done so too.
         if so_info.state in ('confirmed', 'progress'):

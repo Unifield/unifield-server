@@ -41,7 +41,7 @@ sale_order_line_sync()
 
 class sale_order_sync(osv.osv):
     _inherit = "sale.order"
-    _logger = logging.getLogger('sale.order')
+    _logger = logging.getLogger('------sync.sale.order')
     
     _columns = {
                 'received': fields.boolean('Received by Client', readonly=True),
