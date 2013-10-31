@@ -126,11 +126,37 @@ class analytic_line(osv.osv):
                 new_args.append(('commitment_line_id.commit_id.period_id', arg[1], arg[2]))
         return new_args
 
+    def _get_from_commitment_line(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Check if commitment_line_id is filled in. If yes, True. Otherwise False.
+        """
+        if not context:
+            context = {}
+        res = {}
+        for al in self.browse(cr, uid, ids, context=context):
+            res[al.id] = False
+            if al.commitment_line_id:
+                res[al.id] = True
+        return res
+
+    def _get_is_unposted(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Check journal entry state. If unposted: True, otherwise False.
+        """
+        if not context:
+            context = {}
+        res = {}
+        for al in self.browse(cr, uid, ids, context=context):
+            res[al.id] = False
+            if al.move_state != 'posted':
+                res[al.id] = True
+        return res
+
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]"),
         'commitment_line_id': fields.many2one('account.commitment.line', string='Commitment Voucher Line', ondelete='cascade'),
-        'from_write_off': fields.boolean(string='From write-off account line?', readonly=True, help="Indicates that this line come from a write-off account line."),
+        'from_write_off': fields.boolean(string='Write-off?', readonly=True, help="Indicates that this line come from a write-off account line."),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]"),
         'is_fp_compat_with': fields.function(_get_fake_is_fp_compat_with, fnct_search=_search_is_fp_compat_with, method=True, type="char", size=254, string="Is compatible with some FP?"),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
@@ -139,6 +165,8 @@ class analytic_line(osv.osv):
             help="Indicates the Journal Type of the Analytic journal item"),
         'entry_sequence': fields.function(_get_entry_sequence, method=True, type='text', string="Entry Sequence", readonly=True, store=True),
         'period_id': fields.function(_get_period_id, fnct_search=_search_period_id, method=True, string="Period", readonly=True, type="many2one", relation="account.period", store=False),
+        'from_commitment_line': fields.function(_get_from_commitment_line, method=True, type='boolean', string="Commitment?"),
+        'is_unposted': fields.function(_get_is_unposted, method=True, type='boolean', string="Unposted?"),
     }
 
     _defaults = {
@@ -307,8 +335,12 @@ class analytic_line(osv.osv):
         date_stop = account and account.get('date', False) or False
         # Date verification for all lines and fetch all necessary elements sorted by analytic distribution
         for aline in self.browse(cr, uid, ids):
+            # UTP-800: Change date comparison regarding FP. If FP, use document date. Otherwise use date.
+            aline_cmp_date = aline.date
+            if account_type == 'FUNDING':
+                aline_cmp_date = aline.document_date
             # Add line to expired_date if date is not in date_start - date_stop
-            if (date_start and aline.date < date_start) or (date_stop and aline.date > date_stop):
+            if (date_start and aline_cmp_date < date_start) or (date_stop and aline_cmp_date > date_stop):
                 expired_date_ids.append(aline.id)
         # Process regarding account_type
         if account_type == 'OC':
