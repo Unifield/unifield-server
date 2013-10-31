@@ -117,14 +117,15 @@ class analytic_distribution_wizard(osv.osv_memory):
         wiz_line_types = {'cost.center': '', 'funding.pool': 'fp', 'free.1': 'f1', 'free.2': 'f2',}
         wizard = self.browse(cr, uid, wizard_id)
         to_update  = [] # NEEDED for analytic lines to be updated with new analytic distribution after its creation
-        # Fetch funding pool lines, free 1 lines and free 2 lines
-
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         current_date = time.strftime('%Y-%m-%d')
         ml = wizard.move_line_id
-
         orig_date = ml.source_date or ml.date
         orig_document_date = ml.document_date
+        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction')])
+        correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
+        if not correction_journal_id:
+            raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
         # OK let's go on funding pool lines
         # Search old line and new lines
         old_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
@@ -202,7 +203,10 @@ class analytic_distribution_wizard(osv.osv_memory):
         for line in to_reverse:
             # reverse the line
             to_reverse_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
-            self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids)
+            # UTP-943: Set wizard date as date for REVERSAL AND CORRECTION lines
+            rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids, posting_date=wizard.date)
+            # UTP-943: Add correction journal on it
+            self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'journal_id': correction_journal_id})
             # Mark old lines as non reallocatable (ana_ids): why reverse() don't set this flag ?
             self.pool.get('account.analytic.line').write(cr, uid, to_reverse_ids, {'is_reallocated': True,})
             # update the distrib line
@@ -216,8 +220,17 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'percentage': line.percentage,
                     'destination_id': line.destination_id.id,
                 })
+            # UTP-943: Check that new ana line is on an open period
+            correction_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wizard.date)
+            if not correction_period_ids:
+                raise osv.except_osv(_('Error'), _('No period found for the given date: %s') % (wizard.date,))
+            for cp in self.pool.get('account.period').browse(cr, uid, correction_period_ids):
+                if cp.state != 'draft':
+                    raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
             # Create the new ana line
-            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name)
+            cor_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name)
+            for distrib_id in cor_ids:
+                self.pool.get('account.analytic.line').write(cr, uid, [cor_ids[distrib_id]], {'journal_id': correction_journal_id})
 
         for line in to_override:
             # update the ana line
@@ -231,7 +244,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'destination_id': line.destination_id.id,
                     'amount_currency': amount_cur,
                     'amount': amount,
-                    'date': wizard.date,
+                    'date': orig_date,
                     'source_date': orig_date,
                     'document_date': orig_document_date,
                 })

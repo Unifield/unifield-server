@@ -246,7 +246,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 ('destination_id', '=', line.destination_id_first_value.id),
                 ('move_id', '=', all_lines[line.id])
                 ])
-            res_reverse = ana_line_obj.reverse(cr, uid, fp_old_lines)
+            # UTP-943: Add original date as reverse date
+            res_reverse = ana_line_obj.reverse(cr, uid, fp_old_lines, posting_date=line.date)
             # Give them analytic correction journal (UF-1385 in comments)
             if not acor_journal_id:
                 raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
