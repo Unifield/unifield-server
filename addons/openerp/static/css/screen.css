@@ -2376,3 +2376,7 @@ img.no_image {
     width: 0;
     padding-left: 17px !important;
 }
+#toggle-fullscreen-mode {
+    width: 0;
+    text-indent: -100001px;
+}
