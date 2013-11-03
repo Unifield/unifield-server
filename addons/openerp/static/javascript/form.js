@@ -1352,3 +1352,14 @@ function validate_action() {
     }
     return true;
 }
+
+function fullscreen(mode) {
+    // switch left panel
+    $('#nav2').toggle(mode);
+    $('#main-sidebar-toggler').toggleClass('closed', !mode);
+
+    // switch right panel
+    var to_add = mode && 'open' || 'closed';
+    var to_remove = mode && 'closed' || 'open';
+    $('#tertiary,#a_main_sidebar').addClass(to_add).removeClass(to_remove);
+}

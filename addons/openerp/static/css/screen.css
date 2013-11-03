@@ -1643,7 +1643,7 @@ ul.sections-a li span.wrap a:hover span strong,ul.sections-a li span.wrap a:focu
 #sidenav-a li > span {
     display: block;
     height: 20px;
-    padding: 0 5px;
+    padding: 0 5px 0 10px;
     font-size: 1.1em;
     background: url(../images/sidenav-link-a.png) 0 100% repeat-x;
     line-height: 20px;
@@ -1950,6 +1950,26 @@ td.tertiary div.wrap {
     position: absolute;
     z-index: 10;
 }
+#main-sidebar-toggler {
+    background: url("../images/toggle-a-bg.png") no-repeat scroll -8px -2px transparent;
+    border-color: #D2CFCF;
+    border-style: solid;
+    border-width: 1px;
+    display: block;
+    height: 19px;
+    left: 0;
+    overflow: hidden;
+    padding-left: 0;
+    position: absolute;
+    text-indent: -10001px;
+    width: 6px;
+    z-index: 10;
+    cursor: pointer;
+}
+#main-sidebar-toggler.closed{
+    background-position: -29px -2px;
+}
+
 .toggle-sidebar.open {
     margin-left: 158px;
     width: 21px;
@@ -2339,4 +2359,20 @@ img.no_image {
     left: 50%;
     width: 300px;
     text-align: center;
+}
+
+#fullscreen-mode {
+    background: url("../images/stock/gtk-fullscreen.png") no-repeat scroll 0 0 transparent;
+    height: 17px;
+    text-indent: -100001px;
+    width: 0;
+    padding-left: 17px !important;
+}
+
+#leave-fullscreen-mode {
+    background: url("../images/stock/gtk-leave-fullscreen.png") no-repeat scroll 0 0 transparent;
+    height: 17px;
+    text-indent: -100001px;
+    width: 0;
+    padding-left: 17px !important;
 }

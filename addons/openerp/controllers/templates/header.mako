@@ -83,6 +83,10 @@ version = release.version
                 </li>
             % endfor
         </ul>
+        <div style="position: absolute; right: 5px;">
+        <a id="fullscreen-mode" onclick="fullscreen(true);">${_("Full Screen")}</a>
+        <a id="leave-fullscreen-mode" onclick="fullscreen(false);">${_("Leave Full Screen")}</a>
+        </div>
     % endif
     </div>
 </td>
