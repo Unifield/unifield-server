@@ -59,7 +59,7 @@ function openRecord(id, src, target, readonly){
         'notebook_tab': jQuery('#_terp_notebook_tab').val() || 0,
         'action_id': jQuery('#_terp_action_id').val() || null
     };
-
+    get_sidebar_status(args, true);
     var action = readonly ? 'view' : 'edit';
 
     if (target == '_blank') {
@@ -195,6 +195,18 @@ function error_display(msg) {
     window.top.jQuery.fancybox(error, {scrolling: 'no'});
 }
 
+function get_sidebar_status(args, noterp) {
+    var sidebar = $('#a_main_sidebar')
+    if (sidebar) {
+        if (sidebar.hasClass('open')) {
+            if (noterp) {
+                args['sidebar_open'] = 1;
+            } else {
+                args['_terp_sidebar_open'] = 1;
+            }
+        }
+    }
+}
 
 function submit_form(action, src, target){
 
@@ -219,7 +231,7 @@ function submit_form(action, src, target){
         action = 'save';
         args['_terp_close'] = 1;
     }
-
+    get_sidebar_status(args);
     action = get_form_action(action, args);
 
     var $form = jQuery('#view_form');
