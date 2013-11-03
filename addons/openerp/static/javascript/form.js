@@ -1367,11 +1367,11 @@ function validate_action() {
 
 function fullscreen(mode) {
     // switch left panel
-    $('#nav2').toggle(mode);
-    $('#main-sidebar-toggler').toggleClass('closed', !mode);
+    $('#nav2').toggle(!mode);
+    $('#main-sidebar-toggler').toggleClass('closed', mode);
 
     // switch right panel
-    var to_add = mode && 'open' || 'closed';
-    var to_remove = mode && 'closed' || 'open';
+    var to_remove = mode && 'open' || 'closed';
+    var to_add = mode && 'closed' || 'open';
     $('#tertiary,#a_main_sidebar').addClass(to_add).removeClass(to_remove);
 }
