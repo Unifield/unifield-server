@@ -172,7 +172,9 @@
             </td>
             % if form.sidebar:
                 <%
-                  if form.screen.view_type in ['calendar', 'gantt'] or sidebar_open:
+                  if sidebar_closed:
+                      sidebar_class="closed"
+                  elif form.screen.view_type in ['form', 'calendar', 'gantt']:
                       sidebar_class="open"
                   else:
                       sidebar_class="closed"

@@ -197,12 +197,14 @@ function error_display(msg) {
 
 function get_sidebar_status(args, noterp) {
     var sidebar = $('#a_main_sidebar')
-    if (sidebar) {
-        if (sidebar.hasClass('open')) {
+    var view_type=$('#_terp_view_type')
+    if (sidebar && view_type && view_type.val() == 'form') {
+        if (sidebar.hasClass('closed')) {
+            console.log('is_closed');
             if (noterp) {
-                args['sidebar_open'] = 1;
+                args['sidebar_closed'] = 1;
             } else {
-                args['_terp_sidebar_open'] = 1;
+                args['_terp_sidebar_closed'] = 1;
             }
         }
     }
