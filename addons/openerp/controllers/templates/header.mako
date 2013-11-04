@@ -86,7 +86,7 @@ version = release.version
         <div style="position: absolute; right: 5px;">
         <a id="fullscreen-mode" onclick="fullscreen(true);">${_("Full Screen")}</a>
         <a id="leave-fullscreen-mode" onclick="fullscreen(false);">${_("Leave Full Screen")}</a>
-        <a id="toggle-fullscreen-mode" onclick="fullscreen(!$('#main-sidebar-toggler').hasClass('closed'))" accesskey="0">${_("Toggle fullscreen")}</a>
+        <a id="toggle-fullscreen-mode" onclick="fullscreen(!$(this).hasClass('closed'));$(this).toggleClass('closed')" accesskey="0">${_("Toggle fullscreen")}</a>
         </div>
     % endif
     </div>

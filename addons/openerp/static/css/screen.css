@@ -2367,6 +2367,7 @@ img.no_image {
     text-indent: -100001px;
     width: 0;
     padding-left: 17px !important;
+    visibility: hidden;
 }
 
 #leave-fullscreen-mode {
@@ -2375,8 +2376,16 @@ img.no_image {
     text-indent: -100001px;
     width: 0;
     padding-left: 17px !important;
+    display: none;
+    visibility: hidden;
 }
 #toggle-fullscreen-mode {
-    width: 0;
+    background: url("../images/stock/gtk-fullscreen.png") no-repeat scroll 0 0 transparent;
+    height: 17px;
     text-indent: -100001px;
+    width: 0;
+    padding-left: 17px !important;
+}
+#toggle-fullscreen-mode.closed {
+    background: url("../images/stock/gtk-leave-fullscreen.png") no-repeat scroll 0 0 transparent;
 }
