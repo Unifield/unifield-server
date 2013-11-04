@@ -29,10 +29,8 @@ MODELS_TO_IGNORE = [
                     'ir.module.module',
                     'ir.ui.view',
                     'ir.module.repository',
-                    'ir.model',
                     'ir.model.data',
                     'ir.model.fields',
-                    'ir.model.access',
                     'ir.ui.view_sc',
                     'ir.config_parameter',
 
@@ -70,7 +68,6 @@ MODELS_TO_IGNORE = [
                   ]
 
 MODELS_TO_IGNORE_DOMAIN = [
-        'ir.%',
         'sync_client.%',
         'sync_server.%',
         'res.widget%',

@@ -464,3 +464,45 @@ class batch_number(osv.osv):
         return get_valid_xml_name('batch_numer', (batch.instance_id.code or 'noinstance'), (batch.product_id.code or 'noprod'), (batch.xmlid_name or 'noname'))
     
 batch_number()
+
+class ir_model_access(osv.osv):
+    """
+    UF-2146 To allow synchronisation of ir.model.access, must have same sd ref across all instances
+    """
+    _inherit = "ir.model.access"
+    
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        ima = self.browse(cr, uid, res_id)
+        return get_valid_xml_name(
+                  'ir_model_access', 
+                  self.pool.get('ir.model').get_sd_ref(cr, uid, ima.model_id.id),
+                  ima.name
+                )
+    
+ir_model_access()
+
+class ir_model(osv.osv):
+    """
+    UF-2146 sd ref for ir.model to be included in sd ref of ir.model.access
+    """
+    _inherit = 'ir.model'
+    
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        model = self.browse(cr, uid, res_id)
+        return get_valid_xml_name('ir_model', model.model)
+
+ir_model()
+
+class button_access_rule(osv.osv):
+    """
+    Generate an xml ID like BAR_$view-xml-id_$button-name
+    so rules can be synchronized between instances after being generated at each instance
+    """
+    _inherit = 'msf_button_access_rights.button_access_rule'
+
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        bar = self.browse(cr, uid, res_id)
+        view_xml_id = self.pool.get('ir.ui.view').get_xml_id(cr, 1, [bar.view_id.id])
+        return get_valid_xml_name('BAR', view_xml_id[bar.view_id.id], bar.name)
+
+button_access_rule()
