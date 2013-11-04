@@ -154,6 +154,7 @@ class account_analytic_line(osv.osv):
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
+            'display_fp': True,
         })
         # Display the result
         return {
