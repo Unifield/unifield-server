@@ -4,11 +4,11 @@
   I create a fiscalyear
 -
   !record {model: account.fiscalyear, id: fiscalyear0}:
-    code: !eval "'FY%s'% (datetime.now().year+10)"
+    code: !eval "'FY%s'% (datetime.now().year+1)"
     company_id: base.main_company
-    date_start: !eval "'%s-01-01' %(datetime.now().year+10)"
-    date_stop: !eval "'%s-12-31' %(datetime.now().year+10)"
-    name: !eval "'Fiscal Year %s' %(datetime.now().year+10)"
+    date_start: !eval "'%s-01-01' %(datetime.now().year+1)"
+    date_stop: !eval "'%s-12-31' %(datetime.now().year+1)"
+    name: !eval "'Fiscal Year %s' %(datetime.now().year+1)"
 -
   I create the period 000
 -
@@ -49,6 +49,37 @@
     fiscalyear_id: fiscalyear0
     name: JAN-HHHHH
     special: 1
+-
+  I create a fiscalyear
+-
+  !record {model: account.fiscalyear, id: fiscalyear10}:
+    code: !eval "'FY%s'% (datetime.now().year+10)"
+    company_id: base.main_company
+    date_start: !eval "'%s-01-01' %(datetime.now().year+10)"
+    date_stop: !eval "'%s-12-31' %(datetime.now().year+10)"
+    name: !eval "'Fiscal Year %s' %(datetime.now().year+10)"
+-
+  I create the ten years period
+-
+  !record {model: account.period, id: ten_years_period}:
+    company_id: base.main_company
+    date_start: !eval "'%s-01-01' % (datetime.now().year + 10)"
+    date_stop: !eval "'%s-01-31' % (datetime.now().year + 10)"
+    fiscalyear_id: fiscalyear10
+    name: JAN-10
+    special: 1
+    number: 1
+-
+  I create the ten years period (current month number)
+-
+  !record {model: account.period, id: ten_years_current_period}:
+    company_id: base.main_company
+    date_start: !eval "'%s-%s-01' % (datetime.now().year + 10, datetime.now().month)"
+    date_stop: !eval "'%s-%s-28' % (datetime.now().year + 10, datetime.now().month)"
+    fiscalyear_id: fiscalyear10
+    name: !eval "'%s-10' % (time.strftime('%b'))"
+    special: 1
+    number: !eval time.strftime('%m')
 -
   I create the period 01
 -
@@ -738,3 +769,12 @@
         min_qty: 0.00
         name: res_partner_supplier_wood_0
     international_status: product_attributes.int_1
+-
+  I overwrite periods with right number and open them
+-
+  !python {model: account.period}: |
+    import datetime
+    period_ids = self.search(cr, uid, [], order='date_start, name')
+    for p in self.browse(cr, uid, period_ids):
+      self.write(cr, uid, [p.id], {'number': int(datetime.datetime.strptime(p.date_start, '%Y-%m-%d').strftime('%m'))})
+    self.action_set_state(cr, uid, period_ids, {'state': 'draft'})

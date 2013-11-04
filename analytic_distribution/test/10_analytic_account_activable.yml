@@ -19,7 +19,6 @@
     import datetime
     from dateutil.relativedelta import relativedelta
     assert  ac.date_start == (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'), "Wrong activation date"
-    
 -
   I create Asset Account Type.
 -
@@ -28,7 +27,6 @@
     code: asset
     name: Asset
     sign: 1
-
 -
   I create the account
 -
@@ -37,7 +35,6 @@
     code: "TEST"
     type: payable
     user_type: account_account_type_asset0
-
 -
   I create an analytical journal, ...
 -
@@ -45,7 +42,43 @@
     code: CANJ
     name: Cash Analytic Journal
     type: general
-    
+-
+  I create a fiscalyear
+-
+  !record {model: account.fiscalyear, id: fiscalyear1}:
+    code: !eval "'FY%s'% (datetime.now().year+1)"
+    company_id: base.main_company
+    date_start: !eval "'%s-01-01' %(datetime.now().year+1)"
+    date_stop: !eval "'%s-12-31' %(datetime.now().year+1)"
+    name: !eval "'Fiscal Year %s' %(datetime.now().year+1)"
+-
+  I create March period for next year
+-
+  !record {model: account.period, id: period_3_1}:
+    company_id: base.main_company
+    date_start: !eval "'%s-03-01' % (datetime.now().year + 1)"
+    date_stop: !eval "'%s-03-31' % (datetime.now().year + 1)"
+    name: !eval "'March-%s' % (datetime.now().year + 1)"
+    fiscalyear_id: fiscalyear1
+    special: 0
+    number: 3
+-
+  I create April period for next year
+-
+  !record {model: account.period, id: period_4_1}:
+    company_id: base.main_company
+    date_start: !eval "'%s-04-01' % (datetime.now().year + 1)"
+    date_stop: !eval "'%s-04-30' % (datetime.now().year + 1)"
+    name: !eval "'April-%s' % (datetime.now().year + 1)"
+    fiscalyear_id: fiscalyear1
+    special: 0
+    number: 4
+-
+  I open all periods
+-
+  !python {model: account.period}: |
+    period_ids = self.search(cr, uid, [])
+    self.action_set_state(cr, uid, period_ids, {'state': 'draft'})
 -
   I create an account analytic line with all of this.
 -
@@ -57,7 +90,7 @@
     amount: 10.0
     amount_currency: 10.0
     currency_id: cur_1
-    date: !eval "'%s-03-12' %(datetime.now().year + 1)"
+    date: !eval "'%s-03-12' % (datetime.now().year + 1)"
 -
   I change the inactivation date to today (forbidden)
 -
@@ -67,7 +100,6 @@
       self.write(cr, uid, ref('analytic_account_1'), vals={'date': datetime.datetime.now().strftime('%Y-%m-%d')})
     except Exception as exception:
       assert exception.value == "You cannot set an inactivity date lower than tomorrow!", "Date inactivity lower"
-     
 -
   I change the dates so that date_start > date (forbidden)
 -
@@ -77,7 +109,6 @@
       self.write(cr, uid, ref('analytic_account_1'), vals={'date_start': '%s-03-12' %(datetime.datetime.now().year + 1), 'date': '%s-03-01' %(datetime.datetime.now().year + 1)})
     except Exception as exception:
       assert exception.value == "Activation date must be lower than inactivation date!", "Activation date must be lower"
-     
 -
   I change the analytic line date so that it is outside the account's activity period (forbidden)
 -
