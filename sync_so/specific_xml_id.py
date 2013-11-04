@@ -472,3 +472,17 @@ class ir_model(osv.osv):
         return get_valid_xml_name('ir_model', model.model)
 
 ir_model()
+
+class button_access_rule(osv.osv):
+    """
+    Generate an xml ID like BAR_$view-xml-id_$button-name
+    so rules can be synchronized between instances after being generated at each instance
+    """
+    _inherit = 'msf_button_access_rights.button_access_rule'
+
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        bar = self.browse(cr, uid, res_id)
+        view_xml_id = self.pool.get('ir.ui.view').get_xml_id(cr, 1, [bar.view_id.id])
+        return get_valid_xml_name('BAR', view_xml_id[bar.view_id.id], bar.name)
+
+button_access_rule()
