@@ -880,6 +880,7 @@ class account_invoice(osv.osv):
                     if i == len(totlines):
                         amount_currency += res_amount_currency
 
+                    # UNIFIELD REFACTORING: is_counterpart field added (UF-1536)
                     iml.append({
                         'type': 'dest',
                         'name': name,
@@ -891,8 +892,10 @@ class account_invoice(osv.osv):
                         'currency_id': diff_currency_p \
                                 and inv.currency_id.id or False,
                         'ref': ref,
+                        'is_counterpart': True,
                     })
             else:
+                # UNIFIELD REFACTORING: is_counterpart field added (UF-1536)
                 iml.append({
                     'type': 'dest',
                     'name': name,
@@ -903,7 +906,8 @@ class account_invoice(osv.osv):
                             and total_currency or False,
                     'currency_id': diff_currency_p \
                             and inv.currency_id.id or False,
-                    'ref': ref
+                    'ref': ref,
+                    'is_counterpart': True,
             })
 
             date = inv.date_invoice or time.strftime('%Y-%m-%d')
@@ -968,6 +972,8 @@ class account_invoice(osv.osv):
             'product_id': x.get('product_id', False),
             'product_uom_id': x.get('uos_id', False),
             'analytic_account_id': x.get('account_analytic_id', False),
+            # UNIFIELD REFACTORISATION: (UF-1536) add new attribute to search which line is the counterpart
+            'is_counterpart': x.get('is_counterpart', False),
         }
 
     def action_number(self, cr, uid, ids, context=None):
