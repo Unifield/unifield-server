@@ -360,7 +360,7 @@ class Entity(osv.osv):
         
         def prepare_update(session):
             updates_count = 0
-            for rule_id in self.pool.get('sync.client.rule').search(cr, uid, [], context=context):
+            for rule_id in self.pool.get('sync.client.rule').search(cr, uid, [('type', '!=', 'USB')], context=context):
                 updates_count += sum(updates.create_update(
                     cr, uid, rule_id, session, context=context))
             return updates_count

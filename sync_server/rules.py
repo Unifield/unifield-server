@@ -111,6 +111,7 @@ class sync_rule(osv.osv):
         'applies_to_type': fields.boolean('Applies to type', help='Applies to a group type instead of a specific group'),
         'group_id': fields.many2one('sync.server.entity_group','Group', select=True),
         'type_id': fields.many2one('sync.server.group_type','Group Type', select=True),
+        'type_name': fields.related('type_id', 'name', type='char', string='Group Name'),
         'direction': fields.selection([
                     ('up', 'Up'),
                     ('down', 'Down'),
@@ -133,6 +134,7 @@ class sync_rule(osv.osv):
     }
 
     _defaults = {
+        'domain': '[]',
         'active': False,
         'status': 'invalid',
     }
@@ -161,12 +163,12 @@ class sync_rule(osv.osv):
     def _get_rules_per_group(self, cr, uid, entity, context=None):
         cr.execute("""SELECT g.id, array_agg(r.id)
                       FROM sync_server_entity_group g 
-                           JOIN sync_server_group_type t ON (g.type_id=t.id) 
+                           JOIN sync_server_group_type t ON (g.type_id=t.id or t.name = 'USB') 
                            JOIN sync_server_sync_rule r
                                 ON (((r.group_id = g.id AND NOT r.applies_to_type)
                                      OR (r.type_id = t.id AND r.applies_to_type))
                                     AND r.active)
-                      WHERE g.id IN %s
+                      WHERE g.id IN %s                  
                       GROUP BY g.id""", (tuple(x.id for x in entity.group_ids),))
         return dict(cr.fetchall())
 
@@ -218,22 +220,24 @@ class sync_rule(osv.osv):
         'sequence_number' : 'sequence_number',
         'included_fields' : 'included_fields',
         'can_delete' : 'can_delete',
+        'type_name' : 'type',
     }
 
     def _serialize_rule(self, cr, uid, ids, context=None):
         if not ids:
             return []
         rules_data = []
-        rules_serialization_mapping = dict(
-            sum((c._rules_serialization_mapping.items()
-                     for c in reversed(self.__class__.mro())
-                     if hasattr(c, '_rules_serialization_mapping')), [])
-        )
-        for rule in self.browse(cr, uid, ids, context=context):
-            rules_data.append(dict(
-                (data, rule[column]) for column, data
-                    in rules_serialization_mapping.items()
-            ))
+        if ids:
+            rules_serialization_mapping = dict(
+                sum((c._rules_serialization_mapping.items()
+                         for c in reversed(self.__class__.mro())
+                         if hasattr(c, '_rules_serialization_mapping')), [])
+            )
+            for rule in self.browse(cr, uid, ids, context=context):
+                rules_data.append(dict(
+                    (data, rule[column]) for column, data
+                        in rules_serialization_mapping.items()
+                ))
         return rules_data
 
     
@@ -532,7 +536,9 @@ class message_rule(osv.osv):
         'applies_to_type': fields.boolean('Applies to type', help='Applies to a group type instead of a specific group'),
         'group_id': fields.many2one('sync.server.entity_group','Group', select=True),
         'type_id': fields.many2one('sync.server.group_type','Group Type', select=True),
+        'type_name': fields.related('type_id', 'name', type='char', string='Group Name'),
         'domain': fields.text('Domain', required = False),
+        'filter_method' : fields.char('Filter Method', size=64, help='The method to use to find target records instead of a domain.'),
         'sequence_number': fields.integer('Sequence', required = True),
         'remote_call': fields.text('Method to call', required = True),
         'arguments': fields.text('Arguments of the method', required = True),
@@ -542,6 +548,7 @@ class message_rule(osv.osv):
     }
 
     _defaults = {
+        'domain': '[]',
         'active': False,
         'status': 'invalid',
         'applies_to_type' : True,
@@ -557,29 +564,44 @@ class message_rule(osv.osv):
     def _get_rules(self, cr, uid, entity, context=None):
         rules_ids = []
         for group in entity.group_ids:
-            domain = ['|',
+            domain = ['|', '|',
                     '&', ('group_id', '=', group.id), ('applies_to_type', '=', False),
-                    '&', ('type_id', '=', group.type_id.id), ('applies_to_type', '=', True)]
+                    '&', ('type_id', '=', group.type_id.id), ('applies_to_type', '=', True),
+                    ('type_name', '=', 'USB')]
             ids = self.search(cr, uid, domain, context=context)
             if ids:
                 rules_ids.extend(ids)
-        
-        return rules_ids
+        return list(set(rules_ids))
     
+    _rules_serialization_mapping = {            
+        'name' : 'name',
+        'id': 'server_id',
+        'model_id': 'model',
+        'domain': 'domain',
+        'filter_method': 'filter_method',
+        'sequence_number': 'sequence_number',
+        'remote_call': 'remote_call',
+        'arguments': 'arguments',
+        'destination_name': 'destination_name',
+        'active': 'active',
+        'type_name' : 'type',
+    }
+
     def _serialize_rule(self, cr, uid, ids, context=None):
+        if not ids:
+            return []
         rules_data = []
-        for rule in self.browse(cr, uid, ids, context=context):
-            data = {
-                    'name' : rule.name,
-                    'server_id' : rule.id,
-                    'model' : rule.model_id,
-                    'domain' : rule.domain,
-                    'sequence_number' : rule.sequence_number,
-                    'remote_call' : rule.remote_call,
-                    'arguments' : rule.arguments,
-                    'destination_name' : rule.destination_name,
-            }
-            rules_data.append(data)
+        if ids:
+            rules_serialization_mapping = dict(
+                sum((c._rules_serialization_mapping.items()
+                         for c in reversed(self.__class__.mro())
+                         if hasattr(c, '_rules_serialization_mapping')), [])
+            )
+            for rule in self.browse(cr, uid, ids, context=context):
+                rules_data.append(dict(
+                    (data, rule[column]) for column, data
+                        in rules_serialization_mapping.items()
+                ))
         return rules_data
 
     def invalidate(self, cr, uid, ids, model_ref, context=None):
@@ -654,11 +676,14 @@ class message_rule(osv.osv):
             else:
                 message.append("pass.\n")
                 
+            if not rec.filter_method:
+                mess, err = self.check_domain(cr, uid, rec, context)
+                error = err or error
+                message.append(mess)
+            elif not hasattr(self.pool.get(rec.model_id), rec.filter_method):
+                message.append('Filter Method %s does not exist on object %s' % (rec.filter_method, rec.model_id))
+                error = True
                 
-            mess, err = self.check_domain(cr, uid, rec, context)
-            error = err or error
-            message.append(mess)
-            
             # Remote Call Possible
             call_tree = rec.remote_call.split('.')
             call_class = '.'.join(call_tree[:-1])

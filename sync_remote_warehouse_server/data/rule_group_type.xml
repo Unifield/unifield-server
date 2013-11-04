@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+        
+        <record id="sync_remote_warehouse_rule_group_type" model="sync.server.group_type">
+    		<field name="name">USB</field>
+		</record>
+        
+    </data>
+</openerp>

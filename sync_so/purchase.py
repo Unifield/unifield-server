@@ -272,6 +272,23 @@ class purchase_order_sync(osv.osv):
         
         res_id = self.write(cr, uid, po_id, default, context=context)
         return True
+    
+    def msg_close_filter(self, cr, uid, rule, context=None):
+        """
+        Called by PO close message rule at RW
+        @return: list of ids of unclosed PO's whose pickings are all done
+        """
+        cr.execute("""\
+            SELECT p.id from purchase_order p 
+            left join stock_picking s on s.purchase_id = p.id 
+            where p.state = 'approved' 
+            group by p.id 
+            having bool_and(s.state = 'done') = true;""")
+        return [row[0] for row in cr.fetchall()]
+    
+    def msg_close(self, cr, uid, source, po, context=None):
+        po_id = self.search(cr, uid, [('name','=',po.name)])
+        self.action_done(cr, uid, po_id, context=context)
 
     def canceled_fo_cancel_po(self, cr, uid, source, so_info, context=None):
         if not context:

@@ -3,7 +3,7 @@ AC,,,,Accruals,accrual,Accruals
 HQ,,,,HQ,hq,Analytic HQ
 HQ-Exp,,,,HQ - Field expenses,hq,HQ - Field expenses
 HR,,,,HR,hr,HR
-MT,,6940 Currency exchange difference HQ ONLY,6940 Currency exchange difference HQ ONLY,Miscellaneous Transactions,cur_adj,Miscellaneous Transactions Journal
+MT,,,6940 Currency exchange difference HQ ONLY,Miscellaneous Transactions,cur_adj,Miscellaneous Transactions Journal
 OD,,,,Correction,correction,Correction
 PUR,,,,Purchase,purchase,Purchase
 PURR,,,,Purchase Refund,purchase_refund,Purchase Refund

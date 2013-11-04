@@ -41,8 +41,10 @@ def check_validated(f):
         entity = entity_pool.browse(cr, uid, id)[0]
         if entity.state == 'updated':
             return (False, 'This Instance has been updated and the update procedure has to be launched at your side')
-        if not (entity.state == 'validated' and entity.user_id.id == int(uid)):
+        if not entity.state == 'validated':
             return (False, "The instance has not yet been validated by its parent")
+        if not entity.user_id.id == int(uid):
+            return (False, "You are not supposed to use this user to connect to the synchronization server")
         return f(self, cr, uid, entity, *args, **kargs)
         
     return check
