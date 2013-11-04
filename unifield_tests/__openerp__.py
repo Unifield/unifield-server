@@ -39,7 +39,11 @@
     "test": [
         "test/test_partner_data.yml",
         "test/test_product_data.yml",
+        "test/test_analytic_distrib_data.yml",
         "test/resourcing/cancel_fo_line.yml",
+        "test/resourcing/cancel_fo.yml",
+        "test/resourcing/cancel_po.yml",
+        "test/resourcing/cancel_po_line.yml",
         ],
     "installable": True,
     "active": False

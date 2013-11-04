@@ -58,7 +58,7 @@
             <field name="condition">(order_policy=='picking') or order_type!='regular' or (order_type=='regular' and partner_id.partner_type=='internal')</field>
         </record>
 
-        <record id="sale.act_ship_corrected" model="workflow.activity">
+        <!--<record id="sale.act_ship_corrected" model="workflow.activity">
             <field name="wkf_id" ref="sale.wkf_sale" />
             <field name="name">ship_corrected</field>
             <field name="kind">function</field>
@@ -67,15 +67,15 @@
 
         <record id="sale.trans_ship_except_ship_end" model="workflow.transition">
             <field name="act_from" ref="sale.act_ship_except" />
-            <field name="act_to" ref="sale.act_ship_corrected" />
+            <field name="act_to" ref="sale.act_ship_corrected" />-->
             <!--<field name="signal">ship_corrected</field>-->
-            <field name="signal" eval="False" />
+            <!--            <field name="signal" eval="False" />
         </record>
 
         <record id="sale.trans_ship_corrected_ship_end" model="workflow.transition">
             <field name="act_from" ref="sale.act_ship_corrected" />
             <field name="act_to" ref="sale.act_ship" />
-        </record>
+        </record>-->
         
         <!-- SPLIT STEP -->
         

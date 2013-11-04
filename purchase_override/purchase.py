@@ -2094,6 +2094,11 @@ class purchase_order_line(osv.osv):
         Call the unlink method for lines and if the PO becomes empty
         ask the user if he wants to cancel the PO
         '''
+        context = context or {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         purchase_ids = []
         for line in self.read(cr, uid, ids, ['order_id'], context=context):
             if line['order_id'][0] not in purchase_ids:
@@ -2573,6 +2578,9 @@ class purchase_order_unlink_wizard(osv.osv_memory):
         Cancel the PO and display his form
         '''
         context = context or {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
             self.pool.get('purchase.order').action_cancel(cr, uid, [wiz.order_id.id], context=context)

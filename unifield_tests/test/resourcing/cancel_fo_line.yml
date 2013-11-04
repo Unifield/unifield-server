@@ -144,7 +144,7 @@
         # Validate the FO that re-sourced the initial one
         import netsvc
         wf_service = netsvc.LocalService('workflow')
-        wf_service.trg_validate(uid, 'sale.order', l.order_id.id, 'order_confirm', cr)
+        wf_service.trg_validate(uid, 'sale.order', l.order_id.id, 'order_validated', cr)
 
     # Ask unlink of FO line => Must return a wizard
     logger.log(logging.TEST, "Unlink the fourth FO line")

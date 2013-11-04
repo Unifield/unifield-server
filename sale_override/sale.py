@@ -1306,7 +1306,7 @@ class sale_order_line(osv.osv):
         if not qty_diff:
             qty_diff = line.product_uom_qty
 
-        line_id = self.copy(cr, uid, line.id, {'order_id': order_id, 'product_uom_qty': qty_diff, 'product_uos_qty': qty_diff}, context=context)
+        line_id = self.copy(cr, uid, line.id, {'order_id': order_id, 'product_uom_qty': qty_diff, 'product_uos_qty': qty_diff, 'procurement_id': False}, context=context)
 
         order_name = self.pool.get('sale.order').read(cr, uid, [order_id], ['name'], context=context)[0]['name']
 

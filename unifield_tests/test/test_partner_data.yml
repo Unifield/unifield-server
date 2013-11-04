@@ -18,3 +18,37 @@
     partner_id: test_partner1
     street: P1 Street
     city: P1 City
+-
+  Test partner 2
+-
+  !record {model: res.partner, id: test_partner2}:
+    credit_limit: 0.00
+    debit_limit: 0.00
+    name: Partner 2
+    supplier: True
+    customer: True
+    partner_type: external
+-
+  Test partner 2 address
+-
+  !record {model: res.partner.address, id: test_partner2_address}:
+    partner_id: test_partner2
+    street: P2 Street
+    city: P2 City
+-
+  Test partner 3
+-
+  !record {model: res.partner, id: test_partner3}:
+    credit_limit: 0.00
+    debit_limit: 0.00
+    name: Partner 3
+    supplier: True
+    customer: True
+    partner_type: external
+-
+  Test partner 3 address
+-
+  !record {model: res.partner.address, id: test_partner3_address}:
+    partner_id: test_partner3
+    street: P3 Street
+    city: P3 City
