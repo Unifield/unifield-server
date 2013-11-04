@@ -83,8 +83,9 @@ version = release.version
                 </li>
             % endfor
         </ul>
-        <div style="position: absolute; right: 5px;">
-        <a id="toggle-fullscreen-mode" onclick="fullscreen(!$(this).hasClass('closed'));$(this).toggleClass('closed')" accesskey="0">${_("Toggle fullscreen")}</a>
+        <div style="position: absolute; right: 5px; top: 6px;">
+        <a id="fullscreen-mode" onclick="fullscreen(true);" accesskey="0">${_("Full Screen")}</a>
+        <a id="leave-fullscreen-mode" onclick="fullscreen(false);" accesskey="9">${_("Leave Full Screen")}</a>
         </div>
     % endif
     </div>
