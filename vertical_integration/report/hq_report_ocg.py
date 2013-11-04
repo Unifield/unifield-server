@@ -128,7 +128,8 @@ class hq_report_ocg(report_sxw.report_sxw):
                          'Third Parties',
                          'Booking Debit',
                          'Booking Credit',
-                         'Booking Currency']
+                         'Booking Currency',
+                         'Field Activity']
         
         # Initialize lists: one for the first report...
         first_result_lines = []
@@ -226,9 +227,15 @@ class hq_report_ocg(report_sxw.report_sxw):
                               analytic_line.functional_currency_id and analytic_line.functional_currency_id.name or ""]
             first_result_lines.append(formatted_data)
             
+            cost_center = formatted_data[11][:5] or " "
+            field_activity = formatted_data[11][6:] or " "
+            
             if (journal.code, journal.id, currency.id) not in main_lines:
                 main_lines[(journal.code, journal.id, currency.id)] = []
-            main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + formatted_data[11:12] + formatted_data[13:17])
+            #main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + formatted_data[11:12] + formatted_data[13:17])
+            main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + [cost_center] + formatted_data[13:17] + [field_activity])
+
+        
         
         first_result_lines = sorted(first_result_lines, key=lambda line: line[2])
         first_report = [first_header] + first_result_lines
