@@ -3,7 +3,7 @@ TRUE,PUR,Purchase,purchase
 TRUE,PURR,Purchase Refund,purchase
 TRUE,SAL,Sale,sale
 TRUE,SALR,Sale Refund,sale
-TRUE,OD,Correction,general
+TRUE,OD,Correction,correction
 TRUE,AHQ,Analytic HQ,hq
 TRUE,AHQ-Exp,HQ - Field expenses,hq
 TRUE,HR,HR,hr
