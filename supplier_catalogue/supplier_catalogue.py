@@ -25,7 +25,7 @@ from osv import fields
 from tools.translate import _
 
 from mx.DateTime import DateFrom, now, RelativeDate
-from datetime import date
+from datetime import date, datetime
 
 import decimal_precision as dp
 
@@ -34,6 +34,9 @@ import time
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
+
+from tools import DEFAULT_SERVER_DATETIME_FORMAT
+
 
 class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
@@ -239,6 +242,26 @@ class supplier_catalogue(osv.osv):
                 return [('id', 'in', ids)]
         
         return ids
+        
+    def _is_esc(self, cr, uid, ids, fieldname, args, context=None):
+        """Is an ESC Supplier Catalog ?"""
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for r in self.read(cr, uid, ids, ['partner_id'],
+                            context=context):
+            if r['partner_id']:
+                res[r['id']] = False
+                rs = self.pool.get('res.partner').read(cr, uid,
+                                                       [r['partner_id'][0]],
+                                                       ['partner_type'],
+                                                       context=context)
+                if rs and rs[0] and rs[0]['partner_type'] \
+                   and rs[0]['partner_type'] == 'esc':
+                    res[r['id']] = True
+        return res
 
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
@@ -264,6 +287,8 @@ class supplier_catalogue(osv.osv):
         'filename_template': fields.char(string='Template', size=256),
         'import_error_ok': fields.boolean('Display file with error'), 
         'text_error': fields.text('Text Error', readonly=True),
+        'esc_update_ts': fields.datetime('Last updated on', readonly=True),  # UTP-746 last update date for ESC Supplier
+        'is_esc': fields.function(_is_esc, type='boolean', string='Is ESC Supplier', method=True),
     }
     
     _defaults = {
@@ -362,6 +387,7 @@ class supplier_catalogue(osv.osv):
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
         wiz_common_import = self.pool.get('wiz.common.import')
+        obj_catalog_line = self.pool.get('supplier.catalogue.line')
 
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.file_to_import:
@@ -489,26 +515,44 @@ class supplier_catalogue(osv.osv):
                     error_list.append('\n -'.join(error_list_line) + '\n')
                     continue
                 line_num += 1
-
-                to_write = {
-                    'to_correct_ok': to_correct_ok, 
-                    'product_id': default_code,
-                    'min_qty': p_min_qty,
-                    'line_uom_id': uom_id,
-                    'unit_price': p_unit_price,
-                    'rounding': p_rounding,
-                    'min_order_qty': p_min_order_qty,
-                    'comment': p_comment,
-                }
-
-                vals['line_ids'].append((0, 0, to_write))
+                
+                # [utp-746] update prices of an already product in catalog
+                criteria = [
+                    ('catalogue_id', '=', obj.id),
+                    ('product_id', '=', default_code),
+                ]
+                catalog_line_id = obj_catalog_line.search(cr, uid, criteria, context=context)
+                if catalog_line_id:
+                    if isinstance(catalog_line_id, (int, long)):
+                        catalog_line_id = [catalog_line_id]
+                    to_write = {
+                        'min_qty': p_min_qty,
+                        'line_uom_id': uom_id,
+                        'unit_price': p_unit_price,
+                        'rounding': p_rounding,
+                        'min_order_qty': p_min_order_qty,
+                    }
+                    vals['line_ids'].append((1, catalog_line_id[0], to_write))
+                else:
+                    to_write = {
+                        'to_correct_ok': to_correct_ok, 
+                        'product_id': default_code,
+                        'min_qty': p_min_qty,
+                        'line_uom_id': uom_id,
+                        'unit_price': p_unit_price,
+                        'rounding': p_rounding,
+                        'min_order_qty': p_min_order_qty,
+                        'comment': p_comment,
+                    }
+                    vals['line_ids'].append((0, 0, to_write))
+                
             # in case of lines ignored, we notify the user and create a file with the lines ignored
             vals.update({'text_error': _('Lines ignored: %s \n ----------------------\n') % (ignore_lines,) +
                          '\n'.join(error_list), 'data': False, 'import_error_ok': False})
             if line_with_error:
                 file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
                 vals.update(file_to_export)
-
+            vals['esc_update_ts'] = datetime.now().strftime(DEFAULT_SERVER_DATETIME_FORMAT)
             self.write(cr, uid, ids, vals, context=context)
 
             # TODO: To implement

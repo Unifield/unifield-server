@@ -35,6 +35,8 @@
 					<field name="period_to" />
 					<field name="currency_id" domain="[('partner_currency', '=', partner_id)]" />
 					<field name="partner_id" readonly="1" />
+                    <field name="is_esc" invisible="1" />
+                    <field name="esc_update_ts" attrs="{'invisible': [('is_esc', '!=', True)]}" /> <!-- UTP-746 -->
 					<field name="active" />
                     <newline />
 
