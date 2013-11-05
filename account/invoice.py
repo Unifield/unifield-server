@@ -95,7 +95,9 @@ class account_invoice(osv.osv):
         result = {}
         for invoice in self.browse(cr, uid, ids, context=context):
             # UNIFIELD REFACTORING: UF-1536 have change this method
-            result[invoice.id] = invoice.check_total
+            result[invoice.id] = invoice.check_total # use check_total to take also VAT
+            if invoice.type in ['out_invoice', 'in_refund']:
+                result[invoice.id] = invoice.amount_total # no VAT on out_invoice and in_refund
             # Not needed to do process if invoice is draft or paid
             if invoice.state in ['draft', 'paid']:
                 result[invoice.id] = 0.0
@@ -112,7 +114,7 @@ class account_invoice(osv.osv):
                     if counterpart_line.reconcile_partial_id:
                         for ml in counterpart_line.reconcile_partial_id.line_partial_ids:
                             if ml.is_counterpart == False:
-                                result[invoice.id] -= ml.amount_currency
+                                result[invoice.id] -= abs(ml.amount_currency)
         return result
 
     # Give Journal Items related to the payment reconciled to this invoice
