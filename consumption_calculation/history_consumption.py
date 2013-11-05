@@ -387,6 +387,8 @@ class product_product(osv.osv):
                 # We save the order of the fields to read them in the good order
                 fields_sort.update({sort_iter2: f})
                 sort_iter2 += 1
+        else:
+            new_fields_to_export = fields_to_export
 
         res = super(product_product, self).export_data(cr, uid, ids, new_fields_to_export, context=context)
 
