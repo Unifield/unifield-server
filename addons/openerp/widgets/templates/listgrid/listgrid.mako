@@ -130,7 +130,7 @@
             % elif o2m:
                 <img src="/openerp/static/images/iconset-b-remove.gif" class="listImage"
                     border="0" title="${_('Delete')}"
-                    onclick="new One2Many('${name}').rm(${data['id']}); return false;"/>
+                    onclick="new One2Many('${name}').rm(${data['id']}, this); return false;"/>
             % else:
                 <img src="/openerp/static/images/iconset-b-remove.gif" class="listImage"
                     border="0" title="${_('Delete')}"
