@@ -130,6 +130,8 @@
                                 address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" 
                                 name="invoice_line" nolabel="1" attrs="{'readonly': [('state', 'not in', ['draft', 'open']), ('is_direct_invoice', '=', True)]}">
                                 <tree editable="bottom" string="Invoice lines" colors="blue:inactive_product == False and analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid') or inactive_product == True;black:inactive_product == False and analytic_distribution_state in ('none')">
+                                    <field name="is_corrected" invisible="1"/>
+                                    <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
                                     <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, 
                                         parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, 
                                         {'company_id': parent.company_id})"/>
