@@ -552,7 +552,7 @@ The columns should be in this values:
                             if v:
                                 filtered_vals.update({k: v})
                         po_obj.write(cr, uid, po_id, filtered_vals, context)
-                        notif_list.append(_("Line %s of the Excel file updated the PO %s." % (file_line_number+1, po_browse.name)))
+                        notif_list.append(_("Line %s of the Excel file updated the PO %s.") % (file_line_number+1, po_browse.name))
                     first_row = False
                 # get values from row
                 line_values = cell_data.get_line_values(cr, uid, ids, row)

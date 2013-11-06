@@ -53,7 +53,10 @@ class stock_partial_move_memory_out(osv.osv_memory):
         if vals.get('product_uom', False):
             mem_move = self.browse(cr, uid, ids[0], context=context)
             if mem_move.move_id.picking_id.type == 'in':
-                vals['cost'] = uom_obj._compute_price(cr, uid, mem_move.product_uom.id, mem_move.cost, to_uom_id=vals.get('product_uom', mem_move.product_uom.id))
+                # UTP-220: Give the possibility to change the cost when receiving the goods, so we need to take this cost into account
+                # but if the cost is not available, then just take the cost from the PO/original move
+                cost = vals.get('cost', mem_move.cost)
+                vals['cost'] = uom_obj._compute_price(cr, uid, mem_move.product_uom.id, cost, to_uom_id=vals.get('product_uom', mem_move.product_uom.id))
         
         return super(stock_partial_move_memory_out, self).write(cr, uid, ids, vals, context=context)
     

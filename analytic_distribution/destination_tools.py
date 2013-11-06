@@ -95,7 +95,16 @@ class many2many_notlazy(many2many_sorted):
                     args.append((0,))
                 else:
                     args.append(tuple(act[2]))
-                cr.execute('delete from '+self._rel+' where '+self._id1+'=%s AND '+self._id2+' IN (SELECT '+self._rel+'.'+self._id2+' FROM '+self._rel+', '+','.join(tables)+' WHERE '+self._rel+'.'+self._id1+'=%s AND '+self._rel+'.'+self._id2+' = '+obj._table+'.id '+ d1 +' and '+self._rel+'.'+self._id2+' not in %s)', args)
+                    
+                # JIRA UTP-334
+                if self._rel == 'account_destination_link':
+                    cr.execute('select id from '+self._rel+' where '+self._id1+'=%s AND '+self._id2+' IN (SELECT '+self._rel+'.'+self._id2+' FROM '+self._rel+', '+','.join(tables)+' WHERE '+self._rel+'.'+self._id1+'=%s AND '+self._rel+'.'+self._id2+' = '+obj._table+'.id '+ d1 +' and '+self._rel+'.'+self._id2+' not in %s)', args)
+                    unlink_obj = pooler.get_pool(cr.dbname).get('account.destination.link')
+                    for unlinked_id in cr.fetchall():
+                        unlink_obj.unlink(cr, user, unlinked_id[0])
+                else:
+                    cr.execute('delete from '+self._rel+' where '+self._id1+'=%s AND '+self._id2+' IN (SELECT '+self._rel+'.'+self._id2+' FROM '+self._rel+', '+','.join(tables)+' WHERE '+self._rel+'.'+self._id1+'=%s AND '+self._rel+'.'+self._id2+' = '+obj._table+'.id '+ d1 +' and '+self._rel+'.'+self._id2+' not in %s)', args)
+                
 
                 cr.execute('select '+self._id2+' from '+self._rel+' where '+self._id1+'=%s', [id, ])
                 existing = [x[0] for x in cr.fetchall()]

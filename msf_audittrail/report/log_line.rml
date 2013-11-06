@@ -105,7 +105,7 @@
           <para style="P4">[[ get_method(line, 'method') ]]</para>
         </td>
         <td>
-          <para style="P4left">[[ line.field_description ]]</para>
+          <para style="P4left">[[ line.trans_field_description ]]</para>
         </td>
         <td>
           <para style="P4">[[ line.old_value_fct ]]</para>

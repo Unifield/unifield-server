@@ -1082,6 +1082,23 @@ class stock_production_lot(osv.osv):
                 res[batch_id] = False
 
         return res
+
+    def _is_expired(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns True if the lot is expired
+        '''
+        res = {}
+        context = context or {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for batch in self.read(cr, uid, ids, ['life_date'], context=context):
+            res[batch['id']] = False
+            if batch['life_date'] < time.strftime('%Y-%m-%d'):
+                res[batch['id']] = True
+
+        return res
     
     _columns = {'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
                 # readonly is True, the user is only allowed to create standard lots - internal lots are system-created
@@ -1104,6 +1121,7 @@ class stock_production_lot(osv.osv):
                 'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
                 'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
                 'delete_ok': fields.function(_get_delete_ok, method=True, string='Possible deletion ?', type='boolean', readonly=True),
+                'is_expired': fields.function(_is_expired, method=True, string='Expired ?', type='boolean', store=False, readonly=True),
                 }
     
     _defaults = {'type': 'standard',
@@ -1342,6 +1360,7 @@ class stock_inventory(osv.osv):
         '''
         prodlot_obj = self.pool.get('stock.production.lot')
         product_obj = self.pool.get('product.product')
+        line_ids = []
         # treat the needed production lot
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.inventory_line_id:
@@ -1380,6 +1399,9 @@ class stock_inventory(osv.osv):
                             prodlot_id = prodlot_ids[0]
                         # update the line
                         line.write({'prod_lot_id': prodlot_id,},)
+                line_ids.append(line.id)
+
+        self.pool.get('%s.line' % (self._name)).write(cr, uid, line_ids, {'comment': ''}, context=context)
         
         # super function after production lot creation - production lot are therefore taken into account at stock move creation
         result = super(stock_inventory, self).action_confirm(cr, uid, ids, context=context)      

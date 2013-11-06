@@ -116,21 +116,5 @@
             </field>
         </record>
 
-        <record id="purchase_order_line_form_transport_inherit" model="ir.ui.view">
-            <field name="name">purchase.order.line.form.transport.inherit</field>
-            <field name="model">purchase.order.line</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="purchase.purchase_order_line_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <!-- The field product_domain is True or False, so the result of the domain is [True, True] (only transport
-                            products) or [True, False] (all products) -->
-                    <xpath expr="/form/notebook//field[@name='product_id']" position="attributes">
-                        <attribute name="domain">[parent.categ in ('transport', 'service') and ('type', '=', 'service_recep') or ('type', '!=', False), ('transport_ok', 'in', [True, parent.categ=='transport' and 't' or 'f'])]</attribute>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
     </data>
 </openerp>

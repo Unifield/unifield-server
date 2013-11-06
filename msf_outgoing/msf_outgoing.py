@@ -1268,6 +1268,11 @@ class stock_picking(osv.osv):
                     view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_search')[1]
             except ValueError:
                 pass
+        if not view_id and context.get('pick_type') == 'incoming' and view_type == 'tree':
+            try:
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_tree')[1]
+            except ValueError:
+                pass
 
         return super(stock_picking, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
     
@@ -1652,6 +1657,57 @@ class stock_picking(osv.osv):
                     continue
 
         return res
+
+    def _get_lines_state(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the state according to line states and picking state
+        If the Picking Ticket is not draft, don't compute the line state
+        Else, for all moves with quantity, check the state of the move
+        and set the line state with these values :
+        'mixed': 'Partially Available'
+        'assigned': 'Available'
+        'confirmed': 'Not available'
+        '''
+        res = {}
+
+        for pick in self.browse(cr, uid, ids, context=context):
+            if pick.type != 'out' or pick.subtype != 'picking' or pick.state != 'draft':
+                res[pick.id] = False
+                continue
+
+            res[pick.id] = 'confirmed'
+            available = False
+            confirmed = False
+            processed = True
+            empty = len(pick.move_lines)
+            for move in pick.move_lines:
+                if move.product_qty == 0.00:
+                    continue
+
+                processed = False
+
+                if move.state != 'assigned':
+                    confirmed = True
+                else:
+                    available = True
+
+                if confirmed and available:
+                    break
+
+            if available and confirmed:
+                res[pick.id] = 'mixed'
+            elif available:
+                res[pick.id] = 'assigned'
+            elif confirmed:
+                res[pick.id] = 'confirmed'
+            elif processed and empty:
+                res[pick.id] = 'processed'
+            elif empty == 0:
+                res[pick.id] = 'empty'
+            else:
+                res[pick.id] = False
+
+        return res
     
     _columns = {'flow_type': fields.selection([('full', 'Full'),('quick', 'Quick')], readonly=True, states={'draft': [('readonly', False),],}, string='Flow Type'),
                 'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')], string='Subtype'),
@@ -1678,8 +1734,15 @@ class stock_picking(osv.osv):
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals'),
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals'),
                 'overall_qty': fields.function(_get_overall_qty, method=True, fnct_search=_qty_search, type='float', string='Overall Qty',
-                                    store= {'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10),}
-                ),
+                                    store= {'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10),}),
+                'line_state': fields.function(_get_lines_state, method=True, type='selection', 
+                                    selection=[('confirmed', 'Not available'),
+                                               ('assigned', 'Available'),
+                                               ('empty', 'Empty'),
+                                               ('processed', 'Processed'),
+                                               ('mixed', 'Partially available')], string='Lines state', 
+                                    store={'stock.move': (_get_picking_ids, ['picking_id', 'state', 'product_qty'], 10),
+                                           'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 'pack_family_memory_ids': fields.one2many('pack.family.memory', 'draft_packing_id', string='Memory Families'),
                 'description_ppl': fields.char('Description', size=256 ),
@@ -1693,9 +1756,15 @@ class stock_picking(osv.osv):
                  'warehouse_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)) and obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)[0] or False,
                  'converted_to_standard': False,
                  'already_shipped': False,
+                 'line_state': 'empty',
                  }
     #_order = 'origin desc, name asc'
     _order = 'name desc'
+
+    def create(self, cr, uid, vals, context=None):
+        if not 'move_lines' in vals:
+            vals['line_state'] = 'empty'
+        return super(stock_picking, self).create(cr, uid, vals, context=context)
 
     def onchange_move(self, cr, uid, ids, context=None):
         '''

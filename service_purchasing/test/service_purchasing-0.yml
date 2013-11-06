@@ -82,9 +82,7 @@
       pol.write({'product_id': ref("product_stockable_p2")}, context=None)
       self.pool.get('purchase.order').write(cr, uid, pol.order_id.id, {})
     except except_osv as e:
+      assert False, 'The constraint about Purchase Order of type Category Service with not only Service products has been triggered'
       # ok the constraint is triggered
       #print e
-      pass
-    else:
-      assert False, 'The constraint about Purchase Order of type Category Service with not only Service products has not been triggered'
       

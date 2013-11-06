@@ -190,6 +190,15 @@
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
 -
+  I overwrite periods to have the right number and open them
+-
+  !python {model: account.period}: |
+    import datetime
+    period_ids = self.search(cr, uid, [], order='date_start, name')
+    for p in self.browse(cr, uid, period_ids):
+      self.write(cr, uid, [p.id], {'number': int(datetime.datetime.strptime(p.date_start, '%Y-%m-%d').strftime('%m'))})
+    self.action_set_state(cr, uid, period_ids, {'state': 'open'})
+-
   I create an account move line with all of this.
 -
   !record {model: account.move.line, id: move_line_test}:
@@ -238,8 +247,8 @@
         is_target: True
         is_top_cost_center: True
         is_po_fo_cost_center: True
-    move_prefix: TEST
-    reconcile_prefix: T1
+    move_prefix: TIN
+    reconcile_prefix: T3
 -
   I add the instance to the default company
 -
