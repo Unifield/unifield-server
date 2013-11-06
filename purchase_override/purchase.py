@@ -273,6 +273,8 @@ class purchase_order(osv.osv):
         'po_from_fo': fields.function(_is_po_from_fo, method=True, type='boolean', string='Is PO from FO ?',),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
+        'origin': fields.text('Source Document', 
+                        help="Reference of the document that generated this purchase order request."),
     }
     
     _defaults = {
@@ -307,6 +309,9 @@ class purchase_order(osv.osv):
         '''
         Avoid the saving of a PO with non service products on Service PO
         '''
+        # UTP-871 : Remove check of service
+        return True
+
         if isinstance(ids, (int, long)):
             ids = [ids]
         categ = {'transport': _('Transport'),
@@ -435,17 +440,19 @@ class purchase_order(osv.osv):
 #            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
         else:
             v['invoice_method'] = 'picking'
+
+        company_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id
         
-        if order_type == 'direct' and dest_partner_id:
+        if order_type == 'direct' and dest_partner_id and dest_partner_id != company_id:
             cp_address_id = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])['delivery']
             v.update({'dest_address_id': cp_address_id})
 #            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
         elif order_type == 'direct':
-            v.update({'dest_address_id': False})
+            v.update({'dest_address_id': False, 'dest_partner_id': False})
 #            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
         else:
-            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id, ['delivery'])['delivery']
-            v.update({'dest_address_id': cp_address_id})
+            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, company_id, ['delivery'])['delivery']
+            v.update({'dest_address_id': cp_address_id, 'dest_partner_id': company_id})
 #            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
 
         if partner_id and partner_id != local_market:
@@ -555,14 +562,15 @@ class purchase_order(osv.osv):
         
         if not dest_partner_id:
             v.update({'dest_address_id': False})
-            d.update({'dest_address_id': [('partner_id', '=', company_id)]})
+#            d.update({'dest_address_id': [('partner_id', '=', company_id)]})
         else:
-            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
+#            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
         
             delivery_addr = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])
             v.update({'dest_address_id': delivery_addr['delivery']})
         
-        return {'value': v, 'domain': d}
+#        return {'value': v, 'domain': d}
+        return {'value': v}
     
     def change_currency(self, cr, uid, ids, context=None):
         '''
@@ -692,10 +700,11 @@ class purchase_order(osv.osv):
         Check analytic distribution.
         '''
         for order in self.browse(cr, uid, ids, context=context):
-            if order.categ in ['transport', 'service']:
-                ch_res = self.onchange_categ(cr, uid, [order.id], order.categ, order.warehouse_id.id, order.cross_docking_ok, order.location_id.id, context=context)
-                if ch_res.get('warning', {}).get('message', False):
-                    raise osv.except_osv(_('Error'), ch_res.get('warning', {}).get('message', ''))
+            # UTP-871 : Remove the service check on order validation
+#            if order.categ in ['transport', 'service']:
+#                ch_res = self.onchange_categ(cr, uid, [order.id], order.categ, order.warehouse_id.id, order.cross_docking_ok, order.location_id.id, context=context)
+#                if ch_res.get('warning', {}).get('message', False):
+#                    raise osv.except_osv(_('Error'), ch_res.get('warning', {}).get('message', ''))
             pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('in_search', '=', order.partner_id.partner_type)], context=context)
             if order.pricelist_id.id not in pricelist_ids:
                 raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
@@ -775,10 +784,11 @@ class purchase_order(osv.osv):
         move_obj = self.pool.get('stock.move')
             
         for order in self.browse(cr, uid, ids, context=context):
-            if order.categ in ['transport', 'service']:
-                ch_res = self.onchange_categ(cr, uid, [order.id], order.categ, order.warehouse_id.id, order.cross_docking_ok, order.location_id.id, context=context)
-                if ch_res.get('warning', {}).get('message', False):
-                    raise osv.except_osv(_('Error'), ch_res.get('warning', {}).get('message', ''))
+            # UTP-871 : Remove the service check on order validation
+#            if order.categ in ['transport', 'service']:
+#                ch_res = self.onchange_categ(cr, uid, [order.id], order.categ, order.warehouse_id.id, order.cross_docking_ok, order.location_id.id, context=context)
+#                if ch_res.get('warning', {}).get('message', False):
+#                    raise osv.except_osv(_('Error'), ch_res.get('warning', {}).get('message', ''))
             if not order.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             todo = []
@@ -1259,8 +1269,24 @@ stock moves which are already processed : '''
                 for pick_id in todo3:
                     wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
                     wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
-            
+
         return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
+
+    def need_counterpart(self, cr, uid, ids, context=None):
+        res = False
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.order_type == 'loan' and not po.loan_id and not po.is_a_counterpart and po.partner_id.partner_type not in ('internal', 'intermission'):
+                res = True
+
+        return res
+
+    def go_to_loan_done(self, cr, uid, ids, context=None):
+        res = False
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.order_type not in ('loan', 'direct') or po.loan_id or (po.order_type == 'loan' and po.partner_id.partner_type in ('internal', 'intermission')):
+                res = True
+
+        return res
     
     def action_sale_order_create(self, cr, uid, ids, context=None):
         '''
@@ -2244,12 +2270,11 @@ class purchase_order_line(osv.osv):
             other_lines = self.search(cr, uid, domain)
             for l in self.browse(cr, uid, other_lines):
                 all_qty += l.product_qty 
-        
+
         res = super(purchase_order_line, self).product_id_change(cr, uid, ids, pricelist, product, all_qty, uom,
                                                                  partner_id, date_order, fiscal_position, 
                                                                  date_planned, name, price_unit, notes)
-        
-        # Remove the warning message if the product has no staged pricelist
+
 #        if res.get('warning'):
 #            supplier_info = self.pool.get('product.supplierinfo').search(cr, uid, [('product_id', '=', product)])
 #            product_pricelist = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('suppinfo_id', 'in', supplier_info)])
@@ -2335,6 +2360,17 @@ class purchase_order_line(osv.osv):
             res['value'].update({'price_unit': 0.00, 'old_price_unit': 0.00})
         elif not product and not comment and not nomen_manda_0:
             res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})
+
+
+        if context and context.get('categ') and product:
+            # Check consistency of product
+            consistency_message = self.pool.get('product.product').check_consistency(cr, uid, product, context.get('categ'), context=context)
+            if consistency_message:
+                res.setdefault('warning', {})
+                res['warning'].setdefault('title', 'Warning')
+                res['warning'].setdefault('message', '')
+
+                res['warning']['message'] = '%s \n %s' % (res.get('warning', {}).get('message', ''), consistency_message)
         
         return res
 
@@ -2428,8 +2464,9 @@ class purchase_order_group(osv.osv_memory):
     
     _columns = {
         'po_value_id': fields.many2one('purchase.order', string='Template PO', help='All values in this PO will be used as default values for the merged PO'),
+        'unmatched_categ': fields.boolean(string='Unmatched categories'),
     }
-    
+
     def default_get(self, cr, uid, fields, context=None):
         res = super(purchase_order_group, self).default_get(cr, uid, fields, context=context)
         if context.get('active_model','') == 'purchase.order' and len(context['active_ids']) < 2:
@@ -2437,6 +2474,13 @@ class purchase_order_group(osv.osv_memory):
             _('Please select multiple order to merge in the list view.'))
             
         res['po_value_id'] = context['active_ids'][-1]
+
+        categories = set()
+        for po in self.pool.get('purchase.order').read(cr, uid, context['active_ids'], ['categ'], context=context):
+            categories.add(po['categ'])
+
+        if len(categories) > 1:
+            res['unmatched_categ'] = True
         
         return res
     
@@ -2498,6 +2542,51 @@ class product_product(osv.osv):
         'price': fields.function(_product_price, method=True, type='float', string='Pricelist', digits_compute=dp.get_precision('Sale Price')),
     }
     
+    def check_consistency(self, cr, uid, product_id, category, context=None):
+        '''
+        Check the consistency of product according to category
+        '''
+        context = context or {}
+        display_message = False
+
+        # No check for Other
+        if category == 'other':
+            return False
+
+        product = self.read(cr, uid, product_id, ['nomen_manda_0', 'type', 'transport_ok'], context=context)
+        transport_product = product['transport_ok']
+        product_type = product['type']
+        main_type = product['nomen_manda_0'][0]
+
+        if category == 'medical':
+            try:
+                med_nomen = self.pool.get('product.nomenclature').search(cr, uid, [('level', '=', 0), ('name', '=', 'MED')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('MED nomenclature Main Type not found'))
+
+            if main_type != med_nomen:
+                display_message = True
+
+        if category == 'log':
+            try:
+                log_nomen = self.pool.get('product.nomenclature').search(cr, uid, [('level', '=', 0), ('name', '=', 'LOG')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('LOG nomenclature Main Type not found'))
+
+            if main_type != log_nomen:
+                display_message = True
+
+        if category == 'service' and product_type != 'service_recep':
+           display_message = True
+
+        if category == 'transport' and (product_type != 'service_recep' or not transport_product):
+            display_message = True
+
+        if display_message:
+            return 'Warning you are about to add a product which does not conform to this PO’s order category, do you wish to proceed ?'
+        else:
+            return False
+
 product_product()
 
 class account_invoice(osv.osv):
@@ -2509,5 +2598,87 @@ class account_invoice(osv.osv):
     }
     
 account_invoice()
+
+
+class res_partner(osv.osv):
+    _inherit = 'res.partner'
+
+    def address_multiple_get(self, cr, uid, ids, adr_pref=['default']):
+        address_obj = self.pool.get('res.partner.address')
+        address_ids = address_obj.search(cr, uid, [('partner_id', '=', ids)])
+        address_rec = address_obj.read(cr, uid, address_ids, ['type'])
+        res= {}
+        for addr in address_rec:
+            res.setdefault(addr['type'], [])
+            res[addr['type']].append(addr['id'])
+        if res:
+            default_address = res.get('default', False)
+        else:
+            default_address = False
+        result = {}
+        for a in adr_pref:
+            result[a] = res.get(a, default_address)
+        
+        return result
+
+res_partner()
+
+
+class res_partner_address(osv.osv):
+    _inherit = 'res.partner.address'
+
+    def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for id in ids:
+            res[id] = True
+
+        return res
+
+    def _src_address(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns all the destination addresses of a partner or all default
+        addresses if he hasn't destination addresses
+        '''
+        addr_obj = self.pool.get('res.partner.address')
+        partner_obj = self.pool.get('res.partner')
+        user_obj = self.pool.get('res.users')
+        res = []
+
+        for arg in args:
+            if arg[0] == 'dest_address':
+                addr_type = 'delivery'
+            elif arg[0] == 'inv_address':
+                addr_type = 'invoice'
+                
+            if arg[2]:
+                partner_id = arg[2]
+            else:
+                partner_id = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id
+                if arg[1] == 'in':
+                    partner_id = [partner_id]
+            
+            addr_ids = []
+            if isinstance(partner_id, list):
+                for partner in partner_id:
+                    if not partner:
+                        continue
+                    addr_ids.extend(partner_obj.address_multiple_get(cr, uid, partner, [addr_type])[addr_type])
+
+            else:
+                addr_ids = partner_obj.address_multiple_get(cr, uid, partner_id, [addr_type])[addr_type]
+
+            res.append(('id', 'in', list(id for id in addr_ids if id)))
+
+        return res
+    
+    _columns = {
+        'dest_address': fields.function(_get_dummy, fnct_search=_src_address, method=True,
+                                           type='boolean', string='Dest. Address', store=False),
+        'inv_address': fields.function(_get_dummy, fnct_search=_src_address, method=True,
+                                           type='boolean', string='Invoice Address', store=False),
+    }
+    
+
+res_partner_address()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

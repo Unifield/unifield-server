@@ -90,7 +90,10 @@ class account_commitment(osv.osv):
             vals.update({'period_id': period_ids and period_ids[0]})
         # UTP-317 # Check that no inactive partner have been used to create this commitment
         if 'partner_id' in vals:
-            partner = self.pool.get('res.partner').browse(cr, uid, [vals.get('partner_id')])
+            partner_id = vals.get('partner_id')
+            if isinstance(partner_id, (str)):
+                partner_id = int(partner_id)
+            partner = self.pool.get('res.partner').browse(cr, uid, [partner_id])
             active = True
             if partner and partner[0] and not partner[0].active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))

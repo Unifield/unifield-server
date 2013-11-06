@@ -417,6 +417,12 @@ class product_product(osv.osv):
         # fetch the product
         if 'type' in vals and vals['type'] != 'product':
             vals.update(subtype='single')
+            
+            
+        #UF-2170: remove the standard price value from the list if the value comes from the sync
+        if 'standard_price' in vals and context and context.get('sync_update_execution'):
+            del vals['standard_price']
+        
 #        if 'type' in vals and vals['type'] == 'consu':
 # Remove these two lines to display the warning message of the constraint
 #        if vals.get('type') == 'consu':

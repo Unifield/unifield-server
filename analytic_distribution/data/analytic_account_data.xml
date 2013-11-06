@@ -51,6 +51,7 @@
             <field name="active">True</field>
             <field name="category">FUNDING</field>
             <field name="parent_id" ref="analytic_distribution.analytic_account_funding_pool"/>
+            <field name="date_start" eval="time.strftime('%Y-01-01')"/>
         </record>
         
         <record id="analytic_account_destination" model="account.analytic.account">
@@ -59,6 +60,7 @@
             <field name="type">view</field>
             <field name="active">True</field>
             <field name="category">DEST</field>
+            <field name="date_start" eval="time.strftime('%Y-01-01')"/>
         </record>
         
         <record id="analytic_account_destination_operation" model="account.analytic.account">
@@ -68,6 +70,7 @@
             <field name="active">True</field>
             <field name="category">DEST</field>
             <field name="parent_id" ref="analytic_account_destination"/>
+            <field name="date_start" eval="time.strftime('%Y-01-01')"/>
         </record>
         
         <record id="analytic_account_destination_support" model="account.analytic.account">
@@ -77,6 +80,7 @@
             <field name="active">True</field>
             <field name="category">DEST</field>
             <field name="parent_id" ref="analytic_account_destination"/>
+            <field name="date_start" eval="time.strftime('%Y-01-01')"/>
         </record>
         
         <record id="analytic_account_destination_national_staff" model="account.analytic.account">
@@ -86,6 +90,7 @@
             <field name="active">True</field>
             <field name="category">DEST</field>
             <field name="parent_id" ref="analytic_account_destination"/>
+            <field name="date_start" eval="time.strftime('%Y-01-01')"/>
         </record>
         
         <record id="analytic_account_destination_expatriates" model="account.analytic.account">
@@ -95,6 +100,7 @@
             <field name="active">True</field>
             <field name="category">DEST</field>
             <field name="parent_id" ref="analytic_account_destination"/>
+            <field name="date_start" eval="time.strftime('%Y-01-01')"/>
         </record>
     <!-- END OF WARNING -->
 

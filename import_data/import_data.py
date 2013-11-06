@@ -267,6 +267,9 @@ class import_data(osv.osv_memory):
                         ids_to_update = impobj.search(cr, uid, [('default_code', '=', data['default_code'])])
                     
                     if ids_to_update:
+                        #UF-2170: remove the standard price value from the list for update product case
+                        if 'standard_price' in data:
+                            del data['standard_price']
                         impobj.write(cr, uid, ids_to_update, data)
                         nb_update_success += 1
                         cr.commit()
