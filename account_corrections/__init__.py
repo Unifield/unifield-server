@@ -23,5 +23,7 @@
 
 import account_move_line
 import wizard
+import account_analytic_line
+import account_invoice
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
