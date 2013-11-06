@@ -324,7 +324,7 @@ class analytic_line(osv.osv):
                     # First reverse line
                     rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], posting_date=date)
                     # UTP-943: Shoud have a correction journal on these lines
-                    self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'journal_id': correction_journal_id})
+                    self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'journal_id': correction_journal_id, 'is_reversal': True, 'reversal_origin': aline.id, 'last_corrected_id': False})
                     # UTP-943: Check that period is open
                     correction_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date, context=context)
                     if not correction_period_ids:
@@ -333,8 +333,9 @@ class analytic_line(osv.osv):
                         if p.state != 'draft':
                             raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (p.name,))
                     # then create new lines
-                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
+                    cor_ids = self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
                         'source_date': aline.source_date or aline.date, 'journal_id': correction_journal_id}, context=context)
+                    self.pool.get('account.analytic.line').write(cr, uid, cor_ids, {'last_corrected_id': aline.id})
                     # finally flag analytic line as reallocated
                     self.pool.get('account.analytic.line').write(cr, uid, [aline.id], {'is_reallocated': True})
             else:

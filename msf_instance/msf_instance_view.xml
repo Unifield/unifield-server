@@ -125,6 +125,7 @@
             <field name="model">account.analytic.line</field>
             <field name="type">tree</field>
             <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
+            <field name="priority" eval="18"/>
             <field name="arch" type="xml">
                 <field name="journal_id" position="before">
                     <field name="instance_id" readonly="1"/>
@@ -294,6 +295,20 @@
                 <field name="journal_id" position="before">
                     <field name="instance_id" readonly="1"/>
                 </field>
+            </field>
+        </record>
+
+        <record id="view_move_line_tree_from_move_inherit" model="ir.ui.view">
+            <field name="name">account.move.line.tree.from.move.inherit</field>
+            <field name="model">account.move.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="register_accounting.view_move_line_tree_from_move"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='is_corrigible']" position="before">
+                        <field name="instance_id" readonly="1"/>
+                    </xpath>
+                </data>
             </field>
         </record>
 
