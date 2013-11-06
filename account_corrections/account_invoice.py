@@ -25,7 +25,6 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from time import strftime
-from tools.misc import flatten
 
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
@@ -40,14 +39,16 @@ class account_invoice_line(osv.osv):
         if context is None:
             context = {}
         res = {}
+
+        def has_ana_reallocated(move):
+            for ml in move.move_lines or []:
+                for al in ml.analytic_lines or []:
+                    if al.is_reallocated:
+                        return True
+            return False
+
         for il in self.browse(cr, uid, ids, context=context):
-            res[il.id] = False
-            if il.move_lines:
-                for ml in il.move_lines:
-                    if ml.analytic_lines:
-                        for al in ml.analytic_lines:
-                            if al.is_reallocated:
-                                res[il.id] = True
+            res[il.id] = has_ana_reallocated(il)
         return res
 
     _columns = {
@@ -77,8 +78,8 @@ class account_invoice_line(osv.osv):
             if il.move_lines:
                 for ml in il.move_lines:
                     if ml.analytic_lines:
-                        al_ids.append([x.id for x in ml.analytic_lines])
-        return self.pool.get('account.analytic.line').button_open_analytic_corrections(cr, uid, flatten(al_ids), context=context)
+                        al_ids += [x.id for x in ml.analytic_lines]
+        return self.pool.get('account.analytic.line').button_open_analytic_corrections(cr, uid, al_ids, context=context)
 
 account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
