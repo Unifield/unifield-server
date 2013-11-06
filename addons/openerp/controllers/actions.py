@@ -35,6 +35,7 @@ from selection import Selection
 from tree import Tree
 from wizard import Wizard
 import urllib
+import re
 
 def execute_window(view_ids, model, res_id=False, domain=None, view_type='form', context=None,
                    mode='form,tree', name=None, target=None, limit=None, search_view=None,
@@ -191,7 +192,7 @@ def execute_report(name, **data):
             # Only 5 first document name on report name to avoid too long report name
             for str_name in rpc.RPCProxy(datas['model']).read(ids[0:5], ['name']):
                 doc_name = '%s%s_' % (doc_name, str_name['name'])
-            report_letters = ''.join(word[0] for word in input.split()).upper()
+            report_letters = ''.join(item[0].upper() for item in re.findall("\w+", report_name))
             report_name = '%s_%s' % (report_letters, doc_name[:-1])
         elif datas.get('context', {}).get('_terp_view_name'):
             report_name = datas['context']['_terp_view_name']
