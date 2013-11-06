@@ -60,7 +60,7 @@
                             <field domain="[('company_id', '=', company_id),('type','=', 'receivable')]" name="account_id" />
                             <field name="name"/>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
-                                <tree editable="top" string="Invoice Line" noteditable="1" hide_new_button="1" colors="red: inactive_product == True">
+                                <tree editable="top" string="Invoice Line" noteditable="1" hide_new_button="1">
                                     <field name="name"/>
                                     <field name="account_id" />
                                     <field name="quantity"/>
@@ -183,7 +183,7 @@
                             <label string="" colspan="2"/>
                             <field name="check_total" required="2"/>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
-                                <tree editable="top" string="Donation Lines" noteditable="1" hide_new_button="1" colors="red: inactive_product == True">
+                                <tree editable="top" string="Donation Lines" noteditable="1" hide_new_button="1">
                                     <field name="line_number"/>
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
@@ -283,7 +283,7 @@
                             <field name="name" string="Reference"/>
                             <newline/>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
-                                <tree editable="top" string="Intermission Voucher Lines" hide_new_button="1" colors="red: inactive_product == True">
+                                <tree editable="top" string="Intermission Voucher Lines" hide_new_button="1">
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
                                     <field name="name"/>

@@ -11,7 +11,7 @@
                 <form string="Down Payment">
                     <separator string="Message" colspan="4"/>
                     <newline/>
-                    <label string="Please choose the PO from which this payment is down." align="0.0" colspan="4"/>
+                    <label string="Please choose the PO for this down payment." align="0.0" colspan="4"/>
                     <newline/>
                     <separator string="Your Selection" colspan="4"/>
                     <newline/>

@@ -25032,7 +25032,7 @@ msgstr "Falta ubicación "
 
 #. module: account_invoice_split
 #: view:wizard.split.invoice:0
-msgid "Select the lines to be splitted; the wizard will create a new invoice and adjust the original one."
+msgid "Select the lines to be split; the wizard will create a new invoice and adjust the original one."
 msgstr "Seleccione las líneas que desea dividir, el asistente creará una nueva factura y ajustará la original."
 
 #. module: product
