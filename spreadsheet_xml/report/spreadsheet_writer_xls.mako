@@ -76,7 +76,9 @@ x:FullRows="1">
             % if h[1] == 'bool':
                 <Data ss:Type="Boolean">${result=='True' and '1' or '0'}</Data>
             % elif h[1] in ('number', 'int', 'float'):
-                % if not isinstance(result, bool): 
+                % if isinstance(result, tuple):
+                    <Data ss:Type="${result[1]}">${result[0]}</Data>
+                % elif not isinstance(result, bool): 
                     <Data ss:Type="Number">${result}</Data>
                 % else:
                     <Data ss:Type="String"></Data>

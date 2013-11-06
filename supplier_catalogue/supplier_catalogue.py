@@ -338,27 +338,23 @@ class supplier_catalogue(osv.osv):
         Export lines with errors in a file.
         Warning: len(columns_header) == len(lines_not_imported)
         """
-#        columns_header = [('Product code*', 'string'), ('Product description', 'string'), ('Product UoM*', 'string'),
-#                          ('Min Quantity*', 'number'), ('Unit Price*', 'number'), ('Rounding', 'number'), ('Min Order Qty', 'number'),
-#                          ('Comment', 'string')]
-        columns_header = []
+        columns_header = [('Product code*', 'string'), ('Product description', 'string'), ('Product UoM*', 'string'),
+                          ('Min Quantity*', 'number'), ('Unit Price*', 'number'), ('Rounding', 'number'), ('Min Order Qty', 'number'),
+                          ('Comment', 'string')]
         lines_not_imported = [] # list of list
         date_fields = []
         t_dt = type(now())
         for line in kwargs.get('line_with_error'):
-            # Compute headers
-            if len(line) > len(columns_header):
-                for f in line[len(columns_header):]:
-                    columns_header.append(('Col', _HEADER_TYPE.get(type(f), 'string')))
-
             for f in line:
                 if type(f) == t_dt:
                     line[line.index(f)] = f.strftime('%Y-%m-%d %H:%M:%S')
+                elif isinstance(f, str) and columns_header[line.index(f)][1] != 'string':
+                    try:
+                        line[line.index(f)] = (float(f), 'Number')
+                    except:
+                        line[line.index(f)] = (f, 'String')
 
-            if len(line) < len(columns_header):
-                lines_not_imported.append(line + ['' for x in range(len(columns_header)-len(line))])
-            else:
-                lines_not_imported.append(line)
+            lines_not_imported.append(line)
 
         files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
         vals = {'data': base64.encodestring(files_with_error.get_xml(['decode.utf8'])),
