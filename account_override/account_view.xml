@@ -14,6 +14,8 @@
                 <data>
                     <xpath expr="/tree/field[@name='name']" position="before">
                         <field name="line_number"/>
+                        <field name="is_corrected" invisible="1"/>
+                        <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
                     </xpath>
                 </data>
             </field>
@@ -272,7 +274,7 @@
             <field name='inherit_id' ref='account.view_account_form' />
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='user_type']" position="after">
-                    <field name="is_settled_at_hq"/>
+                    <field name="shrink_entries_for_hq"/>
                 </xpath>
             </field>
         </record>

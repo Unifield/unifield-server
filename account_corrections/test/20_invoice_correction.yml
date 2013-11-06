@@ -1,4 +1,38 @@
 -
+  I create an invoice
+-
+  !record {model: account.invoice, id: invoice_account_correction_1}:
+    account_id: account.a_pay
+    address_contact_id: base.res_partner_address_3000
+    address_invoice_id: base.res_partner_address_3000
+    check_total: 250.0
+    company_id: base.main_company
+    currency_id: base.EUR
+    journal_id: account.expenses_journal
+    partner_id: base.res_partner_desertic_hispafuentes
+    reference_type: none
+    type: in_invoice
+    analytic_distribution_id: distrib_1
+    date_invoice: !eval datetime.today().strftime('%Y-%m-%d')
+-
+  Then I add an invoice line in order it takes analytic distribution from invoice
+-
+  !python {model: account.invoice.line}: |
+    vals = {
+        'account_id': ref('account_6101'),
+        'name': 'Product PC1',
+        'price_unit': 50.0,
+        'product_id': ref('product11'),
+        'quantity': 5.0,
+        'uos_id': ref('product.product_uom_unit'),
+        'invoice_id': ref('account_corrections.invoice_account_correction_1'),
+    }
+    self.create(cr, uid, vals)
+-
+  I validate the invoice
+-
+  !workflow {model: account.invoice, ref: invoice_account_correction_1, action: invoice_open}
+-
   In order to test Account Correction Wizard, I search a move line and launch the wizard on it
 -
   !python {model: account.move.line}: |
@@ -23,7 +57,7 @@
         # Update wizard date
         date = self.onchange_date(cr, uid, wiz.id, wiz.move_line_id.date)
         for line in wiz.to_be_corrected_ids:
-            self.pool.get('wizard.journal.items.corrections.lines').write(cr, uid, [line.id], {'account_id': ref('account_account_expense1')})
+            self.pool.get('wizard.journal.items.corrections.lines').write(cr, uid, [line.id], {'account_id': ref('account_6102')})
         # Click on correct button to validate changes
         self.action_confirm(cr,  uid, [wiz.id])
 -

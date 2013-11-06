@@ -482,9 +482,13 @@ class ir_sequence(osv.osv):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
         parent_id = company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.parent_id
         code = company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.po_fo_cost_center_id and company.instance_id.po_fo_cost_center_id.code or ''
+        parent_seen = []
         while parent_id:
             code = parent_id.po_fo_cost_center_id and parent_id.po_fo_cost_center_id.code or ''
             parent_id = parent_id.parent_id or False
+            if parent_id in parent_seen:
+                raise osv.except_osv(_('Error'), _('Loop detected in Proprietary Instance tree, you should have a top level instance without any parent.'))
+            parent_seen.append(parent_id)
         return code
 
 
@@ -506,6 +510,7 @@ class ir_sequence(osv.osv):
             data['instance'] = self._get_instance(cr, uid)
         if s and '%(hqcode)s' in s:
             data['hqcode'] =  self._get_hqcode(cr, uid)
+        
         return (s or '') % data
 ir_sequence()
 

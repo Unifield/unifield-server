@@ -38,8 +38,9 @@
     ],
     "demo_xml" : [],
     "test": [
-        'test/account_data.yml',
-        'test/invoice_correction.yml'
+        'test/10_account_data.yml',
+        'test/20_invoice_correction.yml',
+        'test/30_analytical_changes.yml'
     ],
     "installable": True,
     "active": False

@@ -935,6 +935,52 @@ class account_bank_statement_line(osv.osv):
             return open_register_view(self, cr, uid, st_line.statement_id.id)
         raise osv.except_osv(_('Warning'), _('You have to select some line to return to a register.'))
 
+    def get_analytic_lines(self, cr, uid, ids, context=None):
+        """
+        Give all analytic lines linked to the given register line(s)
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not 'active_ids' in context or not context.get('active_ids', False):
+            raise osv.except_osv(_('Error'), _('No line selected!'))
+        # Use right register line IDS
+        ids = context.get('active_ids')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Check which move_id to use
+        move_ids = []
+        for absl in self.browse(cr, uid, ids):
+            if absl.move_ids:
+                # Default ones (direct link to register lines)
+                for m in absl.move_ids:
+                    if m.id not in move_ids:
+                        move_ids.append(m.id)
+                    # Those from cash advance return (we should use the reconciliation to find the return and its expenses)
+                    for ml in m.line_id:
+                        if ml.reconcile_id and ml.reconcile_id.line_id:
+                            for line in ml.reconcile_id.line_id:
+                                if line.move_id and line.move_id.id and line.move_id.id not in move_ids:
+                                    move_ids.append(line.move_id.id)
+            # Those from pending payments (imported_invoice_line_ids are move_line)
+            if absl.imported_invoice_line_ids:
+                for ml in absl.imported_invoice_line_ids:
+                    if ml.move_id and ml.move_id.id not in move_ids:
+                        move_ids.append(ml.move_id.id)
+        # Search valid ids
+        domain = [('account_id.category', '=', 'FUNDING'), ('move_id.move_id', 'in', move_ids)]
+        context.update({'display_fp': True}) # to display "Funding Pool" column name instead of "Analytic account"
+        return {
+            'name': _('Analytic Journal Items'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.analytic.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
+
     def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
         """
         Create move from the register line
@@ -1715,8 +1761,14 @@ class account_bank_statement_line(osv.osv):
             elif absl.state == "temp" and postype == "temp":
                 raise osv.except_osv(_('Warning'), _('You can\'t temp re-post a temp posted entry !'))
 
-            # Analytic distribution
-            # Check analytic distribution presence
+            # Some checks
+            ## Journal presence for transfers cases - because of UF-1982 migration without journals
+            if absl.account_id.type_for_register in ['transfer', 'transfer_same'] and not absl.transfer_journal_id:
+                raise osv.except_osv(_('Error'), _('Please give a transfer journal!'))
+            ## Employee presence for operational advance
+            if absl.account_id.type_for_register == 'advance' and not absl.employee_id:
+                raise osv.except_osv(_('Error'), _('Please give an employee!'))
+            ## Analytic distribution presence
             if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
                 raise osv.except_osv(_('Error'), _('Analytic distribution is mandatory for this line: %s') % (absl.name or '',))
             # Check analytic distribution validity
@@ -1780,6 +1832,17 @@ class account_bank_statement_line(osv.osv):
         Write some statement lines into some account move lines in draft state.
         """
         return self.posting(cr, uid, ids, 'temp', context=context)
+
+    def button_analytic_lines(self, cr, uid, ids, context=None):
+        """
+        Give analytic lines linked to the given register lines
+        """
+        if not context:
+            context = {}
+        # Update context
+        context.update({'active_ids': ids})
+        # Return result of action named "Analytic Lines" on register lines
+        return self.get_analytic_lines(cr, uid, ids, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
         """

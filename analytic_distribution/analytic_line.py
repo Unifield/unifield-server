@@ -101,17 +101,28 @@ class analytic_line(osv.osv):
             context = {}
         # Prepare some values
         res = {}
+        period_obj = self.pool.get('account.period')
         for al in self.browse(cr, uid, ids, context):
             res[al.id] = False
-            if al.commitment_line_id and al.commitment_line_id.commit_id and al.commitment_line_id.commit_id.period_id:
-                res[al.id] = al.commitment_line_id.commit_id.period_id.id
-            elif al.move_id and al.move_id.period_id:
-                res[al.id] = al.move_id.period_id.id
+            # UTP-943: Since this ticket, we search period regarding analytic line posting date.
+            period_ids = period_obj.get_period_from_date(cr, uid, date=al.date)
+            if period_ids:
+                res[al.id] = period_ids[0]
         return res
 
     def _search_period_id(self, cr, uid, obj, name, args, context=None):
         """
-        Search period
+        Search period regarding date.
+        First fetch period date_start and date_stop.
+        Then check that analytic line have a posting date bewteen these two date.
+        Finally do this check as "OR" for each given period.
+        Examples:
+        - Just january:
+        ['&', ('date', '>=', '2013-01-01'), ('date', '<=', '2013-01-31')]
+        - January + February:
+        ['|', '&', ('date', '>=', '2013-01-01'), ('date', '<=', '2013-01-31'), '&', ('date', '>=', '2013-02-01'), ('date', '<=', '2013-02-28')]
+        - January + February + March
+        ['|', '|', '&', ('date', '>=', '2013-01-01'), ('date', '<=', '2013-01-31'), '&', ('date', '>=', '2013-02-01'), ('date', '<=', '2013-02-28'), '&', ('date', '>=', '2013-03-01'), ('date', '<=', '2013-03-31')]
         """
         # Checks
         if not context:
@@ -119,18 +130,53 @@ class analytic_line(osv.osv):
         if not args:
             return []
         new_args = []
+        period_obj = self.pool.get('account.period')
         for arg in args:
             if len(arg) == 3 and arg[1] in ['=', 'in']:
-                new_args.append('|')
-                new_args.append(('move_id.period_id', arg[1], arg[2]))
-                new_args.append(('commitment_line_id.commit_id.period_id', arg[1], arg[2]))
+                periods = arg[2]
+                if isinstance(periods, (int, long)):
+                    periods = [periods]
+                if len(periods) > 1:
+                    for i in range(len(periods) - 1):
+                        new_args.append('|')
+                for p_id in periods:
+                    period = period_obj.browse(cr, uid, [p_id])[0]
+                    new_args.append('&')
+                    new_args.append(('date', '>=', period.date_start))
+                    new_args.append(('date', '<=', period.date_stop))
         return new_args
+
+    def _get_from_commitment_line(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Check if commitment_line_id is filled in. If yes, True. Otherwise False.
+        """
+        if not context:
+            context = {}
+        res = {}
+        for al in self.browse(cr, uid, ids, context=context):
+            res[al.id] = False
+            if al.commitment_line_id:
+                res[al.id] = True
+        return res
+
+    def _get_is_unposted(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Check journal entry state. If unposted: True, otherwise False.
+        """
+        if not context:
+            context = {}
+        res = {}
+        for al in self.browse(cr, uid, ids, context=context):
+            res[al.id] = False
+            if al.move_state != 'posted':
+                res[al.id] = True
+        return res
 
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]"),
         'commitment_line_id': fields.many2one('account.commitment.line', string='Commitment Voucher Line', ondelete='cascade'),
-        'from_write_off': fields.boolean(string='From write-off account line?', readonly=True, help="Indicates that this line come from a write-off account line."),
+        'from_write_off': fields.boolean(string='Write-off?', readonly=True, help="Indicates that this line come from a write-off account line."),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]"),
         'is_fp_compat_with': fields.function(_get_fake_is_fp_compat_with, fnct_search=_search_is_fp_compat_with, method=True, type="char", size=254, string="Is compatible with some FP?"),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
@@ -139,6 +185,8 @@ class analytic_line(osv.osv):
             help="Indicates the Journal Type of the Analytic journal item"),
         'entry_sequence': fields.function(_get_entry_sequence, method=True, type='text', string="Entry Sequence", readonly=True, store=True),
         'period_id': fields.function(_get_period_id, fnct_search=_search_period_id, method=True, string="Period", readonly=True, type="many2one", relation="account.period", store=False),
+        'from_commitment_line': fields.function(_get_from_commitment_line, method=True, type='boolean', string="Commitment?"),
+        'is_unposted': fields.function(_get_is_unposted, method=True, type='boolean', string="Unposted?"),
     }
 
     _defaults = {
@@ -253,6 +301,10 @@ class analytic_line(osv.osv):
         # Prepare some value
         account = self.pool.get('account.analytic.account').browse(cr, uid, [account_id], context)[0]
         context.update({'from': 'mass_reallocation'}) # this permits reallocation to be accepted when rewrite analaytic lines
+        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+        correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
+        if not correction_journal_id:
+            raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
         # Process lines
         for aline in self.browse(cr, uid, ids, context=context):
             if account.category in ['OC', 'DEST']:
@@ -264,16 +316,26 @@ class analytic_line(osv.osv):
                     fieldname = 'destination_id'
                 # if period is not closed, so override line.
                 if period and period.state not in ['done', 'mission-closed']:
-                    # Update account
-                    self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': date, 
+                    # Update account # Date: UTP-943 speak about original date for non closed periods
+                    self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': aline.date, 
                         'source_date': aline.source_date or aline.date}, context=context)
                 # else reverse line before recreating them with right values
                 else:
                     # First reverse line
-                    self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id])
+                    rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], posting_date=date)
+                    # UTP-943: Shoud have a correction journal on these lines
+                    self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'journal_id': correction_journal_id, 'is_reversal': True, 'reversal_origin': aline.id, 'last_corrected_id': False})
+                    # UTP-943: Check that period is open
+                    correction_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date, context=context)
+                    if not correction_period_ids:
+                        raise osv.except_osv(_('Error'), _('No period found for this date: %s') % (date,))
+                    for p in self.pool.get('account.period').browse(cr, uid, correction_period_ids, context=context):
+                        if p.state != 'draft':
+                            raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (p.name,))
                     # then create new lines
-                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
-                        'source_date': aline.source_date or aline.date}, context=context)
+                    cor_ids = self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
+                        'source_date': aline.source_date or aline.date, 'journal_id': correction_journal_id}, context=context)
+                    self.pool.get('account.analytic.line').write(cr, uid, cor_ids, {'last_corrected_id': aline.id})
                     # finally flag analytic line as reallocated
                     self.pool.get('account.analytic.line').write(cr, uid, [aline.id], {'is_reallocated': True})
             else:
@@ -307,8 +369,12 @@ class analytic_line(osv.osv):
         date_stop = account and account.get('date', False) or False
         # Date verification for all lines and fetch all necessary elements sorted by analytic distribution
         for aline in self.browse(cr, uid, ids):
+            # UTP-800: Change date comparison regarding FP. If FP, use document date. Otherwise use date.
+            aline_cmp_date = aline.date
+            if account_type == 'FUNDING':
+                aline_cmp_date = aline.document_date
             # Add line to expired_date if date is not in date_start - date_stop
-            if (date_start and aline.date < date_start) or (date_stop and aline.date > date_stop):
+            if (date_start and aline_cmp_date < date_start) or (date_stop and aline_cmp_date > date_stop):
                 expired_date_ids.append(aline.id)
         # Process regarding account_type
         if account_type == 'OC':

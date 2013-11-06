@@ -440,17 +440,19 @@ class purchase_order(osv.osv):
 #            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
         else:
             v['invoice_method'] = 'picking'
+
+        company_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id
         
-        if order_type == 'direct' and dest_partner_id:
+        if order_type == 'direct' and dest_partner_id and dest_partner_id != company_id:
             cp_address_id = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])['delivery']
             v.update({'dest_address_id': cp_address_id})
 #            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
         elif order_type == 'direct':
-            v.update({'dest_address_id': False})
+            v.update({'dest_address_id': False, 'dest_partner_id': False})
 #            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
         else:
-            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id, ['delivery'])['delivery']
-            v.update({'dest_address_id': cp_address_id})
+            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, company_id, ['delivery'])['delivery']
+            v.update({'dest_address_id': cp_address_id, 'dest_partner_id': company_id})
 #            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
 
         if partner_id and partner_id != local_market:
@@ -560,14 +562,15 @@ class purchase_order(osv.osv):
         
         if not dest_partner_id:
             v.update({'dest_address_id': False})
-            d.update({'dest_address_id': [('partner_id', '=', company_id)]})
+#            d.update({'dest_address_id': [('partner_id', '=', company_id)]})
         else:
-            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
+#            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
         
             delivery_addr = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])
             v.update({'dest_address_id': delivery_addr['delivery']})
         
-        return {'value': v, 'domain': d}
+#        return {'value': v, 'domain': d}
+        return {'value': v}
     
     def change_currency(self, cr, uid, ids, context=None):
         '''
@@ -1270,10 +1273,10 @@ stock moves which are already processed : '''
         return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
 
     def need_counterpart(self, cr, uid, ids, context=None):
-        res = True
+        res = False
         for po in self.browse(cr, uid, ids, context=context):
-            if (po.order_type == 'loan' and not po.loan_id and po.partner_id.partner_type in ('internal', 'intermission')) or po.is_a_counterpart:
-                res = False
+            if po.order_type == 'loan' and not po.loan_id and not po.is_a_counterpart and po.partner_id.partner_type not in ('internal', 'intermission'):
+                res = True
 
         return res
 
@@ -2595,5 +2598,87 @@ class account_invoice(osv.osv):
     }
     
 account_invoice()
+
+
+class res_partner(osv.osv):
+    _inherit = 'res.partner'
+
+    def address_multiple_get(self, cr, uid, ids, adr_pref=['default']):
+        address_obj = self.pool.get('res.partner.address')
+        address_ids = address_obj.search(cr, uid, [('partner_id', '=', ids)])
+        address_rec = address_obj.read(cr, uid, address_ids, ['type'])
+        res= {}
+        for addr in address_rec:
+            res.setdefault(addr['type'], [])
+            res[addr['type']].append(addr['id'])
+        if res:
+            default_address = res.get('default', False)
+        else:
+            default_address = False
+        result = {}
+        for a in adr_pref:
+            result[a] = res.get(a, default_address)
+        
+        return result
+
+res_partner()
+
+
+class res_partner_address(osv.osv):
+    _inherit = 'res.partner.address'
+
+    def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for id in ids:
+            res[id] = True
+
+        return res
+
+    def _src_address(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns all the destination addresses of a partner or all default
+        addresses if he hasn't destination addresses
+        '''
+        addr_obj = self.pool.get('res.partner.address')
+        partner_obj = self.pool.get('res.partner')
+        user_obj = self.pool.get('res.users')
+        res = []
+
+        for arg in args:
+            if arg[0] == 'dest_address':
+                addr_type = 'delivery'
+            elif arg[0] == 'inv_address':
+                addr_type = 'invoice'
+                
+            if arg[2]:
+                partner_id = arg[2]
+            else:
+                partner_id = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id
+                if arg[1] == 'in':
+                    partner_id = [partner_id]
+            
+            addr_ids = []
+            if isinstance(partner_id, list):
+                for partner in partner_id:
+                    if not partner:
+                        continue
+                    addr_ids.extend(partner_obj.address_multiple_get(cr, uid, partner, [addr_type])[addr_type])
+
+            else:
+                addr_ids = partner_obj.address_multiple_get(cr, uid, partner_id, [addr_type])[addr_type]
+
+            res.append(('id', 'in', list(id for id in addr_ids if id)))
+
+        return res
+    
+    _columns = {
+        'dest_address': fields.function(_get_dummy, fnct_search=_src_address, method=True,
+                                           type='boolean', string='Dest. Address', store=False),
+        'inv_address': fields.function(_get_dummy, fnct_search=_src_address, method=True,
+                                           type='boolean', string='Invoice Address', store=False),
+    }
+    
+
+res_partner_address()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

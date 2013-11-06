@@ -23,18 +23,18 @@
                             <field name="top_cost_center_id"/>
                             <field name="po_fo_cost_center_id"/>
                         </page>
-                        <page string="Cost Centres">
-		                    <button name="button_cost_center_wizard" string="Add Cost Centres" type="object" icon="terp-document-new" attrs="{'invisible': ['|', '|', ('level', '=', 'section'), ('level', '=', 'project'), ('current_instance_level', '!=', 'section')]}"/>
+                        <page string="Cost Centers">
+		                    <button name="button_cost_center_wizard" string="Add Cost Centers" type="object" icon="terp-document-new" attrs="{'invisible': ['|', '|', ('level', '=', 'section'), ('level', '=', 'project'), ('current_instance_level', '!=', 'section')]}"/>
 		                    <group colspan="4">
 			                    <field name="target_cost_center_ids" colspan="4" nolabel="1" attrs="{'invisible': [('level', '=', 'section')]}" widget="one2many_list">
-			                        <tree editable="top" string="Cost Centres" hide_new_button="1" hide_delete_button="1">
+			                        <tree editable="top" string="Cost Centers" hide_new_button="1" hide_delete_button="1">
 	                                    <field name="cost_center_id" readonly="1"/>
 	                                    <field name="cost_center_name"/>
 			                            <field name="is_target"/>
                                         <field name="is_top_cost_center"/>
                                         <field name="is_po_fo_cost_center"/>
 			                        </tree>
-			                        <form string="Cost Centres">
+			                        <form string="Cost Centers">
 			                            <field name="cost_center_id" readonly="1"/>
                                         <field name="cost_center_name"/>
 			                            <field name="is_target"/>
@@ -125,6 +125,7 @@
             <field name="model">account.analytic.line</field>
             <field name="type">tree</field>
             <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
+            <field name="priority" eval="18"/>
             <field name="arch" type="xml">
                 <field name="journal_id" position="before">
                     <field name="instance_id" readonly="1"/>
@@ -294,6 +295,20 @@
                 <field name="journal_id" position="before">
                     <field name="instance_id" readonly="1"/>
                 </field>
+            </field>
+        </record>
+
+        <record id="view_move_line_tree_from_move_inherit" model="ir.ui.view">
+            <field name="name">account.move.line.tree.from.move.inherit</field>
+            <field name="model">account.move.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="register_accounting.view_move_line_tree_from_move"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='is_corrigible']" position="before">
+                        <field name="instance_id" readonly="1"/>
+                    </xpath>
+                </data>
             </field>
         </record>
 

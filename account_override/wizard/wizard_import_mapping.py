@@ -38,7 +38,12 @@ class wizard_import_mapping(osv.osv_memory):
         if context is None:
             context = {}
         account_obj = self.pool.get('account.account')
-        mapping_obj = self.pool.get('account.export.mapping')
+        instance_obj = self.pool.get('msf.instance')
+        # using the "active model" variable to determine which mapping is uploaded
+        if 'active_model' in context:
+            mapping_obj = self.pool.get(context['active_model'])
+        else:
+            raise osv.except_osv(_('Error'), _('The object to be imported is undertermined!'))
         
         # Delete previous lines
         mapping_ids = mapping_obj.search(cr, uid, [], context=context)
@@ -49,15 +54,26 @@ class wizard_import_mapping(osv.osv_memory):
             import_string = StringIO.StringIO(import_file)
             import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
         
-            for line in import_data[1:]:
-                if len(line) == 2:
-                    account_ids = account_obj.search(cr, uid, [('code', '=', line[0])], context=context)
-                    if len(account_ids) > 0:
-                        mapping_obj.create(cr, uid, {'account_id': account_ids[0],
-                                                     'mapping_value': line[1]}, context=context)
-                    else:
-                        raise osv.except_osv(_('Error'), _('The account code %s is not in the database!') % line[0])
-                        break
+            if context['active_model'] == 'account.export.mapping':
+                for line in import_data[1:]:
+                    if len(line) == 2:
+                        account_ids = account_obj.search(cr, uid, [('code', '=', line[0])], context=context)
+                        if len(account_ids) > 0:
+                            mapping_obj.create(cr, uid, {'account_id': account_ids[0],
+                                                         'mapping_value': line[1]}, context=context)
+                        else:
+                            raise osv.except_osv(_('Error'), _('The account code %s is not in the database!') % line[0])
+                            break
+            elif context['active_model'] == 'country.export.mapping':
+                for line in import_data[1:]:
+                    if len(line) == 2:
+                        instance_ids = instance_obj.search(cr, uid, [('code', '=', line[0])], context=context)
+                        if len(instance_ids) > 0:
+                            mapping_obj.create(cr, uid, {'instance_id': instance_ids[0],
+                                                         'mapping_value': line[1]}, context=context)
+                        else:
+                            raise osv.except_osv(_('Error'), _('The instance code %s is not in the database!') % line[0])
+                            break
                         
         return {'type': 'ir.actions.act_window_close'}
     
