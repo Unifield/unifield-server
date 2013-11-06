@@ -41,6 +41,8 @@ class import_commitment_wizard(osv.osv_memory):
         instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
         journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENGI')], context=context)
         to_be_deleted_ids = analytic_obj.search(cr, uid, [('imported_commitment', '=', True)], context=context)
+        functional_currency_obj = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id
+
         
         if len(journal_ids) > 0:
             # read file
@@ -139,8 +141,23 @@ class import_commitment_wizard(osv.osv_memory):
                             raise osv.except_osv(_('Error'), _('This currency was not found or is not active: %s') % (booking_currency,))
                         if currency_ids and currency_ids[0]:
                             vals.update({'currency_id': currency_ids[0]})
+                            # Functional currency
+                            if functional_currency_obj.name == booking_currency:
+                                vals.update({'amount': -float(booking_amount)})
+                            else:
+                                # lookup id for code
+                                line_currency_id = self.pool.get('res.currency').search(cr,uid,[('name','=',booking_currency)])[0]
+                                date_context = {'date': time.strftime('%x')}
+                                converted_amount = self.pool.get('res.currency').compute(cr,
+                                                                                         uid,
+                                                                                         line_currency_id,
+                                                                                         functional_currency_obj.id,
+                                                                                         -float(booking_amount),
+                                                                                         round=True,
+                                                                                         context=date_context)
+                                vals.update({'amount': converted_amount})
                     else:
-                        raise osv.except_osv(_('Error'), _('No booking currency found!'))
+                        raise osv.exaccount.analytic.journalcept_osv(_('Error'), _('No booking currency found!'))
                     # Fetch amount
                     if booking_amount:
                         vals.update({'amount_currency': -float(booking_amount)})
