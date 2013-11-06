@@ -342,20 +342,22 @@ class supplier_catalogue(osv.osv):
                           ('Min Quantity*', 'number'), ('Unit Price*', 'number'), ('Rounding', 'number'), ('Min Order Qty', 'number'),
                           ('Comment', 'string')]
         lines_not_imported = [] # list of list
-        date_fields = []
         t_dt = type(now())
         for line in kwargs.get('line_with_error'):
             for f in line:
                 if type(f) == t_dt:
-                    line[line.index(f)] = f.strftime('%Y-%m-%d %H:%M:%S')
-
-                if isinstance(f, str) and columns_header[line.index(f)][1] != 'string':
+                    new_f = f.strftime('%Y-%m-%dT%H:%M:%S.000')
+                    line[line.index(f)] = (new_f, 'DateTime')
+                elif isinstance(f, str) and columns_header[line.index(f)][1] != 'string':
                     try:
                         line[line.index(f)] = (float(f), 'Number')
                     except:
                         line[line.index(f)] = (f, 'String')
 
-            lines_not_imported.append(line)
+            if len(line) < len(columns_header):
+                lines_not_imported.append(line + ['' for x in range(len(columns_header)-len(line))])
+            else:
+                lines_not_imported.append(line)
 
         files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
         vals = {'data': base64.encodestring(files_with_error.get_xml(['decode.utf8'])),
