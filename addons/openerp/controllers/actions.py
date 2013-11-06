@@ -191,7 +191,8 @@ def execute_report(name, **data):
             # Only 5 first document name on report name to avoid too long report name
             for str_name in rpc.RPCProxy(datas['model']).read(ids[0:5], ['name']):
                 doc_name = '%s%s_' % (doc_name, str_name['name'])
-            report_name = doc_name[:-1]
+            report_letters = ''.join(word[0] for word in input.split()).upper()
+            report_name = '%s_%s' % (report_letters, doc_name[:-1])
         elif datas.get('context', {}).get('_terp_view_name'):
             report_name = datas['context']['_terp_view_name']
 
