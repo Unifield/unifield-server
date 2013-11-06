@@ -155,7 +155,7 @@ class import_commitment_wizard(osv.osv_memory):
                                                                                          -float(booking_amount),
                                                                                          round=True,
                                                                                          context=date_context)
-                                vals.update({'amount': converted_amount})
+                                vals.update({'amount': converted_amount}) 
                     else:
                         raise osv.exaccount.analytic.journalcept_osv(_('Error'), _('No booking currency found!'))
                     # Fetch amount
