@@ -138,33 +138,6 @@ class supplier_catalogue(osv.osv):
         '''
         if context is None:
             context = {}
-            
-        # [utp-746] ESC Supplier catalogue only from HQ instance
-        if 'partner_id' in context:
-            supplier_r = self.pool.get('res.partner').read(cr, uid,
-                                                [context['partner_id']],
-                                                ['partner_type'],
-                                                context=context)
-            if supplier_r and supplier_r[0] \
-               and supplier_r[0]['partner_type'] \
-               and supplier_r[0]['partner_type'] == 'esc':
-                users_obj = self.pool.get('res.users')
-                user_ids = users_obj.search(cr, uid, [('id','=', uid)],
-                                            context=context)
-                if user_ids:
-                    if isinstance(user_ids, (int, long)):
-                        user_ids = [user_ids]
-                    users = users_obj.browse(cr, uid, user_ids,
-                                             context=context)
-                    if users:
-                        user = users[0]
-                        if user.company_id and user.company_id.instance_id:
-                            if user.company_id.instance_id.level and \
-                                user.company_id.instance_id.level !=  'section':
-                                    raise osv.except_osv(
-                                        _('Error'),
-                                        'For an ESC Supplier you must create the catalogue on a HQ instance.'
-                                    )
 
         # Check if other catalogues need to be updated because they finished
         # after the starting date of the new catalogue.
@@ -625,13 +598,39 @@ class supplier_catalogue(osv.osv):
         return True
         
     def default_get(self, cr, uid, fields, context=None):
-        """[utp-746] ESC supplier catalogue default value"""
+        """[utp-746] ESC supplier catalogue default value
+        and catalogue create not allowed in a not HQ instance"""
         res = super(supplier_catalogue, self).default_get(cr, uid, fields, context=context)
         if 'partner_id' in context:
             res['is_esc'] = self._is_esc_from_partner_id(cr, uid,
                                                 context['partner_id'],
                                                 context=context)
             if res['is_esc']:
+                supplier_r = self.pool.get('res.partner').read(cr, uid,
+                                                    [context['partner_id']],
+                                                    ['partner_type'],
+                                                    context=context)
+                if supplier_r and supplier_r[0] \
+                   and supplier_r[0]['partner_type'] \
+                   and supplier_r[0]['partner_type'] == 'esc':
+                    users_obj = self.pool.get('res.users')
+                    user_ids = users_obj.search(cr, uid, [('id','=', uid)],
+                                                context=context)
+                    if user_ids:
+                        if isinstance(user_ids, (int, long)):
+                            user_ids = [user_ids]
+                        users = users_obj.browse(cr, uid, user_ids,
+                                                 context=context)
+                        if users:
+                            user = users[0]
+                            if user.company_id and user.company_id.instance_id:
+                                if user.company_id.instance_id.level and \
+                                    user.company_id.instance_id.level !=  'section':
+                                        raise osv.except_osv(
+                                            _('Error'),
+                                            'For an ESC Supplier you must create the catalogue on a HQ instance.'
+                                        )
+                
                 # ESC supplier catalogue: no period date
                 res['period_from'] = False
                 res['period_to'] = False
