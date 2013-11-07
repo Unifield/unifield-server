@@ -137,9 +137,16 @@ class stock_picking(osv.osv):
         so_ref = source + "." + pick_dict['origin']
         po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
         po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
-        # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
-        in_id = so_po_common.get_in_id(cr, uid, po_id, po_name, context)
         
+        # prepare the shipment/OUT reference to update to IN 
+        shipment = pick_dict.get('shipment_id', False)
+        if shipment:
+            shipment_ref = source + "." + shipment['name'] # shipment made
+        else:
+            shipment_ref = source + "." +  pick_dict.get('name', False) # the case of OUT
+        
+        # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
+        in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, 'assigned', context)
         if in_id:
             partial_datas = {}
             partial_datas[in_id] = {}
@@ -185,20 +192,30 @@ class stock_picking(osv.osv):
                     
             # for the last Shipment of an FO, no new INcoming shipment will be created --> same value as in_id
             new_picking = self.do_incoming_shipment_sync(cr, uid, in_id, partial_datas, context)            
-
-            # set the Shipment ID/OUT from the Coordo side to this IN 
-            shipment = pick_dict.get('shipment_id', False)
-            if shipment:
-                shipment_ref = source + "." + shipment['name'] # shipment made
-            else:
-                shipment_ref = source + "." +  pick_dict.get('name', False) # the case of OUT
-            self.write(cr, uid, new_picking, {'already_shipped': True, 'shipment_ref': shipment_ref}, context)
-            
             # Set the backorder reference to the IN !!!! THIS NEEDS TO BE CHECKED WITH SUPPLY PM!
             if new_picking != in_id:
                 self.write(cr, uid, in_id, {'backorder_id': new_picking}, context)
+            self.write(cr, uid, new_picking, {'already_shipped': True, 'shipment_ref': shipment_ref}, context)
             
-        return True
+            in_name = self.browse(cr, uid, new_picking, context=context)['name']
+            message = "The INcoming " + in_name + "(" + po_name + ") is now become shipped available!"
+            self._logger.info(message)
+            return message
+        else:
+            # still try to check whether this IN has already been manually processed
+            in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, 'done', context)
+            if not in_id:
+                message = "The IN linked to " + po_name + " is not found in the system!"
+                self._logger.info(message)
+                raise Exception(message)
+            
+            self.write(cr, uid, in_id, {'already_shipped': True, 'shipment_ref': shipment_ref}, context)
+            
+            in_name = self.browse(cr, uid, in_id, context=context)['name']
+            message = "The INcoming " + in_name + "(" + po_name + ") has already been MANUALLY processed!"
+            self._logger.info(message)
+            return message
+            
 
     def do_incoming_shipment_sync(self, cr, uid, in_id, partial_datas, context=None):
         '''
@@ -290,12 +307,20 @@ class stock_picking(osv.osv):
                 # set the Shipment to become delivered
                 shipment_obj.set_delivered(cr, uid, ship_ids, context=context)
                 message = "The shipment " + ship_split[1] + " has been well delivered to its partner." 
+            else:
+                ship_ids = shipment_obj.search(cr, uid, [('name', '=', ship_split[1]), ('state', '=', 'delivered')], context=context)
+                if ship_ids:
+                    message = "The shipment " + ship_split[1] + " has been MANUALLY confirmed as delivered." 
         elif 'OUT' in ship_split[1]:
             ship_ids = self.search(cr, uid, [('name', '=', ship_split[1]), ('state', '=', 'done')], context=context)
             if ship_ids:
                 # set the Shipment to become delivered
                 self.set_delivered(cr, uid, ship_ids, context=context)
                 message = "The OUTcoming " + ship_split[1] + " has been well delivered to its partner."
+            else:
+                ship_ids = self.search(cr, uid, [('name', '=', ship_split[1]), ('state', '=', 'delivered')], context=context)
+                if ship_ids:
+                    message = "The OUTcoming " + ship_split[1] + " has been MANUALLY confirmed as delivered." 
                  
         if message:
             self._logger.info(message)
@@ -353,7 +378,7 @@ class stock_picking(osv.osv):
         asset_obj = self.pool.get('product.asset')
         
         asset_dict = out_info.to_dict()
-        error_message = False
+        error_message = ""
         
         if asset_dict['instance_id'] and asset_dict['instance_id']['id']: 
             rec_id = self.pool.get('msf.instance').find_sd_ref(cr, uid, xmlid_to_sdref(asset_dict['instance_id']['id']), context=context)
@@ -362,7 +387,7 @@ class stock_picking(osv.osv):
             
                 existing_asset = asset_obj.search(cr, uid, [('name', '=', asset_dict['name']), ('instance_id', '=', rec_id)], context=context)
                 if existing_asset: # existed already, then don't need to create a new one
-                    message = "Create Asset: the given asset form exists already local instance, no new asset will be created"
+                    message = "Create Asset: the given asset form exists already at local instance, no new asset will be created"
                     self._logger.info(message)
                     return message
         
@@ -372,18 +397,24 @@ class stock_picking(osv.osv):
                         asset_dict['product_id'] = rec_id
                     else:
                         error_message = "Invalid product reference for the asset. The asset cannot be created"
-        
-                    rec_id = self.pool.get('product.asset.type').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.asset_type_id.id), context=context)
-                    if rec_id:
-                        asset_dict['asset_type_id'] = rec_id
+
+                    if out_info.asset_type_id:          
+                        rec_id = self.pool.get('product.asset.type').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.asset_type_id.id), context=context)
+                        if rec_id:
+                            asset_dict['asset_type_id'] = rec_id
+                        else:
+                            error_message += "\n Invalid asset type reference for the asset. The asset cannot be created"
                     else:
-                        error_message = "Invalid asset type reference for the asset. The asset cannot be created"
+                        error_message += "\n Invalid asset type reference for the asset. The asset cannot be created"
         
-                    rec_id = self.pool.get('res.currency').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.invo_currency.id), context=context)
-                    if rec_id:
-                        asset_dict['invo_currency'] = rec_id
+                    if out_info.invo_currency:
+                        rec_id = self.pool.get('res.currency').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.invo_currency.id), context=context)
+                        if rec_id:
+                            asset_dict['invo_currency'] = rec_id
+                        else:
+                            error_message += "\n Invalid currency reference for the asset. The asset cannot be created"
                     else:
-                        error_message = "Invalid currency reference for the asset. The asset cannot be created"
+                        error_message += "\n Invalid currency reference for the asset. The asset cannot be created"
                 else:
                     error_message = "Invalid reference to product for the asset. The asset cannot be created"
             else:
@@ -392,7 +423,7 @@ class stock_picking(osv.osv):
         # If error message exists --> raise exception and no esset will be created        
         if error_message:    
             self._logger.info(error_message)
-            raise Exception, error_message
+            raise Exception(error_message)
         
         asset_obj.create(cr, uid, asset_dict, context=context)
         message = "The new asset (" + asset_dict['name'] + ", " + source +  ") has been created"
@@ -490,7 +521,7 @@ class stock_picking(osv.osv):
         res = super(stock_picking, self)._hook_create_sync_messages(cr, uid, ids, context=context)
         for pick in self.browse(cr, uid, ids, context=context):
             partner = pick.partner_id
-            if not partner or partner.partner_type != 'internal':
+            if not partner or partner.partner_type == 'external':
                 return True
             
             list_batch = []
@@ -513,7 +544,7 @@ class stock_picking(osv.osv):
             for item in list_batch:
                 self.create_message_with_object_and_partner(cr, uid, 1001, item, partner.name, context)
 
-            # for each new batch number object and for each partner, create messages and put into the queue for sending on next sync round
+            # for each new asset object and for each partner, create messages and put into the queue for sending on next sync round
             for item in list_asset:
                 self.create_message_with_object_and_partner(cr, uid, 1002, item, partner.name, context)
 

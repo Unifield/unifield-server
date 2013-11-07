@@ -110,15 +110,13 @@ class so_po_common(osv.osv_memory):
             raise Exception, "The IN of the PO not found!"
         return in_ids[0]
 
-    def get_in_id(self, cr, uid, po_id, po_ref, context):
+    def get_in_id_by_state(self, cr, uid, po_id, po_ref, state, context):
         # Get the Id of the original PO to update these info back 
         if not po_id:
             return False
 
-        in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', '=', 'assigned')], 0, None, None, context)
-        if not in_ids:
-            raise Exception, "The IN of the PO not found! " + po_ref
-        return in_ids[0]
+        in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', '=', state)], 0, None, None, context)
+        return in_ids[0] if in_ids else False 
 
     # Update the next line number for the FO, PO that have been created by the synchro
     def update_next_line_number_fo_po(self, cr, uid, order_id, fo_po_obj, order_line_object, context):
