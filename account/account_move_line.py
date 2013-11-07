@@ -520,7 +520,9 @@ class account_move_line(osv.osv):
         'analytic_account_id': fields.many2one('account.analytic.account', 'Analytic Account'),
         #TODO: remove this
         #'amount_taxed':fields.float("Taxed Amount", digits_compute=dp.get_precision('Account')),
-        'company_id': fields.related('account_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True)
+        'company_id': fields.related('account_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
+        # UF-1536: Fix residual amount (to be checked during UNIFIELD REFACTORING)
+        'is_counterpart': fields.boolean('Is counterpart?', readonly=True),
     }
 
     def _get_date(self, cr, uid, context=None):
@@ -559,7 +561,8 @@ class account_move_line(osv.osv):
         'journal_id': lambda self, cr, uid, c: c.get('journal_id', c.get('journal',False)),
         'account_id': lambda self, cr, uid, c: c.get('account_id', False),
         'period_id': lambda self, cr, uid, c: c.get('period_id', False),
-        'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'account.move.line', context=c)
+        'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'account.move.line', context=c),
+        'is_counterpart': lambda *a: False,
     }
     _order = "date desc, id desc"
     _sql_constraints = [
