@@ -95,13 +95,11 @@ class account_invoice(osv.osv):
         result = {}
         for invoice in self.browse(cr, uid, ids, context=context):
             # UNIFIELD REFACTORING: UF-1536 have change this method
-            result[invoice.id] = invoice.check_total # use check_total to take also VAT
-            if invoice.type in ['out_invoice', 'in_refund']:
-                result[invoice.id] = invoice.amount_total # no VAT on out_invoice and in_refund
             # Not needed to do process if invoice is draft or paid
             if invoice.state in ['draft', 'paid']:
                 result[invoice.id] = 0.0
                 continue
+            result[invoice.id] = invoice.amount_total
             # Search if a Journal Entry is linked to this invoice
             # if yes: 
             # - search counterparts lines
