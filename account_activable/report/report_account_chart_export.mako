@@ -47,8 +47,8 @@
   <Column ss:Width="58.1102"/>
   <Column ss:Width="200.1543"/>
   <Row>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Code')}</Data></Cell>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Name')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Acct Code')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Acct Desc')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Balance')}</Data></Cell>
   </Row>
 % for o in objects:
