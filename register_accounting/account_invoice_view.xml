@@ -133,9 +133,6 @@
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
                                     <field name="name"/>
-                                    <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, 
-                                        parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, 
-                                        {'company_id': parent.company_id})"/>
                                     <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), 
                                         ('type', '&lt;&gt;', 'view')]" name="account_id" on_change="onchange_account_id(parent.fiscal_position,account_id)"/>
                                     <button name="button_analytic_distribution_from_direct_inv_line" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
