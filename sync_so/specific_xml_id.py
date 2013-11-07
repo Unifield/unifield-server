@@ -353,9 +353,11 @@ class account_move_line(osv.osv):
     _inherit = 'account.move.line'
     
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        if not context:
+            context = {}
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
         # Do workflow if line is coming from sync, is now reconciled and it has an unpaid invoice
-        if context.get('sync_update_execution') and 'reconcile_id' in vals and vals['reconcile_id']:
+        if context.get('sync_update_execution', False) and 'reconcile_id' in vals and vals['reconcile_id']:
             invoice_ids = []
             for line in self.browse(cr, uid, ids, context=context):
                 if line.invoice and line.invoice.state != 'paid':
