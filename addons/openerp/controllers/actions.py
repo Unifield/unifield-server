@@ -183,19 +183,15 @@ def execute_report(name, **data):
             proxy = rpc.RPCProxy('ir.actions.report.xml')
             res = proxy.search([('report_name','=', name)])
             if res:
-                report_name = proxy.read(res[0], ['name'])['name']
+                read_ctx = datas.copy()
+                read_ctx.setdefault('context', {}).update(ctx)
+                report_name = proxy.read(res[0], ['filename'], read_ctx)['filename']
 
         report_name = report_name.replace('Print ', '')
 
-        if ids and datas.get('id') and datas.get('model'):
-            doc_name = ''
-            # Only 5 first document name on report name to avoid too long report name
-            for str_name in rpc.RPCProxy(datas['model']).read(ids[0:5], ['name']):
-                doc_name = '%s%s_' % (doc_name, str_name['name'])
-            report_letters = ''.join(item[0].upper() for item in re.findall("\w+", report_name))
-            report_name = '%s_%s' % (report_letters, doc_name[:-1])
-        elif datas.get('context', {}).get('_terp_view_name'):
-            report_name = datas['context']['_terp_view_name']
+        if not ids or not datas.get('id') or not datas.get('model'):
+            if datas.get('context', {}).get('_terp_view_name'):
+                report_name = datas['context']['_terp_view_name']
 
         cherrypy.response.headers['Content-Disposition'] = 'filename="' + report_name + '.' + report_type + '"'
 
