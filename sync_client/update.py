@@ -47,6 +47,7 @@ class local_rule(osv.osv):
         'owner_field' : fields.char('Owner Field', size=128, readonly=True),
         'can_delete': fields.boolean('Can delete record?', readonly=True, help='Propagate the delete of old unused records'),
         'active' : fields.boolean('Active', select=True),
+        'type' : fields.char('Group Type', size=256),
     }
 
     _defaults = {
@@ -205,10 +206,13 @@ class update_to_send(osv.osv):
         assert obj, "Cannot find model %s of rule id=%d!" % (rule.model, rule.id)
         return (create_normal_update(obj, rule, update_context), create_delete_update(obj, rule, update_context))
 
-    def create_package(self, cr, uid, session_id, packet_size, context=None):
-        ids = self.search(cr, uid, [('session_id', '=', session_id), ('sent', '=', False)], limit=packet_size, order='id asc', context=context)
+    def create_package(self, cr, uid, session_id=None, packet_size=None, context=None):
+        domain = session_id and [('session_id', '=', session_id), ('sent', '=', False)] or [('sent', '=', False)]
+        ids = self.search(cr, uid, domain, limit=packet_size,  order='id asc', context=context)
+        
         if not ids:
             return False
+            
         update_master = self.browse(cr, uid, ids[0], context=context)
         data = {  
             'session_id' : update_master.session_id,
@@ -258,6 +262,7 @@ class update_received(osv.osv):
 
     _name = "sync.client.update_received"
     _rec_name = 'source'
+    _sync_field = 'sync_field'
 
     _columns = {
         'source': fields.char('Source Instance', size=128, readonly=True), 
@@ -416,7 +421,7 @@ class update_received(osv.osv):
                 for sdref, version in versions.items():
                     try:
                         self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-                            sdref, {'version':version,'sync_date':fields.datetime.now()},
+                            sdref, {'version': version, self._sync_field: fields.datetime.now()},
                             context=context)
                     except ValueError:
                         self._logger.warning("Cannot find record %s during update execution process!" % update.sdref)

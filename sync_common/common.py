@@ -63,6 +63,8 @@ MODELS_TO_IGNORE = [
                     'sync.server.update',
                     'sync.server.message',
                     'sync_server.version',
+                    'audittrail.log.sequence',
+                    'audittrail.log.line',
 
                     'res.widget',
                   ]
@@ -73,7 +75,8 @@ MODELS_TO_IGNORE_DOMAIN = [
         'res.widget%',
         'base%',
         'board%',
-        'workflow%',
+        'audittrail%',
+        #'workflow%',
     ]
 
 def __compile_models_to_ignore():

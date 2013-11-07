@@ -12,12 +12,15 @@ Created on 9 juil. 2012
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
-                    <field name="state" invisible="1"/> 
+                    <field name="state" invisible="1" colspan="4"/> 
                     <field name="message" nolabel="1" colspan="4"/> 
                     <label string="" colspan="1"/>
+                    <field name="patch" nolabel="1" attrs="{'invisible':[('state','!=','need-provide-manually')]}"/> 
                     <button type="object" string="Download" name="download" icon="gtk-save" states="need-download"/>
+                    <button type="object" string="Import" name="import_patch" icon="gtk-save" states="need-provide-manually"/>
                     <button type="object" string="Upgrade" name="do_upgrade" icon="gtk-execute" states="need-install"/>
                     <button type="object" string="Restart" name="restart" icon="gtk-refresh" states="need-restart"/>
+                    <button special="cancel" string="Okay" icon="gtk-close" states="up-to-date"/>
                 </form>
             </field>
         </record>

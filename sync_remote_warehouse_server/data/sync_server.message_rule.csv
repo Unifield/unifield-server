@@ -1,0 +1,3 @@
+id,active,sequence_number,name,remote_call,type_id,status,model_id,arguments,direction_usb,domain,filter_method,destination_name
+sd._rw_msg_incoming_shipment_close,True,1000,[IN] close,stock.picking.msg_close,USB,valid,stock.picking,['name'],rw_to_cp,"[('state','=','done')]",,name
+sd._rw_msg_purchase_order_close,True,1000,[PO] close,purchase.order.msg_close,USB,valid,purchase.order,['name'],rw_to_cp,[],msg_close_filter,name

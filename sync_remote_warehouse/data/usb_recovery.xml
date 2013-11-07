@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+        <wizard id="wizard_usb_recovery" string="USB Synchronisation Recovery" model="usb_recovery" name="usb_recovery.wizard" />
+        
+        <act_window name="USB Synchronisation Recovery"
+        res_model="usb_recovery"
+        view_mode="form"
+        target="new"
+        id="act_window_usb_recovery"/>
+        
+        <menuitem id="menu_usb_recovery" name="USB Recovery" action="act_window_usb_recovery" parent="sync_client.mon_menu" sequence="30" />
+        
+    </data>
+</openerp>
