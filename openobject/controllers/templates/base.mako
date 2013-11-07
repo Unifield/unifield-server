@@ -29,7 +29,7 @@
     <script type="text/javascript" src="/openobject/static/javascript/openobject/openobject.base.js"></script>
     <script type="text/javascript" src="/openobject/static/javascript/openobject/openobject.gettext.js"></script>
     <script type="text/javascript" src="/openobject/static/javascript/openobject/openobject.dom.js"></script>
-    <script type="text/javascript" src="/openobject/static/javascript/openobject/openobject.http.js"></script>
+    <script type="text/javascript" src="/openobject/static/javascript/openobject/openobject.http.js?v=2.7b1"></script>
     <script type="text/javascript" src="/openobject/static/javascript/openobject/openobject.tools.js"></script>
     
     <script type="text/javascript">
