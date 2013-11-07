@@ -6,10 +6,14 @@
     'category': 'Tools',
     'author': 'OpenERP SA',
     'developer': 'Max Mumford',
-    'data': [
+    'update_xml': [
         'views/sync_update_rule.xml',
         'views/sync_message_rule.xml',
+    ],
+    'init_xml': [
         'data/rule_group_type.xml',
+        'data/sync_server.message_rule.csv',
+        'data/sync_server.sync_rule.csv',
     ],
     'depends': ['sync_client', 'sync_server'],
     'installable': True,
