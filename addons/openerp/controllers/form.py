@@ -192,7 +192,6 @@ class Form(SecuredController):
 
     @expose(template="/openerp/controllers/templates/form.mako")
     def create(self, params, tg_errors=None):
-
         params.view_type = params.view_type or params.view_mode[0]
 
         if params.view_type == 'tree':
@@ -271,7 +270,7 @@ class Form(SecuredController):
             tips = tips
         
         is_dashboard = form.screen.is_dashboard or False
-        return dict(form=form, pager=pager, buttons=buttons, path=self.path, can_shortcut=can_shortcut, shortcut_ids=shortcut_ids, display_name=display_name, title=title, tips=tips, obj_process=obj_process, is_dashboard=is_dashboard)
+        return dict(form=form, pager=pager, buttons=buttons, path=self.path, can_shortcut=can_shortcut, shortcut_ids=shortcut_ids, display_name=display_name, title=title, tips=tips, obj_process=obj_process, is_dashboard=is_dashboard, sidebar_closed=params._terp_sidebar_closed)
 
     @expose('json', methods=('POST',))
     def close_or_disable_tips(self):
@@ -280,7 +279,7 @@ class Form(SecuredController):
     def _read_form(self, context, count, domain, filter_domain, id, ids, kw,
                    limit, model, offset, search_data, search_domain, source,
                    view_ids, view_mode, view_type, notebook_tab, o2m_edit=False,
-                   editable=False):
+                   editable=False, sidebar_closed=False):
         """ Extract parameters for form reading/creation common to both
         self.edit and self.view
         """
@@ -299,7 +298,8 @@ class Form(SecuredController):
                                        '_terp_search_domain': search_domain,
                                        '_terp_search_data': search_data,
                                        '_terp_filter_domain': filter_domain,
-                                       '_terp_notebook_tab': notebook_tab})
+                                       '_terp_notebook_tab': notebook_tab,
+                                       '_terp_sidebar_closed': sidebar_closed})
         params.o2m_edit = o2m_edit
         params.editable = editable
         params.action_id = kw.get('action_id')
@@ -324,13 +324,13 @@ class Form(SecuredController):
     def edit(self, model, id=False, ids=None, view_ids=None,
              view_mode=['form', 'tree'], view_type='form', source=None, domain=[], context={},
              offset=0, limit=50, count=0, search_domain=None,
-             search_data=None, filter_domain=None, o2m_edit=False, **kw):
+             search_data=None, filter_domain=None, o2m_edit=False, sidebar_closed=False, **kw):
 
         notebook_tab = kw.get('notebook_tab') or 0
         params = self._read_form(context, count, domain, filter_domain, id,
                                  ids, kw, limit, model, offset, search_data,
                                  search_domain, source, view_ids, view_mode,
-                                 view_type, notebook_tab, o2m_edit=o2m_edit, editable=True)
+                                 view_type, notebook_tab, o2m_edit=o2m_edit, editable=True, sidebar_closed=sidebar_closed)
 
         if not params.ids:
             params.count = 0
@@ -347,13 +347,13 @@ class Form(SecuredController):
     def view(self, model, id, ids=None, view_ids=None,
              view_mode=['form', 'tree'], view_type='form', source=None, domain=[], context={},
              offset=0, limit=50, count=0, search_domain=None,
-             search_data=None, filter_domain=None, **kw):
+             search_data=None, filter_domain=None, sidebar_closed=False, **kw):
 
         notebook_tab = kw.get('notebook_tab') or 0
         params = self._read_form(context, count, domain, filter_domain, id,
                                  ids, kw, limit, model, offset, search_data,
                                  search_domain, source, view_ids, view_mode,
-                                 view_type, notebook_tab)
+                                 view_type, notebook_tab, sidebar_closed=sidebar_closed)
 
         if not params.ids:
             params.count = 1
@@ -372,7 +372,6 @@ class Form(SecuredController):
 
         if not params.id and params.ids:
             params.id = params.ids[0]
-
         if params.id and params.editable:
             raise redirect(self.path + "/view", model=params.model,
                                                id=params.id,
@@ -386,7 +385,8 @@ class Form(SecuredController):
                                                count=params.count,
                                                search_domain=ustr(params.search_domain),
                                                search_data = ustr(params.search_data),
-                                               filter_domain= ustr(params.filter_domain))
+                                               filter_domain= ustr(params.filter_domain),
+                                               sidebar_closed=params._terp_sidebar_closed)
 
         params.view_type = 'tree'
         return self.create(params)
@@ -499,7 +499,8 @@ class Form(SecuredController):
                 'search_domain': ustr(params.search_domain),
                 'search_data': ustr(params.search_data),
                 'filter_domain': ustr(params.filter_domain),
-                'notebook_tab': params.notebook_tab}
+                'notebook_tab': params.notebook_tab,
+                'sidebar_closed': params.sidebar_closed}
         if params.view_target and params.view_target in ('new', 'same'):
             # within a wizard popup dialog - keep the orignal target mode
             # (here target='new' will hide toolbar buttons (new, save, pager, etc..)
@@ -628,7 +629,8 @@ class Form(SecuredController):
                 'limit': params.limit,
                 'count': params.count,
                 'search_domain': ustr(params.search_domain),
-                'filter_domain': ustr(params.filter_domain)}
+                'filter_domain': ustr(params.filter_domain),
+                'sidebar_closes': params.sidebar_closed}
 
         if new_id:
             raise redirect(self.path + '/edit', **args)
@@ -671,7 +673,8 @@ class Form(SecuredController):
                 'limit': params.limit,
                 'count': params.count,
                 'search_domain': ustr(params.search_domain),
-                'filter_domain': ustr(params.filter_domain)}
+                'filter_domain': ustr(params.filter_domain),
+                'sidebar_closed': params.sidebar_closed}
 
         if not params.id:
             raise redirect(self.path + '/edit', **args)
