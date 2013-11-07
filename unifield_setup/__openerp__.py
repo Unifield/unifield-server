@@ -57,6 +57,7 @@
         "installer/currency_setup_view.xml",
         "installer/fixed_asset_view.xml",
         "installer/payroll_view.xml",
+        "installer/commitment_import_view.xml",
         # Security and access rights
         "security/ir.model.access.csv",
         "view/product_view.xml",
