@@ -64,7 +64,7 @@
     </record>
 
     <record model="ir.actions.act_window" id="log_sale_purchase_action">
-      <field name="name">Sale/Purchase/Order/Shipment Logs</field>
+      <field name="name">PO/FO/Shipment Logs</field>
       <field name="res_model">sync.client.log_sale_purchase</field>
       <field name="view_type">form</field>
       <field name="view_mode">tree,form</field>
@@ -72,7 +72,7 @@
     </record>
 
     <menuitem id="log_sale_purchase_menu"
-              name="Sale/Purchase/Order/Shipment Logs"
+              name="PO/FO/Shipment Logs"
               parent="mon_menu" action="log_sale_purchase_action"/>
 
   </data>
