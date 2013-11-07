@@ -2023,7 +2023,8 @@ class purchase_order_line(osv.osv):
         if (other_lines and stages and order.state != 'confirmed'):
             context.update({'change_price_ok': False})
 
-        vals = self._update_merged_line(cr, uid, False, vals, context=dict(context, skipResequencing=True))
+        if not context.get('offline_synchronization'):
+            vals = self._update_merged_line(cr, uid, False, vals, context=dict(context, skipResequencing=True))
 
         vals.update({'old_price_unit': vals.get('price_unit', False)})
 
