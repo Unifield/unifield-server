@@ -182,8 +182,13 @@ class account_account(osv.osv):
                             sums[current.id][fn] += currency_obj.compute(cr, uid, child.company_id.currency_id.id, current.company_id.currency_id.id, sums[child.id][fn], context=context)
         res = {}
         null_result = dict((fn, 0.0) for fn in field_names)
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         for id in ids:
             res[id] = sums.get(id, null_result)
+            # If output_currency_id in context, we change balance computation
+            if context.get('output_currency_id', False) and res[id].get('balance', False):
+                new_balance = currency_obj.compute(cr, uid, context.get('output_currency_id'), company_currency, res[id].get('balance'), context=context)
+                res[id].update({'balance': new_balance,})
         return res
     #@@@end
 
