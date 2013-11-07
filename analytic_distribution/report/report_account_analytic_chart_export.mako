@@ -36,7 +36,7 @@
      <NumberFormat ss:Format="Standard"/>
    </Style>
 </Styles>
-<Worksheet ss:Name="${_('Analytic Chart of Account')}">
+<Worksheet ss:Name="${_('Balance by analytic account')}">
 <Table >
   <Column ss:Width="37.3039"/>
   <Column ss:Width="293.5559"/>

@@ -116,7 +116,7 @@
 
         <report
             id="account_chart_export"
-            string="Account chart export"
+            string="Balance by account"
             model="account.account"
             name="account.chart.export"
             file="account_activable/report/report_account_chart_export.mako"

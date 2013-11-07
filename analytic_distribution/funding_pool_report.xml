@@ -13,7 +13,7 @@
 
       <report
         id="account_analytic_chart_export"
-        string="Account analytic chart export"
+        string="Balance by analytic account"
         model="account.analytic.account"
         name="account.analytic.chart.export"
         file="analytic_distribution/report/report_account_analytic_chart_export.mako"
