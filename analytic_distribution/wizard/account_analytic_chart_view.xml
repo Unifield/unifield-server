@@ -24,6 +24,7 @@
                     </xpath>
                     <xpath expr="/form//button[@name='analytic_account_chart_open_window']" position="attributes">
                         <attribute name="icon">terp-gtk-go-back-rtl</attribute>
+                        <attribute name="string">Show Balances</attribute>
                     </xpath>
                     <xpath expr="/form/group[1]" position="after">
                         <group colspan="4" col="2">
