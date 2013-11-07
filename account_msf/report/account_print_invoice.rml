@@ -414,8 +414,9 @@
     <blockTable  style="Table9a">
         <tr>
           <td>
-			<para style="terp_default_9" alignment="LEFT">Comments :</para>
-			<para style="terp_default_9">[[ o.comment and format(o.comment ) or ' ' ]]</para>
+            <para style="terp_default_9" alignment="LEFT">State: [[ o.state and getSel(o, 'state') or '' ]]</para>
+            <para style="terp_default_9" alignment="LEFT">Comments: </para>
+            <para style="terp_default_9">[[ o.comment and format(o.comment ) or ' ' ]]</para>
           </td>
         </tr>
         <tr>
