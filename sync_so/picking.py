@@ -37,7 +37,7 @@ class stock_picking(osv.osv):
     '''
     _inherit = "stock.picking"
     _logger = logging.getLogger('------sync.stock.picking')
-    
+
     def format_data(self, cr, uid, data, context=None):
         '''
         we format the data, gathering ids corresponding to objects
@@ -45,17 +45,17 @@ class stock_picking(osv.osv):
         # objects
         prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
-        
+
         # product
         product_name = data['product_id']['name']
         product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
         if not product_ids:
             raise Exception, "The corresponding product does not exist here. Product name: %s"%product_name
         product_id = product_ids[0]
-        
+
         #UF-1617: asset form
         asset_id = False
-        if data['asset_id'] and data['asset_id']['id']: 
+        if data['asset_id'] and data['asset_id']['id']:
             asset_id = self.pool.get('product.asset').find_sd_ref(cr, uid, xmlid_to_sdref(data['asset_id']['id']), context=context)
 
         # uom
@@ -64,14 +64,14 @@ class stock_picking(osv.osv):
         if not uom_ids:
             raise Exception, "The corresponding uom does not exist here. Uom name: %s"%uom_name
         uom_id = uom_ids[0]
-        
+
         #UF-1617: Handle batch and asset object
         batch_id = False
         if data['prodlot_id']:
             batch_id = self.pool.get('stock.production.lot').find_sd_ref(cr, uid, xmlid_to_sdref(data['prodlot_id']['id']), context=context)
             if not batch_id:
                 raise Exception, "Batch Number %s not found for this sync data record" %data['prodlot_id']
-        
+
         expired_date = data['expired_date']
 
         # build a dic which can be used directly to update the stock move
@@ -93,7 +93,7 @@ class stock_picking(osv.osv):
                   'note': data['note'],
                   }
         return result
-    
+
     def package_data_update_in(self, cr, uid, source, out_info, context=None):
         '''
         package the data to get info concerning already processed or not
@@ -109,28 +109,28 @@ class stock_picking(osv.osv):
                     line_dic.setdefault('data', []).append(self.format_data(cr, uid, line, context=context))
                     # set the flag to know if the data has already been processed (partially or completely) in Out side
                     line_dic.update({'out_processed':  line_dic.setdefault('out_processed', False) or line['processed_stock_move']})
-            
+
         return result
-        
+
     def partial_shipped_fo_updates_in_po(self, cr, uid, source, out_info, context=None):
         '''
         ' This sync method is used for updating the IN of Project side when the OUT/PICK at Coordo side became done.
         ' In partial shipment/OUT, when the last shipment/OUT is made, the original IN will become Available Shipped, no new IN will
         ' be created, as the whole quantiy of the IN is delivered (but not yet received at Project side)
         '''
-        
+
         if context is None:
             context = {}
         self._logger.info("+++ Call to update partial shipment/OUT from supplier %s to INcoming Shipment of PO at %s"%(source, cr.dbname))
-        
+
         pick_dict = out_info.to_dict()
-        
+
         # objects
         so_po_common = self.pool.get('so.po.common')
         po_obj = self.pool.get('purchase.order')
         move_obj = self.pool.get('stock.move')
         pick_tools = self.pool.get('picking.tools')
-        
+
         # package data
         pack_data = self.package_data_update_in(cr, uid, source, pick_dict, context=context)
         # Look for the PO name, which has the reference to the FO on Coordo as source.out_info.origin
@@ -139,14 +139,14 @@ class stock_picking(osv.osv):
         po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
         # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
         in_id = so_po_common.get_in_id(cr, uid, po_id, po_name, context)
-        
+
         if in_id:
             partial_datas = {}
             partial_datas[in_id] = {}
             line_numbers = {}
             for line in pack_data:
                 line_data = pack_data[line]
-                
+
                 # get the corresponding picking line ids
                 for data in line_data['data']:
                     ln = data.get('line_number', False)
@@ -156,7 +156,7 @@ class stock_picking(osv.osv):
                         message = "Line number "  + str(ln) + " with quantity 0 is ignored!"
                         self._logger.info(message)
                         continue
-                    
+
                     if ln not in line_numbers.keys():
                         move_ids = move_obj.search(cr, uid, [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))], context=context)
                         if move_ids and move_ids[0]:
@@ -166,10 +166,10 @@ class stock_picking(osv.osv):
                             self._logger.info(message)
                             raise Exception(message)
                     move_id = line_numbers[ln]
-                       
+
                     # If we have a shipment with 10 packs and return from shipment
                     # the pack 2 and 3, the IN shouldn't be splitted in three moves (pack 1 available,
-                    # pack 2 and 3 not available and pack 4 to 10 available) but splitted into 
+                    # pack 2 and 3 not available and pack 4 to 10 available) but splitted into
                     # two moves (one move for all products available and one move for all
                     # products not available in IN)
                     if not partial_datas[in_id].get(move_id):
@@ -182,35 +182,35 @@ class stock_picking(osv.osv):
                                 break
                         else:
                             partial_datas[in_id][move_id].append(data)
-                    
-            # for the last Shipment of an FO, no new INcoming shipment will be created --> same value as in_id
-            new_picking = self.do_incoming_shipment_sync(cr, uid, in_id, partial_datas, context)            
 
-            # set the Shipment ID/OUT from the Coordo side to this IN 
+            # for the last Shipment of an FO, no new INcoming shipment will be created --> same value as in_id
+            new_picking = self.do_incoming_shipment_sync(cr, uid, in_id, partial_datas, context)
+
+            # set the Shipment ID/OUT from the Coordo side to this IN
             shipment = pick_dict.get('shipment_id', False)
             if shipment:
                 shipment_ref = source + "." + shipment['name'] # shipment made
             else:
                 shipment_ref = source + "." +  pick_dict.get('name', False) # the case of OUT
             self.write(cr, uid, new_picking, {'already_shipped': True, 'shipment_ref': shipment_ref}, context)
-            
+
             # Set the backorder reference to the IN !!!! THIS NEEDS TO BE CHECKED WITH SUPPLY PM!
             if new_picking != in_id:
                 self.write(cr, uid, in_id, {'backorder_id': new_picking}, context)
-            
+
         return True
 
     def do_incoming_shipment_sync(self, cr, uid, in_id, partial_datas, context=None):
         '''
         ' Modify the original method do_incoming_shipment in delivery_mechanism/wizard/stock_partial_picking.py to perform similarly as a
-        ' partial incoming shipment for the sync case, as partial shipment/OUT has been made. 
+        ' partial incoming shipment for the sync case, as partial shipment/OUT has been made.
         '
         ' The main idea here is to "rebuild" the value of "partial_datas" then call the method do_incoming_shipment of stock.picking
         '''
         # picking ids
         move_obj = self.pool.get('stock.move')
         prodlot_obj = self.pool.get('stock.production.lot')
-        
+
         pick = self.browse(cr, uid, in_id, context=context)
 
         # treated moves
@@ -243,7 +243,7 @@ class stock_picking(osv.osv):
         if not context:
             context = {}
         self._logger.info("+++ Cancel the relevant IN at %s due to the cancel of OUT at supplier %s"%(cr.dbname, source))
-        
+
         wf_service = netsvc.LocalService("workflow")
         so_po_common = self.pool.get('so.po.common')
         po_obj = self.pool.get('purchase.order')
@@ -259,28 +259,28 @@ class stock_picking(osv.osv):
                 # Cancel the IN object
                 wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_cancel', cr)
                 return True
-        
+
         raise Exception("There is a problem when cancel of the IN at project")
 
     def closed_in_validates_delivery_out_ship(self, cr, uid, source, out_info, context=None):
         if not context:
             context = {}
         self._logger.info("+++ Closed INcoming at %s confirms the delivery of the relevant OUT/SHIP at %s"%(source, cr.dbname))
-        
+
         wf_service = netsvc.LocalService("workflow")
         so_po_common = self.pool.get('so.po.common')
         pick_dict = out_info.to_dict()
-        
+
         shipment_ref = pick_dict.get('shipment_ref', False)
         if not shipment_ref:
             raise Exception("The shipment reference is empty. The action cannot be executed.")
-        
+
         ship_split = shipment_ref.split('.')
         if len(ship_split) != 2:
             message = "Invalid shipment reference format"
             self._logger.info(message)
             raise Exception(message)
-        
+
         # Check if it an SHIP --_> call Shipment object to proceed the validation of delivery, otherwise, call OUT to validate the delivery!
         message = False
         if 'SHIP' in ship_split[1]:
@@ -289,18 +289,18 @@ class stock_picking(osv.osv):
             if ship_ids:
                 # set the Shipment to become delivered
                 shipment_obj.set_delivered(cr, uid, ship_ids, context=context)
-                message = "The shipment " + ship_split[1] + " has been well delivered to its partner." 
+                message = "The shipment " + ship_split[1] + " has been well delivered to its partner."
         elif 'OUT' in ship_split[1]:
             ship_ids = self.search(cr, uid, [('name', '=', ship_split[1]), ('state', '=', 'done')], context=context)
             if ship_ids:
                 # set the Shipment to become delivered
                 self.set_delivered(cr, uid, ship_ids, context=context)
                 message = "The OUTcoming " + ship_split[1] + " has been well delivered to its partner."
-                 
+
         if message:
             self._logger.info(message)
             return message
-        
+
         message = "Something goes wrong with this message and no confirmation of delivery"
         self._logger.info(message)
         raise Exception(message)
@@ -311,11 +311,11 @@ class stock_picking(osv.osv):
         self._logger.info("+++ Create batch number that comes with the SHIP/OUT from %s"%source)
         so_po_common = self.pool.get('so.po.common')
         batch_obj = self.pool.get('stock.production.lot')
-        
+
         batch_dict = out_info.to_dict()
         error_message = "Create Batch Number: Something go wrong with this message, invalid instance reference"
-        
-        if batch_dict['instance_id'] and batch_dict['instance_id']['id']: 
+
+        if batch_dict['instance_id'] and batch_dict['instance_id']['id']:
             rec_id = self.pool.get('msf.instance').find_sd_ref(cr, uid, xmlid_to_sdref(batch_dict['instance_id']['id']), context=context)
             if rec_id:
                 batch_dict['instance_id'] = rec_id
@@ -334,16 +334,16 @@ class stock_picking(osv.osv):
                         batch_dict['product_id'] = rec_id
                         error_message = False
 
-        # If error message exists --> cannot create the BN        
-        if error_message:    
+        # If error message exists --> cannot create the BN
+        if error_message:
             self._logger.info(error_message)
             raise Exception, error_message
 
         batch_obj.create(cr, uid, batch_dict, context=context)
         message = "The new BN " + batch_dict['name'] + ", " + source +  ") has been created"
         self._logger.info(message)
-        return message    
-    
+        return message
+
 
     def create_asset(self, cr, uid, source, out_info, context=None):
         if not context:
@@ -351,34 +351,34 @@ class stock_picking(osv.osv):
         self._logger.info("+++ Create asset form that comes with the SHIP/OUT from %s"%source)
         so_po_common = self.pool.get('so.po.common')
         asset_obj = self.pool.get('product.asset')
-        
+
         asset_dict = out_info.to_dict()
         error_message = False
-        
-        if asset_dict['instance_id'] and asset_dict['instance_id']['id']: 
+
+        if asset_dict['instance_id'] and asset_dict['instance_id']['id']:
             rec_id = self.pool.get('msf.instance').find_sd_ref(cr, uid, xmlid_to_sdref(asset_dict['instance_id']['id']), context=context)
             if rec_id:
                 asset_dict['instance_id'] = rec_id
-            
+
                 existing_asset = asset_obj.search(cr, uid, [('name', '=', asset_dict['name']), ('instance_id', '=', rec_id)], context=context)
                 if existing_asset: # existed already, then don't need to create a new one
                     message = "Create Asset: the given asset form exists already local instance, no new asset will be created"
                     self._logger.info(message)
                     return message
-        
+
                 if asset_dict.get('product_id'):
                     rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.product_id.id), context=context)
                     if rec_id:
                         asset_dict['product_id'] = rec_id
                     else:
                         error_message = "Invalid product reference for the asset. The asset cannot be created"
-        
+
                     rec_id = self.pool.get('product.asset.type').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.asset_type_id.id), context=context)
                     if rec_id:
                         asset_dict['asset_type_id'] = rec_id
                     else:
                         error_message = "Invalid asset type reference for the asset. The asset cannot be created"
-        
+
                     rec_id = self.pool.get('res.currency').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.invo_currency.id), context=context)
                     if rec_id:
                         asset_dict['invo_currency'] = rec_id
@@ -389,87 +389,87 @@ class stock_picking(osv.osv):
             else:
                 error_message = "Create Asset: Something go wrong with this message, invalid instance reference"
 
-        # If error message exists --> raise exception and no esset will be created        
-        if error_message:    
+        # If error message exists --> raise exception and no esset will be created
+        if error_message:
             self._logger.info(error_message)
             raise Exception, error_message
-        
+
         asset_obj.create(cr, uid, asset_dict, context=context)
         message = "The new asset (" + asset_dict['name'] + ", " + source +  ") has been created"
         self._logger.info(message)
         return message
-    
+
     def check_valid_to_generate_message(self, cr, uid, ids, rule, context):
         # Check if the given object is valid for the rule
-        model_obj = self.pool.get(rule.model.model)
+        model_obj = self.pool.get(rule.model)
         domain = rule.domain and eval(rule.domain) or []
         domain.insert(0, '&')
-        domain.append(('id', '=', ids[0])) # add also this id to short-list only the given object 
+        domain.append(('id', '=', ids[0])) # add also this id to short-list only the given object
         return model_obj.search(cr, uid, domain, context=context)
 
     def create_manual_message(self, cr, uid, ids, context):
         rule_obj = self.pool.get("sync.client.message_rule")
-        
+
         ##############################################################################
         # Define the message rule to be fixed, or by given a name for it
         #
         ##############################################################################
         rule = rule_obj.get_rule_by_sequence(cr, uid, 1000, context)
-        
+
         if not rule or not ids or not ids[0]:
             return
 
         valid_ids = self.check_valid_to_generate_message(cr, uid, ids, rule, context)
         if not valid_ids:
             return # the current object is not valid for creating message
-        valid_id = valid_ids[0] 
-        
-        model_obj = self.pool.get(rule.model.model)
+        valid_id = valid_ids[0]
+
+        model_obj = self.pool.get(rule.model)
         msg_to_send_obj = self.pool.get("sync.client.message_to_send")
-        
+
         arg = model_obj.get_message_arguments(cr, uid, ids[0], rule, context=context)
         call = rule.remote_call
         update_destinations = model_obj.get_destination_name(cr, uid, ids, rule.destination_name, context=context)
-        
-        identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model.model, ids, rule.server_id, context=context)
+
+        identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, ids, rule.server_id, context=context)
         if not identifiers or not update_destinations:
             return
-        
+
         xml_id = identifiers[valid_id]
         existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id)], context=context)
         if not existing_message_id: # if similar message does not exist in the system, then do nothing
             return
-        
+
         # make a change on the message only now
         msg_to_send_obj.modify_manual_message(cr, uid, existing_message_id, xml_id, call, arg, update_destinations.values()[0], context)
 
     def create_message_with_object_and_partner(self, cr, uid, rule_sequence, object_id, partner_name, context):
-        
+
         ##############################################################################
         # This method creates a message and put into the sendbox, but the message is created for a given object, AND for a given partner
-        # Meaning that for the same object, but for different internal partners, the object could be sent many times to these partner  
+        # Meaning that for the same object, but for different internal partners, the object could be sent many times to these partner
         #
         ##############################################################################
         rule_obj = self.pool.get("sync.client.message_rule")
         rule = rule_obj.get_rule_by_sequence(cr, uid, rule_sequence, context)
-        
+
         if not rule or not object_id:
             return
 
-        model_obj = self.pool.get(rule.model.model)
+        model_obj = self.pool.get(rule.model)
         msg_to_send_obj = self.pool.get("sync.client.message_to_send")
-        
+
         arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, context=context)
-        
-        identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model.model, [object_id], rule.server_id, context=context)
+
+        identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [object_id], rule.server_id, context=context)
         if not identifiers:
             return
-        
+
         xml_id = identifiers[object_id]
         existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id), ('destination_name', '=', partner_name)], context=context)
         if existing_message_id: # if similar message does not exist in the system, then do nothing
             return
-        
+
         # if not then create a new one --- FOR THE GIVEN Batch number AND Destination
         data = {
                 'identifier' : xml_id,
@@ -486,13 +486,13 @@ class stock_picking(osv.osv):
     def _hook_create_sync_messages(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         res = super(stock_picking, self)._hook_create_sync_messages(cr, uid, ids, context=context)
         for pick in self.browse(cr, uid, ids, context=context):
             partner = pick.partner_id
             if not partner or partner.partner_type != 'internal':
                 return True
-            
+
             list_batch = []
             list_asset = []
             # only treat for the internal partner
@@ -503,12 +503,12 @@ class stock_picking(osv.osv):
                 if move.prodlot_id:
                     # put the new batch number into the list, and create messages for them below
                     list_batch.append(move.prodlot_id.id)
-                    
+
                 # Get asset object
                 if move.asset_id:
                     # put the new batch number into the list, and create messages for them below
                     list_asset.append(move.asset_id.id)
-            
+
             # for each new batch number object and for each partner, create messages and put into the queue for sending on next sync round
             for item in list_batch:
                 self.create_message_with_object_and_partner(cr, uid, 1001, item, partner.name, context)
@@ -517,32 +517,32 @@ class stock_picking(osv.osv):
             for item in list_asset:
                 self.create_message_with_object_and_partner(cr, uid, 1002, item, partner.name, context)
 
-        return res  
-    
+        return res
+
     def msg_close(self, cr, uid, source, stock_picking, context=None):
         """
         Trigger a close on a stock.stock_picking
         """
         # get stock pickings to process using name from message
         stock_picking_ids = self.search(cr, uid, [('name','=',stock_picking.name)])
-        
+
         if stock_picking_ids:
             # create stock.partial.picking wizard object to perform the close
             partial_obj = self.pool.get("stock.partial.picking")
             partial_id = partial_obj.create(cr, uid, {}, context=dict(context, active_ids=stock_picking_ids))
-            
+
             if self.pool.get('stock.picking').browse(cr, uid, stock_picking_ids[0]).state == 'done':
                 return 'Stock picking %s was already closed' % stock_picking.name
-            
+
             # set quantity to process on lines
             partial_obj.copy_all(cr, uid, [partial_id], context=dict(context, model='stock.partial.picking'))
-            
+
             # process partial and return
             try:
                 partial_obj.do_partial(cr, uid, partial_id, context=dict(context, active_ids=stock_picking_ids))
             except KeyError:
                 raise ValueError('Please set a batch number on all move lines')
-            
+
             return 'Stock picking %s closed' % stock_picking.name
         else:
             return 'Could not find stock picking %s' % stock_picking.name
