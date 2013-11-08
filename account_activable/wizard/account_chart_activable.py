@@ -55,6 +55,11 @@ class account_chart_activable(osv.osv_memory):
         if data['output_currency_id']:
             context['output_currency_id'] = data['output_currency_id']
         result['context'] = unicode(context)
+        # UF-1718: Add a link on each account to display linked journal items
+        tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_activable', 'balance_account_tree')
+        tree_view_id = tree_view_id and tree_view_id[1] or False
+        result['view_id'] = [tree_view_id]
+        result['views'] = [(tree_view_id, 'tree')]
         return result
 
     _defaults = {
@@ -138,6 +143,11 @@ class account_coa(osv.osv_memory):
         # Set context regarding show_inactive field
         context['filter_inactive_accounts'] = not data['show_inactive']
         result['context'] = unicode(context)
+        # UF-1718: Add a link on each account to display linked journal items
+        tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'view_account_tree')
+        tree_view_id = tree_view_id and tree_view_id[1] or False
+        result['view_id'] = [tree_view_id]
+        result['views'] = [(tree_view_id, 'tree')]
         return result
 
 account_coa()
