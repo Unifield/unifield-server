@@ -18,7 +18,11 @@
                 <field name="sortby"/>
                 <field name="landscape"/>
                 <field name="initial_balance" attrs="{'readonly':[('fiscalyear_id','=', False)]}"/>
+                <newline/>
+                <field name="output_currency"/>
                 <field name="amount_currency"/>
+                <newline/>
+                <field name="instance_ids" widget="many2many" />
                 <newline/>
             </xpath>
             </data>

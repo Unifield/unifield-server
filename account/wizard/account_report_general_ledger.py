@@ -32,6 +32,9 @@ class account_report_general_ledger(osv.osv_memory):
                                           help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
         'amount_currency': fields.boolean("With Currency", help="It adds the currency column if the currency is different then the company currency"),
         'sortby': fields.selection([('sort_date', 'Date'), ('sort_journal_partner', 'Journal & Partner')], 'Sort By', required=True),
+        'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
+        'instance_ids': fields.one2many("msf.instance", 'argl_id', 'Proprietary Instances'),
+        #'instance_ids': fields.many2many('msf.instance', 'msf_instance_rel', 'account_id', 'instance_id', 'Proprietary Instances', required=True),
     }
     _defaults = {
         'landscape': True,
