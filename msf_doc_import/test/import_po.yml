@@ -1,4 +1,14 @@
 -
+  Create a Service stock location for this test
+-
+  !record {model: stock.location, id: service_loc}:
+    name: Import Service LOC
+    location_id: stock.stock_location_locations_virtual
+    location_category: other
+    usage: inventory
+    chained_location_type: none
+    service_location: True
+-
   Create Purchase Order (PO1) in English
 - 
   !record {model: purchase.order, id: po1}:

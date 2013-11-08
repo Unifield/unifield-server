@@ -20,6 +20,7 @@
                         <field name="categ" attrs="{'readonly': [('state', '!=', 'draft')]}" 
                         on_change="onchange_categ(categ)"/>
                         <field name="priority" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="delivery_address" colspan="4" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('dest_address', '=', company_id)]"/>
                         <field name="details" />
                     </group>
                     <notebook colspan="5">
@@ -209,9 +210,15 @@
             <field name="arch" type="xml">
                 <data>
                     <field name="details" position="after">
-                        <field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
+                        <newline />
                         <field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'draft', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
+                        <field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
                         <field name="rfq_ok" invisible="1" />
+                        <field
+                            name="rfq_delivery_address" 
+                            colspan="4"
+                            domain="[('dest_address', '=', company_id)]"
+                            attrs="{'invisible': [('rfq_ok', '=', False)], 'readonly': ['|', ('tender_id', '!=', False), ('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
                     </field>
 
                     <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']" position="attributes">
