@@ -57,6 +57,18 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if (data['model'] == 'ir.ui.menu'):
             new_ids = [data['form']['chart_account_id']]
             objects = self.pool.get('account.account').browse(self.cr, self.uid, new_ids)
+        
+        # output currency
+        self.output_currency_id = data['form']['output_currency']
+        self.output_currency_code = ''
+        if self.output_currency_id:
+            ouput_cur_r = self.pool.get('res.currency').read(self.cr,
+                                            self.uid,
+                                            [self.output_currency_id],
+                                            ['name'])
+            if ouput_cur_r and ouput_cur_r[0] and ouput_cur_r[0]['name']:
+                self.output_currency_code = ouput_cur_r[0]['name']
+        
         return super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
 
     def __init__(self, cr, uid, name, context=None):
@@ -87,6 +99,16 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_end_date':self._get_end_date,
             'get_target_move': self._get_target_move,
         })
+        
+        # company currency
+        self.uid = uid
+        self.currency_id = False
+        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+        if user and user[0] and user[0].company_id:
+            self.currency_id = user[0].company_id.currency_id.id
+        if not self.currency_id:
+            raise osv.except_osv(_('Error !'), _('Company has no default currency'))
+        
         self.context = context
 
     def _sum_currency_amount_account(self, account):
@@ -302,6 +324,16 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         elif self.sortby == 'sort_journal_partner':
             return 'Journal & Partner'
         return 'Date'
+        
+    def _currency_conv(self, amount):
+        if not self.output_currency or not self.currency_id \
+           or self.output_currency == self.currency_id:
+            return amount
+        return self.pool.get('res.currency').compute(self, 
+                                                self.cr, self.uid,
+                                                self.currency_id,
+                                                self.output_currency_id,
+                                                amount)
 
 report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')

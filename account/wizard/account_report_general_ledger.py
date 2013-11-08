@@ -34,7 +34,6 @@ class account_report_general_ledger(osv.osv_memory):
         'sortby': fields.selection([('sort_date', 'Date'), ('sort_journal_partner', 'Journal & Partner')], 'Sort By', required=True),
         'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
         'instance_ids': fields.one2many("msf.instance", 'argl_id', 'Proprietary Instances'),
-        #'instance_ids': fields.many2many('msf.instance', 'msf_instance_rel', 'account_id', 'instance_id', 'Proprietary Instances', required=True),
     }
     _defaults = {
         'landscape': True,
@@ -61,7 +60,8 @@ class account_report_general_ledger(osv.osv_memory):
         if context is None:
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['landscape',  'initial_balance', 'amount_currency', 'sortby'])[0])
+        # !!! TODO pass 'instance_ids' field
+        data['form'].update(self.read(cr, uid, ids, ['landscape',  'initial_balance', 'amount_currency', 'sortby', 'output_currency'])[0])
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
             data['form'].update({'initial_balance': False})
         if data['form']['landscape']:
