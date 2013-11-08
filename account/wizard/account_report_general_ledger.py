@@ -42,6 +42,14 @@ class account_report_general_ledger(osv.osv_memory):
         'sortby': 'sort_date',
         'initial_balance': False,
     }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(account_report_general_ledger, self).default_get(cr, uid, fields, context=context)
+        # get company default currency
+        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+        if user and user[0] and user[0].company_id:
+            res['output_currency'] = user[0].company_id.currency_id.id
+        return res
 
     def onchange_fiscalyear(self, cr, uid, ids, fiscalyear=False, context=None):
         res = {}
