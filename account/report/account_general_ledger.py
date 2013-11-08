@@ -98,6 +98,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_start_date':self._get_start_date,
             'get_end_date':self._get_end_date,
             'get_target_move': self._get_target_move,
+            'get_output_currency_code': self._get_output_currency_code,
         })
         
         # company currency
@@ -259,6 +260,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     ,(account.id, tuple(move_state)))
             # Add initial balance to the result
             sum_debit += self.cr.fetchone()[0] or 0.0
+        sum_debit = self._currency_conv(sum_debit)
         return sum_debit
 
     def _sum_credit_account(self, account):
@@ -285,6 +287,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     ,(account.id, tuple(move_state)))
             # Add initial balance to the result
             sum_credit += self.cr.fetchone()[0] or 0.0
+        sum_credit = self._currency_conv(sum_credit)
         return sum_credit
 
     def _sum_balance_account(self, account):
@@ -311,6 +314,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     ,(account.id, tuple(move_state)))
             # Add initial balance to the result
             sum_balance += self.cr.fetchone()[0] or 0.0
+        sum_balance = self._currency_conv(sum_balance)
         return sum_balance
 
     def _get_account(self, data):
@@ -325,12 +329,16 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             return 'Journal & Partner'
         return 'Date'
         
+    def _get_output_currency_code(self, data):
+        return self.output_currency_code
+        
     def _currency_conv(self, amount):
-        if not self.output_currency or not self.currency_id \
-           or self.output_currency == self.currency_id:
+        if not amount or amount == 0.:
             return amount
-        return self.pool.get('res.currency').compute(self, 
-                                                self.cr, self.uid,
+        if not self.output_currency_id or not self.currency_id \
+           or self.output_currency_id == self.currency_id:
+            return amount
+        return self.pool.get('res.currency').compute(self.cr, self.uid,
                                                 self.currency_id,
                                                 self.output_currency_id,
                                                 amount)

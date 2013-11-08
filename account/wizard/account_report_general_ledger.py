@@ -40,6 +40,7 @@ class account_report_general_ledger(osv.osv_memory):
         'amount_currency': True,
         'sortby': 'sort_date',
         'initial_balance': False,
+        'amount_currency': True,
     }
     
     def default_get(self, cr, uid, fields, context=None):

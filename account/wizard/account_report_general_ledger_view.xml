@@ -20,7 +20,7 @@
                 <field name="initial_balance" attrs="{'readonly':[('fiscalyear_id','=', False)]}"/>
                 <newline/>
                 <field name="output_currency"/>
-                <field name="amount_currency"/>
+                <field name="amount_currency" invisible="1" />
                 <newline/>
                 <field name="instance_ids" widget="many2many" />
                 <newline/>
