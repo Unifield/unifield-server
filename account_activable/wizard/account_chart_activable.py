@@ -21,6 +21,7 @@
 
 import datetime
 from osv import fields, osv
+from tools.translate import _
 
 class account_chart_activable(osv.osv_memory):
     _inherit = "account.chart"
@@ -81,7 +82,11 @@ class account_chart_activable(osv.osv_memory):
             if wiz.output_currency_id:
                 context.update({'output_currency_id': wiz.output_currency_id.id})
             account_ids = self.pool.get('account.account').search(cr, uid, args, context=context)
-        datas = {'ids': account_ids, 'context': context} # context permit balance to be processed regarding context's elements
+        # UF-1718: Add currency name used from the wizard. If none, set it to "All" (no currency filtering)
+        currency_name = _("No one specified")
+        if context.get('currency_id', False):
+            currency_name = self.pool.get('res.currency').browse(cr, uid, context.get('currency_id')).name or currency_name
+        datas = {'ids': account_ids, 'context': context, 'currency': currency_name,} # context permit balance to be processed regarding context's elements
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.chart.export',
