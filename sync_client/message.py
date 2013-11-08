@@ -272,14 +272,19 @@ class message_received(osv.osv):
                 res.append(arg)
         return res
 
-    def execute(self, cr, uid, ids=False, context=None):
-        if not ids:
+    def execute(self, cr, uid, ids=None, context=None):
+        # scope the context of message executions and loggers
+        context = dict((context or {}),
+            sync_message_execution=True,
+            sale_purchase_logger={})
+
+        # get all ids if not specified
+        if ids is None:
             ids = self.search(cr, uid, [('run', '=', False)],
                 order='id asc', context=context)
         if not ids: return 0
+
         execution_date = fields.datetime.now()
-        self.write(cr, uid, ids, {'execution_date' : execution_date}, context=context)
-        sync_context = dict(context or {}, sync_message_execution=True)
         for message in self.browse(cr, uid, ids, context=context):
             if message.run: #UTP-682: double check to make sure if the message has been executed, then skip it
                 continue
@@ -289,15 +294,23 @@ class message_received(osv.osv):
             arg = self.get_arg(message.arguments)
             try:
                 fn = getattr(self.pool.get(model), method)
-                res = fn(cr, uid, message.source, *arg, context=sync_context)
+                res = fn(cr, uid, message.source, *arg, context=context)
             except BaseException, e:
+                self._logger.exception("Message execution %d failed!" % message.id)
                 cr.execute("ROLLBACK TO SAVEPOINT exec_message")
-                log = "Something go wrong with the call %s \n" % message.remote_call
-                log += sync_log(self, e, 'error')
-                self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
+                self.write(cr, uid, message.id, {
+                    'execution_date' : execution_date,
+                    'run' : False,
+                    'log' : e.__class__.__name__+": "+tools.ustr(e),
+                }, context=context)
             else:
                 cr.execute("RELEASE SAVEPOINT exec_message")
-                self.write(cr, uid, message.id, {'run' : True, 'log' : tools.ustr(res)}, context=context)
+                self.write(cr, uid, message.id, {
+                    'execution_date' : execution_date,
+                    'run' : True,
+                    'log' : tools.ustr(res),
+                }, context=context)
+
         return len(ids)
 
     _order = 'create_date desc, id desc'

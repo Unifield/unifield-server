@@ -19,16 +19,13 @@
 #
 ##############################################################################
 
-from osv import osv
-from osv import fields
-from osv import orm
-from tools.translate import _
-from datetime import datetime
-import tools
-import time
+from osv import osv, fields
 import netsvc
-import so_po_common
+
 import logging
+import pdb
+
+from sync_client import get_sale_purchase_logger
 
 
 class purchase_order_line_sync(osv.osv):
@@ -37,15 +34,14 @@ class purchase_order_line_sync(osv.osv):
     _columns = {
         'original_purchase_line_id': fields.text(string='Original purchase line id'),
     }
-    
+
 purchase_order_line_sync()
 
 
 class purchase_order_sync(osv.osv):
     _inherit = "purchase.order"
     _logger = logging.getLogger('------sync.purchase.order')
-    
-    
+
     _columns = {
         'sended_by_supplier': fields.boolean('Sended by supplier', readonly=True),
         'split_po': fields.boolean('Created by split PO', readonly=True),
@@ -301,5 +297,45 @@ class purchase_order_sync(osv.osv):
         # Cancel the PO
         wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_cancel', cr)
         return True
+
+    def on_create(self, cr, uid, id, values, context=None):
+        if context is None \
+           or not context.get('sync_message_execution') \
+           or context.get('no_store_function'):
+            return
+        logger = get_sale_purchase_logger(cr, uid, self, id, context=context)
+        logger.action_type = 'creation'
+        logger.is_product_added |= (len(values.get('order_line', [])) > 0)
+
+    def on_change(self, cr, uid, changes, context=None):
+        if context is None \
+           or not context.get('sync_message_execution') \
+           or context.get('no_store_function'):
+            return
+        # create a useful mapping purchase.order ->
+        #    dict_of_purchase.order.line_changes
+        lines = {}
+        if 'purchase.order.line' in context['changes']:
+            for rec_line in self.pool.get('purchase.order.line').browse(
+                    cr, uid,
+                    context['changes']['purchase.order.line'].keys(),
+                    context=context):
+                lines.setdefault(rec_line.order_id.id, {})[rec_line.id] = \
+                     context['changes']['purchase.order.line'][rec_line.id]
+        # monitor changes on purchase.order
+        for id, changes in changes.items():
+            logger = get_sale_purchase_logger(cr, uid, self, id, \
+                context=context)
+            if 'order_line' in changes:
+                old_lines, new_lines = map(set, changes['order_line'])
+                logger.is_product_added |= (len(new_lines - old_lines) > 0)
+                logger.is_product_removed |= (len(old_lines - new_lines) > 0)
+            logger.is_date_modified |= ('date_order' in changes)
+            logger.is_status_modified |= ('state' in changes)
+            # handle line's changes
+            for line_id, line_changes in lines.get(id, {}).items():
+                logger.is_quantity_modified |= ('product_qty' in line_changes)
+                logger.is_product_price_modified |= \
+                    ('price_unit' in line_changes)
 
 purchase_order_sync()

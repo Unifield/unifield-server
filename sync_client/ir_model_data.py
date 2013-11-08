@@ -73,13 +73,14 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
         'last_modification':fields.datetime('Last Modification Date'),
         'is_deleted' : fields.function(string='The record exists in database?', type='boolean',
             fnct=_get_is_deleted, fnct_search=_get_is_deleted, method=True),
-        'touched' : fields.char("Which records has been touched", size=2048),
+        'touched' : fields.text("Which records has been touched"),
         'force_recreation' : fields.boolean("Force record re-creation"),
     }
 
     _defaults={
         'version' : 1,
         'force_recreation' : False,
+        'touched' : '[]',
     }
 
     def create_all_sdrefs(self, cr):

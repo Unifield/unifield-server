@@ -12,12 +12,20 @@ from sync_common import MODELS_TO_IGNORE, xmlid_to_sdref
 ## Helpers ###################################################################
 
 class DuplicateKey(KeyError):
-    message = "Key is already present"
+    message_template = "Key \"%s\" already exist: \"%s\" -> \"%s\""
+    message = ""
+    key = None
+    value = None
+
+    def __init__(self, ddict, key, value):
+        self.message = message_template % (key, ddict[key], value)
+        self.key = key
+        self.value = value
 
 class RejectingDict(dict):
     def __setitem__(self, k, v):
         if k in self.keys():
-            raise DuplicateKey
+            raise DuplicateKey(self, k, v)
         else:
             return super(RejectingDict, self).__setitem__(k, v)
 
@@ -115,7 +123,8 @@ SELECT res_id, touched
           (sync_date < last_modification OR sync_date IS NULL)""",
 [self._name, tuple(ids)])
             result = [row[0] for row in cr.fetchall()
-                      if row[1] is None or touched_fields.intersection(eval(row[1]))]
+                      if row[1] is None \
+                          or touched_fields.intersection(eval(row[1]) if row[1] else [])]
         return result if result_iterable else len(result) > 0
 
     def get_sd_ref(self, cr, uid, ids, field='name', context=None):
@@ -149,8 +158,8 @@ SELECT res_id, touched
         try:
             result = RejectingDict((data.res_id, get_fields(data))
                 for data in model_data_obj.browse(cr, uid, sdref_ids))
-        except DuplicateKey:
-            raise Exception("Duplicate definition of 'sd' xml_ids: model=%s, ids=%s. Too late for debugging, sorry!" % (self._name, ids))
+        except DuplicateKey, e:
+            raise Exception("Duplicate definition of 'sd' xml_id: %d@ir.model.data" % e.key)
         missing_ids = filter(lambda id:id and not id in result, ids)
         if missing_ids:
             xmlids = dict(
@@ -190,103 +199,187 @@ SELECT res_id, touched
         """
         return self.get_sd_ref(cr, uid, ids, field='version', context=context)
 
-    def synchronize(self, cr, uid, ids, previous_values=None,
-            previous_calls=None, context=None):
+    def get_touched_fields(self, cr, uid, ids, context=None):
         """
-        Update the SD ref (or create one if it does'n exists) and mark it to be
-        synchronize + touch fields
+        For each id, get a list of fields that has been touch since the last
+        synchronization
+
+        :param cr: database cursor
+        :param uid: current user id
+        :param ids: id or list of the ids of the records to read
+        :param context: optional context arguments, like lang, time zone
+        :type context: dictionary
+        :return: dictionary with list of touched fields per id
+
+        """
+        return dict(
+            (id, (eval(touched) if touched else []))
+            for id, touched_fields
+            in self.get_sd_ref(cr, uid, ids, field='touched', context=context).items())
+
+    def touch(self, cr, uid, ids, previous_values, synchronize,
+            _previous_calls=None, context=None):
+        """
+        Touch the fields that has changed and/or mark the records to be
+        synchronized. If previous_values is None, touch all the fields of every
+        record. If synchronize is False, it doesn't mark the field has touched
+        or mark the records for synchronize neither but call the 'on_change'
+        method on the object if it exists.
 
         :param cr: database cursor
         :param uid: current user id
         :param ids: id or list of the ids of the records to read
         :param previous_values: dict or list of dict containing the result of a
                                 read() call with ids given *before* the change
+        :param synchronize: do we want to write the touched fields and update
+                            last_modification date in ir.model.data
         :param context: optional context arguments, like lang, time zone
         :type context: dictionary
-        :return: filtered list of ids that will be synchronized
+        :return:
+        {
+            id : {
+                'field' : (previous_value, next_value),
+                ...
+            },
+            ...
+        }
         """
         assert not self._name == 'ir.model.data', \
             "Can not call this method on object ir.model.data!"
         assert hasattr(self, '_all_columns'), \
             "You are running an old version of OpenERP server. " \
             "Please update the server to the latest version."
+        assert synchronize or previous_values is not None, \
+            "This call is useless"
+
+        _previous_calls = _previous_calls or []
+        me = (self._name, ids)
+        if me not in _previous_calls:
+            _previous_calls.append(me)
+        else:
+            return {}
 
         result_iterable = hasattr(ids, '__iter__')
         if not result_iterable:
             ids = [ids]
             if previous_values is not None:
                 previous_values = [previous_values]
-        if not ids and result_iterable: return []
+        if not ids: return {}
 
         data = self.pool.get('ir.model.data')
-        now = fields.datetime.now()
-        synchronized_ids = []
+        if isinstance(synchronize, dict):
+            data_base_values = synchronize
+        elif synchronize:
+            data_base_values = {
+                'last_modification' : fields.datetime.now(),
+            }
 
         def touch(data_ids, touched_fields):
-            data.write(cr, uid, data_ids, 
-                {
-                    'touched' : str(sorted(touched_fields)),
-                    'last_modification' : now,
-                }, context=context)
-            synchronized_ids.extend(data_ids)
+            if synchronize:
+                data.write(cr, uid, data_ids, 
+                    dict(data_base_values, touched=str(sorted(touched_fields))),
+                    context=context)
 
         def filter_o2m(field_list):
             return [(f, self._all_columns[f].column)
                     for f in field_list
                     if isinstance(self._all_columns[f].column, fields.one2many)]
 
+        # read current values
+        whole_fields = self._all_columns.keys() \
+            if previous_values is None \
+            else previous_values[0].keys()
+        try:
+            whole_fields.remove('id')
+        except ValueError:
+            pass
+        current_values = dict(
+            (d['id'], d)
+            for d in self.read(cr, uid, ids, whole_fields, context=context) )
+
+        # touch things
         if previous_values is None:
-            previous_calls = previous_calls or []
-            me = (self._name, ids)
-            if me not in previous_calls:
-                previous_calls.append(me)
-                whole_fields = self._columns.keys()
-                touch(
-                    self.get_sd_ref(cr, uid, ids, field='id',
-                        context=context).values(),
-                    whole_fields)
-                # handle one2many
-                o2m_fields = filter_o2m(whole_fields)
-                current_values = dict(
-                    (d['id'], d)
-                    for d in self.read(cr, uid, ids,
-                        [field for field, column in o2m_fields],
-                        context=context))
-                for res_id, next_rec in current_values.items():
-                    for field, column in o2m_fields:
-                        if column._obj == self._name: continue
-                        self.pool.get(column._obj).synchronize(cr, uid,
-                            next_rec[field], previous_calls=previous_calls,
-                            context=context)
+            touch(
+                self.get_sd_ref(cr, uid, ids, field='id',
+                    context=context).values(),
+                whole_fields)
+            # handle one2many
+            o2m_fields = filter_o2m(whole_fields)
+            # handle one2many (because orm don't call write() on them)
+            for field, column in o2m_fields:
+                for next_rec in current_values.values():
+                    if column._obj == self._name: continue
+                    self.pool.get(column._obj).touch(
+                        cr, uid, next_rec[field],
+                        None, data_base_values,
+                        _previous_calls=_previous_calls,
+                        context=context)
         else:
+            # convert previous_values to a mapping id -> dict_of_values
             previous_values = dict((d['id'], d) for d in previous_values)
+            # check that the previous_values provided is correct
             assert set(ids) == set(previous_values.keys()), \
                 "Missing previous values: %s got, %s expected" \
                 % (previous_values.keys(), ids)
-            whole_fields = previous_values[ids[0]].keys()
-            whole_fields.remove('id')
-            current_values = dict((d['id'], d) for d in
-                self.read(cr, uid, ids, whole_fields, context=context))
-            for res_id, info in self.get_sd_ref(cr, uid, ids, \
+            for res_id, (data_id, touched) in self.get_sd_ref(cr, uid, ids, \
                     field=['id','touched'], context=context).items():
-                data_id, touched = info
-                prev_rec, next_rec = previous_values[res_id], current_values[res_id]
-                touched = set(eval(touched) if touched else [])
-                # TODO should make a specific check according to field type
-                # ^ not sure if it's still a current todo
+                prev_rec, next_rec = \
+                    previous_values[res_id], current_values[res_id]
                 modified = set(filter(
                     lambda field: next_rec[field] != prev_rec[field],
                     whole_fields))
-                new_touched = touched | modified
                 if modified:
-                    touch([data_id], list(new_touched))
-                # handle one2many
+                    touch([data_id], list(
+                        modified.union(eval(touched) if touched else [])
+                    ))
+                # handle one2many (because orm don't call write() on them)
                 for field, column in filter_o2m(whole_fields):
-                    self.pool.get(column._obj).synchronize(cr, uid,
-                        list(set(prev_rec[field] + next_rec[field])),
+                    self.pool.get(column._obj).touch(
+                        cr, uid, list(set(prev_rec[field] + next_rec[field])),
+                        None, data_base_values,
+                        _previous_calls=_previous_calls,
                         context=context)
 
-        return synchronized_ids if result_iterable else len(synchronized_ids) > 0
+        # store changes in the context
+        if context is not None:
+            if 'changes' not in context: context['changes'] = {}
+            changes = context['changes'].setdefault(self._name, {})
+        else:
+            changes = {}
+        if previous_values is not None:
+            for res_id in ids:
+                if res_id not in changes:
+                    changes[res_id] = dict(
+                        (field, (previous_values[res_id][field],
+                                 current_values[res_id][field]))
+                        for field in whole_fields
+                        if not previous_values[res_id][field] == \
+                            current_values[res_id][field] )
+                else:
+                    for field in whole_fields:
+                        if previous_values[res_id][field] == \
+                             current_values[res_id][field]:
+                            continue
+                        if field in changes[res_id]:
+                            changes[res_id][field] = \
+                                (changes[res_id][field][0],
+                                 current_values[res_id][field])
+                        else:
+                            changes[res_id][field] = \
+                                (previous_values[res_id][field],
+                                 current_values[res_id][field])
+
+        return changes
+
+    def synchronize(self, cr, uid, ids, context=None):
+        """
+        Update the SD ref (or create one if it does'n exists) and mark it to be
+        synchronize and mark all fields as touched.
+
+        Doesn't returns anything interesting
+        """
+        self.touch(cr, uid, ids, None, True, context=context)
+        return True
 
     def clear_synchronization(self, cr, uid, ids, context=None):
         data_ids = self.get_sd_ref(cr, uid, ids, field='id', context=context)
@@ -323,9 +416,9 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
 % field, [self._name,sdrefs])
         try:
             result = RejectingDict(cr.fetchall())
-        except DuplicateKey:
+        except DuplicateKey, e:
             # Should never happen if called on other object than ir.model.data
-            raise Exception("Duplicate definition of 'sd' xml_ids: model=%s, sdrefs=%s. Too late for debugging, sorry!" % (self._name, sdrefs))
+            raise Exception("Duplicate definition of 'sd' xml_id: %d@ir.model.data" % e.key)
         if field != real_field:
             read_result = self.pool.get('ir.model.data').read(cr, uid, result.values(), [real_field], context=context)
             read_result = dict((x['id'], x) for x in read_result)
@@ -334,19 +427,37 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
 
     @orm_method_overload
     def create(self, original_create, cr, uid, values, context=None):
+        if context is None: context = {}
+        if 'changes' not in context: context['changes'] = {}
         id = original_create(self, cr, uid, values, context=context)
-        if self._name not in MODELS_TO_IGNORE and (context is None or \
-           (not context.get('sync_update_execution') and not context.get('sync_update_creation'))):
-            self.synchronize(cr, uid, id, context=context)
+        to_be_synchronized = (
+            self._name not in MODELS_TO_IGNORE and
+            (not context.get('sync_update_execution') and
+             not context.get('sync_update_creation')))
+        if to_be_synchronized or hasattr(self, 'on_create'):
+            self.touch(cr, uid, [id], None,
+                to_be_synchronized, context=context)
+            if hasattr(self, 'on_create'):
+                self.on_create(cr, uid, id,
+                    self.read(cr, uid, [id], values.keys(), context=context)[0],
+                    context=context)
         return id
 
     @orm_method_overload
     def write(self, original_write, cr, uid, ids, values, context=None):
+        if context is None: context = {}
+        if 'changes' not in context: context['changes'] = {}
         previous_values = self.read(cr, uid, ids, values.keys(), context=context)
         result = original_write(self, cr, uid, ids, values,context=context)
-        if self._name not in MODELS_TO_IGNORE and (context is None or \
-           (not context.get('sync_update_execution') and not context.get('sync_update_creation'))):
-            self.synchronize(cr, uid, ids, previous_values=previous_values, context=context)
+        to_be_synchronized = (
+            self._name not in MODELS_TO_IGNORE and
+            (not context.get('sync_update_execution') and
+             not context.get('sync_update_creation')))
+        if to_be_synchronized or hasattr(self, 'on_change'):
+            changes = self.touch(cr, uid, ids, previous_values,
+                to_be_synchronized, context=context)
+            if hasattr(self, 'on_change'):
+                self.on_change(cr, uid, changes, context=context)
         return result
 
     def message_unlink(self, cr, uid, source, unlink_info, context=None):
@@ -410,8 +521,11 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if self._name not in MODELS_TO_IGNORE \
            and not context.get('sync_update_creation'):
             context = dict(context, avoid_sdref_deletion=True)
-            if not context.get('sync_update_execution'):
-                self.synchronize(cr, uid, ids, context=context)
+            to_be_synchronized = not context.get('sync_update_execution')
+            self.touch(cr, uid, ids, None,
+                to_be_synchronized, context=context)
+            if hasattr(self, 'on_delete'):
+                self.on_delete(cr, uid, ids, context=context)
 
         return original_unlink(self, cr, uid, ids, context=context)
 

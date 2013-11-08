@@ -547,7 +547,6 @@ class stock_picking(osv.osv):
             # for each new asset object and for each partner, create messages and put into the queue for sending on next sync round
             for item in list_asset:
                 self.create_message_with_object_and_partner(cr, uid, 1002, item, partner.name, context)
-
         return res
 
     def msg_close(self, cr, uid, source, stock_picking, context=None):
@@ -577,5 +576,45 @@ class stock_picking(osv.osv):
             return 'Stock picking %s closed' % stock_picking.name
         else:
             return 'Could not find stock picking %s' % stock_picking.name
+
+    def on_create(self, cr, uid, id, values, context=None):
+        if context is None \
+           or not context.get('sync_message_execution') \
+           or context.get('no_store_function'):
+            return
+        logger = get_sale_purchase_logger(cr, uid, self, id, context=context)
+        logger.action_type = 'creation'
+        logger.is_product_added |= (len(values.get('move_lines', [])) > 0)
+
+    def on_change(self, cr, uid, changes, context=None):
+        if context is None \
+           or not context.get('sync_message_execution') \
+           or context.get('no_store_function'):
+            return
+        # create a useful mapping purchase.order ->
+        #    dict_of_stock.move_changes
+        lines = {}
+        if 'stock.move' in context['changes']:
+            for rec_line in self.pool.get('stock.move').browse(
+                    cr, uid,
+                    context['changes']['stock.move'].keys(),
+                    context=context):
+                lines.setdefault(rec_line.order_id.id, {})[rec_line.id] = \
+                     context['changes']['stock.move'][rec_line.id]
+        # monitor changes on purchase.order
+        for id, changes in changes.items():
+            logger = get_sale_purchase_logger(cr, uid, self, id, \
+                context=context)
+            if 'move_lines' in changes:
+                old_lines, new_lines = map(set, changes['move_lines'])
+                logger.is_product_added |= (len(new_lines - old_lines) > 0)
+                logger.is_product_removed |= (len(old_lines - new_lines) > 0)
+            logger.is_date_modified |= ('date' in changes)
+            logger.is_status_modified |= ('state' in changes)
+            # handle line's changes
+            for line_id, line_changes in lines.get(id, {}).items():
+                logger.is_quantity_modified |= ('product_qty' in line_changes)
+                logger.is_product_price_modified |= \
+                    ('price_unit' in line_changes)
 
 stock_picking()
