@@ -27,11 +27,12 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
 import pdb
 from msf_doc_import import check_line
-from msf_doc_import.wizard import INT_LINE_COLUMNS_FOR_IMPORT as columns_for_int_line_import
+from msf_doc_import.wizard import INT_LINE_COLUMNS_FOR_IMPORT as columns_for_internal_line_import
+from msf_doc_import.wizard import IN_LINE_COLUMNS_FOR_IMPORT as columns_for_incoming_line_import
 
-class wizard_import_int_line(osv.osv_memory):
-    _name = 'wizard.import.int.line'
-    _description = 'Import INT Lines from Excel sheet'
+class wizard_import_pick_line(osv.osv_memory):
+    _name = 'wizard.import.pick.line'
+    _description = 'Import Pick Lines from Excel sheet'
 
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
         res = {}
@@ -376,4 +377,4 @@ Otherwise, you can continue to use Unifield.""")
                 'context': context,
                 }
 
-wizard_import_int_line()
+wizard_import_pick_line()
