@@ -35,19 +35,23 @@ class wizard_import_pick_line(osv.osv_memory):
     _description = 'Import Pick Lines from Excel sheet'
 
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        Return True if a message is set on the wizard
+        '''
         res = {}
+
         if isinstance(ids, (int, long)):
             ids = [ids]
+
         for obj in self.browse(cr, uid, ids, context=context):
-            res[obj.id] = False
-            if obj.message:
-                res[obj.id] = True
+            res[obj.id] = obj.message or False
+
         return res
 
     _columns = {
         'file': fields.binary(string='File to import', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'message': fields.text(string='Message', readonly=True),
-        'int_id': fields.many2one('stock.picking', string='Internal Picking', required=True),
+        'picking_id': fields.many2one('stock.picking', string='Stock Picking', required=True),
         'data': fields.binary('Lines with errors'),
         'filename': fields.char('Lines with errors', size=256),
         'filename_template': fields.char('Templates', size=256),
@@ -61,16 +65,8 @@ class wizard_import_pick_line(osv.osv_memory):
         '''
         Import file
         '''
-        if not context.get('yml_test', False):
-            cr = pooler.get_db(dbname).cursor()
-        else:
-            cr = dbname
-        
-        if context is None:
-            context = {}
+        # Objects
         wiz_common_import = self.pool.get('wiz.common.import')
-        context.update({'import_in_progress': True, 'noraise': True})
-        start_time = time.time()
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
@@ -81,13 +77,24 @@ class wizard_import_pick_line(osv.osv_memory):
         asset_obj = self.pool.get('product.asset')
         bn_obj = self.pool.get('stock.production.lot')
         loc_obj = self.pool.get('stock.location')
+
+        context = context or {}
+
+        # Don't create a new cursor if we are in unit test
+        if not context.get('yml_test', False):
+            cr = pooler.get_db(dbname).cursor()
+        else:
+            cr = dbname
+
+        # Variables
+        context.update({'import_in_progress': True, 'noraise': True})
+        start_time = time.time()
         date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
         line_with_error = []
         vals = {'move_lines': []}
         
         for wiz_browse in self.browse(cr, uid, ids, context):
-            int_browse = wiz_browse.int_id
-            int_id = int_browse.id
+            picking = wiz_browse.picking_id
             
             ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
             line_ignored_num = []
@@ -127,7 +134,7 @@ class wizard_import_pick_line(osv.osv_memory):
                 col_count = len(row)
                 template_col_count = len(header_index.items())
                 if col_count != template_col_count:
-                    message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join(columns_for_int_line_import))
+                    message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join(columns_for_internal_line_import))
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
@@ -158,7 +165,7 @@ class wizard_import_pick_line(osv.osv_memory):
 
                     # Cell 8 : Source location
                     src_value = {}
-                    src_value = check_line.compute_location_value(cr, uid, to_write=to_write, loc_obj=loc_obj,
+                    src_value = check_line.compute_location_value(cr, uid, to_write=to_write, loc_obj=loc_obj, pick_type=picking.type,
                                                                   product_id=to_write['product_id'], check_type='src',
                                                                   row=row, cell_nb=8, context=context)
                     to_write.update({'location_id': src_value['location_id'], 'error_list': src_value['error_list'],})
@@ -167,7 +174,7 @@ class wizard_import_pick_line(osv.osv_memory):
 
                     # Cell 9 : Destination location
                     dest_value = {}
-                    dest_value = check_line.compute_location_value(cr, uid, to_write=to_write, loc_obj=loc_obj,
+                    dest_value = check_line.compute_location_value(cr, uid, to_write=to_write, loc_obj=loc_obj, pick_type=picking.type,
                                                                    product_id=to_write['product_id'], check_type='dest',
                                                                    row=row, cell_nb=9, context=context)
                     to_write.update({'location_dest_id': dest_value['location_id'], 'error_list': dest_value['error_list'],})
@@ -213,8 +220,8 @@ class wizard_import_pick_line(osv.osv_memory):
                     to_write.update({
                         'to_correct_ok': any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
                         'show_msg_ok': any(to_write['warning_list']),  # the lines with show_msg_ok=True won't change color, it is just info
-                        'picking_id': int_browse.id,
-                        'reason_type_id': int_browse.reason_type_id.id,
+                        'picking_id': picking.id,
+                        'reason_type_id': picking.reason_type_id.id,
                         'text_error': '\n'.join(to_write['error_list'] + to_write['warning_list']),
                     })
                     # we check consistency on the model of on_change functions to call for updating values
@@ -231,7 +238,7 @@ class wizard_import_pick_line(osv.osv_memory):
 
                     # write move line on picking
                     #vals['move_lines'].append((0, 0, to_write))
-                    #if pick_obj._check_service(cr, uid, int_id, vals, context=context):
+                    #if pick_obj._check_service(cr, uid, picking.id, vals, context=context):
                     move_id = move_obj.create(cr, uid, to_write, context=context)
                     if to_write['error_list']:
                         lines_to_correct += 1
@@ -281,7 +288,7 @@ Importation completed in %s!
                 wizard_vals.update(file_to_export)
             self.write(cr, uid, ids, wizard_vals, context=context)
             # we reset the state of the FO to draft (initial state)
-            pick_obj.write(cr, uid, int_id, {'state': int_browse.state_before_import, 'import_in_progress': False}, context)
+            pick_obj.write(cr, uid, picking.id, {'state': picking.state_before_import, 'import_in_progress': False}, context)
             if not context.get('yml_test', False):
                 cr.commit()
                 cr.close()
@@ -296,7 +303,7 @@ Importation completed in %s!
         wiz_common_import = self.pool.get('wiz.common.import')
         pick_obj = self.pool.get('stock.picking')
         for wiz_read in self.browse(cr, uid, ids, context=context):
-            int_id = wiz_read.int_id.id
+            picking_id = wiz_read.picking_id.id
             if not wiz_read.file:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
             try:
@@ -307,8 +314,8 @@ Importation completed in %s!
                 # get first line
                 first_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
-                context.update({'int_id': int_id, 'header_index': header_index})
-                res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_int_line_import)
+                context.update({'picking_id': picking_id, 'header_index': header_index})
+                res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_internal_line_import)
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
             except osv.except_osv as osv_error:
@@ -317,7 +324,7 @@ Importation completed in %s!
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
             # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
-            pick_obj.write(cr, uid, int_id, {'state': 'import', 'import_in_progress': True, 'state_before_import': wiz_read.int_id.state}, context)
+            pick_obj.write(cr, uid, picking_id, {'state': 'import', 'import_in_progress': True, 'state_before_import': wiz_read.picking_id.state}, context)
             cr.commit()
         if not context.get('yml_test', False):
             thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
@@ -335,9 +342,9 @@ Otherwise, you can continue to use Unifield.""")
         if isinstance(ids, (int, long)):
             ids = [ids]
         pick_obj = self.pool.get('stock.picking')
-        for wiz_read in self.read(cr, uid, ids, ['int_id', 'state', 'file']):
-            int_id = wiz_read['int_id']
-            int_name = pick_obj.read(cr, uid, int_id, ['name'])['name']
+        for wiz_read in self.read(cr, uid, ids, ['picking_id', 'state', 'file']):
+            picking_id = wiz_read['picking_id']
+            int_name = pick_obj.read(cr, uid, picking_id, ['name'])['name']
             if wiz_read['state'] != 'done':
                 self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % (int_name, )})
         return False
@@ -349,14 +356,16 @@ Otherwise, you can continue to use Unifield.""")
         '''
         if isinstance(ids, (int, long)):
             ids=[ids]
-        for wiz_obj in self.read(cr, uid, ids, ['int_id']):
-            int_id = wiz_obj['int_id']
+        for wiz_obj in self.browse(cr, uid, ids, context=context):
+            picking_id = wiz_obj.picking_id
+            view_id = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=picking_id)[1]
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.picking',
                 'view_type': 'form',
                 'view_mode': 'form, tree',
+                'view_id': [view_id],
                 'target': 'crush',
-                'res_id': int_id,
+                'res_id': picking_id.id,
                 'context': context,
                 }
 
@@ -366,14 +375,16 @@ Otherwise, you can continue to use Unifield.""")
         '''
         if isinstance(ids, (int, long)):
             ids=[ids]
-        for wiz_obj in self.read(cr, uid, ids, ['int_id']):
-            int_id = wiz_obj['int_id']
+        for wiz_obj in self.browse(cr, uid, ids, context=context):
+            picking_id = wiz_obj.picking_id
+            view_id = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=picking_id)[1]
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.picking',
                 'view_type': 'form',
                 'view_mode': 'form, tree',
+                'view_id': [view_id],
                 'target': 'crush',
-                'res_id': int_id,
+                'res_id': picking_id.id,
                 'context': context,
                 }
 

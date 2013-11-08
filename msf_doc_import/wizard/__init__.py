@@ -55,6 +55,11 @@ INT_COLUMNS_HEADER_FOR_IMPORT = [
 (_('Asset'), 'string'), (_('Batch Number'), 'string'), (_('Expiry Date'), 'DateTime'), (_('Source Location'), 'string'), (_('Destination Location'), 'string')]
 INT_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in INT_COLUMNS_HEADER_FOR_IMPORT]
 
+IN_COLUMNS_HEADER_FOR_IMPORT = [
+(_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Kit'), 'string'),
+(_('Asset'), 'string'), (_('Batch Number'), 'string'), (_('Expiry Date'), 'DateTime'), (_('Source Location'), 'string'), (_('Destination Location'), 'string')]
+IN_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in IN_COLUMNS_HEADER_FOR_IMPORT]
+
 IR_COLUMNS_HEADER_FOR_IMPORT=[
 (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('Cost Price'), 'number'), (_('UoM'), 'string'),
 (_('Currency'), 'string'), (_('Comment'), 'string')]
@@ -71,7 +76,7 @@ import stock_partial_picking
 import wizard_import_po_line
 import wizard_import_fo_line
 import wizard_import_ir_line
-import wizard_import_int_line
+import wizard_import_picking_line
 import wiz_common_import
 import wizard_import_tender_line
 import wizard_delete_lines

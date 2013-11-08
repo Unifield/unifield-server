@@ -197,6 +197,7 @@ def compute_location_value(cr, uid, **kwargs):
     cell_nb = kwargs['cell_nb']
     check_type = kwargs.get('check_type')
     product_id = kwargs.get('product_id')
+    pick_type = kwargs.get('pick_type')
     loc_id = None
     loc_name = None
     msg = ''
@@ -205,10 +206,14 @@ def compute_location_value(cr, uid, **kwargs):
             loc_name = row.cells[cell_nb].data.strip()
             if loc_name:
                 domain = [('name', '=', loc_name)]
-                if check_type and product_id and check_type == 'src':
+                if check_type and product_id and check_type == 'src' and pick_type == 'internal':
                     domain.extend([('internal_src', '=', product_id), ('usage', '!=', 'view')])
-                elif check_type and product_id and check_type == 'dest':
+                elif check_type and product_id and check_type == 'dest' and pick_type == 'internal':
                     domain.extend([('internal_dest', '=', product_id), ('usage', '!=', 'view')])
+                elif check_type and product_id and check_type == 'src' and pick_type == 'in':
+                    domain.extend([('usage', '=', 'supplier')])
+                elif check_type and product_id and check_type == 'dest' and pick_type == 'in':
+                    domain.extend([('incoming_dest', '=', product_id), ('usage', '!=', 'view')])
 
                 loc_ids = loc_obj.search(cr, uid, domain)
                 if loc_ids:

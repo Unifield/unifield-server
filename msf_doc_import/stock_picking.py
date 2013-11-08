@@ -40,10 +40,13 @@ class stock_picking(osv.osv):
     """
     _inherit = 'stock.picking'
 
-    def wizard_import_line(self, cr, uid, ids, context=None):
+    def wizard_import_pick_line(self, cr, uid, ids, context=None):
         '''
         Launches the wizard to import lines from a file
         '''
+        # Objects
+        wiz_obj = self.pool.get('wizard.import.pick.line')
+
         context = context or {}
 
         if isinstance(ids, (int, long)):
@@ -61,16 +64,16 @@ class stock_picking(osv.osv):
 
         columns_header = [(_(f[0]), f[1]) for f in header_cols]
         default_template = SpreadsheetCreator(_('Template of import'), columns_header, [])
-        file = base64.encodestring(default_template.get_xml(default_filtres=['decode.utf8']))
+        file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = wiz_obj.create(cr, uid, {'file': file,
                                              'filename_template': 'template.xls',
                                              'filename': 'Lines_Not_Imported.xls',
                                              'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in cols])),
-                                             'pick_id': ids[0],
-                                             'state': 'draft',}, context=context
+                                             'picking_id': ids[0],
+                                             'state': 'draft',}, context=context)
 
         return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.import.picking.line',
+                'res_model': 'wizard.import.pick.line',
                 'res_id': export_id,
                 'view_type': 'form',
                 'view_mode': 'form',
