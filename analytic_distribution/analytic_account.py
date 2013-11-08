@@ -198,7 +198,7 @@ class analytic_account(osv.osv):
                   GROUP BY a.id""", where_clause_args)
             for ac_id, debit, credit, balance, quantity in cr.fetchall():
                 res[ac_id] = {'debit': debit, 'credit': credit, 'balance': balance, 'quantity': quantity}
-            tmp_res = self._compute_level_tree(cr, uid, ids, child_ids, res, ['debit', 'credit', 'balance', 'quantity'], context)
+            tmp_res = self._compute_level_tree(cr, uid, ids, child_ids, res, name, context)
             res.update(tmp_res)
         return res
     # @@@end
