@@ -31,6 +31,8 @@ import so_po_common
 from sync_common import xmlid_to_sdref
 import logging
 
+from sync_client import get_sale_purchase_logger
+
 class stock_picking(osv.osv):
     '''
     synchronization methods related to stock picking objects
@@ -599,7 +601,7 @@ class stock_picking(osv.osv):
                     cr, uid,
                     context['changes']['stock.move'].keys(),
                     context=context):
-                lines.setdefault(rec_line.order_id.id, {})[rec_line.id] = \
+                lines.setdefault(rec_line.id, {})[rec_line.id] = \
                      context['changes']['stock.move'][rec_line.id]
         # monitor changes on purchase.order
         for id, changes in changes.items():
