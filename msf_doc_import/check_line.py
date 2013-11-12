@@ -198,6 +198,7 @@ def compute_location_value(cr, uid, **kwargs):
     check_type = kwargs.get('check_type')
     product_id = kwargs.get('product_id')
     pick_type = kwargs.get('pick_type')
+    pick_subtype = kwargs.get('pick_subtype')
     loc_id = None
     loc_name = None
     msg = ''
@@ -214,6 +215,15 @@ def compute_location_value(cr, uid, **kwargs):
                     domain.extend([('usage', '=', 'supplier')])
                 elif check_type and product_id and check_type == 'dest' and pick_type == 'in':
                     domain.extend([('incoming_dest', '=', product_id), ('usage', '!=', 'view')])
+                elif check_type and product_id and check_type == 'src' and pick_type == 'out' and pick_subtype == 'standard':
+                    domain.extend([('outgoing_src', '=', product_id), ('usage', '!=', 'view')])
+                elif check_type and product_id and check_type == 'dest' and pick_type == 'out' and pick_subtype == 'standard':
+                    domain.extend(['|', ('output_ok', '=', True), ('usage', '=', 'customer')])
+                elif check_type and product_id and check_type == 'src' and pick_type == 'out' and pick_subtype == 'picking':
+                    domain.extepnd([('picking_ticket_src', '=', produc_id)])
+                elif check_type and product_id and check_type == 'dest' and pick_type == 'out' and pick_subtype == 'picking':
+                    pack_loc_id = self.pool.get('ir.model.data').get_object_refence(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
+                    domain.extend([('id', '=', pack_loc_id)])
 
                 loc_ids = loc_obj.search(cr, uid, domain)
                 if loc_ids:

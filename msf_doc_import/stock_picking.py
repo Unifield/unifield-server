@@ -29,6 +29,8 @@ from msf_doc_import.wizard import INT_COLUMNS_HEADER_FOR_IMPORT as columns_heade
 from msf_doc_import.wizard import INT_LINE_COLUMNS_FOR_IMPORT as columns_for_internal_import
 from msf_doc_import.wizard import IN_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_incoming_import
 from msf_doc_import.wizard import IN_LINE_COLUMNS_FOR_IMPORT as columns_for_incoming_import
+from msf_doc_import.wizard import OUT_COLUMNS_HEADER_FOR_IMPORT as columns_headr_for_delivery_import
+from msf_doc_import.wizard import OUT_LINE_COLUMNS_FOR_IMPORT as columns_for_delivery_import
 from msf_doc_import import GENERIC_MESSAGE
 
 import base64
@@ -58,6 +60,9 @@ class stock_picking(osv.osv):
         if picking.type == 'in':
             header_cols = columns_header_for_incoming_import
             cols = columns_for_incoming_import
+        elif picking.type == 'out' and picking.subtype == 'standard':
+            header_cols = columns_header_for_delivery_import
+            cols = columns_for_delivery_import
         else:
             header_cols = columns_header_for_internal_import
             cols = columns_for_incoming_import

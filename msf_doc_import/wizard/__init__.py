@@ -60,6 +60,11 @@ IN_COLUMNS_HEADER_FOR_IMPORT = [
 (_('Asset'), 'string'), (_('Batch Number'), 'string'), (_('Expiry Date'), 'DateTime'), (_('Source Location'), 'string'), (_('Destination Location'), 'string')]
 IN_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in IN_COLUMNS_HEADER_FOR_IMPORT]
 
+OUT_COLUMNS_HEADER_FOR_IMPORT = [
+(_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Kit'), 'string'),
+(_('Asset'), 'string'), (_('Batch Number'), 'string'), (_('Expiry Date'), 'DateTime'), (_('Source Location'), 'string'), (_('Destination Location'), 'string')]
+OUT_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in OUT_COLUMNS_HEADER_FOR_IMPORT]
+
 IR_COLUMNS_HEADER_FOR_IMPORT=[
 (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('Cost Price'), 'number'), (_('UoM'), 'string'),
 (_('Currency'), 'string'), (_('Comment'), 'string')]
