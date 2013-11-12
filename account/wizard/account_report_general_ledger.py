@@ -70,13 +70,29 @@ class account_report_general_ledger(osv.osv_memory):
         if context is None:
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['landscape',  'initial_balance', 'amount_currency', 'sortby', 'output_currency', 'instance_ids'])[0])
+        data['form'].update(self.read(cr, uid, ids, ['landscape',  'initial_balance', 'amount_currency', 'sortby', 'output_currency', 'instance_ids', 'export_format'])[0])
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
             data['form'].update({'initial_balance': False})
+        if data['form']['export_format'] \
+           and data['form']['export_format'] == 'xls':
+            return { 
+                'type': 'ir.actions.report.xml',
+                'report_name': 'account.general.ledger_xls',
+                'datas': data,
+            }
         if data['form']['landscape']:
-            return { 'type': 'ir.actions.report.xml', 'report_name': 'account.general.ledger_landscape', 'datas': data}
-        return { 'type': 'ir.actions.report.xml', 'report_name': 'account.general.ledger', 'datas': data}
-
+            return { 
+                'type': 'ir.actions.report.xml',
+                'report_name': 'account.general.ledger_landscape',
+                'datas': data,
+            }
+        return { 
+            'type': 'ir.actions.report.xml',
+            'report_name': 'account.general.ledger',
+            'datas': data,
+        }
+        
+        
 account_report_general_ledger()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

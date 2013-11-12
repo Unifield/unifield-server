@@ -30,6 +30,8 @@
 import time
 from report import report_sxw
 from common_report_header import common_report_header
+from report_webkit.webkit_report import WebKitParser
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class general_ledger(report_sxw.rml_parse, common_report_header):
     _name = 'report.account.general.ledger'
@@ -359,8 +361,18 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                                                 self.currency_id,
                                                 self.output_currency_id,
                                                 amount)
-
 report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
+
+
+class general_ledger_xls(SpreadsheetReport):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        super(general_ledger_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        #ids = getIds(self, cr, uid, ids, context)
+        a = super(general_ledger_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+general_ledger_xls('report.account.general.ledger_xls', 'account.account', 'addons/account/report/account_general_ledger_xls.mako', parser=general_ledger, header='internal')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
