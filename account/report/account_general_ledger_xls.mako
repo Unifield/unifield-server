@@ -51,6 +51,16 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Worksheet ss:Name="Sheet">
 <%
     max = 12
+    journals = ', '.join([ lt or '' for lt in get_journal(data) ])
+    display_account = (data['form']['display_account']=='bal_all' and 'All') or (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0'
+    filter = get_filter(data)
+    if filter:
+        if filter=='Date':
+            filter = "%s - %s" % (formatLang(get_start_date(data),date=True),
+                formatLang(get_end_date(data),date=True), )
+        elif filter == 'Periods':
+            filter = "%s - %s" % (get_start_period(data),
+                get_end_period(data), )
 %>
 <Table ss:ExpandedColumnCount="${max}" ss:ExpandedRowCount="1" x:FullColumns="1"
 x:FullRows="1">
@@ -73,25 +83,25 @@ x:FullRows="1">
 </Row>
 <Row>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
+    <Data ss:Type="String">${get_account(data) or ''}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
+    <Data ss:Type="String">${get_fiscalyear(data) or ''}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
+    <Data ss:Type="String">${journals}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
+    <Data ss:Type="String">${display_account}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
+    <Data ss:Type="String">${filter}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
+    <Data ss:Type="String">${get_sortby(data)}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
+    <Data ss:Type="String">${get_target_move(data)}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder"></Cell>
 <Cell ss:StyleID="ssBorder"></Cell>
