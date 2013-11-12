@@ -68,6 +68,20 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                                             ['name'])
             if ouput_cur_r and ouput_cur_r[0] and ouput_cur_r[0]['name']:
                 self.output_currency_code = ouput_cur_r[0]['name']
+                
+        # proprietary instances filter
+        self.instance_ids = data['form']['instance_ids'] 
+        if self.instance_ids:
+            # we add instance filter in clauses 'self.query/self.init_query' 
+            instance_ids_in = "l.instance_id in(%s)" % (",".join(map(str, self.instance_ids)))
+            if not self.query:
+                self.query = instance_ids_in
+            else:
+                self.query += ' AND ' + instance_ids_in
+            if not self.init_query:
+                self.init_query = instance_ids_in
+            else:
+                self.init_query += ' AND ' + instance_ids_in
         
         return super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
 
@@ -104,9 +118,12 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         # company currency
         self.uid = uid
         self.currency_id = False
+        self.instance_id = False
         user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
         if user and user[0] and user[0].company_id:
             self.currency_id = user[0].company_id.currency_id.id
+            if user[0].company_id.instance_id:
+                self.instance_id = user[0].company_id.instance_id.id
         if not self.currency_id:
             raise osv.except_osv(_('Error !'), _('Company has no default currency'))
         

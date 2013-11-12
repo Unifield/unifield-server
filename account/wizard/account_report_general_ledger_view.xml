@@ -22,7 +22,7 @@
                 <field name="output_currency"/>
                 <field name="amount_currency" invisible="1" />
                 <newline/>
-                <field name="instance_ids" widget="many2many" />
+                <field name="instance_ids" />
                 <newline/>
             </xpath>
             </data>
