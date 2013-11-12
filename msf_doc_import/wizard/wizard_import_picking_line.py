@@ -92,206 +92,225 @@ class wizard_import_pick_line(osv.osv_memory):
         date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
         line_with_error = []
         vals = {'move_lines': []}
-        
+
         for wiz_browse in self.browse(cr, uid, ids, context):
-            picking = wiz_browse.picking_id
-            
-            ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
-            line_ignored_num = []
-            error_list = []
-            error_log = ''
-            message = ''
-            line_num = 0
-            header_index = context['header_index']
-            
-            file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
-            # iterator on rows
-            rows = file_obj.getRows()
-            # ignore the first row
-            rows.next()
-            line_num = 0
-            to_write = {}
-            total_line_num = len([row for row in file_obj.getRows()])
-            percent_completed = 0
-            for row in rows:
-                line_num += 1
-                # default values
-                to_write = {
-                    'error_list': [],
-                    'warning_list': [],
-                    'to_correct_ok': False,
-                    'show_msg_ok': False,
-                    'comment': '',
-                    'price_unit': 1,  # in case that the product is not found and we do not have price
-                    'product_qty': 1,
-                    'default_code': False,
-                    'prodlot_id': False,
-                    'expiry_date': False,
-                    'asset_id': False,
-                    'kit_creation_id_stock_move': False,
-                }
+            try:
+                picking = wiz_browse.picking_id
+                
+                ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
+                line_ignored_num = []
+                error_list = []
+                error_log = ''
+                message = ''
+                line_num = 0
+                header_index = context['header_index']
+                
+                file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
+                # iterator on rows
+                rows = file_obj.getRows()
+                # ignore the first row
+                rows.next()
+                line_num = 0
+                to_write = {}
+                total_line_num = len([row for row in file_obj.getRows()])
+                percent_completed = 0
+                for row in rows:
+                    line_num += 1
+                    # default values
+                    to_write = {
+                        'error_list': [],
+                        'warning_list': [],
+                        'to_correct_ok': False,
+                        'show_msg_ok': False,
+                        'comment': '',
+                        'price_unit': 1,  # in case that the product is not found and we do not have price
+                        'product_qty': 1,
+                        'default_code': False,
+                        'prodlot_id': False,
+                        'expiry_date': False,
+                        'asset_id': False,
+                        'kit_creation_id_stock_move': False,
+                    }
 
-                col_count = len(row)
-                template_col_count = len(header_index.items())
-                if col_count != template_col_count:
-                    message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join(columns_for_internal_line_import))
-                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
-                    ignore_lines += 1
-                    line_ignored_num.append(line_num)
-                    percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
-                    continue
-                try:
-                    if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
+                    col_count = len(row)
+                    template_col_count = len(header_index.items())
+                    if col_count != template_col_count:
+                        message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join(columns_for_internal_line_import))
+                        line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                        ignore_lines += 1
+                        line_ignored_num.append(line_num)
                         percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                        self.write(cr, uid, ids, {'percent_completed': percent_completed})
-                        line_num-=1
-                        total_line_num -= 1
+                        self.write(cr, uid, ids, {'percent_completed':percent_completed})
                         continue
-    
-                    # Cell 0: Product Code
-                    p_value = {}
-                    p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
-                    to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'price_unit': p_value['price_unit'],
-                                    'comment': p_value['comment'], 'error_list': p_value['error_list']})
+                    try:
+                        if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
+                            percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                            self.write(cr, uid, ids, {'percent_completed': percent_completed})
+                            line_num-=1
+                            total_line_num -= 1
+                            continue
+        
+                        # Cell 0: Product Code
+                        p_value = {}
+                        p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                        to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'price_unit': p_value['price_unit'],
+                                        'comment': p_value['comment'], 'error_list': p_value['error_list']})
 
-                    # Name
-                    if p_value['default_code']:
-                        product = product_obj.browse(cr, uid, to_write['product_id'])
-                        name = '[%s] %s' % (product.default_code, product.name)
-                        to_write.update({'name': name})
-                    else:
-                        raise osv.except_osv(_('Error'), '\n'.join(x for x in p_value['error_list']))
+                        # Name
+                        if p_value['default_code']:
+                            product = product_obj.browse(cr, uid, to_write['product_id'])
+                            name = '[%s] %s' % (product.default_code, product.name)
+                            to_write.update({'name': name})
+                        else:
+                            raise osv.except_osv(_('Error'), '\n'.join(x for x in p_value['error_list']))
 
-                    # Cell 8 : Source location
-                    src_value = {}
-                    src_value = check_line.compute_location_value(cr, uid, to_write=to_write, loc_obj=loc_obj, pick_type=picking.type,
-                                                                  product_id=to_write['product_id'], check_type='src',
-                                                                  row=row, cell_nb=8, context=context)
-                    to_write.update({'location_id': src_value['location_id'], 'error_list': src_value['error_list'],})
-                    if not src_value['location_id']:
-                        raise osv.except_osv(_('Error'), '\n'.join(x for x in p_value['error_list']))
+                        # Cell 8 : Source location
+                        src_value = {}
+                        src_value = check_line.compute_location_value(cr, uid, to_write=to_write, loc_obj=loc_obj, pick_type=picking.type,
+                                                                      product_id=to_write['product_id'], check_type='src',
+                                                                      row=row, cell_nb=8, context=context)
+                        to_write.update({'location_id': src_value['location_id'], 'error_list': src_value['error_list'],})
+                        if not src_value['location_id']:
+                            raise osv.except_osv(_('Error'), '\n'.join(x for x in p_value['error_list']))
 
-                    # Cell 9 : Destination location
-                    dest_value = {}
-                    dest_value = check_line.compute_location_value(cr, uid, to_write=to_write, loc_obj=loc_obj, pick_type=picking.type,
-                                                                   product_id=to_write['product_id'], check_type='dest',
-                                                                   row=row, cell_nb=9, context=context)
-                    to_write.update({'location_dest_id': dest_value['location_id'], 'error_list': dest_value['error_list'],})
-                    if not dest_value['location_id']:
-                        raise osv.except_osv(_('Error'), '\n'.join(x for x in p_value['error_list']))
-    
-                    # Cell 2: Quantity
-                    qty_value = {}
-                    qty_value = check_line.quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
-                    to_write.update({'product_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
-    
-                    # Cell 3: UOM
-                    uom_value = {}
-                    uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
-                    to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
-    
-                    # Cell 4: Kit
-                    if product.type == 'product' and product.subtype == 'kit':
-                        kit_value = {}
-                        kit_value = check_line.compute_kit_value(cr, uid, row=row, to_write=to_write, kit_obj=kit_obj, 
-                                                                 cell_nb=4, context=context)
-                        to_write.update({'composition_list_id': kit_value['kit_id'], 'error_list': kit_value['error_list'],})
-    
-                    # Cell 5: Asset
-                    if product.type == 'product' and product.subtype == 'asset':
-                        asset_value = {}
-                        asset_value = check_line.compute_asset_value(cr, uid, row=row, to_write=to_write, asset_obj=asset_obj,
-                                                                     cell_nb=5, context=context)
-                        to_write.update({'asset_id': asset_value['asset_id'], 'error_list': asset_value['error_list']})
-    
-                    if product.batch_management or product.perishable:
-                        # Cell 6: Batch Number and Cell 7 : Expiry date
-                        batch_value = {}
-                        batch_value = check_line.compute_batch_expiry_value(cr, uid, row=row, to_write=to_write, bn_obj=bn_obj,
-                                                                            bn_cell_nb=6, ed_cell_nb=7, 
-                                                                            date_format=date_format,
-                                                                            product_id=to_write.get('product_id'),)
-                        to_write.update({'prodlot_id': batch_value['prodlot_id'],
-                                         'expired_date': batch_value['expired_date'],
-                                         'error_list': batch_value['error_list']})
+                        # Cell 9 : Destination location
+                        dest_value = {}
+                        dest_value = check_line.compute_location_value(cr, uid, to_write=to_write, loc_obj=loc_obj, pick_type=picking.type,
+                                                                       product_id=to_write['product_id'], check_type='dest',
+                                                                       row=row, cell_nb=9, context=context)
+                        to_write.update({'location_dest_id': dest_value['location_id'], 'error_list': dest_value['error_list'],})
+                        if not dest_value['location_id']:
+                            raise osv.except_osv(_('Error'), '\n'.join(x for x in p_value['error_list']))
+        
+                        # Cell 2: Quantity
+                        qty_value = {}
+                        qty_value = check_line.quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
+                        to_write.update({'product_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
+        
+                        # Cell 3: UOM
+                        uom_value = {}
+                        uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                        to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
+
+                        new_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_value.get('uom_id', False), qty_value.get('product_qty', False), 'qty').get('value', {}).get('qty', qty_value.get('product_qty'))
+                        if new_qty != qty_value.get('product_qty'):
+                            qty_value.update({'product_qty': new_qty})
+                            to_write.update({'product_qty': new_qty})
+                            error_log += _("Line %s in the Excel file : The product qty. has been rounded with the rounding value of the UoM.") % line_num
+        
+                        # Cell 4: Kit
+                        if product.type == 'product' and product.subtype == 'kit':
+                            kit_value = {}
+                            kit_value = check_line.compute_kit_value(cr, uid, row=row, to_write=to_write, kit_obj=kit_obj, 
+                                                                     cell_nb=4, context=context)
+                            to_write.update({'composition_list_id': kit_value['kit_id'], 'error_list': kit_value['error_list'],})
+        
+                        # Cell 5: Asset
+                        if product.type == 'product' and product.subtype == 'asset':
+                            asset_value = {}
+                            asset_value = check_line.compute_asset_value(cr, uid, row=row, to_write=to_write, asset_obj=asset_obj,
+                                                                         cell_nb=5, context=context)
+                            to_write.update({'asset_id': asset_value['asset_id'], 'error_list': asset_value['error_list']})
+        
+                        if product.batch_management or product.perishable:
+                            # Cell 6: Batch Number and Cell 7 : Expiry date
+                            batch_value = {}
+                            batch_value = check_line.compute_batch_expiry_value(cr, uid, row=row, to_write=to_write, bn_obj=bn_obj,
+                                                                                bn_cell_nb=6, ed_cell_nb=7, 
+                                                                                date_format=date_format,
+                                                                                product_id=to_write.get('product_id'),)
+                            to_write.update({'prodlot_id': batch_value['prodlot_id'],
+                                             'expired_date': batch_value['expired_date'],
+                                             'error_list': batch_value['error_list']})
 
 
-                    to_write.update({
-                        'to_correct_ok': any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
-                        'show_msg_ok': any(to_write['warning_list']),  # the lines with show_msg_ok=True won't change color, it is just info
-                        'picking_id': picking.id,
-                        'reason_type_id': picking.reason_type_id.id,
-                        'text_error': '\n'.join(to_write['error_list'] + to_write['warning_list']),
-                    })
-                    # we check consistency on the model of on_change functions to call for updating values
-                    #move_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
+                        to_write.update({
+                            'to_correct_ok': any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
+                            'show_msg_ok': any(to_write['warning_list']),  # the lines with show_msg_ok=True won't change color, it is just info
+                            'picking_id': picking.id,
+                            'reason_type_id': picking.reason_type_id.id,
+                            'text_error': '\n'.join(to_write['error_list'] + to_write['warning_list']),
+                        })
+                        # we check consistency on the model of on_change functions to call for updating values
+                        #move_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
 
-                    if to_write.get('product_qty', 0.00) <= 0.00:
-                        error_log += _("Line %s in the Excel file was ignored. Details: %s") % (line_num, _('Product Quantity must be greater than zero.'))
+                        if to_write.get('product_qty', 0.00) <= 0.00:
+                            error_log += _("Line %s in the Excel file was ignored. Details: %s") % (line_num, _('Product Quantity must be greater than zero.'))
+                            line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                            ignore_lines += 1
+                            line_ignored_num.append(line_num)
+                            percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                            cr.rollback()
+                            continue
+
+                        # write move line on picking
+                        #vals['move_lines'].append((0, 0, to_write))
+                        #if pick_obj._check_service(cr, uid, picking.id, vals, context=context):
+                        move_id = move_obj.create(cr, uid, to_write, context=context)
+                        if to_write['error_list']:
+                            lines_to_correct += 1
+                        #move_obj.action_confirm(cr, uid, [move_id], context=context)
+                        percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                        complete_lines += 1
+
+                    except IndexError, e:
+                        error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
                         line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                         ignore_lines += 1
                         line_ignored_num.append(line_num)
                         percent_completed = float(line_num)/float(total_line_num-1)*100.0
                         cr.rollback()
                         continue
+                    except osv.except_osv as osv_error:
+                        osv_value = osv_error.value
+                        osv_name = osv_error.name
+                        message += _("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
+                        ignore_lines += 1
+                        line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                        percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                        cr.rollback()
+                        continue
+                    except AttributeError as e:
+                        error_log += _('Line %s in the Excel file was added to the file of the lines with error, an error is occured. Details : %s') % (line_num, e)
+                        line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                        ignore_lines += 1
+                        line_ignored_num.append(line_num)
+                        percent_completed = float(line_num)/float(total_line_num-1)/100.0
+                        cr.rollback()
+                        continue
+                    finally:
+                        self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                        if not context.get('yml_test', False):
+                            cr.commit()
+            except Exception as e:
+                error_log += _("An error is occured. Details : %s") % e
+                cr.rollback()
+                continue
+            finally:
+                error_log += '\n'.join(error_list)
+                if error_log:
+                    error_log = _("Reported errors for ignored lines : \n") + error_log
+                end_time = time.time()
+                total_time = str(round(end_time-start_time)) + _(' second(s)')
+                final_message = _(''' 
+    Importation completed in %s!
+    # of imported lines : %s on %s lines
+    # of ignored lines: %s
+    # of lines to correct: %s
+    %s
 
-                    # write move line on picking
-                    #vals['move_lines'].append((0, 0, to_write))
-                    #if pick_obj._check_service(cr, uid, picking.id, vals, context=context):
-                    move_id = move_obj.create(cr, uid, to_write, context=context)
-                    if to_write['error_list']:
-                        lines_to_correct += 1
-                    #move_obj.action_confirm(cr, uid, [move_id], context=context)
-                    percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                    complete_lines += 1
-
-                except IndexError, e:
-                    error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
-                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
-                    ignore_lines += 1
-                    line_ignored_num.append(line_num)
-                    percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                    cr.rollback()
-                    continue
-                except osv.except_osv as osv_error:
-                    osv_value = osv_error.value
-                    osv_name = osv_error.name
-                    message += _("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
-                    ignore_lines += 1
-                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
-                    percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                    cr.rollback()
-                    continue
-                finally:
-                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
-                    if not context.get('yml_test', False):
-                        cr.commit()
-
-            error_log += '\n'.join(error_list)
-            if error_log:
-                error_log = _("Reported errors for ignored lines : \n") + error_log
-            end_time = time.time()
-            total_time = str(round(end_time-start_time)) + _(' second(s)')
-            final_message = _(''' 
-Importation completed in %s!
-# of imported lines : %s on %s lines
-# of ignored lines: %s
-# of lines to correct: %s
-%s
-
-%s
-''') % (total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
-            wizard_vals = {'message': final_message, 'state': 'done'}
-            if line_with_error:
-                file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
-                wizard_vals.update(file_to_export)
-            self.write(cr, uid, ids, wizard_vals, context=context)
-            # we reset the state of the FO to draft (initial state)
-            pick_obj.write(cr, uid, picking.id, {'state': picking.state_before_import, 'import_in_progress': False}, context)
-            if not context.get('yml_test', False):
-                cr.commit()
-                cr.close()
+    %s
+    ''') % (total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
+                wizard_vals = {'message': final_message, 'state': 'done'}
+                if line_with_error:
+                    file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
+                    wizard_vals.update(file_to_export)
+                self.write(cr, uid, ids, wizard_vals, context=context)
+                # we reset the state of the FO to draft (initial state)
+                pick_obj.write(cr, uid, picking.id, {'state': picking.state_before_import, 'import_in_progress': False}, context)
+        if not context.get('yml_test', False):
+            cr.commit()
+            cr.close()
 
         return True
 

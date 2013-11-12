@@ -50,7 +50,7 @@
 
         <record id="view_delivery_order_import_form_view" model="ir.ui.view">
             <field name="name">view.delivery.order.import.form.view</field>
-            <field name="model">stock.pikcing</field>
+            <field name="model">stock.picking</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="stock.view_picking_out_form" />
             <field name="arch" type="xml">
@@ -70,8 +70,6 @@
             </field>
         </record>
 
-        view_picking_ticket_form
-
         <record id="view_picking_ticket_import_form_view" model="ir.ui.view">
             <field name="name">view.picking.ticket.import.form.view</field>
             <field name="model">stock.picking</field>
@@ -79,14 +77,14 @@
             <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_form" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/form/notebook//field[@nmae='move_lines']" position="before">
+                    <xpath expr="/form/notebook//field[@name='move_lines']" position="before">
                         <group name="import" string="Import Lines" colspan="4" attrs="{'invisible': ['|', ('state', 'not in', ('draft', 'confirmed', 'assigned')), ('from_wkf', '=', True)]}">
                             <button name="wizard_import_pick_line" string="Import lines" icon="gtk-dnd" col="1" type="object" />
                             <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0" />
                         </group>
                     </xpath>
 
-                    <xpath expr="/form//field[@name='move_lines']//form/field[@nmae='state']" position="after">
+                    <xpath expr="/form//field[@name='move_lines']//form/field[@name='state']" position="after">
                         <newline />
                         <field name="text_error" colspan="4" nolabel="1" readonly="1" />
                     </xpath>
