@@ -34,6 +34,8 @@ class account_report_general_ledger(osv.osv_memory):
         'sortby': fields.selection([('sort_date', 'Date'), ('sort_journal_partner', 'Journal & Partner')], 'Sort By', required=True),
         'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
+        #'export_format': fields.selection([('xls', 'Excel'), ('csv', 'CSV'), ('pdf', 'PDF')], string="Export format", required=True),
+        'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
     }
     _defaults = {
         'landscape': True,
@@ -41,6 +43,7 @@ class account_report_general_ledger(osv.osv_memory):
         'sortby': 'sort_date',
         'initial_balance': False,
         'amount_currency': True,
+        'export_format': 'pdf',
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -56,6 +59,12 @@ class account_report_general_ledger(osv.osv_memory):
         if not fiscalyear:
             res['value'] = {'initial_balance': False}
         return res
+        
+    def remove_journals(self, cr, uid, ids, context=None):
+        if ids:
+            self.write(cr, uid, ids, { 'journal_ids': [(6, 0, [])] },
+                       context=context)
+        return {}
 
     def _print_report(self, cr, uid, ids, data, context=None):
         if context is None:

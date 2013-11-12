@@ -16,15 +16,26 @@
             <xpath expr="//field[@name='target_move']" position="after">
                 <field name="display_account"/>
                 <field name="sortby"/>
-                <field name="landscape"/>
                 <field name="initial_balance" attrs="{'readonly':[('fiscalyear_id','=', False)]}"/>
                 <newline/>
+                <field name="landscape"/>
+                <field name="export_format"/>
+                <newline/>   
                 <field name="output_currency"/>
                 <field name="amount_currency" invisible="1" />
                 <newline/>
                 <field name="instance_ids" />
                 <newline/>
             </xpath>
+            
+            <xpath expr="//field[@name='journal_ids']" position="replace">
+                <group col="4" colspan="4">
+                    <button name="remove_journals" string="Remove all journals" type="object" col="1" colspan="1" />
+                    <newline />
+                    <field name="journal_ids" colspan="4" nolabel="1"/>
+                </group>
+            </xpath>
+            
             </data>
             </field>
         </record>
