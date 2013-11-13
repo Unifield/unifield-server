@@ -30,9 +30,16 @@
             
             <xpath expr="//field[@name='journal_ids']" position="replace">
                 <group col="4" colspan="4">
-                    <button name="remove_journals" string="Remove all journals" type="object" col="1" />
-                    <newline />
-                    <field name="journal_ids" colspan="4" nolabel="1"/>
+                    <button name="remove_journals" string="Remove all journals" type="object" colspan="1" />
+                    <label string="" colspan="3" />
+                    <field name="journal_ids" colspan="4" nolabel="1" noteditable="1">
+                        <tree noteditable="1" editable="top" string="Account Journal" >
+                            <field name="instance_id" />
+                            <field name="code" />
+                            <field name="name" />
+                            <field name="type" />
+                        </tree>
+                    </field>
                 </group>
             </xpath>
             
