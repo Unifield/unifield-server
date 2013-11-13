@@ -39,6 +39,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
     def set_context(self, objects, data, ids, report_type=None):
         new_ids = ids
         obj_move = self.pool.get('account.move.line')
+        
         self.sortby = data['form'].get('sortby', 'sort_date')
         self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=data['form'].get('used_context',{}))
         ctx2 = data['form'].get('used_context',{}).copy()
@@ -96,7 +97,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.period_sql = ""
         self.sold_accounts = {}
         self.sortby = 'sort_date'
-        self.localcontext.update( {
+        self.localcontext.update({
             'time': time,
             'lines': self.lines,
             'sum_debit_account': self._sum_debit_account,
@@ -115,6 +116,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_end_date':self._get_end_date,
             'get_target_move': self._get_target_move,
             'get_output_currency_code': self._get_output_currency_code,
+            'get_filter_info': self._get_filter_info,
         })
         
         # company currency
@@ -350,6 +352,25 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         
     def _get_output_currency_code(self, data):
         return self.output_currency_code
+        
+    def _get_filter_info(self, data):
+        """ get filter info
+        _get_filter, _get_start_date, _get_end_date,
+        get_start_period, get_end_period
+        are from common_report_header
+        """
+        res = ''
+        f = self._get_filter(data)
+        if not f:
+            return res
+
+        if f == 'No Filter':
+            res = f
+        elif f == 'Date':
+            res = self.formatLang(self._get_start_date(data), date=True) + ' - ' + self.formatLang(self._get_end_date(data), date=True)
+        elif f == 'Periods':
+            res = self.get_start_period(data) + ' - ' + self.get_end_period(data)
+        return res
         
     def _currency_conv(self, amount):
         if not amount or amount == 0.:
