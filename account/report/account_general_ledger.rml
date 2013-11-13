@@ -406,7 +406,7 @@
       </blockTable>
       <section>
         <para style="terp_default_8">[[ repeatIn(lines(o), 'line') ]]</para>
-        <blockTable colWidths="40.0,28.0,48.0,42.0,42.0,48.0,28.0,57.0,57.0,74.0,74.0" style="Table9">
+        <blockTable colWidths="47.0,21.0,48.0,42.0,42.0,48.0,28.0,57.0,57.0,74.0,74.0" style="Table9">
           <tr>
             <td>
               <para style="terp_default_8">[[ formatLang(line['ldate'],date=True) ]]</para>
