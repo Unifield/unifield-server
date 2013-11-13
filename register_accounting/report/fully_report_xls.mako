@@ -451,11 +451,11 @@
         </Cell>
       </Row>
 
-% if line.analytic_distribution_id and line.analytic_distribution_id.funding_pool_lines:
-% for ana_line in line.analytic_distribution_id.funding_pool_lines:
+% if line.fp_analytic_lines:
+% for ana_line in line.fp_analytic_lines:
       <Row>
         <Cell ss:Index="10" ss:StyleID="ana_amount">
-          <Data ss:Type="Number">${line.amount and ana_line.percentage and (abs((line.amount or 0.0) * (ana_line.percentage or 0.0) / 100)) or 0.0}</Data>
+          <Data ss:Type="Number">${ana_line.amount_currency}</Data>
         </Cell>
         <Cell ss:StyleID="ana_left">
           <Data ss:Type="String">${ana_line.destination_id and ana_line.destination_id.code or ''|x}</Data>
@@ -464,10 +464,10 @@
           <Data ss:Type="String">${ana_line.cost_center_id and ana_line.cost_center_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${ana_line.analytic_id and ana_line.analytic_id.code or ''|x}</Data>
+          <Data ss:Type="String">${ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="ana_percent">
-          <Data ss:Type="Number">${ana_line.percentage or 0.0}</Data>
+        <Cell ss:StyleID="ana_left">
+          <Data ss:Type="Number">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
         </Cell>
       </Row>
 % endfor
