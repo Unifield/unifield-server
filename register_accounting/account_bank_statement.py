@@ -916,7 +916,10 @@ class account_bank_statement_line(osv.osv):
         # Prepare some values
         res = {}
         for absl in self.browse(cr, uid, ids, context=context):
-            res[absl.id] = self.pool.get('account.analytic.line').search(cr, uid, [('move_id.move_id', 'in', self._get_move_ids(cr, uid, [absl.id], context=context)), ('account_id.category', '=', 'FUNDING')])
+            # Fetch all analytic lines linked to this register line
+            ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id.move_id', 'in', self._get_move_ids(cr, uid, [absl.id], context=context)), ('account_id.category', '=', 'FUNDING')])
+            # Then retrieve all corrections/reversals from them
+            res[absl.id] = self.pool.get('account.analytic.line').get_corrections_history(cr, uid, ana_ids, context=context)
         return res
 
     _columns = {

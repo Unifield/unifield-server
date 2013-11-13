@@ -100,6 +100,7 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
     </Style>
+    <!-- Blue left string for analytic distribution lines -->
     <Style ss:ID="ana_left">
       <Alignment ss:Horizontal="Left" ss:Indent="0"/>
       <Borders>
@@ -109,6 +110,28 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
       <Font ss:Color="#0000ff"/>
+    </Style>
+    <!-- Red left string for analytic distribution lines -->
+    <Style ss:ID="red_ana_left">
+      <Alignment ss:Horizontal="Left" ss:Indent="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Color="#ff0000"/>
+    </Style>
+    <!-- Green left string for analytic distribution lines -->
+    <Style ss:ID="green_ana_left">
+      <Alignment ss:Horizontal="Left" ss:Indent="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Color="#006400"/>
     </Style>
     <Style ss:ID="centre">
       <Alignment ss:Horizontal="Center" ss:Indent="0"/>
@@ -207,6 +230,30 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
       <Font ss:Color="#0000ff"/>
+    </Style>
+    <!-- Formated Number in red for analytic distribution amounts -->
+    <Style ss:ID="red_ana_amount">
+      <Alignment ss:Horizontal="Right" ss:Indent="0"/>
+      <NumberFormat ss:Format="Standard"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Color="#ff0000"/>
+    </Style>
+    <!-- Formated Number in green for analytic distribution amounts -->
+    <Style ss:ID="green_ana_amount">
+      <Alignment ss:Horizontal="Right" ss:Indent="0"/>
+      <NumberFormat ss:Format="Standard"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Color="#006400"/>
     </Style>
     <!-- Formated Number (without thousand separator) for analytic distribution amounts (in blue font color) -->
     <Style ss:ID="ana_percent">
@@ -453,6 +500,43 @@
 
 % if line.fp_analytic_lines:
 % for ana_line in line.fp_analytic_lines:
+% if ana_line.is_reallocated:
+      <Row>
+        <Cell ss:Index="10" ss:StyleID="red_ana_amount">
+          <Data ss:Type="Number">${ana_line.amount_currency}</Data>
+        </Cell>
+        <Cell ss:StyleID="red_ana_left">
+          <Data ss:Type="String">${ana_line.destination_id and ana_line.destination_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="red_ana_left">
+          <Data ss:Type="String">${ana_line.cost_center_id and ana_line.cost_center_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="red_ana_left">
+          <Data ss:Type="String">${ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="red_ana_left">
+          <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
+        </Cell>
+      </Row>
+% elif ana_line.is_reversal:
+      <Row>
+        <Cell ss:Index="10" ss:StyleID="green_ana_amount">
+          <Data ss:Type="Number">${ana_line.amount_currency}</Data>
+        </Cell>
+        <Cell ss:StyleID="green_ana_left">
+          <Data ss:Type="String">${ana_line.destination_id and ana_line.destination_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="green_ana_left">
+          <Data ss:Type="String">${ana_line.cost_center_id and ana_line.cost_center_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="green_ana_left">
+          <Data ss:Type="String">${ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="green_ana_left">
+          <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
+        </Cell>
+      </Row>
+% else:
       <Row>
         <Cell ss:Index="10" ss:StyleID="ana_amount">
           <Data ss:Type="Number">${ana_line.amount_currency}</Data>
@@ -467,9 +551,10 @@
           <Data ss:Type="String">${ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="ana_left">
-          <Data ss:Type="Number">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
+          <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
         </Cell>
       </Row>
+% endif
 % endfor
 % endif
 
