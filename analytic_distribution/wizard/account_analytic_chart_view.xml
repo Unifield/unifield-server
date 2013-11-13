@@ -52,11 +52,11 @@
 
         <menuitem
           name="Balance by analytic accounts"
-          parent="account.menu_finance_charts"
+          parent="account.final_accounting_reports"
           action="account.action_account_analytic_chart"
           id="account.menu_action_analytic_account_tree2"
           icon="STOCK_INDENT"
-          groups="analytic.group_analytic_accounting" sequence="20"/>
+          groups="analytic.group_analytic_accounting" sequence="110"/>
 
     <!--
          New Chart of Analytic Accounts

@@ -54,7 +54,7 @@
 
         <menuitem icon="STOCK_INDENT" action="account.action_account_chart"
               id="account.menu_action_account_tree2"
-                  parent="account.menu_finance_charts" string="Balance by accounts"/>
+                  parent="account.final_accounting_reports" string="Balance by accounts" sequence="100"/>
 
     <!--
       Renew account move line tree when you come from balance by accounts and chart of accounts wizards
