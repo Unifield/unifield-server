@@ -111,7 +111,7 @@ class order_cycle_rule(osv.osv):
                                              'filename_template': 'template.xls',
                                              'filename': 'Lines_Not_Imported.xls',
                                              'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in cols])),
-                                             'picking_id': ids[0],
+                                             'rule_id': ids[0],
                                              'state': 'draft',}, context=context)
 
         return {'type': 'ir.actions.act_window',
@@ -156,7 +156,7 @@ class threshold_value_rule(osv.osv):
                                              'filename_template': 'template.xls',
                                              'filename': 'Lines_Not_Imported.xls',
                                              'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in cols])),
-                                             'picking_id': ids[0],
+                                             'rule_id': ids[0],
                                              'state': 'draft',}, context=context)
 
         return {'type': 'ir.actions.act_window',
