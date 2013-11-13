@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="auto_supply_import_lines" model="ir.ui.view">
+            <field name="name">auto.supply.import.lines</field>
+            <field name="model">stock.warehouse.automatic.supply</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="procurement_auto.automatic_supply_form_view" />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='line_ids']" position="before">
+                    <group name="import" string=" Import Lines " colspan="1" col="4">
+                        <button name="wizard_import_auto_supply_line" string="Import lines" icon="gtk-dnd" col="1" type="object" />
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>
