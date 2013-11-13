@@ -42,7 +42,6 @@ class import_commitment_wizard(osv.osv_memory):
         journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENGI')], context=context)
         to_be_deleted_ids = analytic_obj.search(cr, uid, [('imported_commitment', '=', True)], context=context)
         functional_currency_obj = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id
-
         
         if len(journal_ids) > 0:
             # read file
@@ -166,6 +165,9 @@ class import_commitment_wizard(osv.osv_memory):
                     analytic_obj.create(cr, uid, vals, context=context)
                     sequence_number += 1
                 
+        else: 
+            raise osv.except_osv(_('Error'), _('Analytic Journal ENGI doesn\'t exist!'))
+
         analytic_obj.unlink(cr, uid, to_be_deleted_ids, context=context)
 
         return {'type' : 'ir.actions.act_window_close'}
