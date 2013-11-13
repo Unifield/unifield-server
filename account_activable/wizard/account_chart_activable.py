@@ -72,7 +72,7 @@ class account_chart_activable(osv.osv_memory):
         Export chart of account in a XML file
         """
         if not context:
-            context = None
+            context = {}
         account_ids = []
         for wiz in self.browse(cr, uid, ids):
             args = [('active', '=', True)]

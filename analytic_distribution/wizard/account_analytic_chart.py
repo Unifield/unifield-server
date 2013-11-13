@@ -93,7 +93,7 @@ class account_analytic_chart(osv.osv_memory):
         Export chart of analytic account in a XML file
         """
         if not context:
-            context = None
+            context = {}
         account_ids = []
         for wiz in self.browse(cr, uid, ids):
             args = [('filter_active', '=', True)]
