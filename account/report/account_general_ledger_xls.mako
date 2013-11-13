@@ -50,7 +50,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Styles>
 <Worksheet ss:Name="Sheet">
 <%
-    max = 12
+    max = 11
     if data['model'] == 'account.account':
         header_company_or_chart_of_account = 'Company'
     else:
@@ -86,40 +86,36 @@ x:FullRows="1">
 <Cell ss:StyleID="ssH"></Cell>
 <Cell ss:StyleID="ssH"></Cell>
 <Cell ss:StyleID="ssH"></Cell>
-<Cell ss:StyleID="ssH"></Cell>
 </Row>
 % for a in objects:
 <Row>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${(get_account(data) or '') | x}</Data>
+    <Data ss:Type="String">${(get_account(data) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${(get_fiscalyear(data) or '') | x}</Data>
+    <Data ss:Type="String">${(get_fiscalyear(data) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${(journals or '') | x}</Data>
+    <Data ss:Type="String">${(journals or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${(display_account or '') | x}</Data>
+    <Data ss:Type="String">${(display_account or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${(filter or '') | x}</Data>
+    <Data ss:Type="String">${(filter or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${(get_sortby(data) or '') | x}</Data>
+    <Data ss:Type="String">${(get_sortby(data) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${(get_target_move(data) or '') | x}</Data>
+    <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder"></Cell>
 <Cell ss:StyleID="ssBorder"></Cell>
 <Cell ss:StyleID="ssBorder"></Cell>
 <Cell ss:StyleID="ssBorder"></Cell>
 <Cell ss:StyleID="ssBorder"></Cell>
 </Row>
 <Row>
-<Cell ss:StyleID="">
-</Cell>
 <Cell ss:StyleID="">
 </Cell>
 <Cell ss:StyleID="">
@@ -146,7 +142,6 @@ x:FullRows="1">
 
 <Row>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Date</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Period</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">JRNL</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Partner</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Ref</Data></Cell>
@@ -163,12 +158,10 @@ x:FullRows="1">
 <Cell ss:StyleID="ssBorder">
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${o.code}</Data>
+    <Data ss:Type="String">${(o.code or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
     <Data ss:Type="String">${(o.name or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssBorder">
 </Cell>
 <Cell ss:StyleID="ssBorder">
 </Cell>
@@ -191,6 +184,45 @@ x:FullRows="1">
     <Data ss:Type="String">${output_currency_code}</Data>
 </Cell>
 </Row>
+
+% for line in lines(o):
+<Row>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="String">${(formatLang(line['ldate'],date=True)) or ''}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="String">${(line['lcode'] or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="String">${(line['partner_name'] or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="String">${(line['lref'] or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="String">${(line['move'] or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="String">${(line['lname'] or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="String">${strip_name(line['line_corresp'].replace(', ',','),25)}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="String">${formatLang(line['debit'], digits=get_digits(dp='Account'))}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="String">${formatLang(line['credit'], digits=get_digits(dp='Account'))}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="String">${formatLang(line['progress'], digits=get_digits(dp='Account'))}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="String">${((company.currency_id and company.currency_id.name) or '')|x}</Data>
+</Cell>
+</Row>
+% endfor
+
 % endfor
 % endfor
 </Table>
