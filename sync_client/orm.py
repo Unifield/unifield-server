@@ -521,9 +521,8 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if self._name not in MODELS_TO_IGNORE \
            and not context.get('sync_update_creation'):
             context = dict(context, avoid_sdref_deletion=True)
-            to_be_synchronized = not context.get('sync_update_execution')
-            self.touch(cr, uid, ids, None,
-                to_be_synchronized, context=context)
+            if not context.get('sync_update_execution'):
+                self.touch(cr, uid, ids, None, True, context=context)
             if hasattr(self, 'on_delete'):
                 self.on_delete(cr, uid, ids, context=context)
 
