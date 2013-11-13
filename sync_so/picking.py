@@ -19,19 +19,14 @@
 #
 ##############################################################################
 
-from osv import osv
-from osv import fields
-from osv import orm
-from tools.translate import _
-from datetime import datetime
-import tools
-import time
+from osv import osv, fields
 import netsvc
-import so_po_common
-from sync_common import xmlid_to_sdref
+
 import logging
 
+from sync_common import xmlid_to_sdref
 from sync_client import get_sale_purchase_logger
+
 
 class stock_picking(osv.osv):
     '''
@@ -601,7 +596,7 @@ class stock_picking(osv.osv):
                     cr, uid,
                     context['changes']['stock.move'].keys(),
                     context=context):
-                lines.setdefault(rec_line.id, {})[rec_line.id] = \
+                lines.setdefault(rec_line.picking_id.id, {})[rec_line.id] = \
                      context['changes']['stock.move'][rec_line.id]
         # monitor changes on purchase.order
         for id, changes in changes.items():
