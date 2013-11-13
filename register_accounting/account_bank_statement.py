@@ -186,7 +186,7 @@ class account_bank_statement(osv.osv):
         'period_number': fields.related('period_id', 'number', relation='account.period', string="Period number", type="integer", store=True, readonly=True),
     }
 
-    _order = 'period_number asc, state'
+    _order = 'state asc, period_number desc'
 
     _defaults = {
         'balance_start': lambda *a: 0.0,
