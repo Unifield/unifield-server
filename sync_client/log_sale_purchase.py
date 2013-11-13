@@ -101,7 +101,7 @@ class log_sale_purchase(osv.osv):
                 ('modification','Modified'),
             ], string="Action", required=True, readonly=True),
         'action_datetime' :
-            fields.datetime("Log Date/Time"),
+            fields.datetime("Log Date/Time", readonly=True),
 
         # Log content
         'is_status_modified' :
