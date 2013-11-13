@@ -82,8 +82,12 @@ class account_analytic_chart(osv.osv_memory):
         context['display_fp'] = True
         result['context'] = unicode(context)
         # UF-1718: Add a link on each account to display linked analytic items
-        tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'balance_analytic_tree')
-        tree_view_id = tree_view_id and tree_view_id[1] or False
+        try:
+            tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'balance_analytic_tree')
+        except:
+            tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'view_account_analytic_account_tree')
+        finally:
+            tree_view_id = tree_view_id and tree_view_id[1] or False
         result['view_id'] = [tree_view_id]
         result['views'] = [(tree_view_id, 'tree')]
         return result
