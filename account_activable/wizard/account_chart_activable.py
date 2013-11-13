@@ -138,6 +138,7 @@ class account_coa(osv.osv_memory):
         if data.get('period_from', False) and data.get('period_to', False):
             result['periods'] = period_obj.build_ctx_periods(cr, uid, data['period_from'], data['period_to'])
         result['context'] = str({'fiscalyear': data['fiscalyear'], 'periods': result['periods']})
+        result['name'] = _('Chart of Accounts')
         if data['fiscalyear']:
             result['name'] += ': ' + fy_obj.read(cr, uid, [data['fiscalyear']], context=context)[0]['code']
         # Set context regarding show_inactive field

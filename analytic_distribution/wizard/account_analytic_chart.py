@@ -73,6 +73,7 @@ class account_analytic_chart(osv.osv_memory):
         context['filter_inactive'] = not data['show_inactive']
         if data['currency_id']:
             context['currency_id'] = data['currency_id']
+        result['name'] = _('Balance by analytic accounts')
         if data['fiscalyear']:
             result['name'] += ': ' + self.pool.get('account.fiscalyear').read(cr, uid, [data['fiscalyear']], context=context)[0]['code']
         if data['output_currency_id']:
@@ -80,6 +81,11 @@ class account_analytic_chart(osv.osv_memory):
         # Display FP on result
         context['display_fp'] = True
         result['context'] = unicode(context)
+        # UF-1718: Add a link on each account to display linked analytic items
+        tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'balance_analytic_tree')
+        tree_view_id = tree_view_id and tree_view_id[1] or False
+        result['view_id'] = [tree_view_id]
+        result['views'] = [(tree_view_id, 'tree')]
         return result
 
     def button_export(self, cr, uid, ids, context=None):
@@ -151,6 +157,7 @@ class account_analytic_coa(osv.osv_memory):
         if data.get('period_from', False) and data.get('period_to', False):
             result['periods'] = period_obj.build_ctx_periods(cr, uid, data['period_from'], data['period_to'])
         result['context'] = str({'fiscalyear': data['fiscalyear'], 'periods': result['periods']})
+        result['name'] = _('Chart of analytic accounts')
         if data['fiscalyear']:
             result['name'] += ': ' + fy_obj.read(cr, uid, [data['fiscalyear']], context=context)[0]['code']
         # Set context regarding show_inactive field
@@ -158,6 +165,11 @@ class account_analytic_coa(osv.osv_memory):
         # Display FP on result
         context['display_fp'] = True
         result['context'] = unicode(context)
+        # UF-1718: Add a link on each account to display linked analytic items
+        tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'view_account_analytic_account_tree_coa')
+        tree_view_id = tree_view_id and tree_view_id[1] or False
+        result['view_id'] = [tree_view_id]
+        result['views'] = [(tree_view_id, 'tree')]
         return result
 
 account_analytic_coa()
