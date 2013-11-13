@@ -184,6 +184,12 @@
             <field name="type">engagement</field>
         </record>
 
+        <record id="account_journal.engagement_international_journal" model="account.analytic.journal">
+            <field name="name">Engagement - intl orders</field>
+            <field name="code">ENGI</field>
+            <field name="type">engagement</field>
+        </record>
+
         <record id="analytic_miscellaneous_transactions" model="account.analytic.journal">
             <field name="name">Miscellaneous Transactions Journal</field>
             <field name="code">AMT</field>

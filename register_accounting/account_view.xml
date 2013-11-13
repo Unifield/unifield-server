@@ -14,7 +14,7 @@
             <field name="priority" eval="20"/>
             <field name="arch" type="xml">
                 <xpath expr="/form" position="replace">
-                    <form string="Bank Statement" hide_new_button="1" hide_delete_button="1">
+                    <form string="Bank Statement" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                         <group col="6" colspan="4">
                             <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="journal_id" domain="[('type', '=', 'bank'),('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)" select="1"/>
@@ -53,7 +53,8 @@
                         <notebook colspan="4">
                             <page string="Transaction" name="statement_line_ids">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')">
+                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp'))">
+                                        <field name="transfer_amount" invisible="1"/>
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
                                         <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
@@ -65,6 +66,7 @@
                                         <field domain="[('journal_id','=',parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id" 
                                             on_change="onchange_account(account_id, parent.virtual_id)" 
                                             attrs="{'readonly': ['|','|', ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}" />
+                                        <field name="type_for_register" invisible="1"/>
                                         <field name="partner_type" 
                                             attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
@@ -158,10 +160,10 @@
             <field name='model'>account.bank.statement</field>
             <field name="type">form</field>
             <field name='inherit_id' ref='account.view_bank_statement_form2' />
-            <field name="priority" eval="20"/>
+            <field name="priority" eval="21"/>
             <field name="arch" type="xml">
                 <xpath expr="/form" position="replace">
-                    <form string="Statement" hide_new_button="1" hide_delete_button="1">
+                    <form string="Statement" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                         <group col="6" colspan="4">
                             <field name="name"/>
                             <field name="company_id" select="1" groups="base.group_multi_company" invisible="True"/>
@@ -188,7 +190,8 @@
                         <notebook colspan="4">
                             <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')">
+                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp'))">
+                                      <field name="transfer_amount" invisible="1"/>
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
                                         <field name="from_cash_return" invisible="1"/>
@@ -468,16 +471,19 @@
                         <filter string="Open" domain="[('state', '=', 'open')]" icon="terp-camera_test" name="open"/>
                         <filter string="Closed" domain="[('state','=','confirm')]" icon="terp-dialog-close" name="confirm"/>
                         <separator orientation="vertical"/>
-                        <field name="date"/>
+                        <field name="instance_id"/>
                         <field name="name"/>
+                        <newline/>
+                        <field name="period_id"/>
                         <field name="journal_id" widget='selection' domain="[('type', '=', 'cash')]" />
                     </group>
                     <newline/>
-                    <group expand="0" string="Group By...">
+                    <group expand="1" string="Group By...">
                         <filter string="Journal" context="{'group_by': 'journal_id'}" icon="terp-folder-orange"/>
                         <filter string="State" context="{'group_by': 'state'}" icon="terp-stock_effects-object-colorize"/>
                         <separator orientation="vertical"/>
                         <filter string="Period" context="{'group_by': 'period_id'}" icon="terp-go-month"/>
+                        <filter string="Instance" context="{'group_by': 'instance_id'}" icon="terp-stage"/>
                     </group>
                 </search>
             </field>
@@ -490,8 +496,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="16"/>
             <field name="arch" type="xml">
-                <tree colors="red:balance_end_real!=balance_end and state=='draft';blue:state=='draft' 
-                and (balance_end_real==balance_end);black:state=='confirm'" string="Register" hide_new_button="1" hide_delete_button="1">
+                <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1">
                     <field name="name"/>
                     <field name="date"/>
                     <field name="period_id"/>
@@ -512,9 +517,9 @@
             <field name="name">account.bank.statement.tree</field>
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
+            <field name="priority" eval="18"/>
             <field name="arch" type="xml">
-                <tree colors="red:balance_end_real!=balance_end;blue:state=='draft' and (balance_end_real==balance_end);black:state in ('open')" 
-                string="Register" hide_new_button="1" hide_delete_button="1">
+                <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1">
                     <field name="name"/>
                     <field name="date"/>
                     <field name="period_id"/>
@@ -535,6 +540,7 @@
             <field name="name">account.bank.statement.search</field>
             <field name="model">account.bank.statement</field>
             <field name="type">search</field>
+            <field name="priority" eval="25"/>
             <field name="arch" type="xml">
                 <search string="Search Bank Statements">
                     <group col="8" colspan="4">
@@ -542,36 +548,38 @@
                         <filter string="Open" domain="[('state', '=', 'open')]" icon="terp-camera_test" name="open"/>
                         <filter string="Closed" domain="[('state','=','confirm')]" icon="terp-dialog-close" name="confirm"/>
                         <separator orientation="vertical"/>
+                        <field name="instance_id"/>
                         <field name="name"/>
-                        <field name="date"/>
+                        <newline/>
                         <field name="period_id"/>
                         <field name="journal_id" widget="selection" domain="[('type', '=', 'bank')]" />
                     </group>
                     <newline/>
-                    <group expand="0" string="Group By...">
+                    <group expand="1" string="Group By...">
                         <filter string="Journal" context="{'group_by': 'journal_id'}" icon="terp-folder-orange"/>
                         <filter string="State" context="{'group_by': 'state'}" icon="terp-stock_effects-object-colorize"/>
                         <separator orientation="vertical"/>
                         <filter string="Period" context="{'group_by': 'period_id'}" icon="terp-go-month"/>
+                        <filter string="Instance" context="{'group_by': 'instance_id'}" icon="terp-stage"/>
                     </group>
                 </search>
             </field>
         </record>
 
     <!--Bank Statement modification to change "Bank Statement" into "Bank Statement" -->
+        <record id="action_view_bank_statement_search" model="ir.actions.server">
+          <field name="name">Bank Registers</field>
+          <field name="model_id" ref="model_account_bank_statement"/>
+          <field name="state">code</field>
+          <field name="code">action = obj.get_statement(st_type='bank', context=context)</field>
+        </record>
 
-        <record id="account.action_bank_statement_tree" model="ir.actions.act_window">
-            <field name="name">Bank Registers</field>
-            <field name="res_model">account.bank.statement</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form,graph</field>
-            <field name="domain">[('journal_id.type', '=', 'bank')]</field>
-            <field name="context">{'journal_type':'bank', 'search_default_open': 1}</field>
-            <field name="search_view_id" ref="view_bank_statement_search"/>
-            <field name="help">A bank statement is a summary of all financial transactions occurring over a given period of time on a deposit account, 
-                a credit card or any other type of financial account. The starting balance will be proposed automatically and the closing balance is 
-                to be found on your statement. When you are in the Payment column of a line, you can press F1 to open the reconciliation form.
-            </field>
+        <record id="account.menu_bank_statement_tree" model="ir.ui.menu">
+          <field name="name">Bank Registers</field>
+          <field name="sequence" eval="7"/>
+          <field name="parent_id" ref="account.menu_finance_bank_and_cash"/>
+          <field name="icon">STOCK_EXECUTE</field>
+          <field name="action" ref="action_view_bank_statement_search"/>
         </record>
 
         <record id="action_bank_statement_periodic_tree" model="ir.actions.act_window">
@@ -591,19 +599,20 @@
            res_model="account.bank.statement"
            src_model="account.journal"/>
 
-    <!-- Cash Register context modification to display only open cash register by default -->
+    <!-- Cash Register context modification to display only open cash register by default and to display default instance -->
+        <record id="action_view_cash_statement_search" model="ir.actions.server">
+          <field name="name">Cash Registers</field>
+          <field name="model_id" ref="model_account_bank_statement"/>
+          <field name="state">code</field>
+          <field name="code">action = obj.get_statement(st_type='cash', context=context)</field>
+        </record>
 
-        <record id="account.action_view_bank_statement_tree" model="ir.actions.act_window">
-            <field name="name">Cash Registers</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">account.bank.statement</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form,graph</field>
-            <field name="view_id" ref="view_cash_statement_tree"/>
-            <field name="search_view_id" ref="account.view_account_bank_statement_filter"/>
-            <field name="domain">[('journal_id.type', '=', 'cash')]</field>
-            <field name="context">{'journal_type':'cash', 'search_default_open': 1}</field>
-            <field name="help">A Cash Register allows you to manage cash entries in your cash journals. This feature provides an easy way to follow up cash payments on a daily basis. You can enter the coins that are in your cash box, and then post entries when money comes in or goes out of the cash box.</field>
+        <record id="account.journal_cash_move_lines" model="ir.ui.menu">
+          <field name="name">Cash Registers</field>
+          <field name="sequence" eval="10"/>
+          <field name="parent_id" ref="account.menu_finance_bank_and_cash"/>
+          <field name="icon">STOCK_EXECUTE</field>
+          <field name="action" ref="action_view_cash_statement_search"/>
         </record>
 
     <!-- Modification to display bank_statement_tree -->
@@ -628,15 +637,14 @@
             <field name="act_window_id" ref="account.action_view_bank_statement_tree"/>
         </record>
 
-        <menuitem string="Bank Registers" action="account.action_bank_statement_tree" id="account.menu_bank_statement_tree" parent="account.menu_finance_bank_and_cash" sequence="7"/>
-
     <!-- Cheque Register View -->
         <record id="view_cheque_register_form" model="ir.ui.view">
             <field name='name'>view.cheque.register.form</field>
             <field name='model'>account.bank.statement</field>
             <field name="type">form</field>
+            <field name="priority" eval="28"/>
             <field name="arch" type="xml">
-                <form string="Cheque Register" hide_new_button="1" hide_delete_button="1">
+                <form string="Cheque Register" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                     <group col="7" colspan="4">
                         <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                         <field name="journal_id" domain="[('type', '=', 'cheque'),('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)" select="1"/>
@@ -664,7 +672,8 @@
                         <page string="Transaction" name="statement_line_ids">
                             <field colspan="4" name="line_ids" nolabel="1">
                                 <!-- WARNING: because of UTP-331, in cheque register direct invoice lines should be editable but ONLY for cheque_number FIELD. That's why ALL field must be not editable when "direct_invoice" is True. -->
-                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')">
+                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="(red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp'))">
+                                    <field name="transfer_amount" invisible="1"/>
                                     <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                     <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
                                     <field name="document_date" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
@@ -676,6 +685,7 @@
                                     <field name="ref"/>
                                     <field domain="[('journal_id','=',parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id" 
                                         on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"/>
+                                    <field name="type_for_register" invisible="1"/>
                                     <field name="partner_type"
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
@@ -758,9 +768,9 @@
             <field name="name">account.cheque.register.tree</field>
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
+            <field name="priority" eval="27"/>
             <field name="arch" type="xml">
-                <tree colors="red:balance_end_real!=balance_end and state=='draft';blue:state=='draft';black:state=='confirm'" 
-                    string="Register" hide_new_button="1" hide_delete_button="1">
+                <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1">
                     <field name="name"/>
                     <field name="date"/>
                     <field name="period_id"/>
@@ -786,52 +796,40 @@
                         <filter string="Open" domain="[('state', '=', 'open')]" icon="terp-camera_test" name="open"/>
                         <filter string="Closed" domain="[('state','=','confirm')]" icon="terp-dialog-close" name="confirm"/>
                         <separator orientation="vertical"/>
+                        <field name="instance_id"/>
                         <field name="name"/>
-                        <field name="date"/>
+                        <newline/>
                         <field name="period_id"/>
                         <field name="journal_id" widget="selection" domain="[('type', '=', 'cheque')]" />
                     </group>
                     <newline/>
-                    <group expand="0" string="Group By...">
+                    <group expand="1" string="Group By...">
                         <filter string="Journal" context="{'group_by': 'journal_id'}" icon="terp-folder-orange"/>
                         <filter string="State" context="{'group_by': 'state'}" icon="terp-stock_effects-object-colorize"/>
                         <separator orientation="vertical"/>
                         <filter string="Period" context="{'group_by': 'period_id'}" icon="terp-go-month"/>
+                        <filter string="Instance" context="{'group_by': 'instance_id'}" icon="terp-stage"/>
                     </group>
                 </search>
             </field>
         </record>
 
     <!-- Cheque Register Actions -->
-        <record id="action_cheque_register_tree" model="ir.actions.act_window">
-            <field name="name">Cheque Registers</field>
-            <field name="res_model">account.bank.statement</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="domain">[('journal_id.type', '=', 'cheque')]</field>
-            <field name="context">{'journal_type':'cheque', 'search_default_open': 1}</field>
-            <field name="search_view_id" ref="view_cheque_register_search"/>
-            <field name="help">A cheque register is a summary of all financial transactions occurring over a given period of time on a cheque account.
-                 The starting balance will be proposed automatically and the closing balance is to be found on your statement.</field>
-        </record>
-
-        <record model="ir.actions.act_window.view" id="action_cheque_register_tree_cheque">
-            <field name="sequence" eval="10"/>
-            <field name="view_mode">tree</field>
-            <field name="view_id" ref="view_cheque_register_tree"/>
-            <field name="act_window_id" ref="action_cheque_register_tree"/>
-        </record>
-
-        <record model="ir.actions.act_window.view" id="action_cheque_register_form_cheque">
-            <field name="sequence" eval="20"/>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="view_cheque_register_form"/>
-            <field name="act_window_id" ref="action_cheque_register_tree"/>
+        <record id="action_view_cheque_statement_search" model="ir.actions.server">
+          <field name="name">Cheque Registers</field>
+          <field name="model_id" ref="model_account_bank_statement"/>
+          <field name="state">code</field>
+          <field name="code">action = obj.get_statement(st_type='cheque', context=context)</field>
         </record>
 
     <!-- Cheque Register Menu -->
-        <menuitem string="Cheque Registers" action="action_cheque_register_tree" id="menu_cash_register" 
-            parent="account.menu_finance_bank_and_cash" sequence="7"/>
+        <record id="menu_cash_register" model="ir.ui.menu">
+          <field name="name">Cheque Registers</field>
+          <field name="sequence" eval="7"/>
+          <field name="parent_id" ref="account.menu_finance_bank_and_cash"/>
+          <field name="icon">STOCK_EXECUTE</field>
+          <field name="action" ref="action_view_cheque_statement_search"/>
+        </record>
 
     <!-- Account View -->
         <record id="inherit_view_account_form" model="ir.ui.view">

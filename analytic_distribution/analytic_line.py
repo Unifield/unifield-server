@@ -77,7 +77,9 @@ class analytic_line(osv.osv):
 
     def _get_entry_sequence(self, cr, uid, ids, field_names, args, context=None):
         """
-        Give right entry sequence. Either move_id.move_id.name or commitment_line_id.commit_id.name
+        Give right entry sequence. Either move_id.move_id.name,
+        or commitment_line_id.commit_id.name, or
+        if the line was imported, the stored name
         """
         if not context:
             context = {}
@@ -88,6 +90,8 @@ class analytic_line(osv.osv):
                 res[l.id] = l.move_id.move_id.name
             elif l.commitment_line_id:
                 res[l.id] = l.commitment_line_id.commit_id.name
+            elif l.imported_commitment:
+                res[l.id] = l.imported_entry_sequence
         return res
 
     def _get_period_id(self, cr, uid, ids, field_name, args, context=None):
@@ -187,10 +191,13 @@ class analytic_line(osv.osv):
         'period_id': fields.function(_get_period_id, fnct_search=_search_period_id, method=True, string="Period", readonly=True, type="many2one", relation="account.period", store=False),
         'from_commitment_line': fields.function(_get_from_commitment_line, method=True, type='boolean', string="Commitment?"),
         'is_unposted': fields.function(_get_is_unposted, method=True, type='boolean', string="Unposted?"),
+        'imported_commitment': fields.boolean(string="From imported commitment?"),
+        'imported_entry_sequence': fields.text("Imported Entry Sequence"),
     }
 
     _defaults = {
         'from_write_off': lambda *a: False,
+        'imported_commitment': lambda *a: False,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

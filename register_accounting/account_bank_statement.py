@@ -32,6 +32,7 @@ from register_tools import open_register_view
 import time
 import decimal_precision as dp
 import netsvc
+from lxml import etree
 
 def _get_fake(cr, table, ids, *a, **kw):
     ret = {}
@@ -178,11 +179,14 @@ class account_bank_statement(osv.osv):
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
         'name': fields.char('Register Name', size=64, required=True, states={'confirm': [('readonly', True)]},
             help='If you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself'),
-        'journal_id': fields.many2one('account.journal', 'Journal Name', required=True, readonly=True),
+        'journal_id': fields.many2one('account.journal', 'Journal', required=True, readonly=True),
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
         'balance_gap': fields.function(_balance_gap_compute, method=True, string='Gap', readonly=True),
         'notes': fields.text('Comments'),
+        'period_number': fields.related('period_id', 'number', relation='account.period', string="Period number", type="integer", store=True, readonly=True),
     }
+
+    _order = 'state asc, period_number desc'
 
     _defaults = {
         'balance_start': lambda *a: 0.0,
@@ -545,13 +549,82 @@ class account_bank_statement(osv.osv):
             'target': 'current',
         }
 
+    def get_statement(self, cr, uid, ids, st_type='bank', context=None):
+        """
+        Give the search + tree view of account cash statement with a pre-filled instance field
+        """
+        # Some checks
+        if not context:
+            context = {}
+        # Prepare some values
+        domain = [('journal_id.type', '=', st_type)]
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        instance_id = user.company_id and user.company_id.instance_id and user.company_id.instance_id.id or False
+        context.update({
+            'journal_type': st_type,
+            'search_default_open': 1,
+            'search_default_instance_id': instance_id,
+            'active_id': False, # this is to avoid some "No field_values" problem
+            'active_ids': False, # idem that active_id
+        })
+        st_help = "A bank statement is a summary of all financial transactions occurring over a given period of time on a deposit account, a credit card or any other type of financial account. The starting balance will be proposed automatically and the closing balance is to be found on your statement. When you are in the Payment column of a line, you can press F1 to open the reconciliation form."
+        tree_module = 'account'
+        tree_view = 'view_bank_statement_tree'
+        search_module = 'register_accounting'
+        search_view = 'view_bank_statement_search'
+        name = _('Bank Registers')
+        res_module = 'register_accounting'
+        res_view = 'inherit_view_bank_statement_form'
+        if st_type == 'cheque':
+            name = _('Cheque Registers')
+            tree_module = 'register_accounting'
+            tree_view = 'view_cheque_register_tree'
+            search_module = 'register_accounting'
+            search_view = 'view_cheque_register_search'
+            res_module = 'register_accounting'
+            res_view = 'view_cheque_register_form'
+            st_help = "A cheque register is a summary of all financial transactions occurring over a given period of time on a cheque account. \
+The starting balance will be proposed automatically and the closing balance is to be found on your statement."
+        elif st_type == 'cash':
+            name = _('Cash Registers')
+            tree_module = 'register_accounting'
+            tree_view = 'view_cash_statement_tree'
+            search_module = 'account'
+            search_view = 'view_account_bank_statement_filter'
+            res_module = 'register_accounting'
+            res_view = 'inherit_view_bank_statement_form2'
+            st_help = "A Cash Register allows you to manage cash entries in your cash journals. This feature provides an easy way to follow up cash payments on a daily basis. You can enter the coins that are in your cash box, and then post entries when money comes in or goes out of the cash box."
+        # Search views
+        tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, tree_module, tree_view)
+        tree_view_id = tree_view_id and tree_view_id[1] or False
+        search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, search_module, search_view)
+        search_view_id = search_view_id and search_view_id[1] or False
+        res_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, res_module, res_view)
+        res_id = res_id and res_id[1] or False
+        # Return the search view
+        return {
+            'name': name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.bank.statement',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'view_id': [tree_view_id],
+            'search_view_id': search_view_id,
+            'views': [(tree_view_id, 'tree'), (res_id, 'form')],
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+            'help': st_help,
+
+        }
+
 account_bank_statement()
 
 class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
     _inherit = "account.bank.statement.line"
 
-    _order = 'date desc, id desc'
+    _order = 'sequence_for_reference desc'
 
     def _get_state(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """

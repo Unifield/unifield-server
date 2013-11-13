@@ -97,7 +97,7 @@ class wizard_transfer_with_change(osv.osv_memory):
             ids = [ids]
         # Browse elements
         for wiz in self.browse(cr, uid, ids, context=context):
-            vals = {}
+            vals = {'transfer_amount': False} # Default value for users that delete the previous amount
             # Fetch transfer amount
             if (wiz.amount_to or wiz.amount_from) and wiz.type:
                 amount = 0.0
