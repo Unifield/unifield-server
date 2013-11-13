@@ -30,5 +30,19 @@
             </field>
         </record>
 
+        <record id="threshold_value_import_lines" model="ir.ui.view">
+            <field name="name">threshold.value.import.lines</field>
+            <field name="model">threshold.value</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="threshold_value.threshold_value_form_view" />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='line_ids']" position="before">
+                    <group name="import" string=" Import Lines " colspan="1" col="4">
+                        <button name="wizard_import_threshold_value_line" string="Import lines" icon="gtk-dnd" col="1" type="object" />
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
     </data>
 </openerp>
