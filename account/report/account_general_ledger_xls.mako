@@ -47,6 +47,15 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
 <NumberFormat ss:Format="#,##0.00"/>
 </Style>
+<Style ss:ID="ssAccount">
+<Alignment ss:Vertical="Center" ss:MergeAcross="5" />
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
 <%
@@ -160,7 +169,7 @@ x:FullRows="1">
 <Cell ss:StyleID="ssBorder">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder">
+<Cell ss:StyleID="ssAccount">
     <Data ss:Type="String">${(o.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
@@ -184,7 +193,6 @@ x:FullRows="1">
     <Data ss:Type="String">${output_currency_code}</Data>
 </Cell>
 </Row>
-
 % for line in lines(o):
 <Row>
 <Cell ss:StyleID="ssBorder">
@@ -206,7 +214,7 @@ x:FullRows="1">
     <Data ss:Type="String">${(line['lname'] or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${strip_name(line['line_corresp'].replace(', ',','),25)}</Data>
+    <Data ss:Type="String">${((strip_name(line['line_corresp'].replace(', ',','),25)) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
     <Data ss:Type="String">${formatLang(line['debit'], digits=get_digits(dp='Account'))}</Data>
@@ -222,7 +230,6 @@ x:FullRows="1">
 </Cell>
 </Row>
 % endfor
-
 % endfor
 % endfor
 </Table>
