@@ -886,25 +886,22 @@ class account_bank_statement_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        res = []
+        res = set()
         for absl in self.browse(cr, uid, ids, context=context):
             if absl.move_ids:
                 # Default ones (direct link to register lines)
                 for m in absl.move_ids:
-                    if m.id not in res:
-                        res.append(m.id)
+                    res.add(m.id)
                     # Those from cash advance return (we should use the reconciliation to find the return and its expenses)
                     for ml in m.line_id:
                         if ml.reconcile_id and ml.reconcile_id.line_id:
                             for line in ml.reconcile_id.line_id:
-                                if line.move_id and line.move_id.id and line.move_id.id not in res:
-                                    res.append(line.move_id.id)
+                                res.add(line.move_id.id)
             # Those from pending payments (imported_invoice_line_ids are move_line)
             if absl.imported_invoice_line_ids:
                 for ml in absl.imported_invoice_line_ids:
-                    if ml.move_id and ml.move_id.id not in res:
-                        res.append(ml.move_id.id)
-        return res
+                    res.add(ml.move_id.id)
+        return list(res)
 
     def _get_fp_analytic_lines(self, cr, uid, ids, field_name=None, args=None, context=None):
         """
