@@ -373,7 +373,7 @@
     <blockTable colWidths="37.0,54.0,99.0,71.0,71.0,99.0,57.0,71.0,71.0,71.0,85.0" style="Table7">
       <tr>
         <td>
-          <para style="terp_tblheader_Details">[[data['form']['amount_currency'] == True or removeParentNode('blockTable')]] Date</para>
+          <para style="terp_tblheader_Details">[[data['form']['amount_currency'] or removeParentNode('blockTable')]] Date</para>
         </td>
         <td>
           <para style="terp_tblheader_Details">JNRL</para>

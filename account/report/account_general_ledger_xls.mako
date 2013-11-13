@@ -51,16 +51,23 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Worksheet ss:Name="Sheet">
 <%
     max = 12
+    if data['model'] == 'account.account':
+        header_company_or_chart_of_account = 'Company'
+    else:
+        header_company_or_chart_of_account = 'Chart of Account'
     journals = ', '.join([ lt or '' for lt in get_journal(data) ])
     display_account = (data['form']['display_account']=='bal_all' and 'All') or (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0'
     filter = get_filter(data)
     if filter:
-        if filter=='Date':
+        if filter == 'Date':
             filter = "%s - %s" % (formatLang(get_start_date(data),date=True),
                 formatLang(get_end_date(data),date=True), )
         elif filter == 'Periods':
             filter = "%s - %s" % (get_start_period(data),
                 get_end_period(data), )
+    output_currency_code = get_output_currency_code(data)
+    if not output_currency_code:
+        output_currency_code = ''
 %>
 <Table ss:ExpandedColumnCount="${max}" ss:ExpandedRowCount="1" x:FullColumns="1"
 x:FullRows="1">
@@ -68,7 +75,7 @@ x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
 <Row>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Chart of Account</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${header_company_or_chart_of_account}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Journals</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Display Account</Data></Cell>
@@ -81,27 +88,28 @@ x:FullRows="1">
 <Cell ss:StyleID="ssH"></Cell>
 <Cell ss:StyleID="ssH"></Cell>
 </Row>
+% for a in objects:
 <Row>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${get_account(data) or ''}</Data>
+    <Data ss:Type="String">${(get_account(data) or '') | x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${get_fiscalyear(data) or ''}</Data>
+    <Data ss:Type="String">${(get_fiscalyear(data) or '') | x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${journals}</Data>
+    <Data ss:Type="String">${(journals or '') | x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${display_account}</Data>
+    <Data ss:Type="String">${(display_account or '') | x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${filter}</Data>
+    <Data ss:Type="String">${(filter or '') | x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${get_sortby(data)}</Data>
+    <Data ss:Type="String">${(get_sortby(data) or '') | x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${get_target_move(data)}</Data>
+    <Data ss:Type="String">${(get_target_move(data) or '') | x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder"></Cell>
 <Cell ss:StyleID="ssBorder"></Cell>
@@ -150,45 +158,41 @@ x:FullRows="1">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Balance</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
 </Row>
+% for o in get_children_accounts(a):
 <Row>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
+    <Data ss:Type="String">${o.code}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
+    <Data ss:Type="String">${(o.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
+    <Data ss:Type="String">${formatLang(sum_debit_account(o), digits=get_digits(dp='Account'))}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
+    <Data ss:Type="String">${formatLang(sum_credit_account(o), digits=get_digits(dp='Account'))}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
+    <Data ss:Type="String">${formatLang(sum_balance_account(o), digits=get_digits(dp='Account'))}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">TEST</Data>
+    <Data ss:Type="String">${output_currency_code}</Data>
 </Cell>
 </Row>
-
+% endfor
+% endfor
 </Table>
 <AutoFilter x:Range="R1C1:R1C18" xmlns="urn:schemas-microsoft-com:office:excel">
 </AutoFilter>
