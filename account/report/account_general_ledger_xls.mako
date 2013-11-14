@@ -84,14 +84,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         header_company_or_chart_of_account = 'Chart of Account'
     journals = ', '.join([ lt or '' for lt in get_journal(data) ])
     display_account = (data['form']['display_account']=='bal_all' and 'All') or (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0'
-    filter = get_filter(data)
-    if filter:
-        if filter == 'Date':
-            filter = "%s - %s" % (formatLang(get_start_date(data),date=True),
-                formatLang(get_end_date(data),date=True), )
-        elif filter == 'Periods':
-            filter = "%s - %s" % (get_start_period(data),
-                get_end_period(data), )
     output_currency_code = get_output_currency_code(data)
     if not output_currency_code:
         output_currency_code = ''
@@ -106,7 +98,7 @@ x:FullRows="1">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Journals</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Display Account</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Filter By</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Filter By ${(get_filter(data) or '')|x}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Entries Sorted By</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Target Moves</Data></Cell>
 <Cell ss:StyleID="ssH"></Cell>
@@ -129,7 +121,7 @@ x:FullRows="1">
     <Data ss:Type="String">${(display_account or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${(filter or '')|x}</Data>
+    <Data ss:Type="String">${(get_filter_info(data) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${(get_sortby(data) or '')|x}</Data>
