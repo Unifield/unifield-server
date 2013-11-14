@@ -29,7 +29,7 @@
                         <field name="original_amount" colspan="2"/>
                     </group>
                     <newline/>
-                    <field name="line_ids" colspan="4" nolabel="1">
+                    <field name="line_ids" colspan="4" nolabel="1" context="{'parent_id': active_id}">
                         <tree string="Split Lines" editable="top">
                             <field name="name"/>
                             <field name="ref"/>

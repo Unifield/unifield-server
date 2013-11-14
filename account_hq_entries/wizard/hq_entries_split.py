@@ -40,6 +40,83 @@ class hq_entries_split_lines(osv.osv_memory):
         'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", domain=[('category', '=', 'FUNDING'), ('type', '!=', 'view')], required=True),
     }
 
+    def _get_original_line(self, cr, uid, context=None):
+        """
+        Fetch original line from context. If not, return False.
+        """
+        res = False
+        if not context:
+            return res
+        if context.get('parent_id', False):
+            wiz = self.pool.get('hq.entries.split').browse(cr, uid, context.get('parent_id'))
+            res = wiz and wiz.original_id or False
+        return res
+
+    def _get_field(self, cr, uid, field_name, field_type=False, context=None):
+        """
+        Get original line specific info given by "field_name" parameter
+        """
+        res = False
+        if not context or not field_name:
+            return res
+        original_line = self._get_original_line(cr, uid, context=context)
+        res = original_line and getattr(original_line, field_name, False) or False
+        if res and field_type and field_type == 'm2o':
+            res = getattr(res, 'id', False)
+        return res
+
+    def _get_amount(self, cr, uid, context=None):
+        """
+        Get original line amount substracted of all other lines amount
+        """
+        res = 0.0
+        if not context:
+            return res
+        original_line = self._get_original_line(cr, uid, context=context)
+        if original_line:
+            res = original_line.amount
+            line_ids = self.search(cr, uid, [('wizard_id', '=', context.get('parent_id', False))])
+            for line in self.browse(cr, uid, line_ids) or []:
+                res -= line.amount
+        # Do not allow negative amounts
+        if res < 0.0:
+            res = 0.0
+        return res
+
+    _defaults = {
+        'name': lambda obj, cr, uid, c: obj._get_field(cr, uid, 'name', context=c),
+        'ref': lambda obj, cr, uid, c: obj._get_field(cr, uid, 'ref', context=c),
+        'account_id': lambda obj, cr, uid, c: obj._get_field(cr, uid, 'account_id', field_type='m2o', context=c),
+        'amount': _get_amount,
+        'destination_id': lambda obj, cr, uid, c: obj._get_field(cr, uid, 'destination_id', field_type='m2o', context=c),
+        'cost_center_id': lambda obj, cr, uid, c: obj._get_field(cr, uid, 'cost_center_id', field_type='m2o', context=c),
+        'analytic_id': lambda obj, cr, uid, c: obj._get_field(cr, uid, 'analytic_id', field_type='m2o', context=c),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Check that:
+        - no negative value is given for amount
+        - amount and all other line's amount is not superior to original line
+        """
+        if not context:
+            context = {}
+        if vals.get('amount', 0.0):
+            # Check that amount is not negative
+            if vals.get('amount') <= 0.0:
+                raise osv.except_osv(_('Error'), _('Negative value is not allowed!'))
+        res = super(hq_entries_split_lines, self).create(cr, uid, vals, context=context)
+        # Check that amount is not superior to what expected
+        if res:
+            line = self.browse(cr, uid, res)
+            expected_max_amount = line.wizard_id.original_amount
+            for line in line.wizard_id.line_ids:
+                expected_max_amount -= line.amount
+            expected_max_amount += line.amount
+            if line.amount > expected_max_amount:
+                raise osv.except_osv(_('Error'), _('Expected max amount: %s') % (expected_max_amount or 0.0,))
+        return res
+
 hq_entries_split_lines()
 
 class hq_entries_split(osv.osv_memory):
