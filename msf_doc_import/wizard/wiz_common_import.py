@@ -430,26 +430,31 @@ class stock_move(osv.osv):
         p_obj = self.pool.get('product.product')
         pick_obj = self.pool.get('stock.picking')
         data_obj = self.pool.get('ir.model.data')
+        get_ref = data_obj.get_object_reference
 
         context = context or {}
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
         picking = pick_obj.browse(cr, uid, parent_id, context=context)
 
-        nomen_manda_log = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'nomen_log')[1]
-        nomen_manda_med = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'nomen_med')[1]
+        nomen_manda_log = get_ref(cr, uid, 'msf_config_locations', 'nomen_log')[1]
+        nomen_manda_med = get_ref(cr, uid, 'msf_config_locations', 'nomen_med')[1]
 
         if picking.partner_id:
             location_id = picking.partner_id.property_stock_supplier.id
         elif picking.type == 'in':
-            location_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_suppliers')[1]
+            location_id = get_ref(cr, uid, 'stock', 'stock_location_suppliers')[1]
         else:
-            location_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+            location_id = get_ref(cr, uid, 'stock', 'stock_location_stock')[1]
 
         for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'name', 'nomen_manda_0'], context=context):
             # Set the location dest id
             if picking.type == 'internal':
-                location_dest_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+                location_dest_id = get_ref(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+            elif picking.type == 'out' and picking.subtype == 'picking':
+                location_dest_id = get_ref(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
+            elif picking.type == 'out' and picking.subtype == 'standard':
+                location_dest_id = get_ref(cr, uid, 'stock', 'stock_location_output')[1]
             else:
                 location_dest_id = False
 
@@ -467,7 +472,6 @@ class stock_move(osv.osv):
 
             values.update({'product_qty': 0.00})
 
-            print values
             self.create(cr, uid, values, context=dict(context, noraise=True, import_in_progress=True))
 
         return True
@@ -488,4 +492,137 @@ class stock_picking(osv.osv):
                 open_wizard(cr, uid, ids[0], 'stock.picking', 'stock.move', context=context)
 
 stock_picking()
+
+
+class stock_warehouse_auto_supply_line(osv.osv):
+    _inherit = 'stock.warehouse.automatic.supply.line'
+    
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
+        '''
+        Create lines according to product in list
+        '''
+        p_obj = self.pool.get('product.product')
+
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+            values = {'product_id': p_data['id'],
+                      'product_uom_id': p_data['uom_id'][0],
+                      'supply_id': parent_id}
+
+            values.update(self.onchange_product_id(cr, uid, False, p_data['id'], p_data['uom_id'][0], 1.00, context=context).get('value', {}))
+            # Set the quantity to 0.00
+            values.update({'product_qty': 0.00})
+
+            self.create(cr, uid, values, context=dict(context, noraise=True))
+
+        return True        
+
+stock_warehouse_auto_supply_line()
+
+
+class stock_warehouse_auto_supply(osv.osv):
+    _inherit = 'stock.warehouse.automatic.supply'
+
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to open multiple lines
+        '''
+        context = context or {}
+
+        return self.pool.get('wizard.common.import.line').\
+                open_wizard(cr, uid, ids[0], 'stock.warehouse.automatic.supply', 'stock.warehouse.automatic.supply.line', context=context)
+
+stock_warehouse_auto_supply()
+
+
+class stock_warehouse_order_cycle_line(osv.osv):
+    _inherit = 'stock.warehouse.order.cycle.line'
+
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
+        '''
+        Create lines according to product in list
+        '''
+        p_obj = self.pool.get('product.product')
+
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+            values = {'product_id': p_data['id'],
+                      'uom_id': p_data['uom_id'][0],
+                      'order_cycle_id': parent_id}
+
+            values.update(self.product_change(cr, uid, False, p_data['id'], context=context).get('value', {}))
+            # Set the quantity to 0.00
+            values.update({'safety_stock': 0.00})
+
+            self.create(cr, uid, values, context=dict(context, noraise=True))
+
+        return True
+
+stock_warehouse_order_cycle_line()
+
+
+class stock_warehouse_order_cycle(osv.osv):
+    _inherit = 'stock.warehouse.order.cycle'
+
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to open multiple lines
+        '''
+        context = context or {}
+
+        return self.pool.get('wizard.common.import.line').\
+                open_wizard(cr, uid, ids[0], 'stock.warehouse.order.cycle', 'stock.warehouse.order.cycle.line', context=context)
+
+stock_warehouse_order_cycle()
+
+
+class threshold_value_line(osv.osv):
+    _inherit = 'threshold.value.line'
+
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
+        '''
+        Create lines according to product in list
+        '''
+        p_obj = self.pool.get('product.product')
+
+        t_data = self.pool.get('threshold.value').browse(cr, uid, parent_id, context=context)
+
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+            values = {'product_id': p_data['id'],
+                      'product_uom_id': p_data['uom_id'],
+                      'threshold_value_id': parent_id}
+
+            values.update(self.onchange_product_id(cr, 
+                                                   uid, 
+                                                   False, 
+                                                   p_data['id'],
+                                                   t_data.compute_method,
+                                                   t_data.consumption_method,
+                                                   t_data.consumption_period_from,
+                                                   t_data.consumption_period_to,
+                                                   t_data.frequency,
+                                                   t_data.safety_month,
+                                                   t_data.lead_time,
+                                                   t_data.supplier_lt,).get('value', {}))
+            # Set the quantity to 0.00
+            values.update({'fixed_product_qty': 0.00, 'fixed_threshold_value': 0.00})
+
+            self.create(cr, uid, values, context=dict(context, noraise=True))
+
+        return True
+
+threshold_value_line()
+
+
+class threshold_value(osv.osv):
+    _inherit = 'threshold.value'
+
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to open multiple lines
+        '''
+        context = context or {}
+
+        return self.pool.get('wizard.common.import.line').\
+                open_wizard(cr, uid, ids[0], 'threshold.value', 'threshold.value.line', context=context)
+
+threshold_value()
 

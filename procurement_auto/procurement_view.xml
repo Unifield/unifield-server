@@ -62,7 +62,7 @@
                     <group colspan="4" col="4">
                         <separator colspan="4" string="Order quantity by product" />
                         <field name="line_ids" nolabel="1" colspan="4">
-                            <tree string="Products" editable="top">
+                            <tree string="Products" editable="top" colors="red: product_qty &lt;= 0.00">
                                 <field name="product_id" on_change="onchange_product_id(product_id, product_uom_id, product_qty)" domain="[('list_ids', '=', parent.sublist_id), ('type', 'not in', ['consu', 'service', 'service_recep'])]"/>
                                 <field name="product_uom_id" domain="[('uom_by_product', '=', product_id)]" 
                                     on_change="onchange_uom_qty(product_uom_id, product_qty)"/>

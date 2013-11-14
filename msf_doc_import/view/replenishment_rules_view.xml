@@ -11,6 +11,8 @@
                 <xpath expr="/form//field[@name='line_ids']" position="before">
                     <group name="import" string=" Import Lines " colspan="1" col="4">
                         <button name="wizard_import_auto_supply_line" string="Import lines" icon="gtk-dnd" col="1" type="object" />
+                        <newline />
+                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" type="object" colspan="4" />
                     </group>
                 </xpath>
             </field>
@@ -25,6 +27,8 @@
                 <xpath expr="/form//field[@name='product_ids']" position="before">
                     <group name="import" string=" Import Lines " colspan="1" col="4">
                         <button name="wizard_import_order_cycle_line" string="Import lines" icon="gtk-dnd" col="1" type="object" />
+                        <newline />
+                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" type="object" colspan="4" />
                     </group>
                 </xpath>
             </field>
@@ -39,6 +43,8 @@
                 <xpath expr="/form//field[@name='line_ids']" position="before">
                     <group name="import" string=" Import Lines " colspan="1" col="4">
                         <button name="wizard_import_threshold_value_line" string="Import lines" icon="gtk-dnd" col="1" type="object" />
+                        <newline />
+                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" type="object" colspan="4" />
                     </group>
                 </xpath>
             </field>
