@@ -316,16 +316,16 @@
               <para style="terp_default_Centre_8">[[ strip_name(line['line_corresp'].replace(', ',','),25) ]]</para>
             </td>
             <td>
-              <para style="terp_default_Right_8">[[ formatLang(line['debit'], digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_Right_8">[[ formatLang(get_line_debit(line), digits=get_digits(dp='Account')) ]]</para>
             </td>
             <td>
-              <para style="terp_default_Right_8">[[ formatLang(line['credit'], digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_Right_8">[[ formatLang(get_line_credit(line)], digits=get_digits(dp='Account')) ]]</para>
             </td>
             <td>
-              <para style="terp_default_Right_8">[[ formatLang(line['progress'], digits=get_digits(dp='Account')) ]] </para>
+              <para style="terp_default_Right_8">[[ formatLang(get_line_balance(line), digits=get_digits(dp='Account')) ]] </para>
             </td>
             <td>
-              <para style="P2">[[ company.currency_id.name ]]</para>
+              <para style="P2">[[ get_output_currency_code(data) ]]</para>
             </td>
           </tr>
         </blockTable>

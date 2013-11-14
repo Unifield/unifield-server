@@ -97,9 +97,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         header_company_or_chart_of_account = 'Chart of Account'
     journals = ', '.join([ lt or '' for lt in get_journal(data) ])
     display_account = (data['form']['display_account']=='bal_all' and 'All') or (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0'
-    output_currency_code = get_output_currency_code(data)
-    if not output_currency_code:
-        output_currency_code = ''
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 % for x in range(0,max):
@@ -192,7 +189,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="Number">${sum_balance_account(o)}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${output_currency_code}</Data>
+    <Data ss:Type="String">${get_output_currency_code(data)}</Data>
 </Cell>
 </Row>
 % for line in lines(o):
@@ -219,16 +216,16 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="String">${((strip_name(line['line_corresp'].replace(', ',','),25)) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${line['debit']}</Data>
+    <Data ss:Type="Number">${get_line_debit(line)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${line['credit']}</Data>
+    <Data ss:Type="Number">${get_line_credit(line)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${line['progress']}</Data>
+    <Data ss:Type="Number">${get_line_balance(line)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine2">
-    <Data ss:Type="String">${((company.currency_id and company.currency_id.name) or '')|x}</Data>
+    <Data ss:Type="String">${get_output_currency_code(data)}</Data>
 </Cell>
 </Row>
 % endfor

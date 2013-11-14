@@ -117,6 +117,10 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_target_move': self._get_target_move,
             'get_output_currency_code': self._get_output_currency_code,
             'get_filter_info': self._get_filter_info,
+            'get_line_debit': self._get_line_debit,
+            'get_line_credit': self._get_line_credit,
+            'get_line_balance': self._get_line_balance,
+            'currency_conv': self._currency_conv,
         })
         
         # company currency
@@ -172,7 +176,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if not res:
             return [account]
         return res
-
     def lines(self, account):
         """ Return all the account_move_line of account with their account code counterparts """
         move_state = ['draft','posted']
@@ -205,7 +208,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         else:
             sql_sort='l.date, l.move_id'
         sql = """
-            SELECT l.id AS lid, l.date AS ldate, j.code AS lcode, l.currency_id,l.amount_currency,l.ref AS lref, l.name AS lname, COALESCE(l.debit,0) AS debit, COALESCE(l.credit,0) AS credit, l.period_id AS lperiod_id, l.partner_id AS lpartner_id,
+            SELECT l.id AS lid, l.date AS ldate, j.code AS lcode, l.currency_id,l.amount_currency,l.ref AS lref, l.name AS lname, COALESCE(l.debit,0) AS debit, COALESCE(l.credit,0) AS credit, COALESCE(l.debit_currency,0) as debit_currency, COALESCE(l.credit_currency,0) as credit_currency, l.period_id AS lperiod_id, l.partner_id AS lpartner_id,
             m.name AS move_name, m.id AS mmove_id,per.code as period_code,
             c.symbol AS currency_code,
             i.id AS invoice_id, i.type AS invoice_type, i.number AS invoice_number,
@@ -225,7 +228,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if res_lines and self.init_balance:
             #FIXME: replace the label of lname with a string translatable
             sql = """
-                SELECT 0 AS lid, '' AS ldate, '' AS lcode, COALESCE(SUM(l.amount_currency),0.0) AS amount_currency, '' AS lref, 'Initial Balance' AS lname, COALESCE(SUM(l.debit),0.0) AS debit, COALESCE(SUM(l.credit),0.0) AS credit, '' AS lperiod_id, '' AS lpartner_id,
+                SELECT 0 AS lid, '' AS ldate, '' AS lcode, COALESCE(SUM(l.amount_currency),0.0) AS amount_currency, '' AS lref, 'Initial Balance' AS lname, COALESCE(SUM(l.debit),0.0) AS debit, COALESCE(SUM(l.credit),0.0) AS credit,COALESCE(SUM(l.debit_currency),0.0) AS debit_currency, COALESCE(SUM(l.credit_currency),0.0) AS credit_currency, '' AS lperiod_id, '' AS lpartner_id,
                 '' AS move_name, '' AS mmove_id, '' AS period_code,
                 '' AS currency_code,
                 NULL AS currency_id,
@@ -259,7 +262,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def _sum_debit_account(self, account):
         if account.type == 'view':
-            return account.debit
+            return self._currency_conv(account.debit)
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
@@ -286,7 +289,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def _sum_credit_account(self, account):
         if account.type == 'view':
-            return account.credit
+            return self._currency_conv(account.credit)
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
@@ -313,7 +316,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def _sum_balance_account(self, account):
         if account.type == 'view':
-            return account.balance
+            return self._currency_conv(account.balance)
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
@@ -351,6 +354,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return 'Date'
         
     def _get_output_currency_code(self, data):
+        if not self.output_currency_code:
+            return ''
         return self.output_currency_code
         
     def _get_filter_info(self, data):
@@ -372,16 +377,34 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             res = self.get_start_period(data) + ' - ' + self.get_end_period(data)
         return res
         
+    def _get_line_debit(self, line):
+        return self._currency_conv(line['debit'])
+        
+    def _get_line_credit(self, line):
+        return self._currency_conv(line['credit'])
+        
+    def _get_line_balance(self, line):
+        return self._currency_conv(line['debit'] - line['credit'])
+        
+    def _is_company_currency(self):
+        if not self.output_currency_id or not self.currency_id \
+           or self.output_currency_id == self.currency_id:
+            # ouput currency == company currency
+            return True
+        else:
+            # is other currency
+            return False
+        
     def _currency_conv(self, amount):
         if not amount or amount == 0.:
             return amount
-        if not self.output_currency_id or not self.currency_id \
-           or self.output_currency_id == self.currency_id:
+        if self._is_company_currency():
             return amount
         return self.pool.get('res.currency').compute(self.cr, self.uid,
                                                 self.currency_id,
                                                 self.output_currency_id,
                                                 amount)
+                                            
 report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
 
