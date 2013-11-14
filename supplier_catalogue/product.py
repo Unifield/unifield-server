@@ -212,10 +212,14 @@ class pricelist_partnerinfo(osv.osv):
         '''
         Check if the min_qty field is set
         '''
-        for line in self.browse(cr, uid, ids, context=context):
-            if line.min_quantity <= 0.00:
-                raise osv.except_osv(_('Error'), _('The line of product %s has a negative or zero min. quantity !') %line.suppinfo_id.product_id.name)
-                return False
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not context.get('noraise'):
+            for line in self.browse(cr, uid, ids, context=context):
+                if line.min_quantity <= 0.00:
+                    raise osv.except_osv(_('Error'), _('The line of product %s has a negative or zero min. quantity !') %line.suppinfo_id.product_id.name)
+                    return False
             
         return True
 
@@ -247,9 +251,29 @@ class pricelist_partnerinfo(osv.osv):
                                         })
     }
 
-    _constraints = [
-        (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_quantity']),
-    ]
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Check the constraint
+        '''
+        res = super(pricelist_partnerinfo, self).create(cr, uid, vals, context=context)
+
+        self._check_min_quantity(cr, uid, res, context=context)
+
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Check the constraint
+        '''
+        res = super(pricelist_partnerinfo, self).write(cr, uid, ids, vals, context=context)
+
+        self._check_min_quantity(cr, uid, ids, context=context)
+
+        return res
+
+#    _constraints = [
+#        (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_quantity']),
+#    ]
 
 pricelist_partnerinfo()
 

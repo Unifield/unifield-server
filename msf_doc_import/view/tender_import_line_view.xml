@@ -33,6 +33,8 @@
                     <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0"/>
                     <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
                     <field name="hide_column_error_ok" invisible="1" colspan="1" />
+                    <newline />
+                    <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
                 </group>
                 </xpath>
                 <xpath expr="/form//field[@name='tender_line_ids']" position="attributes" >

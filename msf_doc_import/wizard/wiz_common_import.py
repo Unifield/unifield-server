@@ -220,3 +220,201 @@ class purchase_order(osv.osv):
 
 
 purchase_order()
+
+
+class tender_line(osv.osv):
+    _inherit = 'tender.line'
+
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
+        '''
+        Create lines according to product in list
+        '''
+        p_obj = self.pool.get('product.product')
+        tender_obj = self.pool.get('tender')
+
+        context = context or {}
+        product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
+
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+            values = {'tender_id': parent_id,
+                      'product_id': p_data['id'],
+                      'product_uom': p_data['uom_id'][0]}
+
+            values.update(self.on_product_change(cr, uid, False, p_data['id'], p_data['uom_id'][0], 1.00, context=context).get('value', {}))
+
+            # Set the quantity to 0.00
+            values.update({'qty': 0.00})
+
+            self.create(cr, uid, values, context=dict(context, noraise=True, import_in_progress=True))
+
+        return True
+
+tender_line()
+
+
+class tender(osv.osv):
+    _inherit = 'tender'
+
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to open multiple lines
+        '''
+        context = context or {}
+
+        return self.pool.get('wizard.common.import.line').\
+                open_wizard(cr, uid, ids[0], 'tender', 'tender.line', context=context)
+
+tender()
+
+
+class sale_order_line(osv.osv):
+    _inherit = 'sale.order.line'
+
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
+        '''
+        Create lines according to product in list
+        '''
+        p_obj = self.pool.get('product.product')
+        order_obj = self.pool.get('sale.order')
+
+        context = context or {}
+        product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
+
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+            order_data = order_obj.read(cr, uid, parent_id, ['pricelist_id', 
+                                                             'partner_id', 
+                                                             'date_order',
+                                                             'fiscal_position'], context=context)
+
+            values = {'order_id': parent_id,
+                      'product_id': p_data['id'],
+                      'product_uom': p_data['uom_id'][0]}
+
+            values.update(self.product_id_change(cr, uid, False, order_data['pricelist_id'][0],
+                                                                 p_data['id'],
+                                                                 1.00,
+                                                                 p_data['uom_id'][0],
+                                                                 p_data['uom_id'][0],
+                                                                 '',
+                                                                 order_data['partner_id'][0],
+                                                                 context.get('lang'),
+                                                                 True,
+                                                                 order_data['date_order'],
+                                                                 False,
+                                                                 order_data['fiscal_position'] and order_data['fiscal_position'][0] or False,
+                                                                 False).get('value', {}))
+
+            # Set the quantity to 0.00
+            values.update({'product_uom_qty': 0.00, 'product_uos_qty': 0.00})
+
+            self.create(cr, uid, values, context=dict(context, noraise=True, import_in_progress=True))
+
+        return True
+
+sale_order_line()
+
+
+class sale_order(osv.osv):
+    _inherit = 'sale.order'
+
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to add multiple lines
+        '''
+        context = context or {}
+
+        return self.pool.get('wizard.common.import.line').\
+                open_wizard(cr, uid, ids[0], 'sale.order', 'sale.order.line', context=context)
+
+sale_order()
+
+
+class composition_item(osv.osv):
+    _inherit = 'composition.item'
+
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
+        '''
+        Create lines according to product in list
+        '''
+        p_obj  = self.pool.get('product.product')
+        kit_obj = self.pool.get('composition.kit')
+
+        context = context or {}
+        product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
+
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price'], context=context):
+            values = {'item_kit_id': parent_id,
+                      'item_product_id': p_data['id'],
+                      'item_uom_id': p_data['uom_id'][0],}
+            
+            values.update(self.on_product_change(cr, uid, False, values['item_product_id'], context=context).get('value', {}))
+            # Set the quantity to 0.00
+            values.update({'product_qty': 0.00})
+
+            self.create(cr, uid, values, context=dict(context, noraise=True, import_in_progress=True))
+
+        return True
+
+composition_item()
+
+
+class composition_kit(osv.osv):
+    _inherit = 'composition.kit'
+
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to open multiple lines
+        '''
+        context = context or {}
+
+        return self.pool.get('wizard.common.import.line').\
+                open_wizard(cr, uid, ids[0], 'composition.kit', 'composition.item', context=context)
+
+composition_kit()
+
+
+class supplier_catalogue_line(osv.osv):
+    _inherit = 'supplier.catalogue.line'
+
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
+        '''
+        Create lines according to product in list
+        '''
+        p_obj = self.pool.get('product.product')
+        cat_obj = self.pool.get('supplier.catalogue')
+
+        context = context or {}
+        product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
+
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price'], context=context):
+            values = {'product_id': p_data['id'],
+                      'catalogue_id': parent_id,
+                      'unit_price': p_data['standard_price'],
+                      'line_uom_id': p_data['uom_id'][0],
+                      'min_qty': 1.00}
+
+            values.update(self.product_change(cr, uid, False, p_data['id'], 1.00, 1.00).get('value', {}))
+
+            # Set the quantity to 0.00
+            values.update({'min_qty': 0.00})
+
+            self.create(cr, uid, values, context=dict(context, noraise=True, import_in_progress=True))
+
+        return True
+
+supplier_catalogue_line()
+
+
+class supplier_catalogue(osv.osv):
+    _inherit = 'supplier.catalogue'
+
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to open multiple lines
+        '''
+        context = context or {}
+
+        return self.pool.get('wizard.common.import.line').\
+                open_wizard(cr, uid, ids[0], 'supplier.catalogue', 'supplier.catalogue.line', context=context)
+
+supplier_catalogue()

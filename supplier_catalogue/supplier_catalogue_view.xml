@@ -49,6 +49,8 @@
                         <button name="clear_error" string="Clear errors" icon="gtk-clear" colspan="1" type="object" attrs="{'invisible': [('import_error_ok', '=', False)]}" />
                         <field name="import_error_ok" invisible="1"/>
                         <field name="text_error" colspan="4" attrs="{'invisible': [('import_error_ok', '=', False)]}" nolabel="1"/>
+                        <newline />
+                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
                     </group>
     
 					<notebook colspan="4">

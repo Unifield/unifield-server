@@ -314,6 +314,9 @@ class tender(osv.osv):
                 po_id = po_obj.create(cr, uid, values, context=dict(context, partner_id=supplier.id, rfq_ok=True))
                 
                 for line in tender.tender_line_ids:
+                    if line.qty <= 0.00:
+                        raise osv.except_osv(_('Error !'), _('You cannot generate RfQs for an line with a null quantity.'))
+
                     if line.product_id.id == obj_data.get_object_reference(cr, uid,'msf_doc_import', 'product_tbd')[1]:
                         raise osv.except_osv(_('Warning !'), _('You can\'t have "To Be Defined" for the product. Please select an existing product.'))
                     # create an order line for each tender line
@@ -738,10 +741,6 @@ class tender_line(osv.osv):
 
         return True
 
-    _sql_constraints = [
-        ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
-    ]
-    
 tender_line()
 
 

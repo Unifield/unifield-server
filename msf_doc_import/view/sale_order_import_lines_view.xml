@@ -22,6 +22,8 @@
                     <button name="wizard_import_fo_line" string="Import lines" icon="gtk-dnd" col="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                     <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
                     <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0"/>
+                    <newline />
+                    <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
                 </group>
                 </xpath>
                 <xpath expr="/form//separator[@string='Notes']" position="after">

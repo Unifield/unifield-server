@@ -634,7 +634,11 @@ class supplier_catalogue_line(osv.osv):
         '''
         vals = self._create_supplier_info(cr, uid, vals, context=context)
         
-        return super(supplier_catalogue_line, self).create(cr, uid, vals, context={})
+        ids = super(supplier_catalogue_line, self).create(cr, uid, vals, context=context)
+
+        self._check_min_quantity(cr, uid, ids, context=context)
+
+        return ids
     
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -686,7 +690,11 @@ class supplier_catalogue_line(osv.osv):
                 self.pool.get('pricelist.partnerinfo').write(cr, uid, [line.partner_info_id.id], 
                                                          pinfo_data, context=context) 
         
-        return super(supplier_catalogue_line, self).write(cr, uid, ids, vals, context={})
+        res = super(supplier_catalogue_line, self).write(cr, uid, ids, vals, context=context)
+
+        self._check_min_quantity(cr, uid, ids, context=context)
+
+        return res
     
     def unlink(self, cr, uid, line_id, context=None):
         '''
@@ -714,10 +722,16 @@ class supplier_catalogue_line(osv.osv):
         '''
         Check if the min_qty field is set
         '''
-        for line in self.browse(cr, uid, ids, context=context):
-            if line.min_qty <= 0.00:
-                raise osv.except_osv(_('Error'), _('The line of product [%s] %s has a negative or zero min. qty !') % (line.product_id.default_code, line.product_id.name))
-                return False
+        context = context or {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not context.get('noraise'):
+            for line in self.browse(cr, uid, ids, context=context):
+                if line.min_qty <= 0.00:
+                    raise osv.except_osv(_('Error'), _('The line of product [%s] %s has a negative or zero min. qty !') % (line.product_id.default_code, line.product_id.name))
+                    return False
             
         return True
     
@@ -739,9 +753,9 @@ class supplier_catalogue_line(osv.osv):
         'to_correct_ok': fields.boolean('To correct'),
     }
     
-    _constraints = [
-        (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_qty']),
-    ]
+#    _constraints = [
+#        (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_qty']),
+#    ]
     
     def product_change(self, cr, uid, ids, product_id, min_qty, min_order_qty, context=None):
         '''

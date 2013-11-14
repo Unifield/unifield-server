@@ -17,6 +17,8 @@
                     <button name="import_file" string="Import lines" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible': [('composition_type', '!=', 'theoretical')]}"/>
                     <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" colspan="1" type="object" />
                     <field name="hide_column_error_ok" invisible="1" colspan="1" />
+                    <newline />
+                    <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
                 </group>
                 </xpath>
                 <xpath expr="/form//field[@name='composition_item_ids']/tree" position="attributes" >
