@@ -56,25 +56,38 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
-<Style ss:ID="ssAccount">
-<Alignment ss:Vertical="Center" ss:MergeAcross="5" />
+<Style ss:ID="ssAccountLine">
+<Alignment ss:Bottom="Top" ss:WrapText="1"/>
+<Font ss:Size="8" ss:Italic="1"/>
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
+</Style>
+<Style ss:ID="ssAccountLine2">
+<Alignment ss:Bottom="Top" ss:WrapText="1"/>
+<Font ss:Size="8"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
+<Style ss:ID="ssAccountLineNumber">
+<Alignment ss:Horizontal="Right" ss:Vertical="Bottom" ss:WrapText="1"/>
+<Font ss:Size="8"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<NumberFormat ss:Format="#,##0.00"/>
 </Style>
 </Styles>
-<Style ss:ID="ssAccountLine">
-<Alignment ss:Vertical="Top" ss:WrapText="1"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-</Style>
 <Worksheet ss:Name="Sheet">
 <%
     max = 11
@@ -88,8 +101,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     if not output_currency_code:
         output_currency_code = ''
 %>
-<Table ss:ExpandedColumnCount="${max}" ss:ExpandedRowCount="1" x:FullColumns="1"
-x:FullRows="1">
+<Table x:FullColumns="1" x:FullRows="1">
 % for x in range(0,max):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
@@ -135,30 +147,18 @@ x:FullRows="1">
 <Cell ss:StyleID="ssHeader"></Cell>
 </Row>
 <Row>
-<Cell ss:StyleID="">
-</Cell>
-<Cell ss:StyleID="">
-</Cell>
-<Cell ss:StyleID="">
-</Cell>
-<Cell ss:StyleID="">
-</Cell>
-<Cell ss:StyleID="">
-</Cell>
-<Cell ss:StyleID="">
-</Cell>
-<Cell ss:StyleID="">
-</Cell>
-<Cell ss:StyleID="">
-</Cell>
-<Cell ss:StyleID="">
-</Cell>
-<Cell ss:StyleID="">
-</Cell>
-<Cell ss:StyleID="">
-</Cell>
+<Cell></Cell>
+<Cell></Cell>
+<Cell></Cell>
+<Cell></Cell>
+<Cell></Cell>
+<Cell></Cell>
+<Cell></Cell>
+<Cell></Cell>
+<Cell></Cell>
+<Cell></Cell>
+<Cell></Cell>
 </Row>
-
 <Row>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Date</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">JRNL</Data></Cell>
@@ -179,25 +179,17 @@ x:FullRows="1">
 <Cell ss:StyleID="ssBorder">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccount">
+<Cell ss:StyleID="ssBorder" ss:MergeAcross="4">
     <Data ss:Type="String">${(o.name or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder">
-</Cell>
-<Cell ss:StyleID="ssBorder">
-</Cell>
-<Cell ss:StyleID="ssBorder">
-</Cell>
-<Cell ss:StyleID="ssBorder">
+<Cell ss:StyleID="ssNumber">
+    <Data ss:Type="Number">${sum_debit_account(o)}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber">
-    <Data ss:Type="String">${formatLang(sum_debit_account(o), digits=get_digits(dp='Account'))}</Data>
+    <Data ss:Type="Number">${sum_credit_account(o)}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber">
-    <Data ss:Type="String">${formatLang(sum_credit_account(o), digits=get_digits(dp='Account'))}</Data>
-</Cell>
-<Cell ss:StyleID="ssNumber">
-    <Data ss:Type="String">${formatLang(sum_balance_account(o), digits=get_digits(dp='Account'))}</Data>
+    <Data ss:Type="Number">${sum_balance_account(o)}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
     <Data ss:Type="String">${output_currency_code}</Data>
@@ -220,22 +212,22 @@ x:FullRows="1">
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['move'] or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLineEntryLabel">
+<Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['lname'] or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${((strip_name(line['line_corresp'].replace(', ',','),25)) or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssNumber">
-    <Data ss:Type="String">${formatLang(line['debit'], digits=get_digits(dp='Account'))}</Data>
+<Cell ss:StyleID="ssAccountLineNumber">
+    <Data ss:Type="Number">${line['debit']}</Data>
 </Cell>
-<Cell ss:StyleID="ssNumber">
-    <Data ss:Type="String">${formatLang(line['credit'], digits=get_digits(dp='Account'))}</Data>
+<Cell ss:StyleID="ssAccountLineNumber">
+    <Data ss:Type="Number">${line['credit']}</Data>
 </Cell>
-<Cell ss:StyleID="ssNumber">
-    <Data ss:Type="String">${formatLang(line['progress'], digits=get_digits(dp='Account'))}</Data>
+<Cell ss:StyleID="ssAccountLineNumber">
+    <Data ss:Type="Number">${line['progress']}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLine">
+<Cell ss:StyleID="ssAccountLine2">
     <Data ss:Type="String">${((company.currency_id and company.currency_id.name) or '')|x}</Data>
 </Cell>
 </Row>
