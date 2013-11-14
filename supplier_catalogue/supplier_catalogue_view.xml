@@ -62,6 +62,9 @@
 						</page>
 					</notebook>
 
+                    <field name="state" readonly="1" />
+                    <button type="object" name="button_confirm" icon="gtk-execute" string="Confirm" states="draft" />
+                    <button type="object" name="button_draft" icon="gtk-cancel" string="Reset to draft" states="confirmed" />
 				</form>
 			</field>
 		</record>
