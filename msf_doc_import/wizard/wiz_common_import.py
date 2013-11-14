@@ -418,3 +418,60 @@ class supplier_catalogue(osv.osv):
                 open_wizard(cr, uid, ids[0], 'supplier.catalogue', 'supplier.catalogue.line', context=context)
 
 supplier_catalogue()
+
+
+class stock_move(osv.osv):
+    _inherit = 'stock.move'
+
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
+        '''
+        Create lines according to product in list
+        '''
+        p_obj = self.pool.get('product.product')
+        pick_obj = self.pool.get('stock.picking')
+
+        context = context or {}
+        product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
+
+        picking = pick_obj.browse(cr, uid, parent_id, context=context)
+
+        if picking.partner_id:
+            location_id = picking.partner_id.property_stock_supplier.id
+        else:
+            location_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_suppliers')[0]
+
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'name'], context=context):
+            values = {'picking_id': parent_id,
+                      'product_id': p_data['id'],
+                      'product_uom': p_data['uom_id'][0],
+                      'date': picking.date,
+                      'date_expected': picking.min_date,
+                      'reason_type_id': picking.reason_type_id.id,
+                      'location_id': location_id,
+                      'name': p_data['name'],}
+
+            values.update(self.onchange_product_id(cr, uid, False, p_data['id'], location_id, False, picking.address_id and picking.address_id.id or False, picking.type, False).get('value', {}))
+
+            values.update({'product_qty': 0.00})
+
+            self.create(cr, uid, values, context=dict(context, noraise=True, import_in_progress=True))
+
+        return True
+
+stock_move()
+
+
+class stock_picking(osv.osv):
+    _inherit = 'stock.picking'
+
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to open multiple lines
+        '''
+        context = context or {}
+
+        return self.pool.get('wizard.common.import.line').\
+                open_wizard(cr, uid, ids[0], 'stock.picking', 'stock.move', context=context)
+
+stock_picking()
+
