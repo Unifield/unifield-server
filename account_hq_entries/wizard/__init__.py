@@ -24,4 +24,5 @@
 import hq_entries_import
 import hq_reallocation
 import hq_entries_validation
+import hq_entries_split
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
