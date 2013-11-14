@@ -421,11 +421,17 @@ class hq_entries(osv.osv):
         'destination_id_first_value': fields.many2one('account.analytic.account', "Destination @import", required=True, readonly=True),
         'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
+        'is_original': fields.boolean("Is Original HQ Entry?", help="This line was split into other one.", readonly=True),
+        'is_split': fields.boolean("Is split?", help="This line comes from a split.", readonly=True),
+        'original_id': fields.many2one("hq.entries", "Original HQ Entry", help="The Original HQ Entry from which this line comes from."),
+        'split_ids': fields.one2many('hq.entries', 'original_id', "Split lines", help="All lines linked to this original HQ Entry."),
     }
 
     _defaults = {
         'user_validated': lambda *a: False,
         'amount': lambda *a: 0.0,
+        'is_original': lambda *a: False,
+        'is_split': lambda *a: False,
     }
 
     
