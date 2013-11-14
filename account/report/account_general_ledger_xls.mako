@@ -190,13 +190,13 @@ x:FullRows="1">
 </Cell>
 <Cell ss:StyleID="ssBorder">
 </Cell>
-<Cell ss:StyleID="ssBorder">
+<Cell ss:StyleID="ssNumber">
     <Data ss:Type="String">${formatLang(sum_debit_account(o), digits=get_digits(dp='Account'))}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder">
+<Cell ss:StyleID="ssNumber">
     <Data ss:Type="String">${formatLang(sum_credit_account(o), digits=get_digits(dp='Account'))}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder">
+<Cell ss:StyleID="ssNumber">
     <Data ss:Type="String">${formatLang(sum_balance_account(o), digits=get_digits(dp='Account'))}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
@@ -226,13 +226,13 @@ x:FullRows="1">
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${((strip_name(line['line_corresp'].replace(', ',','),25)) or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLine">
+<Cell ss:StyleID="ssNumber">
     <Data ss:Type="String">${formatLang(line['debit'], digits=get_digits(dp='Account'))}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLine">
+<Cell ss:StyleID="ssNumber">
     <Data ss:Type="String">${formatLang(line['credit'], digits=get_digits(dp='Account'))}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLine">
+<Cell ss:StyleID="ssNumber">
     <Data ss:Type="String">${formatLang(line['progress'], digits=get_digits(dp='Account'))}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
