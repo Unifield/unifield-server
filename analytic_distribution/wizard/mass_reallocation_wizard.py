@@ -100,6 +100,9 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
                 lines[line.distribution_id.id].append(line)
             # Process each distribution
             for distrib_id in lines:
+                # UF-2205: fix problem with lines that does not have any distribution line or distribution id (INTL engagement lines)
+                if not distrib_id:
+                    continue
                 for line in lines[distrib_id]:
                     # Update distribution
                     self.pool.get('analytic.distribution').update_distribution_line_account(cr, uid, line.distrib_line_id.id, account_id, context=context)
