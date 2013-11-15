@@ -814,15 +814,17 @@ class account_move(osv.osv):
     _name = 'account.move'
     _inherit = 'account.move'
 
-    def reverse(self, cr, uid, ids, date=False):
+    def reverse(self, cr, uid, ids, date=False, context=None):
         """
         Reverse move
         """
+        if not context:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         reversed_move = []
         for m in self.browse(cr, uid, ids):
-            res_ml_ids, res_move_ids = self.pool.get('account.move.line').reverse_move(cr, uid, [x.id for x in m.line_id], date=date)
+            res_ml_ids, res_move_ids = self.pool.get('account.move.line').reverse_move(cr, uid, [x.id for x in m.line_id], date=date, context=context)
             if res_ml_ids:
                 reversed_move.append(m.id)
         return reversed_move
