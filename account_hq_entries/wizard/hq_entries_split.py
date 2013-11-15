@@ -116,54 +116,35 @@ class hq_entries_split_lines(osv.osv_memory):
             if line.amount > expected_max_amount:
                 # WARNING: On osv.memory, no rollback. That's why we should unlink the previous line before raising this error
                 self.unlink(cr, uid, [res], context=context)
-                raise osv.except_osv(_('Error'), _('Expected max amount: %s') % (expected_max_amount or 0.0,))
+                raise osv.except_osv(_('Error'), _('Expected max amount: %.2f') % (expected_max_amount or 0.0,))
         return res
 
 hq_entries_split_lines()
 
 class hq_entries_split(osv.osv_memory):
     _name = 'hq.entries.split'
-    _description = 'HQ entries split'
+    _description = 'HQ entry split'
 
     _columns = {
-        'original_id': fields.many2one('hq.entries', "Original HQ Entry", readonly=True),
-        'original_amount': fields.float('Original Amount', readonly=True),
+        'original_id': fields.many2one('hq.entries', "Original HQ Entry", readonly=True, required=True),
+        'original_amount': fields.float('Original Amount', readonly=True, required=True),
         'line_ids': fields.one2many('hq.entries.split.lines', 'wizard_id', "Split lines"),
     }
 
-    def _get_original_id(self, cr, uid, context=None):
-        """
-        Get the only one original id given in context.
-        If more than one, raise an error because we only split HQ Entries lines one by one.
-        """
-        if not context or not context.get('active_ids'):
-            raise osv.except_osv(_('Error'), _('No line to split!'))
-            return False
-        if len(context.get('active_ids')) > 1:
-            raise osv.except_osv(_('Warning'), _('You can only split HQ Entries one by one!'))
-        return context.get('active_ids')[0]
-
-    def _get_original_amount(self, cr, uid, context=None):
-        """
-        Get original amount of original HQ Entry
-        """
-        if not context:
-            context = {}
-        original_id = self._get_original_id(cr, uid, context=context)
-        res = 0.0
-        if original_id:
-            res = self.pool.get('hq.entries').browse(cr, uid, original_id, context=context).amount
-        return res
-
-    _defaults = {
-        'original_id': _get_original_id,
-        'original_amount': _get_original_amount,
-    }
-
-    def button_validate(self, cr, uid, ids, context):
+    def button_validate(self, cr, uid, ids, context=None):
         """
         Validate wizard lines and create new split HQ lines.
         """
+        # Some checks
+        if not context:
+            context = {}
+        # Check total amount for this wizard
+        for wiz in self.browse(cr, uid, ids, context=context):
+            total = 0.00
+            for line in wiz.line_ids:
+                total += line.amount
+            if total != wiz.original_amount:
+                raise osv.except_osv(_('Error'), _('Wrong total: %.2f, instead of: %.2f') % (total or 0.00, wiz.original_amount or 0.00,))
         # TODO:
         # - keep original line id (link)
         # - flag original line (is_original)

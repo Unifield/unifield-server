@@ -434,7 +434,40 @@ class hq_entries(osv.osv):
         'is_split': lambda *a: False,
     }
 
-    
+    def get_split_wizard(self, cr, uid, ids, context=None):
+        """
+        Launch HQ Entry Split Wizard
+        """
+        # Some checks
+        if not context or not context.get('active_ids', False):
+            raise osv.except_osv(_('Error'), _('No line found!'))
+        # Prepare some values
+        vals = {}
+        ids = context.get('active_ids')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if len(ids) > 1:
+            raise osv.except_osv(_('Warning'), _('You can only split HQ Entries one by one!'))
+        original_id = ids[0]
+        original_amount = self.browse(cr, uid, original_id, context=context).amount
+        vals.update({'original_id': original_id, 'original_amount': original_amount,})
+        wiz_id = self.pool.get('hq.entries.split').create(cr, uid, vals, context=context)
+        # Return view with register_line id
+        context.update({
+            'active_id': wiz_id,
+            'active_ids': [wiz_id],
+        })
+        return {
+            'name': _("HQ Entry Split"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'hq.entries.split',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'view_mode': 'form',
+            'view_type': 'form',
+            'context': context,
+        }
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
         Change funding pool domain in order to include MSF Private fund

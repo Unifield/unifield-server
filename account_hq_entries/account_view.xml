@@ -182,16 +182,21 @@
             target="new"
             view_id="hq_entries_validation_form"/>
 
-    <!-- Action: line split -->
-        <act_window id="action_hq_split"
-            name="Split"
-            res_model="hq.entries.split"
-            src_model="hq.entries"
-            key2="client_action_multi"
-            view_mode="form"
-            view_type="form"
-            target="new"
-            view_id="hq_entries_split_form"/>
+    <!-- Display HQ Entry Split wizard -->
+        <record id="action_hq_split" model="ir.actions.server">
+            <field name="name">Split</field>
+            <field name="model_id" ref="model_hq_entries"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_split_wizard(context=context)</field>
+        </record>
+
+        <record id="ir_open_hq_split" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">hq.entries</field>
+            <field name="name">Split</field>
+            <field eval="'ir.actions.server,%d'%action_hq_split" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
 
     <!-- Mass analytic reallocation wizard for HQ Entries -->
         <act_window id="action_hq_analytic_reallocation"
