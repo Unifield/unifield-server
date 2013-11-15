@@ -33,13 +33,37 @@ class hq_entries_validation(osv.osv_memory):
         'txt': fields.char("Text", size=128, readonly="1"),
     }
 
+    def _get_hq_entries_number(self, cr, uid, active_ids, context=None):
+        """
+        Return number of HQ Entries to validate regarding the fact that some HQ Entry could be original entries and have some split lines.
+        """
+        res = 0
+        if not active_ids:
+            return res
+        ids = set()
+        if isinstance(active_ids, (int, long)):
+            active_ids = [active_ids]
+        for hq in self.pool.get('hq.entries').browse(cr, uid, active_ids):
+            ids.add(hq.id)
+            if hq.is_original:
+                for line in hq.split_ids:
+                    ids.add(line.id)
+            if hq.is_split:
+                ids.add(hq.original_id.id)
+                for line in hq.original_id.split_ids:
+                    ids.add(line.id)
+        if ids:
+            res = len(ids)
+        return res
+
     def _get_txt(self, cr, uid, context=None):
         if not context:
             context = {}
         ids = context.get('active_ids', [])
         if self.pool.get('hq.entries').search(cr, uid, [('id', 'in', ids), ('user_validated', '=', True)]):
             raise osv.except_osv(_('Error'), _('You cannot validate HQ Entries already validated !'))
-        return _('Are you sure you want to post %d HQ entries ?') % (len(context.get('active_ids', [])),)
+        number = self._get_hq_entries_number(cr, uid, context.get('active_ids', False), context=context)
+        return _('Are you sure you want to post %d HQ entries ?') % (number or 0,)
 
 
     def button_validate(self, cr, uid, ids, context):
