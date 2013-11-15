@@ -31,12 +31,14 @@ import netsvc
 class hq_entries_validation_wizard(osv.osv_memory):
     _name = 'hq.entries.validation.wizard'
 
-    def create_move(self, cr, uid, ids, period_id=False, currency_id=False, date=None):
+    def create_move(self, cr, uid, ids, period_id=False, currency_id=False, date=None, journal=None, context=None):
         """
         Create a move with given hq entries lines
         Return created lines (except counterpart lines)
         """
         # Some verifications
+        if not context:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not period_id:
@@ -60,6 +62,9 @@ class hq_entries_validation_wizard(osv.osv_memory):
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No HQ journal found!'))
             journal_id = journal_ids[0]
+            # Use defined journal (if given)
+            if journal:
+                journal_id = journal
             # create move
             move_id = self.pool.get('account.move').create(cr, uid, {
                 'date': date,
@@ -165,6 +170,51 @@ class hq_entries_validation_wizard(osv.osv_memory):
             self.pool.get('account.move').post(cr, uid, [move_id])
         return res
 
+    def process_split(self, cr, uid, lines, context=None):
+        """
+        Create a journal entry with the original HQ Entry.
+        Create a journal entry with all split lines and a specific counterpart.
+        Mark HQ Lines as user_validated.
+        """
+        # Checks
+        if not context:
+            context = {}
+        if not lines:
+            return False
+        # Prepare some values
+        original_lines = set()
+        od_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+        if not od_journal_ids:
+            raise osv.except_osv(_('Error'), _('No correction journal found!'))
+        od_journal_id = od_journal_ids[0]
+        all_lines = set()
+        # Process
+        for line in lines:
+            if line.is_original:
+                original_lines.add(line)
+                all_lines.add(line.id)
+            elif line.is_split:
+                original_lines.add(line.original_id)
+                all_lines.add(line.original_id.id)
+        # Create the original line as it is (and its reverse)
+        for line in original_lines:
+            res_move = self.create_move(cr, uid, line.id, line.period_id.id, line.currency_id.id, date=line.date, context=context)
+            # Fetch journal move from which the new move line comes from
+            move_id = self.pool.get('account.move.line').browse(cr, uid, res_move[line.id]).move_id.id
+            # Reverse the given move
+            res_reverse = self.pool.get('account.move').reverse(cr, uid, move_id, date=line.date, context=context)
+            if not res_reverse:
+                raise osv.except_osv(_('Error'), _('An unexpected error occured. Please contact an administrator.'))
+        # Create split lines
+        for original in original_lines:
+            split_lines = self.pool.get('hq.entries').search(cr, uid, [('original_id', 'in', [x.id for x in original_lines]), ('user_validated', '=', False)], context=context)
+            self.create_move(cr, uid, split_lines, original.period_id.id, original.currency_id.id, date=original.date, journal=od_journal_id)
+            for split_line in split_lines:
+                all_lines.add(split_line)
+        # Mark ALL lines as user_validated
+        self.pool.get('hq.entries').write(cr, uid, list(all_lines), {'user_validated': True}, context=context)
+        return True
+
     def validate(self, cr, uid, ids, context=None):
         """
         Validate all given lines (in context)
@@ -190,6 +240,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
         account_change = []
         cc_change = []
         cc_account_change = []
+        split_change = []
         current_date = strftime('%Y-%m-%d')
         for line in self.pool.get('hq.entries').browse(cr, uid, active_ids, context=context):
             #UF-1956: interupt validation if currency is inactive
@@ -197,6 +248,10 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('Currency %s is not active!') % (line.currency_id and line.currency_id.name or '',))
             if line.analytic_state != 'valid':
                 raise osv.except_osv(_('Warning'), _('Invalid analytic distribution!'))
+            # UTP-760: Do other modifications for split lines
+            if line.is_original or line.is_split:
+                split_change.append(line)
+                continue
             if not line.user_validated:
                 to_write.setdefault(line.currency_id.id, {}).setdefault(line.period_id.id, {}).setdefault(line.date, []).append(line.id)
 
@@ -282,8 +337,9 @@ class hq_entries_validation_wizard(osv.osv_memory):
                         })]
                 })
             self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id, corrected_distrib_id)
+        # Do split lines process
+        self.process_split(cr, uid, split_change, context=context)
 
-        # Write lines and validate them
         # Return HQ Entries Tree View in current view
         action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_hq_entries', 'action_hq_entries_tree')
         res = self.pool.get('ir.actions.act_window').read(cr, uid, action_id[1], [], context=context)
