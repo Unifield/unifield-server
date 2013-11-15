@@ -449,7 +449,11 @@ class hq_entries(osv.osv):
         if len(ids) > 1:
             raise osv.except_osv(_('Warning'), _('You can only split HQ Entries one by one!'))
         original_id = ids[0]
-        original_amount = self.browse(cr, uid, original_id, context=context).amount
+        original = self.browse(cr, uid, original_id, context=context)
+        # Check if Original HQ Entry is valid (distribution state)
+        if original.analytic_state != 'valid':
+            raise osv.except_osv(_('Error'), _('You cannot split a HQ Entry which analytic distribution state is not valid!'))
+        original_amount = original.amount
         vals.update({'original_id': original_id, 'original_amount': original_amount,})
         wiz_id = self.pool.get('hq.entries.split').create(cr, uid, vals, context=context)
         # Return view with register_line id
