@@ -178,7 +178,7 @@ class purchase_order_line(osv.osv):
                       'product_uom': p_data['uom_id'][0],
                       'price_unit': p_data['standard_price'],
                       'old_price_unit': p_data['standard_price'],}
-            
+ 
             values.update(self.product_id_on_change(cr, uid, False,
                                                     po_data['pricelist_id'][0], # Pricelist
                                                     values['product_id'], # Product
