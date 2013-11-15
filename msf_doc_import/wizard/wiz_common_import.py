@@ -131,6 +131,16 @@ class wizard_common_import_line(osv.osv_memory):
                                         'wiz_id', 'product_id', string='Products'),
     }
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        res = super(wizard_common_import_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+#        if view_type == 'form':
+#            root = etree.fromstring(res['arch'])
+            # xpath of fields to be modified
+#            list = 
+
+        return res
+
     def fill_lines(self, cr, uid, ids, context=None):
         '''
         Fill the line of attached document
@@ -214,6 +224,21 @@ class purchase_order(osv.osv):
         Open the wizard to open multiple lines
         '''
         context = context or {}
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+
+        order_id = self.browse(cr, uid, ids[0], context=context)
+        context.update({'partner_id': order_id.partner_id.id,
+                        'quantity': 0.00,
+                        'rfq_ok': False,
+                        'purchase_id': order_id.id,
+                        'purchase_order': True,
+                        'uom': False,
+                        'product_ids_domain': [('available_for_restriction', '=', order_id.partner_type)], 
+                        'partner_type': order_id.partner_type,
+                        'pricelist_id': order_id.pricelist_id.id,
+                        'pricelist': order_id.pricelist_id.id,
+                        'warehouse': order_id.warehouse_id.id,
+                        'categ': order_id.categ})
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'purchase.order', 'purchase.order.line', context=context)

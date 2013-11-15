@@ -10,7 +10,7 @@
                 <form string="Add multiple products">
                     <field name="parent_id" invisible="1" />
                     <field name="parent_model" invisible="1" />
-                    <field name="product_ids" nolabel="1" colspan="4" model="tree">
+                    <field name="product_ids" nolabel="1" colspan="4" model="tree" domain="context.get('product_ids_domain', [])" context="{'dummy': 1}">
                         <tree string="Products">
                             <field name="default_code" />
                             <field name="name" />
