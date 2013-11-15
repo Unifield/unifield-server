@@ -114,6 +114,8 @@ class hq_entries_split_lines(osv.osv_memory):
                 expected_max_amount -= line.amount
             expected_max_amount += line.amount
             if line.amount > expected_max_amount:
+                # WARNING: On osv.memory, no rollback. That's why we should unlink the previous line before raising this error
+                self.unlink(cr, uid, [res], context=context)
                 raise osv.except_osv(_('Error'), _('Expected max amount: %s') % (expected_max_amount or 0.0,))
         return res
 
