@@ -138,6 +138,8 @@ class hq_entries_split(osv.osv_memory):
         # Some checks
         if not context:
             context = {}
+        # Prepare some values
+        hq_obj = self.pool.get('hq.entries')
         # Check total amount for this wizard
         for wiz in self.browse(cr, uid, ids, context=context):
             total = 0.00
@@ -145,12 +147,36 @@ class hq_entries_split(osv.osv_memory):
                 total += line.amount
             if total != wiz.original_amount:
                 raise osv.except_osv(_('Error'), _('Wrong total: %.2f, instead of: %.2f') % (total or 0.00, wiz.original_amount or 0.00,))
-        # TODO:
-        # - keep original line id (link)
-        # - flag original line (is_original)
-        # - flag new split hq lines (is_split)
-        # create new hq lines
-        return False
+            # If all is OK, do process of lines
+            # Mark original line as it is: an original one :-)
+            hq_obj.write(cr, uid, wiz.original_id.id, {'is_original': True,})
+            # Create new lines
+            for line in wiz.line_ids:
+                line_vals = {
+                    'original_id': wiz.original_id.id,
+                    'is_split': True,
+                    'account_id': line.account_id.id,
+                    'destination_id': line.destination_id.id,
+                    'cost_center_id': line.cost_center_id.id,
+                    'analytic_id': line.analytic_id.id,
+                    'date': wiz.original_id.date,
+                    'partner_txt': wiz.original_id.partner_txt or '',
+                    'period_id': wiz.original_id.period_id and wiz.original_id.period_id.id or False,
+                    'name': line.name,
+                    'ref': line.ref,
+                    'document_date': wiz.original_id.document_date,
+                    'currency_id': wiz.original_id.currency_id and wiz.original_id.currency_id.id or False,
+                    'amount': line.amount,
+                    'account_id_first_value': line.account_id.id,
+                    'cost_center_id_first_value': line.cost_center_id.id, 
+                    'analytic_id_first_value': line.analytic_id.id,
+                    'destination_id_first_value': line.destination_id.id,
+                }
+                hq_line_id = hq_obj.create(cr, uid, line_vals, context=context)
+                hq_line = hq_obj.browse(cr, uid, hq_line_id, context=context)
+                if hq_line.analytic_state != 'valid':
+                    raise osv.except_osv(_('Warning'), _('Analytic distribution is invalid for the line "%s" with %.2f amount.') % (line.name, line.amount))
+        return {'type' : 'ir.actions.act_window_close',}
 
 hq_entries_split()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
