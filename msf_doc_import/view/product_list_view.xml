@@ -12,8 +12,7 @@
                 <data>
                     <xpath expr="/form//separator[@string='Products']" position="before">
                         <group name="import" string="Import Lines" colspan="4">
-                            <field name="file_to_import" colspan="2" />
-                            <button name="import_file" string="Import lines" icon="gtk-execute" colspan="1" type="object" />
+                            <button name="wizard_import_product_list_line" string="Import lines" icon="gtk-execute" colspan="1" type="object" />
                             <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
                         </group>
                     </xpath>

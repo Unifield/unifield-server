@@ -480,6 +480,8 @@
                                on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
                     </group>
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    <newline />
+                    <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="4" />
                 </xpath>
 
                     <xpath expr="/form//field[@name='inventory_line_id']/tree//field[@name='product_id']" position="attributes">

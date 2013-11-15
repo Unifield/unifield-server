@@ -626,3 +626,174 @@ class threshold_value(osv.osv):
 
 threshold_value()
 
+
+class stock_inventory_line(osv.osv):
+    _inherit = 'stock.inventory.line'
+
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
+        '''
+        Create lines according to product in list
+        '''
+        p_obj = self.pool.get('product.product')
+
+        location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+        reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+            values = {'product_id': p_data['id'],
+                      'product_uom': p_data['uom_id'][0],
+                      'location_id': location_id,
+                      'reason_type_id': reason_id,
+                      'inventory_id': parent_id}
+
+            values.update(self.on_change_product_id(cr, uid, False, location_id, p_data['id'], p_data['uom_id'][0], False).get('value', {}))
+
+            # Set the quantity to 0.00
+            values.update({'product_qty': 0.00})
+
+            self.create(cr, uid, values, context=dict(context, noraise=True))
+
+        return True
+
+stock_inventory_line()
+
+class stock_inventory(osv.osv):
+    _inherit = 'stock.inventory'
+
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to open multiple lines
+        '''
+        context = context or {}
+
+        return self.pool.get('wizard.common.import.line').\
+                open_wizard(cr, uid, ids[0], 'stock.inventory', 'stock.inventory.line', context=context)
+
+stock_inventory()
+
+class initial_stock_inventory_line(osv.osv):
+    _inherit = 'initial.stock.inventory.line'
+
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
+        '''
+        Create lines according to product in list
+        '''
+        p_obj = self.pool.get('product.product')
+
+        location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+        reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+            values = {'product_id': p_data['id'],
+                      'product_uom': p_data['uom_id'][0],
+                      'location_id': location_id,
+                      'reason_type_id': reason_id,
+                      'inventory_id': parent_id}
+
+            values.update(self.on_change_product_id(cr, uid, False, location_id, p_data['id'], p_data['uom_id'][0], False).get('value', {}))
+
+            # Set the quantity to 0.00
+            values.update({'product_qty': 0.00})
+
+            self.create(cr, uid, values, context=dict(context, noraise=True))
+
+        return True
+
+initial_stock_inventory_line()
+
+class initial_stock_inventory(osv.osv):
+    _inherit = 'initial.stock.inventory'
+    
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to open multiple lines
+        '''
+        context = context or {}
+
+        return self.pool.get('wizard.common.import.line').\
+                open_wizard(cr, uid, ids[0], 'initial.stock.inventory', 'initial.stock.inventory.line', context=context)
+
+initial_stock_inventory()
+
+
+class real_average_consumption_line(osv.osv):
+    _inherit = 'real.average.consumption.line'
+
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
+        '''
+        Create lines according to product in list
+        '''
+        p_obj = self.pool.get('product.product')
+
+        c_data = self.pool.get('real.average.consumption').read(cr, uid, parent_id, ['cons_location_id'], context=context)
+
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+            values = {'product_id': p_data['id'],
+                      'uom_id': p_data['uom_id'],
+                      'rac_id': parent_id}
+
+            values.update(self.product_onchange(cr, uid, False, p_data['id'], c_data['cons_location_id'][0], p_data['uom_id'][0], False).get('value', {}))
+
+            # Set the quantity to 0.00
+            values.update({'consumed_qty': 0.00})
+
+            self.create(cr, uid, values, context=dict(context, noraise=True))
+
+        return True
+
+real_average_consumption_line()
+
+class real_average_consumption(osv.osv):
+    _inherit = 'real.average.consumption'
+
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to open multiple lines
+        '''
+        context = context or {}
+
+        return self.pool.get('wizard.common.import.line').\
+                open_wizard(cr, uid, ids[0], 'real.average.consumption', 'real.average.consumption.line', context=context)
+
+real_average_consumption()
+
+
+class monthly_review_consumption_line(osv.osv):
+    _inherit = 'monthly.review.consumption.line'
+
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
+        '''
+        Create lines according to product in list
+        '''
+        p_obj = self.pool.get('product.product')
+
+        c_data = self.pool.get('monthly.review.consumption').read(cr, uid, parent_id, ['period_from', 'period_to'], context=context)
+
+        for product_id in product_ids:
+            values = {'name': product_id,
+                      'mrc_id': parent_id,}
+
+            values.update(self.product_onchange(cr, uid, False, product_id, parent_id, c_data['period_from'], c_data['period_to']).get('value', {}))
+
+            # Set the quantity to 0.00
+            values.update({'fmc': 0.00, 'fmc2': 0.00})
+
+            self.create(cr, uid, values, context=dict(context, noraise=True))
+
+        return True
+
+monthly_review_consumption_line()
+
+class monthly_review_consumption(osv.osv):
+    _inherit = 'monthly.review.consumption'
+
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to open multiple lines
+        '''
+        context = context or {}
+
+        return self.pool.get('wizard.common.import.line').\
+                open_wizard(cr, uid, ids[0], 'monthly.review.consumption', 'monthly.review.consumption.line', context=context)
+
+monthly_review_consumption()

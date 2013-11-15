@@ -46,6 +46,7 @@
         'wizard/wizard_import_auto_supply_line.xml',
         'wizard/wizard_import_order_cycle_line.xml',
         'wizard/wizard_import_threshold_value_line.xml',
+        'wizard/wizard_import_product_list.xml',
         'view/composition_kit_import_line_view.xml',
         'wizard/wizard_import_po_view.xml',
         'wizard/wizard_delete_lines_view.xml',

@@ -54,6 +54,9 @@
                         </group>
 
                         <button colspan="6" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('created_ok', '=', True)]}" />
+                        <newline />
+                        <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="4" />
+
                     </group>
                     <separator colspan="4" string="Products" />
                     <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" type="object" 
@@ -244,6 +247,8 @@
                             get_selection="get_nomen"
                             on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
                         />
+                        <newline />
+                        <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="4" />
                     </group>
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
                     <separator colspan="4" string="Products" />
@@ -260,8 +265,8 @@
                             <field name="last_reviewed" />
                             <field name="valid_ok" />
                             <field name="valid_until" />
-                <field name="fmc2" invisible="1" />
-                <field name="last_reviewed2" invisible="1" />
+                            <field name="fmc2" invisible="1" />
+                            <field name="last_reviewed2" invisible="1" />
                             <!--<button name="valid_line" type="object" string="Valid line" icon="gtk-execute" attrs="{'invisible': [('valid_ok', '=', True)]}" />-->
                             <button name="display_graph" type="object" string="Display graph" icon="terp-purchase" />
                             <field name="to_correct_ok" invisible="1"/>
