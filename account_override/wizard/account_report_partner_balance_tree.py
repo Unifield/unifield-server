@@ -30,6 +30,7 @@ class account_partner_balance_tree(osv.osv):
         'uid': fields.many2one('res.users', 'Uid', invisible=True),
         'account_type': fields.char('Account type', size=16),
         'account_type_display': fields.boolean('Display account type ?', invisible=True),
+        'partner_id': fields.many2one('res.partner', 'Partner', invisible=True),
         'partner_name': fields.char('Partner', size=168),
         'debit': fields.float('Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Credit', digits_compute=dp.get_precision('Account')),
@@ -88,7 +89,8 @@ class account_partner_balance_tree(osv.osv):
         cr.execute(
             "SELECT p.ref as partner_ref,l.account_id as account_id," \
             " ac.type as account_type, ac.name AS account_name," \
-            " ac.code AS account_code,p.name as partner_name," \
+            " ac.code AS account_code," \
+            " p.name as partner_name, p.id as partner_id," \
             " sum(debit) AS debit, sum(credit) AS credit, " \
                     "CASE WHEN sum(debit) > sum(credit) " \
                         "THEN sum(debit) - sum(credit) " \
@@ -127,6 +129,7 @@ class account_partner_balance_tree(osv.osv):
             # TODO: fonctional currency 2 to output currency
             vals = {
                 'uid': uid,
+                'partner_id': r['partner_id'],
                 'partner_name': r['partner_name'],
                 'debit': r['debit'],
                 'credit': r['credit'],
@@ -137,6 +140,26 @@ class account_partner_balance_tree(osv.osv):
             }
             print vals
             self.create(cr, uid, vals, context=context)
+            
+    def open_journal_items(self, cr, uid, ids, context=None):
+        # get related partner
+        if not ids:
+            return {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        r = self.read(cr, uid, ids, ['partner_id'], context=context)
+        if r and r[0] and r[0]['partner_id']:
+            print 'partner_id', r[0]['partner_id']
+            return {
+                "name": "Journal Items",
+                "type": "ir.actions.act_window",
+                "res_model": "account.move.line",
+                "view_mode": "tree,form",
+                "view_type": "form",
+                "domain":[('partner_id','=',r[0]['partner_id'][0])],
+            }
+        else:
+            return {}
 account_partner_balance_tree()
 
 
@@ -199,7 +222,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
                                                         context=context)
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Partner Balance' + account_type,
+            'name': 'Partner Balance ' + account_type,
             'res_model': 'account.partner.balance.tree',
             'view_type': 'form',
             'view_mode': 'tree,form',
