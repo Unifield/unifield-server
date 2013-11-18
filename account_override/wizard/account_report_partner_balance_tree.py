@@ -66,6 +66,7 @@ class account_partner_balance_tree(osv.osv_memory):
     
     def show(self, cr, uid, ids, context=None):
         """
+        data
         {'model': 'ir.ui.menu', 'ids': [494], 
          'form': {
             'output_currency': 1,
@@ -87,12 +88,7 @@ class account_partner_balance_tree(osv.osv_memory):
         data = self._get_data(cr, uid, ids, context=context)
         print data
         obj_move = self.pool.get('account.move.line')
-        query = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
-        print query
-        
-        move_state = ['draft','posted']
-        if data['form'].get('target_mode', '') == 'posted':
-            move_state = ['posted']
+        where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
         
         result_selection = data['form'].get('result_selection', '')
         if (result_selection == 'customer'):
@@ -102,21 +98,48 @@ class account_partner_balance_tree(osv.osv_memory):
         else:
             account_type = ('payable', 'receivable')
         
+        move_state = ('draft','posted')
+        if data['form'].get('target_mode', '') == 'posted':
+            move_state = ('posted')
+        
         cr.execute(
-            "SELECT id FROM account_move_line l LEFT JOIN res_partner p ON (l.partner_id=p.id) " \
-            "JOIN account_account ac ON (l.account_id = ac.id)" \
-            "JOIN account_move am ON (am.id = l.move_id)" \
-            "WHERE ac.type IN %s " \
-            "AND am.state IN %s " \
-            "AND " + query
-            (account_type, tuple(move_state)))
-        res = self.cr.dictfetchall()
-        print res
+            "SELECT p.ref,l.account_id,ac.name AS account_name,ac.code AS code,p.name, sum(debit) AS debit, sum(credit) AS credit, " \
+                    "CASE WHEN sum(debit) > sum(credit) " \
+                        "THEN sum(debit) - sum(credit) " \
+                        "ELSE 0 " \
+                    "END AS sdebit, " \
+                    "CASE WHEN sum(debit) < sum(credit) " \
+                        "THEN sum(credit) - sum(debit) " \
+                        "ELSE 0 " \
+                    "END AS scredit, " \
+                    "(SELECT sum(debit-credit) " \
+                        "FROM account_move_line l " \
+                        "WHERE partner_id = p.id " \
+                            "AND " + where + " " \
+                            "AND blocked = TRUE " \
+                    ") AS enlitige " \
+            "FROM account_move_line l LEFT JOIN res_partner p ON (l.partner_id=p.id) " \
+            "JOIN account_account ac ON (l.account_id = ac.id) " \
+            "JOIN account_move am ON (am.id = l.move_id) " \
+            "WHERE ac.type IN (%s) " \
+            "AND am.state IN (%s)" \
+            "AND " + where + "" \
+            "GROUP BY p.id, p.ref, p.name,l.account_id,ac.name,ac.code " \
+            "ORDER BY l.account_id,p.name",
+            (",".join(account_type), ",".join(move_state)))
+        res = cr.dictfetchall()
 
-        #~ if data['form'].get('display_partner', '') == 'non-zero_balance':
-            #~ full_account = [r for r in res if r['sdebit'] > 0 or r['scredit'] > 0]
-        #~ else:
-            #~ full_account = [r for r in res]
+        if data['form'].get('display_partner', '') == 'non-zero_balance':
+            full_account = [r for r in res if r['sdebit'] > 0 or r['scredit'] > 0]
+        else:
+            full_account = [r for r in res]
+            
+        for rec in full_account:
+            if not rec.get('name', False):
+                rec.update({'name': _('Unknown Partner')})
+        ## We will now compute Total
+        #subtotal_row = self._add_subtotal(full_account)
+        
         return {}
    
     def export(self, cr, uid, ids, context=None):
