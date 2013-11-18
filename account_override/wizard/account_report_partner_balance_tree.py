@@ -65,8 +65,10 @@ class account_partner_balance_tree(osv.osv):
          }
         }
         """
-        print 'DATA', data
         self._delete_previous_data(cr, uid, context=context)
+        
+        comp_currency_id = self._get_company_currency(cr, uid, context=context)
+        output_currency_id = data['form'].get('output_currency', comp_currency)
         
         obj_move = self.pool.get('account.move.line')
         where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
@@ -126,14 +128,13 @@ class account_partner_balance_tree(osv.osv):
             if not r.get('partner_name', False):
                 r.update({'partner_name': _('Unknown Partner')})
             print r
-            # TODO: fonctional currency 2 to output currency
             vals = {
                 'uid': uid,
                 'partner_id': r['partner_id'],
                 'partner_name': r['partner_name'],
-                'debit': r['debit'],
-                'credit': r['credit'],
-                'balance': r['debit'] - r['credit'],
+                'debit': self._currency_conv(r['debit'], comp_currency_id, output_currency_id),
+                'credit': self._currency_conv(r['credit'], comp_currency_id, output_currency_id),
+                'balance': self._currency_conv(r['debit'] - r['credit'], comp_currency_id, output_currency_id),
                 'account_type': r['account_type'],
                 # display account type then 'Receivable' and 'Payable' are chosen together
                 'account_type_display': result_selection not in ('customer', 'receivable'),
@@ -160,6 +161,30 @@ class account_partner_balance_tree(osv.osv):
             }
         else:
             return {}
+            
+    def _get_company_currency(self, cr, uid, context=None):
+        res = False
+        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+        if user and user[0] and user[0].company_id:
+            res = user[0].company_id.currency_id.id
+        if not res:
+            raise osv.except_osv(_('Error !'), _('Company has no default currency'))
+        return res
+            
+    def _currency_conv(self, amount, comp_currency_id, output_currency_id):
+        if not amount or amount == 0.:
+            return amount
+        if not comp_currency_id or not output_currency_id \
+            or comp_currency_id == output_currency_id:
+            return amount
+        amount = self.pool.get('res.currency').compute(self.cr,
+                                                self.uid,
+                                                comp_currency_id,
+                                                output_currency_id,
+                                                amount)
+        if not amount:
+            amount = 0.
+        return amount
 account_partner_balance_tree()
 
 
