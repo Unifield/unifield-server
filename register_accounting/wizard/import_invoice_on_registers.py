@@ -232,7 +232,7 @@ class wizard_import_invoice(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('No line created!'))
         # Close Wizard
         # st_line_ids could be necessary for some tests
-        return { 'type': 'ir.actions.act_window_close', 'st_line_ids': st_line_ids}
+        return { 'type': 'ir.actions.act_window_close', 'st_line_ids': st_line_ids, 'o2m_refresh': 'line_ids'}
 
 wizard_import_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
