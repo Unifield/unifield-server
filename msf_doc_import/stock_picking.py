@@ -49,7 +49,7 @@ class stock_picking(osv.osv):
         # Objects
         wiz_obj = self.pool.get('wizard.import.pick.line')
 
-        context = context or {}
+        context = context is None and {} or context
 
         if isinstance(ids, (int, long)):
             ids = [ids]

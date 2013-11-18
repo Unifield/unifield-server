@@ -1410,7 +1410,7 @@ class sale_order_line(osv.osv):
         '''                                                                     
         Return an error if the line has no qty                                  
         '''                                                                     
-        context = context or {}                                                                                                                                                                         
+        context = context is None and {} or context                                                                                                                                                                         
         if not context.get('noraise') and not context.get('import_in_progress'):
             if ids and not 'product_uom_qty' in vals:                              
                 for line in self.read(cr, uid, ids, ['product_uom_qty'], context=context):

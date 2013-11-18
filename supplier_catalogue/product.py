@@ -352,7 +352,7 @@ class product_product(osv.osv):
         # Objects
         line_obj = self.pool.get('supplier.catalogue.line')
 
-        context = context or {}
+        context = context is None and {} or context
 
         if isinstance(ids, (long, int)):
             ids = [ids]
@@ -376,7 +376,7 @@ class product_product(osv.osv):
         # Objects
         catalogue_obj = self.pool.get('supplier.catalogue')
 
-        context = context or {}
+        context = context is None and {} or context
         ids = set()
 
         for arg in args:

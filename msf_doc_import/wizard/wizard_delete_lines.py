@@ -26,7 +26,9 @@ from tools.translate import _
 
 # DOCUMENT DATA dict : {'document.model': ('document.line.model',
 #                                          'field linked to document.model on document.line.model',
-#                                          'field linked to document.line.model on document.model)}
+#                                          'field linked to document.line.model on document.model',
+#                                          'field with the quantity in document.line.model',
+#                                          'domain to apply on document.line.model')}
 """
 This dictionnary is used by the document.remove.line and wizard.delete.lines
 objects to get the different relation between a parent document and its lines.
@@ -36,38 +38,30 @@ are a tuple with information in this order :
     * model of the line for the parent document
     * field of the line that link the line to its parent
     * field of the parent that contains the lines
+    * field with the quantity for the line
+    * domain to apply on lines (e.g. : only draft stock moves on picking)
 """
-DOCUMENT_DATA = {'product.list': ('product.list.line', 'list_id', 'product_ids', ''),
-                 'composition.kit': ('composition.item', 'item_kit_id', 'composition_item_ids', 'item_qty'),
-                 'purchase.order': ('purchase.order.line', 'order_id', 'order_line', 'product_qty'),
-                 'tender': ('tender.line', 'tender_id', 'tender_line_ids', 'qty'),
-                 'sale.order': ('sale.order.line', 'order_id', 'order_line', 'product_uom_qty'),
-                 'supplier.catalogue': ('supplier.catalogue.line', 'catalogue_id', 'line_ids', 'min_qty'),
-                 'stock.picking': ('stock.move', 'picking_id', 'move_lines', 'product_qty'),
-                 'stock.warehouse.automatic.supply': ('stock.warehouse.automatic.supply.line', 'supply_id', 'line_ids', 'product_qty'),
-                 'stock.warehouse.order.cycle': ('stock.warehouse.order.cycle.line', 'order_cycle_id', 'product_id', ''),
-                 'threshold.value': ('threshold.value.line', 'threshold_value_id', 'line_ids', ''),
-                 'stock.inventory': ('stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty'),
-                 'initial.stock.inventory': ('initial.stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty'),
-                 'real.average.consumption': ('real.average.consumption.line', 'rac_id', 'line_ids', 'product_qty'),
-                 'monthly.review.consumption': ('monthly.review.consumption.line', 'mrc_id', 'line_ids', ''),}
+DOCUMENT_DATA = {'product.list': ('product.list.line', 'list_id', 'product_ids', '', ''),
+                 'composition.kit': ('composition.item', 'item_kit_id', 'composition_item_ids', 'item_qty', ''),
+                 'purchase.order': ('purchase.order.line', 'order_id', 'order_line', 'product_qty', ''),
+                 'tender': ('tender.line', 'tender_id', 'tender_line_ids', 'qty', ''),
+                 'sale.order': ('sale.order.line', 'order_id', 'order_line', 'product_uom_qty', ''),
+                 'supplier.catalogue': ('supplier.catalogue.line', 'catalogue_id', 'line_ids', 'min_qty', ''),
+                 'stock.picking': ('stock.move', 'picking_id', 'move_lines', 'product_qty', '(\'state\', \'=\', \'draft\')'),
+                 'stock.warehouse.automatic.supply': ('stock.warehouse.automatic.supply.line', 'supply_id', 'line_ids', 'product_qty', ''),
+                 'stock.warehouse.order.cycle': ('stock.warehouse.order.cycle.line', 'order_cycle_id', 'product_ids', 'safety_stock', ''),
+                 'threshold.value': ('threshold.value.line', 'threshold_value_id', 'line_ids', '', ''),
+                 'stock.inventory': ('stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty', ''),
+                 'initial.stock.inventory': ('initial.stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty', ''),
+                 'real.average.consumption': ('real.average.consumption.line', 'rac_id', 'line_ids', 'product_qty', ''),
+                 'monthly.review.consumption': ('monthly.review.consumption.line', 'mrc_id', 'line_ids', '', ''),}
 
-
-#class document_remove_line(osv.osv):
-#    """
-#    This object is a dummy object used to have only one method to remove
-#    lines from multiple objects.
-#    Some other objects inherit from this object to avoid multiple overriding of
-#    the button_remove_lines method.
-#    """
-#
-#    _name = 'document.remove.line'
 
 def brl(self, cr, uid, ids, context=None):
     '''
     Call the wizard to remove lines
     '''
-    context = context or {}
+    context = context is None and {} or context
 
     if isinstance(ids, (int, long)):
         ids = [ids]
@@ -77,21 +71,21 @@ def brl(self, cr, uid, ids, context=None):
         if not obj[DOCUMENT_DATA.get(self._name)[2]]:
             raise osv.except_osv(_('Error'), _('No line to remove'))
 
+    context.update({'active_id': ids[0],
+                    'from_delete_wizard': True,
+                    'active_model': self._name,})
+
     # Return the wizard to display lines to remove
     return {'type': 'ir.actions.act_window',
             'res_model': 'wizard.delete.lines',
             'view_type': 'form',
             'view_mode': 'form',
             'target': 'new',
-            'context': dict(context, active_id=ids[0], active_model=self._name)}
+            'context': context}
 
-#document_remove_line()
-
-
-#### DOCUMENT INHERITANCE ####
 """
-All the following documents will inherit from document.remove.line to have an
-unique button_remove_lines method to remove some or all lines on documents.
+All the following documents will call the same button_remove_lines method 
+to remove some or all lines on documents.
 
 Documents which inherit from document.remove.line:
     * Product List
@@ -113,7 +107,6 @@ Documents which inherit from document.remove.line:
 class product_list(osv.osv):
     _name = 'product.list'
     _inherit = 'product.list'
-#    _inherit = ['product.list', 'document.remove.line']
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         return brl(self, cr, uid, ids, context=context)
@@ -122,7 +115,6 @@ class product_list(osv.osv):
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
-#    _inherit = ['purchase.order', 'document.remove.line']
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         return brl(self, cr, uid, ids, context=context)
@@ -131,7 +123,6 @@ class purchase_order(osv.osv):
 class composition_kit(osv.osv):
     _name = 'composition.kit'
     _inherit = 'composition.kit'
-#    _inherit = ['composition.kit', 'document.remove.line']
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         return brl(self, cr, uid, ids, context=context)
@@ -140,7 +131,6 @@ class composition_kit(osv.osv):
 class tender(osv.osv):
     _name = 'tender'
     _inherit = 'tender'
-#    _inherit = ['tender', 'document.remove.line']
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         return brl(self, cr, uid, ids, context=context)
@@ -149,7 +139,6 @@ class tender(osv.osv):
 class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
-#    _inherit = ['sale.order', 'document.remove.line']
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         return brl(self, cr, uid, ids, context=context)
@@ -158,7 +147,6 @@ class sale_order(osv.osv):
 class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
     _inherit = 'supplier.catalogue'
-#    _inherit = ['supplier.catalogue', 'document.remove.line']
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         return brl(self, cr, uid, ids, context=context)
@@ -167,7 +155,6 @@ class supplier_catalogue(osv.osv):
 class stock_picking(osv.osv):
     _name = 'stock.picking'
     _inherit = 'stock.picking'
-#    _inherit = ['stock.picking', 'document.remove.line']
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         return brl(self, cr, uid, ids, context=context)
@@ -176,7 +163,6 @@ class stock_picking(osv.osv):
 class stock_warehouse_automatic_supply(osv.osv):
     _name = 'stock.warehouse.automatic.supply'
     _inherit = 'stock.warehouse.automatic.supply'
-#    _inherit = ['stock.warehouse.automatic.supply', 'document.remove.line']
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         return brl(self, cr, uid, ids, context=context)
@@ -185,7 +171,6 @@ class stock_warehouse_automatic_supply(osv.osv):
 class stock_warehouse_order_cycle(osv.osv):
     _name = 'stock.warehouse.order.cycle'
     _inherit = 'stock.warehouse.order.cycle'
-#    _inherit = ['stock.warehouse.order.cycle', 'document.remove.line']
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         return brl(self, cr, uid, ids, context=context)
@@ -194,16 +179,19 @@ class stock_warehouse_order_cycle(osv.osv):
 class threshold_value(osv.osv):
     _name = 'threshold.value'
     _inherit = 'threshold.value'
-#    _inherit = ['threshold.value', 'document.remove.line']
 
     def button_remove_lines(self, cr, uid, ids, context=None):
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+        context = context is None and {} or context
+
+        context.update({'compute_method': self.read(cr, uid, ids[0], ['compute_method'], context=context)['compute_method']})
+
         return brl(self, cr, uid, ids, context=context)
 
 
 class stock_inventory(osv.osv):
     _name = 'stock.inventory'
     _inherit = 'stock.inventory'
-#    _inherit = ['stock.inventory', 'document.remove.line']
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         return brl(self, cr, uid, ids, context=context)
@@ -212,7 +200,6 @@ class stock_inventory(osv.osv):
 class initial_stock_inventory(osv.osv):
     _name = 'initial.stock.inventory'
     _inherit = 'initial.stock.inventory'
-#    _inherit = ['initial.stock.inventory', 'document.remove.line']
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         return brl(self, cr, uid, ids, context=context)
@@ -221,7 +208,6 @@ class initial_stock_inventory(osv.osv):
 class real_average_consumption(osv.osv):
     _name = 'real.average.consumption'
     _inherit = 'real.average.consumption'
-#    _inherit = ['real.average.consumption', 'document.remove.line']
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         return brl(self, cr, uid, ids, context=context)
@@ -255,6 +241,185 @@ monthly_review_consumption()
 
 #### END OF INHERITANCE OF DOCUMENTS ####
 
+"""
+All the following documents will call the same fields_view_get to
+display the good tree/search view if a tree/search view is defined
+for the document wizard deletion.
+
+Documents:
+    * Product List lines
+    * Theoretical Kit Items
+    * Purchase Order / Request for Quotation lines
+    * Tender lines
+    * Field Order / Internal request lines
+    * Supplier catalogue lines
+    * Stock Moves (IN / INT / OUT / PICK)
+    * Order Cycle Replenishment Rule lines
+    * Automatic Supply Replenishment Rule lines
+    * Threshold value Replenishment Rule lines
+    * Physical Inventory lines
+    * Initial stock inventory lines
+    * Real consumption report lines
+    * Monthly consumption report lines
+
+"""
+
+def delete_fields_view_get(self, cr, uid, view_id, view_type, context=None):
+    '''
+    Check if a view exist for the object (self) and the view type (view_type)
+    '''
+    if context is None:
+        context = {}
+
+    if view_id:
+        return view_id
+
+    # If we don't coming from delete lines wizard
+    if not context.get('from_delete_wizard') or view_type not in ('tree', 'search'):
+        return None
+
+    data_obj = self.pool.get('ir.model.data')
+    view_name = '%s_%s_delete_view' % (self._name.replace('.', '_'), view_type)
+    try:
+        res = None
+        view = data_obj.get_object_reference(cr, uid, 'msf_doc_import', view_name)
+        if view:
+            res = view[1]
+    except ValueError as e:
+        res = None
+
+    return res
+
+
+class product_list_line(osv.osv):
+    _inherit = 'product.list.line'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
+        return super(product_list_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+
+class purchase_order_line(osv.osv):
+    _inherit = 'purchase.order.line'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
+        return super(purchase_order_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+
+class composition_item(osv.osv):
+    _inherit = 'composition.item'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
+        return super(composition_item, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+
+class tender_line(osv.osv):
+    _inherit = 'tender.line'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
+        return super(tender_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+
+class sale_order_line(osv.osv):
+    _inherit = 'sale.order.line'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
+        return super(sale_order_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+
+class supplier_catalogue_line(osv.osv):
+    _inherit = 'supplier.catalogue.line'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
+        return super(supplier_catalogue_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+
+class stock_move(osv.osv):
+    _inherit = 'stock.move'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
+        return super(stock_move, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+
+class stock_warehouse_automatic_supply_line(osv.osv):
+    _inherit = 'stock.warehouse.automatic.supply.line'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
+        return super(stock_warehouse_automatic_supply_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+
+class stock_warehouse_order_cycle_line(osv.osv):
+    _inherit = 'stock.warehouse.order.cycle.line'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
+        return super(stock_warehouse_order_cycle_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+
+class threshold_value_line(osv.osv):
+    _inherit = 'threshold.value.line'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
+        return super(threshold_value_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+
+class stock_inventory_line(osv.osv):
+    _inherit = 'stock.inventory.line'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
+        return super(stock_inventory_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+
+class initial_stock_inventory_line(osv.osv):
+    _inherit = 'initial.stock.inventory.line'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
+        return super(initial_stock_inventory_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+
+class real_average_consumption_line(osv.osv):
+    _inherit = 'real.average.consumption.line'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
+        return super(real_average_consumption_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+
+class monthly_review_consumption_line(osv.osv):
+    _inherit = 'monthly.review.consumption.line'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
+        return super(monthly_review_consumption_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+
+product_list_line()
+purchase_order_line()
+composition_item()
+tender_line()
+sale_order_line()
+supplier_catalogue_line()
+stock_move()
+stock_warehouse_automatic_supply_line()
+stock_warehouse_order_cycle_line()
+threshold_value_line()
+stock_inventory_line()
+initial_stock_inventory_line()
+real_average_consumption_line()
+monthly_review_consumption_line()
+
+### END OF INHERITANCE ###
+
 
 class wizard_delete_lines(osv.osv_memory):
     """
@@ -282,7 +447,7 @@ class wizard_delete_lines(osv.osv_memory):
         '''
         Check if the wizard has been overrided
         '''
-        context = context or {}
+        context = context is None and {} or context
 
         res = super(wizard_delete_lines, self).default_get(cr, uid, fields, context=context)
 
@@ -308,7 +473,7 @@ class wizard_delete_lines(osv.osv_memory):
         '''
         Remove only the selected lines
         '''
-        context = context or {}
+        context = context is None and {} or context
         if isinstance(ids, (int, long)):
             ids = [ids]
 
@@ -329,7 +494,7 @@ class wizard_delete_lines(osv.osv_memory):
         '''
         Remove all lines of the initial document
         '''
-        context = context or {}
+        context = context is None and {} or context
         if isinstance(ids, (int, long)):
             ids = [ids]
 
@@ -355,21 +520,25 @@ class wizard_delete_lines(osv.osv_memory):
         The line_ids field is changed to a many2many field according to the
         data in DOCUMENT_DATA (see top of this file).
         '''
-        context = context or {}
+        context = context is None and {} or context
 
         res = super(wizard_delete_lines, self).fields_get(cr, uid, fields, context=context)
 
         if context.get('active_model') and DOCUMENT_DATA.get(context.get('active_model')):
             ddata = DOCUMENT_DATA.get(context.get('active_model'))
             line_obj = ddata[0]
+            if not ddata[4]:
+                domain = "[('%s', '=', initial_doc_id)]" % ddata[1]
+            else:
+                domain = "[%s, ('%s', '=', initial_doc_id)]" % (ddata[4], ddata[1])
             res.update(line_ids={'related_columns': ['wiz_id', 'line_id'], 
                                  'relation': line_obj, 
                                  'string': 'Lines to remove', 
-                                 'context': {}, 
+                                 'context': context, 
                                  'third_table': '%sto_remove' % line_obj.replace('.', '_'), 
                                  'selectable': True, 
                                  'type': 'many2many', 
-                                 'domain': "[('%s', '=', initial_doc_id)]" % ddata[1]})
+                                 'domain': "%s" % domain})
 
         return res
     

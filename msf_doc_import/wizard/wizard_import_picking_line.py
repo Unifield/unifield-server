@@ -78,7 +78,7 @@ class wizard_import_pick_line(osv.osv_memory):
         bn_obj = self.pool.get('stock.production.lot')
         loc_obj = self.pool.get('stock.location')
 
-        context = context or {}
+        context = context is None and {} or context
 
         # Don't create a new cursor if we are in unit test
         if not context.get('yml_test', False):

@@ -361,7 +361,7 @@ class stock_warehouse_automatic_supply_line(osv.osv):
         '''
         Check if the quantity is larger than 0.00
         '''
-        context = context or {}
+        context = context is None and {} or context
         
         if isinstance(ids, (int, long)):
             ids = [ids]

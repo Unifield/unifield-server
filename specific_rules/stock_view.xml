@@ -41,8 +41,6 @@
                         />
                     </group>
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                    <newline />
-                    <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="4" />
                     <notebook colspan="4">
                         <page string="Inventory lines">
                             <field colspan="4" name="inventory_line_id" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', '!=', 'draft')]}">

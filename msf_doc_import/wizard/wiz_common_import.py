@@ -109,7 +109,7 @@ class wizard_common_import_line(osv.osv_memory):
         '''
         Open the wizard
         '''
-        context = context or {}
+        context = context is None and {} or context
 
         wiz_id = self.create(cr, uid, {'parent_id': parent_id,
                                        'parent_model': parent_model,
@@ -145,7 +145,7 @@ class wizard_common_import_line(osv.osv_memory):
         '''
         Fill the line of attached document
         '''
-        context = context or {}
+        context = context is None and {} or context
         ids = isinstance(ids, (int, long)) and [ids] or ids
 
         fields_to_read = ['parent_id', 
@@ -176,7 +176,7 @@ class purchase_order_line(osv.osv):
         p_obj  = self.pool.get('product.product')
         po_obj = self.pool.get('purchase.order')
 
-        context = context or {}
+        context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
         for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price'], context=context):
@@ -223,7 +223,7 @@ class purchase_order(osv.osv):
         '''
         Open the wizard to open multiple lines
         '''
-        context = context or {}
+        context = context is None and {} or context
         ids = isinstance(ids, (int, long)) and [ids] or ids
 
         order_id = self.browse(cr, uid, ids[0], context=context)
@@ -257,7 +257,7 @@ class tender_line(osv.osv):
         p_obj = self.pool.get('product.product')
         tender_obj = self.pool.get('tender')
 
-        context = context or {}
+        context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
         for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
@@ -284,7 +284,12 @@ class tender(osv.osv):
         '''
         Open the wizard to open multiple lines
         '''
-        context = context or {}
+        context = context is None and {} or context
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+        
+        tender = self.browse(cr, uid, ids[0], context=context)
+        context.update({'product_ids_domain': [('purchase_type', '=', tender.categ),
+                                               ('available_for_restriction', '=', 'tender')]})
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'tender', 'tender.line', context=context)
@@ -302,7 +307,7 @@ class sale_order_line(osv.osv):
         p_obj = self.pool.get('product.product')
         order_obj = self.pool.get('sale.order')
 
-        context = context or {}
+        context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
         for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
@@ -346,7 +351,12 @@ class sale_order(osv.osv):
         '''
         Open the wizard to add multiple lines
         '''
-        context = context or {}
+        context = context is None and {} or context
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+        
+        order = self.browse(cr, uid, ids[0], context=context)
+        context.update({'product_ids_domain': [('purchase_type', '=', order.categ),
+                                               ('available_for_restriction', '=', order.procurement_request and 'consumption' or order.partner_type)]})
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'sale.order', 'sale.order.line', context=context)
@@ -364,7 +374,7 @@ class composition_item(osv.osv):
         p_obj  = self.pool.get('product.product')
         kit_obj = self.pool.get('composition.kit')
 
-        context = context or {}
+        context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
         for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price'], context=context):
@@ -390,7 +400,7 @@ class composition_kit(osv.osv):
         '''
         Open the wizard to open multiple lines
         '''
-        context = context or {}
+        context = context is None and {} or context
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'composition.kit', 'composition.item', context=context)
@@ -408,7 +418,7 @@ class supplier_catalogue_line(osv.osv):
         p_obj = self.pool.get('product.product')
         cat_obj = self.pool.get('supplier.catalogue')
 
-        context = context or {}
+        context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
         for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'standard_price'], context=context):
@@ -437,7 +447,7 @@ class supplier_catalogue(osv.osv):
         '''
         Open the wizard to open multiple lines
         '''
-        context = context or {}
+        context = context is None and {} or context
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'supplier.catalogue', 'supplier.catalogue.line', context=context)
@@ -457,7 +467,7 @@ class stock_move(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         get_ref = data_obj.get_object_reference
 
-        context = context or {}
+        context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
         picking = pick_obj.browse(cr, uid, parent_id, context=context)
@@ -465,7 +475,7 @@ class stock_move(osv.osv):
         nomen_manda_log = get_ref(cr, uid, 'msf_config_locations', 'nomen_log')[1]
         nomen_manda_med = get_ref(cr, uid, 'msf_config_locations', 'nomen_med')[1]
 
-        if picking.partner_id:
+        if picking.partner_id and picking.type == 'in':
             location_id = picking.partner_id.property_stock_supplier.id
         elif picking.type == 'in':
             location_id = get_ref(cr, uid, 'stock', 'stock_location_suppliers')[1]
@@ -511,7 +521,19 @@ class stock_picking(osv.osv):
         '''
         Open the wizard to open multiple lines
         '''
-        context = context or {}
+        context = context is None and {} or context
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+        data_obj = self.pool.get('ir.model.data')
+        get_ref = data_obj.get_object_reference
+
+        picking = self.browse(cr, uid, ids[0], context=context)
+        if picking.type in ('in', 'out'):
+            context.update({'product_ids_domain': [('type', '!=', 'service'),
+                                                   ('available_for_restriction', '=', 'picking')]})
+        elif picking.type == 'internal':
+            cd_loc = get_ref(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+            context.update({'product_ids_domain': [('type', '!=', 'service'),
+                                                   ('available_for_restriction', '=', {'location_id': cd_loc})]})
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'stock.picking', 'stock.move', context=context)
@@ -537,7 +559,8 @@ class stock_warehouse_auto_supply_line(osv.osv):
             # Set the quantity to 0.00
             values.update({'product_qty': 0.00})
 
-            self.create(cr, uid, values, context=dict(context, noraise=True))
+            if not self.search(cr, uid, [('product_id', '=', p_data['id']), ('supply_id', '=', parent_id)], context=context):
+                self.create(cr, uid, values, context=dict(context, noraise=True))
 
         return True        
 
@@ -551,7 +574,8 @@ class stock_warehouse_auto_supply(osv.osv):
         '''
         Open the wizard to open multiple lines
         '''
-        context = context or {}
+        context = context is None and {} or context
+        context.update({'product_ids_domain': [('type', 'not in', ['consu', 'service', 'service_recep'])]})
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'stock.warehouse.automatic.supply', 'stock.warehouse.automatic.supply.line', context=context)
@@ -577,7 +601,8 @@ class stock_warehouse_order_cycle_line(osv.osv):
             # Set the quantity to 0.00
             values.update({'safety_stock': 0.00})
 
-            self.create(cr, uid, values, context=dict(context, noraise=True))
+            if not self.search(cr, uid, [('product_id', '=', p_data['id']), ('order_cycle_id', '=', parent_id)], context=context):
+                self.create(cr, uid, values, context=dict(context, noraise=True))
 
         return True
 
@@ -591,7 +616,8 @@ class stock_warehouse_order_cycle(osv.osv):
         '''
         Open the wizard to open multiple lines
         '''
-        context = context or {}
+        context = context is None and {} or context
+        context.update({'product_ids_domain': [('type', 'not in', ['consu', 'service', 'service_recep'])]})
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'stock.warehouse.order.cycle', 'stock.warehouse.order.cycle.line', context=context)
@@ -630,7 +656,8 @@ class threshold_value_line(osv.osv):
             # Set the quantity to 0.00
             values.update({'fixed_product_qty': 0.00, 'fixed_threshold_value': 0.00})
 
-            self.create(cr, uid, values, context=dict(context, noraise=True))
+            if not self.search(cr, uid, [('product_id', '=', p_data['id']), ('threshold_value_id', '=', parent_id)], context=context):
+                self.create(cr, uid, values, context=dict(context, noraise=True))
 
         return True
 
@@ -644,7 +671,8 @@ class threshold_value(osv.osv):
         '''
         Open the wizard to open multiple lines
         '''
-        context = context or {}
+        context = context is None and {} or context
+        context.update({'product_ids_domain': [('type', 'not in', ['consu', 'service', 'service_recep'])]})
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'threshold.value', 'threshold.value.line', context=context)
@@ -689,7 +717,11 @@ class stock_inventory(osv.osv):
         '''
         Open the wizard to open multiple lines
         '''
-        context = context or {}
+        context = context is None and {} or context
+
+        stock_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+        context.update({'product_ids_domain': [('type', 'not in', ['consu', 'service', 'service_recep']),
+                                               ('available_for_restriction', '=', {'location_id': stock_loc})]})
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'stock.inventory', 'stock.inventory.line', context=context)
@@ -733,7 +765,11 @@ class initial_stock_inventory(osv.osv):
         '''
         Open the wizard to open multiple lines
         '''
-        context = context or {}
+        context = context is None and {} or context
+
+        stock_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+        context.update({'product_ids_domain': [('type', 'not in', ['consu', 'service', 'service_recep']),
+                                               ('available_for_restriction', '=', {'location_id': stock_loc})]})
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'initial.stock.inventory', 'initial.stock.inventory.line', context=context)
@@ -775,7 +811,8 @@ class real_average_consumption(osv.osv):
         '''
         Open the wizard to open multiple lines
         '''
-        context = context or {}
+        context = context is None and {} or context
+        context.update({'product_ids_domain': [('available_for_restriction', '=', 'consumption')]})
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'real.average.consumption', 'real.average.consumption.line', context=context)
@@ -803,7 +840,8 @@ class monthly_review_consumption_line(osv.osv):
             # Set the quantity to 0.00
             values.update({'fmc': 0.00, 'fmc2': 0.00})
 
-            self.create(cr, uid, values, context=dict(context, noraise=True))
+            if not self.search(cr, uid, [('name', '=', product_id), ('mrc_id', '=', parent_id)], context=context):
+                self.create(cr, uid, values, context=dict(context, noraise=True))
 
         return True
 
@@ -816,7 +854,7 @@ class monthly_review_consumption(osv.osv):
         '''
         Open the wizard to open multiple lines
         '''
-        context = context or {}
+        context = context is None and {} or context
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'monthly.review.consumption', 'monthly.review.consumption.line', context=context)

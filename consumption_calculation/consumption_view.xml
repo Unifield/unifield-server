@@ -55,7 +55,8 @@
 
                         <button colspan="6" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('created_ok', '=', True)]}" />
                         <newline />
-                        <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="4" />
+                        <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="3" />
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="3" type="object" />
 
                     </group>
                     <separator colspan="4" string="Products" />
@@ -66,8 +67,8 @@
                     context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}">
                     <tree string="Products" editable="top" colors="red: consumed_qty>0 and (inactive_product or to_correct_ok or consumed_qty > product_qty or (batch_mandatory and not prodlot_id) or (date_mandatory and not expiry_date));blue: not prodlot_id and consumed_qty>product_qty and not to_correct_ok and not inactive_product">
                             <field name="product_id" on_change="product_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id)"
-                                context="{'location': parent.cons_location_id, 'compute_child': False, 'available_for_restriction': 'consumption', 'search_default_not_restricted': 1}"
-                                domain="[('list_ids', '=', parent.sublist_id)]" />
+                                context="{'location': parent.cons_location_id, 'compute_child': False, 'available_for_restriction': 'consumption', 'search_default_not_restricted': 1}" />
+                            <!-- domain="[('list_ids', '=', parent.sublist_id)]" /> -->
                             <field name="uom_id" 
                                 on_change="uom_onchange(product_id, consumed_qty, parent.cons_location_id, uom_id, prodlot_id)"/>
                             <field name="product_qty" />
@@ -247,10 +248,11 @@
                             get_selection="get_nomen"
                             on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
                         />
-                        <newline />
-                        <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="4" />
                     </group>
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
+                    <newline />
+                    <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="2" />
+                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
                     <separator colspan="4" string="Products" />
                     <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" type="object"
                     confirm="Are you sure that you want to remove all lines?" invisible="1"/>
@@ -258,8 +260,8 @@
                     <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list"
                     context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}">
                         <tree string="Products" editable="top" colors="red: to_correct_ok==True"> 
-                            <field name="name" on_change="product_onchange(name, parent.id, parent.period_from, parent.period_to)" 
-                                domain="[('list_ids', '=', parent.sublist_id)]" />
+                            <field name="name" on_change="product_onchange(name, parent.id, parent.period_from, parent.period_to)" />
+                            <!-- domain="[('list_ids', '=', parent.sublist_id)]" />-->
                             <field name="amc" />
                             <field name="fmc" on_change="fmc_change(amc, fmc, name)" attrs="{'readonly': [('valid_ok', '=', True)]}" />
                             <field name="last_reviewed" />

@@ -985,9 +985,6 @@ class composition_item(osv.osv):
         if context is None:
             context = {}
 
-        if view_type == 'tree' and context.get('from_delete_wizard'):
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'view_composition_item_delete_wizard')[1]
-
         # call super
         result = super(composition_item, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         # columns depending on type

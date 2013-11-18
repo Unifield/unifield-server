@@ -14,6 +14,7 @@
                         <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}">
                             <button name="wizard_import_pick_line" string="Import lines" icon="gtk-dnd" col="1" type="object"/>
                             <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0"/>
+                            <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
                             <newline />
                             <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
                         </group>
@@ -36,9 +37,10 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook//field[@name='move_lines']" position="before">
-                        <group name="import" stirng="Import Lines" colspan="4" attrs="{'invisible': ['|', ('state', 'not in', ('draft', 'confirmed', 'assigned')), ('from_wkf', '=', True)]}">
+                        <group name="import" string="Import Lines" colspan="4" attrs="{'invisible': ['|', ('state', 'not in', ('draft', 'confirmed', 'assigned')), ('from_wkf', '=', True)]}">
                             <button name="wizard_import_pick_line" string="Import lines" icon="gtk-dnd" col="1" type="object" />
                             <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0" />
+                            <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
                             <newline />
                             <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
                         </group>
@@ -63,6 +65,7 @@
                         <group name="import" string="Import Lines" colspan="4" attrs="{'invisible': ['|', ('state', 'not in', ('draft', 'confirmed', 'assigned')), ('from_wkf', '=', True)]}">
                             <button name="wizard_import_pick_line" string="Import lines" icon="gtk-dnd" col="1" type="object" />
                             <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0" />
+                            <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
                             <newline />
                             <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
                         </group>
@@ -87,6 +90,7 @@
                         <group name="import" string="Import Lines" colspan="4" attrs="{'invisible': ['|', ('state', 'not in', ('draft', 'confirmed', 'assigned')), ('from_wkf', '=', True)]}">
                             <button name="wizard_import_pick_line" string="Import lines" icon="gtk-dnd" col="1" type="object" />
                             <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0" />
+                            <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
                             <newline />
                             <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
                         </group>

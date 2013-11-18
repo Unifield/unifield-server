@@ -65,7 +65,7 @@ class wizard_import_product_list(osv.osv):
         '''
         Import lines from file
         '''
-        context = context or {}
+        context = context is None and {} or context
         ids = isinstance(ids, (int, long)) and [ids] or ids
 
         if not context.get('yml_test', False):
@@ -218,7 +218,7 @@ Importation completed in %s!
         Launch a thread for importing lines.
         """
         ids = isinstance(ids, (int, long)) and [ids] or ids
-        context = context or {}
+        context = context is None and {} or context
 
         wiz_common_import = self.pool.get('wiz.common.import')
         list_obj = self.pool.get('product.list')
@@ -256,7 +256,7 @@ Importation completed in %s!
         This button is only for updating the view.
         """
         ids = isinstance(ids, (int, long)) and [ids] or ids
-        context = context or {}
+        context = context is None and {} or context
         list_obj = self.pool.get('product.list')
         for wiz_read in self.read(cr, uid, ids, ['list_id', 'state', 'file']):
             list_id = wiz_read['list_id'][0]

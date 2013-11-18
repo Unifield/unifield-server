@@ -10,9 +10,10 @@
             <field name="arch" type="xml">
                 <xpath expr="/form//field[@name='line_ids']" position="before">
                     <group name="import" string=" Import Lines " colspan="1" col="4">
-                        <button name="wizard_import_auto_supply_line" string="Import lines" icon="gtk-dnd" col="1" type="object" />
+                        <button name="wizard_import_auto_supply_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object" />
                         <newline />
-                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" type="object" colspan="4" />
+                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" type="object" colspan="2" />
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
                     </group>
                 </xpath>
             </field>
@@ -26,9 +27,10 @@
             <field name="arch" type="xml">
                 <xpath expr="/form//field[@name='product_ids']" position="before">
                     <group name="import" string=" Import Lines " colspan="1" col="4">
-                        <button name="wizard_import_order_cycle_line" string="Import lines" icon="gtk-dnd" col="1" type="object" />
+                        <button name="wizard_import_order_cycle_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object" />
                         <newline />
-                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" type="object" colspan="4" />
+                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" type="object" colspan="2" />
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
                     </group>
                 </xpath>
             </field>
@@ -42,9 +44,10 @@
             <field name="arch" type="xml">
                 <xpath expr="/form//field[@name='line_ids']" position="before">
                     <group name="import" string=" Import Lines " colspan="1" col="4">
-                        <button name="wizard_import_threshold_value_line" string="Import lines" icon="gtk-dnd" col="1" type="object" />
+                        <button name="wizard_import_threshold_value_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object" />
                         <newline />
-                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" type="object" colspan="4" />
+                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" type="object" colspan="2" />
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
                     </group>
                 </xpath>
             </field>

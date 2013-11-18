@@ -2551,7 +2551,7 @@ class product_product(osv.osv):
         '''
         Check the consistency of product according to category
         '''
-        context = context or {}
+        context = context is None and {} or context
         display_message = False
 
         # No check for Other

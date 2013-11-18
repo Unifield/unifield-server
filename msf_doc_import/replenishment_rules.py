@@ -48,7 +48,7 @@ class automatic_supply_rule(osv.osv):
         # Objects
         wiz_obj = self.pool.get('wizard.import.auto.supply.line')
 
-        context = context or {}
+        context = context is None and {} or context
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -93,7 +93,7 @@ class order_cycle_rule(osv.osv):
         # Objects
         wiz_obj = self.pool.get('wizard.import.order.cycle.line')
 
-        context = context or {}
+        context = context is None and {} or context
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -138,7 +138,7 @@ class threshold_value_rule(osv.osv):
         # Objects
         wiz_obj = self.pool.get('wizard.import.threshold.value.line')
 
-        context = context or {}
+        context = context is None and {} or context
 
         if isinstance(ids, (int, long)):
             ids = [ids]

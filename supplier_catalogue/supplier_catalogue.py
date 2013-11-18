@@ -769,7 +769,7 @@ class supplier_catalogue_line(osv.osv):
         '''
         Check if the min_qty field is set
         '''
-        context = context or {}
+        context = context is None and {} or context
 
         if isinstance(ids, (int, long)):
             ids = [ids]
