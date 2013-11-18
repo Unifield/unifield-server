@@ -237,6 +237,7 @@ class res_partner(osv.osv):
         com_vouch_obj = self.pool.get('account.commitment')# for commitment voucher
         ship_obj = self.pool.get('shipment')
         absl_obj = self.pool.get('account.bank.statement.line') # for register lines
+        aml_obj = self.pool.get('account.move.line')
 
         # ids list (the domain are the same as the one used for the action window of the menus)
         purchase_ids = purchase_obj.search(cr, uid,
@@ -315,6 +316,7 @@ class res_partner(osv.osv):
             [('state', 'not in', ['done', 'delivered']), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])],
             context=context)
         absl_ids = absl_obj.search(cr, uid, [('state', 'in', ['draft', 'temp']), ('partner_id', '=', ids[0])], context=context)
+        aml_ids = aml_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('reconcile_id', '=', False), ('account_id.reconcile', '=', True)])
         
         return ', '.join([
             po['name']+_(' (Purchase)') for po in purchase_obj.read(cr, uid, purchase_ids, ['name'], context) if po['name']]
@@ -339,6 +341,7 @@ class res_partner(osv.osv):
             +[com_vouch['name']+_(' (Commitment Voucher)') for com_vouch in com_vouch_obj.read(cr, uid, com_vouch_ids, ['name'], context) if com_vouch['name']]
             +[ship['name']+_(' (Shipment)') for ship in ship_obj.read(cr, uid, ship_ids, ['name'], context) if ship['name']]
             +[absl.name + '(' + absl.statement_id.name + _(' Register)') for absl in absl_obj.browse(cr, uid, absl_ids, context) if absl.name and absl.statement_id and absl.statement_id.name]
+            +[_('%s (Journal Item)') % (aml['move_id'] and aml['move_id'][1] or '') for aml in aml_obj.read(cr, uid, aml_ids, ['move_id'])]
         )
 
     def write(self, cr, uid, ids, vals, context=None):
