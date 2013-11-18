@@ -27,12 +27,16 @@ class account_partner_balance_tree(osv.osv):
     _name = 'account.partner.balance.tree'
     _description = 'Print Account Partner Balance Tree'
     _columns = {
-        'uid': fields.many2one('res.users', 'uid'),
-        'partner_name': fields.char('Name', size=168),
+        'uid': fields.many2one('res.users', 'Uid', invisible=True),
+        'account_type': fields.char('Account type', size=16),
+        'account_type_display': fields.boolean('Display account type ?', invisible=True),
+        'partner_name': fields.char('Partner', size=168),
         'debit': fields.float('Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Credit', digits_compute=dp.get_precision('Account')),
         'balance': fields.float('Balance', digits_compute=dp.get_precision('Account')),
     }
+    
+    _order = "uid, account_type, partner_name"
     
     def _delete_previous_data(self, cr, uid, context=None):
         ids = self.search(cr, uid, [('uid', '=', uid)], context=context)
@@ -82,7 +86,10 @@ class account_partner_balance_tree(osv.osv):
         
         # inspired from account_report_balance.py
         cr.execute(
-            "SELECT p.ref as partner_ref,l.account_id as account_id,ac.name AS account_name,ac.code AS account_code,p.name as partner_name, sum(debit) AS debit, sum(credit) AS credit, " \
+            "SELECT p.ref as partner_ref,l.account_id as account_id," \
+            " ac.type as account_type, ac.name AS account_name," \
+            " ac.code AS account_code,p.name as partner_name," \
+            " sum(debit) AS debit, sum(credit) AS credit, " \
                     "CASE WHEN sum(debit) > sum(credit) " \
                         "THEN sum(debit) - sum(credit) " \
                         "ELSE 0 " \
@@ -104,7 +111,7 @@ class account_partner_balance_tree(osv.osv):
             " WHERE ac.type IN " + account_type + "" \
             " AND am.state IN " + move_state + ""\
             " AND " + where + "" \
-            " GROUP BY p.id, p.ref, p.name,l.account_id,ac.name,ac.code" \
+            " GROUP BY p.id,ac.type,p.ref,p.name,l.account_id,ac.name,ac.code" \
             " ORDER BY l.account_id,p.name")
         res = cr.dictfetchall()
 
@@ -124,6 +131,9 @@ class account_partner_balance_tree(osv.osv):
                 'debit': r['debit'],
                 'credit': r['credit'],
                 'balance': r['debit'] - r['credit'],
+                'account_type': r['account_type'],
+                # display account type then 'Receivable' and 'Payable' are chosen together
+                'account_type_display': result_selection not in ('customer', 'receivable'),
             }
             print vals
             self.create(cr, uid, vals, context=context)
@@ -175,17 +185,25 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
     
     def show(self, cr, uid, ids, context=None):
         data = self._get_data(cr, uid, ids, context=context)
+        
+        result_selection = data['form'].get('result_selection', '')
+        if (result_selection == 'customer'):
+            account_type = 'Receivable'
+        elif (result_selection == 'supplier'):
+            account_type = 'Payable'
+        else:
+            account_type = 'Receivable and Payable'
+        
         self.pool.get('account.partner.balance.tree').build_data(cr,
                                                         uid, data,
                                                         context=context)
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Partner Balance',
+            'name': 'Partner Balance' + account_type,
             'res_model': 'account.partner.balance.tree',
             'view_type': 'form',
             'view_mode': 'tree,form',
             'ref': 'view_account_partner_balance_tree',
-            #'target': 'new',
             'domain': [('uid', '=', uid)],
         }
    

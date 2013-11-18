@@ -8,11 +8,16 @@
             <field name="type">tree</field>
             <field name="priority" eval="200"/>
             <field name="arch" type="xml">
-                <tree string="Partner Balance Tree" editable="top" noteditable="1" hide_new_button="1" hide_delete_button="1">
+                <tree string="Partner Balance Tree"
+                    editable="top" noteditable="1" 
+                    hide_new_button="1" hide_delete_button="1"
+                    colors="gray:account_type in('payable')">
                     <field name="partner_name"/>
                     <field name="debit"/>
                     <field name="credit"/>
                     <field name="balance"/>
+                    <field name="account_type_display" invisible="1" />
+                    <field name="account_type" attrs="{'invisible': [('account_type_display','!=',True)]" />
                 </tree>
             </field>
         </record>
