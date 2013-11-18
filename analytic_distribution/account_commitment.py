@@ -52,16 +52,31 @@ class account_commitment(osv.osv):
                 res[co.id] += line.amount
         return res
 
+    def _get_cv(self, cr, uid, ids, context=None):
+        """
+        Get CV linked to given lines
+        """
+        res = []
+        if not context:
+            context = {}
+        for cvl in self.pool.get('account.commitment.line').browse(cr, uid, ids):
+            if not cvl.commit_id in res:
+                res.append(cvl.commit_id.id)
+        return res
+
     _columns = {
         'journal_id': fields.many2one('account.analytic.journal', string="Journal", readonly=True, required=True),
         'name': fields.char(string="Number", size=64, readonly=True, required=True),
-        'currency_id': fields.many2one('res.currency', string="Currency", readonly=True, required=True),
-        'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=True),
+        'currency_id': fields.many2one('res.currency', string="Currency", required=True),
+        'partner_id': fields.many2one('res.partner', string="Supplier", required=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True, required=True),
         'state': fields.selection([('draft', 'Draft'), ('open', 'Validated'), ('done', 'Done')], readonly=True, string="State", required=True),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
-        'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total"),
+        'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total", 
+            store={
+                'account.commitment.line': (_get_cv, ['amount'],10),
+        }),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'type': fields.selection([('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Manual - ESC supplier')], string="Type", readonly=True),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
@@ -90,7 +105,10 @@ class account_commitment(osv.osv):
             vals.update({'period_id': period_ids and period_ids[0]})
         # UTP-317 # Check that no inactive partner have been used to create this commitment
         if 'partner_id' in vals:
-            partner = self.pool.get('res.partner').browse(cr, uid, [vals.get('partner_id')])
+            partner_id = vals.get('partner_id')
+            if isinstance(partner_id, (str)):
+                partner_id = int(partner_id)
+            partner = self.pool.get('res.partner').browse(cr, uid, [partner_id])
             active = True
             if partner and partner[0] and not partner[0].active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))

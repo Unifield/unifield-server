@@ -55,8 +55,10 @@ class sale_order(osv.osv):
         if context.get('from_button'):
             default.update({'is_a_counterpart': False})
         
-        default.update({'loan_id': False,
-                        'order_policy': 'picking',
+        if 'loan_id' not in default:
+            default.update({'loan_id': False})
+
+        default.update({'order_policy': 'picking',
                         'active': True})
 
         if not context.get('keepClientOrder', False):
@@ -540,6 +542,7 @@ class sale_order(osv.osv):
                         fo_name = so.name + '-' + selec_name
                         split_id = self.copy(cr, uid, so.id, {'name': fo_name,
                                                               'order_line': [],
+                                                              'loan_id': so.loan_id and so.loan_id.id or False,
                                                               'delivery_requested_date': so.delivery_requested_date,
                                                               'split_type_sale_order': fo_type,
                                                               'ready_to_ship_date': line.order_id.ready_to_ship_date,
@@ -547,6 +550,10 @@ class sale_order(osv.osv):
                         # log the action of split
                         self.log(cr, uid, split_id, _('The %s split %s has been created.')%(selec_name, fo_name))
                         split_fo_dic[fo_type] = split_id
+                        # For loans, change the subflow
+                        if fo_type == 'stock_split_sale_order':
+                            po_ids = self.pool.get('purchase.order').search(cr, uid, [('loan_id', '=', so.id)], context=context)
+                            netsvc.LocalService("workflow").trg_change_subflow(uid, 'purchase.order', po_ids, 'sale.order', [so.id], split_id, cr)
                 # copy the line to the split Fo - the state is forced to 'draft' by default method in original add-ons
                 # -> the line state is modified to sourced when the corresponding procurement is created in action_ship_proc_create
                 new_context = dict(context, keepDateAndDistrib=True, keepLineNumber=True, no_store_function=True)
@@ -582,21 +589,18 @@ class sale_order(osv.osv):
         old_order_name = self.get_original_name(cr, uid, order, context=context)
 #        order_name = '/'.join(x for x in order.name.split('/')[0:-1])
 
-        order_ids = self.search(cr, uid, [('active', 'in', ('t', 'f')), ('fo_to_resource', '=', True), ('name', 'like', old_order_name)], context=dict(context, procurement_request=True))
-        name_iter = 1
+        order_ids = self.search(cr, uid, [('active', 'in', ('t', 'f')), ('fo_to_resource', '=', True), ('parent_order_name', '=', old_order_name)], context=dict(context, procurement_request=True))
         for old_order in self.read(cr, uid, order_ids, ['name', 'state'], context=context):
             if old_order['state'] == 'draft':
                 return old_order['id']
-            else:
-                name_iter += 1
 
-        order_name = '%s/%s' % (old_order_name, str(name_iter))
 
         order_id = self.copy(cr, uid, order.id, {'order_line': [], 
                                                  'state': 'draft', 
-                                                 'parent_order_name': old_order_name,
-                                                 'name': order_name, 
+                                                 'parent_order_name': old_order_name, 
                                                  'fo_to_resource': True}, context=context)
+
+        order_name = self.read(cr, uid, order_id, ['name'], context=context)['name']
 
         self.log(cr, uid, order_id, _('The Field order %s has been created to re-source the canceled needs') % order_name, context=dict(context, procurement_request=order.procurement_request))
 
@@ -1345,7 +1349,7 @@ class sale_order_line(osv.osv):
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
             default.update({'so_back_update_dest_po_id_sale_order_line': False,
                             'so_back_update_dest_pol_id_sale_order_line': False,})
-        default.update({'sync_order_line_db_id': False})
+        default.update({'sync_order_line_db_id': False, 'manually_corrected': False})
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
     def open_order_line_to_correct(self, cr, uid, ids, context=None):
@@ -1484,7 +1488,7 @@ class sale_order_line(osv.osv):
         if not default:
             default = {}
             
-        default.update({'sync_order_line_db_id': False})
+        default.update({'sync_order_line_db_id': False, 'manually_corrected': False})
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
     def create(self, cr, uid, vals, context=None):

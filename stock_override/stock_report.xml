@@ -23,5 +23,13 @@
             auto="False"
             menu="True" />
 
+        <report auto="False"
+                id="delivery_order"
+                model="stock.picking"
+                name="delivery.order"
+                header="True"
+                rml="addons/stock_override/report/delivery_order.rml"
+                string="Delivery Order" />
+
     </data>
 </openerp>

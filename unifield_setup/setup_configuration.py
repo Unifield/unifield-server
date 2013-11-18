@@ -74,6 +74,7 @@ class unifield_setup_configuration(osv.osv):
         'field_orders_ok': fields.boolean(string='Activate the Field Orders feature ?'),
         'lang_id': fields.char(size=5, string='Default language'),
         'payroll_ok': fields.boolean(string='System manages payrolls ?'),
+        'import_commitments': fields.boolean(string='Manage commitments corresponding to international order through specific import ?'),
     }
     
     _defaults = {
@@ -86,6 +87,7 @@ class unifield_setup_configuration(osv.osv):
         'unallocated_ok': lambda *a: False,
         'fixed_asset_ok': lambda *a: False,
         'payroll_ok': lambda *a: True,
+        'import_commitments': lambda *a: True,
     }
     
     _constraints = [

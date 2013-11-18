@@ -109,7 +109,7 @@
                             <field colspan="4" name="f2_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                         </group>
                     </group>
-                    <group colspan="4">
+                    <group colspan="4" attrs="{'invisible': [('state', '=', 'correction')]}">
                         <label string="" colspan="2"/>
                         <button name="button_cancel" string='Cancel' type='object' icon='gtk-cancel' colspan="1"/>
                         <button name="button_confirm" string="Save" type="object" icon="gtk-ok" colspan="1" attrs="{'readonly': [('is_writable', '=', False)]}"/>
@@ -144,7 +144,42 @@
                     <field name="date" colspan="2" /><label string="" colspan="2"/>
                     <newline/>
                     <field name="display_fp" invisible="1"/>
+                    <separator string="Items to check"/>
+                    <newline/>
                     <field name="line_ids" nolabel="1" colspan="4" context="{'display_fp': display_fp}"/>
+                    <newline/>
+                    <separator string="Items not considered in reallocation"/>
+                    <newline/>
+                    <label string="Criteria used to exclude specific types of items from the reallocation perimeter." align="0.0" colspan="2"/>
+                    <newline/>
+                    <label string="- Commitments" align="0.0"/>
+                    <newline/>
+                    <label string="- Items already reallocated" align="0.0"/>
+                    <newline/>
+                    <label string="- Reversals" align="0.0"/>
+                    <newline/>
+                    <label string="- Write-off" align="0.0"/>
+                    <newline/>
+                    <label string="- Unposted items" align="0.0"/>
+                    <newline/>
+                    <html>
+                        <br />
+                    </html>
+                    <field name="other_ids" nolabel="1" colspan="4" context="{'display_fp': display_fp}">
+                        <tree string="Analytic journal items">
+                            <field name="instance_id"/>
+                            <field name="journal_id"/>
+                            <field name="entry_sequence"/>
+                            <field name="name"/>
+                            <field name="ref"/>
+                            <field name="from_commitment_line"/>
+                            <field name="is_reallocated"/>
+                            <field name="is_reversal"/>
+                            <field name="from_write_off"/>
+                            <field name="is_unposted"/>
+                        </tree>
+                    </field>
+                    <separator string=""/>
                     <group col="6" colspan="4">
                         <label string="" colspan="2"/>
                         <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
@@ -172,10 +207,18 @@
                     <newline/>
                     <field name="date"/>
                     <newline/>
+                    <separator string="Allocatable items"/>
+                    <newline/>
+                    <field name="process_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
+                    <newline/>
+                    <separator string="Items excluded from reallocation"/>
+                    <newline/>
                     <field name="error_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
                     <newline />
-                    <field name="process_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
-                    <newline />
+                    <separator string="Excluded lines"/>
+                    <newline/>
+                    <field name="other_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
+                    <newline/>
                     <group col="6" colspan="4"/>
                         <label string="" colspan="2"/>
                         <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>

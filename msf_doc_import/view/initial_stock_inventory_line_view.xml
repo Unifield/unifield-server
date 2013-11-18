@@ -38,13 +38,22 @@
         	<field name="inherit_id" ref="stock.view_inventory_form" />
         	<field name="arch" type="xml">
         		<data>
-        			<xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree/field[@name='comment']" position="replace">
-                    <field name="inactive_product" invisible="1" />
-                    <field name="inactive_error" />
+                    <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree/field[@name='comment']" position="replace">
+                        <field name="to_correct_ok" invisible="1" />
+                        <field name="inactive_product" invisible="1" />
+                        <field name="inactive_error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=,' False)]}" />
                 </xpath>
                 <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree" position="attributes" >
-                    <attribute name="colors">red:has_problem == True or inactive_product == True</attribute>
+                    <attribute name="colors">red:to_correct_ok ==True or has_problem == True or inactive_product == True</attribute>
                 </xpath>
+                <xpath expr="/form/notebook//field[@name='inventory_line_id']" position="before" >
+                <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}" >
+                    <field name="file_to_import" colspan="2" />
+                    <button name="import_file" string="Import lines" icon="gtk-execute" colspan="1" type="object" />
+                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" invisible="0" confirm="Are you sure that you want to remove all lines?"/>
+                    <!--                    <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0"/>-->
+                </group>
+            </xpath>
         		</data>
         	</field>
         </record>

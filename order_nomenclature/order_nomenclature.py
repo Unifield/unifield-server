@@ -106,10 +106,14 @@ class purchase_order_line(osv.osv):
         
         if not product and not comment and not nomen_manda_0 and qty != 0.00:
             return {}
+
+        prod_context = context.copy()
+        if 'categ' in prod_context:
+            del prod_context['categ']
         
         result = self.product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order, fiscal_position, date_planned,
-            name, price_unit, notes, state, old_unit_price,nomen_manda_0,comment,context=context)
+            name, price_unit, notes, state, old_unit_price,nomen_manda_0,comment,context=prod_context)
         
         # drop modification to name attribute
         if 'name' in result['value']:

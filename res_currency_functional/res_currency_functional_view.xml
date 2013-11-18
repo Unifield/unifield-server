@@ -31,6 +31,8 @@
                     <field name="company_id" position="replace">
                         <field name="currency_name"/>
                     </field>
+                    <field name="base" position="replace">
+                    </field>
                     <form string="Rates" position="replace">
                         <form string="Rates">
                             <field name="name"/>

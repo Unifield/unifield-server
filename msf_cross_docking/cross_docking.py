@@ -137,6 +137,26 @@ class purchase_order(osv.osv):
                 value = {'location_id': warehouse_obj.read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]}
             else:
                 value = {'location_id': False}
+
+        res = False
+        if ids and categ in ['log', 'medical']:
+            try:
+                med_nomen = self.pool.get('product.nomenclature').search(cr, uid, [('level', '=', 0), ('name', '=', 'MED')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('MED nomenclature Main Type not found'))
+            try:
+                log_nomen = self.pool.get('product.nomenclature').search(cr, uid, [('level', '=', 0), ('name', '=', 'LOG')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('LOG nomenclature Main Type not found'))
+
+            category = categ=='log' and log_nomen or med_nomen
+            cr.execute('''SELECT t.id
+                          FROM purchase_order_line l
+                            LEFT JOIN product_product p ON l.product_id = p.id
+                            LEFT JOIN product_template t ON p.product_tmpl_id = t.id
+                            LEFT JOIN purchase_order po ON l.order_id = po.id
+                          WHERE (t.nomen_manda_0 != %s) AND po.id in %s''', (category, tuple(ids)))
+            res = cr.fetchall()
         
         if ids and categ in ['service', 'transport']:
             # Avoid selection of non-service producs on Service PO
@@ -149,12 +169,12 @@ class purchase_order(osv.osv):
                             LEFT JOIN product_product p ON l.product_id = p.id
                             LEFT JOIN product_template t ON p.product_tmpl_id = t.id
                             LEFT JOIN purchase_order po ON l.order_id = po.id
-                          WHERE (t.type != 'service_recep' %s) AND po.id in (%s) LIMIT 1''' % (transport_cat, ','.join(str(x) for x in ids)))
+                          WHERE (t.type != 'service_recep' %s) AND po.id in %%s LIMIT 1''' % transport_cat, (tuple(ids),))
             res = cr.fetchall()
-            if res:
-                cat_name = categ=='service' and 'Service' or 'Transport'
-                message.update({'title': _('Warning'),
-                                'message': _('The product [%s] %s is not a \'%s\' product. You can purchase only \'%s\' products on a \'%s\' purchase order. Please remove this line before saving.') % (res[0][0], res[0][1], cat_name, cat_name, cat_name)})
+
+        if res:
+            message.update({'title': _('Warning'),
+                            'message': _('This order category is not consistent with product(s) on this PO')})
                 
         return {'value': value, 'warning': message}
 
@@ -570,11 +590,11 @@ class stock_move(osv.osv):
             ret = self.write(cr, uid, todo, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
             
             # we cancel availability
-            self.cancel_assign(cr, uid, todo, context=context)
+            todo = self.cancel_assign(cr, uid, todo, context=context)
             # we rechech availability
             self.action_assign(cr, uid, todo)
             #FEFO
-            self.fefo_update(cr, uid, ids, context)
+            self.fefo_update(cr, uid, todo, context)
             # below we cancel availability to recheck it
 #            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
 #            picking_todo.append(stock_picking_id)
@@ -619,7 +639,7 @@ class stock_move(osv.osv):
 
         if todo:
             # we cancel availability
-            self.cancel_assign(cr, uid, todo, context=context)
+            todo = self.cancel_assign(cr, uid, todo, context=context)
             # we rechech availability
             self.action_assign(cr, uid, todo)
             

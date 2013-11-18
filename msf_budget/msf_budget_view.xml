@@ -11,6 +11,8 @@
                     <field name="name" colspan="1"/>
                     <field name="code" colspan="1"/>
                     <field name="fiscalyear_id"/>
+                    <field name="cost_center_id"/>
+                    <field name="instance_type"/>
                     <field name="state"/>
                     <field name="decision_moment_id"/>
                     <field name="version"/>
@@ -29,6 +31,11 @@
                        <filter string="Draft" icon="terp-document-new" domain="[('state','=','draft')]" help="Draft Budgets"/>
                        <filter name="validated" string="Validated" icon="terp-camera_test" domain="[('state','=','valid')]" help="Validated Budgets" />
                        <separator orientation="vertical"/>
+                       <filter name='hq' string="HQ" domain="[('instance_type', '=', 'section')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a HQ instance." icon="terp-go-home"/>
+                       <filter name='coordo' string="Coordo" domain="[('instance_type', '=', 'coordo')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a Coordo instance." icon="terp-go-home"/>
+                       <filter name='project' string="Project" domain="[('instance_type', '=', 'project')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a Project instance." icon="terp-go-home"/>
+                       <separator orientation="vertical"/>
+                       <newline/>
                        <field name="name" select="1"/>
                        <field name="code" select="1" />
                        <field name="cost_center_id"/>
@@ -63,10 +70,10 @@
                     <field name="budget_line_ids" colspan="4" nolabel="1" readonly="1">
                         <tree string="Budget Lines" editable="top" colors="black:line_type in ('normal');blue:line_type in ('view')">
                             <field name="name"/>
-                            <field name="budget_amount" real_sum="Budget Amount" digits="(24,0)"/>
-                            <field name="comm_amount" real_sum="Comm. Amount" digits="(24,0)"/>
-                            <field name="actual_amount" real_sum="Actual Amount" digits="(24,0)"/>
-                            <field name="balance" real_sum="Balance" digits="(24,0)"/>
+                            <field name="budget_amount" digits="(24,0)"/>
+                            <field name="comm_amount" digits="(24,0)"/>
+                            <field name="actual_amount" digits="(24,0)"/>
+                            <field name="balance" digits="(24,0)"/>
                             <field name="percentage" digits="(24,0)"/>
                             <field name="line_type"/>
                         </tree>

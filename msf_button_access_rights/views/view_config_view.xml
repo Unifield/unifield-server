@@ -14,7 +14,7 @@
 	                    <attribute name="string">Generate Button Access Rules for Existing Views</attribute>
                 	</separator>
 				    <group string="res_config_contents" position="replace">
-				        <label colspan="4" string="Click Next below to start generating Button Access Rules for the views that are already in your database. This process can take a long time. You can open this wizard at a more convenient time form the Configuration Wizards section of the Administration module."/>
+				        <label colspan="4" string="Click Next below to start generating Button Access Rules for the views that are already in your database. This process can take a long time."/>
 				        <newline />
 				        <label colspan="4" string="Note: You only need to do this once! Each time a view is created or editted, Button Access Rules will automatically be created or updated." />
 				    </group>
