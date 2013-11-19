@@ -92,6 +92,13 @@ class analytic_line(osv.osv):
                 res[l.id] = l.commitment_line_id.commit_id.name
             elif l.imported_commitment:
                 res[l.id] = l.imported_entry_sequence
+            elif not l.move_id:
+                # UF-2217
+                # on create the value is inserted by a sql query, so we can retreive it after the insertion
+                # the field has store=True so we don't create a loop
+                # on write the value is not updated by the query, the method always returns the value set at creation
+                # TODO: add yml use case
+                res[l.id] = l.entry_sequence
         return res
 
     def _get_period_id(self, cr, uid, ids, field_name, args, context=None):
