@@ -123,31 +123,18 @@ def open_register_view(self, cr, uid, register_id, context=None):
     Return the necessary object in order to return on the register we come from
     """
     st_type = self.pool.get('account.bank.statement').browse(cr, uid, register_id).journal_id.type
-    module = 'account'
-    mod_action = 'action_view_bank_statement_tree'
-    mod_obj = self.pool.get('ir.model.data')
-    act_obj = self.pool.get('ir.actions.act_window')
-    if st_type:
-        if st_type == 'cash':
-            mod_action = 'action_view_bank_statement_tree'
-        elif st_type == 'bank':
-            mod_action = 'action_bank_statement_tree'
-        elif st_type == 'cheque':
-            mod_action = 'action_cheque_register_tree'
-            module = 'register_accounting'
-    result = mod_obj._get_id(cr, uid, module, mod_action)
-    id = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
-    result = act_obj.read(cr, uid, [id], context=context)[0]
+    # Get act_window info
+    result = self.pool.get('account.bank.statement').get_statement(cr, uid, [register_id], st_type=st_type, context=context)
+    # Adapt it to our case
     result['res_id'] = register_id
-    result['view_mode'] = 'form,tree,graph'
-    views_id = {}
-    for (num, typeview) in result['views']:
-        views_id[typeview] = num
-    result['views'] = []
-    for typeview in ['form','tree','graph']:
-        if views_id.get(typeview):
-            result['views'].append((views_id[typeview], typeview))
     result['target'] = 'crush'
+    result['view_mode'] = 'form,tree,graph'
+    # Sort views by first letter (form, then tree). this permit to show form instead tree view
+    result['views'] = sorted(result['views'], cmp=lambda x,y: cmp(x[1][0:1], y[1][0:1]))
+    # Take right ID to display form view
+    for view in result['views']:
+        if view[1] and view[1] == 'form':
+            result['view_id'] = [view[0]]
     return result
 
 def _get_date_in_period(self, cr, uid, date=None, period_id=None, context=None):

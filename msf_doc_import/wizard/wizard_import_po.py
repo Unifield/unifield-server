@@ -725,9 +725,10 @@ The columns should be in this values:
                                                                            ('order_id', '=', po_id)], context=context)
                                     new_po_line = po_line_ids[-1]
                                     pol_obj.write(cr, uid, [new_po_line], {'product_qty': file_line.product_qty,
-                                                                            'product_uom': file_line.product_uom.id,
-                                                                            'product_id': file_line.product_id.id,
-                                                                            'confirmed_delivery_date': file_line.confirmed_delivery_date}, context)
+                                                                           'product_uom': file_line.product_uom.id,
+                                                                           'product_id': file_line.product_id.id,
+                                                                           'price_unit': file_line.price_unit,
+                                                                           'confirmed_delivery_date': file_line.confirmed_delivery_date}, context)
                                     complete_lines += 1
                                     processed_lines += 1
                                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0

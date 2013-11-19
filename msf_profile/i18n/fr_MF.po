@@ -48878,7 +48878,7 @@ msgstr "%s a été désactivé. Si vous voulez valider ce document vous devez su
 
 #. module: account_invoice_split
 #: view:wizard.split.invoice:0
-msgid "Select the lines to be splitted; the wizard will create a new invoice and adjust the original one."
+msgid "Select the lines to be split; the wizard will create a new invoice and adjust the original one."
 msgstr "Sélectionner les lignes à fractionner, l'assistant créera une nouvelle facture et ajustera l'originale"
 
 #. module: msf_order_date

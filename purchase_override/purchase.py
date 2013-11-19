@@ -1196,12 +1196,16 @@ stock moves which are already processed : '''
         # which doesnt execute wkf_confirm_wait_order (null value in column "date_expected" violates not-null constraint for stock.move otherwise)
         # msf_order_date checks
         self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
+        
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
 
         for order in self.browse(cr, uid, ids):
             # Create commitments for each PO only if po is "from picking"
             # UTP-114: No Commitment Voucher on PO that are 'purchase_list'!
             if (order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type not in ['in_kind', 'purchase_list'] and order.partner_id.partner_type != 'intermission') or (order.invoice_method == 'manual' and order.order_type == 'direct' and order.partner_id.partner_type == 'esc'):
-                self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
+                # UTP-827: no commitment if they are imported for ESC partners
+                if not (order.partner_id.partner_type == 'esc' and setup.import_commitments):
+                    self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
             if order.order_type == 'regular':
                 line_error = []
@@ -2019,7 +2023,8 @@ class purchase_order_line(osv.osv):
         if (other_lines and stages and order.state != 'confirmed'):
             context.update({'change_price_ok': False})
 
-        vals = self._update_merged_line(cr, uid, False, vals, context=dict(context, skipResequencing=True))
+        if not context.get('offline_synchronization'):
+            vals = self._update_merged_line(cr, uid, False, vals, context=dict(context, skipResequencing=True))
 
         vals.update({'old_price_unit': vals.get('price_unit', False)})
 
