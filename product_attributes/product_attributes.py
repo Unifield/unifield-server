@@ -490,7 +490,7 @@ class product_attributes(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if not context:
+        if context is None:
             context = {}
         
         error = False

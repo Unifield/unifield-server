@@ -1997,7 +1997,7 @@ class purchase_order_line(osv.osv):
         '''
         Create or update a merged line
         '''
-        if not context:
+        if context is None:
             context = {}
             
         order_id = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context=context)
@@ -2092,7 +2092,7 @@ class purchase_order_line(osv.osv):
         '''
         Update merged line
         '''
-        if not context:
+        if context is None:
             context = {}
 
         if isinstance(ids, (int, long)):

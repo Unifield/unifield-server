@@ -201,6 +201,7 @@ class supplier_catalogue(osv.osv):
         '''
         Confirm the catalogue and all lines
         '''
+        ids = isinstance(ids, (int, long)) and [ids] or ids
         line_obj = self.pool.get('supplier.catalogue.line')
 
         line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
@@ -216,6 +217,7 @@ class supplier_catalogue(osv.osv):
         '''
         Reset to draft the catalogue
         '''
+        ids = isinstance(ids, (int, long)) and [ids] or ids
         self.write(cr, uid, ids, {'state': 'draft'}, context=context)
 
         return True
@@ -691,11 +693,12 @@ class supplier_catalogue_line(osv.osv):
         prod_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
 
         for line in self.browse(cr, uid, ids, context=context):
-            cat_state = cat_obj.read(cr, uid, vals.get('catalogue_id', line.catalogue_id.id), ['state'], context=context)['state']
-            if 'product_id' in vals and 'line_uom_id' in vals and vals['product_id'] != prod_id and vals['line_uom_id'] != uom_id:  
-                vals['to_correct_ok'] = False
+            new_vals = vals.copy()
+            cat_state = cat_obj.read(cr, uid, new_vals.get('catalogue_id', line.catalogue_id.id), ['state'], context=context)['state']
+            if 'product_id' in new_vals and 'line_uom_id' in new_vals and new_vals['product_id'] != prod_id and new_vals['line_uom_id'] != uom_id:  
+                new_vals['to_correct_ok'] = False
             # If product is changed
-            if vals.get('product_id', line.product_id.id) != line.product_id.id and cat_state != 'draft':
+            if new_vals.get('product_id', line.product_id.id) != line.product_id.id and cat_state != 'draft':
                 c = context.copy()
                 c.update({'product_change': True})
                 # Remove the old pricelist.partnerinfo and create a new one
@@ -708,37 +711,37 @@ class supplier_catalogue_line(osv.osv):
                     self.pool.get('product.supplierinfo').unlink(cr, uid, line.supplier_info_id.id, context=c)
                     
                 # Create new partnerinfo line
-                vals.update({'catalogue_id': vals.get('catalogue_id', line.catalogue_id.id),
-                             'product_id': vals.get('product_id', line.product_id.id),
-                             'min_qty': vals.get('min_qty', line.min_qty),
-                             'line_uom_id': vals.get('line_uom_id', line.line_uom_id.id),
-                             'unit_price': vals.get('unit_price', line.unit_price),
-                             'rounding': vals.get('rounding', line.rounding),
-                             'min_order_qty': vals.get('min_order_qty', line.min_order_qty),
-                             'comment': vals.get('comment', line.comment),
-                             })
-                vals = self._create_supplier_info(cr, uid, vals, context=context)
+                new_vals.update({'catalogue_id': new_vals.get('catalogue_id', line.catalogue_id.id),
+                                 'product_id': new_vals.get('product_id', line.product_id.id),
+                                 'min_qty': new_vals.get('min_qty', line.min_qty),
+                                 'line_uom_id': new_vals.get('line_uom_id', line.line_uom_id.id),
+                                 'unit_price': new_vals.get('unit_price', line.unit_price),
+                                 'rounding': new_vals.get('rounding', line.rounding),
+                                 'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty),
+                                 'comment': new_vals.get('comment', line.comment),
+                                 })
+                new_vals = self._create_supplier_info(cr, uid, new_vals, context=context)
             elif cat_state != 'draft' and line.partner_info_id:
-                pinfo_data = {'min_quantity': vals.get('min_qty', line.min_qty),
-                          'price': vals.get('unit_price', line.unit_price),
-                          'uom_id': vals.get('line_uom_id', line.line_uom_id.id),
-                          'rounding': vals.get('rounding', line.rounding),
-                          'min_order_qty': vals.get('min_order_qty', line.min_order_qty)
+                pinfo_data = {'min_quantity': new_vals.get('min_qty', line.min_qty),
+                          'price': new_vals.get('unit_price', line.unit_price),
+                          'uom_id': new_vals.get('line_uom_id', line.line_uom_id.id),
+                          'rounding': new_vals.get('rounding', line.rounding),
+                          'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty)
                           }
                 # Update the pricelist line on product supplier information tab
                 self.pool.get('pricelist.partnerinfo').write(cr, uid, [line.partner_info_id.id], 
                                                          pinfo_data, context=context) 
             elif cat_state != 'draft':
-                vals.update({'catalogue_id': vals.get('catalogue_id', line.catalogue_id.id),
-                             'product_id': vals.get('product_id', line.product_id.id),
-                             'min_qty': vals.get('min_qty', line.min_qty),
-                             'line_uom_id': vals.get('line_uom_id', line.line_uom_id.id),
-                             'unit_price': vals.get('unit_price', line.unit_price),
-                             'rounding': vals.get('rounding', line.rounding),
-                             'min_order_qty': vals.get('min_order_qty', line.min_order_qty),})
-                vals = self._create_supplier_info(cr, uid, vals, context=context)
+                new_vals.update({'catalogue_id': new_vals.get('catalogue_id', line.catalogue_id.id),
+                                 'product_id': new_vals.get('product_id', line.product_id.id),
+                                 'min_qty': new_vals.get('min_qty', line.min_qty),
+                                 'line_uom_id': new_vals.get('line_uom_id', line.line_uom_id.id),
+                                 'unit_price': new_vals.get('unit_price', line.unit_price),
+                                 'rounding': new_vals.get('rounding', line.rounding),
+                                 'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty),})
+                new_vals = self._create_supplier_info(cr, uid, new_vals, context=context)
         
-        res = super(supplier_catalogue_line, self).write(cr, uid, ids, vals, context=context)
+        res = super(supplier_catalogue_line, self).write(cr, uid, ids, new_vals, context=context)
 
         self._check_min_quantity(cr, uid, ids, context=context)
 
@@ -800,6 +803,10 @@ class supplier_catalogue_line(osv.osv):
         'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
         'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
         'to_correct_ok': fields.boolean('To correct'),
+    }
+
+    _defaults = {
+        'rounding': 1.00,
     }
     
 #    _constraints = [

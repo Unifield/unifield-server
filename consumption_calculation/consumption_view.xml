@@ -24,7 +24,7 @@
                         <separator colspan="6" string="Period of consumption" />
                         <field name="period_from" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="3"/>
                         <field name="period_to" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="3"/>
-                        <separator colspan="6" string="Product filters" />
+                        <!--<separator colspan="6" string="Product filters" />
                         <field name="sublist_id" attrs="{'readonly': ['|',('created_ok', '=', True), ('nomen_manda_0', '!=', False)]}" colspan="3" />
 
                         <group colspan="3" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
@@ -54,10 +54,11 @@
                         </group>
 
                         <button colspan="6" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('created_ok', '=', True)]}" />
-                        <newline />
-                        <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="3" />
-                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="3" type="object" />
-
+                        <newline />-->
+                        <group colspan="6" col="6" name="import" string="Import lines">
+                            <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="3" />
+                            <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="3" type="object" />
+                        </group>
                     </group>
                     <separator colspan="4" string="Products" />
                     <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" type="object" 
@@ -223,7 +224,7 @@
                     <button name="export_fmc" string="Export lines" icon="terp-mail-forward" type="object" colspan="2" />
                     <field name="cons_location_id" />
                     <newline />
-                    <field name="sublist_id" attrs="{'readonly': [('nomen_manda_0', '!=', False)]}"/>
+                    <!--<field name="sublist_id" attrs="{'readonly': [('nomen_manda_0', '!=', False)]}"/>
                     <group colspan="2" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
                         <field name="nomen_manda_0"
                             domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
@@ -250,10 +251,12 @@
                         />
                     </group>
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
-                    <newline />
-                    <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="2" />
-                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
+                    <newline />-->
                     <separator colspan="4" string="Products" />
+                    <group colspan="4" col="4" name="import" string="Import lines">
+                        <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="2" />
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
+                    </group>
                     <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" type="object"
                     confirm="Are you sure that you want to remove all lines?" invisible="1"/>
                     <field name="hide_column_error_ok" invisible="1" />

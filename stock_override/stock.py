@@ -1163,6 +1163,7 @@ class stock_move(osv.osv):
         '''
         Set the bool already confirmed to True
         '''
+        ids = isinstance(ids, (int, long)) and [ids] or ids
         for move in self.browse(cr, uid, ids, context=context):
             if move.product_qty <= 0.00:
                 raise osv.except_osv(_('Error'), _('You cannot confirm a stock move without quantity.'))

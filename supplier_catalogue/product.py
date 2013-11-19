@@ -215,6 +215,9 @@ class pricelist_partnerinfo(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if context is None:
+            context = {}
+
         if not context.get('noraise'):
             for line in self.browse(cr, uid, ids, context=context):
                 if line.min_quantity <= 0.00:

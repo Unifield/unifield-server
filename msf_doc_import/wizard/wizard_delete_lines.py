@@ -53,8 +53,8 @@ DOCUMENT_DATA = {'product.list': ('product.list.line', 'list_id', 'product_ids',
                  'threshold.value': ('threshold.value.line', 'threshold_value_id', 'line_ids', '', ''),
                  'stock.inventory': ('stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty', ''),
                  'initial.stock.inventory': ('initial.stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty', ''),
-                 'real.average.consumption': ('real.average.consumption.line', 'rac_id', 'line_ids', 'product_qty', ''),
-                 'monthly.review.consumption': ('monthly.review.consumption.line', 'mrc_id', 'line_ids', '', ''),}
+                 'real.average.consumption': ('real.average.consumption.line', 'rac_id', 'line_ids', 'consumed_qty', ''),
+                 'monthly.review.consumption': ('monthly.review.consumption.line', 'mrc_id', 'line_ids', 'fmc', ''),}
 
 
 def brl(self, cr, uid, ids, context=None):
