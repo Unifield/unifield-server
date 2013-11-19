@@ -490,6 +490,30 @@ class hq_entries(osv.osv):
         'is_split': lambda *a: False,
     }
 
+    def split_forbidden(self, cr, uid, ids, context=None):
+        """
+        Split is forbidden for these lines:
+         - original one
+         - split one
+         - validated lines
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = False
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.is_original:
+                res = True
+                break
+            if line.is_split:
+                res = True
+                break
+            if line.user_validated == True:
+                res = True
+                break
+        return res
+
     def get_split_wizard(self, cr, uid, ids, context=None):
         """
         Launch HQ Entry Split Wizard
@@ -506,6 +530,9 @@ class hq_entries(osv.osv):
             raise osv.except_osv(_('Warning'), _('You can only split HQ Entries one by one!'))
         original_id = ids[0]
         original = self.browse(cr, uid, original_id, context=context)
+        # some lines are forbidden to be split:
+        if self.split_forbidden(cr, uid, ids, context=context):
+            raise osv.except_osv(_('Error'), _('This line cannot be split.'))
         # Check if Original HQ Entry is valid (distribution state)
         if original.analytic_state != 'valid':
             raise osv.except_osv(_('Error'), _('You cannot split a HQ Entry which analytic distribution state is not valid!'))
