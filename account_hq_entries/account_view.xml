@@ -43,6 +43,9 @@
                         <filter icon="gtk-new" string="To validate" domain="[('user_validated', '=', False)]" help="Non validated entries" name="non_validated"/>
                         <filter icon="gtk-apply" string="Validated" domain="[('user_validated', '=', True)]" help="Validated entries" name="validated"/>
                         <separator orientation="vertical"/>
+                        <filter icon="gtk-about" string="Original" domain="[('is_original', '=', True)]" help="Original HQ entries" name="original"/>
+                        <filter icon="terp-administration" string="Split" domain="[('is_split', '=', True)]" help="Split entries" name="split"/>
+                        <separator orientation="vertical"/>
                         <field name="date" select='1'/>
                         <field name="account_id" select='1'/>
                         <field name="partner_txt" select='1'/>
@@ -58,6 +61,8 @@
                         <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Original" icon="gtk-about" domain="[]" context="{'group_by': 'original_id'}"/>
                     </group>
                     <newline/>
                 </search>
