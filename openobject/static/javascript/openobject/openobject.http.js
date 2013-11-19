@@ -95,7 +95,14 @@ openobject.http = {
             uri = sp + uri;
         }
     
-        return qs ? uri + "?" +  qs : uri;
+        
+        if (qs) {
+            if (uri.indexOf('?') != -1) {
+                return uri + '&' +qs;
+            }
+            return uri + "?" +  qs;
+        } 
+        return uri
     },
     
     redirect: function(uri, params) {

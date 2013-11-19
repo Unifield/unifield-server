@@ -76,7 +76,7 @@
                 <%include file="header.mako"/>
             </tr>
             <tr>
-                <td id="main_nav" colspan="3">
+                <td id="main_nav" colspan="4">
                     <div id="applications_menu">
                         <ul>
                             %for parent in parents:
@@ -94,7 +94,8 @@
             % if tools is not None:
                 <tr>
                     <td id="secondary" class="sidenav-open">
-                        <div class="wrap">
+                    <a onclick="$('#nav2').toggle();$('#main-sidebar-toggler').toggleClass('closed');" id="main-sidebar-toggler">Toggle Menu</a>
+                        <div class="wrap" id="nav2">
                             <ul id="sidenav-a" class="accordion">
                                 % for tool in tools:
                                     % if tool.get('action'):
@@ -114,7 +115,7 @@
                             </script>
                         </div>
                     </td>
-                    <td id="primary">
+                    <td></td><td id="primary">
                         <div class="wrap">
                             <div id="appContent"></div>
                         </div>
@@ -122,7 +123,7 @@
                 </tr>
             % else:
                 <tr>
-                    <td colspan="3" height="100%" valign="top">
+                    <td colspan="4" height="100%" valign="top">
                         <table width="100%" height="100%">
                             <tr>
                                 <td id="primary" class="first-page-primary">
@@ -164,7 +165,7 @@
                 </tr>
             % endif
             <tr>
-                <td id="footer_section" colspan="3">
+                <td id="footer_section" colspan="4">
                     % if cp.config('server.environment') == 'development':
                         <div class="footer-a">
                             <p class="one">
