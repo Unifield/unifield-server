@@ -415,7 +415,7 @@ class res_partner(osv.osv):
             if objects_linked_to_partner:
                 return {'value': {'active': True}, 
                         'warning': {'title': _('Error'), 
-                                    'message': _("Some documents linked to this partner needs to be closed or canceled before deactivating the partner: %s"
+                                    'message': _("Some documents linked to this partner need to be closed or cancelled before deactivating the partner: %s"
                                                 ) % (objects_linked_to_partner,)}}
         return {}
 
