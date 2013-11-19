@@ -514,6 +514,31 @@ class hq_entries(osv.osv):
                 break
         return res
 
+    def unsplit_allowed_lines(self, cr, uid, ids, context=None):
+        """
+        You can unsplit a line if these one have the following criteria:
+         - line is a draft one
+         - line is original OR a split one
+        This method return so the lines that can be unsplit
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = set()
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.user_validated == False and (line.is_original or line.is_split):
+                # Add original one if this line is a split
+                if line.is_split:
+                    res.add(line.original_id.id)
+                # Add split lines if this one is an original one
+                if line.is_original:
+                    for split_line in line.split_ids:
+                        res.add(split_line.id)
+                # Finally add the line
+                res.add(line.id)
+        return list(res)
+
     def get_split_wizard(self, cr, uid, ids, context=None):
         """
         Launch HQ Entry Split Wizard
@@ -548,6 +573,37 @@ class hq_entries(osv.osv):
             'name': _("HQ Entry Split"),
             'type': 'ir.actions.act_window',
             'res_model': 'hq.entries.split',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'view_mode': 'form',
+            'view_type': 'form',
+            'context': context,
+        }
+
+    def get_unsplit_wizard(self, cr, uid, ids, context=None):
+        """
+        Open Unsplit wizard
+        """
+        # Some checks
+        if not context or not context.get('active_ids', False):
+            raise osv.except_osv(_('Error'), _('No selected line(s)!'))
+        # Prepare some values
+        vals = {}
+        ids = context.get('active_ids')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Update vals
+        vals.update({'line_ids': [(6, 0, ids)], 'process_ids': [(6, 0, self.unsplit_allowed_lines(cr, uid, ids, context=context))]})
+        wiz_id = self.pool.get('hq.entries.unsplit').create(cr, uid, vals, context=context)
+        # Return view with register_line id
+        context.update({
+            'active_id': wiz_id,
+            'active_ids': [wiz_id],
+        })
+        return {
+            'name': _("HQ Entry Unsplit"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'hq.entries.unsplit',
             'target': 'new',
             'res_id': [wiz_id],
             'view_mode': 'form',

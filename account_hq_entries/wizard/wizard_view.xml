@@ -2,6 +2,7 @@
 <openerp>
     <data>
 
+    <!-- Validation Wizard -->
         <record id="hq_entries_validation_form" model="ir.ui.view">
             <field name="name">hq.entries.validation.form</field>
             <field name="model">hq.entries.validation</field>
@@ -17,6 +18,7 @@
             </field>
         </record>
 
+    <!-- Split Wizard -->
         <record id="hq_entries_split_form" model="ir.ui.view">
             <field name="name">hq.entries.split.form</field>
             <field name="model">hq.entries.split</field>
@@ -44,6 +46,26 @@
                         <button string="Cancel" special="cancel" icon="gtk-cancel" />
                         <button name="button_validate" type="object" string="Split" icon="terp-camera_test"/>
                     </group>
+                </form>
+            </field>
+        </record>
+
+    <!-- Unsplit Wizard -->
+        <record id="hq_entries_unsplit_form" model="ir.ui.view">
+            <field name="name">hq.entries.unsplit.form</field>
+            <field name="model">hq.entries.unsplit</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Unsplit">
+                    <separator string="Valid lines" colspan="4"/>
+                    <field name="process_ids" nolabel="1" colspan="4"/>
+                    <separator string=""/>
+                    <group colspan="4" col="2">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel" />
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                    <separator string="Selected lines" colspan="4"/>
+                    <field name="line_ids" nolabel="1" colspan="4"/>
                 </form>
             </field>
         </record>

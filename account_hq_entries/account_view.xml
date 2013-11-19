@@ -201,6 +201,22 @@
             <field eval="True" name="object"/>
         </record>
 
+    <!-- Display HQ Entry Unsplit wizard -->
+        <record id="action_hq_unsplit" model="ir.actions.server">
+            <field name="name">Unsplit</field>
+            <field name="model_id" ref="model_hq_entries"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_unsplit_wizard(context=context)</field>
+        </record>
+
+        <record id="ir_open_hq_unsplit" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">hq.entries</field>
+            <field name="name">Unsplit</field>
+            <field eval="'ir.actions.server,%d'%action_hq_unsplit" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
     <!-- Mass analytic reallocation wizard for HQ Entries -->
         <act_window id="action_hq_analytic_reallocation"
             name="Analytic reallocation"
