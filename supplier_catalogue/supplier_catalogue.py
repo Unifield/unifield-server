@@ -699,10 +699,11 @@ class supplier_catalogue_line(osv.osv):
                 c = context.copy()
                 c.update({'product_change': True})
                 # Remove the old pricelist.partnerinfo and create a new one
-                self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=c)
+                if line.partner_info_id:
+                    self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=c)
         
                 # Check if the removed line wasn't the last line of the supplierinfo
-                if len(line.supplier_info_id.pricelist_ids) == 0:
+                if line.supplier_info_id and len(line.supplier_info_id.pricelist_ids) == 0:
                     # Remove the supplier info
                     self.pool.get('product.supplierinfo').unlink(cr, uid, line.supplier_info_id.id, context=c)
                     
@@ -756,7 +757,8 @@ class supplier_catalogue_line(osv.osv):
             c = context.copy()
             c.update({'product_change': True})
             # Remove the pricelist line in product tab
-            self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=c)
+            if line.partner_info_id:
+                self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=c)
             
             # Check if the removed line wasn't the last line of the supplierinfo
             if line.supplier_info_id and len(line.supplier_info_id.pricelist_ids) == 0:
