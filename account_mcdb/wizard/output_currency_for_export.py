@@ -105,6 +105,8 @@ class output_currency_for_export(osv.osv_memory):
 
         context.update({'display_fp': display_fp})
 
+        datas['target_filename'] = _()
+
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
