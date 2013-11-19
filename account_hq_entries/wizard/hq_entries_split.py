@@ -140,8 +140,11 @@ class hq_entries_split(osv.osv_memory):
             context = {}
         # Prepare some values
         hq_obj = self.pool.get('hq.entries')
-        # Check total amount for this wizard
         for wiz in self.browse(cr, uid, ids, context=context):
+            # Check that wizard have 2 lines at least
+            if len(wiz.line_ids) < 2:
+                raise osv.except_osv(_('Warning'), _('Make 2 lines at least.'))
+            # Check total amount for this wizard
             total = 0.00
             for line in wiz.line_ids:
                 total += line.amount
