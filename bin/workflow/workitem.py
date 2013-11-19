@@ -31,6 +31,7 @@ import wkf_expr
 import wkf_logs
 
 def create(cr, act_datas, inst_id, ident, stack):
+    ids = []
     for act in act_datas:
         cr.execute("select nextval('wkf_workitem_id_seq')")
         id_new = cr.fetchone()[0]
@@ -39,6 +40,8 @@ def create(cr, act_datas, inst_id, ident, stack):
         res = cr.dictfetchone()
         wkf_logs.log(cr,ident,act['id'],'active')
         process(cr, res, ident, stack=stack)
+        ids.append(id_new)
+    return ids
 
 def process(cr, workitem, ident, signal=None, force_running=False, stack=None):
     if stack is None:
