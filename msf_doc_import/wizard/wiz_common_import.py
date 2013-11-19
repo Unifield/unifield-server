@@ -131,16 +131,6 @@ class wizard_common_import_line(osv.osv_memory):
                                         'wiz_id', 'product_id', string='Products'),
     }
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        res = super(wizard_common_import_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-
-#        if view_type == 'form':
-#            root = etree.fromstring(res['arch'])
-            # xpath of fields to be modified
-#            list = 
-
-        return res
-
     def fill_lines(self, cr, uid, ids, context=None):
         '''
         Fill the line of attached document
