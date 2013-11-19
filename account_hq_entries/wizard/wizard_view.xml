@@ -9,11 +9,16 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Confirmation">
+                    <separator string="Valid lines"/>
+                    <field name="process_ids" nolabel="1" colspan="4"/>
+                    <separator string=""/>
                     <field name="txt" nolabel="1" colspan="4" />
                     <group colspan="4" col="2">
                         <button string="Cancel" special="cancel" icon="gtk-cancel" />
                         <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
                     </group>
+                    <separator string="Selected Lines"/>
+                    <field name="line_ids" nolabel="1" colspan="4"/>
                 </form>
             </field>
         </record>

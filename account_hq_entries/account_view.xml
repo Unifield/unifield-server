@@ -223,15 +223,20 @@
         </record>
 
     <!-- Action: lines validation -->
-        <act_window id="action_hq_validation"
-            name="Validation"
-            res_model="hq.entries.validation"
-            src_model="hq.entries"
-            key2="client_action_multi"
-            view_mode="form"
-            view_type="form"
-            target="new"
-            view_id="hq_entries_validation_form"/>
+        <record id="action_hq_validation" model="ir.actions.server">
+            <field name="name">Validation</field>
+            <field name="model_id" ref="model_hq_entries"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_validation_wizard(context=context)</field>
+        </record>
+
+        <record id="ir_open_hq_validation" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">hq.entries</field>
+            <field name="name">Validation</field>
+            <field eval="'ir.actions.server,%d'%action_hq_validation" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
 
     <!-- Display HQ Entry Split wizard -->
         <record id="action_hq_split" model="ir.actions.server">
