@@ -406,7 +406,9 @@ class account_mcdb(osv.osv):
             view_id = view_id and view_id[1] or False
             search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', search_view)
             search_view_id = search_view_id and search_view_id[1] or False
-            
+
+            context['target_filename_prefix'] = name
+
             return {
                 'name': name,
                 'type': 'ir.actions.act_window',

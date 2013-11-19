@@ -25,6 +25,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
+import time
+
 class output_currency_for_export(osv.osv_memory):
     _name = 'output.currency.for.export'
     _description = 'Output currency choice wizard'
@@ -105,7 +107,7 @@ class output_currency_for_export(osv.osv_memory):
 
         context.update({'display_fp': display_fp})
 
-        datas['target_filename'] = _()
+        datas['target_filename'] = '%s_%s' % (context.get('target_filename_prefix', 'Export_search_result'), time.strftime('%Y%m%d'))
 
         return {
             'type': 'ir.actions.report.xml',
