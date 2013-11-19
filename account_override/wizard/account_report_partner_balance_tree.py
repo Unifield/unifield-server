@@ -68,7 +68,7 @@ class account_partner_balance_tree(osv.osv):
         self._delete_previous_data(cr, uid, context=context)
         
         comp_currency_id = self._get_company_currency(cr, uid, context=context)
-        output_currency_id = data['form'].get('output_currency', comp_currency)
+        output_currency_id = data['form'].get('output_currency', comp_currency_id)
         
         obj_move = self.pool.get('account.move.line')
         where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
@@ -132,9 +132,9 @@ class account_partner_balance_tree(osv.osv):
                 'uid': uid,
                 'partner_id': r['partner_id'],
                 'partner_name': r['partner_name'],
-                'debit': self._currency_conv(r['debit'], comp_currency_id, output_currency_id),
-                'credit': self._currency_conv(r['credit'], comp_currency_id, output_currency_id),
-                'balance': self._currency_conv(r['debit'] - r['credit'], comp_currency_id, output_currency_id),
+                'debit': self._currency_conv(cr, uid, r['debit'], comp_currency_id, output_currency_id),
+                'credit': self._currency_conv(cr, uid, r['credit'], comp_currency_id, output_currency_id),
+                'balance': self._currency_conv(cr, uid, r['debit'] - r['credit'], comp_currency_id, output_currency_id),
                 'account_type': r['account_type'],
                 # display account type then 'Receivable' and 'Payable' are chosen together
                 'account_type_display': result_selection not in ('customer', 'receivable'),
@@ -171,14 +171,13 @@ class account_partner_balance_tree(osv.osv):
             raise osv.except_osv(_('Error !'), _('Company has no default currency'))
         return res
             
-    def _currency_conv(self, amount, comp_currency_id, output_currency_id):
+    def _currency_conv(self, cr, uid, amount, comp_currency_id, output_currency_id):
         if not amount or amount == 0.:
             return amount
         if not comp_currency_id or not output_currency_id \
             or comp_currency_id == output_currency_id:
             return amount
-        amount = self.pool.get('res.currency').compute(self.cr,
-                                                self.uid,
+        amount = self.pool.get('res.currency').compute(cr, uid,
                                                 comp_currency_id,
                                                 output_currency_id,
                                                 amount)
