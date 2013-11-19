@@ -28,20 +28,22 @@ class account_partner_balance_tree(osv.osv):
     _description = 'Print Account Partner Balance View'
     _columns = {
         'uid': fields.many2one('res.users', 'Uid', invisible=True),
+        'row_type': fields.integer('Row type', invisible=True),
         'account_type': fields.char('Account type', size=16),
         'account_type_display': fields.boolean('Display account type ?', invisible=True),
         'partner_id': fields.many2one('res.partner', 'Partner', invisible=True),
-        'partner_name': fields.char('Partner', size=168),
+        'account_id': fields.many2one('account.account', 'Account', invisible=True),
+        'name': fields.char('Partner', size=168),
         'debit': fields.float('Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Credit', digits_compute=dp.get_precision('Account')),
         'balance': fields.float('Balance', digits_compute=dp.get_precision('Account')),
     }
     
-    _order = "uid, account_type, partner_name"
+    _order = "uid, account_type, partner_id, row_type"
     
     def _execute_query_aggregate(self, cr, uid, data):
         """
-        return res, result_selection, move_state
+        return res, account_type, move_state
         """
         obj_move = self.pool.get('account.move.line')
         where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
@@ -59,7 +61,7 @@ class account_partner_balance_tree(osv.osv):
             move_state = "('posted')"
     
         # inspired from account_report_balance.py report query
-        query = "SELECT p.ref as partner_ref,l.account_id as account_id," \
+        query = "SELECT p.ref,l.account_id as account_id," \
         " ac.type as account_type, ac.name AS account_name," \
         " ac.code AS account_code," \
         " p.name as partner_name, p.id as partner_id," \
@@ -78,15 +80,17 @@ class account_partner_balance_tree(osv.osv):
         " WHERE ac.type IN " + account_type + "" \
         " AND am.state IN " + move_state + "" \
         " AND " + where + "" \
-        " GROUP BY p.id,ac.type,p.ref,p.name,l.account_id,ac.name,ac.code" \
-        " ORDER BY l.account_id,p.name"
+        " GROUP BY ac.type,p.id, p.ref,p.name,l.account_id,ac.name,ac.code" \
+        " ORDER BY ac.type,p.name,l.account_id"
+        print query
         cr.execute(query)
         res = cr.dictfetchall()
+        print 'RES rows', len(res)
         if data['form'].get('display_partner', '') == 'non-zero_balance':
             res2 = [r for r in res if r['sdebit'] > 0 or r['scredit'] > 0]
         else:
             res2 = [r for r in res]
-        return res2, result_selection, move_state
+        return res2, account_type, move_state
         
     def _execute_query_selected_partner_move_line_ids(self, cr, uid, partner_id, data):
         obj_move = self.pool.get('account.move.line')
@@ -156,22 +160,84 @@ class account_partner_balance_tree(osv.osv):
         comp_currency_id = self._get_company_currency(cr, uid, context=context)
         output_currency_id = data['form'].get('output_currency', comp_currency_id)
 
-        res, result_selection, move_state = self._execute_query_aggregate(cr, uid, data)
+        res, account_type, move_state = self._execute_query_aggregate(cr, uid, data)
+        if account_type and account_type == "('payable', 'receivable')":
+            account_type_display = True
+        else:
+            account_type_display = False
+        print 'account_partner_balance_tree account_type_display', account_type, account_type_display
+        prev = {
+            'partner_id': False,
+            'partner_name': False,
+            'account_type': False,
+        }
+        sub_total = {
+            'debit': 0.,
+            'credit': 0.,
+        }
         for r in res:
             if not r.get('partner_name', False):
                 r.update({'partner_name': _('Unknown Partner')})
+            if not prev['partner_id'] and not prev['account_type']:
+                prev['partner_id'] = r['partner_id']
+                prev['partner_name'] = r['partner_name']
+                prev['account_type'] = r['account_type']
+            
             vals = {
                 'uid': uid,
+                'row_type': 2,
+                'account_type': r['account_type'].capitalize(),
+                # display account type then 'Receivable' and 'Payable' are chosen together
+                'account_type_display': account_type_display,
                 'partner_id': r['partner_id'],
-                'partner_name': r['partner_name'],
+                'account_id': r['account_id'],
+                'name': r['account_name'],
                 'debit': self._currency_conv(cr, uid, r['debit'], comp_currency_id, output_currency_id),
                 'credit': self._currency_conv(cr, uid, r['credit'], comp_currency_id, output_currency_id),
                 'balance': self._currency_conv(cr, uid, r['debit'] - r['credit'], comp_currency_id, output_currency_id),
-                'account_type': r['account_type'].capitalize(),
-                # display account type then 'Receivable' and 'Payable' are chosen together
-                'account_type_display': result_selection not in ('customer', 'receivable'),
             }
+            print 'line', vals
+            
+            if prev['partner_id'] == r['partner_id'] and prev['account_type'] == r['account_type']:
+                sub_total['credit'] += r['credit']
+                sub_total['debit'] += r['debit']
+            else:
+                sub_vals = {
+                    'uid': uid,
+                    'row_type': 1,
+                    'account_type': prev['account_type'].capitalize(),
+                    # display account type then 'Receivable' and 'Payable' are chosen together
+                    'account_type_display': account_type_display,
+                    'partner_id': prev['partner_id'],
+                    'account_id': False,
+                    'name': prev['partner_name'],
+                    'debit': self._currency_conv(cr, uid, sub_total['debit'], comp_currency_id, output_currency_id),
+                    'credit': self._currency_conv(cr, uid, sub_total['credit'], comp_currency_id, output_currency_id),
+                    'balance': self._currency_conv(cr, uid, sub_total['debit'] - sub_total['credit'], comp_currency_id, output_currency_id),
+                }
+                print 'subvals ', sub_vals
+                self.create(cr, uid, sub_vals, context=context)
+                prev['partner_id'] = r['partner_id']
+                prev['partner_name'] = r['partner_name']
+                prev['account_type'] = r['account_type']
+                sub_total['debit'] = r['debit']
+                sub_total['credit'] = r['credit']
+                
             self.create(cr, uid, vals, context=context)
+        sub_vals = {
+            'uid': uid,
+            'row_type': 1,
+            'account_type': prev['account_type'].capitalize(),
+            # display account type then 'Receivable' and 'Payable' are chosen together
+            'account_type_display': account_type_display,
+            'partner_id': prev['partner_id'],
+            'account_id': False,
+            'name': prev['partner_name'],
+            'debit': self._currency_conv(cr, uid, sub_total['debit'], comp_currency_id, output_currency_id),
+            'credit': self._currency_conv(cr, uid, sub_total['credit'], comp_currency_id, output_currency_id),
+            'balance': self._currency_conv(cr, uid, sub_total['debit'] - sub_total['credit'], comp_currency_id, output_currency_id),
+        }
+        self.create(cr, uid, sub_vals, context=context)
             
     def open_journal_items(self, cr, uid, ids, context=None):
         # get related partner
@@ -292,18 +358,14 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         }
    
     def export(self, cr, uid, ids, context=None):
-        return {}
-
-    #~ def _print_report(self, cr, uid, ids, data, context=None):
-        #~ if context is None:
-            #~ context = {}
-        #~ data = self.pre_print_report(cr, uid, ids, data, context=context)
-        #~ data['form'].update(self.read(cr, uid, ids, ['display_partner'])[0])
-        #~ return {
-            #~ 'type': 'ir.actions.report.xml',
-            #~ 'report_name': 'account.partner.balance',
-            #~ 'datas': data,
-    #~ }
+        if context is None:
+            context = {}
+        data = self._get_data(cr, uid, ids, context=context)
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'account.partner.balance.tree_xls',
+            'datas': data,
+        }
 
 wizard_account_partner_balance_tree()
 

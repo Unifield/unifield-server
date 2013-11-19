@@ -279,5 +279,18 @@
             </field>
         </record>
 
+
+
+    <!-- UF-1715 -->
+    <report id="account_partner_balance_tree_xls"
+        auto="False" 
+        menu="False"
+        header="False"
+        model="account.partner.balance.tree"
+        name="account.partner.balance.tree_xls"
+        file="account_override/report/account_partner_balance_tree_xls.mako"
+        report_type="webkit" 
+        string="Partner Balance"/>
+
     </data>
 </openerp>

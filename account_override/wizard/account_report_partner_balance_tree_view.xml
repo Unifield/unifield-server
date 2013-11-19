@@ -18,12 +18,12 @@
                         type="object"
                         icon="terp-gtk-go-back-rtl"
                     />
-                    <field name="partner_name"/>
+                    <field name="name"/>
                     <field name="debit"/>
                     <field name="credit"/>
                     <field name="balance"/>
-                    <field name="account_type" attrs="{'invisible': [('account_type_display','!=',True)]" />
                     <field name="account_type_display" invisible="1" />
+                    <field name="account_type" attrs="{'invisible': [('account_type_display','=',False)]" />
                 </tree>
             </field>
         </record>
