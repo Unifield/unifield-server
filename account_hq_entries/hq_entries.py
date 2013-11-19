@@ -676,13 +676,20 @@ class hq_entries(osv.osv):
 
     def unlink(self, cr, uid, ids, context=None):
         """
-        Do not permit user to delete HQ Entries lines
+        Do not permit user to delete:
+         - validated HQ entries
+         - split entries
+         - original entries
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not context.get('from', False) or context.get('from') != 'code' and ids:
             if self.search(cr, uid, [('id', 'in', ids), ('user_validated', '=', True)]):
                 raise osv.except_osv(_('Error'), _('You cannot delete validated HQ Entries lines!'))
+            if self.search(cr, uid, [('id', 'in', ids), ('is_split', '=', True)]):
+                raise osv.except_osv(_('Error'), _('You cannot delete split entries!'))
+            if self.search(cr, uid, [('id', 'in', ids), ('is_original', '=', True)]):
+                raise osv.except_osv(_('Error'), _('You cannot delete original entries!'))
         return super(hq_entries, self).unlink(cr, uid, ids, context)
 
 hq_entries()
