@@ -8,20 +8,22 @@
             <field name="type">tree</field>
             <field name="priority" eval="200"/>
             <field name="arch" type="xml">
-                <tree string="Partner Balance Tree"
+                <tree string="Partner Balance View"
                     editable="top" noteditable="1" 
                     hide_new_button="1" hide_delete_button="1"
                     colors="gray:account_type in('payable')">
                     <button
                         name="open_journal_items"
                         string="Open journal items"
-                        type="object" />
+                        type="object"
+                        icon="terp-gtk-go-back-rtl"
+                    />
                     <field name="partner_name"/>
                     <field name="debit"/>
                     <field name="credit"/>
                     <field name="balance"/>
-                    <field name="account_type_display" invisible="1" />
                     <field name="account_type" attrs="{'invisible': [('account_type_display','!=',True)]" />
+                    <field name="account_type_display" invisible="1" />
                 </tree>
             </field>
         </record>
@@ -59,7 +61,7 @@
         </record>
 
         <record id="wizard_account_report_partner_balance_tree_view" model="ir.ui.view">
-            <field name="name">Partner Balance</field>
+            <field name="name">Partner Balance View</field>
             <field name="model">wizard.account.partner.balance.tree</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="account.account_common_report_view" />
@@ -93,7 +95,7 @@
         </record>
 
         <record id="action_account_partner_balance_tree" model="ir.actions.act_window">
-             <field name="name">Partner Balance</field>
+             <field name="name">Partner Balance View</field>
              <field name="res_model">wizard.account.partner.balance.tree</field>
              <field name="type">ir.actions.act_window</field>
              <field name="view_type">form</field>
@@ -104,7 +106,7 @@
        </record>
 
         <menuitem icon="STOCK_PRINT"
-            name="Partner Balance Tree"
+            name="Partner Balance View"
             action="action_account_partner_balance_tree"
             id="menu_account_partner_balance_tree"
             parent="account.next_id_22"/>
