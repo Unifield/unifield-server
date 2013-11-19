@@ -59,7 +59,7 @@ class hq_entries_unsplit(osv.osv_memory):
             # Process
             context.update({'from': 'code'}) # "from: code" is to avoid unlink problems
             hq_obj.unlink(cr, uid, split_ids, context=context)
-            hq_obj.write(cr, uid, original_ids, {'is_original': False,}, context=context)
+            hq_obj.write(cr, uid, original_ids, {'is_original': False, 'split_ids': False}, context=context)
         return {'type' : 'ir.actions.act_window_close',}
 
 hq_entries_unsplit()

@@ -531,6 +531,8 @@ class hq_entries(osv.osv):
                 # Add original one if this line is a split
                 if line.is_split:
                     res.add(line.original_id.id)
+                    for split_line in line.original_id.split_ids:
+                        res.add(split_line.id)
                 # Add split lines if this one is an original one
                 if line.is_original:
                     for split_line in line.split_ids:
@@ -589,6 +591,8 @@ class hq_entries(osv.osv):
             raise osv.except_osv(_('Error'), _('No selected line(s)!'))
         # Prepare some values
         vals = {}
+        if context is None:
+            context = {}
         ids = context.get('active_ids')
         if isinstance(ids, (int, long)):
             ids = [ids]
