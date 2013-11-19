@@ -380,8 +380,8 @@ class stock_warehouse_automatic_supply_line(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
-        super(stock_warehouse_automatic_supply_line, self).write(cr, uid, ids, vals, context=context)
-        self._check_product_qty(cr, uid, res, context=context)
+        res = super(stock_warehouse_automatic_supply_line, self).write(cr, uid, ids, vals, context=context)
+        self._check_product_qty(cr, uid, ids, context=context)
         return res
     
     #_sql_constraints = [
