@@ -20,6 +20,8 @@
 ##############################################################################
 
 from osv import osv, fields
+from tools.translate import _
+import time
 
 class account_pl_report(osv.osv_memory):
     """
@@ -43,6 +45,8 @@ class account_pl_report(osv.osv_memory):
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         data['form'].update(self.read(cr, uid, ids, ['display_type'])[0])
+        instance = self.pool.get('ir.sequence')._get_instance(cr, uid)
+        data['target_filename'] = _('Account Profit_and_Loss_%s_%s' % (instance, time.strftime('%Y%m%d')))
         if data['form']['display_type']:
             return {
                 'type': 'ir.actions.report.xml',
