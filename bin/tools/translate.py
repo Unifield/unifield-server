@@ -975,6 +975,9 @@ def trans_load_data(cr, fileobj, fileformat, lang, lang_name=None, verbose=True,
             # dictionary which holds values for this line of the csv file
             # {'lang': ..., 'type': ..., 'name': ..., 'res_id': ...,
             #  'src': ..., 'value': ...}
+            if len(row) < len(f):
+                continue
+
             dic = {'lang': lang}
             for i in range(len(f)):
                 if f[i] in ('module',):
