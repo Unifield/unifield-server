@@ -88,7 +88,10 @@ class ir_actions_report_xml(osv.osv):
         if not report.target_filename:
             if active_model and active_id:
                 report_letters = ''.join(item[0].upper() for item in re.findall("\w+", report.name))
-                return '%s_%s' % (report_letters, self.pool.get(active_model).read(cr, uid, active_id, ['name'])['name'])
+                try:
+                    return '%s_%s' % (report_letters, self.pool.get(active_model).read(cr, uid, active_id, ['name'])['name'])
+                except KeyError:
+                    return False
             else:
                 return False
 
