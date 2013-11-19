@@ -64,6 +64,49 @@
             </field>
         </record>
 
+    <!-- HQ Entries form view -->
+      <record id="hq_entries_form" model="ir.ui.view">
+          <field name="name">HQ Entry</field>
+          <field name="model">hq.entries</field>
+          <field name="type">form</field>
+          <field name="arch" type="xml">
+              <form string="HQ Entry" hide_duplicate_button="1" hide_new_button="1">
+                  <separator string="General Information"/>
+                  <group colspan="4" col="4">
+                      <field name="name" readonly="1"/>
+                      <field name="ref" readonly="1"/>
+                      <field name="account_id" readonly="1"/>
+                      <field name="period_id" readonly="1"/>
+                      <field name="document_date" readonly="1"/>
+                      <field name="date" readonly="1"/>
+                      <field name="partner_txt" readonly="1"/>
+                      <newline/>
+                      <field name="amount" readonly="1"/>
+                      <field name="currency_id" readonly="1"/>
+                  </group>
+                  <group colspan="2" col="2">
+                      <separator string="Analytic Allocation (At import)"/>
+                      <field name="destination_id_first_value" readonly="1"/>
+                      <field name="cost_center_id_first_value" readonly="1"/>
+                      <field name="analytic_id_first_value" readonly="1"/>
+                  </group>
+                  <group colspan="2" col="2">
+                      <separator string="Analytic Allocation (Current)"/>
+                      <field name="destination_id" readonly="1"/>
+                      <field name="cost_center_id" readonly="1"/>
+                      <field name="analytic_id" readonly="1"/>
+                      <field name="free_1_id" readonly="1"/>
+                      <field name="free_2_id" readonly="1"/>
+                  </group>
+                  <separator string="Extra Information"/>
+                  <group colspan="4" col="4">
+                      <field name="is_original" string="Original Entry" readonly="1"/>
+                      <field name="is_split" string="Split Entry" readonly="1"/>
+                  </group>
+              </form>
+          </field>
+      </record>
+
     <!--
         Wizard
     -->
