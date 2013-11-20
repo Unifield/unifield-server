@@ -192,6 +192,17 @@ class wizard_import_pick_line(osv.osv_memory):
                         uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                         to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
+                        # Check if the UoM is compatible with the product
+                        if to_write.get('product_id') and to_write.get('product_uom'):
+                            uom_categ = uom_obj.browse(cr, uid, to_write.get('product_uom'), context=context).category_id.id
+                            prod_uom_categ = product_obj.browse(cr, uid, to_write.get('product_id'), context=context).uom_id.category_id.id
+                            if uom_categ != prod_uom_categ:
+                                message += _("Line %s in the Excel file: Details: %s\n") % (line_num, _('The UoM is not compatible with the product.'))
+                                ignore_lines += 1
+                                line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                                cr.rollback()
+                                continue
+
                         new_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_value.get('uom_id', False), qty_value.get('product_qty', False), 'qty').get('value', {}).get('qty', qty_value.get('product_qty'))
                         if new_qty != qty_value.get('product_qty'):
                             qty_value.update({'product_qty': new_qty})

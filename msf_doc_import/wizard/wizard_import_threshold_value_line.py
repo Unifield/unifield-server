@@ -151,6 +151,17 @@ class wizard_import_threshold_value_line(osv.osv_memory):
                     if not to_write.get('product_uom_id') or to_write.get('uom_id') == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]:
                         raise osv.except_osv(_('Error'), '\n'.join(x for x in p_value['error_list']))
 
+                    # Check if the UoM is compatible with the product
+                    if to_write.get('product_id') and to_write.get('product_uom_id'):
+                        uom_categ = uom_obj.browse(cr, uid, to_write.get('product_uom_id'), context=context).category_id.id
+                        prod_uom_categ = product_obj.browse(cr, uid, to_write.get('product_id'), context=context).uom_id.category_id.id
+                        if uom_categ != prod_uom_categ:
+                            message += _("Line %s in the Excel file: Details: %s\n") % (line_num, _('The UoM is not compatible with the product.'))
+                            ignore_lines += 1
+                            line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                            cr.rollback()
+                            continue
+
                     # Cell 4: Fixed Quantity
                     qty_value = {}
                     qty_value = check_line.quantity_value(product_obj=product_obj, row=row, to_write=to_write, cell_nb=cell_index['qty'], context=context)

@@ -63,7 +63,7 @@ class automatic_supply_rule(osv.osv):
         default_template = SpreadsheetCreator(_('Template of import'), columns_header, [])
         file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = wiz_obj.create(cr, uid, {'file': file,
-                                             'filename_template': 'template.xls',
+                                             'filename_template': 'Auto Supply template.xls',
                                              'filename': 'Lines_Not_Imported.xls',
                                              'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in cols])),
                                              'rule_id': ids[0],
@@ -108,7 +108,7 @@ class order_cycle_rule(osv.osv):
         default_template = SpreadsheetCreator(_('Template of import'), columns_header, [])
         file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = wiz_obj.create(cr, uid, {'file': file,
-                                             'filename_template': 'template.xls',
+                                             'filename_template': 'Order Cycle template.xls',
                                              'filename': 'Lines_Not_Imported.xls',
                                              'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in cols])),
                                              'rule_id': ids[0],
@@ -153,7 +153,7 @@ class threshold_value_rule(osv.osv):
         default_template = SpreadsheetCreator(_('Template of import'), columns_header, [])
         file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = wiz_obj.create(cr, uid, {'file': file,
-                                             'filename_template': 'template.xls',
+                                             'filename_template': 'Threshold value template.xls',
                                              'filename': 'Lines_Not_Imported.xls',
                                              'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in cols])),
                                              'rule_id': ids[0],

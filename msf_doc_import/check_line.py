@@ -206,7 +206,7 @@ def compute_location_value(cr, uid, **kwargs):
         if row.cells[cell_nb].type == 'str':
             loc_name = row.cells[cell_nb].data.strip()
             if loc_name:
-                domain = [('name', '=', loc_name)]
+                domain = [('name', '=ilike', loc_name)]
                 if check_type and product_id and check_type == 'src' and pick_type == 'internal':
                     domain.extend([('internal_src', '=', product_id), ('usage', '!=', 'view')])
                 elif check_type and product_id and check_type == 'dest' and pick_type == 'internal':
@@ -228,7 +228,7 @@ def compute_location_value(cr, uid, **kwargs):
                 loc_ids = loc_obj.search(cr, uid, domain)
                 if loc_ids:
                     loc_id = loc_ids[0]
-                elif loc_obj.search(cr, uid, [('name', '=', loc_name)]):
+                elif loc_obj.search(cr, uid, [('name', '=ilike', loc_name)]):
                     error_list.append(_('The Location "%s" is not compatible with the product of the stock move.') % loc_name)
                 else:
                     error_list.append(_('The Location "%s" does not exist on this instance.') % loc_name)
@@ -266,7 +266,7 @@ def product_value(cr, uid, **kwargs):
             product_code = row.cells[cell_nb].data
             if product_code and row.cells[cell_nb].type == 'str':
                 product_code = product_code.strip()
-                p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)], context=context)
+                p_ids = product_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
                 if not p_ids:
                     comment += _(' Code: %s') % (product_code)
                     msg = _('Product code doesn\'t exist in the DB.')
@@ -340,7 +340,7 @@ def compute_uom_value(cr, uid, **kwargs):
         if row.cells[cell_nb] and row.cells[cell_nb].data is not None:
             if row.cells[cell_nb].type == 'str':
                 uom_name = row.cells[cell_nb].data.strip()
-                uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
+                uom_ids = uom_obj.search(cr, uid, [('name', '=ilike', uom_name)], context=context)
                 if uom_ids:
                     uom_id = uom_ids[0]
                     # check the uom category consistency
