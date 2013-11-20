@@ -44,11 +44,13 @@
 -
   I validate all HQ Entries
 -
-  !python {model: hq.entries.validation.wizard}: |
+  !python {model: hq.entries.validation}: |
     # The wizard only takes active_ids that are in context. So we search all HQ Entries, put them into context and launch the process!
     hq_ids = self.pool.get('hq.entries').search(cr, uid, [])
-    wiz_id = self.create(cr, uid, {}, context={'active_ids': hq_ids})
-    self.validate(cr, uid, [wiz_id], context={'active_ids': hq_ids})
+    res = self.pool.get('hq.entries').get_validation_wizard(cr, uid, [], context={'active_ids': hq_ids})
+    assert res.get('res_id', False) != False, "No wizard created!"
+    assert res.get('res_model', False) == 'hq.entries.validation', "Wrong return type. Should be hq.entries.validation!"
+    self.button_validate(cr, uid, res.get('res_id'))
 -
   I test HQ entries import result (5 JI on Jan the 8th, 4 JE in BIF, 1 JE on CHF, 2 JE in EUR, etc.)
 -
