@@ -203,6 +203,7 @@ class hq_entries_validation(osv.osv_memory):
                 all_lines.add(line.original_id.id)
         # Create the original line as it is (and its reverse)
         for line in original_lines:
+            # PROCESS ORIGINAL LINES
             res_move = self.create_move(cr, uid, line.id, line.period_id.id, line.currency_id.id, date=line.date, context=context)
             # Fetch journal move from which the new move line comes from
             move_id = self.pool.get('account.move.line').browse(cr, uid, res_move[line.id]).move_id.id
@@ -210,19 +211,32 @@ class hq_entries_validation(osv.osv_memory):
             res_reverse = self.pool.get('account.move').reverse(cr, uid, move_id, date=line.date, context=context)
             if not res_reverse:
                 raise osv.except_osv(_('Error'), _('An unexpected error occured. Please contact an administrator.'))
-        # Create split lines
-        for original in original_lines:
-            split_lines = self.pool.get('hq.entries').search(cr, uid, [('original_id', 'in', [x.id for x in original_lines]), ('user_validated', '=', False)], context=context)
-            self.create_move(cr, uid, split_lines, original.period_id.id, original.currency_id.id, date=original.date, journal=od_journal_id)
+            # PROCESS SPLIT LINES
+            split_lines = self.pool.get('hq.entries').search(cr, uid, [('original_id', '=', line.id), ('user_validated', '=', False)], context=context)
+            new_res_move = self.create_move(cr, uid, split_lines, line.period_id.id, line.currency_id.id, date=line.date, journal=od_journal_id)
+            # keep all split lines
             for split_line in split_lines:
                 all_lines.add(split_line)
+            # original move line
+            original_ml_result = res_move[line.id]
+            # Mark new journal items as corrections for the first one
+            new_expense_ml_ids = new_res_move.values()
+            self.pool.get('account.move.line').write(cr, uid, new_expense_ml_ids, {'corrected_line_id': original_ml_result}, context=context, check=False, update_check=False)
+            # Mark new analytic items as correction for original line
+            # - take original move line
+            # - search linked analytic line
+            # - use new journal items (from split lines) to find their analytic lines
+            # - add "last_corrected_id" link for all these new analytic lines to the first one (original analytic line)
+            original_aal_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', '=', original_ml_result)])
+            new_aal_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', new_expense_ml_ids)])
+            self.pool.get('account.analytic.line').write(cr, uid, new_aal_ids, {'last_corrected_id': original_aal_ids[0],})
         # Mark ALL lines as user_validated
         self.pool.get('hq.entries').write(cr, uid, list(all_lines), {'user_validated': True}, context=context)
         return True
 
     def button_validate(self, cr, uid, ids, context=None):
         """
-        Validate all given lines (in context)
+        Validate all given lines (process_ids)
         """
         # Some verifications
         if context is None:
