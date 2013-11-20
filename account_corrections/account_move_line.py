@@ -693,7 +693,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'reference': ml.move_id and ml.move_id.name or '',
                 'ref': ml.move_id and ml.move_id.name or '',
             })
-            self.write(cr, uid, [rev_line_id], vals, context=context)
+            self.write(cr, uid, [rev_line_id], vals, context=context, check=False, update_check=False)
             # Do the correction line
             name = self.join_without_redundancy(ml.name, 'COR')
             cor_vals = {
@@ -712,12 +712,12 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 cor_vals['analytic_distribution_id'] = distrib_id
             else:
                 cor_vals['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
-            self.write(cr, uid, [correction_line_id], cor_vals, context=context)
+            self.write(cr, uid, [correction_line_id], cor_vals, context=context, check=False, update_check=False)
             # Update register line if exists
             if ml.statement_id:
                 self.update_account_on_st_line(cr, uid, [ml.id], new_account_id, context=context)
             # Inform old line that it have been corrected
-            self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context)
+            self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context, check=False, update_check=False)
             # Post the move
             move_obj.post(cr, uid, [move_id], context=context)
             # Change analytic lines that come from:
@@ -738,7 +738,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             for search_data in search_datas:
                 # keep initial analytic line as corrected line if it the 2nd or more correction on this line
                 if ml.corrected_line_id and search_data[0] == ml.id and first_analytic_line_id:
-                    search_data[1].update({'last_corrected_id': first_analytic_line_id})
+                    search_data[1].update({'last_corrected_id': first_analytic_line_id, 'have_an_historic': True,})
                 search_ids = al_obj.search(cr, uid, [('move_id', '=', search_data[0])])
                 if search_ids:
                     al_obj.write(cr, uid, search_ids, search_data[1])
