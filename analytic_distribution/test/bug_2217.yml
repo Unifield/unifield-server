@@ -1,0 +1,20 @@
+-
+  I create analytic line with an entry sequence
+-
+  !record {model: account.analytic.line, id: test_analytic}:
+    amount: 100
+    name: test1
+    date: !eval "time.strftime('%Y-%m-%d')"
+    account_id: account_6102
+    general_account_id: account_6102
+    currency_id: base.EUR
+    journal_id: analytic_journal_1
+    amount_currency: 100
+    document_date: !eval "time.strftime('%Y-%m-%d')"
+    entry_sequence: ABCD
+-
+  I check the entry is set
+-
+  !python {model: account.analytic.line,}: |
+    al = self.read(cr, uid, ref('test_analytic'), ['entry_sequence'])
+    assert al['entry_sequence'] == 'ABCD', 'The field entry_sequence is not set on creation'
