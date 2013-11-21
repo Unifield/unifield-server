@@ -467,16 +467,39 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Delete Field Order">
-                    <label colspan="4" string="You removed all lines of this field order, would you cancel it ?" />
+                    <group colspan="4" col="1">
+                        <html>
+                            <h3 style="text-align: center; margin: 10px">You removed all lines of this field order, would you cancel it ?</h3>
+                        </html>
+                    </group>
+                    <newline />
                     <label> </label>
-                    <button colspan="2" type="object" icon="gtk-execute" name="cancel_fo" string="Yes" />
+                    <button colspan="1" type="object" icon="gtk-execute" name="cancel_fo" string="Yes" />
                     <button colspan="1" type="object" icon="gtk-cancel" name="close_window" string="No" />
+                    <label> </label>
                 </form>
             </field>
         </record>
 
-
-
+        <record id="sale_order_cancelation_wizard_form_view" model="ir.ui.view">
+            <field name="name">sale.order.cancelation.wizard.form.view</field>
+            <field name="model">sale.order.cancelation.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Cancel Field Order">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h3 style="text-align: center; margin: 10px">Do you want to re-source all lines of this order ?</h3>
+                        </html>
+                    </group>
+                    <newline/>
+                    <label> </label>
+                    <button colspan="1" type="object" icon="gtk-execute" name="resource_lines" string="Yes"/>
+                    <button colspan="1" type="object" icon="gtk-cancel" name="only_cancel" string="No"/>
+                    <label> </label>
+                </form>
+            </field>
+        </record>
 
     </data>
 </openerp>
