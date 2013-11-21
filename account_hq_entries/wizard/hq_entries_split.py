@@ -29,6 +29,23 @@ class hq_entries_split_lines(osv.osv_memory):
     _name = 'hq.entries.split.lines'
     _description = 'HQ entries split lines'
 
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Get state of distribution and some info if needed.
+        By default the distribution is "none". But valid is all is OK and invalid if ONE point is not OK.
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = {}
+        # Process
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'state_info': False, 'state': 'none'}
+            state, info = self.pool.get('analytic.distribution').analytic_state_from_info(cr, uid, line.account_id.id, line.destination_id.id, line.cost_center_id.id, line.analytic_id.id, context=context)
+            res[line.id].update({'state_info': info, 'state': state,})
+        return res
+
     _columns = {
         'wizard_id': fields.many2one('hq.entries.split', "Wizard", required=True),
         'name': fields.char("Description", size=255, required=True),
@@ -38,6 +55,8 @@ class hq_entries_split_lines(osv.osv_memory):
         'destination_id': fields.many2one('account.analytic.account', "Destination", domain=[('category', '=', 'DEST'), ('type', '!=', 'view')], required=True),
         'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", domain=[('category', '=', 'OC'), ('type', '!=', 'view')], required=True),
         'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", domain=[('category', '=', 'FUNDING'), ('type', '!=', 'view')], required=True),
+        'state': fields.function(_get_distribution_state, method=True, type='selection', selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], string="State", help="Informs from distribution state among 'none', 'valid', 'invalid.", multi="hq_split_line_distrib_state"),
+        'state_info': fields.function(_get_distribution_state, method=True, type='char', string="Info", help="Informs about distribution state.", multi='hq_split_line_distrib_state'),
     }
 
     def _get_original_line(self, cr, uid, context=None):
