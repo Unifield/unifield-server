@@ -451,7 +451,7 @@
             <field name="model">sale.order.line.unlink.wizard</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Unlink Field Order Line">
+                <form string="Delete Field Order Line">
                     <label colspan="4" string="Do you wish to re-source this line ?" />
                     <label> </label>
                     <button colspan="1" type="object" icon="gtk-cancel" name="close_window" string="Close window" />
@@ -466,7 +466,7 @@
             <field name="model">sale.order.unlink.wizard</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Unlink Field Order">
+                <form string="Delete Field Order">
                     <label colspan="4" string="You removed all lines of this field order, would you cancel it ?" />
                     <label> </label>
                     <button colspan="2" type="object" icon="gtk-execute" name="cancel_fo" string="Yes" />

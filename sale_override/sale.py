@@ -75,6 +75,17 @@ class sale_order(osv.osv):
             default.update({'parent_order_name': False})
         return super(sale_order, self).copy(cr, uid, id, default=default, context=context)
 
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        Check if the status of the unlinked FO is allowed for unlink.
+        Statuses allowed : draft / cancel
+        '''
+        for order in self.read(cr, uid, ['state', 'procurement_request'], context=context):
+            if order['state'] not in ('draft', 'cancel'):
+                type = order['procurement_request'] and _('Internal Request') or _('Field order')
+                raise osv.except_osv(_('Error'), _('Only Draft and Canceled %s can be deleted.') % type)
+        return super(sale_order, self).unlink(cr, uid, ids, context=context)
+
     #@@@override sale.sale_order._invoiced
     def _invoiced(self, cr, uid, ids, name, arg, context=None):
         '''
@@ -1252,7 +1263,11 @@ class sale_order_line(osv.osv):
         '''
         Call the user to know if the line must be re-sourced
         '''
-        return self.pool.get('sale.order.line.unlink.wizard').ask_unlink(cr, uid, ids, context=context)
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.order_id and line.order_id.state != 'draft':
+                return self.pool.get('sale.order.line.unlink.wizard').ask_unlink(cr, uid, ids, context=context)
+
+        return self.unlink(cr, uid, ids, context=context)
 
     def ask_order_unlink(self, cr, uid, ids, context=None):
         '''
@@ -1297,20 +1312,35 @@ class sale_order_line(osv.osv):
         Update the product qty with the qty_diff in case of split or backorder moves
         before cancelation
         '''
+        # Documents
+        order_obj = self.pool.get('sale.order')
+        ad_obj = self.pool.get('analytic.distribution')
+
         context = context or {}
 
         if isinstance(line, (int, long)):
             line = self.browse(cr, uid, line, context=context)
         
         if not order_id and not line.order_id.procurement_request and line.order_id.original_so_id_sale_order:
-            order_id = self.pool.get('sale.order').create_resource_order(cr, uid, line.order_id.original_so_id_sale_order, context=context)
+            order_id = order_obj.create_resource_order(cr, uid, line.order_id.original_so_id_sale_order, context=context)
         elif not order_id and (line.order_id.procurement_request or not line.order_id.original_so_id_sale_order):
-            order_id = self.pool.get('sale.order').create_resource_order(cr, uid, line.order_id, context=context)
+            order_id = order_obj.create_resource_order(cr, uid, line.order_id, context=context)
 
         if not qty_diff:
             qty_diff = line.product_uom_qty
 
-        line_id = self.copy(cr, uid, line.id, {'order_id': order_id, 'product_uom_qty': qty_diff, 'product_uos_qty': qty_diff, 'procurement_id': False}, context=context)
+        values = {
+            'order_id': order_id,
+            'product_uom_qty': qty_diff,
+            'product_uos_qty': qty_diff,
+            'procurement_id': False
+        }
+        context['keepDateAndDistrib'] = True
+        if not line.analytic_distribution_id and line.order_id and line.order_id.analytic_distribution_id:
+            new_distrib = ad_obj.copy(cr, uid, line.order_id.analytic_distribution_id.id, {}, context=context)
+            values['analytic_distribution_id'] = new_distrib
+
+        line_id = self.copy(cr, uid, line.id, values, context=context)
 
         order_name = self.pool.get('sale.order').read(cr, uid, [order_id], ['name'], context=context)[0]['name']
 
