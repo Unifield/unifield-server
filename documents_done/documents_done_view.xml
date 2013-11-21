@@ -7,7 +7,7 @@
             <field name="model">documents.done.wizard</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Documents 'In Progress'">
+                <tree string="Where product used">
                     <field name="name" />
                     <field name="creation_date" />
                     <field name="partner_id" />
@@ -24,7 +24,7 @@
             <field name="model">documents.done.wizard</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Documents 'In Progress'">
+                <search string="Where product used">
                     <group colspan="4">
                         <field name="creation_date" />
                         <field name="expected_date" />
@@ -47,7 +47,7 @@
         </record>
         
         <record id="action_documents_done_view" model="ir.actions.act_window">
-            <field name="name">Documents 'In Progress'</field>
+            <field name="name">Where product used</field>
             <field name="res_model">documents.done.wizard</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree</field>
