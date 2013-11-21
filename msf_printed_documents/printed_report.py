@@ -30,23 +30,25 @@ HELP_TARGET = '''
 
           Possible elements:
 
-          ${field_name} => Get the value of the field 'field_name' of the document.
-                           You can use a dot field_name (e.g. : partner_id.name) to
-                           get the value of the field of a many2one
+          ${field_name}     => Get the value of the field 'field_name' of the document.
+                               You can use a dot field_name (e.g. : partner_id.name) to
+                               get the value of the field of a many2one
+          ${eval(function)} => Return the value of the function. The function is a 
+                               method of the object like function(self, cr, uid, ids)
 
-          %(year)s     => Current year (e.g: 2013, 2014, ...)
-          %(month)s    => Current month number (e.g: 01, 02, ..., 12)
-          %(day)s      => Current day of month number (e.g: 25)
-          %(y)s        => Current year without century (e.g: 02,03, ...,99)
-          %(doy)s      => Current day of the year (e.g: 001, 002, ..., 366)
-          %(woy)s      => Current week number of the year
-          %(weekday)s  => Current weekday as decimal number where 0 is Sunday
-          %(h24)s      => Current hour (24-hour clock)
-          %(h12)s      => Current hour (12-hour clock)
-          %(min)s      => Current minute
-          %(sec)s      => Current second
-          %(instance)s => Instance code
-          %(hqcode)s   => HQ instance code'''
+          %(year)s          => Current year (e.g: 2013, 2014, ...)
+          %(month)s         => Current month number (e.g: 01, 02, ..., 12)
+          %(day)s           => Current day of month number (e.g: 25)
+          %(y)s             => Current year without century (e.g: 02,03, ...,99)
+          %(doy)s           => Current day of the year (e.g: 001, 002, ..., 366)
+          %(woy)s           => Current week number of the year
+          %(weekday)s       => Current weekday as decimal number where 0 is Sunday
+          %(h24)s           => Current hour (24-hour clock)
+          %(h12)s           => Current hour (12-hour clock)
+          %(min)s           => Current minute
+          %(sec)s           => Current second
+          %(instance)s      => Instance code
+          %(hqcode)s        => HQ instance code'''
 
 class ir_actions_report_xml(osv.osv):
     _inherit = 'ir.actions.report.xml'
@@ -65,23 +67,25 @@ class ir_actions_report_xml(osv.osv):
           Available templates:
           ####################
 
-          ${field_name} => Get the value of the field 'field_name' of the document.
-                           You can use a dot field_name (e.g. : partner_id.name) to
-                           get the value of the field of a many2one
+          ${field_name}     => Get the value of the field 'field_name' of the document.
+                               You can use a dot field_name (e.g. : partner_id.name) to
+                               get the value of the field of a many2one
+          ${eval(function)} => Return the value of the function. The function is a 
+                               method of the object like function(self, cr, uid, ids)
 
-          %(year)s     => Current year (e.g: 2013, 2014, ...)
-          %(month)s    => Current month number (e.g: 01, 02, ..., 12)
-          %(day)s      => Current day of month number (e.g: 25)
-          %(y)s        => Current year without century (e.g: 02,03, ...,99)
-          %(doy)s      => Current day of the year (e.g: 001, 002, ..., 366)
-          %(woy)s      => Current week number of the year
-          %(weekday)s  => Current weekday as decimal number where 0 is Sunday
-          %(h24)s      => Current hour (24-hour clock)
-          %(h12)s      => Current hour (12-hour clock)
-          %(min)s      => Current minute
-          %(sec)s      => Current second
-          %(instance)s => Instance code
-          %(hqcode)s   => HQ instance code
+          %(year)s          => Current year (e.g: 2013, 2014, ...)
+          %(month)s         => Current month number (e.g: 01, 02, ..., 12)
+          %(day)s           => Current day of month number (e.g: 25)
+          %(y)s             => Current year without century (e.g: 02,03, ...,99)
+          %(doy)s           => Current day of the year (e.g: 001, 002, ..., 366)
+          %(woy)s           => Current week number of the year
+          %(weekday)s       => Current weekday as decimal number where 0 is Sunday
+          %(h24)s           => Current hour (24-hour clock)
+          %(h12)s           => Current hour (12-hour clock)
+          %(min)s           => Current minute
+          %(sec)s           => Current second
+          %(instance)s      => Instance code
+          %(hqcode)s        => HQ instance code
         '''
         context = context or {}
 
