@@ -97,7 +97,6 @@ class analytic_line(osv.osv):
                 # on create the value is inserted by a sql query, so we can retreive it after the insertion
                 # the field has store=True so we don't create a loop
                 # on write the value is not updated by the query, the method always returns the value set at creation
-                # TODO: add yml use case
                 res[l.id] = l.entry_sequence
         return res
 
