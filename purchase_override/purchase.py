@@ -2127,15 +2127,25 @@ class purchase_order_line(osv.osv):
         '''
         context = context or {}
 
+        proc_obj = self.pool.get('procurement.order')
+
         if isinstance(ids, (int, long)):
             ids = [ids]
 
         purchase_ids = []
+        proc_ids = []
         for line in self.read(cr, uid, ids, ['order_id'], context=context):
+            if line.procurement_id:
+                proc_ids.append(line.procurement_id.id)
             if line['order_id'][0] not in purchase_ids:
                 purchase_ids.append(line['order_id'][0])
 
         res = self.unlink(cr, uid, ids, context=context)
+
+        # Cancel the procurement order
+        for proc_id in proc_ids:
+            if not self.search(cr, uid, [('procurement_id', '=', proc_id)], context=context):
+                proc_obj.action_cancel(cr, uid, [proc_id], context=context)
 
         for order in self.pool.get('purchase.order').read(cr, uid, purchase_ids, ['order_line'], context=context):
             if len(order['order_line']) == 0:

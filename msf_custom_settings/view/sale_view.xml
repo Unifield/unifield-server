@@ -47,7 +47,7 @@
                                 <button name="action_cancel" states="manual,progress" string="Cancel Order" type="object" icon="gtk-cancel"/>
                                 <button name="manual_invoice" states="manual" string="Create Final Invoice" icon="gtk-go-forward" type="object" invisible="1" />
                                 <button name="ship_cancel" states="shipping_except" string="Cancel Order" icon="gtk-cancel"/>
-                                <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert"/>
+                                <!--<button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert"/>-->
                                 <button name="cancel" states="draft,validated" string="Cancel Order" icon="gtk-cancel"/>
                                 <button name="invoice_cancel" states="invoice_except" string="Cancel Order" icon="gtk-cancel"/>
                                 <button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply" invisible="True" />
