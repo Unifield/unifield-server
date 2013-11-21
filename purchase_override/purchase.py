@@ -2125,28 +2125,36 @@ class purchase_order_line(osv.osv):
         Call the unlink method for lines and if the PO becomes empty
         ask the user if he wants to cancel the PO
         '''
-        context = context or {}
-
+        # Objects
         proc_obj = self.pool.get('procurement.order')
+
+        # Variables initialization
+        if context is None:
+            context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
 
         purchase_ids = []
         proc_ids = []
-        for line in self.read(cr, uid, ids, ['order_id'], context=context):
-            if line.procurement_id:
-                proc_ids.append(line.procurement_id.id)
+
+        # Set the procurement orders to delete
+        # Set the list of linked purchase orders
+        for line in self.read(cr, uid, ids, ['order_id', 'procurement_id'], context=context):
+            if line['procurement_id']:
+                proc_ids.append(line['procurement_id'][0])
             if line['order_id'][0] not in purchase_ids:
                 purchase_ids.append(line['order_id'][0])
 
+        # Unlink the purchase order line
         res = self.unlink(cr, uid, ids, context=context)
 
-        # Cancel the procurement order
+        # Cancel the listed procurement orders
         for proc_id in proc_ids:
             if not self.search(cr, uid, [('procurement_id', '=', proc_id)], context=context):
-                proc_obj.action_cancel(cr, uid, [proc_id], context=context)
+                proc_obj.action_cancel(cr, uid, [proc_id])
 
+        # Check if we must ask the user to cancel the PO (no lines in PO)
         for order in self.pool.get('purchase.order').read(cr, uid, purchase_ids, ['order_line'], context=context):
             if len(order['order_line']) == 0:
                 return self.pool.get('purchase.order.unlink.wizard').ask_unlink(cr, uid, order['id'], context=context)
@@ -2183,11 +2191,14 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+          
         # if the line is linked to a sale order line through procurement process,
         # the deletion is impossible
+        # raise osv.except_osv(_('Error'), _('You cannot delete a line which is linked to a Fo line.'))
+
+        # If the line is linked to a field order line through procurement process,
+        # cancel the linked FO line and re-source it.
         self.cancel_sol(cr, uid, ids, context=context)
-#                raise osv.except_osv(_('Error'), _('You cannot delete a line which is linked to a Fo line.'))
 
         for line_id in ids:
             # we want to skip resequencing because unlink is performed on merged purchase order lines
