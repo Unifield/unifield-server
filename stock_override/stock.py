@@ -418,11 +418,12 @@ class stock_picking(osv.osv):
         fo_line = {}
         fo_ids = set()
         for pick in self.browse(cr, uid, ids, context=context):
-            for move in pick.move_lines:
-                if move.sale_line_id:
-                    fo_ids.add(move.sale_line_id.order_id.id)
-                    fo_line.setdefault(move.sale_line_id.id, 0.00)
-                    fo_line[move.sale_line_id.id] += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
+            if pick.has_to_be_resourced:
+                for move in pick.move_lines:
+                    if move.sale_line_id:
+                        fo_ids.add(move.sale_line_id.order_id.id)
+                        fo_line.setdefault(move.sale_line_id.id, 0.00)
+                        fo_line[move.sale_line_id.id] += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
 
         for fol_id, fol_qty in fo_line.iteritems():
             fol = sol_obj.browse(cr, uid, fol_id, context=context)
