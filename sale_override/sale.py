@@ -1297,7 +1297,7 @@ class sale_order_line(osv.osv):
             if line.order_id and line.order_id.state != 'draft':
                 return self.pool.get('sale.order.line.unlink.wizard').ask_unlink(cr, uid, ids, context=context)
 
-        return self.unlink(cr, uid, ids, context=context)
+        return self.ask_order_unlink(cr, uid, ids, context=context)
 
     def ask_order_unlink(self, cr, uid, ids, context=None):
         '''
