@@ -289,7 +289,7 @@ class account_move_line(osv.osv):
                 context.update({'date': m.date})
         res = super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
         # UTP-317: Check partner (if active or not)
-        if res:
+        if res and context.get('sync_update_execution', False): #UF-2214: Not for the case of sync
             aml = self.browse(cr, uid, [res], context)
             if aml and aml[0] and aml[0].partner_id and not aml[0].partner_id.active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (aml[0].partner_id.name or '',))
