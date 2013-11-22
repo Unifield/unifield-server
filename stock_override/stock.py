@@ -420,7 +420,7 @@ class stock_picking(osv.osv):
         for pick in self.browse(cr, uid, ids, context=context):
             for move in pick.move_lines:
                 if move.sale_line_id:
-                    fo_ids.add(move.sale_line_id.id)
+                    fo_ids.add(move.sale_line_id.order_id.id)
                     fo_line.setdefault(move.sale_line_id.id, 0.00)
                     fo_line[move.sale_line_id.id] += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
 
