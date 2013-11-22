@@ -297,7 +297,7 @@ class account_bank_statement(osv.osv):
                         raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") % (st.journal_id.name,))
                 if not st_line.amount:
                     continue
-            self.write(cr, uid, [st.id], {'name': st_number, 'closing_date': time.strftime("%Y-%m-%d %H:%M:%S")}, context=context)
+            self.write(cr, uid, [st.id], {'name': st_number, 'closing_date': time.strftime("%Y-%m-%d")}, context=context)
             # Verify that the closing balance is frozen
             if not st.closing_balance_frozen and st.journal_id.type in ['bank', 'cash']:
                 raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')

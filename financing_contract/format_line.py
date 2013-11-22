@@ -29,6 +29,7 @@ class financing_contract_format_line(osv.osv):
     _name = "financing.contract.format.line"
     
     def _create_domain(self, header, element_list):
+        print 'sfc: _create_domain', header, element_list
         domain = "('" + header + "', 'in', ["
         if len(element_list) > 0:
             for element in element_list:
@@ -39,6 +40,7 @@ class financing_contract_format_line(osv.osv):
         return domain
     
     def _create_account_destination_domain(self, account_destination_list):
+        print 'sfc: _create_account_destination_domain', account_destination_list
         if len(account_destination_list) == 0:
             return ['&',
                     ('general_account_id', 'in', []),
@@ -51,6 +53,7 @@ class financing_contract_format_line(osv.osv):
             return ['|'] + self._create_account_destination_domain([account_destination_list[0]]) + self._create_account_destination_domain(account_destination_list[1:])
 
     def _get_number_of_childs(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        print 'sfc: _get_number_of_childs', ids
         # Verifications
         if not context:
             context = {}
@@ -63,6 +66,7 @@ class financing_contract_format_line(osv.osv):
         return res
     
     def _get_parent_ids(self, cr, uid, ids, context=None):
+        print 'sfc: _get_parent_ids'
         res = []
         for line in self.browse(cr, uid, ids, context=context):
             if line.parent_id:
@@ -70,6 +74,7 @@ class financing_contract_format_line(osv.osv):
         return res
     
     def _get_account_destination_ids(self, browse_line, funding_pool_account_destination_ids):
+        print 'sfc: _get_account_destination_ids', funding_pool_account_destination_ids
         result = []
         if browse_line.line_type != 'view':
             result = [account_destination for account_destination in browse_line.account_destination_ids if account_destination.id in funding_pool_account_destination_ids]
@@ -79,6 +84,7 @@ class financing_contract_format_line(osv.osv):
         return result
     
     def _get_general_domain(self, cr, uid, browse_format, domain_type, context=None):
+        print 'sfc: _get_general_domain', domain_type
         # Method to get the domain (allocated or project) of a line
         date_domain = "[('document_date', '>=', '"
         date_domain += browse_format.eligibility_from_date
@@ -324,6 +330,7 @@ class financing_contract_format_line(osv.osv):
         return super(financing_contract_format_line, self).write(cr, uid, ids, vals, context=context)
     
     def copy_format_line(self, cr, uid, browse_source_line, destination_format_id, parent_id=None, context=None):
+        print 'sfc: copy_format_line', browse_source_line, destination_format_id
         if destination_format_id:
             format_line_vals = {
                 'name': browse_source_line.name,
@@ -353,6 +360,7 @@ class financing_contract_format(osv.osv):
     }
     
     def copy_format_lines(self, cr, uid, source_id, destination_id, context=None):
+        print 'sfc01: copy_format_lines', source_id, destination_id
         # remove all old report lines
         destination_obj = self.browse(cr, uid, destination_id, context=context)
         for to_remove_line in destination_obj.actual_line_ids:

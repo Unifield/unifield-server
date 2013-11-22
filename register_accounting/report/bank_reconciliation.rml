@@ -240,7 +240,7 @@
           <para style="P13">Gap: [[ o.balance_gap and formatLang(o.balance_gap, digits=2, grouping=True) or '0.00' ]]</para>
         </td>
         <td>
-          <para style="P13">Closing Date: [[ o.closing_date if o.closing_date or '' ]]</para>
+          <para style="P13">Closing Date: [[ o.closing_date or '' ]]</para>
         </td>
       </tr>
     </blockTable>
