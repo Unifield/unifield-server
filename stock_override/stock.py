@@ -400,6 +400,40 @@ class stock_picking(osv.osv):
             wf_service.trg_validate(uid, 'stock.picking', id, 'button_cancel', cr)
 
         return True
+
+    def action_cancel(self, cr, uid, ids, context=None):
+        '''
+        Re-source the FO/IR lines if needed
+        '''
+        # Objects
+        uom_obj = self.pool.get('product.uom')
+        sol_obj = self.pool.get('sale.order.line')
+
+        # Variables
+        wf_service = netsvc.LocalService("workflow")
+
+        res = super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
+
+        # Re-source the sale.order.line
+        fo_line = {}
+        fo_ids = set()
+        for pick in self.browse(cr, uid, ids, context=context):
+            for move in pick.move_lines:
+                if move.sale_line_id:
+                    fo_ids.add(move.sale_line_id.id)
+                    fo_line.setdefault(move.sale_line_id.id, 0.00)
+                    fo_line[move.sale_line_id.id] += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
+
+        for fol_id, fol_qty in fo_line.iteritems():
+            fol = sol_obj.browse(cr, uid, fol_id, context=context)
+            sol_obj.add_resource_line(cr, uid, fol_id, fol.order_id.id, fol_qty, context=context)
+
+        
+        # Run the signal 'ship_corrected' to the FO
+        for fo in fo_ids:
+            wf_service.trg_validate(uid, 'sale.order', fo, 'ship_corrected', cr)
+
+        return res
     
     def _do_partial_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
