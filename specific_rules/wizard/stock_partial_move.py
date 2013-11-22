@@ -50,13 +50,21 @@ class stock_partial_move_memory_out(osv.osv_memory):
         if vals.get('prodlot_id', False) and not vals.get('expiry_date', False):
             vals.update(expiry_date=prodlot_obj.browse(cr, uid, vals.get('prodlot_id'), context=context).life_date)
 
-        if vals.get('product_uom', False):
-            mem_move = self.browse(cr, uid, ids[0], context=context)
-            if mem_move.move_id.picking_id.type == 'in':
-                # UTP-220: Give the possibility to change the cost when receiving the goods, so we need to take this cost into account
-                # but if the cost is not available, then just take the cost from the PO/original move
-                cost = vals.get('cost', mem_move.cost)
-                vals['cost'] = uom_obj._compute_price(cr, uid, mem_move.product_uom.id, cost, to_uom_id=vals.get('product_uom', mem_move.product_uom.id))
+#----------------------------------------------------------------------------------
+
+        # UF-2213: JF: PLEASE REMOVE THE FOLLOWING BLOCK OF CODE, REASON: Now when modifying an IN line, the "cost" is also editable, so the value 
+        # in this field is passed into the vals, and we don't need to convert to the relevant UOM anymore!
+        
+
+#        if vals.get('product_uom', False):
+#            mem_move = self.browse(cr, uid, ids[0], context=context)
+#            if mem_move.move_id.picking_id.type == 'in':
+#                # UTP-220: Give the possibility to change the cost when receiving the goods, so we need to take this cost into account
+#                # but if the cost is not available, then just take the cost from the PO/original move
+#                cost = vals.get('cost', mem_move.cost)
+#                vals['cost'] = uom_obj._compute_price(cr, uid, mem_move.product_uom.id, cost, to_uom_id=vals.get('product_uom', mem_move.product_uom.id))
+
+#----------------------------------------------------------------------------------
         
         return super(stock_partial_move_memory_out, self).write(cr, uid, ids, vals, context=context)
     
