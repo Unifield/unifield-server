@@ -357,7 +357,6 @@ class financing_contract_format(osv.osv):
         destination_obj = self.browse(cr, uid, destination_id, context=context)
         for to_remove_line in destination_obj.actual_line_ids:
             self.pool.get('financing.contract.format.line').unlink(cr, uid, to_remove_line.id, context=context)
-            print 'sfc01: unlinked lines', to_remove_line.id
         source_obj = self.browse(cr, uid, source_id, context=context)
         # Method to copy a format
         # copy format lines
