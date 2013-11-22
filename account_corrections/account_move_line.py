@@ -442,6 +442,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         success_move_line_ids = []
         move_obj = self.pool.get('account.move')
         j_obj = self.pool.get('account.journal')
+        ana_j_obj = self.pool.get('account.analytic.journal')
         aal_obj = self.pool.get('account.analytic.line')
         j_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
                                        ('is_current_instance', '=', True)], context=context)
@@ -449,6 +450,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
         j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
                                             ('is_current_instance', '=', True)], context=context)
         j_corr_id = j_corr_ids and j_corr_ids[0] or False
+        j_ana_corr_ids = ana_j_obj.search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)], context=context)
+        j_ana_corr_id = j_ana_corr_ids and j_ana_corr_ids[0] or False
         # Search extra-accounting journal
         j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
                                              ('is_current_instance', '=', True)])
@@ -559,7 +562,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             move_obj.post(cr, uid, [new_move_id], context=context)
             # Update analytic lines data (reversal: True)
             ana_ids = aal_obj.search(cr, uid, [('move_id', 'in', new_ml_ids)])
-            aal_obj.write(cr, uid, ana_ids, {'is_reversal': True, 'journal_id': j_corr_id, 'last_corrected_id': False,})
+            aal_obj.write(cr, uid, ana_ids, {'is_reversal': True, 'journal_id': j_ana_corr_id, 'last_corrected_id': False,})
             # Update old analytic lines as "is_reallocated" to True
             old_ana_ids = aal_obj.search(cr, uid, [('move_id', 'in', success_move_line_ids)])
             aal_obj.write(cr, uid, old_ana_ids, {'is_reallocated': True,})

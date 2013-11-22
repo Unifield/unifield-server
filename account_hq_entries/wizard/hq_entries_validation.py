@@ -241,6 +241,8 @@ class hq_entries_validation(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         for wiz in self.browse(cr, uid, ids, context=context):
             active_ids = [x.id for x in wiz.process_ids]
             if isinstance(active_ids, (int, long)):

@@ -41,6 +41,8 @@ class hq_entries_unsplit(osv.osv_memory):
         # Some checks
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # Prepare some values
         hq_obj = self.pool.get('hq.entries')
         for wiz in self.browse(cr, uid, ids, context=context):
