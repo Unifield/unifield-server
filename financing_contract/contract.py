@@ -422,12 +422,18 @@ class financing_contract_contract(osv.osv):
                 'context': context,
         }
         
+        
     def create(self, cr, uid, vals, context=None):
+        # Do not copy lines from the Donor on create if coming from the sync server
         result = super(financing_contract_contract, self).create(cr, uid, vals, context=context)
-        contract = self.browse(cr, uid, result, context=context)
-        if contract.donor_id and contract.donor_id.format_id and contract.format_id:
-            self.pool.get('financing.contract.format').copy_format_lines(cr, uid, contract.donor_id.format_id.id, contract.format_id.id, context=context)
+        if context.get('sync_update_execution', None) == True:
+            pass
+        else:  
+            contract = self.browse(cr, uid, result, context=context)
+            if contract.donor_id and contract.donor_id.format_id and contract.format_id:
+                self.pool.get('financing.contract.format').copy_format_lines(cr, uid, contract.donor_id.format_id.id, contract.format_id.id, context=context)
         return result
+    
         
     def write(self, cr, uid, ids, vals, context=None):
         if 'donor_id' in vals:
