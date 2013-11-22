@@ -184,7 +184,7 @@ class account_bank_statement(osv.osv):
         'balance_gap': fields.function(_balance_gap_compute, method=True, string='Gap', readonly=True),
         'notes': fields.text('Comments'),
         'period_number': fields.related('period_id', 'number', relation='account.period', string="Period number", type="integer", store=True, readonly=True),
-        'closing_date': fields.datetime("Closed On"),
+        'closing_date': fields.date("Closed On"),
     }
 
     _order = 'state asc, period_number desc'
