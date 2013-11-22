@@ -152,27 +152,28 @@ class analytic_line(osv.osv):
 
     def _get_from_commitment_line(self, cr, uid, ids, field_name, args, context=None):
         """
-        Check if commitment_line_id is filled in. If yes, True. Otherwise False.
+        Check if line comes from a 'engagement' journal type. If yes, True. Otherwise False.
         """
         if not context:
             context = {}
         res = {}
         for al in self.browse(cr, uid, ids, context=context):
             res[al.id] = False
-            if al.commitment_line_id:
+            if al.journal_id.type == 'engagement':
                 res[al.id] = True
         return res
 
     def _get_is_unposted(self, cr, uid, ids, field_name, args, context=None):
         """
         Check journal entry state. If unposted: True, otherwise False.
+        A line that comes from a commitment cannot be posted. So it's always to False.
         """
         if not context:
             context = {}
         res = {}
         for al in self.browse(cr, uid, ids, context=context):
             res[al.id] = False
-            if al.move_state != 'posted':
+            if al.move_state != 'posted' and al.journal_id.type != 'engagement':
                 res[al.id] = True
         return res
 
