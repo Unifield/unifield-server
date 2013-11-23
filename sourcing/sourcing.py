@@ -92,9 +92,11 @@ class sourcing_line(osv.osv):
         for sl in self.browse(cr, uid, ids, context):
             product_context = context
             if sl.product_id:
-                real_stock = sl.product_id.qty_available
+                real_stock = sl.real_stock
                 product_context = context
                 product_context.update({'states': ('assigned',), 'what': ('out',)})
+                if sl.type == 'make_to_stock' and sl.location_id:
+                    product_context.update({'location_id': sl.location_id.id})
                 productId = productObj.get_product_available(cr, uid, [sl.product_id.id], context=product_context)
                 res = real_stock + productId.get(sl.product_id.id, 0.00)
             else:
@@ -123,10 +125,13 @@ class sourcing_line(osv.osv):
         for sl in self.browse(cr, uid, ids, context):
             product_context = context
             rts = sl.rts < time.strftime('%Y-%m-%d') and time.strftime('%Y-%m-%d') or sl.rts
+            if sl.type == 'make_to_stock' and sl.location_id:
+                location_ids = sl.location_id.id
             product_context.update({'location': location_ids, 'to_date': '%s 23:59:59' % rts})
             if sl.product_id:
                 product_virtual = productObj.browse(cr, uid, sl.product_id.id, context=product_context)
-                res = product_virtual.virtual_available
+                res = {'real_stock': product_virtual.qty_available, 
+                       'virtual_stock': product_virtual.virtual_available}
             else:
                 res = 0.00
 
@@ -282,8 +287,9 @@ class sourcing_line(osv.osv):
         'sale_order_line_state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, store=False),
         'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', readonly=True, states={'draft': [('readonly', False)]}),
         'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT', readonly=True, states={'draft': [('readonly', False)]}),
-        'real_stock': fields.related('product_id', 'qty_available', type='float', string='Real Stock', readonly=True),
-        'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        #'real_stock': fields.related('product_id', 'qty_available', type='float', string='Real Stock', readonly=True),
+        'real_stock': fields.function(_getVirtualStock, method=True, type='float', string='Real Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True, multi='stock_qty'),
+        'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True, multi='stock_qty'),
         'available_stock': fields.function(_getAvailableStock, method=True, type='float', string='Available Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'stock_uom_id': fields.related('product_id', 'uom_id', string='UoM', type='many2one', relation='product.uom'),
         'supplier': fields.many2one('res.partner', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}, domain=[('supplier', '=', True)]),
