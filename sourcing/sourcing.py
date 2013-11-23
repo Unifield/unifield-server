@@ -307,6 +307,23 @@ class sourcing_line(osv.osv):
              'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
 
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Set the location_id with the stock location of the warehouse of the order of the line
+        '''
+        # Objects
+        warehouse_obj = self.pool.get('stock.warehouse')
+
+        res = super(sourcing_line, self).default_get(cr, uid, fields, context=context)
+
+        if res is None:
+            res = {}
+
+        warehouse = warehouse_obj.search(cr, uid, [], context=context)
+        res['location_id'] = warehouse_obj.browse(cr, uid, warehouse, context=context).lot_stock_id.id
+
+        return res
+
     def _check_line_conditions(self, cr, uid, ids, context=None):
         '''
         Check if the line have good values
