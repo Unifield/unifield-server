@@ -320,7 +320,8 @@ class sourcing_line(osv.osv):
             res = {}
 
         warehouse = warehouse_obj.search(cr, uid, [], context=context)
-        res['location_id'] = warehouse_obj.browse(cr, uid, warehouse, context=context).lot_stock_id.id
+        if warehouse:
+            res['location_id'] = warehouse_obj.browse(cr, uid, warehouse[0], context=context).lot_stock_id.id
 
         return res
 
@@ -451,6 +452,10 @@ class sourcing_line(osv.osv):
                     pocft = False
                     values.update({'po_cft': pocft, 'supplier': False})
                     vals.update({'po_cft': pocft, 'supplier': False})
+
+                # location_id
+                if 'location_id' in values:
+                    vals.update({'location_id': values['location_id']})
                 
                 # partner_id
                 if 'supplier' in values:
@@ -1118,6 +1123,8 @@ class sale_order_line(osv.osv):
                 values.update({'product_id': vals['product_id']})
             if 'line_number' in vals:
                 values.update({'line_number': vals['line_number']})
+            if 'location_id' in vals:
+                values.update({'location_id': vals['location_id']})
             
             # If lines are modified after the validation of the FO, update
             # lines values if the order is a loan
