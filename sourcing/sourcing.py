@@ -298,13 +298,15 @@ class sourcing_line(osv.osv):
 
         # UTP-392: if the FO is loan type, then the procurement method is only Make to Stock allowed        
         'loan_type': fields.function(_get_sourcing_vals, method=True, type='boolean', multi='get_vals_sourcing',),
+        # UTP-965 : Select a source stock location for line in make to stock
+        'location_id': fields.many2one('stock.location', string='Location'),
     }
     _order = 'sale_order_id desc, line_number'
     _defaults = {
              'name': lambda self, cr, uid, context=None: self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),
              'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
-    
+
     def _check_line_conditions(self, cr, uid, ids, context=None):
         '''
         Check if the line have good values
@@ -907,6 +909,7 @@ class sale_order_line(osv.osv):
                 'po_cft': fields.selection(_SELECTION_PO_CFT, string="PO/CFT"),
                 'supplier': fields.many2one('res.partner', 'Supplier'),
                 'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_line_id', 'Sourcing Lines'),
+                'location_id': fields.many2one('stock.location', string='Location'),
                 }
     
     def create(self, cr, uid, vals, context=None):

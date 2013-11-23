@@ -90,7 +90,9 @@
 						attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('loan_type', '=', True)]}" />
 					<field name="po_cft"
 					    on_change="onChangePoCft(po_cft, sale_order_id, supplier)" 
-						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
+                        attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
+                    <field name="location_id" 
+                        attrs="{'readonly': ['|', ('type', '!=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_stock')]}" />
 					<field name="real_stock" />
 					<field name="available_stock" />
                     <field name="virtual_stock" />
