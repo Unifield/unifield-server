@@ -526,7 +526,7 @@ class sourcing_line(osv.osv):
 
         return res
     
-    def onChangeType(self, cr, uid, id, type, context=None):
+    def onChangeType(self, cr, uid, id, type, location_id=False, context=None):
         '''
         if type == make to stock, change pocft to False
         '''
@@ -544,6 +544,12 @@ class sourcing_line(osv.osv):
                                 'message': _('You cannot choose \'from stock\' as method to source a %s product !') % product_type})
 
         if type == 'make_to_stock':
+            if not location_id:
+                wh_obj = self.pool.get('stock.warehouse')
+                wh_ids = wh_obj.search(cr, uid, [], context=context)
+                if wh_ids:
+                    value.update({'location_id': wh_obj.browse(cr, uid, wh_ids[0], context=context).lot_stock_id.id})
+
             value.update({'po_cft': False})
 
             if id and isinstance(id, list):
@@ -557,6 +563,8 @@ class sourcing_line(osv.osv):
                     res, error = self._check_product_constraints(cr, uid, type, line.po_cft, line.product_id.id, False, check_fnct, field_name='type', values=res, vals={'constraints': ['storage']}, context=context)
                     if error:
                         return res
+        elif type == 'make_to_order':
+            value.update({'location_id': False})
     
         return {'value': value, 'warning': message}
     
