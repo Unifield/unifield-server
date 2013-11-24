@@ -71,8 +71,7 @@ class account_move_line(osv.osv):
             ('reconcile_id','=',False),
             ('state', '=', 'valid'),
             ('journal_id.type', 'in', ['purchase', 'sale','purchase_refund','sale_refund', 'hr']),
-            ('account_id.type_for_register', 'not in', ['down_payment']),
-            ('partner_id.active', '=', True),
+            ('account_id.type_for_register', 'not in', ['down_payment'])
         ]
         return dom1+[('amount_residual_import_inv', '>', 0)]
 
