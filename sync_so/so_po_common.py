@@ -283,6 +283,8 @@ class so_po_common(osv.osv_memory):
 
             if line_dict.get('price_unit'):
                 values['price_unit'] = line.price_unit
+            else:
+                values['price_unit'] = 0 # This case is for the line that has price unit False (actually 0 but OpenERP converted to False)
                 
             if line_dict.get('product_id'):
                 rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(line.product_id.id), context=context)
