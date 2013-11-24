@@ -295,6 +295,10 @@ class account_move_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
+        #UF-2214: if data comes from the sync, retrieve also the inactive
+        if context.get('sync_update_execution', False):    
+            context.update({'active_test': False})
+                        
         # Retrieve third party name
         res = _get_third_parties_name(self, cr, uid, vals, context=context)
         if res:
