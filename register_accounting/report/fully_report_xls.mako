@@ -544,38 +544,6 @@
         </Cell>
       </Row>
 
-% if line.fp_analytic_lines:
-% for ana_line in line.fp_analytic_lines:
-<%
-line_color = 'blue'
-if ana_line.is_reallocated:
-    line_color = 'darkblue'
-elif ana_line.is_reversal:
-    line_color = 'green'
-elif ana_line.last_corrected_id:
-    line_color = 'red'
-endif
-%>
-      <Row>
-        <Cell ss:Index="10" ss:StyleID="${line_color}_ana_amount">
-          <Data ss:Type="Number">${ana_line.amount_currency}</Data>
-        </Cell>
-        <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String">${ana_line.destination_id and ana_line.destination_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String">${ana_line.cost_center_id and ana_line.cost_center_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String">${ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
-        </Cell>
-      </Row>
-% endfor
-% endif
-
 <!-- Direct invoice and invoice that comes from a PL (in a cash return) -->
 % if line.invoice_id:
 % for inv_line in line.invoice_id.invoice_line:
@@ -602,49 +570,6 @@ endif
           <Data ss:Type="Number">${inv_line.price_subtotal or 0.0}</Data>
         </Cell>
       </Row>
-% if (inv_line.analytic_distribution_id and inv_line.analytic_distribution_id.funding_pool_lines) or (inv_line.invoice_id and inv_line.invoice_id.analytic_distribution_id and inv_line.invoice_id.analytic_distribution_id.funding_pool_lines):
-% if inv_line.analytic_distribution_id:
-% for inv_ana_line in inv_line.analytic_distribution_id.funding_pool_lines:
-      <Row>
-        <Cell ss:Index="10" ss:StyleID="ana_amount">
-          <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and (abs((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100)) or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_percent">
-          <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
-        </Cell>
-      </Row>
-% endfor
-% elif inv_line.invoice_id.analytic_distribution_id:
-% for inv_ana_line in inv_line.invoice_id.analytic_distribution_id.funding_pool_lines:
-      <Row>
-        <Cell ss:Index="10" ss:StyleID="ana_amount">
-          <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and (abs((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100)) or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_percent">
-          <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
-        </Cell>
-      </Row>
-% endfor
-% endif
-% endif
 % endfor
 % endif
 
@@ -675,50 +600,40 @@ endif
           <Data ss:Type="Number">${imp_inv_line.price_subtotal or 0.0}</Data>
         </Cell>
       </Row>
-% if (imp_inv_line.analytic_distribution_id and imp_inv_line.analytic_distribution_id.funding_pool_lines) or (imp_inv_line.invoice_id and imp_inv_line.invoice_id.analytic_distribution_id and imp_inv_line.invoice_id.analytic_distribution_id.funding_pool_lines):
-% if imp_inv_line.analytic_distribution_id:
-% for inv_ana_line in imp_inv_line.analytic_distribution_id.funding_pool_lines:
-      <Row>
-        <Cell ss:Index="10" ss:StyleID="ana_amount">
-          <Data ss:Type="Number">${imp_inv_line.price_subtotal and inv_ana_line.percentage and (abs((imp_inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100)) or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_percent">
-          <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
-        </Cell>
-      </Row>
 % endfor
-% elif imp_inv_line.invoice_id.analytic_distribution_id:
-% for inv_ana_line in imp_inv_line.invoice_id.analytic_distribution_id.funding_pool_lines:
-      <Row>
-        <Cell ss:Index="10" ss:StyleID="ana_amount">
-          <Data ss:Type="Number">${imp_inv_line.price_subtotal and inv_ana_line.percentage and (abs((imp_inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100)) or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_percent">
-          <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
-        </Cell>
-      </Row>
 % endfor
 % endif
-% endif
-% endfor
+
+<!-- Display analytic lines linked to this register line -->
+% if line.fp_analytic_lines:
+% for ana_line in line.fp_analytic_lines:
+<%
+line_color = 'blue'
+if ana_line.is_reallocated:
+    line_color = 'darkblue'
+elif ana_line.is_reversal:
+    line_color = 'green'
+elif ana_line.last_corrected_id:
+    line_color = 'red'
+endif
+%>
+      <Row>
+        <Cell ss:Index="10" ss:StyleID="${line_color}_ana_amount">
+          <Data ss:Type="Number">${ana_line.amount_currency}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.destination_id and ana_line.destination_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.cost_center_id and ana_line.cost_center_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
+        </Cell>
+      </Row>
 % endfor
 % endif
 
