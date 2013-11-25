@@ -389,7 +389,15 @@ class stock_picking(osv.osv):
         '''
         Call the wizard of cancelation (ask user if he wants to resource goods)
         '''
-        for pick_data in self.read(cr, uid, ids, ['sale_id', 'purchase_id'], context=context):
+        for pick_data in self.read(cr, uid, ids, ['sale_id', 'purchase_id', 'subtype', 'state'], context=context):
+            #if draft and shipment is in progress, we cannot cancel
+            if pick_data['subtype'] == 'picking' and pick_data['state'] in ('draft',):
+                if self.has_picking_ticket_in_progress(cr, uid, [pick_data['id']], context=context)[pick_data['id']]:
+                    raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and      try to cancel again.'))
+            # if not draft or qty does not match, the shipping is already in progress
+            if pick_data['subtype'] == 'picking' and pick_data['state'] in ('done',):
+                raise osv.except_osv(_('Warning !'), _('The shipment process is completed and cannot be canceled!'))
+
             if pick_data['sale_id'] or pick_data['purchase_id']:
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'stock.picking.cancel.wizard',
@@ -423,11 +431,11 @@ class stock_picking(osv.osv):
         line_to_resource = set()
         for pick in self.browse(cr, uid, ids, context=context):
             # Don't delete lines if an Available PT is canceled
-            if pick.type == 'out' and pick.subtype == 'picking' and pick.state != 'draft':
+            if pick.type == 'out' and pick.subtype == 'picking' and pick.backorder_id and True:
                 continue
 
             for move in pick.move_lines:
-                if move.sale_line_id:
+                if move.sale_line_id and move.product_qty > 0.00:
                     fo_ids.add(move.sale_line_id.order_id.id)
                     fo_line.setdefault(move.sale_line_id.id, 0.00)
                     fo_line[move.sale_line_id.id] += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)

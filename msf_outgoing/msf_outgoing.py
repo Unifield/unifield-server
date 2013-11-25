@@ -2329,7 +2329,7 @@ class stock_picking(osv.osv):
                             'converted_to_standard': True,
                             'backorder_id': False,
                            }
-
+            
             new_pick_id = False
             new_lines = []
 
@@ -2353,7 +2353,7 @@ class stock_picking(osv.osv):
                     vals = {'state': 'done'}
                 else:
                     # Save the state of this stock move to set it before action_assign()
-                    moves_states.setdefault(move.state, []).append(move.id)
+                    moves_states[move.id] = move.state
                     vals = {'state': 'draft'}
                 vals.update({'backmove_id': False})
                 # If the move comes from a DPO, don't change the destination location
@@ -2380,6 +2380,7 @@ class stock_picking(osv.osv):
                             move_obj.update_linked_documents(cr, uid, move.backmove_id.id, move.id, context=context)
                 elif move.product_qty != 0.00:
                     vals.update({'picking_id': new_pick_id,
+                                 'state': moves_states[move.id],
                                  'product_qty': move.product_qty,})
 
                     new_move_id = move_obj.copy(cr, uid, move.id, vals, context=context)
@@ -2403,15 +2404,18 @@ class stock_picking(osv.osv):
             # trigger workflow (confirm picking)
             self.draft_force_assign(cr, uid, [new_pick_id or obj.id])
 
-            for s in moves_states:
-                self.pool.get('stock.move').write(cr, uid, moves_states[s], {'state': s}, context=context)
+            # Incompatibility between UF-2134 and UTP-833 : The PT move should 
+            # be done if PT move has no quantity because the UTP-833 allows
+            # the convert to standard even if there are flows in P/P/S
+#            for s in moves_states:
+#                self.pool.get('stock.move').write(cr, uid, moves_states[s], {'state': s}, context=context)
 
             # check availability
             self.action_assign(cr, uid, [new_pick_id or obj.id], context=context)
 
             if 'assigned' in moves_states:
                 # Add an empty write to display the 'Process' button on OUT
-                self.write(cr, uid, [obj.id], {'state': 'assigned'}, context=context)
+                self.write(cr, uid, [new_pick_id or obj.id], {'state': 'assigned'}, context=context)
         
             # TODO which behavior
             data_obj = self.pool.get('ir.model.data')
