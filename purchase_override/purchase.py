@@ -992,6 +992,7 @@ stock moves which are already processed : '''
         pol_obj = self.pool.get('purchase.order.line')
         so_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
+        move_obj = self.pool.get('stock.move')
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
@@ -1026,8 +1027,8 @@ stock moves which are already processed : '''
                                                                               db_date_format, context=context)
                     # we update the corresponding sale order line
                     sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
-                    # do not update Internal Requests
-                    if sol.order_id.procurement_request:
+                    # do not update Internal Requests with internal requestor location
+                    if sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage != 'customer':
                         continue
                     # {sol: pol}
                     # compute the price_unit value - we need to specify the date
@@ -1062,6 +1063,21 @@ stock moves which are already processed : '''
                                   }
                     # write the line
                     sol_obj.write(cr, uid, sol_ids, fields_dic, context=ctx)
+
+                    if sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage == 'customer' and line.procurement_id.move_id and not line.procurement_id.move_id.processed_stock_move:
+                        out_move_id = line.procurement_id.move_id
+                        if out_move_id.state == 'assigned':
+                            move_obj.cancel_assign(cr, uid, [out_move_id.id])
+                        elif out_move_id.state in ('cancel', 'done'):
+                            continue
+                        else:
+                            move_dic = {'product_id': line.product_id and line.product_id.id or False,
+                                        'name': line.name,
+                                        'product_uom': line.product_uom and line.product_uom.id or False,
+                                        'product_uos': line.product_uom and line.product_uom.id or False,
+                                        'product_qty': line.product_qty,
+                                        'product_uos_qty': line.product_qty,}
+                            move_obj.write(cr, uid, [out_move_id.id], move_dic, context=context)
 
             if store_to_call:
                 sol_obj._call_store_function(cr, uid, store_to_call, keys=None, bypass=False, context=context)

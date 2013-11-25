@@ -863,9 +863,15 @@ class sale_order(osv.osv):
         
         - allow to modify the data for stock move creation
         '''
+        obj_data = self.pool.get('ir.model.data')
+
         result = super(sale_order, self)._hook_ship_create_stock_move(cr, uid, ids, context=context, *args, **kwargs)
         result['reason_type_id'] = self._get_reason_type(cr, uid, kwargs['order'], context)
         result['price_currency_id'] = self.browse(cr, uid, ids[0], context=context).pricelist_id.currency_id.id
+
+        line = kwargs['line']
+        if line.order_id.procurement_request and line.order_id.location_requestor_id.usage == 'customer' and not line.product_id and line.comment:
+            result['product_id'] = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
         
         return result
     
@@ -898,8 +904,11 @@ class sale_order(osv.osv):
         if line.order_id.manually_corrected:
             return False
         if line.order_id.procurement_request:
-            if line.type == 'make_to_order':
+            # Create OUT lines for MTO lines with an external CU as requestor location 
+            if line.type == 'make_to_order' and line.order_id.location_requestor_id.usage != 'customer':
                 result = False
+            elif line.type == 'make_to_order' and line.order_id.location_requestor_id.usage == 'customer':
+                result = True
         # result = result and not line.order_id.procurement_request => the proc request can have pick and move
         return result
     

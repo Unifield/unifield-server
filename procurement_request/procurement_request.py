@@ -113,7 +113,7 @@ class procurement_request(osv.osv):
     
     _columns = {
         'location_requestor_id': fields.many2one('stock.location', string='Location Requestor', ondelete="cascade",
-        domain=[('usage', '=', 'internal'), ('location_category', '!=', 'transition')], help='You can only select an internal location'),
+        domain=[('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], help='You can only select an internal location'),
         'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', states={'draft': [('readonly', False)]}, readonly=True),
@@ -361,7 +361,7 @@ class procurement_request(osv.osv):
         self.action_ship_create(cr, uid, ids, context=context)
         
         return True
-    
+
     def procurement_done(self, cr, uid, ids, context=None):
         '''
         Creates all procurement orders according to lines
@@ -619,7 +619,7 @@ class purchase_order(osv.osv):
             proc_ids = proc_obj.search(cr, uid, [('move_id', '=', order_line.move_dest_id.id)], context=context)
             so_line_ids = sale_line_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
             po_line_ids = po_line_obj.search(cr, uid, [('move_dest_id', '=', order_line.move_dest_id.id)], context=context)
-            if all(not line.order_id or line.order_id.procurement_request for line in sale_line_obj.browse(cr, uid, so_line_ids, context=context)):
+            if all(not line.order_id or (line.order_id.procurement_request and line.order_id.location_requestor_id.usage != 'customer') for line in sale_line_obj.browse(cr, uid, so_line_ids, context=context)):
                 for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
                     if proc.move_id:
                         move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)

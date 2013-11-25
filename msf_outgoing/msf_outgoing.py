@@ -3631,6 +3631,8 @@ class sale_order(osv.osv):
             move_data['type'] = 'internal'
             move_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
             move_data['location_dest_id'] = self.read(cr, uid, ids, ['location_requestor_id'], context=context)[0]['location_requestor_id'][0]
+            if self.pool.get('stock.location').browse(cr, uid, move_data['location_dest_id'], context=context).usage in ('supplier', 'customer'):
+                move_data['type'] = 'out'
         else:
             # first go to packing location (PICK/PACK/SHIP) or output location (Simple OUT)
             # according to the configuration
@@ -3644,13 +3646,13 @@ class sale_order(osv.osv):
             if self.pool.get('product.product').browse(cr, uid, move_data['product_id']).type == 'service_recep':
                 move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
             
-            if 'sale_line_id' in move_data and move_data['sale_line_id']:
-                sale_line = self.pool.get('sale.order.line').browse(cr, uid, move_data['sale_line_id'], context=context)
-                if sale_line.type == 'make_to_order':
-                    move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
-                    move_data['move_cross_docking_ok'] = True
-                    # Update the stock.picking
-                    self.pool.get('stock.picking').write(cr, uid, move_data['picking_id'], {'cross_docking_ok': True}, context=context)
+        if 'sale_line_id' in move_data and move_data['sale_line_id']:
+            sale_line = self.pool.get('sale.order.line').browse(cr, uid, move_data['sale_line_id'], context=context)
+            if sale_line.type == 'make_to_order':
+                move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+                move_data['move_cross_docking_ok'] = True
+                # Update the stock.picking
+                self.pool.get('stock.picking').write(cr, uid, move_data['picking_id'], {'cross_docking_ok': True}, context=context)
 
         move_data['state'] = 'confirmed'
         return move_data
@@ -3680,14 +3682,19 @@ class sale_order(osv.osv):
         # For IR
         if self.read(cr, uid, ids, ['procurement_request'], context=context):
             procurement_request = self.read(cr, uid, ids, ['procurement_request'], context=context)[0]['procurement_request']
+            location_dest_id = self.read(cr, uid, ids, ['location_requestor_id'], context=context)[0]['location_requestor_id']
             if procurement_request:
-                picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
-                picking_data['type'] = 'internal'
-                picking_data['subtype'] = 'standard'
-                picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
-                pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
-            
-        picking_data['name'] = pick_name        
+                if location_dest_id and self.pool.get('stock.location').browse(cr, uid, location_dest_id[0], context=context).usage in ('supplier', 'customer'):
+                    picking_data['type'] = 'out'
+                    picking_data['subtype'] = 'standard'
+                    picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+                else:
+                    picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
+                    picking_data['type'] = 'internal'
+                    picking_data['subtype'] = 'standard'
+                    picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
+                    pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
+                    picking_data['name'] = pick_name        
         picking_data['flow_type'] = 'full'
         picking_data['backorder_id'] = False
         picking_data['warehouse_id'] = order.shop_id.warehouse_id.id

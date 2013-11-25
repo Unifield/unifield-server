@@ -1281,7 +1281,7 @@ class procurement_order(osv.osv):
         for order in self.browse(cr, uid, ids):
             line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', order.id)])
             for line in self.pool.get('sale.order.line').browse(cr, uid, line_ids):
-                if line.order_id.procurement_request:
+                if line.order_id.procurement_request and line.order_id.location_requestor_id.usage != 'customer':
                     return True
         
         return res
