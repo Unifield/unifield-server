@@ -606,7 +606,7 @@
 
 <!-- Display analytic lines linked to this register line -->
 % if line.fp_analytic_lines:
-% for ana_line in line.fp_analytic_lines:
+% for ana_line in sorted(line.fp_analytic_lines, key=lambda x: x.id):
 <%
 line_color = 'blue'
 if ana_line.is_reallocated:
