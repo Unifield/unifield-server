@@ -3694,7 +3694,7 @@ class sale_order(osv.osv):
                     picking_data['subtype'] = 'standard'
                     picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
                     pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
-                    picking_data['name'] = pick_name        
+        picking_data['name'] = pick_name        
         picking_data['flow_type'] = 'full'
         picking_data['backorder_id'] = False
         picking_data['warehouse_id'] = order.shop_id.warehouse_id.id
