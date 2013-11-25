@@ -417,18 +417,30 @@ class stock_picking(osv.osv):
         # Re-source the sale.order.line
         fo_line = {}
         fo_ids = set()
+        line_to_resource = set()
         for pick in self.browse(cr, uid, ids, context=context):
-            if pick.has_to_be_resourced:
-                for move in pick.move_lines:
-                    if move.sale_line_id:
-                        fo_ids.add(move.sale_line_id.order_id.id)
-                        fo_line.setdefault(move.sale_line_id.id, 0.00)
-                        fo_line[move.sale_line_id.id] += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
+            for move in pick.move_lines:
+                if move.sale_line_id:
+                    fo_ids.add(move.sale_line_id.order_id.id)
+                    fo_line.setdefault(move.sale_line_id.id, 0.00)
+                    fo_line[move.sale_line_id.id] += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
+                    if pick.has_to_be_resourced:
+                        line_to_resource.add(move.sale_line_id.id)
 
         for fol_id, fol_qty in fo_line.iteritems():
             fol = sol_obj.browse(cr, uid, fol_id, context=context)
-            sol_obj.add_resource_line(cr, uid, fol_id, fol.order_id.id, fol_qty, context=context)
+            if fol_id in line_to_resource:
+                sol_obj.add_resource_line(cr, uid, fol_id, fol.order_id.id, fol_qty, context=context)
 
+            # Delete the original FO line if the resourced qty is larger
+            # or equal to the original FO line qty
+            # If the resourced qty is smaller than the original FO line qty,
+            # update the FO line qty
+            if fol.product_uom_qty <= fol_qty:
+                sol_obj.write(cr, uid, fol.id, {'state': 'cancel'}, context=context)
+                sol_obj.unlink(cr, uid, fol.id, context=context)
+            else:
+                sol_obj.write(cr, uid, [fol.id], {'product_uom_qty': fol.product_uom_qty - fol_qty}, context=context)
         
         # Run the signal 'ship_corrected' to the FO
         for fo in fo_ids:

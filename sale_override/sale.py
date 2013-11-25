@@ -1325,7 +1325,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if not context:
+        if context is None:
             context = {}
 
         for line in self.browse(cr, uid, ids, context=context):
@@ -1345,8 +1345,10 @@ class sale_order_line(osv.osv):
         # Documents
         order_obj = self.pool.get('sale.order')
         ad_obj = self.pool.get('analytic.distribution')
+        data_obj = self.pool.get('ir.model.data')
 
-        context = context or {}
+        if context is None:
+            context = {}
 
         if isinstance(line, (int, long)):
             line = self.browse(cr, uid, line, context=context)
@@ -1374,6 +1376,11 @@ class sale_order_line(osv.osv):
 
         order_name = self.pool.get('sale.order').read(cr, uid, [order_id], ['name'], context=context)[0]['name']
 
+        if line.order_id and line.order_id.procurement_request:
+            view_id = data_obj.get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1]
+        else:
+            view_id = data_obj.get_object_reference(cr, uid, 'sale', 'view_order_form')[1]
+        context.update({'view_id': view_id})
         self.pool.get('sale.order').log(cr, uid, order_id, _('A line was added to the Field Order %s to re-source the canceled line.')%(order_name), context=context)
 
         return line_id

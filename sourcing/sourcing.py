@@ -1175,8 +1175,12 @@ class sale_order_line(osv.osv):
         
         remove manually all linked sourcing_line
         '''
-        if not context:
+        if context is None:
             context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         context.update({'fromSaleOrderLine': True})
         idsToDelete = []
         for orderLine in self.browse(cr, uid, ids, context):
