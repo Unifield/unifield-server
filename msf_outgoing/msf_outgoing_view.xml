@@ -332,8 +332,11 @@
 							<group col="14" colspan="4">
                                 <field name="state" readonly="1"/>
                                 <field name="line_state" readonly="1" attrs="{'invisible': [('state', '!=', 'draft')]}" nolabel="1" />
-								<field name="flow_type" />
-                                <button name="call_cancel_wizard" type="object" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"/>
+                                <field name="flow_type" />
+                                <group colspan="1" col="1">
+                                    <button name="call_cancel_wizard" type="object" states="draft" string="_Cancel Picking" icon="gtk-cancel"/>
+                                    <button name="button_cancel" states="assigned,confirmed" string="_Cancel Picking" icon="gtk-cancel"/>
+                                </group>
                                 <field name="has_draft_moves" invisible="1" />
                                 <button name="action_confirm_moves" states="draft" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': [('has_draft_moves', '=', False)]}"/>
 								<button name="action_assign" states="draft,confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>

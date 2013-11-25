@@ -422,6 +422,10 @@ class stock_picking(osv.osv):
         fo_ids = set()
         line_to_resource = set()
         for pick in self.browse(cr, uid, ids, context=context):
+            # Don't delete lines if an Available PT is canceled
+            if pick.type == 'out' and pick.subtype == 'picking' and pick.state != 'draft':
+                continue
+
             for move in pick.move_lines:
                 if move.sale_line_id:
                     fo_ids.add(move.sale_line_id.order_id.id)
