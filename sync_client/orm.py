@@ -302,7 +302,7 @@ SELECT res_id, touched
             touch(
                 self.get_sd_ref(cr, uid, ids, field='id',
                     context=context).values(),
-                whole_fields)
+                whole_fields+['id'])
             # handle one2many
             o2m_fields = filter_o2m(whole_fields)
             # handle one2many (because orm don't call write() on them)
