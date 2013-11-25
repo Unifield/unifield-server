@@ -265,6 +265,7 @@
                     <field name="name"/>
                     <field name="budget_amount" digits="(24,0)"/>
                     <field name="actual_amount" digits="(24,0)"/>
+                    <field name="balance_amount" digits="(24,0)"/>
                     <field name="parent_id" invisible="1"/>
                 </tree>
             </field>
