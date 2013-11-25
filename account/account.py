@@ -1398,6 +1398,16 @@ class account_move(osv.osv):
 
         return True
 
+    def _hook_check_move_line(self, cr, uid, move_line, context=None):
+        """
+        Some checks on move line
+        """
+        if not context:
+            context = {}
+        if not move_line:
+            return False
+        return True
+
     #
     # Validate a balanced move. If it is a centralised journal, create a move.
     #
@@ -1429,6 +1439,8 @@ class account_move(osv.osv):
             line_draft_ids = []
             company_id = None
             for line in move.line_id:
+                # Hook to check line
+                self._hook_check_move_line(cr, uid, line, context=context)
                 amount += line.debit - line.credit
                 line_ids.append(line.id)
                 if line.state=='draft':
