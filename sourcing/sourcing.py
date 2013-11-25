@@ -39,6 +39,7 @@ _SELECTION_PO_CFT = [
                      ('po', 'Purchase Order'),
                      ('dpo', 'Direct Purchase Order'),
                      ('cft', 'Tender'),
+                     ('rfq', 'Request for Quotation'),
                      ]
 
 class sourcing_line(osv.osv):
