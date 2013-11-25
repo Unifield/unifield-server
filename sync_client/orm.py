@@ -286,7 +286,7 @@ SELECT res_id, touched
                     if isinstance(self._all_columns[f].column, fields.one2many)]
 
         # read current values
-        whole_fields = self._all_columns.keys() \
+        whole_fields = [x for x in self._all_columns if not self._all_columns[x].column._properties or self._all_columns[x].column._classic_write] \
             if previous_values is None \
             else previous_values[0].keys()
         try:
