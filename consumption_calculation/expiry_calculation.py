@@ -503,6 +503,12 @@ class product_likely_expire_report(osv.osv):
             res['fields']['line_ids']['views']['tree']['arch'] = line_view
              
         return res
+        
+    def open_report(self, cr, uid, ids, context=None):
+        '''
+        Open the report
+        '''
+        return {}
                 
 product_likely_expire_report()
 

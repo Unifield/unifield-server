@@ -73,6 +73,39 @@
                   sequence="-10"
     			  parent="menu_warehouse_expiry" />
     			  
+        <record id="product_likely_expire_report_search_view" model="ir.ui.view">
+            <field name="name">product.likely.expire.report.search.view</field>
+            <field name="model">product.likely.expire.report</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Products likely to expire">
+                    <field name="requestor_id" />
+                    <filter domain="[('requestor_id', '=', uid)]" icon="terp-personal" help="My requests" />
+                    <field name="requestor_date" />
+                </search>
+            </field>
+        </record>
+
+        <record id="product_likely_expire_report_tree_view" model="ir.ui.view">
+            <field name="name">product.likely.expire.report.tree.view</field>
+            <field name="model">product.likely.expire.report</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Products likely to expire" noteditable="1" colors="grey:status=='in_progress';green:status=='ready'">
+                    <field name="date_from" />
+                    <field name="date_to" />
+                    <field name="only_non_zero" />
+                    <field name="consumption_type" />
+                    <field name="consumption_from" />
+                    <field name="consumption_to" />
+                    <field name="location_id" />
+                    <button name="in_progress" type="object" icon="gtk-refresh" string="In Progress" attrs="{'invisible': [('status', '!=', 'in_progress')]}" />
+                    <button name="open_report" type="object" icon="terp-check" string="Open report" attrs="{'invisible': [('status', '!=', 'ready')]}"/>
+                    <field name="fake_status" />
+                    <field name="status" invisible="1" />
+                </tree>
+            </field>
+        </record>
     			  
     	<record id="product_likely_expire_report_form_init" model="ir.ui.view">
     		<field name="name">product.likely.expire.report.form.init</field>
@@ -94,9 +127,9 @@
 				<newline />
 				<field name="input_output_ok" attrs="{'invisible': [('location_id', '!=', False)]}" />
     				<separator colspan="4" string="Actions" />
-    				<button special="cancel" string="Cancel" colspan="2" icon="gtk-cancel" />
     				<button name="process_lines" string="Process" type="object" colspan="2" icon="gtk-execute" />
-    			</form>
+                    <label string="" /><label string="" />
+                </form>
     		</field>
     	</record>
     	
@@ -130,6 +163,8 @@
     		</field>
     	</record> 
     
+        <!--
+        !!! TO-DO remove
     	<record id="action_products_to_expire" model="ir.actions.act_window">
     		<field name="name">Products likely to expire</field>
     		<field name="res_model">product.likely.expire.report</field>
@@ -137,6 +172,14 @@
     		<field name="view_mode">form</field>
     		<field name="target">new</field>
     	</record>
+        -->
+        <record id="action_products_to_expire" model="ir.actions.act_window">
+            <field name="name">Products likely to expire</field>
+            <field name="res_model">product.likely.expire.report</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="target"></field>
+        </record>
     	
     	<menuitem id="menu_products_to_expire"
     			  action="action_products_to_expire"
