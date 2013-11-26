@@ -3393,7 +3393,7 @@ class stock_move(osv.osv):
 
             if pick_type == 'in' and move.purchase_line_id:
                 pol_ids.append(move.purchase_line_id.id)
-            elif pick_type == 'internal' and mnove.sale_line_id:
+            elif pick_type == 'internal' and move.sale_line_id:
                 # TODO : Needs UoM calculation
                 diff_qty = move.sale_line_id.product_uom_qty - (move.sale_line_id.product_uom_qty - move.product_qty)
                 sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
@@ -3410,8 +3410,8 @@ class stock_move(osv.osv):
         for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
             if proc.state == 'draft':
                 wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_confirm', cr)
-            else:
-                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
+#            else:
+#                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
         
         return res
 
