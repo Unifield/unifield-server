@@ -97,6 +97,7 @@ class msf_instance(osv.osv):
     
     _defaults = {
         'state': 'draft',
+        'current_instance_level': 'section', # UTP-941 set the default value to section, otherwise all fields in the new form are readonly
     }
 
     def button_cost_center_wizard(self, cr, uid, ids, context=None):
@@ -263,8 +264,8 @@ class msf_instance(osv.osv):
                     
                 if 'target_cost_center_ids' in res['fields']:
                     arch = res['fields']['target_cost_center_ids']['views']['tree']['arch']
-                    if 'hide_new_button="PROP_INSTANCE_HIDE_BUTTON"' in arch:
-                        res['fields']['target_cost_center_ids']['views']['tree']['arch'] = arch.replace('hide_delete_button="PROP_INSTANCE_HIDE_BUTTON"', 'hide_delete_button="1"')
+                    if 'hide_delete_button="PROP_INSTANCE_HIDE_BUTTON"' in arch:
+                        res['fields']['target_cost_center_ids']['views']['tree']['arch'] = arch.replace('hide_delete_button="PROP_INSTANCE_HIDE_BUTTON"', 'hide_delete_button="1" noteditable="1"')
             else:
                 if res['type'] == 'form' and 'hide_new_button="PROP_INSTANCE_HIDE_BUTTON"' in res['arch']:
                     res['arch'] = res['arch'].replace('hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"', '')
