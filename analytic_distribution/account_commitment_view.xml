@@ -65,7 +65,7 @@
             <field name="model">account.commitment.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Commitment Voucher Lines" editable="top" colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')">
+                <tree string="Commitment Voucher Lines" editable="top" colors="red:analytic_distribution_state == 'invalid'">
                     <field name="account_id" domain="[('type', '!=', 'view'), ('user_type.code', '=', 'expense')]"/>
                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context"/>
                     <field name="analytic_distribution_state"/>
@@ -103,6 +103,23 @@
             </field>
         </record>
 
+        <record id="import_commitment_wizard_view" model="ir.ui.view">
+            <field name="name">Import Intl Commitments</field>
+            <field name="model">import.commitment.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Intl Commitments">
+                    <label string="Select a .CSV file to import." align="0.0" colspan="3"/>
+                    <field name="import_file"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                        <button name="import_csv_commitment_lines" string="Import" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
     <!-- Commitment Voucher Actions -->
         <record model="ir.actions.act_window" id="action_account_commitment_tree">
             <field name="res_model">account.commitment</field>
@@ -135,10 +152,21 @@
             <field eval="True" name="object"/>
         </record>
 
+        <record id="action_import_commitment_wizard" model="ir.actions.act_window">
+            <field name="name">Import Intl Commitments</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">import.commitment.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="import_commitment_wizard_view"/>
+            <field name="target">new</field>
+        </record>
+
     <!-- Menu -->
         <menuitem id="menu_commitment" name="Commitments" parent="account.menu_finance" sequence="4"/>
         <menuitem name="Commitment Voucher" action="action_account_commitment_tree" id="menu_commitment_entries" parent="menu_commitment" sequence="1"/>
         <menuitem name="Commitment Lines" action="action_engagement_line_tree" id="menu_engagement_lines" parent="menu_commitment" sequence="2"/>
+        <menuitem name="Import Intl Commitments" action="action_import_commitment_wizard" id="menu_import_commitment" parent="menu_commitment" sequence="3"/>
 
     </data>
 </openerp>

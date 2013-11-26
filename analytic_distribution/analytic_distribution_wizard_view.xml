@@ -109,7 +109,7 @@
                             <field colspan="4" name="f2_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                         </group>
                     </group>
-                    <group colspan="4">
+                    <group colspan="4" attrs="{'invisible': [('state', '=', 'correction')]}">
                         <label string="" colspan="2"/>
                         <button name="button_cancel" string='Cancel' type='object' icon='gtk-cancel' colspan="1"/>
                         <button name="button_confirm" string="Save" type="object" icon="gtk-ok" colspan="1" attrs="{'readonly': [('is_writable', '=', False)]}"/>
@@ -157,6 +157,8 @@
                     <label string="- Items already reallocated" align="0.0"/>
                     <newline/>
                     <label string="- Reversals" align="0.0"/>
+                    <newline/>
+                    <label string="- Items from engagement journal" align="0.0"/>
                     <newline/>
                     <label string="- Write-off" align="0.0"/>
                     <newline/>

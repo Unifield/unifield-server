@@ -473,10 +473,11 @@ class kit_creation(osv.osv):
         data = {}
         # moves consolidated
         move_list = []
+        move_manual = []
         
         for move in obj.consumed_ids_kit_creation:
             # the stock move should not be canceled, but... we recycle them in case.
-            if move.state in ['confirmed', 'cancel']:
+            if move.state in ['confirmed', 'cancel'] and not move.kol_lot_manual:
                 move_list.append(move.id)
                 # consolidate the moves qty
                 qty = data.setdefault(move.product_id.id, {}).setdefault('uoms', {}).setdefault(move.product_uom.id, {}).setdefault('qty', 0.0)
@@ -489,8 +490,10 @@ class kit_creation(osv.osv):
                 data.setdefault(move.product_id.id, {}).setdefault('uoms', {})[move.product_uom.id]['qty'] = qty
                 # save object for efficiency
                 data.setdefault(move.product_id.id, {}).setdefault('object', move.product_id)
+            elif move.kol_lot_manual:
+                move_manual.append(move.id)
         
-        return data, move_list
+        return data, move_list, move_manual
     
     def consolidate_lines(self, cr, uid, ids, context=None):
         '''
@@ -510,7 +513,7 @@ class kit_creation(osv.osv):
         
         for obj in self.browse(cr, uid, ids, context=context):
             # consolidate data
-            data, move_list = self._consolidate_data(cr, uid, obj.id, context=context)
+            data, move_list, move_manual = self._consolidate_data(cr, uid, obj.id, context=context)
             # delete stock moves
             move_obj.unlink(cr, uid, move_list, context=dict(context, call_unlink=True))
             # default location
@@ -561,16 +564,41 @@ class kit_creation(osv.osv):
         loc_obj = self.pool.get('stock.location')
         prodlot_obj = self.pool.get('stock.production.lot')
         data_tools_obj = self.pool.get('data.tools')
+        uom_obj = self.pool.get('product.uom')
         # load data into the context
         data_tools_obj.load_common_data(cr, uid, ids, context=context)
         
         for obj in self.browse(cr, uid, ids, context=context):
             # consolidate data
-            data, move_list = self._consolidate_data(cr, uid, obj.id, context=context)
-            # delete stock moves
-            move_obj.unlink(cr, uid, move_list, context=dict(context, call_unlink=True))
+            data, move_list, move_manual = self._consolidate_data(cr, uid, obj.id, context=context)
             # default location
             default_location_id = obj.default_location_src_id_kit_creation.id
+
+            # Check availability of manual moves
+            for move in move_obj.browse(cr, uid, move_manual, context=context):
+                if move.state != 'confirmed' or not move.prodlot_id:
+                    continue
+
+                location_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', move.location_id.id)], context=context)
+                needed_qty = move.product_qty
+                for loc in location_ids:
+                    available_qty = prodlot_obj.browse(cr, uid, move.prodlot_id.id, context=dict(context, location_id=loc)).stock_virtual
+                    diff_qty = available_qty - uom_obj._compute_qty(cr, uid, move.product_uom.id, needed_qty, move.product_id.uom_id.id)
+                    if diff_qty >= 0:
+                        move_obj.write(cr, uid, [move.id], {'state': 'assigned'}, context=context)
+                        break
+                    else:
+                        if available_qty:
+                            move_obj.copy(cr, uid, move.id, {'product_qty': available_qty, 'state': 'assigned'}, context=context)
+                        needed_qty -= available_qty
+                        move_obj.write(cr, uid, [move.id], {'product_qty': needed_qty}, context=context)
+                else:
+                    move_obj.write(cr, uid, [move.id], {'prodlot_id': False, 'kol_lot_manual': False}, context=context)
+
+            data, move_list, move_manual = self._consolidate_data(cr, uid, obj.id, context=context)
+            # delete stock moves
+            move_obj.unlink(cr, uid, move_list, context=dict(context, call_unlink=True))
+
             # create consolidated stock moves
             for product_id in data.keys():
                 for uom_id in data[product_id]['uoms'].keys():
@@ -1250,6 +1278,7 @@ class stock_move(osv.osv):
                 'hidden_creation_state': fields.function(_vals_get_kit_creation, method=True, type='selection', selection=KIT_CREATION_STATE, string='Hidden Creation State', multi='get_vals_kit_creation', store=False, readonly=True),
                 'assigned_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='float', string='Assigned Qty', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_creation_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='integer', string='Hidden Creation Qty', multi='get_vals_kit_creation', store=False, readonly=True),
+                'kol_lot_manual': fields.boolean(string='The batch is set manually'),
                 }
     
     _defaults = {'to_consume_id_stock_move': False,
@@ -1273,6 +1302,15 @@ class stock_move(osv.osv):
         # open the selected wizard
         res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context))
         return res
+
+    def kol_prodlot_change(self, cr, uid, ids, prodlot_id, context=None):
+        '''
+        Set a new attribute on stock move if the prodolt is change manually in the Kit order creation
+        '''
+        if prodlot_id:
+            return {'value': {'kol_lot_manual': True}}
+
+        return {'value': {'kol_lot_manual': False}}
     
     def automatic_assignment(self, cr, uid, ids, context=None):
         '''

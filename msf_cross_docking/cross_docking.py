@@ -590,11 +590,11 @@ class stock_move(osv.osv):
             ret = self.write(cr, uid, todo, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
             
             # we cancel availability
-            self.cancel_assign(cr, uid, todo, context=context)
+            todo = self.cancel_assign(cr, uid, todo, context=context)
             # we rechech availability
             self.action_assign(cr, uid, todo)
             #FEFO
-            self.fefo_update(cr, uid, ids, context)
+            self.fefo_update(cr, uid, todo, context)
             # below we cancel availability to recheck it
 #            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
 #            picking_todo.append(stock_picking_id)
@@ -639,7 +639,7 @@ class stock_move(osv.osv):
 
         if todo:
             # we cancel availability
-            self.cancel_assign(cr, uid, todo, context=context)
+            todo = self.cancel_assign(cr, uid, todo, context=context)
             # we rechech availability
             self.action_assign(cr, uid, todo)
             

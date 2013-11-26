@@ -53,6 +53,18 @@ class account_commitment(osv.osv):
                 res[co.id] += line.amount
         return res
 
+    def _get_cv(self, cr, uid, ids, context=None):
+        """
+        Get CV linked to given lines
+        """
+        res = []
+        if not context:
+            context = {}
+        for cvl in self.pool.get('account.commitment.line').browse(cr, uid, ids):
+            if not cvl.commit_id in res:
+                res.append(cvl.commit_id.id)
+        return res
+
     _columns = {
         'journal_id': fields.many2one('account.analytic.journal', string="Journal", readonly=True, required=True),
         'name': fields.char(string="Number", size=64, readonly=True, required=True),
@@ -62,7 +74,10 @@ class account_commitment(osv.osv):
         'state': fields.selection([('draft', 'Draft'), ('open', 'Validated'), ('done', 'Done')], readonly=True, string="State", required=True),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
-        'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total"),
+        'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total", 
+            store={
+                'account.commitment.line': (_get_cv, ['amount'],10),
+        }),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'type': fields.selection([('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Manual - ESC supplier')], string="Type", readonly=True),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),

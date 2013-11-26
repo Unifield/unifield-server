@@ -122,7 +122,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         ml = wizard.move_line_id
         orig_date = ml.source_date or ml.date
         orig_document_date = ml.document_date
-        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction')])
+        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
         correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
         if not correction_journal_id:
             raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
@@ -190,8 +190,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'distribution_id': distrib_id,
                     'currency_id': ml and  ml.currency_id and ml.currency_id.id or company_currency_id,
                 })
-            # create the ana line
-            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date)
+            # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
+            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=orig_date, document_date=orig_document_date, source_date=orig_date)
 
         for line in to_delete:
             # delete distrib line
@@ -204,11 +204,12 @@ class analytic_distribution_wizard(osv.osv_memory):
             # reverse the line
             to_reverse_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
             # UTP-943: Set wizard date as date for REVERSAL AND CORRECTION lines
-            rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids, posting_date=wizard.date)
+            reversed_ids = self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids[0], posting_date=wizard.date)
+            # Add reversal origin link (to not loose it). last_corrected_id is to prevent case where you do a reverse a line that have been already corrected
             # UTP-943: Add correction journal on it
-            self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'journal_id': correction_journal_id})
+            self.pool.get('account.analytic.line').write(cr, uid, [reversed_ids[0]], {'reversal_origin': to_reverse_ids[0], 'last_corrected_id': False, 'journal_id': correction_journal_id})
             # Mark old lines as non reallocatable (ana_ids): why reverse() don't set this flag ?
-            self.pool.get('account.analytic.line').write(cr, uid, to_reverse_ids, {'is_reallocated': True,})
+            self.pool.get('account.analytic.line').write(cr, uid, [to_reverse_ids[0]], {'is_reallocated': True,})
             # update the distrib line
             name = False
             if to_reverse_ids:
@@ -228,9 +229,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if cp.state != 'draft':
                     raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
             # Create the new ana line
-            cor_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name)
-            for distrib_id in cor_ids:
-                self.pool.get('account.analytic.line').write(cr, uid, [cor_ids[distrib_id]], {'journal_id': correction_journal_id})
+            ret = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name)
+            # Add link to first analytic lines
+            for ret_id in ret:
+                self.pool.get('account.analytic.line').write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id})
 
         for line in to_override:
             # update the ana line
