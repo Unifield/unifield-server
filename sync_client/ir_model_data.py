@@ -33,8 +33,8 @@ class ir_module_module(osv.osv):
     _inherit = 'ir.module.module'
 
     def check(self, cr, uid, ids, context=None):
-        for module in self.browse(cr, uid, ids, context=context):
-            if module.name == 'sync_client' and module.state in ('to install', 'to upgrade'):
+        if ids and \
+            self.search(cr, uid, [('id', 'in', ids), ('name', '=', 'sync_client'), ('state', 'in', ['to install', 'to upgrade'])]):
                 self.pool.get('ir.model.data').create_all_sdrefs(cr)
         return super(ir_module_module, self).check(cr, uid, ids, context=context)
 
