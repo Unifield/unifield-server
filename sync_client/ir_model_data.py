@@ -27,27 +27,25 @@ import tools
 
 from sync_common import MODELS_TO_IGNORE, MODELS_TO_IGNORE_DOMAIN, normalize_sdref
 
+
+class ir_module_module(osv.osv):
+    _name = 'ir.module.module'
+    _inherit = 'ir.module.module'
+
+    def check(self, cr, uid, ids, context=None):
+        for module in self.browse(cr, uid, ids, context=context):
+            if module.name == 'sync_client' and module.state in ('to install', 'to upgrade'):
+                self.pool.get('ir.model.data').create_all_sdrefs(cr)
+        return super(ir_module_module, self).check(cr, uid, ids, context=context)
+
+ir_module_module()
+
 class ir_model_data_sync(osv.osv):
     """ ir_model_data with sync date """
 
     _inherit = "ir.model.data"
     _logger = logging.getLogger('ir.model.data')
 
-    def __init__(self, pool, cr):
-        module_obj = pool.get('ir.module.module')
-        original_check = module_obj.check
-
-        def new_check(self, cr, uid, ids, context=None):
-            for module in self.browse(cr, uid, ids, context=context):
-                if module.name == 'sync_client':
-                    self.check = original_check
-                    if module.state in ('to install', 'to upgrade'):
-                        self.pool.get('ir.model.data').create_all_sdrefs(cr)
-            res = original_check(cr, uid, ids, context=None)
-            return res
-
-        setattr(module_obj.__class__, 'check', new_check)
-        super(ir_model_data_sync, self).__init__(pool, cr)
 
     def _get_is_deleted(self, cr, uid, ids, field, args, context=None):
         datas = {}
