@@ -46,7 +46,6 @@
                         </page>
                     </notebook>
                     <field name="state" readonly="1"/>
-                    <button name="button_deactivate" string="Deactivate" type="object" attrs="{'invisible': [('state', '!=', 'active')]}" icon="gtk-cancel" confirm="You are about to deactivate this proprietary instance. This action can not be undone, do you want to proceed?"/>
                     <button name="button_deactivate" string="Deactivate" type="object" attrs="{'invisible': ['|', ('state', '!=', 'active'), ('current_instance_level', '!=', 'section')]}" icon="gtk-cancel" confirm="You are about to deactivate this proprietary instance. This action can not be undone, do you want to proceed?"/>
                     
                 </form>
