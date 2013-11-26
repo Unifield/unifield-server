@@ -243,5 +243,35 @@ class msf_instance(osv.osv):
         self.write(cr, uid, ids, {'state': 'inactive'}, context=context)
         return True
     
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        '''
+        Override the tree view to display historical prices according to context
+        '''
+        if context is None:
+            context = {}
+        res = super(msf_instance, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        
+        if user.company_id and user.company_id.instance_id:
+            current_instance_level = user.company_id.instance_id.current_instance_level
+            
+            if current_instance_level != 'section':
+                if 'hide_new_button="PROP_INSTANCE_HIDE_BUTTON"' in res['arch']:
+                    res['arch'] = res['arch'].replace('hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"', 'hide_duplicate_button="1"')
+                    res['arch'] = res['arch'].replace('hide_delete_button="PROP_INSTANCE_HIDE_BUTTON"', 'hide_delete_button="1"')
+                    res['arch'] = res['arch'].replace('hide_new_button="PROP_INSTANCE_HIDE_BUTTON"', 'hide_new_button="1" noteditable="1" notselectable="0"')
+                    
+                if 'target_cost_center_ids' in res['fields']:
+                    arch = res['fields']['target_cost_center_ids']['views']['tree']['arch']
+                    if 'hide_new_button="PROP_INSTANCE_HIDE_BUTTON"' in arch:
+                        res['fields']['target_cost_center_ids']['views']['tree']['arch'] = arch.replace('hide_delete_button="PROP_INSTANCE_HIDE_BUTTON"', 'hide_delete_button="1"')
+            else:
+                if res['type'] == 'form' and 'hide_new_button="PROP_INSTANCE_HIDE_BUTTON"' in res['arch']:
+                    res['arch'] = res['arch'].replace('hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"', '')
+                    res['arch'] = res['arch'].replace('hide_delete_button="PROP_INSTANCE_HIDE_BUTTON"', '')
+                    res['arch'] = res['arch'].replace('hide_new_button="PROP_INSTANCE_HIDE_BUTTON"', '')
+        return res
+    
+    
 msf_instance()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
