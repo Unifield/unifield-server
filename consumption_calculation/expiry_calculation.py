@@ -183,10 +183,24 @@ class expiry_quantity_report_line(osv.osv_memory):
 expiry_quantity_report_line()
 
 
+LIKELY_EXPIRE_STATUS = [
+    ('draft', 'Draft'),
+    ('in_progress', 'In Progress'),
+    ('ready', 'Ready')
+]
 class product_likely_expire_report(osv.osv):
     _name = 'product.likely.expire.report'
     _description = 'Products list likely to expire'
     _rec_name = 'id'
+    
+    def _get_status(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return the same status as status
+        '''
+        res = {}
+        for r in self.read(cr, uid, ids, ['status'], context=context):
+            res[obj.id] = r['status']
+        return res
     
     _columns = {
         'location_id': fields.many2one('stock.location', string='Location'),
@@ -201,6 +215,10 @@ class product_likely_expire_report(osv.osv):
         'consumption_from': fields.date(string='From'),
         'consumption_to': fields.date(string='To'),
         'only_non_zero': fields.boolean(string='Only products with total expired > 0'),
+        'requestor_id': fields.many2one('res.users', string='Requestor'),
+        'requestor_date': fields.datetime(string='Date of the demand'),
+        'fake_status': fields.function(_get_status, method=True, type='selection', selection=LIKELY_EXPIRE_STATUS, readonly=True, string='Status'),
+        'status': fields.selection(LIKELY_EXPIRE_STATUS, string='Status'),
     }
     
     _defaults = {
@@ -208,6 +226,9 @@ class product_likely_expire_report(osv.osv):
         'consumption_to': lambda *a: time.strftime('%Y-%m-%d'),
         'consumption_type': lambda *a: 'fmc',
         'msf_instance': lambda *a: 'MSF Instance',
+        'requestor_id': lambda obj, cr, uid, c: uid,
+        'requestor_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+        'status': 'draft',
     }
 
     def period_change(self, cr, uid, ids, consumption_from, consumption_to, consumption_type, context=None):
