@@ -183,9 +183,10 @@ class expiry_quantity_report_line(osv.osv_memory):
 expiry_quantity_report_line()
 
 
-class product_likely_expire_report(osv.osv_memory):
+class product_likely_expire_report(osv.osv):
     _name = 'product.likely.expire.report'
     _description = 'Products list likely to expire'
+    _rec_name = 'id'
     
     _columns = {
         'location_id': fields.many2one('stock.location', string='Location'),
@@ -485,8 +486,9 @@ class product_likely_expire_report(osv.osv_memory):
 product_likely_expire_report()
 
 
-class product_likely_expire_report_line(osv.osv_memory):
+class product_likely_expire_report_line(osv.osv):
     _name = 'product.likely.expire.report.line'
+    _rec_name = 'report_id'
     
     _columns = {
             'report_id': fields.many2one('product.likely.expire.report', string='Report', required=True, ondelete='cascade'),
@@ -566,7 +568,7 @@ class product_likely_expire_report_line(osv.osv_memory):
 product_likely_expire_report_line()
 
 
-class product_likely_expire_report_item(osv.osv_memory):
+class product_likely_expire_report_item(osv.osv):
     _name = 'product.likely.expire.report.item'
     
     _columns = {
@@ -581,9 +583,10 @@ class product_likely_expire_report_item(osv.osv_memory):
 product_likely_expire_report_item()
 
 
-class product_likely_expire_report_item_line(osv.osv_memory):
+class product_likely_expire_report_item_line(osv.osv):
     _name = 'product.likely.expire.report.item.line'
     _order = 'expired_date, location_id'
+    _rec_name = 'id'
     
     _columns = {
             'item_id': fields.many2one('product.likely.expire.report.item', strig='Item', ondelete='cascade'),
@@ -591,7 +594,7 @@ class product_likely_expire_report_item_line(osv.osv_memory):
             'location_id': fields.many2one('stock.location', string='Location'),
             'available_qty': fields.float(digits=(16,2), string='Available Qty.'),
             'expired_qty': fields.float(digits=(16,2), string='Expired Qty.'),
-            'expired_date': fields.related('lot_id', 'life_date', type='date', string='Expiry date'),
+            'expired_date': fields.related('lot_id', 'life_date', type='date', string='Expiry date', store=True),
     }
     
 product_likely_expire_report_item_line()
