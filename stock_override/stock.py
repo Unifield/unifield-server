@@ -1043,6 +1043,7 @@ class stock_move(osv.osv):
         'inventory_ids': fields.many2many('stock.inventory', 'stock_inventory_move_rel', 'move_id', 'inventory_id', 'Created Moves'),
         'expired_lot': fields.function(_is_expired_lot, method=True, type='boolean', string='Lot expired', store=False, multi='attribute'),
         'product_tbd': fields.function(_is_expired_lot, method=True, type='boolean', string='TbD', store=False, multi='attribute'),
+        'has_to_be_resourced': fields.boolean(string='Has to be resourced'),
     }
 
     _defaults = {
@@ -1050,7 +1051,28 @@ class stock_move(osv.osv):
         'processed_stock_move': False, # to know if the stock move has already been partially or completely processed
         'inactive_product': False,
         'inactive_error': lambda *a: '',
+        'has_to_be_resourced': False,
     }
+
+    def call_cancel_wizard(self, cr, uid, ids, context=None):
+        '''
+        Call the wizard to ask user if he wants to re-source the need
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, {'move_id': ids[0]}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.move.cancel.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': wiz_id,
+                'context': context}
 
     def force_assign(self, cr, uid, ids, context=None):
         product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
@@ -1775,6 +1797,52 @@ class stock_location_chained_options(osv.osv):
     }
 
 stock_location_chained_options()
+
+
+class stock_move_cancel_wizard(osv.osv_memory):
+    _name = 'stock.move.cancel.wizard'
+
+    _columns = {
+        'move_id': fields.many2one('stock.move', string='Move', required=True),
+    }
+
+    _defaults = {
+        'move_id': lambda self, cr, uid, c: c.get('active_id'),
+    }
+
+    def just_cancel(self, cr, uid, ids, context=None):
+        '''
+        Just call the cancel of stock.move (re-sourcing flag not set)
+        '''
+        # Objects
+        move_obj = self.pool.get('stock.move')
+        pick_obj = self.pool.get('stock.picking')
+
+        wf_service = netsvc.LocalService("workflow")
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            move_obj.action_cancel(cr, uid, [wiz.move_id.id], context=context)
+            if wiz.move_id.picking_id:
+                lines = wiz.move_id.picking_id.move_lines
+                if all(l.state == 'cancel' for l in lines):
+                    wf_service.trg_validate(uid, 'stock.picking', wiz.move_id.picking_id.id, 'button_cancel', cr)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    
+    def cancel_and_resource(self, cr, uid, ids, context=None):
+        '''
+        Call the cancel and resource method of the stock move
+        '''
+        # Objects
+        move_obj = self.pool.get('stock.move')
+
+        move_ids = [x.move_id.id for x in self.browse(cr, uid, ids, context=context)]
+        move_obj.write(cr, uid, move_ids, {'has_to_be_resourced': True}, context=context)
+
+        return self.just_cancel(cr, uid, ids, context=context)
+
+stock_move_cancel_wizard()
 
 
 class stock_picking_cancel_wizard(osv.osv_memory):

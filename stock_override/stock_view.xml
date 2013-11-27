@@ -1111,5 +1111,24 @@
             </field>
         </record>
 
+        <record id="stock_move_cancel_wizard_form_view" model="ir.ui.view">
+            <field name="name">stock.move.cancel.wizard.form.view</field>
+            <field name="model">stock.move.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Cancel move">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">Would you re-source the need sourced by this stock move ?</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" colspan="4" />
+                    <button name="just_cancel" string="No" type="object" icon="gtk-execute" colspan="2" />
+                    <button name="cancel_and_resource" string="Yes" type="object" icon="gtk-execute" colspan="2" />
+                </form>
+            </field>
+        </record>
+
     </data>
 </openerp>

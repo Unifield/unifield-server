@@ -1423,7 +1423,8 @@ class stock_picking(osv.osv):
         # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
         if context.get('from_button'):
             default.update(purchase_id=False)
-        context['not_workflow'] = True
+        if not context.get('wkf_copy'):
+            context['not_workflow'] = True
         result = super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
         
         return result
@@ -2356,7 +2357,10 @@ class stock_picking(osv.osv):
                 else:
                     # Save the state of this stock move to set it before action_assign()
                     moves_states[move.id] = move.state
-                    vals = {'state': 'draft'}
+                    if move.state not in ('cancel', 'done'):
+                        vals = {'state': 'draft'}
+                    else:
+                        valus = {'state': move.state}
                 vals.update({'backmove_id': False})
                 # If the move comes from a DPO, don't change the destination location
                 if not move.dpo_id:
@@ -2537,6 +2541,7 @@ class stock_picking(osv.osv):
             # a sequence for each draft picking ticket is used for the picking ticket
             sequence = pick.sequence_id
             ticket_number = sequence.get_id(test='id', context=context)
+            context['wkf_copy'] = True
             new_pick_id = self.copy(cr, uid, pick.id, {'name': (pick.name or 'NoName/000') + '-' + ticket_number,
                                                        'backorder_id': pick.id,
                                                        'move_lines': []}, context=dict(context, allow_copy=True,))
@@ -2566,6 +2571,7 @@ class stock_picking(osv.osv):
                               'prodlot_id': partial['prodlot_id'],
                               'asset_id': partial['asset_id'],
                               'composition_list_id': partial['composition_list_id'],
+                              'pt_created': True,
                               'backmove_id': move.id}
                     #add hook
                     values = self.do_create_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
@@ -3059,16 +3065,17 @@ class stock_picking(osv.osv):
                 for move in picking.move_lines:
                     # find the corresponding move in draft
                     draft_move = move.backmove_id
-                    # increase the draft move with the move quantity
-                    initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
-                    initial_qty += move.product_qty
-                    move_obj.write(cr, uid, [draft_move.id], {'product_qty': initial_qty}, context=context)
-                    # log the increase action
-                    # TODO refactoring needed
-                    obj_data = self.pool.get('ir.model.data')
-                    res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-                    context.update({'view_id': res, 'picking_type': 'picking_ticket'})
-                    self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.backorder_id.name,), context=context)
+                    if draft_move:
+                        # increase the draft move with the move quantity
+                        initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
+                        initial_qty += move.product_qty
+                        move_obj.write(cr, uid, [draft_move.id], {'product_qty': initial_qty}, context=context)
+                        # log the increase action
+                        # TODO refactoring needed
+                        obj_data = self.pool.get('ir.model.data')
+                        res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
+                        context.update({'view_id': res, 'picking_type': 'picking_ticket'})
+                        self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.backorder_id.name,), context=context)
                     
             if picking.subtype == 'packing':
                 # for each packing we get the draft packing
@@ -3357,7 +3364,20 @@ class stock_move(osv.osv):
                 'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
                 'location_output_id': fields.many2one('stock.location', string='Output location'),
                 'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice line'),
+                'pt_created': fields.boolean(string='PT created'),
                 }
+
+    def copy(self, cr, uid, id, values=None, context=None):
+        if context is None:
+            context = {}
+
+        if values is None:
+            values = {}
+
+        if not 'pt_created' in values:
+            values['pt_created'] = False
+
+        return super(stock_move, self).copy(cr, uid, id, values, context=context)
 
     def action_cancel(self, cr, uid, ids, context=None):
         '''
@@ -3365,6 +3385,7 @@ class stock_move(osv.osv):
         '''
         pol_obj = self.pool.get('purchase.order.line')
         sol_obj = self.pool.get('sale.order.line')
+        uom_obj = self.pool.get('product.uom')
         
         # purchase order line to re-source
         pol_ids = []
@@ -3383,7 +3404,7 @@ class stock_move(osv.osv):
             if not move.picking_id:
                 continue
 
-            if not move.picking_id.has_to_be_resourced:
+            if not move.has_to_be_resourced and not move.picking_id.has_to_be_resourced:
                 continue
 
             if move.state == 'cancel':
@@ -3393,10 +3414,11 @@ class stock_move(osv.osv):
 
             if pick_type == 'in' and move.purchase_line_id:
                 pol_ids.append(move.purchase_line_id.id)
-            elif pick_type == 'internal' and move.sale_line_id:
-                # TODO : Needs UoM calculation
+            elif pick_type in ('internal', 'out') and move.sale_line_id:
                 diff_qty = move.sale_line_id.product_uom_qty - (move.sale_line_id.product_uom_qty - move.product_qty)
-                sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
+                diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, diff_qty, move.sale_line_id.product_uom.id)
+                if move.has_to_be_resourced:
+                    sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
 
         res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
         
