@@ -45,6 +45,8 @@
                             <field name="date" select="2"/>
                         </page>
                         <page string="Cost centers" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
+                        	<button name="button_cc_clear" type="object" string="Remove all" icon="gtk-clear" colspan="1"/>
+                            <separator/>
                             <field name="cost_center_ids" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]">
                                 <tree string="Cost Centers" >
                                     <field name="code"/>
@@ -53,6 +55,8 @@
                             </field>
                         </page>
                         <page string="Destinations" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
+                        	<button name="button_dest_clear" type="object" string="Remove all" icon="gtk-clear" colspan="1"/>
+                            <separator/>
                             <field name="tuple_destination_account_ids" nolabel="1" context="{'dest_in_use':tuple_destination_account_ids}"/>
                         </page>
                         <page string="Destinations by accounts" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">

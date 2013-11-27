@@ -410,6 +410,20 @@ class analytic_account(osv.osv):
                 if contract.state in ['soft_closed', 'hard_closed']:
                     res.append(aa.id)
         return res
+    
+    
+    
+    def button_cc_clear(self, cr, uid, ids, context=None):
+        vals = {'cost_center_ids':[(6, 0, [])]}
+        self.write(cr, uid, ids, {'cost_center_ids':[(6, 0, [])]}, context=context )
+        return True
 
+
+    def button_dest_clear(self, cr, uid, ids, context=None):
+        vals = {'tuple_destination_account_ids':[(6, 0, [])]}
+        self.write(cr, uid, ids, vals, context=context )
+        return True
+
+        #account = self.browse(cr, uid, ids, context=context)
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
