@@ -218,7 +218,13 @@ class supplier_catalogue(osv.osv):
         Reset to draft the catalogue
         '''
         ids = isinstance(ids, (int, long)) and [ids] or ids
+        line_obj = self.pool.get('supplier.catalogue.line')
         self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+
+        line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
+        # Update lines
+        line_obj.write(cr, uid, line_ids, {}, context=context)
+
 
         return True
     
@@ -740,6 +746,14 @@ class supplier_catalogue_line(osv.osv):
                                  'rounding': new_vals.get('rounding', line.rounding),
                                  'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty),})
                 new_vals = self._create_supplier_info(cr, uid, new_vals, context=context)
+            elif cat_state == 'draft':
+                context.update({'product_change': True})
+                if line.partner_info_id:
+                    self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=context)
+                if line.supplier_info_id and len(line.supplier_info_id.pricelist_ids) == 0:
+                    # Remove the supplier info
+                    self.pool.get('product.supplierinfo').unlink(cr, uid, line.supplier_info_id.id, context=context)
+                context.update({'product_change': False})
         
             res = super(supplier_catalogue_line, self).write(cr, uid, [line.id], new_vals, context=context)
 
