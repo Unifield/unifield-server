@@ -2360,7 +2360,7 @@ class stock_picking(osv.osv):
                     if move.state not in ('cancel', 'done'):
                         vals = {'state': 'draft'}
                     else:
-                        valus = {'state': move.state}
+                        vals = {'state': move.state}
                 vals.update({'backmove_id': False})
                 # If the move comes from a DPO, don't change the destination location
                 if not move.dpo_id:
@@ -2410,11 +2410,8 @@ class stock_picking(osv.osv):
             # trigger workflow (confirm picking)
             self.draft_force_assign(cr, uid, [new_pick_id or obj.id])
 
-            # Incompatibility between UF-2134 and UTP-833 : The PT move should 
-            # be done if PT move has no quantity because the UTP-833 allows
-            # the convert to standard even if there are flows in P/P/S
-#            for s in moves_states:
-#                self.pool.get('stock.move').write(cr, uid, moves_states[s], {'state': s}, context=context)
+            for s in moves_states:
+                self.pool.get('stock.move').write(cr, uid, s, {'state': moves_states[s]}, context=context)
 
             # check availability
             self.action_assign(cr, uid, [new_pick_id or obj.id], context=context)

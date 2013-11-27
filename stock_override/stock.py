@@ -1064,6 +1064,10 @@ class stock_move(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        backmove_ids = self.search(cr, uid, [('backmove_id', 'in', ids)], context=context)
+        if backmove_ids:
+            raise osv.except_osv(_('Error'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
+
         wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, {'move_id': ids[0]}, context=context)
 
         return {'type': 'ir.actions.act_window',
