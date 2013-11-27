@@ -47,7 +47,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
-<Font ss:Bold="1"/>
 </Style>
 <Style ss:ID="ssBorderDate">
 <Alignment ss:Vertical="Center" ss:WrapText="1"/>
@@ -71,7 +70,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
-<Table ss:ExpandedColumnCount="19" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1" x:FullRows="1">
+<!-- We get the length objects. We add Grand Total and columns header (2) and we add all subtotals for each account_id.code (so we sort objects, retrieve unique account_id.code and calculate the number of them). Which give the ExpandedRowCount value. -->
+<Table ss:ExpandedColumnCount="19" ss:ExpandedRowCount="${len(objects)+len(set([x.account_id and x.account_id.code for x in sorted(objects, key=lambda x: x.account_id and x.account_id.code)]))+2}" x:FullColumns="1" x:FullRows="1">
 % for x in range(0,19):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor

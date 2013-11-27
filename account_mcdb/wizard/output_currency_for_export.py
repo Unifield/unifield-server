@@ -48,7 +48,7 @@ class output_currency_for_export(osv.osv_memory):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Remove export_format
+        Remove export_format for FREE1/FREE2 analytic accounts because it has no sens.
         """
         view = super(output_currency_for_export, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         if view_type == 'form' and context and context.get('active_ids', False) and context.get('from', False):
@@ -143,7 +143,6 @@ class output_currency_for_export(osv.osv_memory):
             report_name += '_csv'
         elif choice == 'xls':
             report_name += '_xls'
-
 
         return {
             'type': 'ir.actions.report.xml',
