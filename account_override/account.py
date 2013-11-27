@@ -76,13 +76,13 @@ class account_account(osv.osv):
             that could be attached. For an example make the account to be a transfer type will display only registers to the user in the Cash Register 
             when he add a new register line.
             """),
-        'is_settled_at_hq': fields.boolean("Settled at HQ"),
+        'shrink_entries_for_hq': fields.boolean("Shrink entries for HQ export", help="Check this attribute if you want to consolidate entries on this account before they are exported to the HQ system."),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
     }
 
     _defaults = {
         'type_for_register': lambda *a: 'none',
-        'is_settled_at_hq': lambda *a: False,
+        'shrink_entries_for_hq': lambda *a: True,
     }
 
     # UTP-493: Add a dash between code and account name
@@ -189,6 +189,19 @@ class account_move(osv.osv):
                     continue
                 raise osv.except_osv(_('Error'), _('Posting date should be include in defined Period%s.') % (m.period_id and ': ' + m.period_id.name or '',))
         return True
+
+    def _hook_check_move_line(self, cr, uid, move_line, context=None):
+        """
+        Check date on move line. Should be the same as Journal Entry (account.move)
+        """
+        if not context:
+            context = {}
+        res = super(account_move, self)._hook_check_move_line(cr, uid, move_line, context=context)
+        if not move_line:
+            return res
+        if move_line.date != move_line.move_id.date:
+            raise osv.except_osv(_('Error'), _("Journal item does not have same posting date (%s) as journal entry (%s).") % (move_line.date, move_line.move_id.date))
+        return res
 
     def create(self, cr, uid, vals, context=None):
         """

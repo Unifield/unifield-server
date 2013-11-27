@@ -67,7 +67,7 @@
     reference_type: none
     type: in_invoice
     analytic_distribution_id: global_distrib_1
-    date_invoice: !eval datetime.today().strftime('%Y-%m-%d')
+    date_invoice: !eval time.strftime('%Y-%m-%d')
 -
   Then I add an invoice line in order it takes analytic distribution from invoice
 -

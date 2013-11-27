@@ -240,7 +240,8 @@ class product_asset(osv.osv):
                  'arrival_date': lambda *a: time.strftime('%Y-%m-%d'),
                  'receipt_place': 'Country/Project/Activity',
     }
-    _sql_constraints = [('name_uniq', 'unique(name, instance_id)', 'Asset Code must be unique per instance!'),
+    # UF-2148: use this constraint with 3 attrs: name, prod and instance 
+    _sql_constraints = [('asset_name_uniq', 'unique(name, product_id, instance_id)', 'Asset Code must be unique per instance and per product!'),
                         ]
     _order = 'name desc'
     
@@ -416,6 +417,12 @@ class product_product(osv.osv):
         # fetch the product
         if 'type' in vals and vals['type'] != 'product':
             vals.update(subtype='single')
+            
+            
+        #UF-2170: remove the standard price value from the list if the value comes from the sync
+        if 'standard_price' in vals and context and context.get('sync_update_execution'):
+            del vals['standard_price']
+        
 #        if 'type' in vals and vals['type'] == 'consu':
 # Remove these two lines to display the warning message of the constraint
 #        if vals.get('type') == 'consu':

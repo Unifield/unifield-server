@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+        <record model="ir.ui.view" id="country_export_mapping_search_view">
+            <field name="name">country.export.mapping.search</field>
+            <field name="model">country.export.mapping</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="instance_id"/>
+                    <field name="mapping_value"/>
+                </search>
+            </field>
+        </record>
+        
+        <record model="ir.ui.view" id="country_export_mapping_tree_view">
+            <field name="name">country.export.mapping.tree</field>
+            <field name="model">country.export.mapping</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Country Code Mapping">
+                    <field name="instance_id" />
+                    <field name="mapping_value"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="country_export_mapping_form_view">
+            <field name="name">country.export.mapping.form</field>
+            <field name="model">country.export.mapping</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Country Code Mapping">
+                    <field name="instance_id" />
+                    <field name="mapping_value"/>
+                </form>
+            </field>
+        </record>
+        
+        <record model="ir.actions.act_window" id="country_export_mapping_action">
+            <field name="name">Country Code Mapping</field>
+            <field name="res_model">country.export.mapping</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="country_export_mapping_menu" name="Country Code Mapping" parent="account.account_account_menu"
+                action="country_export_mapping_action" />
+        
+        <act_window name="Import Mappings"
+            res_model="wizard.import.mapping"
+            src_model="country.export.mapping"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            empty_ids="1"
+            id="action_import_country_mappings"/>
+        
+    </data>
+</openerp>

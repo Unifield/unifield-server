@@ -552,7 +552,7 @@ The columns should be in this values:
                             if v:
                                 filtered_vals.update({k: v})
                         po_obj.write(cr, uid, po_id, filtered_vals, context)
-                        notif_list.append(_("Line %s of the Excel file updated the PO %s." % (file_line_number+1, po_browse.name)))
+                        notif_list.append(_("Line %s of the Excel file updated the PO %s.") % (file_line_number+1, po_browse.name))
                     first_row = False
                 # get values from row
                 line_values = cell_data.get_line_values(cr, uid, ids, row)
@@ -725,9 +725,10 @@ The columns should be in this values:
                                                                            ('order_id', '=', po_id)], context=context)
                                     new_po_line = po_line_ids[-1]
                                     pol_obj.write(cr, uid, [new_po_line], {'product_qty': file_line.product_qty,
-                                                                            'product_uom': file_line.product_uom.id,
-                                                                            'product_id': file_line.product_id.id,
-                                                                            'confirmed_delivery_date': file_line.confirmed_delivery_date}, context)
+                                                                           'product_uom': file_line.product_uom.id,
+                                                                           'product_id': file_line.product_id.id,
+                                                                           'price_unit': file_line.price_unit,
+                                                                           'confirmed_delivery_date': file_line.confirmed_delivery_date}, context)
                                     complete_lines += 1
                                     processed_lines += 1
                                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0

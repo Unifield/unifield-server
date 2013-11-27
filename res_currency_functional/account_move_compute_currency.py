@@ -57,6 +57,35 @@ class account_move_compute_currency(osv.osv):
                     res[move.id] = False
         return res
 
+    def _search_currency(self, cr, uid, obj, name, args, context=None):
+        """
+        Search move in which lines have the given currency
+        """
+        # Prepare some elements
+        newargs = []
+        if not context:
+            context = {}
+        if not args:
+            return newargs
+        sql_base = """
+        SELECT ml.id FROM account_move ml, account_move_line aml
+        WHERE aml.move_id = ml.id
+        AND aml.currency_id"""
+        for arg in args:
+            if args[0] and args[0][1] and args[0][1] in ['in', '='] and args[0][2]:
+                # create SQL request
+                sql = sql_base + ' in %s\nGROUP BY ml.id'
+                second = args[0][2]
+                # execute it and fetch result
+                if isinstance(second, (int, long)):
+                    second = [second]
+                cr.execute(sql, (tuple(second),))
+                res = cr.fetchall()
+                newargs.append(('id', 'in', [x and x[0] for x in res]))
+            else:
+                raise osv.except_osv(_('Error'), _('Operator not supported.'))
+        return newargs
+
     def onchange_journal_id(self, cr, uid, ids, journal_id=False, context=None):
         """
         Change currency_id regarding journal.

@@ -53,8 +53,8 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         'error_ids': fields.many2many('account.analytic.line', 'mass_reallocation_error_rel', 'wizard_id', 'analytic_line_id', string="Errors", readonly=True),
         'other_ids': fields.many2many('account.analytic.line', 'mass_reallocation_non_supported_rel', 'wizard_id', 'analytic_line_id', string="Non supported", readonly=True),
         'process_ids': fields.many2many('account.analytic.line', 'mass_reallocation_process_rel', 'wizard_id', 'analytic_line_id', string="Allocatable", readonly=True),
-        'nb_error': fields.function(_get_total, string="Lines in error", type='integer', method=True, store=False, multi="mass_reallocation_check"),
-        'nb_process': fields.function(_get_total, string="Allocatable lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
+        'nb_error': fields.function(_get_total, string="Items excluded from reallocation", type='integer', method=True, store=False, multi="mass_reallocation_check"),
+        'nb_process': fields.function(_get_total, string="Allocatable items", type='integer', method=True, store=False, multi="mass_reallocation_check"),
         'nb_other': fields.function(_get_total, string="Excluded lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
         'display_fp': fields.boolean('Display FP'),
     }
@@ -100,6 +100,9 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
                 lines[line.distribution_id.id].append(line)
             # Process each distribution
             for distrib_id in lines:
+                # UF-2205: fix problem with lines that does not have any distribution line or distribution id (INTL engagement lines)
+                if not distrib_id:
+                    continue
                 for line in lines[distrib_id]:
                     # Update distribution
                     self.pool.get('analytic.distribution').update_distribution_line_account(cr, uid, line.distrib_line_id.id, account_id, context=context)
@@ -120,6 +123,8 @@ class mass_reallocation_wizard(osv.osv_memory):
             string="Analytic Journal Items", required=True),
         'state': fields.selection([('normal', 'Normal'), ('blocked', 'Blocked')], string="State", readonly=True),
         'display_fp': fields.boolean('Display FP'),
+        'other_ids': fields.many2many('account.analytic.line', 'mass_reallocation_other_rel', 'wizard_id', 'analytic_line_id', 
+            string="Non eligible analytic journal items", required=False, readonly=True),
     }
 
     _default = {
@@ -145,6 +150,21 @@ class mass_reallocation_wizard(osv.osv_memory):
             res['account_id'] =  context['analytic_account_from']
         if context.get('active_ids', False) and context.get('active_model', False) == 'account.analytic.line':
             res['line_ids'] = context.get('active_ids')
+            # Search which lines are eligible
+            search_args = [
+                ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|',
+                ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
+                ('is_reversal', '=', True),
+                ('journal_id.type', '=', 'engagement'),
+                ('from_write_off', '=', True),
+                ('move_state', '=', 'draft')
+            ]
+            search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, search_args, context=context)
+            # Process lines if exist
+            if search_ns_ids:
+                # add non eligible lines to the right field.
+                res['other_ids'] = search_ns_ids
+                res['line_ids'] = [x for x in context.get('active_ids') if x not in search_ns_ids]
         res['display_fp'] = context.get('display_fp', False)
         return res
 
@@ -160,7 +180,7 @@ class mass_reallocation_wizard(osv.osv_memory):
             context = {}
         if not date or not al_ids:
             if not al_ids:
-                raise osv.except_osv(_('Warning'), _('No line to be processed (So no one is compatible.)'))
+                raise osv.except_osv(_('Warning'), _('No items are eligible to be mass reallocated with the given analytic account.'))
             raise osv.except_osv(_('Error'), _('Some missing args in check_date method. Please contact an administrator.'))
         # Initialisation of Document Date and Posting Date
         dd = False
@@ -216,7 +236,8 @@ class mass_reallocation_wizard(osv.osv_memory):
                 ('id', 'in', to_process), '|', '|', '|', '|', '|', '|',
                 (account_field_name, '=', account_id),
                 ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
-                ('is_reversal', '=', True), ('journal_id.type', '=', 'engagement'),
+                ('is_reversal', '=', True),
+                ('journal_id.type', '=', 'engagement'),
                 ('from_write_off', '=', True),
                 ('move_state', '=', 'draft')
             ]

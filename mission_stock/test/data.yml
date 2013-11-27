@@ -40,10 +40,10 @@
 -
   We create also a new Unifield instance which is not a local instance
 -
-  !record {model: account.analytic.account, id: analytic_account_kenya}:
-    name: "Kenya"
+  !record {model: account.analytic.account, id: analytic_account_kenya2}:
+    name: "Kenya2"
     currency_id: 1
-    code: KEN
+    code: KEN2
     type: normal
     category: OC
     parent_id: analytic_distribution.analytic_account_project
@@ -68,7 +68,7 @@
     #parent_id: msf_instance.instance_section
     name: Project 1
     target_cost_center_ids:
-      - cost_center_id: analytic_account_kenya
+      - cost_center_id: analytic_account_kenya2
         is_target: True
         is_top_cost_center: True
         is_po_fo_cost_center: True

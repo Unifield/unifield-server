@@ -39,7 +39,7 @@
 					</field>
 					
 					<field name="cost" position="attributes">
-						<attribute name="readonly">True</attribute>
+						<attribute name="required">True</attribute>
 					</field>
 					
 					<field name="currency" position="attributes">

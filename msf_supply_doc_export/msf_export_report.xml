@@ -63,6 +63,19 @@
             menu="True"
          />
 
+     <!-- STOCK INVENTORY-->
+        <report
+            id="report_stock_inventory_xls"
+            string="Stock Inventory Excel Export"
+            model="stock.inventory"
+            name="stock.inventory_xls"
+            file="msf_supply_doc_export/report/stock_inventory_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+
      <!-- STOCK INITIAL INVENTORY-->
         <report
             id="report_stock_initial_inventory_xls"
@@ -127,6 +140,19 @@
             auto="False"
             menu="True"
             />
+
+    <!-- INTERNAL MOVE -->
+        <report
+           id="report_internal_move_xls"
+           string="Internal Move Excel Export"
+           model="stock.picking"
+           name="internal.move.xls"
+           file="msf_supply_doc_export/report/report_internal_move_xls.mako"
+           report_type="webkit"
+           header="False"
+           auto="False"
+           menu="True"
+           />
 
     </data>
 </openerp>

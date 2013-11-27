@@ -27,9 +27,10 @@
                 <field name="prodlot_id" invisible="1"/>
                 <field name="tracking_id" invisible="1"/>
 				<field name="reason_type_id" invisible="1" />
-                <field name="product_qty" sum="Total quantity"/>
-                <field name="product_qty_in" sum="Total incoming quantity" />
-                <field name="product_qty_out" sum="Total outgoing quantity"/>
+                <field name="product_qty" />
+                <field name="product_qty_in" />
+                <field name="product_qty_out" />
+                <field name="product_uom" />
                 <field name="currency_id" invisible="1" />
                 <field name="day_diff1"/>
                 <field name="day_diff"/>
@@ -93,6 +94,7 @@
                     <separator orientation="vertical"/>
                     <filter name="group_categ_id" string="Family" icon="terp-stock_symbol-selection" context="{'group_by':'categ_id'}"/>
                     <filter name="group_product" string="Product" icon="terp-accessories-archiver" context="{'group_by':'product_id'}"/>
+                    <filter name="group_product_uom" string="UoM" icon="terp-accessories-archiver" context="{'group_by':'product_uom'}"/>
                     <filter name="group_prodlot" string="Batch" icon="terp-accessories-archiver" context="{'group_by':'prodlot_id'}"/>
                     <separator orientation="vertical"/>
                     <filter string="Source Location" name="src_location" icon="terp-gtk-jump-to-rtl" context="{'group_by':'location_id'}"/>

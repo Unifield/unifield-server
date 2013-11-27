@@ -128,9 +128,12 @@ class account_invoice(osv.osv):
                 # Give false analytic lines for 'line' in order not to give an error
                 if 'analytic_line_ids' in el[2]:
                     el[2]['analytic_line_ids'] = False
-                # Give false order_line_id in order not to give an error
-                if 'order_line_id' in el[2]:
-                    el[2]['order_line_id'] = el[2].get('order_line_id', False) and el[2]['order_line_id'][0] or False
+                # Give false for (because not needed):
+                # - order_line_id
+                # - sale_order_line_id
+                for field in ['order_line_id', 'sale_order_line_id']:
+                    if field in el[2]:
+                        el[2][field] = el[2].get(field, False) and el[2][field][0] or False
         return res
 
     def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None):
