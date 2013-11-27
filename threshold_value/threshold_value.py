@@ -363,15 +363,24 @@ class threshold_value_line(osv.osv):
 
             # Expiry values
             d_values = {'reviewed_consumption': line.threshold_value_id.consumption_method == 'fmc',
-                        'past_consumption': line.threshold_value_id.consumption_method == 'anc',
+                        'past_consumption': line.threshold_value_id.consumption_method == 'amc',
                         'manual_consumption': 0.00,
+                        'consumption_period_from': line.threshold_value_id.consumption_period_from,
+                        'consumption_period_to': line.threshold_value_id.consumption_period_to,
                         'leadtime': line.threshold_value_id.lead_time,
                         'coverage': line.threshold_value_id.frequency,
                         'safety_stock': 0.00,
                         'safety_time': line.threshold_value_id.safety_month}
             expiry_product_qty = product_obj.get_expiry_qty(cr, uid, line.product_id.id, location_id, False, d_values, context=dict(context, location=location_id, compute_child=True))
 
-            qty_to_order, req_date = proc_obj._compute_quantity(cr, uid, False, line.product_id, line.threshold_value_id.location_id.id, d_values, context=dict(context, from_date=from_date, to_date=to_date, get_data=True))
+            new_context = context.copy()
+            new_context.update({'from_date': from_date,
+                                'to_date': to_date,
+                                'get_data': True,
+                                'consumption_period_from': d_values['consumption_period_from'],
+                                'consumption_period_to': d_values['consumption_period_to'],})
+
+            qty_to_order, req_date = proc_obj._compute_quantity(cr, uid, False, line.product_id, line.threshold_value_id.location_id.id, d_values, context=new_context)
 
             res[line.id] = {'consumption': consu,
                             'real_stock': stock_product.qty_available,

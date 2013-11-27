@@ -406,6 +406,7 @@ class stock_warehouse_order_cycle_line(osv.osv):
         '''
         product_obj = self.pool.get('product.product')
         proc_obj = self.pool.get('procurement.order')
+        prodlot_obj = self.pool.get('stock.production.lot')
 
         res = {}
 
@@ -426,9 +427,11 @@ class stock_warehouse_order_cycle_line(osv.osv):
                 consu = line.order_cycle_id.manual_consumption
 
             # Expiry values
-            d_values = {'reviewed_consumption': line.order_cycle_id.reviewed_consumption,
-                        'past_consumption': line.order_cycle_id.past_consumption,
-                        'manual_consumption': line.order_cycle_id.manual_consumption,
+            d_values = {'reviewed_consumption': False,
+                        'past_consumption': False,
+                        'manual_consumption': consu,
+                        'consumption_period_from': line.order_cycle_id.consumption_period_from,
+                        'consumption_period_to': line.order_cycle_id.consumption_period_to,
                         'leadtime': line.order_cycle_id.leadtime,
                         'coverage': line.order_cycle_id.order_coverage,
                         'safety_stock': line.safety_stock,
@@ -436,6 +439,14 @@ class stock_warehouse_order_cycle_line(osv.osv):
             expiry_product_qty = product_obj.get_expiry_qty(cr, uid, line.product_id.id, location_id, False, d_values, context=dict(context, location=location_id, compute_child=True))
 
             qty_to_order, req_date = proc_obj._compute_quantity(cr, uid, False, line.product_id, line.order_cycle_id.location_id.id, d_values, context=dict(context, from_date=from_date, to_date=to_date, get_data=True))
+
+            consumed_in_period = (consu * d_values['coverage']) + (consu * d_values['safety_time']) + d_values['safety_stock'] + expiry_product_qty
+            if stock_product.perishable and stock_product.virtual_available < consumed_in_period:
+                prodlot_ids = prodlot_obj.search(cr, uid, [('product_id', '=', stock_product.id)], order='life_date desc', limit=1, context=context)
+                if prodlot_ids:
+                    life_date = prodlot_obj.read(cr, uid, prodlot_ids[0], ['life_date'], context=context)['life_date']
+                    if life_date < req_date:
+                        req_date = life_date
 
             res[line.id] = {'consumption': consu,
                             'real_stock': stock_product.qty_available,
