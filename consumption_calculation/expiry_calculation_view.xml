@@ -154,7 +154,7 @@
 				<newline />
 				<field name="input_output_ok" attrs="{'invisible': [('location_id', '!=', False)]}" />
     				<separator colspan="4" string="Actions" />
-    				<button name="process_lines" string="Process" type="object" colspan="2" icon="gtk-execute" />
+    				<button name="process_lines" string="View report" type="object" colspan="2" icon="gtk-execute" />
                     <label string="" /><label string="" />
                 </form>
     		</field>
@@ -189,17 +189,7 @@
     			</form>
     		</field>
     	</record>
-    
-        <!--
-        !!! TO-DO remove
-    	<record id="action_products_to_expire" model="ir.actions.act_window">
-    		<field name="name">Products likely to expire</field>
-    		<field name="res_model">product.likely.expire.report</field>
-    		<field name="view_type">form</field>
-    		<field name="view_mode">form</field>
-    		<field name="target">new</field>
-    	</record>
-        -->
+
         <record id="action_products_to_expire" model="ir.actions.act_window">
             <field name="name">Products likely to expire</field>
             <field name="res_model">product.likely.expire.report</field>

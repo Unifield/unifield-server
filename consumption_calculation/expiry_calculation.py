@@ -279,6 +279,17 @@ class product_likely_expire_report(osv.osv):
         '''
         if context is None:
             context = {}
+        if ids:
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            report = self.browse(cr, uid, ids[0], context=context)
+            if report:
+                if report.status == 'in_progress':
+                    # currently in progress
+                    return {}
+                elif report.status == 'ready':
+                    # report already build, show it
+                    return self.open_report(cr, uid, ids, context=context)
 
         import threading
         self.write(cr, uid, ids, {'status': 'in_progress'},
