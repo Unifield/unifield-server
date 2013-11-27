@@ -31,7 +31,7 @@
                         <newline/>
                         <field name="destination_id" invisible="not context.get('display_fp', False)"/>
                         <field name="cost_center_id" invisible="not context.get('display_fp', False)"/>
-                        <field name="account_id"/>
+                        <field name="account_id" domain="[('category', '=', context.get('categ', False) and context.get('categ') or 'FUNDING'), ('type', '!=', 'view')]"/>
                         <field name="is_reallocated"/>
                     </xpath>
                     <xpath expr="/search/group[1]/field[@name='name']" position='after'>
@@ -89,7 +89,7 @@
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="view_account_analytic_line_tree"/>
             <field name="domain">[('account_id.category', '=', 'FREE1')]</field>
-            <field name="context">{'display_fp': False}</field>
+            <field name="context">{'display_fp': False, 'categ': 'FREE1'}</field>
         </record>
 
     <!-- Menu for Analytic Journal Items (FREE 1) -->
@@ -104,7 +104,7 @@
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="view_account_analytic_line_tree"/>
             <field name="domain">[('account_id.category', '=', 'FREE2')]</field>
-            <field name="context">{'display_fp': False}</field>
+            <field name="context">{'display_fp': False, 'categ': 'FREE2'}</field>
         </record>
 
     <!-- Menu for Analytic Journal Items (FREE 2) -->

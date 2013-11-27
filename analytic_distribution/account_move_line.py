@@ -399,7 +399,7 @@ class account_move_line(osv.osv):
             ids = [ids]
         # Search valid ids
         domain = [('move_id', 'in', ids), ('account_id.category', '=', 'FREE1')]
-        context.update({'display_fp': False})
+        context.update({'display_fp': False, 'categ': 'FREE1'})
         return {
             'name': _('Analytic Lines (Free 1) from Journal Items'),
             'type': 'ir.actions.act_window',
@@ -424,7 +424,7 @@ class account_move_line(osv.osv):
             ids = [ids]
         # Search valid ids
         domain = [('move_id', 'in', ids), ('account_id.category', '=', 'FREE2')]
-        context.update({'display_fp': False})
+        context.update({'display_fp': False, 'categ': 'FREE2'})
         return {
             'name': _('Analytic Lines (Free 2) from Journal Items'),
             'type': 'ir.actions.act_window',

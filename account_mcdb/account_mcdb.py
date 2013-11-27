@@ -349,11 +349,13 @@ class account_mcdb(osv.osv):
             # ANALYTIC AXIS FIELD
             if res_model == 'account.analytic.line':
                 if wiz.analytic_axis == 'fp':
-                    context.update({'display_fp': True})
+                    context.update({'display_fp': True, 'categ': 'FUNDING'})
                     domain.append(('account_id.category', '=', 'FUNDING'))
                 elif wiz.analytic_axis == 'f1':
+                    context.update({'categ': 'FREE1'})
                     domain.append(('account_id.category', '=', 'FREE1'))
                 elif wiz.analytic_axis == 'f2':
+                    context.update({'categ': 'FREE2'})
                     domain.append(('account_id.category', '=', 'FREE2'))
                 else:
                     raise osv.except_osv(_('Warning'), _('Display field is mandatory!'))

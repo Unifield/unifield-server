@@ -629,7 +629,7 @@ The starting balance will be proposed automatically and the closing balance is t
         # Search valid ids
         reg = self.browse(cr, uid, ids[0])
         domain = [('account_id.category', '=', 'FREE1'), ('move_id.statement_id', 'in', [ids[0]])]
-        context.update({'display_fp': False})
+        context.update({'display_fp': False, 'categ': 'FREE1'})
         return {
             'name': reg and 'Free 1 Analytic Entries from ' + reg.name or 'Free 1 Analytic Entries',
             'type': 'ir.actions.act_window',
@@ -653,7 +653,7 @@ The starting balance will be proposed automatically and the closing balance is t
         # Search valid ids
         reg = self.browse(cr, uid, ids[0])
         domain = [('account_id.category', '=', 'FREE2'), ('move_id.statement_id', 'in', [ids[0]])]
-        context.update({'display_fp': False})
+        context.update({'display_fp': False, 'categ': 'FREE2'})
         return {
             'name': reg and 'Free 2 Analytic Entries from ' + reg.name or 'Free 2 Analytic Entries',
             'type': 'ir.actions.act_window',
