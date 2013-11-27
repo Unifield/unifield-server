@@ -414,14 +414,12 @@ class analytic_account(osv.osv):
     
     
     def button_cc_clear(self, cr, uid, ids, context=None):
-        vals = {'cost_center_ids':[(6, 0, [])]}
         self.write(cr, uid, ids, {'cost_center_ids':[(6, 0, [])]}, context=context )
         return True
 
 
     def button_dest_clear(self, cr, uid, ids, context=None):
-        vals = {'tuple_destination_account_ids':[(6, 0, [])]}
-        self.write(cr, uid, ids, vals, context=context )
+        self.write(cr, uid, ids, {'tuple_destination_account_ids':[(6, 0, [])]}, context=context )
         return True
 
         #account = self.browse(cr, uid, ids, context=context)
