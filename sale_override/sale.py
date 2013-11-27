@@ -80,7 +80,7 @@ class sale_order(osv.osv):
         Check if the status of the unlinked FO is allowed for unlink.
         Statuses allowed : draft / cancel
         '''
-        for order in self.read(cr, uid, ['state', 'procurement_request'], context=context):
+        for order in self.read(cr, uid, ids, ['state', 'procurement_request'], context=context):
             if order['state'] not in ('draft', 'cancel'):
                 type = order['procurement_request'] and _('Internal Request') or _('Field order')
                 raise osv.except_osv(_('Error'), _('Only Draft and Canceled %s can be deleted.') % type)
