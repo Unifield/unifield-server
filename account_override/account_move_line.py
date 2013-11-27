@@ -166,7 +166,7 @@ class account_move_line(osv.osv):
                     res.append(p.id)
         return res
 
-    def _get_is_reconciled(self, cr, uid, ids, context=None):
+    def _get_is_reconciled(self, cr, uid, ids, field_names, args, context=None):
         """
         If reconcile_partial_id or reconcile_id present, then line is reconciled.
         """
