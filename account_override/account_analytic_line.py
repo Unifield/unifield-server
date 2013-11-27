@@ -54,6 +54,7 @@ class account_analytic_line(osv.osv):
         'is_reversal': fields.boolean('Reversal?'),
         'is_reallocated': fields.boolean('Reallocated?'),
         'journal_id': fields.many2one('account.analytic.journal', 'Journal Code', required=True, ondelete='restrict', select=True, readonly=True),
+        'journal_type': fields.related('journal_id', 'type', 'Journal type', readonly=True),
         'date': fields.date('Posting Date', required=True, select=True, readonly=True),
         'document_date': fields.date('Document Date', readonly=True, required=True),
         'move_id': fields.many2one('account.move.line', 'Entry Sequence', ondelete='restrict', select=True, readonly=True, domain="[('account_id.user_type.code', 'in', ['expense', 'income'])]"), # UF-1719: Domain added for search view
@@ -69,7 +70,7 @@ class account_analytic_line(osv.osv):
         'exported': lambda *a: False,
     }
 
-    def reverse(self, cr, uid, ids, context=None):
+    def reverse(self, cr, uid, ids, posting_date=strftime('%Y-%m-%d'), context=None):
         """
         Reverse an analytic line:
          - keep date as source_date
@@ -84,7 +85,7 @@ class account_analytic_line(osv.osv):
             vals = {
                 'name': self.join_without_redundancy(al.name, 'REV'),
                 'amount': al.amount * -1,
-                'date': strftime('%Y-%m-%d'),
+                'date': posting_date,
                 'source_date': al.source_date or al.date,
                 'reversal_origin': al.id,
                 'amount_currency': al.amount_currency * -1,
@@ -101,7 +102,7 @@ class account_analytic_line(osv.osv):
         """
         for aal in self.browse(cr, uid, ids):
             if aal.document_date and aal.date and aal.date < aal.document_date:
-                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+                raise osv.except_osv(_('Error'), _('Posting date (%s) should be later than Document Date (%s).') % (aal.date, aal.document_date))
         return True
 
     def create(self, cr, uid, vals, context=None):
@@ -116,7 +117,7 @@ class account_analytic_line(osv.osv):
                 logging.getLogger('init').info('AAL: set document_date')
                 vals['document_date'] = strftime('%Y-%m-%d')
         if vals.get('document_date', False) and vals.get('date', False) and vals.get('date') < vals.get('document_date'):
-            raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+            raise osv.except_osv(_('Error'), _('Posting date (%s) should be later than Document Date (%s).') % (vals.get('date', False), vals.get('document_date', False)))
         return super(account_analytic_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):

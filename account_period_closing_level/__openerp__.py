@@ -38,7 +38,9 @@
     "test": [
         'test/account_period_closing_level.yml',
     ],
-    'demo_xml': [],
+    'demo_xml': [
+        'test/account_period_demo.xml'
+    ],
     'installable': True,
     'active': False,
 #    'certificate': 'certificate',

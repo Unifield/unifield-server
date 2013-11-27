@@ -246,7 +246,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 ('destination_id', '=', line.destination_id_first_value.id),
                 ('move_id', '=', all_lines[line.id])
                 ])
-            res_reverse = ana_line_obj.reverse(cr, uid, fp_old_lines)
+            # UTP-943: Add original date as reverse date
+            res_reverse = ana_line_obj.reverse(cr, uid, fp_old_lines, posting_date=line.date)
             # Give them analytic correction journal (UF-1385 in comments)
             if not acor_journal_id:
                 raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
@@ -254,8 +255,10 @@ class hq_entries_validation_wizard(osv.osv_memory):
             # create new lines
             if not fp_old_lines: # UTP-546 - this have been added because of sync that break analytic lines generation
                 continue
-            ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 
-                'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id, 'journal_id': acor_journal_id})
+            cor_ids = ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 
+                'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id, 'journal_id': acor_journal_id, 'last_correction_id': fp_old_lines[0]})
+            # update new ana line
+            ana_line_obj.write(cr, uid, cor_ids, {'last_corrected_id': fp_old_lines[0]})
             # update old ana lines
             ana_line_obj.write(cr, uid, fp_old_lines, {'is_reallocated': True})
 
@@ -375,7 +378,7 @@ class hq_entries(osv.osv):
                 account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
                 if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%)') % (line.id or '', line.destination_id.code or '', account.code or ''))
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%s)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue
             else: # CASE 4/
                 # C Check, except B
@@ -392,7 +395,7 @@ class hq_entries(osv.osv):
                 account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
                 if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%)') % (line.id or '', line.destination_id.code or '', account.code or ''))
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%s)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue
         return res
 

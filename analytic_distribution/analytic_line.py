@@ -77,7 +77,9 @@ class analytic_line(osv.osv):
 
     def _get_entry_sequence(self, cr, uid, ids, field_names, args, context=None):
         """
-        Give right entry sequence. Either move_id.move_id.name or commitment_line_id.commit_id.name
+        Give right entry sequence. Either move_id.move_id.name,
+        or commitment_line_id.commit_id.name, or
+        if the line was imported, the stored name
         """
         if not context:
             context = {}
@@ -88,6 +90,14 @@ class analytic_line(osv.osv):
                 res[l.id] = l.move_id.move_id.name
             elif l.commitment_line_id:
                 res[l.id] = l.commitment_line_id.commit_id.name
+            elif l.imported_commitment:
+                res[l.id] = l.imported_entry_sequence
+            elif not l.move_id:
+                # UF-2217
+                # on create the value is inserted by a sql query, so we can retreive it after the insertion
+                # the field has store=True so we don't create a loop
+                # on write the value is not updated by the query, the method always returns the value set at creation
+                res[l.id] = l.entry_sequence
         return res
 
     def _get_period_id(self, cr, uid, ids, field_name, args, context=None):
@@ -101,17 +111,28 @@ class analytic_line(osv.osv):
             context = {}
         # Prepare some values
         res = {}
+        period_obj = self.pool.get('account.period')
         for al in self.browse(cr, uid, ids, context):
             res[al.id] = False
-            if al.commitment_line_id and al.commitment_line_id.commit_id and al.commitment_line_id.commit_id.period_id:
-                res[al.id] = al.commitment_line_id.commit_id.period_id.id
-            elif al.move_id and al.move_id.period_id:
-                res[al.id] = al.move_id.period_id.id
+            # UTP-943: Since this ticket, we search period regarding analytic line posting date.
+            period_ids = period_obj.get_period_from_date(cr, uid, date=al.date)
+            if period_ids:
+                res[al.id] = period_ids[0]
         return res
 
     def _search_period_id(self, cr, uid, obj, name, args, context=None):
         """
-        Search period
+        Search period regarding date.
+        First fetch period date_start and date_stop.
+        Then check that analytic line have a posting date bewteen these two date.
+        Finally do this check as "OR" for each given period.
+        Examples:
+        - Just january:
+        ['&', ('date', '>=', '2013-01-01'), ('date', '<=', '2013-01-31')]
+        - January + February:
+        ['|', '&', ('date', '>=', '2013-01-01'), ('date', '<=', '2013-01-31'), '&', ('date', '>=', '2013-02-01'), ('date', '<=', '2013-02-28')]
+        - January + February + March
+        ['|', '|', '&', ('date', '>=', '2013-01-01'), ('date', '<=', '2013-01-31'), '&', ('date', '>=', '2013-02-01'), ('date', '<=', '2013-02-28'), '&', ('date', '>=', '2013-03-01'), ('date', '<=', '2013-03-31')]
         """
         # Checks
         if not context:
@@ -119,36 +140,46 @@ class analytic_line(osv.osv):
         if not args:
             return []
         new_args = []
+        period_obj = self.pool.get('account.period')
         for arg in args:
             if len(arg) == 3 and arg[1] in ['=', 'in']:
-                new_args.append('|')
-                new_args.append(('move_id.period_id', arg[1], arg[2]))
-                new_args.append(('commitment_line_id.commit_id.period_id', arg[1], arg[2]))
+                periods = arg[2]
+                if isinstance(periods, (int, long)):
+                    periods = [periods]
+                if len(periods) > 1:
+                    for i in range(len(periods) - 1):
+                        new_args.append('|')
+                for p_id in periods:
+                    period = period_obj.browse(cr, uid, [p_id])[0]
+                    new_args.append('&')
+                    new_args.append(('date', '>=', period.date_start))
+                    new_args.append(('date', '<=', period.date_stop))
         return new_args
 
     def _get_from_commitment_line(self, cr, uid, ids, field_name, args, context=None):
         """
-        Check if commitment_line_id is filled in. If yes, True. Otherwise False.
+        Check if line comes from a 'engagement' journal type. If yes, True. Otherwise False.
         """
         if not context:
             context = {}
         res = {}
         for al in self.browse(cr, uid, ids, context=context):
             res[al.id] = False
-            if al.commitment_line_id:
+            if al.journal_id.type == 'engagement':
                 res[al.id] = True
         return res
 
     def _get_is_unposted(self, cr, uid, ids, field_name, args, context=None):
         """
         Check journal entry state. If unposted: True, otherwise False.
+        A line that comes from a commitment cannot be posted. So it's always to False.
         """
         if not context:
             context = {}
         res = {}
         for al in self.browse(cr, uid, ids, context=context):
             res[al.id] = False
-            if al.move_state != 'posted':
+            if al.move_state != 'posted' and al.journal_id.type != 'engagement':
                 res[al.id] = True
         return res
 
@@ -167,10 +198,13 @@ class analytic_line(osv.osv):
         'period_id': fields.function(_get_period_id, fnct_search=_search_period_id, method=True, string="Period", readonly=True, type="many2one", relation="account.period", store=False),
         'from_commitment_line': fields.function(_get_from_commitment_line, method=True, type='boolean', string="Commitment?"),
         'is_unposted': fields.function(_get_is_unposted, method=True, type='boolean', string="Unposted?"),
+        'imported_commitment': fields.boolean(string="From imported commitment?"),
+        'imported_entry_sequence': fields.text("Imported Entry Sequence"),
     }
 
     _defaults = {
         'from_write_off': lambda *a: False,
+        'imported_commitment': lambda *a: False,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -281,6 +315,10 @@ class analytic_line(osv.osv):
         # Prepare some value
         account = self.pool.get('account.analytic.account').browse(cr, uid, [account_id], context)[0]
         context.update({'from': 'mass_reallocation'}) # this permits reallocation to be accepted when rewrite analaytic lines
+        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+        correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
+        if not correction_journal_id:
+            raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
         # Process lines
         for aline in self.browse(cr, uid, ids, context=context):
             if account.category in ['OC', 'DEST']:
@@ -292,16 +330,26 @@ class analytic_line(osv.osv):
                     fieldname = 'destination_id'
                 # if period is not closed, so override line.
                 if period and period.state not in ['done', 'mission-closed']:
-                    # Update account
-                    self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': date, 
+                    # Update account # Date: UTP-943 speak about original date for non closed periods
+                    self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': aline.date, 
                         'source_date': aline.source_date or aline.date}, context=context)
                 # else reverse line before recreating them with right values
                 else:
                     # First reverse line
-                    self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id])
+                    rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], posting_date=date)
+                    # UTP-943: Shoud have a correction journal on these lines
+                    self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'journal_id': correction_journal_id, 'is_reversal': True, 'reversal_origin': aline.id, 'last_corrected_id': False})
+                    # UTP-943: Check that period is open
+                    correction_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date, context=context)
+                    if not correction_period_ids:
+                        raise osv.except_osv(_('Error'), _('No period found for this date: %s') % (date,))
+                    for p in self.pool.get('account.period').browse(cr, uid, correction_period_ids, context=context):
+                        if p.state != 'draft':
+                            raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (p.name,))
                     # then create new lines
-                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
-                        'source_date': aline.source_date or aline.date}, context=context)
+                    cor_ids = self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
+                        'source_date': aline.source_date or aline.date, 'journal_id': correction_journal_id}, context=context)
+                    self.pool.get('account.analytic.line').write(cr, uid, cor_ids, {'last_corrected_id': aline.id})
                     # finally flag analytic line as reallocated
                     self.pool.get('account.analytic.line').write(cr, uid, [aline.id], {'is_reallocated': True})
             else:

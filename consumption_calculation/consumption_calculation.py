@@ -1646,7 +1646,7 @@ class product_product(osv.osv):
         
         if not nb_months: nb_months = 1
         
-        uom_id = self.browse(cr, uid, ids[0], context=context).uom_id.id
+        uom_id = self.read(cr, uid, ids[0], ['uom_id'], context=context)['uom_id'][0]
         res = res/nb_months
         res = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, res, uom_id)
             

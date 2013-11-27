@@ -278,11 +278,18 @@ class shipment(osv.osv):
                 'invoice_id': fields.many2one('account.invoice', string='Related invoice'),
                 'additional_items_ids': fields.one2many('shipment.additionalitems', 'shipment_id', string='Additional Items'),
                 }
-    _defaults = {'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),}
-    
+   
+    def _get_sequence(self, cr, uid, context=None):
+        ir_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'msf_outgoing', 'seq_shipment')
+        return self.pool.get('ir.model.data').browse(cr, uid, ir_id).res_id
+       
+    _defaults = {
+        'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+        'sequence_id': _get_sequence,
+    } 
     
     _order = 'name desc'
-    
+     
     def create_shipment(self, cr, uid, ids, context=None):
         '''
         open the wizard to create (partial) shipment
@@ -490,7 +497,8 @@ class shipment(osv.osv):
                     self.log(cr, uid, draft_shipment_id, _("Packs from the draft Shipment (%s) have been returned to stock.")%(draft_shipment_name,))
                     log_flag = True
                 res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-                self.pool.get('stock.picking').log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(draft_picking.name,), context={'view_id': res,})
+                context.update({'view_id': res, 'picking_type': 'picking.ticket'})
+                self.pool.get('stock.picking').log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(draft_picking.name,), context=context)
             
         # call complete_finished on the shipment object
         # if everything is alright (all draft packing are finished) the shipment is done also 
@@ -510,6 +518,7 @@ class shipment(osv.osv):
             'res_id': draft_picking_id ,
             'type': 'ir.actions.act_window',
             'target': 'crush',
+            'context': context
         }
     
     def return_packs_from_shipment(self, cr, uid, ids, context=None):
@@ -2055,6 +2064,13 @@ class stock_picking(osv.osv):
         
         if context is None:
             context = {}
+
+        if context.get('sync_update_execution', False):
+            # UF-2066: in case the data comes from sync, some False value has been removed, but needed in some assert. 
+            # The following lines are to re-enter explicitly the values, even if they are already set to False
+            vals['backorder_id'] = vals.get('backorder_id', False)
+            vals['shipment_id'] = vals.get('shipment_id', False)
+
         # the action adds subtype in the context depending from which screen it is created
         if context.get('picking_screen', False) and not vals.get('name', False):
             pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
@@ -2202,22 +2218,26 @@ class stock_picking(osv.osv):
                 rts = rts.strftime(db_date_format)
                 
                 if not len(shipment_ids):
-                    # no shipment, create one - no need to specify the state, it's a function
-                    name = self.pool.get('ir.sequence').get(cr, uid, 'shipment')
-                    addr = self.pool.get('res.partner.address').browse(cr, uid, vals['address_id'], context=context)
-                    partner_id = addr.partner_id and addr.partner_id.id or False
-                    values = {'name': name,
-                              'address_id': vals['address_id'],
-                              'partner_id2': partner_id,
-                              'shipment_expected_date': rts,
-                              'shipment_actual_date': rts,
-                              'sequence_id': self.create_sequence(cr, uid, {'name':name,
-                                                                            'code':name,
-                                                                            'prefix':'',
-                                                                            'padding':2}, context=context)}
-                    
-                    shipment_id = shipment_obj.create(cr, uid, values, context=context)
-                    shipment_obj.log(cr, uid, shipment_id, _('The new Draft Shipment %s has been created.')%(name,))
+                    # only create new shipment if we don't already have one through sync
+                    if not vals['shipment_id'] and not context.get('offline_synchronization', False):
+                        # no shipment, create one - no need to specify the state, it's a function
+                        name = self.pool.get('ir.sequence').get(cr, uid, 'shipment')
+                        addr = self.pool.get('res.partner.address').browse(cr, uid, vals['address_id'], context=context)
+                        partner_id = addr.partner_id and addr.partner_id.id or False
+                        values = {'name': name,
+                                  'address_id': vals['address_id'],
+                                  'partner_id2': partner_id,
+                                  'shipment_expected_date': rts,
+                                  'shipment_actual_date': rts,
+                                  'sequence_id': self.create_sequence(cr, uid, {'name':name,
+                                                                                'code':name,
+                                                                                'prefix':'',
+                                                                                'padding':2}, context=context)}
+                        
+                        shipment_id = shipment_obj.create(cr, uid, values, context=context)
+                        shipment_obj.log(cr, uid, shipment_id, _('The new Draft Shipment %s has been created.')%(name,))
+                    else:
+                        shipment_id = vals['shipment_id']
                 else:
                     shipment_id = shipment_ids[0]
                     shipment = shipment_obj.browse(cr, uid, shipment_id, context=context)
@@ -2288,9 +2308,9 @@ class stock_picking(osv.osv):
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
-
         pick_to_check = set()
 
+        moves_states = {}
         for obj in self.browse(cr, uid, ids, context=context):
             # the convert function should only be called on draft picking ticket
             assert obj.subtype == 'picking' and obj.state in ('draft', 'assigned'), 'the convert function should only be called on draft picking ticket objects'
@@ -2333,6 +2353,8 @@ class stock_picking(osv.osv):
                 if move.product_qty == 0.0:
                     vals = {'state': 'done'}
                 else:
+                    # Save the state of this stock move to set it before action_assign()
+                    moves_states.setdefault(move.state, []).append(move.id)
                     vals = {'state': 'draft'}
                 vals.update({'backmove_id': False})
                 # If the move comes from a DPO, don't change the destination location
@@ -2381,8 +2403,16 @@ class stock_picking(osv.osv):
 
             # trigger workflow (confirm picking)
             self.draft_force_assign(cr, uid, [new_pick_id or obj.id])
+
+            for s in moves_states:
+                self.pool.get('stock.move').write(cr, uid, moves_states[s], {'state': s}, context=context)
+
             # check availability
             self.action_assign(cr, uid, [new_pick_id or obj.id], context=context)
+
+            if 'assigned' in moves_states:
+                # Add an empty write to display the 'Process' button on OUT
+                self.write(cr, uid, [obj.id], {'state': 'assigned'}, context=context)
         
             # TODO which behavior
             data_obj = self.pool.get('ir.model.data')
@@ -2945,7 +2975,8 @@ class stock_picking(osv.osv):
             res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
             self.log(cr, uid, picking.id, _("Products from Pre-Packing List (%s) have been returned to stock.")%(picking.name,), context={'view_id': res,})
             res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-            self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.previous_step_id.backorder_id.name,), context={'view_id': res,})
+            context.update({'view_id': res, 'picking_type': 'picking_ticket'})
+            self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.previous_step_id.backorder_id.name,), context=context)
             # if all moves are done or canceled, the ppl is canceled
             cancel_ppl = True
             for move in picking.move_lines:
@@ -3031,7 +3062,8 @@ class stock_picking(osv.osv):
                     # TODO refactoring needed
                     obj_data = self.pool.get('ir.model.data')
                     res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-                    self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.backorder_id.name,), context={'view_id': res,})
+                    context.update({'view_id': res, 'picking_type': 'picking_ticket'})
+                    self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.backorder_id.name,), context=context)
                     
             if picking.subtype == 'packing':
                 # for each packing we get the draft packing
