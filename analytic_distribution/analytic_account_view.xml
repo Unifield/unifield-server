@@ -124,6 +124,7 @@
                     <filter name="active" icon="terp-check" string="Active" domain="[('filter_active', '=', True)]" />
                     <filter name="inactive" icon="gtk-dialog-error" string="Inactive" domain="[('filter_active', '=', False)]"/>
                 </filter>
+                <filter string="Overdue Account" position="replace"></filter>
                 <field name="partner_id" position="replace">
                 </field>
                 <field name="user_id" position="replace">

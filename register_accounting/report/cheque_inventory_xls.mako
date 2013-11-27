@@ -129,17 +129,22 @@
 <Column ss:Index="16" ss:AutoFitWidth="0" ss:Width="51"/>
 
 
-    <Row>
-        <Cell ss:StyleID="s25" ><Data ss:Type="String">${_('CHEQUE INVENTORY')}</Data></Cell>
-    </Row>
-	<Row ss:Index="3">
-		<Cell ss:StyleID="title" ><Data ss:Type="String">${_('Instance:')}</Data></Cell>
-		<Cell ss:StyleID="title" ><Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data></Cell>
-	</Row>
-	<Row>
-		<Cell ss:StyleID="title" ><Data ss:Type="String">${_('Report Date:')}</Data></Cell>
-	<Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data></Cell>
-	</Row>
+  <Row>
+    <Cell ss:StyleID="s25" ><Data ss:Type="String">${_('CHEQUE INVENTORY')}</Data></Cell>
+  </Row>
+  <Row ss:Index="3">
+    <Cell ss:StyleID="title" ><Data ss:Type="String">${_('Instance:')}</Data></Cell>
+    <Cell ss:StyleID="title" ><Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data></Cell>
+  </Row>
+  <Row>
+    <Cell ss:StyleID="title" ><Data ss:Type="String">${_('Report Date:')}</Data></Cell>
+    <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data></Cell>
+  </Row>
+  <Row>
+    <Cell ss:StyleID="title"><Data ss:Type="String">${_('State:')}</Data></Cell>
+    <Cell ss:StyleID="title"><Data ss:Type="String">${(o.state and getSel(o, 'state') or '')|x}</Data></Cell>
+  </Row>
+  <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 
 	<Row ss:Index="6">
         	<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Proprietary Instance')}</Data></Cell>

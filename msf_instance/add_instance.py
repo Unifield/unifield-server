@@ -54,7 +54,8 @@ class account_analytic_journal(osv.osv):
             context={}
         instance_ids = self.pool.get('msf.instance').search(cr, uid, [], context=context)
         for instance_id in instance_ids:
-            eng_ids = self.search(cr, uid, [('type', '=', 'engagement'), ('instance_id', '=', instance_id)])
+            # UTP-827: exception: another engagement journal, ENGI, may exist
+            eng_ids = self.search(cr, uid, [('type', '=', 'engagement'), ('instance_id', '=', instance_id), ('code', '!=', 'ENGI')])
             if len(eng_ids) and len(eng_ids) > 1:
                 return False
         return True

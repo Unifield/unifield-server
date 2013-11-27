@@ -45,10 +45,13 @@ class account_analytic_line(osv.osv):
                     res[l.id] = l.move_id.partner_type.name or ''
             elif l.commitment_line_id and l.commitment_line_id.commit_id and l.commitment_line_id.commit_id.partner_id and l.commitment_line_id.commit_id.partner_id.name:
                 res[l.id] = l.commitment_line_id.commit_id.partner_id.name or ''
+            elif l.imported_commitment:
+                res[l.id] = l.imported_partner_txt
         return res
 
     _columns = {
         'partner_txt': fields.function(_get_partner, method=True, string="Third Party", readonly=True, type="text", store=True),
+        'imported_partner_txt': fields.text("Imported Third Party"),
     }
 
 account_analytic_line()
