@@ -634,7 +634,7 @@ class orm_template(object):
                             cols = self._columns[f[i]]
                         elif f[i] in self._inherit_fields.keys():
                             cols = selection_field(self._inherits)
-                        if cols and cols._type == 'selection':
+                        if cols and cols._type == 'selection' and not sync_context:
                             sel_list = cols.selection
                             if r and type(sel_list) == type([]):
                                 r = [x[1] for x in sel_list if r==x[0]]
@@ -902,6 +902,16 @@ class orm_template(object):
                         if line[i] in [tools.ustr(key), tools.ustr(val)]:
                             res = key
                             break
+                    if line[i] and not res:
+                        model_obj = self.pool.get(model_name)
+                        if model_obj:
+                            # get the selection from the field.selection definition
+                            sel_list = getattr(getattr(model_obj._all_columns.get(field[len(prefix)], object), 'column', object), 'selection', False)
+                            if isinstance(sel_list, list):
+                                for key, val in sel_list:
+                                    if line[i] == val:
+                                        res = key
+                                        break
                     if line[i] and not res:
                         logger.notifyChannel("import", netsvc.LOG_WARNING,
                                 _("key '%s' not found in selection field '%s'") % \
