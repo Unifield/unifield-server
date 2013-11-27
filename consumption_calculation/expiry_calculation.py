@@ -192,6 +192,7 @@ class product_likely_expire_report(osv.osv):
     _name = 'product.likely.expire.report'
     _description = 'Products list likely to expire'
     _rec_name = 'id'
+    _order = 'requestor_date desc, id'
     
     def _get_status(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -294,6 +295,7 @@ class product_likely_expire_report(osv.osv):
         import threading
         self.write(cr, uid, ids, {'status': 'in_progress'},
                    context=context)
+        cr.commit()
         new_thread = threading.Thread(target=self._process_lines,
                         args=(cr, uid, ids, context))
         new_thread.start()
