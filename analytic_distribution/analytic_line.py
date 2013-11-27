@@ -160,7 +160,7 @@ class analytic_line(osv.osv):
         """
         Check if line comes from a 'engagement' journal type. If yes, True. Otherwise False.
         """
-        if not context:
+        if context is None:
             context = {}
         res = {}
         for al in self.browse(cr, uid, ids, context=context):
@@ -174,12 +174,27 @@ class analytic_line(osv.osv):
         Check journal entry state. If unposted: True, otherwise False.
         A line that comes from a commitment cannot be posted. So it's always to False.
         """
-        if not context:
+        if context is None:
             context = {}
         res = {}
         for al in self.browse(cr, uid, ids, context=context):
             res[al.id] = False
             if al.move_state != 'posted' and al.journal_id.type != 'engagement':
+                res[al.id] = True
+        return res
+
+    def _get_is_free(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Check if the line comes from a Free 1 or Free 2 analytic account category.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for al in self.browse(cr, uid, ids, context=context):
+            res[al.id] = False
+            if al.account_id and al.account_id.category and al.account_id.category in ['FREE1', 'FREE2']:
                 res[al.id] = True
         return res
 
@@ -200,6 +215,7 @@ class analytic_line(osv.osv):
         'is_unposted': fields.function(_get_is_unposted, method=True, type='boolean', string="Unposted?"),
         'imported_commitment': fields.boolean(string="From imported commitment?"),
         'imported_entry_sequence': fields.text("Imported Entry Sequence"),
+        'free_account': fields.function(_get_is_free, method=True, type='boolean', string='Free account?', help="Is that line comes from a Free 1 or Free 2 account?"),
     }
 
     _defaults = {

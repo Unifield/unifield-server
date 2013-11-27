@@ -166,6 +166,8 @@
                     <newline/>
                     <label string="- Unposted items" align="0.0"/>
                     <newline/>
+                    <label string="- Free 1 / Free 2 items" align="0.0"/>
+                    <newline/>
                     <html>
                         <br />
                     </html>
@@ -181,6 +183,7 @@
                             <field name="is_reversal"/>
                             <field name="from_write_off"/>
                             <field name="is_unposted"/>
+                            <field name="free_account"/>
                         </tree>
                     </field>
                     <separator string=""/>
