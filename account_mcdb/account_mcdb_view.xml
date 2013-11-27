@@ -264,7 +264,7 @@
                                     <button name="button_free_2_add" type="object" string="Add all Free 2" icon="gtk-add" colspan="1"/>
                                 </group>
                                 <field name="rev_analytic_account_f2_ids"/>
-                                <field name="analytic_account_f2_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1')]">
+                                <field name="analytic_account_f2_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FREE2')]">
                                     <tree string="Free 2" editable="top" noteditable="1">
                                         <field name="code" string="Ana. Code"/>
                                         <field name="name" string="Ana. Name"/>
