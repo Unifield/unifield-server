@@ -326,6 +326,10 @@ class product_likely_expire_report(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        
+        # background cursor    
+        import pooler
+        new_cr = pooler.get_db(cr.dbname).cursor()
             
         move_obj = self.pool.get('stock.move')
         lot_obj = self.pool.get('stock.production.lot')
@@ -335,8 +339,8 @@ class product_likely_expire_report(osv.osv):
         item_obj = self.pool.get('product.likely.expire.report.item')
         item_line_obj = self.pool.get('product.likely.expire.report.item.line')
         
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'product_likely_expire_report_form_processed')[1]
-        report = self.browse(cr, uid, ids[0], context=context)
+        view_id = self.pool.get('ir.model.data').get_object_reference(new_cr, uid, 'consumption_calculation', 'product_likely_expire_report_form_processed')[1]
+        report = self.browse(new_cr, uid, ids[0], context=context)
         
         if report.date_to <= report.date_from:
             raise osv.except_osv(_('Error'), _('You cannot have \'To date\' older than \'From date\''))
@@ -357,20 +361,20 @@ class product_likely_expire_report(osv.osv):
             only_product_ids = context.get('only_product_ids')
 
         if report.input_output_ok:
-            wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)
-            for wh in self.pool.get('stock.warehouse').browse(cr, uid, wh_ids, context=context):
-                not_loc_ids.extend(loc_obj.search(cr, uid, [('location_id', 'child_of', wh.lot_input_id.id)], context=context))
-                not_loc_ids.extend(loc_obj.search(cr, uid, [('location_id', 'child_of', wh.lot_output_id.id)], context=context))
+            wh_ids = self.pool.get('stock.warehouse').search(new_cr, uid, [], context=context)
+            for wh in self.pool.get('stock.warehouse').browse(new_cr, uid, wh_ids, context=context):
+                not_loc_ids.extend(loc_obj.search(new_cr, uid, [('location_id', 'child_of', wh.lot_input_id.id)], context=context))
+                not_loc_ids.extend(loc_obj.search(new_cr, uid, [('location_id', 'child_of', wh.lot_output_id.id)], context=context))
         
         if report.location_id:
             # Get all locations
-            location_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', report.location_id.id), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id', context=context)
+            location_ids = loc_obj.search(new_cr, uid, [('location_id', 'child_of', report.location_id.id), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id', context=context)
         else:
             # Get all locations
-            wh_location_ids = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id', context=context)
+            wh_location_ids = loc_obj.search(new_cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id', context=context)
 
-            move_ids = move_obj.search(cr, uid, [('prodlot_id', '!=', False)], context=context)
-            for move in move_obj.browse(cr, uid, move_ids, context=context):
+            move_ids = move_obj.search(new_cr, uid, [('prodlot_id', '!=', False)], context=context)
+            for move in move_obj.browse(new_cr, uid, move_ids, context=context):
                 if move.location_id.id not in location_ids:
                     if move.location_id.usage == 'internal' and not move.location_id.quarantine_location and move.location_id.id in wh_location_ids:
                         location_ids.append(move.location_id.id)
@@ -384,7 +388,7 @@ class product_likely_expire_report(osv.osv):
         if only_product_ids:
             lot_domain.append(('product_id', 'in', only_product_ids))
         
-        lot_ids = lot_obj.search(cr, uid, lot_domain, order='product_id, life_date', context=context)
+        lot_ids = lot_obj.search(new_cr, uid, lot_domain, order='product_id, life_date', context=context)
         
         from_date = DateFrom(report.date_from)
         to_date = DateFrom(report.date_to) + RelativeDateTime(day=1, months=1, days=-1)
@@ -397,16 +401,16 @@ class product_likely_expire_report(osv.osv):
             
         # Create a report line for each product
         products = {}
-        for lot in lot_obj.browse(cr, uid, lot_ids, context=context):
+        for lot in lot_obj.browse(new_cr, uid, lot_ids, context=context):
             if lot.product_id and lot.product_id.id not in products:
                 products.update({lot.product_id.id: {}})
-                consumption = self._get_average_consumption(cr, uid, lot.product_id.id, 
-                                                                     report.consumption_type,
-                                                                     context.get('from', report.date_from),
-                                                                     context.get('to', report.date_to),
-                                                                     context=context)
+                consumption = self._get_average_consumption(new_cr, uid, lot.product_id.id, 
+                                                            report.consumption_type,
+                                                            context.get('from', report.date_from),
+                                                            context.get('to', report.date_to),
+                                                            context=context)
                 
-                products[lot.product_id.id].update({'line_id': line_obj.create(cr, uid, {'report_id': report.id,
+                products[lot.product_id.id].update({'line_id': line_obj.create(new_cr, uid, {'report_id': report.id,
                                                                                          'product_id': lot.product_id.id,
                                                                                          'in_stock': lot.product_id.qty_available,
                                                                                          'total_expired': 0.00,
@@ -424,7 +428,7 @@ class product_likely_expire_report(osv.osv):
                     # Remove one day to include the expiry date as possible consumable day
                     if not last_expiry_date: last_expiry_date = month - RelativeDateTime(days=1)
                     
-                    item_id = item_obj.create(cr, uid, {'name': month.strftime('%m/%y'), 
+                    item_id = item_obj.create(new_cr, uid, {'name': month.strftime('%m/%y'), 
                                                         'line_id': products[lot.product_id.id]['line_id']}, context=context)
                     available_qty = 0.00
                     expired_qty = 0.00
@@ -437,9 +441,9 @@ class product_likely_expire_report(osv.osv):
 
                     if not start_month_flag:
                         domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
-                        item_obj.write(cr, uid, [item_id], {'period_start': (month + RelativeDateTime(day=1)).strftime('%Y-%m-%d')}, context=context)
+                        item_obj.write(new_cr, uid, [item_id], {'period_start': (month + RelativeDateTime(day=1)).strftime('%Y-%m-%d')}, context=context)
                     else:
-                        item_obj.write(cr, uid, [item_id], {'period_start': report.date_from}, context=context)
+                        item_obj.write(new_cr, uid, [item_id], {'period_start': report.date_from}, context=context)
                         # Uncomment the first line if you want products already expired in the first month
                         #domain.append(('life_date', '>=', month.strftime('%Y-%m-01')))
                         # Comment line if you want all products already expired
@@ -450,15 +454,15 @@ class product_likely_expire_report(osv.osv):
                     # Remove the token after the first month processing
                     start_month_flag = False
 
-                    product_lot_ids = lot_obj.search(cr, uid, domain, order='life_date', context=context)
+                    product_lot_ids = lot_obj.search(new_cr, uid, domain, order='life_date', context=context)
                     
                     # Create an item line for each lot and each location
-                    for product_lot in lot_obj.browse(cr, uid, product_lot_ids, context=context):
+                    for product_lot in lot_obj.browse(new_cr, uid, product_lot_ids, context=context):
                         lot_days = Age(DateFrom(product_lot.life_date), last_expiry_date)
                         lot_coeff = (lot_days.years*365.0 + lot_days.months*30.0 + lot_days.days)/30.0
                         if lot_coeff >= 0.00: last_expiry_date = DateFrom(product_lot.life_date)
                         if lot_coeff < 0.00: lot_coeff = 0.00
-                        lot_cons = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(lot_coeff*consumption,2), lot.product_id.uom_id.id) + rest
+                        lot_cons = self.pool.get('product.uom')._compute_qty(new_cr, uid, lot.product_id.uom_id.id, round(lot_coeff*consumption,2), lot.product_id.uom_id.id) + rest
                         
                         if lot_cons > 0.00:
                             if lot_cons >= product_lot.stock_available:
@@ -475,12 +479,12 @@ class product_likely_expire_report(osv.osv):
                         
                         lot_context = context.copy()
                         lot_context.update({'prodlot_id': product_lot.id})
-                        product = product_obj.browse(cr, uid, lot.product_id.id, context=lot_context)
+                        product = product_obj.browse(new_cr, uid, lot.product_id.id, context=lot_context)
                         lot_expired_qty = l_expired_qty
                         for location in location_ids:
                             new_lot_context = lot_context.copy()
                             new_lot_context.update({'location': location, 'compute_child': False})
-                            product2 = product_obj.browse(cr, uid, lot.product_id.id, context=new_lot_context)
+                            product2 = product_obj.browse(new_cr, uid, lot.product_id.id, context=new_lot_context)
                             if product2.qty_available > 0.00:
                                 # Create the item line
                                 if product2.qty_available <= lot_expired_qty:
@@ -489,7 +493,7 @@ class product_likely_expire_report(osv.osv):
                                 else:
                                     new_lot_expired = lot_expired_qty
                                     lot_expired_qty = 0.00
-                                item_line_obj.create(cr, uid, {'item_id': item_id,
+                                item_line_obj.create(new_cr, uid, {'item_id': item_id,
                                                                'lot_id': product_lot.id,
                                                                'location_id': location,
                                                                'available_qty': product2.qty_available,
@@ -497,21 +501,24 @@ class product_likely_expire_report(osv.osv):
                             
                         available_qty += product.qty_available
                             
-                    item_obj.write(cr, uid, [item_id], {'available_qty': available_qty,
+                    item_obj.write(new_cr, uid, [item_id], {'available_qty': available_qty,
                                                         'expired_qty': expired_qty}, context=context)
                     total_expired += expired_qty
                     
                 if report.only_non_zero and total_expired <= 0.00:
-                    line_obj.unlink(cr, uid, [products[lot.product_id.id]['line_id']], context=context)
+                    line_obj.unlink(new_cr, uid, [products[lot.product_id.id]['line_id']], context=context)
                 else:
-                    line_obj.write(cr, uid, [products[lot.product_id.id]['line_id']], {'total_expired': total_expired}, context=context)
+                    line_obj.write(new_cr, uid, [products[lot.product_id.id]['line_id']], {'total_expired': total_expired}, context=context)
             
         new_date = []        
         for date in dates:
             new_date.append(date.strftime('%m/%y'))
             
         context.update({'dates': new_date})
-        self.write(cr, uid, ids, {'status': 'ready'}, context=context)
+        self.write(new_cr, uid, ids, {'status': 'ready'}, context=context)
+        
+        new_cr.commit()
+        new_cr.close()
         
         return {
             'type': 'ir.actions.act_window',
@@ -580,7 +587,7 @@ class product_likely_expire_report(osv.osv):
             'res_model': 'product.likely.expire.report',
             'view_id': [view_id],
             'view_type': 'form',
-            'view_mode': 'form',
+            'view_mode': 'form,tree',
             'target': 'dummy',
             'context': context,
             'res_id': ids[0],
