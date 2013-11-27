@@ -72,6 +72,34 @@
     			  action="action_expired_products"
                   sequence="-10"
     			  parent="menu_warehouse_expiry" />
+                  
+        <record id="product_likely_expire_report_waiting_view" model="ir.ui.view">
+            <field name="name">product.likely.expire.report.waiting.view</field>
+            <field name="model">product.likely.expire.report</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Status of the report" hide_new_button="1" hide_delete_button="1">
+                    <label> </label>
+                    <group colspan="2" col="2">
+                        <html>
+                            <div style="align: center">
+                                <p style="font-size:14px;align:center">
+                                    Your products likely to expire demand will be treated quickly.<br />
+                                </p>
+                                <p style="font-size:14px;align:center">
+                                    Due to the volume of data, your demand cannot be shown immediatly.<br />
+                                </p>
+                                <p style="font-size:14px;align:center">
+                                    When the report will be ready, you can access to it by the menu Warehouse / Reporting / Expiry / Products likely to expire.<br />
+                                </p>
+                            </div>
+                        </html>
+                    </group>
+                    <label> </label>
+                </form>
+            </field>
+        </record>
     			  
         <record id="product_likely_expire_report_search_view" model="ir.ui.view">
             <field name="name">product.likely.expire.report.search.view</field>
@@ -92,14 +120,12 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Products likely to expire" noteditable="1" colors="grey:status=='in_progress';green:status=='ready'">
-                <tree string="Products likely to expire" noteditable="1">
                     <field name="date_from" />
                     <field name="date_to" />
                     <field name="only_non_zero" />
                     <field name="consumption_type" />
-                    <field name="consumption_from" />
-                    <field name="consumption_to" />
                     <field name="location_id" />
+                    <field name="input_output_ok" />
                     <button name="in_progress" type="object" icon="gtk-refresh" string="In Progress" attrs="{'invisible': [('status', '!=', 'in_progress')]}" />
                     <button name="open_report" type="object" icon="terp-check" string="Open report" attrs="{'invisible': [('status', '!=', 'ready')]}"/>
                     <field name="fake_status" />
@@ -162,7 +188,7 @@
     				</field>
     			</form>
     		</field>
-    	</record> 
+    	</record>
     
         <!--
         !!! TO-DO remove

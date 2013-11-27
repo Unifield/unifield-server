@@ -35,7 +35,7 @@ class expiry_quantity_report(osv.osv_memory):
         '''
         Compute the end date for the calculation
         '''
-        if not context:
+        if context is None:
             context = {}
         
         res = {}
@@ -79,7 +79,7 @@ class expiry_quantity_report(osv.osv_memory):
         '''
         Creates all lines of expired products
         '''
-        if not context:
+        if context is None:
             context = {}
         
         move_obj = self.pool.get('stock.move')
@@ -250,7 +250,7 @@ class product_likely_expire_report(osv.osv):
         '''
         Return the average consumption for all locations
         '''
-        if not context:
+        if context is None:
             context = {}
         
         product_obj = self.pool.get('product.product')
@@ -272,15 +272,47 @@ class product_likely_expire_report(osv.osv):
             res = product_obj.browse(cr, uid, product_id, context=new_context).monthly_consumption
         
         return res
-            
+        
     def process_lines(self, cr, uid, ids, context=None):
+        '''
+        Create one line by product for the period
+        '''
+        if context is None:
+            context = {}
+
+        import threading
+        self.write(cr, uid, ids, {'status': 'in_progress'},
+                   context=context)
+        new_thread = threading.Thread(target=self._process_lines,
+                        args=(cr, uid, ids, context))
+        new_thread.start()
+        new_thread.join(10.0)
+        if new_thread.isAlive():
+            # more than 10 secs to compute data
+            # displaying 'waiting form'
+            view_id = self.pool.get('ir.model.data').get_object_reference(
+                cr, uid, 'consumption_calculation',
+                'product_likely_expire_report_waiting_view')[1]
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'product.likely.expire.report',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'view_id': [view_id],
+                'context': context,
+                'target': 'same',
+            }
+
+        return self.open_report(cr, uid, ids, context=context)
+            
+    def _process_lines(self, cr, uid, ids, context=None):
         '''
         Creates all moves with expiry quantities for all
         lot life date
         '''
-        if not context:
+        if context is None:
             context = {}
-            
         if isinstance(ids, (int, long)):
             ids = [ids]
             
@@ -468,19 +500,22 @@ class product_likely_expire_report(osv.osv):
             new_date.append(date.strftime('%m/%y'))
             
         context.update({'dates': new_date})
-                    
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'product.likely.expire.report',
-                'res_id': report.id,
-                'view_id': [view_id],
-                'view_type': 'form',
-                'view_mode': 'form',
-                'context': context,
-                'target': 'dummy'}
+        self.write(cr, uid, ids, {'status': 'ready'}, context=context)
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'product.likely.expire.report',
+            'res_id': report.id,
+            'view_id': [view_id],
+            'view_type': 'form',
+            'view_mode': 'form',
+            'context': context,
+            'target': 'dummy'
+        }
         
         
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        if not context:
+        if context is None:
             context = {}
             
         res = super(product_likely_expire_report, self).fields_view_get(cr, uid, view_id, view_type, context=context)
@@ -508,7 +543,56 @@ class product_likely_expire_report(osv.osv):
         '''
         Open the report
         '''
-        return {}
+        
+        # compute dates to inject to context
+        if context is None:
+            context = {}
+        if not ids:
+            return {}
+        report = self.browse(cr, uid, ids[0], context=context)
+        if not report:
+            return {}
+        from_date = DateFrom(report.date_from)
+        to_date = DateFrom(report.date_to) + RelativeDateTime(day=1, months=1, days=-1)
+        dates = []
+        while (from_date < to_date):
+            dates.append(from_date.strftime('%m/%y'))
+            from_date = from_date + RelativeDateTime(months=1, day=1)
+        context.update({'dates': dates})
+        
+        view_id = self.pool.get('ir.model.data').get_object_reference(
+            cr, uid, 'consumption_calculation',
+            'product_likely_expire_report_form_processed')[1]
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'product.likely.expire.report',
+            'view_id': [view_id],
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'dummy',
+            'context': context,
+            'res_id': ids[0],
+        }
+        
+    def in_progress(self, cr, uid, ids, context=None):
+        '''
+        Return dummy
+        '''
+        return self._go_to_list(cr, uid, ids, context=context)
+
+    def _go_to_list(self, cr, uid, ids, context=None):
+        '''
+        Returns to the list of reports
+        '''
+        return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'product.likely.expire.report',
+                'view_mode': 'tree,form',
+                'view_type': 'form',
+                'target': 'dummy',
+                'context': context,
+            }
                 
 product_likely_expire_report()
 
@@ -534,7 +618,7 @@ class product_likely_expire_report_line(osv.osv):
             return super(product_likely_expire_report_line, self).__getattr__(name, *args, **kwargs)
     
     def fields_get(self, cr, uid, fields=None, context=None):
-        if not context:
+        if context is None:
             context = {}
             
         res = super(product_likely_expire_report_line, self).fields_get(cr, uid, fields, context)
@@ -549,7 +633,7 @@ class product_likely_expire_report_line(osv.osv):
         return res
     
     def go_to_item(self, cr, uid, ids, context=None):
-        if not context:
+        if context is None:
             context = {}
             
         if not context.get('item_date', self.date):
