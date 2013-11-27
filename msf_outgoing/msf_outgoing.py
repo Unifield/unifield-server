@@ -2337,6 +2337,7 @@ class stock_picking(osv.osv):
             new_lines = []
 
             if obj.state == 'draft' and keep_move:
+                context['wkf_copy'] = True
                 new_pick_id = self.copy(cr, uid, obj.id, default_vals, context=context)
                 pick_to_check.add(obj.id)
             else:
