@@ -741,7 +741,7 @@ class supplier_catalogue_line(osv.osv):
                                  'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty),})
                 new_vals = self._create_supplier_info(cr, uid, new_vals, context=context)
         
-        res = super(supplier_catalogue_line, self).write(cr, uid, ids, new_vals, context=context)
+            res = super(supplier_catalogue_line, self).write(cr, uid, [line.id], new_vals, context=context)
 
         self._check_min_quantity(cr, uid, ids, context=context)
 
