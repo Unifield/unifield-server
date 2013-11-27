@@ -199,7 +199,7 @@ class product_likely_expire_report(osv.osv):
         '''
         res = {}
         for r in self.read(cr, uid, ids, ['status'], context=context):
-            res[obj.id] = r['status']
+            res[r['id']] = r['status']
         return res
     
     _columns = {

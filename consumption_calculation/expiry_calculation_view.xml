@@ -92,6 +92,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Products likely to expire" noteditable="1" colors="grey:status=='in_progress';green:status=='ready'">
+                <tree string="Products likely to expire" noteditable="1">
                     <field name="date_from" />
                     <field name="date_to" />
                     <field name="only_non_zero" />
