@@ -2445,7 +2445,7 @@ class stock_move(osv.osv):
             context = {}
         ctx = context.copy()
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state != 'draft' and not ctx.get('call_unlink',False):
+            if move.state != 'draft' and not ctx.get('call_unlink',False) and not ctx.get('sync_update_execution'):
                 raise osv.except_osv(_('UserError'),
                         _('You can only delete draft moves.'))
         return super(stock_move, self).unlink(

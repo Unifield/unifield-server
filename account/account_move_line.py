@@ -520,7 +520,9 @@ class account_move_line(osv.osv):
         'analytic_account_id': fields.many2one('account.analytic.account', 'Analytic Account'),
         #TODO: remove this
         #'amount_taxed':fields.float("Taxed Amount", digits_compute=dp.get_precision('Account')),
-        'company_id': fields.related('account_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True)
+        'company_id': fields.related('account_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
+        # UF-1536: Fix residual amount (to be checked during UNIFIELD REFACTORING)
+        'is_counterpart': fields.boolean('Is counterpart?', readonly=True),
     }
 
     def _get_date(self, cr, uid, context=None):
@@ -559,7 +561,8 @@ class account_move_line(osv.osv):
         'journal_id': lambda self, cr, uid, c: c.get('journal_id', c.get('journal',False)),
         'account_id': lambda self, cr, uid, c: c.get('account_id', False),
         'period_id': lambda self, cr, uid, c: c.get('period_id', False),
-        'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'account.move.line', context=c)
+        'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'account.move.line', context=c),
+        'is_counterpart': lambda *a: False,
     }
     _order = "date desc, id desc"
     _sql_constraints = [
@@ -1245,10 +1248,15 @@ class account_move_line(osv.osv):
         journal_obj = self.pool.get('account.journal')
         if context is None:
             context = {}
+        move_date = False
         if vals.get('move_id', False):
-            company_id = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['company_id']).get('company_id', False)
-            if company_id:
-                vals['company_id'] = company_id[0]
+            move_data = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['company_id', 'date'])
+            if move_data.get('company_id'):
+                vals['company_id'] = move_data['company_id'][0]
+            move_date = move_data.get('date')
+            if not vals.get('date') and move_date:
+                vals['date'] = move_date
+
         self._check_date(cr, uid, vals, context, check)
         if ('account_id' in vals) and not account_obj.read(cr, uid, vals['account_id'], ['active'])['active']:
             raise osv.except_osv(_('Bad account!'), _('You can not use an inactive account!'))
@@ -1391,6 +1399,8 @@ class account_move_line(osv.osv):
 
         if check and ((not context.get('no_store_function')) or journal.entry_posted):
             tmp = move_obj.validate(cr, uid, [vals['move_id']], context)
+            if vals.get('date') and vals.get('date') != move_date:
+                move_obj.write(cr, uid, [vals['move_id']], {'date': vals.get('date')}, context)
             if journal.entry_posted and tmp:
                 move_obj.button_validate(cr,uid, [vals['move_id']], context)
         return result
