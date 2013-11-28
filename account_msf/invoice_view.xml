@@ -593,7 +593,7 @@
             name="account.invoice2"
             rml="account_msf/report/account_print_invoice.rml"
             string="Print report"
-            target_filename="eval(_get_invoice_report_name)"
+            target_filename="${eval(_get_invoice_report_name)}"
             attachment="(object.state in ('open','paid')) and ('INV'+(object.number or '').replace('/',''))"
             attachment_use="1"
             multi="True"/>

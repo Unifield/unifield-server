@@ -7,7 +7,7 @@
                 id="msf_audittrail.report_log_line" 
                 model="audittrail.log.line" 
                 name="msf.log.line"
-                target_filename="LL_${object_id.name}_%(year)s_%(month)s_%(day)s"
+                target_filename="LL_${object_id.name}_%(year)s%(month)s%(day)s"
                 rml="msf_audittrail/report/log_line.rml"
                 string="Log lines" />
 
