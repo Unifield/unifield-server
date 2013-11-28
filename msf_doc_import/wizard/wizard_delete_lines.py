@@ -42,6 +42,7 @@ are a tuple with information in this order :
     * domain to apply on lines (e.g. : only draft stock moves on picking)
 """
 DOCUMENT_DATA = {'product.list': ('product.list.line', 'list_id', 'product_ids', '', ''),
+                 'return.claim': ('claim.product.line', 'claim_id_claim_product_line', 'product_line_ids_return_claim', 'qty_claim_product_line', ''),
                  'composition.kit': ('composition.item', 'item_kit_id', 'composition_item_ids', 'item_qty', ''),
                  'purchase.order': ('purchase.order.line', 'order_id', 'order_line', 'product_qty', ''),
                  'tender': ('tender.line', 'tender_id', 'tender_line_ids', 'qty', ''),
@@ -107,6 +108,14 @@ Documents which inherit from document.remove.line:
 class product_list(osv.osv):
     _name = 'product.list'
     _inherit = 'product.list'
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        return brl(self, cr, uid, ids, context=context)
+
+
+class return_claim(osv.osv):
+    _name = 'return.claim'
+    _inherit = 'return.claim'
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         return brl(self, cr, uid, ids, context=context)
@@ -225,6 +234,7 @@ class monthly_review_consumption(osv.osv):
 ## Object initializations ##
 
 product_list()
+return_claim()
 purchase_order()
 composition_kit()
 tender()
@@ -248,6 +258,7 @@ for the document wizard deletion.
 
 Documents:
     * Product List lines
+    * Claim product lines
     * Theoretical Kit Items
     * Purchase Order / Request for Quotation lines
     * Tender lines
@@ -297,6 +308,14 @@ class product_list_line(osv.osv):
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
         return super(product_list_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+
+class claim_product_line(osv.osv):
+    _inherit = 'claim.product.line'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
+        return super(claim_product_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 
 
 class purchase_order_line(osv.osv):
@@ -404,6 +423,7 @@ class monthly_review_consumption_line(osv.osv):
 
 
 product_list_line()
+claim_product_line()
 purchase_order_line()
 composition_item()
 tender_line()

@@ -206,6 +206,9 @@ class supplier_catalogue(osv.osv):
 
         line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
 
+        if not all(x['state'] == 'draft' for x in self.read(cr, uid, ids, ['state'], context=context)):
+            raise osv.except_osv(_('Error'), _('The catalogue you try to confirm is already confirmed. Please reload the page to update the status of this catalogue'))
+
         # Update catalogues
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
         # Update lines
@@ -219,9 +222,14 @@ class supplier_catalogue(osv.osv):
         '''
         ids = isinstance(ids, (int, long)) and [ids] or ids
         line_obj = self.pool.get('supplier.catalogue.line')
-        self.write(cr, uid, ids, {'state': 'draft'}, context=context)
-
+        
         line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
+
+        if not all(x['state'] == 'confirmed' for x in self.read(cr, uid, ids, ['state'], context=context)):
+            raise osv.except_osv(_('Error'), _('The catalogue you try to confirm is already in draft state. Please reload the page to update the status of this catalogue'))
+
+        # Update catalogues
+        self.write(cr, uid, ids, {'state': 'draft'}, context=context)
         # Update lines
         line_obj.write(cr, uid, line_ids, {}, context=context)
 

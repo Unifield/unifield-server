@@ -26,10 +26,54 @@
             </field>
         </record>
 
+        <record id="return_claim_product_line_form_delete_view" model="ir.ui.view">
+            <field name="name">return.claim.product.line.form.delete.view</field>
+            <field name="model">return.claim</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="return_claim.view_return_claim_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form//field[@name='product_line_ids_return_claim']" position="before">
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
+                    </xpath>                                                    
+                </data>
+            </field>
+        </record>
 
-        <!-- Product list line delete tree/search views -->
+        <record id="return_claim_product_line_tree_delete_view" model="ir.ui.view">
+            <field name="name">return.claim.product.line.tree.delete.view</field>
+            <field name="model">claim.product.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <tree string="Claim product lines" noteditable="True">
+                    <field name="product_id_claim_product_line" />
+                    <field name="asset_id_claim_product_line" />
+                    <field name="composition_list_id_claim_product_line" />
+                    <field name="lot_id_claim_product_line" />
+                    <field name="expiry_date_claim_product_line" />
+                    <field name="src_location_id_claim_product_line" />
+                    <field name="qty_claim_product_line" />
+                    <field name="uom_id_claim_product_line" />
+                </tree>
+            </field>
+        </record>
 
-        <!-- Purchase order line delete tree/search views -->
+        <record id="return_claim_product_line_search_delete_view" model="ir.ui.view">
+            <field name="name">return.claim.product.line.search.delete.view</field>
+            <field name="model">claim.product.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <search string="Claim product lines">
+                    <field name="product_id_claim_product_line" />
+                    <field name="asset_id_claim_product_line" />
+                    <field name="composition_list_id_claim_product_line" />
+                    <field name="lot_id_claim_product_line" />
+                    <field name="src_location_id_claim_product_line" />
+                </search>
+            </field>
+        </record>
 
         <!-- Composition item delete tree/search views -->
         <record id="composition_item_tree_delete_view" model="ir.ui.view">
@@ -50,11 +94,6 @@
             </field>
         </record>
 
-        <!-- Tender line delete tree/search views -->
-
-        <!-- Sale order line delete tree/search views -->
-
-        <!-- Supplier catalogue line delete tree/search views -->
 
         <!-- Stock move delete tree/search views -->
         <record id="stock_move_tree_delete_view" model="ir.ui.view">
