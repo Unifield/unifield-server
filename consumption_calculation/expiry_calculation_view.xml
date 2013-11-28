@@ -188,6 +188,8 @@
     						<field name="total_expired" />
     					</tree>
     				</field>
+                    <separator colspan="4" string="Report" />
+    				<button type="object" name="print_report_xls" string="Print XLS" icon="gtk-print" />
     			</form>
     		</field>
     	</record>

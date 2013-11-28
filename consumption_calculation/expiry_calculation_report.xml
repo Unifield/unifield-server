@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+	
+		<report
+            id="product_likely_expire_report_xls" 
+            auto="False" 
+            menu="False"
+            header="False"
+            model="product.likely.expire.report" 
+            name="product.likely.expire.report_xls"
+            string="Products likely to expire"
+            file="consumption_calculation/report/product_likely_expire_xls.mako"
+            report_type="webkit"
+        />
+
+        <!--
+        <report auto="False" 
+            id="product_likely_expire_report_pdf"
+            auto="False" 
+            menu="False"
+            header="False"
+            model="product.likely.expire.report" 
+            name="product.likely.expire.report_pdf"
+            rml="consumption_calculation/report/product_likely_expire.rml"
+            string="Products likely to expire"
+        />
+        -->
+	</data>
+	
+</openerp>
