@@ -32,6 +32,8 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'getLines': self._get_lines,
+            'getReportDates': self._get_report_dates,
+            'getLineMonths': self._get_line_months,
             'getTotal': self._get_total,
             'getAddress': self._get_instance_addr,
             'getCurrency': self._get_currency,
@@ -41,15 +43,18 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
     def _get_lines(self, report, type='all'):
         line_obj = self.pool.get('product.likely.expire.report.line')
         domain = [('report_id', '=', report.id)]
-        if type != 'all':
-            if type == 'expired':
-                operator = '<'
-            elif type == 'expiry':
-                operator = '>='
-            domain.append(('expiry_date', operator, time.strftime('%Y-%m-%d')))
-        line_ids = line_obj.search(self.cr, self.uid, domain,
-                                   order='expiry_date, product_code')
+        line_ids = line_obj.search(self.cr, self.uid, domain)
         return line_obj.browse(self.cr, self.uid, line_ids)
+        
+    def _get_report_dates(self, report):
+        return report.get_report_dates(self, report)
+        
+    def _get_line_months(self, line):
+        item_obj = self.pool.get('product.likely.expire.report.item')
+        domain = [('line_id', '=', line.id)]
+        items_ids = line_obj.search(self.cr, self.uid, domain,
+                                    order='period_start')
+        return item_obj.browse(self.cr, self.uid, items_ids)
     
     def _get_total(self, report, type='all'):
         total = 0.00

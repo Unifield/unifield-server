@@ -559,11 +559,22 @@ class product_likely_expire_report(osv.osv):
              
         return res
         
+    def get_report_dates(self, report):
+        """ return list(str) of month headers """
+        if not report:
+            return []
+        from_date = DateFrom(report.date_from)
+        to_date = DateFrom(report.date_to) + RelativeDateTime(day=1, months=1, days=-1)
+        dates = []
+        while (from_date < to_date):
+            dates.append(from_date.strftime('%m/%y'))
+            from_date = from_date + RelativeDateTime(months=1, day=1)
+        return dates
+        
     def open_report(self, cr, uid, ids, context=None):
         '''
         Open the report
         '''
-        
         # compute dates to inject to context
         if context is None:
             context = {}
@@ -572,13 +583,7 @@ class product_likely_expire_report(osv.osv):
         report = self.browse(cr, uid, ids[0], context=context)
         if not report:
             return {}
-        from_date = DateFrom(report.date_from)
-        to_date = DateFrom(report.date_to) + RelativeDateTime(day=1, months=1, days=-1)
-        dates = []
-        while (from_date < to_date):
-            dates.append(from_date.strftime('%m/%y'))
-            from_date = from_date + RelativeDateTime(months=1, day=1)
-        context.update({'dates': dates})
+        context.update({ 'dates': self.get_report_dates(report) })
         
         view_id = self.pool.get('ir.model.data').get_object_reference(
             cr, uid, 'consumption_calculation',
@@ -715,6 +720,7 @@ product_likely_expire_report_line()
 
 class product_likely_expire_report_item(osv.osv):
     _name = 'product.likely.expire.report.item'
+    _rec_name = 'id'
     
     _columns = {
             'line_id': fields.many2one('product.likely.expire.report.line', string='Line', ondelete='cascade'),
