@@ -65,6 +65,10 @@ class tender(osv.osv):
             if obj.state != 'draft':
                 raise osv.except_osv(_('Warning !'), _("Cannot delete Tenders not in 'draft' state."))
 
+            if obj.sale_order_id:
+                obj_name = obj.sale_order_id.procurement_request and _('an Internal Request') or _('a Field Order')
+                raise osv.except_osv(_('Warning !'), _("This tender is linked to %s, so you cannot delete it. Please cancel it instead.") % obj_name)
+
             for line in obj.tender_line_ids:
                t_line_obj.fake_unlink(cr, uid, [line.id], context=context)
 
