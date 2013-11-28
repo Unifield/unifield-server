@@ -47,7 +47,7 @@
             cell_data = first_row.cells[cell].data
             column_header.append(cell_data)
         break
-    expected_header = ['Product Code', 'Product Description', 'Quantity', 'UoM', 'Price', 'Delivery requested date', 'Currency', 'Comment', 'Justification Code', 'Justification Coordination', 'HQ Remarks', 'Justification Y/N']
+    expected_header = ['Product Code', 'Product Description', 'Quantity', 'UoM', 'Price', 'Delivery Request Date', 'Currency', 'Comment', 'Justification Code', 'Justification Coordination', 'HQ Remarks', 'Justification Y/N']
     assert column_header==expected_header, ("Wrong header, it should be %s and it is %s" % (expected_header, column_header))
     self.pool.get(res_model).cancel(cr, uid, wizard_values['res_id'], context)
 -
