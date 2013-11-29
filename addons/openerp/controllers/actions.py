@@ -190,7 +190,9 @@ def execute_report(name, **data):
         report_name = report_name.replace('Print ', '')
 
         if not ids or not datas.get('id') or not datas.get('model'):
-            if datas.get('context', {}).get('_terp_view_name'):
+            if datas.get('target_filename'):
+                report_name = datas['target_filename']
+            elif datas.get('context', {}).get('_terp_view_name'):
                 report_name = datas['context']['_terp_view_name']
 
         cherrypy.response.headers['Content-Disposition'] = 'filename="' + report_name + '.' + report_type + '"'
