@@ -110,7 +110,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         # 'line item' lines
         domain = [('item_id', 'in', items_ids)]
         item_lines_ids = item_line_obj.search(self.cr, self.uid, domain,
-                                              order='expired_qty desc')
+                                              order='expired_date')
         return item_line_obj.browse(self.cr, self.uid, item_lines_ids)
     
     """
