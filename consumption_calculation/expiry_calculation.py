@@ -562,17 +562,24 @@ class product_likely_expire_report(osv.osv):
              
         return res
         
-    def get_report_dates(self, report):
+    def get_report_dates_str(self, report):
         """ return list(str) of month headers """
+        res = []
+        for dates, dates_str in self.get_report_dates_multi(report):
+            res.append(dates_str)
+        return res
+        
+    def get_report_dates_multi(self, report):
+        """ return list(tuple(date, str)) of month headers (1st day of month)"""
         if not report:
             return []
+        res = []
         from_date = DateFrom(report.date_from)
         to_date = DateFrom(report.date_to) + RelativeDateTime(day=1, months=1, days=-1)
-        dates = []
         while (from_date < to_date):
-            dates.append(from_date.strftime('%m/%y'))
+            res.append((from_date, from_date.strftime('%m/%y'), ))
             from_date = from_date + RelativeDateTime(months=1, day=1)
-        return dates
+        return res
         
     def open_report(self, cr, uid, ids, context=None):
         '''
@@ -586,7 +593,7 @@ class product_likely_expire_report(osv.osv):
         report = self.browse(cr, uid, ids[0], context=context)
         if not report:
             return {}
-        context.update({ 'dates': self.get_report_dates(report) })
+        context.update({ 'dates': self.get_report_dates_str(report) })
         
         view_id = self.pool.get('ir.model.data').get_object_reference(
             cr, uid, 'consumption_calculation',

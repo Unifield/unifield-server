@@ -40,7 +40,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
             'getReportConsumptionType': self._get_report_consumption_type,
             'getReportDates': self._get_report_dates,
             'getLines': self._get_lines,
-            'getLineMonths': self._get_line_months,
+            'getLineItems': self._get_line_items,
             #'getTotal': self._get_total,
             'getAddress': self._get_instance_addr,
             'getCurrency': self._get_currency,
@@ -58,7 +58,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         """get period header(str)"""
         dt_from = self.formatLang(report.date_from, date=True)
         dt_to = self.formatLang(report.date_to, date=True)
-        res = "%s - %s" % ('date_from', 'date_to',)
+        res = "%s - %s" % (dt_from, dt_to,)
         return res
         
     def _get_report_consumption_type(self, report):
@@ -72,15 +72,24 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         
     def _get_report_dates(self, report):
         """get months period header(str)"""
-        return report.get_report_dates(report)
+        return self.pool.get('product.likely.expire.report').get_report_dates_multi(report)
         
-    def _get_line_months(self, line):
-        """get month item 'product.likely.expire.report.item'
+    def _get_line_items(self, line):
+        """get line items 'product.likely.expire.report.item'
         for each line 'product.likely.expire.report.line'
         ordered by month
         """
         item_obj = self.pool.get('product.likely.expire.report.item')
         domain = [('line_id', '=', line.id)]
+        items_ids = item_obj.search(self.cr, self.uid, domain,
+                                    order='period_start')  # items ordered by month
+        return item_obj.browse(self.cr, self.uid, items_ids)
+        
+    def _get_month_items(self, month):
+        """get month items(''product.likely.expire.report.item'')
+        """
+        item_obj = self.pool.get('product.likely.expire.report.item')
+        domain = [('period_start', '=', line.id)]
         items_ids = item_obj.search(self.cr, self.uid, domain,
                                     order='period_start')  # items ordered by month
         return item_obj.browse(self.cr, self.uid, items_ids)

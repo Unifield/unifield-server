@@ -55,7 +55,7 @@
 % for o in objects:
 <Table x:FullColumns="1" x:FullRows="1">
 <%
-dates = ['11/13', '12/13']
+dates = getReportDates(o)
 n_columns = 5 + len(dates)
 n_header_columns = 3
 n_header_colspan = n_columns - 3
@@ -94,8 +94,8 @@ if n_header_colspan < 0:
 <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
 <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
 <Cell ss:StyleID="header" ><Data ss:Type="String">Monthly Consumption</Data></Cell>
-% for d in dates:
-<Cell ss:StyleID="header" ><Data ss:Type="String">${d|x}</Data></Cell>
+% for d, d_str in dates:
+<Cell ss:StyleID="header" ><Data ss:Type="String">${d_str|x}</Data></Cell>
 % endfor
 <Cell ss:StyleID="header" ><Data ss:Type="String">In Stock</Data></Cell>
 <Cell ss:StyleID="header" ><Data ss:Type="String">Total Expired</Data></Cell>
@@ -106,13 +106,13 @@ if n_header_colspan < 0:
 <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(line.consumption) or 0.00)}</Data></Cell>
-% for m in getLineMonths(line):
+% for i in getLineItems(line):
     ## line items
-    % if m.expired_qty:
-    <Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(m.available_qty) or 0.00)} (${(formatLang(m.expired_qty) or 0.00)})</Data></Cell>
+    % if i.expired_qty:
+    <Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(i.available_qty) or 0.00)} (${(formatLang(i.expired_qty) or 0.00)})</Data></Cell>
     % endif
-    % if not m.expired_qty:
-    <Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(m.available_qty) or 0.00)}</Data></Cell>
+    % if not i.expired_qty:
+    <Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(i.available_qty) or 0.00)}</Data></Cell>
     % endif
 % endfor
 <Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(line.in_stock) or 0.00)}</Data></Cell>
@@ -123,4 +123,9 @@ if n_header_colspan < 0:
 % endfor
 <x:WorksheetOptions/>
 </ss:Worksheet>
+% for d, d_str in dates:
+<ss:Worksheet ss:Name="${d_str}">
+<x:WorksheetOptions/>
+</ss:Worksheet>
+% endfor
 </Workbook>
