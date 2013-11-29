@@ -43,7 +43,7 @@
                                     <field name="purchase_order_line_number" />
                                     <field name="state" invisible="1" />
                                     <field name="line_state" invisible="1" />
-                                    <button name="fake_unlink" type="object" string="Delete" icon="gtk-del" attrs="{'invisible': [('line_state', 'in', ['done', 'cancel'])]}" />
+                                    <button name="ask_unlink" type="object" string="Delete" icon="gtk-del" attrs="{'invisible': [('line_state', 'in', ['done', 'cancel'])]}" />
                                 </tree>
                             </field>
                             <newline/>
@@ -464,6 +464,25 @@
             <field name="value" eval="'ir.actions.act_window,' + str(ref('act_relate_tender_purchase_order'))" />
             <field name="key">action</field>
             <field name="model">tender</field>
+        </record>
+
+        <record id="tender_line_cancel_wizard_form_view" model="ir.ui.view">
+            <field name="name">tender.line.cancel.wizard.form.view</field>
+            <field name="model">tender.line.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Tender line cancelation">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">Would you re-source the needs sourced by this tender line ?</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" colspan="4" />
+                    <button name="just_cancel" string="No" type="object" icon="gtk-execute" colspan="2" />
+                    <button name="cancel_and_resource" string="Yes" type="object" icon="gtk-execute" colspan="2" />
+                </form>
+            </field>
         </record>
 
 	</data>
