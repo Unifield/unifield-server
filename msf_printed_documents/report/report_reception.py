@@ -51,6 +51,8 @@ class report_reception(report_sxw.rml_parse):
             'getQtyIS': self.getQtyIS,
             'getWarning': self.getWarning,
             'getOriginRef': self.getOriginRef,
+            'getBatch': self.getBatch,
+            'getExpDate': self.getExpDate,
         })
 
     def getOriginRef(self,o):
@@ -79,11 +81,14 @@ class report_reception(report_sxw.rml_parse):
         return warn
 
     def getQtyPO(self,line):
-        if line.picking_id:
-            for x in line.picking_id.move_lines:
-                if x.line_number == line.line_number:
-                    return x.product_qty
+        #if line.picking_id:
+            #for x in line.picking_id.move_lines:
+                #if x.line_number == line.line_number:
+                    #return x.product_qty
+        if line.purchase_line_id:
+            return line.purchase_line_id.product_qty
         return False
+    
 
     def getQtyIS(self,line):
         return line.product_qty
@@ -148,8 +153,13 @@ class report_reception(report_sxw.rml_parse):
 
     def getDateCreation(self, o):
         return time.strftime('%d-%b-%Y', time.strptime(o.creation_date,'%Y-%m-%d %H:%M:%S'))
-
-
+    
+    def getBatch(self, line):
+        return line.prodlot_id.name
+    
+    def getExpDate(self, line):
+        return line.prodlot_id.life_date
+        
     def get_lines(self, o):
         return o.move_lines
 
