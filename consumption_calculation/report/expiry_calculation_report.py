@@ -20,6 +20,7 @@
 ##############################################################################
 
 import time
+import calendar
 
 from report import report_sxw
 from report_webkit.webkit_report import WebKitParser
@@ -41,18 +42,12 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
             'getReportDates': self._get_report_dates,
             'getLines': self._get_lines,
             'getLineItems': self._get_line_items,
+            'getMonthItemLines': self._get_month_item_lines,
             #'getTotal': self._get_total,
             'getAddress': self._get_instance_addr,
             'getCurrency': self._get_currency,
             'toDate': self.str_to_time,
         })
-        
-    def _get_lines(self, report, type='all'):
-        """get report lines('product.likely.expire.report.line')"""
-        line_obj = self.pool.get('product.likely.expire.report.line')
-        domain = [('report_id', '=', report.id)]
-        line_ids = line_obj.search(self.cr, self.uid, domain)
-        return line_obj.browse(self.cr, self.uid, line_ids)
         
     def _get_report_period(self, report):
         """get period header(str)"""
@@ -74,6 +69,13 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         """get months period header(str)"""
         return self.pool.get('product.likely.expire.report').get_report_dates_multi(report)
         
+    def _get_lines(self, report, type='all'):
+        """get report lines('product.likely.expire.report.line')"""
+        line_obj = self.pool.get('product.likely.expire.report.line')
+        domain = [('report_id', '=', report.id)]
+        line_ids = line_obj.search(self.cr, self.uid, domain)
+        return line_obj.browse(self.cr, self.uid, line_ids)
+        
     def _get_line_items(self, line):
         """get line items 'product.likely.expire.report.item'
         for each line 'product.likely.expire.report.line'
@@ -85,14 +87,31 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
                                     order='period_start')  # items ordered by month
         return item_obj.browse(self.cr, self.uid, items_ids)
         
-    def _get_month_items(self, month):
-        """get month items(''product.likely.expire.report.item'')
+    def _get_month_item_lines(self, report, month_date):
+        """get month items('product.likely.expire.report.item')
         """
+        lines_obj = self.pool.get('product.likely.expire.report.line')
         item_obj = self.pool.get('product.likely.expire.report.item')
-        domain = [('period_start', '=', line.id)]
-        items_ids = item_obj.search(self.cr, self.uid, domain,
-                                    order='period_start')  # items ordered by month
-        return item_obj.browse(self.cr, self.uid, items_ids)
+        item_line_obj = self.pool.get('product.likely.expire.report.item.line')
+        
+        # 'report lines' in 'month_date'
+        domain = [('report_id', '=', report.id)]
+        lines_ids = lines_obj.search(self.cr, self.uid, domain)
+        
+        dt_from = '%d-%d-01' % (month_date.year, month_date.month, )
+        dt_to = '%d-%d-%s' % (month_date.year, month_date.month, calendar.monthrange(month_date.year, month_date.month)[1])
+        domain = [
+            ('line_id', 'in', lines_ids),
+            ('period_start', '>=', dt_from),
+            ('period_start', '<=', dt_to)
+        ]
+        items_ids = item_obj.search(self.cr, self.uid, domain)
+        
+        # 'line item' lines
+        domain = [('item_id', 'in', items_ids)]
+        item_lines_ids = item_line_obj.search(self.cr, self.uid, domain,
+                                              order='expired_qty desc')
+        return item_line_obj.browse(self.cr, self.uid, item_lines_ids)
     
     """
     !!! TODO

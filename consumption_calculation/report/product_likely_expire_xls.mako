@@ -124,7 +124,39 @@ if n_header_colspan < 0:
 <x:WorksheetOptions/>
 </ss:Worksheet>
 % for d, d_str in dates:
-<ss:Worksheet ss:Name="${d_str}">
+<%
+worksheet_name = d_str.replace('/', '-')
+%>
+<ss:Worksheet ss:Name="${worksheet_name}">
+<Table x:FullColumns="1" x:FullRows="1">
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="200" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Row>
+<Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">Batch Number</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">Expiry Date</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">Location</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">Available Qty</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">Expiry Qty</Data></Cell>
+</Row>
+% for il in getMonthItemLines(o, d):
+<Row>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${il.item_id.line_id.product_id.default_code or ''|x}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${il.item_id.line_id.product_id.name or ''|x}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${il.lot_id.name}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(il.expired_date, date=True) or '')}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${il.location_id.name}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(il.available_qty) or 0.00)}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(il.expired_qty) or 0.00)}</Data></Cell>
+</Row>
+% endfor
+</Table>
 <x:WorksheetOptions/>
 </ss:Worksheet>
 % endfor
