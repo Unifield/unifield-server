@@ -119,6 +119,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         self._logger.info("+++ Call to update partial shipment/OUT from supplier %s to INcoming Shipment of PO at %s"%(source, cr.dbname))
+        context['InShipOut'] = ""
 
         pick_dict = out_info.to_dict()
 
@@ -148,6 +149,7 @@ class stock_picking(osv.osv):
             partial_datas = {}
             partial_datas[in_id] = {}
             line_numbers = {}
+            context['InShipOut'] = "IN" # asking the IN object to be logged
             for line in pack_data:
                 line_data = pack_data[line]
 
@@ -280,6 +282,7 @@ class stock_picking(osv.osv):
     def closed_in_validates_delivery_out_ship(self, cr, uid, source, out_info, context=None):
         if not context:
             context = {}
+        context['InShipOut'] = ""
         self._logger.info("+++ Closed INcoming at %s confirms the delivery of the relevant OUT/SHIP at %s"%(source, cr.dbname))
 
         wf_service = netsvc.LocalService("workflow")
@@ -304,7 +307,7 @@ class stock_picking(osv.osv):
             ship_ids = shipment_obj.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'done')], context=context)
             if ship_ids:
                 # set the Shipment to become delivered
-                context['do_not_log_pack'] = True # this flag is to tell the PACK object not to log, but only SHIP to log
+                context['InShipOut'] = "" # ask the PACK object not to log (model stock.picking), because it is logged in SHIP
                 shipment_obj.set_delivered(cr, uid, ship_ids, context=context)
                 message = "The shipment " + out_doc_name + " has been well delivered to its partner."
                 shipment_obj.write(cr, uid, ship_ids, {'state': 'delivered',}, context=context) # trigger an on_change in SHIP 
@@ -316,7 +319,7 @@ class stock_picking(osv.osv):
             ship_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'done')], context=context)
             if ship_ids:
                 # set the Shipment to become delivered
-                context['do_not_log_pack'] = False # this flag is to tell the PACK object not to log, but only SHIP to log
+                context['InShipOut'] = "OUT" # asking OUT object to be logged (model stock.picking)
                 self.set_delivered(cr, uid, ship_ids, context=context)
                 message = "The OUTcoming " + out_doc_name + " has been well delivered to its partner."
             else:
@@ -591,7 +594,7 @@ class stock_picking(osv.osv):
         if context is None \
            or not context.get('sync_message_execution') \
            or context.get('no_store_function') \
-           or context.get('do_not_log_pack', False): # if it is a PACK object, then do not log
+           or not (context.get('InShipOut', "") in ["IN", "OUT"]): # log only for the 2 cases IN and OUT, not for SHIP
             return
         
         # create a useful mapping purchase.order ->
