@@ -54,7 +54,10 @@
 <ss:Worksheet ss:Name="Products likely to expire">
 % for o in objects:
 <Table x:FullColumns="1" x:FullRows="1">
-<% nb_of_columns = 5 %>
+<%
+dates = ['11/13', '12/13']
+nb_of_columns = 5 + len(dates)
+%>
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="200" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
@@ -64,15 +67,26 @@
 <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
 <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
 <Cell ss:StyleID="header" ><Data ss:Type="String">Monthly Consumption</Data></Cell>
+% for d in dates:
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${d|x}</Data></Cell>
+% endfor
 <Cell ss:StyleID="header" ><Data ss:Type="String">In Stock</Data></Cell>
 <Cell ss:StyleID="header" ><Data ss:Type="String">Total Expired</Data></Cell>
 </Row>
 % for line in o.line_ids:
 <Row>
-<Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
-<Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
-<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(line.consumption) or 0.00)|x}</Data></Cell>
-<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(line.in_stock) or 0.00)|x}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(line.consumption) or 0.00)}</Data></Cell>
+% for m in getLineMonths(line):
+    % if m.expired_qty:
+    <Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(m.available_qty) or 0.00)} (${(formatLang(m.expired_qty) or 0.00)})</Data></Cell>
+    % endif
+    % if not m.expired_qty:
+    <Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(m.available_qty) or 0.00)}</Data></Cell>
+    % endif
+% endfor
+<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(line.in_stock) or 0.00)}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(line.total_expired) or 0.00)|x}</Data></Cell>
 </Row>
 % endfor
