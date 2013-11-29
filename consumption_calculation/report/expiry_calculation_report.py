@@ -25,14 +25,21 @@ from report import report_sxw
 from report_webkit.webkit_report import WebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
+CONSUMPTION_TYPE = [
+    ('fmc', 'FMC -- Forecasted Monthly Consumption'), 
+    ('amc', 'AMC -- Average Monthly Consumption'), 
+    ('rac', 'RAC -- Real Average Consumption'),
+]
 class product_likely_expire_report_parser(report_sxw.rml_parse):
     """UTP-770/UTP-411"""
     def __init__(self, cr, uid, name, context=None):
         super(product_likely_expire_report_parser, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
-            'getLines': self._get_lines,
+            'getReportPeriod': self._get_report_period,
+            'getReportConsumptionType': self._get_report_consumption_type,
             'getReportDates': self._get_report_dates,
+            'getLines': self._get_lines,
             'getLineMonths': self._get_line_months,
             #'getTotal': self._get_total,
             'getAddress': self._get_instance_addr,
@@ -46,6 +53,22 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         domain = [('report_id', '=', report.id)]
         line_ids = line_obj.search(self.cr, self.uid, domain)
         return line_obj.browse(self.cr, self.uid, line_ids)
+        
+    def _get_report_period(self, report):
+        """get period header(str)"""
+        dt_from = self.formatLang(report.date_from, date=True)
+        dt_to = self.formatLang(report.date_to, date=True)
+        res = "%s - %s" % ('date_from', 'date_to',)
+        return res
+        
+    def _get_report_consumption_type(self, report):
+        """get consumption type header(str)"""
+        res = ""
+        for val, label in CONSUMPTION_TYPE:
+            if val == report.consumption_type:
+                res = label
+                break
+        return res
         
     def _get_report_dates(self, report):
         """get months period header(str)"""

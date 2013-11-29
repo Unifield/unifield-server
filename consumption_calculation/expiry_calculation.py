@@ -188,6 +188,11 @@ LIKELY_EXPIRE_STATUS = [
     ('in_progress', 'In Progress'),
     ('ready', 'Ready')
 ]
+CONSUMPTION_TYPE = [
+    ('fmc', 'FMC -- Forecasted Monthly Consumption'), 
+    ('amc', 'AMC -- Average Monthly Consumption'), 
+    ('rac', 'RAC -- Real Average Consumption'),
+]
 class product_likely_expire_report(osv.osv):
     _name = 'product.likely.expire.report'
     _description = 'Products list likely to expire'
@@ -209,9 +214,7 @@ class product_likely_expire_report(osv.osv):
         'input_output_ok': fields.boolean(string='Exclude Input and Output locations'),
         'date_from': fields.date(string='From', required=True, readonly=True),
         'date_to': fields.date(string='To', required=True),
-        'consumption_type': fields.selection([('fmc', 'FMC -- Forecasted Monthly Consumption'), 
-                                              ('amc', 'AMC -- Average Monthly Consumption'), 
-                                              ('rac', 'RAC -- Real Average Consumption')], string='Consumption', required=True),
+        'consumption_type': fields.selection(CONSUMPTION_TYPE, string='Consumption', required=True),
         'line_ids': fields.one2many('product.likely.expire.report.line', 'report_id', string='Lines', readonly=True),
         'consumption_from': fields.date(string='From'),
         'consumption_to': fields.date(string='To'),
