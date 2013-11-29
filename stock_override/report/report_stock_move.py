@@ -163,7 +163,13 @@ class report_stock_move(osv.osv):
                         sm.prodlot_id as prodlot_id,
                         sm.comment as comment,
                         sm.tracking_id as tracking_id,
-                        sum((sm.product_qty / pu.factor) * u.factor) as product_qty,
+                        CASE 
+                          WHEN sp.type in ('out') THEN
+                            sum((-sm.product_qty / pu.factor) * u.factor)
+                          WHEN sp.type in ('in') THEN
+                            sum((sm.product_qty / pu.factor) * u.factor)
+                          ELSE 0.0
+                          END AS product_qty,
                         pt.nomen_manda_2 as categ_id,
                         sp.partner_id2 as partner_id,
                         sm.product_id as product_id,

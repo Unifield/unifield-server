@@ -497,7 +497,8 @@ class shipment(osv.osv):
                     self.log(cr, uid, draft_shipment_id, _("Packs from the draft Shipment (%s) have been returned to stock.")%(draft_shipment_name,))
                     log_flag = True
                 res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-                self.pool.get('stock.picking').log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(draft_picking.name,), context={'view_id': res,})
+                context.update({'view_id': res, 'picking_type': 'picking.ticket'})
+                self.pool.get('stock.picking').log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(draft_picking.name,), context=context)
             
         # call complete_finished on the shipment object
         # if everything is alright (all draft packing are finished) the shipment is done also 
@@ -517,6 +518,7 @@ class shipment(osv.osv):
             'res_id': draft_picking_id ,
             'type': 'ir.actions.act_window',
             'target': 'crush',
+            'context': context
         }
     
     def return_packs_from_shipment(self, cr, uid, ids, context=None):
@@ -2849,7 +2851,8 @@ class stock_picking(osv.osv):
             res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
             self.log(cr, uid, picking.id, _("Products from Pre-Packing List (%s) have been returned to stock.")%(picking.name,), context={'view_id': res,})
             res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-            self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.previous_step_id.backorder_id.name,), context={'view_id': res,})
+            context.update({'view_id': res, 'picking_type': 'picking_ticket'})
+            self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.previous_step_id.backorder_id.name,), context=context)
             # if all moves are done or canceled, the ppl is canceled
             cancel_ppl = True
             for move in picking.move_lines:
@@ -2935,7 +2938,8 @@ class stock_picking(osv.osv):
                     # TODO refactoring needed
                     obj_data = self.pool.get('ir.model.data')
                     res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-                    self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.backorder_id.name,), context={'view_id': res,})
+                    context.update({'view_id': res, 'picking_type': 'picking_ticket'})
+                    self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.backorder_id.name,), context=context)
                     
             if picking.subtype == 'packing':
                 # for each packing we get the draft packing
