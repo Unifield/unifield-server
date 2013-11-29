@@ -316,6 +316,7 @@ class stock_picking(osv.osv):
             ship_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'done')], context=context)
             if ship_ids:
                 # set the Shipment to become delivered
+                context['do_not_log_pack'] = False # this flag is to tell the PACK object not to log, but only SHIP to log
                 self.set_delivered(cr, uid, ship_ids, context=context)
                 message = "The OUTcoming " + out_doc_name + " has been well delivered to its partner."
             else:
