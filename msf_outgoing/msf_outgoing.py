@@ -2381,6 +2381,7 @@ class stock_picking(osv.osv):
                             move_obj.update_linked_documents(cr, uid, move.backmove_id.id, move.id, context=context)
                 elif move.product_qty != 0.00:
                     vals.update({'picking_id': new_pick_id,
+                                 'line_number': move.line_number,
                                  'product_qty': move.product_qty,})
 
                     new_move_id = move_obj.copy(cr, uid, move.id, vals, context=context)
@@ -2412,7 +2413,7 @@ class stock_picking(osv.osv):
 
             if 'assigned' in moves_states:
                 # Add an empty write to display the 'Process' button on OUT
-                self.write(cr, uid, [obj.id], {'state': 'assigned'}, context=context)
+                self.write(cr, uid, [new_pick_id or obj.id], {'state': 'assigned'}, context=context)
         
             # TODO which behavior
             data_obj = self.pool.get('ir.model.data')
