@@ -826,7 +826,7 @@
                                     <field name="product_uos" invisible="1"/>
                                     <field name="scrapped" invisible="1"/>
                                     <field name="prodlot_id"/>
-                                    <field name="expired_date" invisible="1"/>
+                                    <field name="expired_date"/>
 
 
                                     <!-- <button name="%(stock.track_line)d" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('prodlot_id','&lt;&gt;',False)]}" states="draft,assigned,confirmed"/> -->
