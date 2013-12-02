@@ -365,6 +365,8 @@ class tender(osv.osv):
         '''
         # done all related rfqs
         wf_service = netsvc.LocalService("workflow")
+        sol_obj = self.pool.get('sale.order.line')
+        proc_obj = self.pool.get('procurement.order')
         for tender in self.browse(cr, uid, ids, context=context):
             rfq_list = []
             for rfq in tender.rfq_ids:
@@ -380,6 +382,19 @@ class tender(osv.osv):
             # integrity check, all lines must have purchase_order_line_id
             if not all([line.purchase_order_line_id.id for line in tender.tender_line_ids if line.line_state != 'cancel']):
                 raise osv.except_osv(_('Error !'), _('All tender lines must have been compared!'))
+
+            # Update FO line
+            for line in tender.tender_line_ids:
+                if line.sale_order_line_id:
+                    sol_id = line.sale_order_line_id.id
+                    vals = {'product_id': line.product_id.id,
+                            'product_uom': line.product_uom.id,
+                            'product_uos': line.product_uom.id,
+                            'product_uos_qty': line.qty}
+                    sol_obj.write(cr, uid, [sol_id], dict(vals, product_uom_qty=line.qty), context=context)
+                    if line.sale_order_line_id.procurement_id:
+                        proc_id = line.sale_order_line_id.procurement_id.id
+                        proc_obj.write(cr, uid, [proc_id], dict(vals, product_qty=line.qty), context=context)
         
         # update product supplierinfo and pricelist
         self.update_supplier_info(cr, uid, ids, context=context, integrity_test=False,)
