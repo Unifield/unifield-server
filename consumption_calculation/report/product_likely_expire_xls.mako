@@ -113,18 +113,18 @@ if cols < 0:
 <Row>
 <Cell ss:StyleID="line"><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
-<Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(line.consumption) or 0.00)}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(line.consumption or 0.00))}</Data></Cell>
 % for i in getLineItems(line):
     ## line items
     % if i.expired_qty:
-    <Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(i.available_qty) or 0.00)} (${(formatLang(i.expired_qty) or 0.00)})</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(i.available_qty or 0.00))} (${(formatLang(i.expired_qty) or 0.00)})</Data></Cell>
     % endif
     % if not i.expired_qty:
-    <Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(i.available_qty) or 0.00)}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(i.available_qty or 0.00))}</Data></Cell>
     % endif
 % endfor
-<Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(line.in_stock) or 0.00)}</Data></Cell>
-<Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(line.total_expired) or 0.00)|x}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(line.in_stock or 0.00))}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(line.total_expired or 0.00))|x}</Data></Cell>
 </Row>
 % endfor
 </Table>
@@ -160,8 +160,8 @@ worksheet_name = d_str.replace('/', '-')
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.lot_id.name}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(il.expired_date, date=True) or '')}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.location_id.name}</Data></Cell>
-<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(il.available_qty) or 0.00)}</Data></Cell>
-<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(il.expired_qty) or 0.00)}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(il.available_qty or 0.00))}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(il.expired_qty or 0.00))}</Data></Cell>
 </Row>
 % endfor
 </Table>
