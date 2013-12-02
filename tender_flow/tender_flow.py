@@ -589,6 +589,9 @@ class tender(osv.osv):
         '''
         cancel all corresponding rfqs
         '''
+        if context is None:
+            context = {}
+
         po_obj = self.pool.get('purchase.order')
         t_line_obj = self.pool.get('tender.line')
         wf_service = netsvc.LocalService("workflow")
@@ -673,7 +676,8 @@ class tender_line(osv.osv):
             result['value']['text_error'] = False
             result['value']['to_correct_ok'] = False
         
-        result = self.onchange_uom_qty(cr, uid, id, uom_id, product_qty)
+        res_qty = self.onchange_uom_qty(cr, uid, id, uom_id or result.get('value', {}).get('product_uom',False), product_qty)
+        result['value']['qty'] = res_qty.get('value', {}).get('qty', product_qty)
         
         if uom_id:
             result['value']['product_uom'] = uom_id
@@ -799,7 +803,7 @@ class tender_line(osv.osv):
                     sol_to_remove.append(line.sale_order_line_id.id)
                 else:
                     sol_to_update[line.sale_order_line_id.id] = line.sale_order_line_id.product_uom_qty - diff_qty
-            else:
+            elif not line.has_to_be_resourced:
                 to_remove.append(line.id)
 
         if to_cancel:
@@ -848,15 +852,19 @@ class tender_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        wiz_id = wiz_obj.create(cr, uid, {'tender_line_id': ids[0]}, context=context)
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.sale_order_line_id:
+                wiz_id = wiz_obj.create(cr, uid, {'tender_line_id': line.id}, context=context)
         
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'tender.line.cancel.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'res_id': wiz_id,
-                'target': 'new',
-                'context': context}
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'tender.line.cancel.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'res_id': wiz_id,
+                        'target': 'new',
+                        'context': context}
+        
+        return self.fake_unlink(cr, uid, ids, context=context)
     
 tender_line()
 
@@ -1330,6 +1338,9 @@ class tender_line_cancel_wizard(osv.osv_memory):
         '''
         # Objects
         line_obj = self.pool.get('tender.line')
+        tender_obj = self.pool.get('tender')
+        data_obj = self.pool.get('ir.model.data')
+        tender_wiz_obj = self.pool.get('tender.cancel.wizard')
 
         # Variables
         if context is None:
@@ -1339,13 +1350,28 @@ class tender_line_cancel_wizard(osv.osv_memory):
             ids = [ids]
 
         line_ids = []
+        tender_ids = set()
         for wiz in self.browse(cr, uid, ids, context=context):
+            tender_ids.add(wiz.tender_line_id.tender_id.id)
             line_ids.append(wiz.tender_line_id.id)
 
         if context.get('has_to_be_resourced'):
             line_obj.write(cr, uid, line_ids, {'has_to_be_resourced': True}, context=context)
 
         line_obj.fake_unlink(cr, uid, line_ids, context=context)
+
+        for tender in tender_obj.browse(cr, uid, list(tender_ids), context=context):
+            if all(x.line_state in ('cancel', 'done') for x in tender.tender_line_ids):
+                wiz_id = tender_wiz_obj.create(cr, uid, {'tender_id': tender.id}, context=context)
+                view_id = data_obj.get_object_reference(cr, uid, 'tender_flow', 'ask_tender_cancel_wizard_form_view')[1]
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'tender.cancel.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'view_id': [view_id],
+                        'res_id': wiz_id,
+                        'target': 'new',
+                        'context': context}
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -1362,6 +1388,67 @@ class tender_line_cancel_wizard(osv.osv_memory):
         return self.just_cancel(cr, uid, ids, context=context)
 
 tender_line_cancel_wizard()
+
+
+class tender_cancel_wizard(osv.osv_memory):
+    _name = 'tender.cancel.wizard'
+
+    _columns = {
+        'tender_id': fields.many2one('tender', string='Tender', required=True),
+    }
+
+    def just_cancel(self, cr, uid, ids, context=None):
+        '''
+        Just cancel the wizard and the lines
+        '''
+        # Objects
+        line_obj = self.pool.get('tender.line')
+
+        # Variables
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wf_service = netsvc.LocalService("workflow")
+        line_ids = []
+        tender_ids = []
+        for wiz in self.browse(cr, uid, ids, context=context):
+            tender_ids.append(wiz.tender_id.id)
+            for line in wiz.tender_id.tender_line_ids:
+                line_ids.append(line.id)
+
+        if context.get('has_to_be_resourced'):
+            line_obj.write(cr, uid, line_ids, {'has_to_be_resourced': True}, context=context)
+
+        line_obj.fake_unlink(cr, uid, line_ids, context=context)
+
+        for tender in tender_ids:
+            wf_service.trg_validate(uid, 'tender', tender, 'tender_cancel', cr)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel_and_resource(self, cr, uid, ids, context=None):
+        '''
+        Flag the line to be re-sourced and run cancel method
+        '''
+        # Objects
+        if context is None:
+            context = {}
+
+        context['has_to_be_resourced'] = True
+
+        return self.just_cancel(cr, uid, ids, context=context)
+
+    def close_window(self, cr, uid, ids, context=None):
+        '''
+        Just close the wizard and reload the tender
+        '''
+        return {'type': 'ir.actions.act_window_close'}
+
+tender_cancel_wizard()
+
 
 
 class ir_values(osv.osv):

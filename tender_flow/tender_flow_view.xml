@@ -485,5 +485,44 @@
             </field>
         </record>
 
+        <record id="ask_tender_cancel_wizard_form_view" model="ir.ui.view">
+            <field name="name">ask.tender.cancel.wizard.form.view</field>
+            <field name="model">tender.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Tender cancelation">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">All lines of this tender have been canceled. Would you also cancel this tender ?</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" colspan="4" />
+                    <button name="close_window" string="No" type="object" icon="gtk-execute" colspan="2" />
+                    <button name="just_cancel" string="Yes" type="object" icon="gtk-execute" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="tender_cancel_wizard_form_view" model="ir.ui.view">
+            <field name="name">tender.cancel.wizard.form.view</field>
+            <field name="model">tender.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Tender cancelation">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">If you clik on 'Cancel &amp; Resource' button, all Field Order lines or Internal Request lines attached to this tender will be re-sourced.</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" />
+                    <button name="just_cancel" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
+                </form>
+            </field>
+        </record>
+
 	</data>
 </openerp>
