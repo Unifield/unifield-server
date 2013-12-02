@@ -64,6 +64,12 @@ ACCOUNT_RESTRICTED_AREA = {
         '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
         '|', ('type', '!=', 'regular'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
     ],
+    # LINES OF donation
+    'donation_lines': [
+        ('type', '!=', 'view'),
+        ('user_type_code', '=', 'expense'),
+        ('report_type', '=', 'none'), # To only use Expense extra-accounting accounts
+    ],
     # HEADER OF Intermission Voucher IN/OUT
     'intermission_header': [
         ('is_intermission_counterpart', '=', True),
@@ -91,10 +97,11 @@ ACCOUNT_RESTRICTED_AREA = {
     # HQ ENTRIES
     'hq_lines': [
         ('type', '!=', 'view'),
-        ('user_type_code', '=', 'expense'), # FIXME: exclude non-extra accounting code
+        ('user_type_code', '=', 'expense'), 
+        ('user_type.report_type', '!=', 'none'), # Exclude non-extra accounting expense accounts
     ],
     # MANUEL JOURNAL ENTRIES
-    'account_move': [
+    'account_move_lines': [
         '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
     ]
 }
