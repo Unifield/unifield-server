@@ -43,6 +43,7 @@
         
         <paraStyle name="Title" fontName="Helvetica-Bold" fontSize="12.0" leading="15.0" alignement="CENTER" />
         <paraStyle name="TextInfo" fontName="Helvetica" fontSize="8.0" leading="7.0" />
+        <paraStyle name="TextInfoRight" fontName="Helvetica" fontSize="8.0" leading="7.0" alignment="RIGHT" />
         <paraStyle name="TextInfoBold" fontName="Helvetica-Bold" fontSize="8.0" leading="7.0" />
         <paraStyle name="TextInfoBoldRight" fontName="Helvetica-Bold" fontSize="8.0" leading="7.0" alignment="RIGHT" />
         
@@ -140,7 +141,7 @@
 	    	</tr>
 	    </blockTable>
 	    
-	    <blockTable colWidths="100.0,120.0,60.0,60.0,60.0,60.0,60.0,80.0,80.0,80.0" style="LinesTable" repeatRows="1">
+	    <blockTable colWidths="100.0,120.0,80.0,60.0,60.0,60.0,60.0,80.0,80.0,80.0" style="LinesTable" repeatRows="1">
             [[ repeatIn(getRmlTables(objects[0], 5), 'dates') ]]
             <tr>
 	    		<td>
@@ -150,28 +151,28 @@
 	    			<para style="TextInfoBold">Product Description</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfoBold">Monthly Consumption</para>
+	    			<para style="TextInfoBoldRight">Monthly Consumption</para>
 	    		</td>
                 <td>
-	    			<para style="TextInfoBold">[[ getRmlNextMonth(objects[0]) ]]</para>
+	    			<para style="TextInfoBoldRight">[[ getRmlNextMonth(objects[0]) ]]</para>
 	    		</td>
                 <td>
-	    			<para style="TextInfoBold">[[ getRmlNextMonth(objects[0]) ]]</para>
+	    			<para style="TextInfoBoldRight">[[ getRmlNextMonth(objects[0]) ]]</para>
 	    		</td>
                 <td>
-	    			<para style="TextInfoBold">[[ getRmlNextMonth(objects[0]) ]]</para>
+	    			<para style="TextInfoBoldRight">[[ getRmlNextMonth(objects[0]) ]]</para>
 	    		</td>
                 <td>
-	    			<para style="TextInfoBold">[[ getRmlNextMonth(objects[0]) ]]</para>
+	    			<para style="TextInfoBoldRight">[[ getRmlNextMonth(objects[0]) ]]</para>
 	    		</td>
                 <td>
-	    			<para style="TextInfoBold">[[ getRmlNextMonth(objects[0]) ]]</para>
+	    			<para style="TextInfoBoldRight">[[ getRmlNextMonth(objects[0]) ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfoBold">In Stock</para>
+	    			<para style="TextInfoBoldRight">In Stock</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfoBold">Total Expired</para>
+	    			<para style="TextInfoBoldRight">Total Expired</para>
 	    		</td>
 	    	</tr>
 	    	<tr>
@@ -183,69 +184,48 @@
 	    			<para style="TextInfo">[[ line.product_id.name or '' ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfo">[[ formatLang(line.consumption or 0.00) ]]</para>
+	    			<para style="TextInfoRight">[[ formatLang(line.consumption or 0.00) ]]</para>
 	    		</td>
                 <td>
-	    			<para style="TextInfo">[[ getRmlLineItemNextMonth(objects[0], line) ]]</para>
+	    			<para style="TextInfoRight">[[ getRmlLineItemNextMonth(objects[0], line) ]]</para>
 	    		</td>
                 <td>
-	    			<para style="TextInfo">[[ getRmlLineItemNextMonth(objects[0], line) ]]</para>
+	    			<para style="TextInfoRight">[[ getRmlLineItemNextMonth(objects[0], line) ]]</para>
 	    		</td>
                 <td>
-	    			<para style="TextInfo">[[ getRmlLineItemNextMonth(objects[0], line) ]]</para>
+	    			<para style="TextInfoRight">[[ getRmlLineItemNextMonth(objects[0], line) ]]</para>
 	    		</td>
                 <td>
-	    			<para style="TextInfo">[[ getRmlLineItemNextMonth(objects[0], line) ]]</para>
+	    			<para style="TextInfoRight">[[ getRmlLineItemNextMonth(objects[0], line) ]]</para>
 	    		</td>
                 <td>
-	    			<para style="TextInfo">[[ getRmlLineItemNextMonth(objects[0], line) ]]</para>
+	    			<para style="TextInfoRight">[[ getRmlLineItemNextMonth(objects[0], line) ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfo">[[ formatLang(line.in_stock or 0.00) ]]</para>
+	    			<para style="TextInfoRight">[[ formatLang(line.in_stock or 0.00) ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfo">[[ formatLang(line.total_expired or 0.00) ]]</para>
+	    			<para style="TextInfoRight">[[ formatLang(line.total_expired or 0.00) ]]</para>
 	    		</td>
 	    	</tr>
 	    </blockTable>
-
-	    <para style="Standard">
+    </story>
+    
+    <story>
+        [[ repeatIn(getReportDates(objects[0]), 'dates') ]]
+        <para style="Standard">
 	    	<font color="white"> </font>
 	    </para>
-	    
-	    <blockTable colWidths="772.0" style="LinesTableTotal">
+        	    
+        <blockTable colWidths="772.0" style="LinesTableTotal">
 	    	<tr>
 	    		<td>
-	    			<para style="TextInfoBold">Products/batches by month</para>
+	    			<para style="TextInfoBold">[[ dates[1] ]] Products/batches</para>
 	    		</td>
 	    	</tr>
 	    </blockTable>
 	    
 	    <blockTable colWidths="100.0,200.0,100.0,100.0,100.0,80.0,80.0" style="LinesTable" repeatRows="1">
-            <tr>
-                [[ repeatIn(getReportDates(objects[0]), 'dates') ]]
-	    		<td>
-	    			<para style="TextInfoBold">[[ dates[1] ]]</para>
-	    		</td>
-	    		<td>
-	    			<para style="TextInfoBold"></para>
-	    		</td>
-	    		<td>
-	    			<para style="TextInfoBold"></para>
-	    		</td>
-	    		<td>
-	    			<para style="TextInfoBold"></para>
-	    		</td>
-	    		<td>
-	    			<para style="TextInfoBold"></para>
-	    		</td>
-	    		<td>
-	    			<para style="TextInfoBold"></para>
-	    		</td>
-	    		<td>
-	    			<para style="TextInfoBold"></para>
-	    		</td>
-	    	</tr>
             <tr>
 	    		<td>
 	    			<para style="TextInfoBold">Product Code</para>
@@ -263,10 +243,10 @@
 	    			<para style="TextInfoBold">Location</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfoBold">Available Qty</para>
+	    			<para style="TextInfoBoldRight">Available Qty</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfoBold">Expiry Qty</para>
+	    			<para style="TextInfoBoldRight">Expiry Qty</para>
 	    		</td>
 	    	</tr>
 	    	<tr>
@@ -287,14 +267,13 @@
 	    			<para style="TextInfo">[[ il.location_id.name ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfo">[[ (formatLang(il.available_qty) or 0.00) ]]</para>
+	    			<para style="TextInfoRight">[[ (formatLang(il.available_qty) or 0.00) ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfo">[[ (formatLang(il.expired_qty) or 0.00) ]]</para>
+	    			<para style="TextInfoRight">[[ (formatLang(il.expired_qty) or 0.00) ]]</para>
 	    		</td>
 	    	</tr>
 	    </blockTable>
-	    
     </story>
     
 </document>
