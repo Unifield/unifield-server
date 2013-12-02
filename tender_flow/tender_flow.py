@@ -384,19 +384,34 @@ class tender(osv.osv):
             if not all([line.purchase_order_line_id.id for line in tender.tender_line_ids if line.line_state != 'cancel']):
                 raise osv.except_osv(_('Error !'), _('All tender lines must have been compared!'))
 
-            # Update FO line
-            for line in tender.tender_line_ids:
-                if line.sale_order_line_id:
-                    sol_id = line.sale_order_line_id.id
+            if tender.sale_order_id:
+                # Update procurement order
+                for line in tender.tender_line_ids:
+                    if line.line_state == 'cancel':
+                        continue
                     vals = {'product_id': line.product_id.id,
                             'product_uom': line.product_uom.id,
                             'product_uos': line.product_uom.id,
+                            'product_qty': line.qty,
                             'product_uos_qty': line.qty}
-                    sol_obj.write(cr, uid, [sol_id], dict(vals, product_uom_qty=line.qty), context=context)
-                    if line.sale_order_line_id.procurement_id:
+                    if line.sale_order_line_id and line.sale_order_line_id.procurement_id:
                         proc_id = line.sale_order_line_id.procurement_id.id
-                        proc_obj.write(cr, uid, [proc_id], dict(vals, product_qty=line.qty), context=context)
-        
+                        proc_obj.write(cr, uid, [proc_id], vals, context=context)
+                    elif line.created_by_rfq:   # Create procurement order to add the lines in a PO
+                        create_vals = vals.copy()
+                        create_vals.update({'procure_method': 'make_to_order',
+                                            'is_tender': True,
+                                            'tender_id': tender.id,
+                                            'tender_line_id': line.id,
+                                            'supplier': line.purchase_order_line_id.order_id.partner_id.id,
+                                            'name': '[%s] %s' % (line.product_id.default_code, line.product_id.name),
+                                            'location_id': tender.sale_order_id.warehouse_id.lot_stock_id.id,
+                                            'po_cft': 'cft',
+                                            })
+                        proc_id = proc_obj.create(cr, uid, create_vals, context=context)
+                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+                    
         # update product supplierinfo and pricelist
         self.update_supplier_info(cr, uid, ids, context=context, integrity_test=False,)
         # change tender state
@@ -819,6 +834,7 @@ class tender_line(osv.osv):
         # Objects
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
+        tender_obj = self.pool.get('tender')
 
         # Variables
         wf_service = netsvc.LocalService("workflow")
@@ -828,8 +844,10 @@ class tender_line(osv.osv):
         sol_to_remove = []
         sol_to_update = {}
         so_to_update = set()
+        tender_to_update = set()
 
         for line in self.browse(cr, uid, ids, context=context):
+            tender_to_update.add(line.tender_id.id)
             if line.sale_order_line_id:
                 so_to_update.add(line.sale_order_line_id.order_id.id)
                 to_cancel.append(line.id)
@@ -864,6 +882,17 @@ class tender_line(osv.osv):
         # Update the FO state
         for so in so_to_update:
             wf_service.trg_write(uid, 'sale.order', so, cr)
+
+        # UF-733: if all tender lines have been compared (have PO Line id), then set the tender to be ready
+        # for proceeding to other actions (create PO, Done etc) 
+        for tender in tender_obj.browse(cr, uid, list(tender_to_update), context=context):
+            if tender.internal_state == 'draft':
+                flag = True
+                for line in tender.tender_line_ids:
+                    if line.line_state != 'cancel' and not line.purchase_order_line_id:
+                        flag = False
+                if flag:
+                    tender_obj.write(cr, uid, [tender.id], {'internal_state': 'updated'})
 
         if context.get('fake_unlink'):
             return to_remove
@@ -998,6 +1027,8 @@ class procurement_order(osv.osv):
         tender_line_obj = self.pool.get('tender.line')
         # find the corresponding sale order id for tender
         for proc in self.browse(cr, uid, ids, context=context):
+            if proc.tender_id:
+                return tender_id
             sale_order = False
             sale_order_line = False
             for sol in proc.sale_order_line_ids:
@@ -1222,6 +1253,7 @@ class purchase_order(osv.osv):
 
     def check_rfq_updated(self, cr, uid, ids, context=None):
         tl_obj = self.pool.get('tender.line')
+        line_obj = self.pool.get('purchase.order.line')
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -1234,12 +1266,17 @@ class purchase_order(osv.osv):
             if rfq.rfq_ok and rfq.tender_id:
                 for line in rfq.order_line:
                     if not line.tender_line_id:
-                        tl_vals = {'product_id': line.product_id.id,
-                                   'product_uom': line.product_uom.id,
-                                   'qty': line.product_qty,
-                                   'tender_id': line.order_id.tender_id.id,
-                                   'created_by_rfq': True}
-                        tl_obj.create(cr, uid, tl_vals, context=context)
+                        tl_ids = tl_obj.search(cr, uid, [('product_id', '=', line.product_id.id)], context=context)
+                        if tl_ids:
+                            tl_id = tl_ids[0]
+                        else:
+                            tl_vals = {'product_id': line.product_id.id,
+                                       'product_uom': line.product_uom.id,
+                                       'qty': line.product_qty,
+                                       'tender_id': line.order_id.tender_id.id,
+                                       'created_by_rfq': True}
+                            tl_id = tl_obj.create(cr, uid, tl_vals, context=context)
+                        line_obj.write(cr, uid, [line.id], {'tender_line_id': tl_id}, context=context)
 
             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
 
