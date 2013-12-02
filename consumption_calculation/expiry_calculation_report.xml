@@ -14,10 +14,8 @@
             report_type="webkit"
         />
 
-        <!--
         <report auto="False" 
             id="product_likely_expire_report_pdf"
-            auto="False" 
             menu="False"
             header="False"
             model="product.likely.expire.report" 
@@ -25,7 +23,7 @@
             rml="consumption_calculation/report/product_likely_expire.rml"
             string="Products likely to expire"
         />
-        -->
+
 	</data>
 	
 </openerp>

@@ -135,8 +135,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         if dtime:
             return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, datetime=dtime)
         return ''
-report_sxw.report_sxw('report.product.likely.expire.report_pdf', 'product.likely.expire.report', 'addons/consumption_calculation/report/product_likely_expire.rml', parser=product_likely_expire_report_parser, header=False)
-
+report_sxw.report_sxw('report.product.likely.expire.report_pdf', 'product.likely.expire.report', 'consumption_calculation/report/product_likely_expire.rml', parser=product_likely_expire_report_parser, header=False)
 
 class product_likely_expire_report_xls_parser(SpreadsheetReport):
     """UTP-770"""

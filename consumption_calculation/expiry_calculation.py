@@ -631,13 +631,27 @@ class product_likely_expire_report(osv.osv):
             
     def print_report_xls(self, cr, uid, ids, context=None):
         '''
-        Print the report
+        Print the report (Excel)
         '''
         datas = {'ids': ids} 
         
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'product.likely.expire.report_xls',
+            'datas': datas,
+            'nodestroy': True,
+            'context': context,
+        }
+        
+    def print_report_pdf(self, cr, uid, ids, context=None):
+        '''
+        Print the report (PDF)
+        '''
+        datas = {'ids': ids} 
+        
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'product.likely.expire.report_pdf',
             'datas': datas,
             'nodestroy': True,
             'context': context,

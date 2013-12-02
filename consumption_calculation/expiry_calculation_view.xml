@@ -189,7 +189,8 @@
     					</tree>
     				</field>
                     <separator colspan="4" string="Report" />
-    				<button type="object" name="print_report_xls" string="Print XLS" icon="gtk-print" />
+    				<button type="object" name="print_report_xls" string="Print Excel" icon="gtk-print" />
+                    <button type="object" name="print_report_pdf" string="Print PDF" icon="gtk-print" />
     			</form>
     		</field>
     	</record>
