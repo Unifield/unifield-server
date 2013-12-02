@@ -95,7 +95,6 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
     def _get_month_item_lines(self, report, month_date):
         """get month items('product.likely.expire.report.item')
         """
-        print '_get_month_item_lines res', month_date
         lines_obj = self.pool.get('product.likely.expire.report.line')
         item_obj = self.pool.get('product.likely.expire.report.item')
         item_line_obj = self.pool.get('product.likely.expire.report.item.line')
@@ -120,25 +119,28 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         return item_line_obj.browse(self.cr, self.uid, item_lines_ids)
         
     def _get_rml_tables(self, report, month_cols_count):
-        print '_get_rml_tables ', month_cols_count
-        return [ 1, 2, ]
-        #~ print '_rml_get_main_tables_count', month_cols_count
-        #~ if not month_cols_count or month_cols_count < 1:
-            #~ month_cols_count = 1
-        #~ res = month_cols_count
-        #~ dates = self._get_report_dates(report)
-        #~ if dates:
-            #~ l = len(dates)
-            #~ print '_rml_get_main_tables_count len', l
-            #~ if month_cols_count > l:
-                #~ res = dates / month_cols_count
-                #~ if l % month_cols_count:
-                    #~ res += 1
-            #~ print '_rml_get_main_tables_count res', res
-        #~ if not res or res < 1:
-            #~ res = 1
-        #~ print '_rml_get_main_tables_count ret', res
-        #~ return res
+        """
+        compute number of table to display given:
+            - month_cols_count: cols count to display
+            - total month count in report
+        return a fake list of table count len for repeatIn
+        """
+        if not month_cols_count or month_cols_count < 1:
+            month_cols_count = 1
+        res = month_cols_count
+        dates = self._get_report_dates(report)
+        if dates:
+            l = len(dates)
+            if month_cols_count > 1:
+                res = l / month_cols_count
+                if l % month_cols_count:
+                    res += 1
+        if not res or res < 1:
+            res = 1
+        res_list = []
+        for i in xrange(res):
+           res_list.append(i) 
+        return res_list
         
     def _get_rml_next_month(self, report):
         if not 0 in self._dates_context:
@@ -148,7 +150,6 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
             }
         date_tuple = self._dates_context[0]['dates'][self._dates_context[0]['index']]
         self._dates_context[0]['index'] += 1
-        print '_get_rml_next_month res', date_tuple[1]
         return date_tuple[1]
        
     def _get_rml_line_item_next_month(self, report, line):

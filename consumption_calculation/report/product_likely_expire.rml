@@ -142,7 +142,7 @@
 	    </blockTable>
 	    
 	    <blockTable colWidths="100.0,120.0,80.0,60.0,60.0,60.0,60.0,80.0,80.0,80.0" style="LinesTable" repeatRows="1">
-            [[ repeatIn(getRmlTables(objects[0], 5), 'dates') ]]
+            [[ repeatIn(getRmlTables(objects[0], 5), 't') ]]
             <tr>
 	    		<td>
 	    			<para style="TextInfoBold">Product Code [[ t ]]</para>
