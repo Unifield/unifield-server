@@ -84,10 +84,18 @@ ACCOUNT_RESTRICTED_AREA = {
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False),
     ],
-    # ACCRUALS
+    # ACCRUALS - expense field
     'accruals': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False),
+        ('user_type_code', '=', 'expense'),
+        ('user_type.report_type', '!=', 'none'), # Do not allow extra-expense accounts
+    ],
+    # ACCRUALS - accrual field
+    'accruals_accrual': [
+        ('type', '!=', 'view'),
+        ('is_not_hq_correctible', '=', False),
+        ('accrual_account', '=', True),
     ],
     # PAYROLLS
     'payroll_lines': [
@@ -99,6 +107,7 @@ ACCOUNT_RESTRICTED_AREA = {
         ('type', '!=', 'view'),
         ('user_type_code', '=', 'expense'), 
         ('user_type.report_type', '!=', 'none'), # Exclude non-extra accounting expense accounts
+        ('is_not_hq_correctible', '=', False),
     ],
     # MANUEL JOURNAL ENTRIES
     'account_move_lines': [
