@@ -7,7 +7,7 @@
         NB: context displays FP column and cost center + destination to the user (UTP-372).
     -->
         <record id="action_analytic_lines_from_account_ml_search" model="ir.actions.server">
-            <field name="name">Analytic Lines</field>
+            <field name="name">Analytic Lines (FP)</field>
             <field name="model_id" ref="model_account_move_line"/>
             <field name="state">code</field>
             <field name="code">action = obj.get_analytic_move_lines(context=context)</field>
@@ -16,8 +16,38 @@
         <record id="ir_open_analytic_lines_from_account_ml_search" model="ir.values">
             <field name="key2">client_action_multi</field>
             <field name="model">account.move.line</field>
-            <field name="name">Analytic Lines</field>
+            <field name="name">Analytic Lines (FP)</field>
             <field eval="'ir.actions.server,%d'%action_analytic_lines_from_account_ml_search" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+        <record id="action_analytic_free1_lines_from_account_ml_search" model="ir.actions.server">
+            <field name="name">Analytic Lines (Free 1)</field>
+            <field name="model_id" ref="model_account_move_line"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_analytic_move_free1_lines(context=context)</field>
+        </record>
+
+        <record id="ir_open_analytic_free1_lines_from_account_ml_search" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.move.line</field>
+            <field name="name">Analytic Lines (Free 1)</field>
+            <field eval="'ir.actions.server,%d'%action_analytic_free1_lines_from_account_ml_search" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+        <record id="action_analytic_free2_lines_from_account_ml_search" model="ir.actions.server">
+            <field name="name">Analytic Lines (Free 2)</field>
+            <field name="model_id" ref="model_account_move_line"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_analytic_move_free2_lines(context=context)</field>
+        </record>
+
+        <record id="ir_open_analytic_free2_lines_from_account_ml_search" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.move.line</field>
+            <field name="name">Analytic Lines (Free 2)</field>
+            <field eval="'ir.actions.server,%d'%action_analytic_free2_lines_from_account_ml_search" name="value"/>
             <field eval="True" name="object"/>
         </record>
 
@@ -29,7 +59,7 @@
             <field name="arch" type="xml">
                 <data>
                     <field name="parent_id" position="replace">
-                        <field name="parent_id" on_change="on_change_parent(parent_id)" required="1" attrs="{'readonly': [('category', '=', 'FUNDING')]}"/>
+                        <field name="parent_id" on_change="on_change_parent(parent_id)" required="1" attrs="{'readonly': [('category', '=', 'FUNDING')], 'required': [('category', 'not in', ['FREE1', 'FREE2'])]}"/>
                     </field>
                     <field name="code" position="replace">
                         <field name="code" select="1" required="1"/>
