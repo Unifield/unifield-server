@@ -584,6 +584,29 @@ class tender(osv.osv):
             self.done(cr, uid, [tender.id], context=context)
         
         return po_id
+
+    def cancel_tender(self, cr, uid, ids, context=None):
+        '''
+        Ask the user if he wants to re-source all lines
+        '''
+        wiz_obj = self.pool.get('tender.cancel.wizard')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        tender = self.read(cr, uid, ids[0], ['state'], context=context)
+        wiz_id = wiz_obj.create(cr, uid, {'tender_id': tender['id'], 'not_draft': tender['state'] != 'draft'}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'tender.cancel.wizard',
+                'res_id': wiz_id,
+                'view_mode': 'form',
+                'view_type': 'form',
+                'target': 'new',
+                'context': context}
     
     def wkf_action_cancel(self, cr, uid, ids, context=None):
         '''
@@ -803,7 +826,7 @@ class tender_line(osv.osv):
                     sol_to_remove.append(line.sale_order_line_id.id)
                 else:
                     sol_to_update[line.sale_order_line_id.id] = line.sale_order_line_id.product_uom_qty - diff_qty
-            elif not line.has_to_be_resourced:
+            elif line.tender_id.state == 'draft':
                 to_remove.append(line.id)
 
         if to_cancel:
@@ -1064,6 +1087,7 @@ class purchase_order(osv.osv):
             if obj.state == 'rfq_updated' and not obj.valid_till:
                 return False
         return True
+
     _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
                 'rfq_delivery_address': fields.many2one('res.partner.address', string='Delivery address'),
                 'origin_tender_id': fields.many2one('tender', string='Tender', readonly=True),
@@ -1395,6 +1419,7 @@ class tender_cancel_wizard(osv.osv_memory):
 
     _columns = {
         'tender_id': fields.many2one('tender', string='Tender', required=True),
+        'not_draft': fields.boolean(string='Tender not draft'),
     }
 
     def just_cancel(self, cr, uid, ids, context=None):
@@ -1414,15 +1439,21 @@ class tender_cancel_wizard(osv.osv_memory):
         wf_service = netsvc.LocalService("workflow")
         line_ids = []
         tender_ids = []
+        rfq_ids = []
         for wiz in self.browse(cr, uid, ids, context=context):
             tender_ids.append(wiz.tender_id.id)
             for line in wiz.tender_id.tender_line_ids:
                 line_ids.append(line.id)
+            for rfq in wiz.tender_id.rfq_ids:
+                rfq_ids.append(rfq.id)
 
         if context.get('has_to_be_resourced'):
             line_obj.write(cr, uid, line_ids, {'has_to_be_resourced': True}, context=context)
 
         line_obj.fake_unlink(cr, uid, line_ids, context=context)
+
+        for rfq in rfq_ids:
+            wf_service.trg_validate(uid, 'purchase.order', rfq, 'purchase_cancel', cr)
 
         for tender in tender_ids:
             wf_service.trg_validate(uid, 'tender', tender, 'tender_cancel', cr)
