@@ -26,6 +26,17 @@ class so_po_common(osv.osv_memory):
     _name = "so.po.common"
     _description = "Common methods for SO - PO"
     
+    def get_partner_type(self, cr, uid, partner_name, context=None):
+        if not context:
+            context = {}
+        context.update({'active_test': False})
+        partner_obj = self.pool.get('res.partner')
+        ids = partner_obj.search(cr, uid, [('name', '=', partner_name)], context=context)
+        if not ids:
+            raise Exception("The partner %s is not found in the system. The operation is thus interrupted." % partner_name)
+        
+        return partner_obj.read(cr, uid, ids, ['partner_type'], context=context)[0]['partner_type']
+
     def get_partner_id(self, cr, uid, partner_name, context=None):
         if not context:
             context = {}
@@ -173,7 +184,6 @@ class so_po_common(osv.osv_memory):
         if 'ready_to_ship_date' in header_info:
             header_result['ready_to_ship_date'] = header_info.get('ready_to_ship_date')
             
-            
         if 'analytic_distribution_id' in header_info: 
             header_result['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, header_info, context)
         
@@ -222,8 +232,8 @@ class so_po_common(osv.osv_memory):
         if 'is_a_counterpart' in header_info:
             header_result['is_a_counterpart'] = header_info.get('is_a_counterpart')
 
-        analytic_id = header_info.get('analytic_distribution_id', False)
-        if analytic_id:
+        partner_type = self.get_partner_type(cr, uid, source, context)
+        if partner_type not in ['section', 'intermission'] and header_info.get('analytic_distribution_id', False):
             header_result['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, header_info, context)
         
         partner_id = self.get_partner_id(cr, uid, source, context)
@@ -239,7 +249,7 @@ class so_po_common(osv.osv_memory):
         
         return header_result
     
-    def get_lines(self, cr, uid, line_values, po_id, so_id, for_update, so_called, context):
+    def get_lines(self, cr, uid, source, line_values, po_id, so_id, for_update, so_called, context):
         line_result = []
         update_lines = []
         
@@ -325,7 +335,9 @@ class so_po_common(osv.osv_memory):
                 if rec_id:
                     values['nomen_manda_3'] = rec_id
                 
-            if line_dict.get('analytic_distribution_id'):
+            # UTP-952: set empty AD for lines if the partner is intermission or section
+            partner_type = self.get_partner_type(cr, uid, source, context)
+            if partner_type not in ['section', 'intermission'] and line_dict.get('analytic_distribution_id'):
                 values['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, line_dict, context)
                     
             line_ids = False

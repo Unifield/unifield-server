@@ -74,11 +74,9 @@ class purchase_order_sync(osv.osv):
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
         
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, False, False, False, False, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, source, so_info, False, False, False, False, context)
         header_result['split_po'] = True
-        
         po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
-        
         if so_info.state == 'sourced':
             header_result['state'] = 'sourced'
 
@@ -90,6 +88,12 @@ class purchase_order_sync(osv.osv):
         # UTP-163: Get the 'source document' of the original PO, and add it into the split PO, if existed
         origin = self.browse(cr, uid, po_id, context=context)['origin']
         header_result['origin'] = origin
+
+        # UTP-952: If the partner is section or intermission, then take the AD from the original PO, not from the source instance
+        partner_type = so_po_common.get_partner_type(cr, uid, source, context)
+        if partner_type in ['section', 'intermission']:
+            analytic_distribution_id = self.browse(cr, uid, po_id, context=context)['analytic_distribution_id']
+            header_result['analytic_distribution_id'] = analytic_distribution_id.id
         
         default = {}
         default.update(header_result)
@@ -100,6 +104,15 @@ class purchase_order_sync(osv.osv):
             if orig_line:
                 orig_line = line_obj.browse(cr, uid, orig_line[0], context=context)
                 line[2].update({'move_dest_id': orig_line.move_dest_id and orig_line.move_dest_id.id or False})
+
+        # If partner is intermission, copy the ADs from the lines of original PO                
+        if partner_type == 'intermission':
+            for line in default['order_line']:
+                orig_line = line_obj.search(cr, uid, [('order_id', '=', po_id), ('line_number', '=', line[2].get('line_number'))])
+                if orig_line:
+                    orig_line = line_obj.browse(cr, uid, orig_line[0], context=context)
+                    line[2].update({'analytic_distribution_id': orig_line.analytic_distribution_id and orig_line.analytic_distribution_id.id or False})
+                    line[2].update({'have_analytic_distribution_from_header': False})
         
         res_id = self.create(cr, uid, default , context=context)
         so_po_common.update_next_line_number_fo_po(cr, uid, res_id, self, 'purchase_order_line', context)
@@ -151,36 +164,61 @@ class purchase_order_sync(osv.osv):
         
         return res_id
 
+
+    # UTP-953: This case is not allowed for the intersection partner due to the missing of Analytic Distribution!!!!! 
     def normal_fo_create_po(self, cr, uid, source, so_info, context=None):
         self._logger.info("+++ Create a PO (at %s) from an FO (push flow) (from %s)"%(cr.dbname, source))
         if not context:
             context = {}
         
-        so_dict = so_info.to_dict()
         so_po_common = self.pool.get('so.po.common')
+        partner_type = so_po_common.get_partner_type(cr, uid, source, context)
+        if partner_type == 'section':
+            raise Exception, "Sorry, the push low is not available for intersection partner! " + source
+        
+        so_dict = so_info.to_dict()
         
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
         
         # check whether this FO has already been sent before! if it's the case, then just update the existing PO, and not creating a new one
         po_id = self.check_existing_po(cr, uid, source, so_dict)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, False, False, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, source, so_info, po_id, False, False, False, context)
         header_result['push_fo'] = True
         header_result['origin'] = so_dict.get('name', False)
+
+        # the case of intermission, the AD will be updated below, after creating the PO
+        if partner_type == 'intermission':
+            del header_result['analytic_distribution_id']
 
         default = {}
         default.update(header_result)
         
-        if po_id: # only update the PO
+        if po_id: # only update the PO - should never be in here!
             res_id = self.write(cr, uid, po_id, default, context=context)
         else:
             # create a new PO, then send it to Validated state
             po_id = self.create(cr, uid, default , context=context)
-            wf_service = netsvc.LocalService("workflow")
-            wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
             
-            # update the next line number for the PO if needed        
-            so_po_common.update_next_line_number_fo_po(cr, uid, po_id, self, 'purchase_order_line', context)        
+
+        # UTP-952: If the partner is intermission, then use the intermission CC to create a default AD
+        if partner_type == 'intermission':
+            # create the default AD with intermission CC and default FP
+            intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_intermission')
+            ana_obj = self.pool.get('analytic.distribution')
+            for po in self.browse(cr, uid, [po_id], context=context):
+                for line in po.order_line:
+                    account_id = line.account_4_distribution and line.account_4_distribution.id or False
+                    # Search default destination_id
+                    destination_id = self.pool.get('account.account').read(cr, uid, account_id, ['default_destination_id']).get('default_destination_id', False)
+                    distrib_id = ana_obj.create(cr, uid, {'purchase_line_ids': [(4,line.id)], 
+                        'cost_center_lines': [(0, 0, {'destination_id': destination_id[0], 'analytic_id': intermission_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
+            
+        wf_service = netsvc.LocalService("workflow")
+        wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
+        
+        # update the next line number for the PO if needed        
+        so_po_common.update_next_line_number_fo_po(cr, uid, po_id, self, 'purchase_order_line', context)        
 
         return True
 
@@ -228,8 +266,13 @@ class purchase_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, True, False, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, source, so_info, po_id, False, True, False, context)
         header_result['po_updated_by_sync'] = True
+        
+        # UTP-952: If the partner is section or intermission, remove the AD
+        partner_type = so_po_common.get_partner_type(cr, uid, source, context)
+        if partner_type in ['section', 'intermission']:
+            del header_result['analytic_distribution_id']
 
         default = {}
         default.update(header_result)
@@ -257,11 +300,16 @@ class purchase_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, True, False, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, source, so_info, po_id, False, True, False, context)
         
         partner_ref = source + "." + so_info.name
         header_result['partner_ref'] = partner_ref
         header_result['po_updated_by_sync'] = True
+
+        # UTP-952: If the partner is section or intermission, remove the AD
+        partner_type = so_po_common.get_partner_type(cr, uid, source, context)
+        if partner_type in ['section', 'intermission']:
+            del header_result['analytic_distribution_id']
 
         default = {}
         default.update(header_result)
