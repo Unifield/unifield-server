@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from account_override import ACCOUNT_RESTRICTED_AREA
 from tools.translate import _
 from time import strftime
 import datetime
@@ -68,6 +69,42 @@ class account_account(osv.osv):
                 arg.append(('inactivation_date', '<=', cmp_date))
         return arg
 
+    def _get_restricted_area(self, cr, uid, ids, field_name, args, context=None):
+        """
+        FAKE METHOD
+        """
+        # Check
+        if context is None:
+            context = {}
+        # Prepare some value
+        res = {}
+        for account_id in ids:
+            res[account_id] = True
+        return res
+
+    def _search_restricted_area(self, cr, uid, ids, name, args, context=None):
+        """
+        Search the right domain to apply to this account filter.
+        For this, it uses the "ACCOUNT_RESTRICTED_AREA" variable in which we list all well-known cases.
+        The key args is "restricted_area", the param is like "register_lines".
+        In ACCOUNT_RESTRICTED_AREA, we use the param as key. It so return the domain to apply.
+        If no domain, return an empty domain.
+        """
+        # Check
+        if context is None:
+            context = {}
+        # Prepare some value
+        arg = []
+        # Browse args. Complete it with new domains.
+        for x in args:
+            if x[0] == 'restricted_area' and x[2]:
+                if x[2] in ACCOUNT_RESTRICTED_AREA:
+                    for subdomain in ACCOUNT_RESTRICTED_AREA[x[2]]:
+                        arg.append(subdomain)
+            else:
+                arg.append(x)
+        return arg
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'), 
@@ -78,6 +115,7 @@ class account_account(osv.osv):
             """),
         'shrink_entries_for_hq': fields.boolean("Shrink entries for HQ export", help="Check this attribute if you want to consolidate entries on this account before they are exported to the HQ system."),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
+        'restricted_area': fields.function(_get_restricted_area, fnct_search=_search_restricted_area, type='boolean', method=True, string="Is this account allowed?")
     }
 
     _defaults = {

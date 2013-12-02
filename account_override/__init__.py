@@ -21,6 +21,16 @@
 #
 ##############################################################################
 
+ACCOUNT_RESTRICTED_AREA = {
+    # REGISTER LINES
+    'register_lines': [
+        ('type', '!=', 'view'),
+        ('is_not_hq_correctible', '!=', True),
+        '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
+        '|', ('type', '!=', 'regular'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
+    ]
+}
+
 import res_currency
 import account
 import invoice
