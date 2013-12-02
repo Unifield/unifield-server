@@ -28,6 +28,74 @@ ACCOUNT_RESTRICTED_AREA = {
         ('is_not_hq_correctible', '!=', True),
         '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
         '|', ('type', '!=', 'regular'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
+    ],
+    # HEADER OF:
+    #+ Supplier Invoice
+    #+ Direct Invoice
+    #+ Supplier refund
+    'in_invoice': [
+        ('type', '!=', 'view'),
+        ('type', '=', 'payable'),
+        ('type_for_register', '!=', 'donation'),
+    ],
+    # HEADER OF:
+    #+ Stock Transfer Voucher
+    #+ Customer Refund
+    #+ Debit Notes
+    'out_invoice': [
+        ('type', '!=', 'view'),
+        ('type', '!=', 'receivable'),
+    ],
+    # HEADER OF donation
+    'donation_header': [
+        ('type', '!=', 'view'),
+        ('type_for_register', '=', 'donation'),
+    ],
+    # LINES OF:
+    #+ Supplier invoice
+    #+ Direct invoice
+    #+ Supplier refund
+    #+ Stock transfer voucher
+    #+ Customer refund
+    #+ Debit notes
+    'invoice_lines': [
+        ('type', '!=', 'view'),
+        ('is_not_hq_correctible', '!=', True),
+        '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
+        '|', ('type', '!=', 'regular'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
+    ],
+    # HEADER OF Intermission Voucher IN/OUT
+    'intermission_header': [
+        ('is_intermission_counterpart', '=', True),
+    ],
+    # LINES OF intermission vouchers
+    'intermission_lines': [
+        ('type', '!=', 'view'),
+        ('is_not_hq_correctible', '=', False),
+    ],
+    # RECURRING MODELS
+    'recurring_lines': [
+        ('type', '!=', 'view'),
+        ('is_not_hq_correctible', '=', False),
+    ],
+    # ACCRUALS
+    'accruals': [
+        ('type', '!=', 'view'),
+        ('is_not_hq_correctible', '=', False),
+    ],
+    # PAYROLLS
+    'payroll_lines': [
+        ('type', '!=', 'view'),
+        ('is_not_hq_correctible', '=', False),
+    ],
+    # HQ ENTRIES
+    'hq_lines': [
+        ('type', '!=', 'view'),
+        ('user_type_code', '=', 'expense'), # FIXME: exclude non-extra accounting code
+    ],
+    # MANUEL JOURNAL ENTRIES
+    'account_move': [
+        '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
     ]
 }
 
