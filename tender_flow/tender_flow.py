@@ -343,6 +343,7 @@ class tender(osv.osv):
                               'date_planned': newdate.strftime('%Y-%m-%d'),
                               'notes': line.product_id.description_purchase,
                               'order_id': po_id,
+                              'tender_line_id': line.id,
                               }
                     # create purchase order line
                     pol_id = pol_obj.create(cr, uid, values, context=context)
@@ -786,6 +787,7 @@ class tender_line(osv.osv):
                 'line_state': fields.selection([('draft','Draft'), ('cancel', 'Canceled'), ('done', 'Done')], string='State', readonly=True),
                 'comment': fields.char(size=128, string='Comment'),
                 'has_to_be_resourced': fields.boolean(string='Has to be resourced'),
+                'created_by_rfq': fields.boolean(string='Created by RfQ'),
                 }
     _defaults = {'qty': lambda *a: 1.0,
                  'state': lambda *a: 'draft',
@@ -1219,6 +1221,8 @@ class purchase_order(osv.osv):
                 'datas': datas}
 
     def check_rfq_updated(self, cr, uid, ids, context=None):
+        tl_obj = self.pool.get('tender.line')
+
         if isinstance(ids, (int, long)):
             ids = [ids]
 
@@ -1226,6 +1230,16 @@ class purchase_order(osv.osv):
         for rfq in self.browse(cr, uid, ids, context=context):
             if not rfq.valid_till:
                 raise osv.except_osv(_('Error'), _('You must specify a Valid Till date.'))
+
+            if rfq.rfq_ok and rfq.tender_id:
+                for line in rfq.order_line:
+                    if not line.tender_line_id:
+                        tl_vals = {'product_id': line.product_id.id,
+                                   'product_uom': line.product_uom.id,
+                                   'qty': line.product_qty,
+                                   'tender_id': line.order_id.tender_id.id,
+                                   'created_by_rfq': True}
+                        tl_obj.create(cr, uid, tl_vals, context=context)
 
             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
 
@@ -1289,6 +1303,7 @@ class purchase_order_line(osv.osv):
     '''
     _inherit = 'purchase.order.line'
     _columns = {'tender_id': fields.related('order_id', 'tender_id', type='many2one', relation='tender', string='Tender',),
+                'tender_line_id': fields.many2one('tender.line', string='Tender Line'),
                 'rfq_ok': fields.related('order_id', 'rfq_ok', type='boolean', string='RfQ ?'),
                 }
     
