@@ -68,7 +68,7 @@ ACCOUNT_RESTRICTED_AREA = {
     'donation_lines': [
         ('type', '!=', 'view'),
         ('user_type_code', '=', 'expense'),
-        ('report_type', '=', 'none'), # To only use Expense extra-accounting accounts
+        '|', ('user_type_code', '!=', 'expense'), ('report_type', '=', 'none'), # To only use Expense extra-accounting accounts
     ],
     # HEADER OF Intermission Voucher IN/OUT
     'intermission_header': [
@@ -83,14 +83,14 @@ ACCOUNT_RESTRICTED_AREA = {
     'recurring_lines': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False),
-        '|', '&', ('user_type_code', '=', 'receivables'), ('type', '=', 'receivable'), '&', ('user_type_code', '=', 'expense'), ('user_type.report_type', '!=', 'none'),
+        '|', '&', ('user_type_code', '=', 'receivables'), ('type', '=', 'receivable'), '&', ('user_type_code', '=', 'expense'), ('user_type.report_type', '!=', 'none'), # Receivable/Receivable allowed + expense accounts (without extra-accounting) allowed
     ],
     # ACCRUALS - expense field
     'accruals': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False),
         ('user_type_code', '=', 'expense'),
-        ('user_type.report_type', '!=', 'none'), # Do not allow extra-expense accounts
+        '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Do not allow extra-expense accounts
     ],
     # ACCRUALS - accrual field
     'accruals_accrual': [
@@ -102,17 +102,18 @@ ACCOUNT_RESTRICTED_AREA = {
     'payroll_lines': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False),
+        '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Exclude non-extra accounting expense accounts
     ],
     # HQ ENTRIES
     'hq_lines': [
         ('type', '!=', 'view'),
         ('user_type_code', '=', 'expense'), 
-        ('user_type.report_type', '!=', 'none'), # Exclude non-extra accounting expense accounts
-        ('is_not_hq_correctible', '=', False),
+        '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Exclude non-extra accounting expense accounts
     ],
     # MANUEL JOURNAL ENTRIES
     'account_move_lines': [
-        ('type', 'not in', ['liquidity', 'view', 'consolidation', 'closed']),
+        ('type', 'not in', ['view', 'consolidation', 'closed']),
+        '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
     ]
 }
 
