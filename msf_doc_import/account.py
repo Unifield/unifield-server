@@ -60,7 +60,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         if not context:
             context = {}
         # Prepare some values
-        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'migration')])
+        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'migration'), ('is_current_instance', '=', True)])
         if not journal_ids:
             raise osv.except_osv(_('Warning'), _('No migration journal found!'))
         journal_id = journal_ids[0]

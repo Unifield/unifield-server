@@ -114,15 +114,13 @@ class analytic_distribution_wizard(osv.osv_memory):
         For each given wizard compare old (distrib_id) and new analytic distribution. Then adapt analytic lines.
         """
         # Prepare some values
-        wiz_line_types = {'cost.center': '', 'funding.pool': 'fp', 'free.1': 'f1', 'free.2': 'f2',}
         wizard = self.browse(cr, uid, wizard_id)
-        to_update  = [] # NEEDED for analytic lines to be updated with new analytic distribution after its creation
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         current_date = time.strftime('%Y-%m-%d')
         ml = wizard.move_line_id
         orig_date = ml.source_date or ml.date
         orig_document_date = ml.document_date
-        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction')])
+        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
         correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
         if not correction_journal_id:
             raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
@@ -137,6 +135,13 @@ class analytic_distribution_wizard(osv.osv_memory):
         old_line_ok = []
         period_closed = ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or False
 
+        #####
+        ## FUNDING POOL
+        ###
+        # OK let's go on funding pool lines
+        # Search old line and new lines
+        old_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
+        wiz_line_ids = self.pool.get('analytic.distribution.wizard.fp.lines').search(cr, uid, [('wizard_id', '=', wizard_id), ('type', '=', 'funding.pool')])
         for wiz_line in self.pool.get('analytic.distribution.wizard.fp.lines').browse(cr, uid, wiz_line_ids):
             if not wiz_line.distribution_line_id or wiz_line.distribution_line_id.id not in old_line_ids:
                 # new distribution line
@@ -180,6 +185,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             else:
                 to_delete.append(wiz_line)
 
+        #####
+        ## FP: TO CREATE
+        ###
         for line in to_create:
             # create the new distrib line
             new_distrib_line = self.pool.get('funding.pool.distribution.line').create(cr, uid, {
@@ -190,9 +198,12 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'distribution_id': distrib_id,
                     'currency_id': ml and  ml.currency_id and ml.currency_id.id or company_currency_id,
                 })
-            # create the ana line
-            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date)
+            # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
+            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=orig_date, document_date=orig_document_date, source_date=orig_date)
 
+        #####
+        ## FP: TO DELETE
+        ###
         for line in to_delete:
             # delete distrib line
             self.pool.get('funding.pool.distribution.line').unlink(cr, uid, [line.id])
@@ -200,15 +211,19 @@ class analytic_distribution_wizard(osv.osv_memory):
             to_delete_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.id)])
             self.pool.get('account.analytic.line').unlink(cr, uid, to_delete_ids)
 
+        #####
+        ## FP: TO REVERSE
+        ###
         for line in to_reverse:
             # reverse the line
             to_reverse_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
             # UTP-943: Set wizard date as date for REVERSAL AND CORRECTION lines
-            rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids, posting_date=wizard.date)
+            reversed_ids = self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids[0], posting_date=wizard.date)
+            # Add reversal origin link (to not loose it). last_corrected_id is to prevent case where you do a reverse a line that have been already corrected
             # UTP-943: Add correction journal on it
-            self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'journal_id': correction_journal_id})
+            self.pool.get('account.analytic.line').write(cr, uid, [reversed_ids[0]], {'reversal_origin': to_reverse_ids[0], 'last_corrected_id': False, 'journal_id': correction_journal_id})
             # Mark old lines as non reallocatable (ana_ids): why reverse() don't set this flag ?
-            self.pool.get('account.analytic.line').write(cr, uid, to_reverse_ids, {'is_reallocated': True,})
+            self.pool.get('account.analytic.line').write(cr, uid, [to_reverse_ids[0]], {'is_reallocated': True,})
             # update the distrib line
             name = False
             if to_reverse_ids:
@@ -228,10 +243,14 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if cp.state != 'draft':
                     raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
             # Create the new ana line
-            cor_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name)
-            for distrib_id in cor_ids:
-                self.pool.get('account.analytic.line').write(cr, uid, [cor_ids[distrib_id]], {'journal_id': correction_journal_id})
+            ret = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name)
+            # Add link to first analytic lines
+            for ret_id in ret:
+                self.pool.get('account.analytic.line').write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id})
 
+        #####
+        ## FP: TO OVERRIDE
+        ###
         for line in to_override:
             # update the ana line
             to_override_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
@@ -255,6 +274,73 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'percentage': line.percentage,
                     'destination_id': line.destination_id.id
                 })
+
+        #####
+        ## FREE 1 / FREE 2
+        ###
+        for free in [('free.1', 'f1'), ('free.2', 'f2')]:
+            obj_name = free[0] + '.distribution.line'
+            corr_name = 'analytic.distribution.wizard.' + free[1] + '.lines'
+            old_line_ids = False
+            wiz_line_ids = False
+            to_create = []
+            to_delete = []
+            to_override = []
+            old_line_ids = self.pool.get(obj_name).search(cr, uid, [('distribution_id', '=', distrib_id)])
+            wiz_line_ids = self.pool.get(corr_name).search(cr, uid, [('wizard_id', '=', wizard_id), ('type', '=', free[0])])
+            # To create OR to override
+            for wiz_line in self.pool.get(corr_name).browse(cr, uid, wiz_line_ids):
+                if not wiz_line.distribution_line_id or wiz_line.distribution_line_id.id not in old_line_ids:
+                    to_create.append(wiz_line)
+                else:
+                    old_line = self.pool.get(obj_name).browse(cr, uid, wiz_line.distribution_line_id.id)
+                    # existing line, test modifications
+                    if old_line.analytic_id.id != wiz_line.analytic_id.id or old_line.percentage != wiz_line.percentage:
+                        to_override.append(wiz_line)
+                    # validate line
+                    old_line_ok.append(old_line.id)
+            # To delete
+            for wiz_line in self.pool.get(obj_name).browse(cr, uid, [x for x in old_line_ids if x not in old_line_ok]):
+                # distribution line deleted by user
+                to_delete.append(wiz_line)
+            # Delete lines that should be
+            for line in to_delete:
+                # delete distrib line
+                self.pool.get(obj_name).unlink(cr, uid, [line.id])
+                # delete associated analytic line
+                to_delete_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', '%s,%d' % (obj_name,line.id))])
+                self.pool.get('account.analytic.line').unlink(cr, uid, to_delete_ids)
+            # Override those that should be
+            for line in to_override:
+                # update the ana line
+                to_override_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', '%s,%d' % (obj_name, line.distribution_line_id.id)), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+                ctx = {'date': orig_date}
+                amount_cur = (ml.credit_currency - ml.debit_currency) * line.percentage / 100
+                amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
+                self.pool.get('account.analytic.line').write(cr, uid, to_override_ids, {
+                        'account_id': line.analytic_id.id,
+                        'amount_currency': amount_cur,
+                        'amount': amount,
+                        'date': wizard.date,
+                        'source_date': orig_date,
+                        'document_date': orig_document_date,
+                    })
+                # update the distib line
+                self.pool.get(obj_name).write(cr, uid, [line.distribution_line_id.id], {
+                        'analytic_id': line.analytic_id.id,
+                        'percentage': line.percentage,
+                    })
+            # Create lines that should be
+            for line in to_create:
+                # create the new distrib line
+                new_distrib_line = self.pool.get(obj_name).create(cr, uid, {
+                        'analytic_id': line.analytic_id.id,
+                        'percentage': line.percentage,
+                        'distribution_id': distrib_id,
+                        'currency_id': ml and  ml.currency_id and ml.currency_id.id or company_currency_id,
+                    })
+                # create the ana line
+                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date)
 
     def button_cancel(self, cr, uid, ids, context=None):
         """

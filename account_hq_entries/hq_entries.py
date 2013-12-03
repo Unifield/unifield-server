@@ -84,8 +84,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 fp_id = line.get('analytic_id', False) and line.get('analytic_id')[0] or False
                 if line['cost_center_id'] != line['cost_center_id_first_value'] or line['account_id_first_value'] != line['account_id']:
                     fp_id = private_fund_id
-                f1_id = line.get('free1_id', False) and line.get('free1_id')[0] or False
-                f2_id = line.get('free2_id', False) and line.get('free2_id')[0] or False
+                f1_id = line.get('free_1_id', False) and line.get('free_1_id')[0] or False
+                f2_id = line.get('free_2_id', False) and line.get('free_2_id')[0] or False
                 destination_id = (line.get('destination_id_first_value') and line.get('destination_id_first_value')[0]) or (account.default_destination_id and account.default_destination_id.id) or False
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
                 if distrib_id:
@@ -219,16 +219,36 @@ class hq_entries_validation_wizard(osv.osv_memory):
                         self.pool.get('hq.entries').write(cr, uid, write.keys(), {'user_validated': True}, context=context)
 
         for line in account_change:
-            corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
-                    'funding_pool_lines': [(0, 0, {
-                            'percentage': 100,
-                            'analytic_id': line.analytic_id.id,
-                            'cost_center_id': line.cost_center_id.id,
-                            'currency_id': line.currency_id.id,
-                            'source_date': line.date,
-                            'destination_id': line.destination_id.id,
-                        })]
-                    })
+            corrected_distrib_vals = {
+                'funding_pool_lines': [(0, 0, {
+                    'percentage': 100,
+                    'analytic_id': line.analytic_id.id,
+                    'cost_center_id': line.cost_center_id.id,
+                    'currency_id': line.currency_id.id,
+                    'source_date': line.date,
+                    'destination_id': line.destination_id.id,
+                })]
+            }
+            # Add Free 1 and Free 2 analytic axis if exists in HQ Lines
+            if line.free_1_id:
+                corrected_distrib_vals.update({
+                    'free_1_lines': [(0, 0, {
+                        'percentage': 100,
+                        'analytic_id': line.free_1_id.id,
+                        'currency_id': line.currency_id.id,
+                        'source_date': line.date,
+                    })],
+                })
+            if line.free_2_id:
+                corrected_distrib_vals.update({
+                    'free_2_lines': [(0, 0, {
+                        'percentage': 100,
+                        'analytic_id': line.free_2_id.id,
+                        'currency_id': line.currency_id.id,
+                        'source_date': line.date,
+                    })],
+                })
+            corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, corrected_distrib_vals)
             self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id, corrected_distrib_id)
 
         for line in cc_change:
@@ -255,33 +275,54 @@ class hq_entries_validation_wizard(osv.osv_memory):
             # create new lines
             if not fp_old_lines: # UTP-546 - this have been added because of sync that break analytic lines generation
                 continue
-            ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 
-                'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id, 'journal_id': acor_journal_id})
+            cor_ids = ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 
+                'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id, 'journal_id': acor_journal_id, 'last_correction_id': fp_old_lines[0]})
+            # update new ana line
+            ana_line_obj.write(cr, uid, cor_ids, {'last_corrected_id': fp_old_lines[0]})
             # update old ana lines
             ana_line_obj.write(cr, uid, fp_old_lines, {'is_reallocated': True})
 
         for line in cc_account_change:
             # call correct_account with a new arg: new_distrib
-            corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
-                    'cost_center_lines': [(0, 0, {
-                            'percentage': 100, 
-                            'analytic_id': line.cost_center_id.id,
-                            'currency_id': line.currency_id.id,
-                            'source_date': line.date,
-                            'destination_id': line.destination_id.id,
-                        })],
-                    'funding_pool_lines': [(0, 0, {
-                            'percentage': 100,
-                            'analytic_id': line.analytic_id.id,
-                            'cost_center_id': line.cost_center_id.id,
-                            'currency_id': line.currency_id.id,
-                            'source_date': line.date,
-                            'destination_id': line.destination_id.id,
-                        })]
+            new_distrib_vals = {
+                'cost_center_lines': [(0, 0, {
+                    'percentage': 100, 
+                    'analytic_id': line.cost_center_id.id,
+                    'currency_id': line.currency_id.id,
+                    'source_date': line.date,
+                    'destination_id': line.destination_id.id,
+                })],
+                'funding_pool_lines': [(0, 0, {
+                    'percentage': 100,
+                    'analytic_id': line.analytic_id.id,
+                    'cost_center_id': line.cost_center_id.id,
+                    'currency_id': line.currency_id.id,
+                    'source_date': line.date,
+                    'destination_id': line.destination_id.id,
+                })]
+            }
+            # Add Free 1 and Free 2 if exists
+            if line.free_1_id:
+                new_distrib_vals.update({
+                    'free_1_lines': [(0, 0, {
+                        'percentage': 100,
+                        'analytic_id': line.free_1_id.id,
+                        'currency_id': line.currency_id.id,
+                        'source_date': line.date,
+                    })],
                 })
+            if line.free_2_id:
+                new_distrib_vals.update({
+                    'free_2_lines': [(0, 0, {
+                        'percentage': 100,
+                        'analytic_id': line.free_2_id.id,
+                        'currency_id': line.currency_id.id,
+                        'source_date': line.date,
+                    })],
+                })
+            corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, new_distrib_vals)
             self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id, corrected_distrib_id)
 
-        # Write lines and validate them
         # Return HQ Entries Tree View in current view
         action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_hq_entries', 'action_hq_entries_tree')
         res = self.pool.get('ir.actions.act_window').read(cr, uid, action_id[1], [], context=context)
@@ -376,7 +417,7 @@ class hq_entries(osv.osv):
                 account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
                 if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%)') % (line.id or '', line.destination_id.code or '', account.code or ''))
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%s)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue
             else: # CASE 4/
                 # C Check, except B
@@ -393,7 +434,7 @@ class hq_entries(osv.osv):
                 account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
                 if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%)') % (line.id or '', line.destination_id.code or '', account.code or ''))
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%s)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue
         return res
 

@@ -47,6 +47,7 @@
                         <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" />
                         <field name="filename" invisible="1"/>
                         <field name="data" filename="filename" attrs="{'invisible': [('import_error_ok', '=', False)]}"/>
+                        <button name="clear_error" string="Clear errors" icon="gtk-clear" colspan="1" type="object" attrs="{'invisible': [('import_error_ok', '=', False)]}" />
                         <field name="import_error_ok" invisible="1"/>
                         <field name="text_error" colspan="4" attrs="{'invisible': [('import_error_ok', '=', False)]}" nolabel="1"/>
                     </group>

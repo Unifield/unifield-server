@@ -165,7 +165,7 @@ class financing_contract_contract(osv.osv):
     _columns = {
         'name': fields.char('Financing contract name', size=64, required=True),
         'code': fields.char('Financing contract code', size=16, required=True),
-        'donor_id': fields.many2one('financing.contract.donor', 'Donor', required=True),
+        'donor_id': fields.many2one('financing.contract.donor', 'Donor', required=True, domain="[('active', '=', True)]"),
         'donor_grant_reference': fields.char('Donor grant reference', size=64),
         'hq_grant_reference': fields.char('HQ grant reference', size=64),
         'grant_amount': fields.float('Grant amount', required=True),
@@ -180,6 +180,7 @@ class financing_contract_contract(osv.osv):
                                     ('soft_closed', 'Soft-closed'),
                                     ('hard_closed', 'Hard-closed')], 'State'),
         'currency_table_id': fields.many2one('res.currency.table', 'Currency Table'),
+        'instance_id': fields.many2one('msf.instance','Proprietary Instance', required=True), 
         # Define for _inherits
         'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade"),
     }
@@ -421,12 +422,18 @@ class financing_contract_contract(osv.osv):
                 'context': context,
         }
         
+        
     def create(self, cr, uid, vals, context=None):
+        # Do not copy lines from the Donor on create if coming from the sync server
+        if context is None:
+            context = {}
         result = super(financing_contract_contract, self).create(cr, uid, vals, context=context)
-        contract = self.browse(cr, uid, result, context=context)
-        if contract.donor_id and contract.donor_id.format_id and contract.format_id:
-            self.pool.get('financing.contract.format').copy_format_lines(cr, uid, contract.donor_id.format_id.id, contract.format_id.id, context=context)
+        if not context.get('sync_update_execution'):
+            contract = self.browse(cr, uid, result, context=context)
+            if contract.donor_id and contract.donor_id.format_id and contract.format_id:
+                self.pool.get('financing.contract.format').copy_format_lines(cr, uid, contract.donor_id.format_id.id, contract.format_id.id, context=context)
         return result
+    
         
     def write(self, cr, uid, ids, vals, context=None):
         if 'donor_id' in vals:

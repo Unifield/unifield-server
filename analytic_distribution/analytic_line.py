@@ -77,7 +77,9 @@ class analytic_line(osv.osv):
 
     def _get_entry_sequence(self, cr, uid, ids, field_names, args, context=None):
         """
-        Give right entry sequence. Either move_id.move_id.name or commitment_line_id.commit_id.name
+        Give right entry sequence. Either move_id.move_id.name,
+        or commitment_line_id.commit_id.name, or
+        if the line was imported, the stored name
         """
         if not context:
             context = {}
@@ -88,6 +90,14 @@ class analytic_line(osv.osv):
                 res[l.id] = l.move_id.move_id.name
             elif l.commitment_line_id:
                 res[l.id] = l.commitment_line_id.commit_id.name
+            elif l.imported_commitment:
+                res[l.id] = l.imported_entry_sequence
+            elif not l.move_id:
+                # UF-2217
+                # on create the value is inserted by a sql query, so we can retreive it after the insertion
+                # the field has store=True so we don't create a loop
+                # on write the value is not updated by the query, the method always returns the value set at creation
+                res[l.id] = l.entry_sequence
         return res
 
     def _get_period_id(self, cr, uid, ids, field_name, args, context=None):
@@ -148,27 +158,43 @@ class analytic_line(osv.osv):
 
     def _get_from_commitment_line(self, cr, uid, ids, field_name, args, context=None):
         """
-        Check if commitment_line_id is filled in. If yes, True. Otherwise False.
+        Check if line comes from a 'engagement' journal type. If yes, True. Otherwise False.
         """
-        if not context:
+        if context is None:
             context = {}
         res = {}
         for al in self.browse(cr, uid, ids, context=context):
             res[al.id] = False
-            if al.commitment_line_id:
+            if al.journal_id.type == 'engagement':
                 res[al.id] = True
         return res
 
     def _get_is_unposted(self, cr, uid, ids, field_name, args, context=None):
         """
         Check journal entry state. If unposted: True, otherwise False.
+        A line that comes from a commitment cannot be posted. So it's always to False.
         """
-        if not context:
+        if context is None:
             context = {}
         res = {}
         for al in self.browse(cr, uid, ids, context=context):
             res[al.id] = False
-            if al.move_state != 'posted':
+            if al.move_state != 'posted' and al.journal_id.type != 'engagement':
+                res[al.id] = True
+        return res
+
+    def _get_is_free(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Check if the line comes from a Free 1 or Free 2 analytic account category.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for al in self.browse(cr, uid, ids, context=context):
+            res[al.id] = False
+            if al.account_id and al.account_id.category and al.account_id.category in ['FREE1', 'FREE2']:
                 res[al.id] = True
         return res
 
@@ -187,10 +213,14 @@ class analytic_line(osv.osv):
         'period_id': fields.function(_get_period_id, fnct_search=_search_period_id, method=True, string="Period", readonly=True, type="many2one", relation="account.period", store=False),
         'from_commitment_line': fields.function(_get_from_commitment_line, method=True, type='boolean', string="Commitment?"),
         'is_unposted': fields.function(_get_is_unposted, method=True, type='boolean', string="Unposted?"),
+        'imported_commitment': fields.boolean(string="From imported commitment?"),
+        'imported_entry_sequence': fields.text("Imported Entry Sequence"),
+        'free_account': fields.function(_get_is_free, method=True, type='boolean', string='Free account?', help="Is that line comes from a Free 1 or Free 2 account?"),
     }
 
     _defaults = {
         'from_write_off': lambda *a: False,
+        'imported_commitment': lambda *a: False,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -230,12 +260,12 @@ class analytic_line(osv.osv):
             if date < account.date_start or (account.date != False and date >= account.date):
                 if 'from' not in context or context.get('from') != 'mass_reallocation':
                     raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (account.name or '',))
-            if 'cost_center_id' in vals:
+            if vals.get('cost_center_id', False):
                 cc = account_obj.browse(cr, uid, vals['cost_center_id'], context=context)
                 if date < cc.date_start or (cc.date != False and date >= cc.date):
                     if 'from' not in context or context.get('from') != 'mass_reallocation':
                         raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (cc.name or '',))
-            if 'destination_id' in vals:
+            if vals.get('destination_id', False):
                 dest = account_obj.browse(cr, uid, vals['destination_id'], context=context)
                 if date < dest.date_start or (dest.date != False and date >= dest.date):
                     if 'from' not in context or context.get('from') != 'mass_reallocation':
@@ -301,7 +331,7 @@ class analytic_line(osv.osv):
         # Prepare some value
         account = self.pool.get('account.analytic.account').browse(cr, uid, [account_id], context)[0]
         context.update({'from': 'mass_reallocation'}) # this permits reallocation to be accepted when rewrite analaytic lines
-        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction')])
+        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
         correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
         if not correction_journal_id:
             raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
@@ -324,7 +354,7 @@ class analytic_line(osv.osv):
                     # First reverse line
                     rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], posting_date=date)
                     # UTP-943: Shoud have a correction journal on these lines
-                    self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'journal_id': correction_journal_id})
+                    self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'journal_id': correction_journal_id, 'is_reversal': True, 'reversal_origin': aline.id, 'last_corrected_id': False})
                     # UTP-943: Check that period is open
                     correction_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date, context=context)
                     if not correction_period_ids:
@@ -333,8 +363,9 @@ class analytic_line(osv.osv):
                         if p.state != 'draft':
                             raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (p.name,))
                     # then create new lines
-                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
+                    cor_ids = self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
                         'source_date': aline.source_date or aline.date, 'journal_id': correction_journal_id}, context=context)
+                    self.pool.get('account.analytic.line').write(cr, uid, cor_ids, {'last_corrected_id': aline.id})
                     # finally flag analytic line as reallocated
                     self.pool.get('account.analytic.line').write(cr, uid, [aline.id], {'is_reallocated': True})
             else:

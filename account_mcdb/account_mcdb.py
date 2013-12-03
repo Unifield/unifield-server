@@ -100,6 +100,8 @@ class account_mcdb(osv.osv):
         'display_funding_pool': fields.boolean('Display funding pools?'),
         'display_cost_center': fields.boolean('Display cost centers?'),
         'display_destination': fields.boolean('Display destinations?'),
+        'display_free1': fields.boolean('Display Free 1?'),
+        'display_free2': fields.boolean('Display Free 2?'),
         'user': fields.many2one('res.users', "User"),
     }
 
@@ -201,6 +203,16 @@ class account_mcdb(osv.osv):
         if fx_table_id:
             res.update({'value': {'display_in_output_currency' : False}})
         return res
+
+    def onchange_analytic_axis(self, cr, uid, ids, analytic_axis, context=None):
+        """
+        Clean up Cost Center / Destination / Funding Pool / Free 1 and Free 2 frames
+        """
+        vals = {}
+        if not analytic_axis:
+            return {}
+        vals.update({'analytic_account_fp_ids': False, 'analytic_account_cc_ids': False, 'analytic_account_dest_ids': False, 'analytic_account_f1_ids': False, 'analytic_account_f2_ids': False})
+        return {'value': vals}
 
     def button_validate(self, cr, uid, ids, context=None):
         """
@@ -337,11 +349,13 @@ class account_mcdb(osv.osv):
             # ANALYTIC AXIS FIELD
             if res_model == 'account.analytic.line':
                 if wiz.analytic_axis == 'fp':
-                    context.update({'display_fp': True})
+                    context.update({'display_fp': True, 'categ': 'FUNDING'})
                     domain.append(('account_id.category', '=', 'FUNDING'))
                 elif wiz.analytic_axis == 'f1':
+                    context.update({'categ': 'FREE1'})
                     domain.append(('account_id.category', '=', 'FREE1'))
                 elif wiz.analytic_axis == 'f2':
+                    context.update({'categ': 'FREE2'})
                     domain.append(('account_id.category', '=', 'FREE2'))
                 else:
                     raise osv.except_osv(_('Warning'), _('Display field is mandatory!'))

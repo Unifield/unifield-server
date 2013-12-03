@@ -79,6 +79,7 @@
                     <field name="partner_type" invisible="1"/>
                     <field name="register_line_id" invisible="1"/>
                     <field name="register_line_state" invisible="1"/>
+                    <field name="commitment_line_id" invisible="1"/>
                     <field name="account_id" attrs="{'invisible': ['|', ('register_line_id', '=', False), ('register_line_state', 'in', ['draft', 'hard'])], 'required': [('register_line_state', '=', 'temp')]}" readonly="0" domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"/>
                     <group colspan="2" col="3">
                         <field colspan="2" name="entry_mode" readonly="1"/>
@@ -99,7 +100,7 @@
                         <separator colspan="4" string="Cost Center and Funding Pool allocation"/>
                         <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'from_invoice': invoice_id, 'from_commitment': commitment_id, 'from_model': model_id, 'direct_invoice_id': direct_invoice_id, 'from_move': move_id, 'parent_id':active_id, 'posting_date': posting_date, 'document_date': document_date}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                     </group>
-                    <group colspan="6" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
+                    <group colspan="6" attrs="{'invisible': ['|', '|', ('state', 'in', ['draft', 'cc']), ('commitment_id', '!=', False), ('commitment_line_id', '!=', False)]}">
                         <group colspan="2">
                             <separator string="Free 1"/>
                             <field colspan="4" name="f1_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
@@ -109,7 +110,7 @@
                             <field colspan="4" name="f2_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                         </group>
                     </group>
-                    <group colspan="4">
+                    <group colspan="4" attrs="{'invisible': [('state', '=', 'correction')]}">
                         <label string="" colspan="2"/>
                         <button name="button_cancel" string='Cancel' type='object' icon='gtk-cancel' colspan="1"/>
                         <button name="button_confirm" string="Save" type="object" icon="gtk-ok" colspan="1" attrs="{'readonly': [('is_writable', '=', False)]}"/>
@@ -139,7 +140,8 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
-                  <field name="account_id" colspan="2" attrs="{'readonly': [('state', '=', 'blocked')]}"/><label string="" colspan="2"/>
+                    <field name="account_id" colspan="2" attrs="{'readonly': [('state', '=', 'blocked')]}"/>
+                    <label string="" colspan="2"/>
                     <newline/>
                     <field name="date" colspan="2" /><label string="" colspan="2"/>
                     <newline/>
@@ -158,9 +160,13 @@
                     <newline/>
                     <label string="- Reversals" align="0.0"/>
                     <newline/>
+                    <label string="- Items from engagement journal" align="0.0"/>
+                    <newline/>
                     <label string="- Write-off" align="0.0"/>
                     <newline/>
                     <label string="- Unposted items" align="0.0"/>
+                    <newline/>
+                    <label string="- Free 1 / Free 2 items" align="0.0"/>
                     <newline/>
                     <html>
                         <br />
@@ -177,6 +183,7 @@
                             <field name="is_reversal"/>
                             <field name="from_write_off"/>
                             <field name="is_unposted"/>
+                            <field name="free_account"/>
                         </tree>
                     </field>
                     <separator string=""/>

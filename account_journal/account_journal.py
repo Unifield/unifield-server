@@ -61,19 +61,19 @@ class account_journal(osv.osv):
                 ('correction','Correction'),
                 ('cur_adj', 'Currency Adjustement'),
                 ('depreciation', 'Depreciation'),
-                ('extra', 'OD-Extra Accounting'),
                 ('general', 'General'),
                 ('hq', 'HQ'),
                 ('hr', 'HR'),
                 ('inkind', 'In-kind Donation'),
                 ('intermission', 'Intermission'),
+                ('migration', 'Migration'),
+                ('extra', 'OD-Extra Accounting'),
                 ('situation', 'Opening/Closing Situation'),
                 ('purchase', 'Purchase'),
                 ('purchase_refund','Purchase Refund'),
                 ('sale', 'Sale'),
                 ('sale_refund','Sale Refund'),
                 ('stock', 'Stock'),
-                ('migration', 'Migration'),
         ]
     
     _columns = {

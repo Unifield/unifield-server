@@ -1247,7 +1247,7 @@ class sale_order_line(osv.osv):
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
             default.update({'so_back_update_dest_po_id_sale_order_line': False,
                             'so_back_update_dest_pol_id_sale_order_line': False,})
-        default.update({'sync_order_line_db_id': False})
+        default.update({'sync_order_line_db_id': False, 'manually_corrected': False})
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
     def open_order_line_to_correct(self, cr, uid, ids, context=None):
@@ -1334,11 +1334,14 @@ class sale_order_line(osv.osv):
                 res['value'].update({'type': type})
             else:
                 res.update({'value':{'type': type}})
+            res['value'].update({'product_uom_qty': qty, 'product_uos_qty': qty})
         elif not product:
             if 'value' in res:
                 res['value'].update({'type': 'make_to_order'})
             else:
                 res.update({'value':{'type': 'make_to_order'}})
+            res['value'].update({'product_uom_qty': 0.00, 'product_uos_qty': 0.00})
+
         return res
 
     def default_get(self, cr, uid, fields, context=None):
@@ -1369,6 +1372,7 @@ class sale_order_line(osv.osv):
             self.pool.get('sale.order').write(cr, uid, [context.get('sale_id')], data, context=context)
 
         default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
+        default_data.update({'product_uom_qty': 0.00, 'product_uos_qty': 0.00})
         sale_id = context.get('sale_id', [])
         if not sale_id:
             return default_data
@@ -1386,7 +1390,7 @@ class sale_order_line(osv.osv):
         if not default:
             default = {}
             
-        default.update({'sync_order_line_db_id': False})
+        default.update({'sync_order_line_db_id': False, 'manually_corrected': False})
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
     def create(self, cr, uid, vals, context=None):
