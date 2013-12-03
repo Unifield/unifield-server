@@ -10,7 +10,7 @@
 							hide_new_button="PROP_INSTANCE_HIDE_BUTTON">
                     <field name="code" attrs="{'readonly': [('current_instance_level', '!=', 'section')]}"/>
                     <field name="name" attrs="{'readonly': [('current_instance_level', '!=', 'section')]}"/>
-                    <field name="level" attrs="{'readonly': [('current_instance_level', '!=', 'section')]}"/>
+                    <field name="level" attrs="{'readonly': [('current_instance_level', '!=', 'section')]}"  context="{'level':level}" />
                     <field name="current_instance_level" invisible="1"/>
                     <notebook colspan="4">
                         <page string="General Information">
@@ -26,8 +26,8 @@
                         <page string="Cost Centers">
 		                    <button name="button_cost_center_wizard" string="Add Cost Centers" type="object" icon="terp-document-new" attrs="{'invisible': ['|', '|', ('level', '=', 'section'), ('level', '=', 'project'), ('current_instance_level', '!=', 'section')]}"/>
 		                    <group colspan="4">
-			                    <field name="target_cost_center_ids" colspan="4" nolabel="1" attrs="{'invisible': [('level', '=', 'section')]}" widget="one2many_list">
-			                        <tree editable="top" string="Cost Centers" hide_new_button="1" hide_delete_button="PROP_INSTANCE_HIDE_BUTTON">
+			                    <field name="target_cost_center_ids" colspan="4" nolabel="1" attrs="{'invisible': [('level', '=', 'section')]}" widget="one2many_list"  context="{'level':level}">
+			                        <tree editable="top" string="Cost Centers" hide_new_button="1" hide_delete_button="PROP_INSTANCE_HIDE_BUTTON or context.get('level')=='project'">			                        
 	                                    <field name="cost_center_id" readonly="1"/>
 	                                    <field name="cost_center_name"/>
 			                            <field name="is_target"/>

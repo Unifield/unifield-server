@@ -215,11 +215,15 @@ class msf_instance(osv.osv):
     ]
     
     def name_get(self, cr, user, ids, context=None):
+        if context is None:
+            context = {}
         result = self.browse(cr, user, ids, context=context)
         res = []
         for rs in result:
             txt = rs.code
             res += [(rs.id, txt)]
+            context['level'] = rs.level
+        
         return res
 
     def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):
@@ -264,13 +268,18 @@ class msf_instance(osv.osv):
                     
                 if 'target_cost_center_ids' in res['fields']:
                     arch = res['fields']['target_cost_center_ids']['views']['tree']['arch']
-                    if 'hide_delete_button="PROP_INSTANCE_HIDE_BUTTON"' in arch:
-                        res['fields']['target_cost_center_ids']['views']['tree']['arch'] = arch.replace('hide_delete_button="PROP_INSTANCE_HIDE_BUTTON"', 'hide_delete_button="1" noteditable="1"')
+                    if 'hide_delete_button="PROP_INSTANCE_HIDE_BUTTON' in arch:
+                        res['fields']['target_cost_center_ids']['views']['tree']['arch'] = arch.replace('hide_delete_button="PROP_INSTANCE_HIDE_BUTTON', 'noteditable="1" hide_delete_button="1')
             else:
                 if res['type'] == 'form' and 'hide_new_button="PROP_INSTANCE_HIDE_BUTTON"' in res['arch']:
                     res['arch'] = res['arch'].replace('hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"', '')
                     res['arch'] = res['arch'].replace('hide_delete_button="PROP_INSTANCE_HIDE_BUTTON"', '')
                     res['arch'] = res['arch'].replace('hide_new_button="PROP_INSTANCE_HIDE_BUTTON"', '')
+                if 'target_cost_center_ids' in res['fields']:
+                    arch = res['fields']['target_cost_center_ids']['views']['tree']['arch']
+                    if 'hide_delete_button="PROP_INSTANCE_HIDE_BUTTON' in arch:
+                        res['fields']['target_cost_center_ids']['views']['tree']['arch'] = arch.replace('PROP_INSTANCE_HIDE_BUTTON', '0')
+                    
         return res
     
     
