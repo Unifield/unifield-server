@@ -606,7 +606,7 @@ class product_likely_expire_report(osv.osv):
             'res_model': 'product.likely.expire.report',
             'view_id': [view_id],
             'view_type': 'form',
-            'view_mode': 'form,tree',
+            'view_mode': 'form',
             'target': 'dummy',
             'context': new_context,
             'res_id': ids[0],
