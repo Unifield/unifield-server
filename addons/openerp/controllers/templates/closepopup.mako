@@ -50,7 +50,7 @@
                                 return;
                             }
                         case 'tree':
-                            new topWindow.ListView('_terp_list').reload();
+                            new topWindow.ListView('_terp_list').reload_from_wizard();
                             return;
                     }
                     topWindow.location.reload();

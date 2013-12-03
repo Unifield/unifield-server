@@ -827,7 +827,10 @@ MochiKit.Base.update(ListView.prototype, {
         this.reload();
     },
 
-    reload: function(edit_inline, concurrency_info, default_get_ctx, clear, ids_to_show) {
+    reload_from_wizard: function() {
+        return this.reload(undefined, undefined, undefined, undefined, undefined, true);
+    },
+    reload: function(edit_inline, concurrency_info, default_get_ctx, clear, ids_to_show, from_close_wizard) {
         if (openobject.http.AJAX_COUNT > 0) {
             return callLater(1, bind(this.reload, this), edit_inline, concurrency_info);
         }
@@ -849,8 +852,13 @@ MochiKit.Base.update(ListView.prototype, {
             jQuery.extend(args, {
                 _terp_search_domain: openobject.dom.get('_terp_search_domain').value,
                 _terp_search_data: openobject.dom.get('_terp_search_data').value,
-                _terp_filter_domain: openobject.dom.get('_terp_filter_domain').value
+                _terp_filter_domain: openobject.dom.get('_terp_filter_domain').value,
             });
+            if (from_close_wizard) {
+                jQuery.extend(args, {
+                    _terp_reload_previously_selected: '['+self.get_previously_selected().join(',')+']',
+                });
+            }
         }
 
         if(this.sort_key) {
@@ -889,7 +897,9 @@ MochiKit.Base.update(ListView.prototype, {
                     _terp_ids.value = self.ids = '[' + obj.ids.join(',') + ']';
                     _terp_count.value = obj.count;
                 }
-
+                if ('previously_selected' in obj && obj.previously_selected != null) {
+                    self.update_previously_selected(obj.previously_selected);
+                }
                 self.current_record = edit_inline;
                 if(obj.logs) {
                     jQuery('div#server_logs').append(obj.logs)

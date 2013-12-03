@@ -270,7 +270,7 @@ class List(SecuredController):
                 del params.context['group_by']
             params.group_by_ctx = []
 
-
+        #params.forced_domain = params.domain[:]
         if source == '_terp_list':
             if not params.view_type == 'graph':
                 params.view_type = 'tree'
@@ -314,13 +314,12 @@ class List(SecuredController):
             view=ustr(wid.render())
 
         server_logs = ''
-
         if frm.logs and frm.screen.view_type == 'tree':
             server_logs = ustr(frm.logs.render())
 
         concurrency_info = getattr(cherrypy.request, 'terp_concurrency_info', None)
 
-        return dict(ids=ids, count=count, view=view, logs=server_logs, concurrency_info=concurrency_info)
+        return dict(ids=ids, count=count, view=view, logs=server_logs, concurrency_info=concurrency_info, previously_selected=frm.screen.set_previously_selected)
 
     @expose('json')
     def button_action(self, **kw):
