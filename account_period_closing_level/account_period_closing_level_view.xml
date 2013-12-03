@@ -104,7 +104,7 @@
                         </head>
                         <body style="border:0; margin: 0;">
                             <p style="width: 700px; margin: 15px 0 25px 5px;">You have to verify manually:<br/>
-                            - Check that fx rates have been updated for the period to close<br/>
+                            - Check that FX rates have been updated for the period to close<br/>
                             - Check that HR entries from the Homere interface have been imported<br/>
                             - Check list of monthly accruals (all records, by account)<br/>
                             - Check list of recurring entries for the period (check that they have been generated)<br/>
@@ -120,7 +120,7 @@
                     <group col="4" colspan="4">
                         <label string="" colspan="2"/>
                         <button string='No' special='cancel' icon='gtk-cancel'/>
-                        <button name="button_confirm" type="object" string="Yes" icon="gtk-ok" confirm="Have you really do all verifications given at screen?"/>
+                        <button name="button_confirm" type="object" string="Yes" icon="gtk-ok" confirm="Have you performed all verifications on the previous screen?"/>
                     </group>
                 </form>
             </field>

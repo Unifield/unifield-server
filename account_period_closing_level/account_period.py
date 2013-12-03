@@ -12,7 +12,11 @@
 #    This program is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
+#    GNU Affero General Public    
+        # 1 = state created as 'Draft' ('created') at HQ (update to state handled in create)
+        # 2 = state moves from 'Open' ('draft') -> any close at HQ (sync down)
+        # 3 = 
+        # 3 = state reopened at HQ -> reopen at all levels License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -33,7 +37,11 @@ class account_period(osv.osv):
     # the state are:
     #  - 'created' for Draft
     #  - 'draft' for Open
-    #  - 'done' for HQ-Closed
+    #  - 'done' for HQ-Closed    
+        # 1 = state created as 'Draft' ('created') at HQ (update to state handled in create)
+        # 2 = state moves from 'Open' ('draft') -> any close at HQ (sync down)
+        # 3 = 
+        # 3 = state reopened at HQ -> reopen at all levels
 
 # uf-1624: we replace the function with the import of ACCOUNT_PERIOD_STATE_SELECTION (because of problem in the track changes)
 #    def _get_state(self, cursor, user_id, context=None):
@@ -60,6 +68,25 @@ class account_period(osv.osv):
         curr_obj = self.pool.get('res.currency')
         curr_rate_obj = self.pool.get('res.currency.rate')
         inv_obj = self.pool.get('account.invoice')
+        
+        
+        # Ticket utp913 set state_sync_flag for conditional sync of state
+        # state = draft -> sync down
+        # state = open (in HQ) -> does not sync
+        # state = any close (in HQ or COORDO) -> sync down (coordo -> project) or (HQ -> coordo & project)
+        # 'none' : no update to the state field
+        # other values; state will be set to this value and then to 'none'
+        # note that 'draft' = 'Open' and 'created' = 'Draft' ... see ACCOUNT_PERIOD_STATE_SELECTION
+        if context.get('sync_update_execution') == None:
+            user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+            level = user.company_id.instance_id.level
+            if level == 'section': 
+                if context['state'] == 'draft':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})   
+            if level in ['section','coordo']:
+                if context['state'] in ['field-closed','mission-closed','done']:
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})
+            
         
         # Do verifications for draft periods
         for period in self.browse(cr, uid, ids, context=context):
@@ -157,6 +184,7 @@ class account_period(osv.osv):
         'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State', readonly=True,
             help='HQ opens a monthly period. After validation, it will be closed by the different levels.'),
         'number': fields.integer(string="Number for register creation", help="This number informs period's order. Should be between 1 and 15. If 16: have not been defined yet."),
+        'state_sync_flag': fields.char('Sync Flag', required=True, size=64, help='Flag for controlling sync actions on the period state.'),
     }
 
     _order = 'date_start, number'
@@ -168,13 +196,34 @@ class account_period(osv.osv):
         if context.get('update_mode') in ['init', 'update'] and 'state' not in vals:
             logging.getLogger('init').info('Loading default draft state for account.period')
             vals['state'] = 'draft'
+            
+        if context.get('sync_update_execution') == None:
+            user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+            level = user.company_id.instance_id.level
+            if level == 'section' and vals['state_sync_flag'] == 'created':
+                vals['state_sync_flag'] = 'created'
 
         return super(account_period, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if not context:
+            context = {}
+        # control conditional push-down of state from HQ. Ticket UTP-913
+        if context.get('sync_update_execution'):
+            if vals['state_sync_flag'] != 'none':
+                vals['state'] = vals['state_sync_flag']
+                vals['state_sync_flag'] = 'none'
+            else:
+                vals['state_sync_flag'] = 'none'
+            
+        return super(account_period, self).write(cr, uid, ids, vals, context=context)
+            
 
     _defaults = {
         'state': lambda *a: 'created',
         'number': lambda *a: 16, # Because of 15 period in MSF, no period would use 16 number.
         'special': lambda *a: False,
+        'state_sync_flag': lambda *a: 'none',
     }
 
     def button_overdue_invoice(self, cr, uid, ids, context=None):
