@@ -368,12 +368,18 @@ class purchase_order_sync(osv.osv):
         #    dict_of_purchase.order.line_changes
         lines = {}
         if 'purchase.order.line' in context['changes']:
-            for rec_line in self.pool.get('purchase.order.line').browse(
-                    cr, uid,
-                    context['changes']['purchase.order.line'].keys(),
-                    context=context):
-                lines.setdefault(rec_line.order_id.id, {})[rec_line.id] = \
-                     context['changes']['purchase.order.line'][rec_line.id]
+            lines_changed = context['changes']['purchase.order.line']
+            # UF-2244: remove the lines that have been deleted --
+            lines_to_delete = []
+            for line in lines_changed:
+                if "merged_id" in lines_changed[line]:
+                    lines_to_delete.append(line)
+            for line in lines_to_delete:
+                del context['changes']['purchase.order.line'][line]
+            # UF-2244: -- the above block can be improved! Please do Thanks.
+            
+            for rec_line in self.pool.get('purchase.order.line').browse(cr, uid,lines_changed.keys(),context=context):
+                lines.setdefault(rec_line.order_id.id, {})[rec_line.id] = lines_changed[rec_line.id]
         # monitor changes on purchase.order
         for id, changes in changes.items():
             logger = get_sale_purchase_logger(cr, uid, self, id, \
