@@ -214,6 +214,41 @@
 	    			<para style="TextInfoRight">[[ formatLang(line.total_value or 0.00) ]]</para>
 	    		</td>
 	    	</tr>
+	    	<tr>
+	    		<td>
+	    			<para style="TextInfo"></para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"></para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoRight"></para>
+	    		</td>
+                <td>
+	    			<para style="TextInfoRight"></para>
+	    		</td>
+                <td>
+	    			<para style="TextInfoRight"></para>
+	    		</td>
+                <td>
+	    			<para style="TextInfoRight"></para>
+	    		</td>
+                <td>
+	    			<para style="TextInfoRight"></para>
+	    		</td>
+                <td>
+	    			<para style="TextInfoRight"></para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoRight"></para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoRight"></para>
+	    		</td>
+                <td>
+	    			<para style="TextInfoRight">[[ formatLang(getExpiryValueTotal(objects[0]) or 0.00) ]]</para>
+	    		</td>
+	    	</tr>
 	    </blockTable>
     </story>
     
