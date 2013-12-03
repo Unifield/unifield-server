@@ -84,6 +84,8 @@ ACCOUNT_RESTRICTED_AREA = {
     'intermission_lines': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False),
+        ('user_type_code', '=', 'expense'),
+        ('user_type.report_type', '!=', 'none'), # To only use Expense extra-accounting accounts
     ],
     # RECURRING MODELS
     'recurring_lines': [

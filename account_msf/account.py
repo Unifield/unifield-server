@@ -59,7 +59,7 @@ class account_account(osv.osv):
         return arg
 
     _columns = {
-        'is_intermission_counterpart': fields.function(_get_is_intermission_counterpart, method=True, type='boolean', string='Is the intermission counterpart account?')
+        'is_intermission_counterpart': fields.function(_get_is_intermission_counterpart, fnct_search=_search_is_intermission_counterpart, method=True, type='boolean', string='Is the intermission counterpart account?')
     }
 
 account_account()
