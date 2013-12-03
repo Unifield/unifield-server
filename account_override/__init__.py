@@ -68,7 +68,13 @@ ACCOUNT_RESTRICTED_AREA = {
     'donation_lines': [
         ('type', '!=', 'view'),
         ('user_type_code', '=', 'expense'),
-        '|', ('user_type_code', '!=', 'expense'), ('report_type', '=', 'none'), # To only use Expense extra-accounting accounts
+        '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # To only use Expense extra-accounting accounts
+    ],
+    # Commitment voucher lines
+    'commitment_lines': [
+        ('type', '!=', 'view'),
+        ('user_type_code', '=', 'expense'),
+        '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # To only use Expense extra-accounting accounts
     ],
     # HEADER OF Intermission Voucher IN/OUT
     'intermission_header': [
