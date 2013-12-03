@@ -73,6 +73,7 @@
                   sequence="-10"
     			  parent="menu_warehouse_expiry" />
                   
+    <!-- Products Likely to Expire -->
         <record id="product_likely_expire_report_waiting_view" model="ir.ui.view">
             <field name="name">product.likely.expire.report.waiting.view</field>
             <field name="model">product.likely.expire.report</field>
@@ -186,6 +187,7 @@
     						<field name="consumption" />
     						<field name="in_stock" />
     						<field name="total_expired" />
+                            <field name="total_value" sum="Total Expired Value" />
     					</tree>
     				</field>
                     <separator colspan="4" string="Report" />

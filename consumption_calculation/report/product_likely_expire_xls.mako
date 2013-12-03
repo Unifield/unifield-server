@@ -56,7 +56,7 @@
 <Table x:FullColumns="1" x:FullRows="1">
 <%
 dates = getReportDates(o)
-n_columns = 5 + len(dates)
+n_columns = 6 + len(dates)
 n_header_columns = 3
 n_header_colspan = n_columns - 3
 if n_header_colspan < 0:
@@ -107,6 +107,7 @@ if cols < 0:
 % endfor
 <Cell ss:StyleID="header"><Data ss:Type="String">In Stock</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">Total Expired</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">Total Value</Data></Cell>
 </Row>
 ## lines
 % for line in o.line_ids:
@@ -125,8 +126,22 @@ if cols < 0:
 % endfor
 <Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(line.in_stock or 0.00))}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(line.total_expired or 0.00))|x}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(line.total_value or 0.00))|x}</Data></Cell>
 </Row>
 % endfor
+## total row
+<Row>
+<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+% for i in getLineItems(line):
+    ## line items
+    <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+% endfor
+<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(getExpiryValueTotal(o) or 0.00))|x}</Data></Cell>
+</Row>
 </Table>
 % endfor
 <x:WorksheetOptions/>

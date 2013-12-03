@@ -41,6 +41,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
             'getReportConsumptionType': self._get_report_consumption_type,
             'getReportDates': self._get_report_dates,
             'getLines': self._get_lines,
+            'getExpiryValueTotal': self._get_expiry_value_total,
             'getLineItems': self._get_line_items,
             'getMonthItemLines': self._get_month_item_lines,
             'getRmlTables': self._get_rml_tables,
@@ -80,6 +81,14 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         domain = [('report_id', '=', report.id)]
         line_ids = line_obj.search(self.cr, self.uid, domain)
         return line_obj.browse(self.cr, self.uid, line_ids)
+        
+    def _get_expiry_value_total(self, report):
+        """get expiry value total (float)"""
+        lines = self._get_lines(report)
+        res = 0.
+        for l in lines:
+            res += l.total_value
+        return res
         
     def _get_line_items(self, line):
         """get line items 'product.likely.expire.report.item'

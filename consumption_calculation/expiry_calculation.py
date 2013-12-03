@@ -281,6 +281,8 @@ class product_likely_expire_report(osv.osv):
         '''
         Create one line by product for the period
         '''
+        # TODO
+        print 'process_lines', ids, context
         if context is None:
             context = {}
         if ids:
@@ -555,6 +557,7 @@ class product_likely_expire_report(osv.osv):
             
         line_view += """<field name="in_stock"/>
                         <field name="total_expired" />
+                        <field name="total_value" sum="Total Expired Value" />
                         </tree>"""
                         
         if res['fields'].get('line_ids', {}).get('views', {}).get('tree', {}).get('arch', {}):
@@ -585,6 +588,7 @@ class product_likely_expire_report(osv.osv):
         '''
         Open the report
         '''
+        # TODO
         # compute dates to inject to context
         if context is None:
             context = {}
@@ -664,12 +668,26 @@ class product_likely_expire_report_line(osv.osv):
     _name = 'product.likely.expire.report.line'
     _rec_name = 'report_id'
     
+    def _get_total_value(self, cr, uid, ids, fieldname, args, context=None):
+        res = { }
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for o in self.browse(cr, uid, ids, context=context):
+            if o.product_id:
+                res[o.id] = o.product_id.standard_price * o.total_expired
+            else:
+                res[o.id] = 0.
+        return res
+    
     _columns = {
             'report_id': fields.many2one('product.likely.expire.report', string='Report', required=True, ondelete='cascade'),
             'product_id': fields.many2one('product.product', string='Product', required=True),
             'consumption': fields.float(digits=(16,2), string='Monthly Consumption', required=True),
             'in_stock': fields.float(digits=(16,2), string='In stock'),
             'total_expired': fields.float(digits=(16,2), string='Total expired'),
+            'total_value': fields.function(_get_total_value, type='float', string='Total Value', method=True),
     }
     
     def __getattr__(self, name, *args, **kwargs):
