@@ -70,6 +70,12 @@ class log_sale_purchase(osv.osv):
     def write(self, *a, **kw):
         return super(log_sale_purchase, self).write(*a, **kw)
 
+    # UF-2239: Sort the list by synchronisation id
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+        if not orderby:
+            orderby = 'synchro_datetime desc'
+        return super(log_sale_purchase, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
+
     _columns = {
         # Synchronization
         'synchro_id' :
