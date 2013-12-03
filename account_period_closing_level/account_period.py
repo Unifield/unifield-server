@@ -194,15 +194,9 @@ class account_period(osv.osv):
             context = {}
 
         if context.get('update_mode') in ['init', 'update'] and 'state' not in vals:
-            logging.getLogger('init').info('Loading default draft state for account.period')
-            vals['state'] = 'draft'
-            
-        if context.get('sync_update_execution') == None:
-            user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
-            level = user.company_id.instance_id.level
-            if level == 'section' and vals['state_sync_flag'] == 'created':
-                vals['state_sync_flag'] = 'created'
-
+            logging.getLogger('init').info('Loading default created state for account.period')
+            vals['state'] = 'created'
+     
         return super(account_period, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
