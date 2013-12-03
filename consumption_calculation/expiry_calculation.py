@@ -538,7 +538,7 @@ class product_likely_expire_report(osv.osv):
         
         
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        if context is None:
+        if not context:
             context = {}
             
         res = super(product_likely_expire_report, self).fields_view_get(cr, uid, view_id, view_type, context=context)
@@ -555,7 +555,6 @@ class product_likely_expire_report(osv.osv):
             
         line_view += """<field name="in_stock"/>
                         <field name="total_expired" />
-                        <field name="total_value" sum="Total Expired Value" />
                         </tree>"""
                         
         if res['fields'].get('line_ids', {}).get('views', {}).get('tree', {}).get('arch', {}):
@@ -586,21 +585,22 @@ class product_likely_expire_report(osv.osv):
         '''
         Open the report
         '''
-        # TODO
         # compute dates to inject to context
         if context is None:
             context = {}
         if not ids:
             return {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         report = self.browse(cr, uid, ids[0], context=context)
         if not report:
             return {}
-        context.update({ 'dates': self.get_report_dates_str(report) })
         
+        new_context = context.copy()
+        new_context['dates'] = self.get_report_dates_str(report)
         view_id = self.pool.get('ir.model.data').get_object_reference(
-            cr, uid, 'consumption_calculation',
+            cr, uid, 'consumption_calculation', 
             'product_likely_expire_report_form_processed')[1]
-        
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'product.likely.expire.report',
@@ -608,7 +608,7 @@ class product_likely_expire_report(osv.osv):
             'view_type': 'form',
             'view_mode': 'form,tree',
             'target': 'dummy',
-            'context': context,
+            'context': new_context,
             'res_id': ids[0],
         }
         

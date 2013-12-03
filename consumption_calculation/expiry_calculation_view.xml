@@ -78,7 +78,7 @@
             <field name="name">product.likely.expire.report.waiting.view</field>
             <field name="model">product.likely.expire.report</field>
             <field name="type">form</field>
-            <field name="priority" eval="99" />
+            <field name="priority" eval="100" />
             <field name="arch" type="xml">
                 <form string="Status of the report" hide_new_button="1" hide_delete_button="1">
                     <label> </label>
