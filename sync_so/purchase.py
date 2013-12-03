@@ -84,7 +84,11 @@ class purchase_order_sync(osv.osv):
         if so_info.name[-2] == '-' and so_info.name[-1] in ['1', '2', '3']:
             po_name = self.browse(cr, uid, po_id, context=context)['name']
             header_result['name'] = po_name + so_info.name[-2:]
-        
+        else:
+            text = "The given format of the split FO is not valid" + so_info.name
+            self._logger.error(text)
+            raise Exception, text
+            
         # UTP-163: Get the 'source document' of the original PO, and add it into the split PO, if existed
         origin = self.browse(cr, uid, po_id, context=context)['origin']
         header_result['origin'] = origin

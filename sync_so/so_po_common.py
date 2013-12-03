@@ -26,6 +26,7 @@ class so_po_common(osv.osv_memory):
     _name = "so.po.common"
     _description = "Common methods for SO - PO"
     
+    # UTP-952: get the partner type, for the case of intermission and section
     def get_partner_type(self, cr, uid, partner_name, context=None):
         if not context:
             context = {}
@@ -232,6 +233,7 @@ class so_po_common(osv.osv_memory):
         if 'is_a_counterpart' in header_info:
             header_result['is_a_counterpart'] = header_info.get('is_a_counterpart')
 
+        # UTP-952: only retrieve the AD from the source if the partner type is not intermission or section        
         partner_type = self.get_partner_type(cr, uid, source, context)
         if partner_type not in ['section', 'intermission'] and header_info.get('analytic_distribution_id', False):
             header_result['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, header_info, context)
