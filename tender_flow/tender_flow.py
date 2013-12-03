@@ -368,6 +368,10 @@ class tender(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         sol_obj = self.pool.get('sale.order.line')
         proc_obj = self.pool.get('procurement.order')
+        date_tools = self.pool.get('date.tools')                                
+        fields_tools = self.pool.get('fields.tools')                            
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+
         for tender in self.browse(cr, uid, ids, context=context):
             rfq_list = []
             for rfq in tender.rfq_ids:
@@ -388,6 +392,9 @@ class tender(osv.osv):
                 # Update procurement order
                 for line in tender.tender_line_ids:
                     if line.line_state == 'cancel':
+                        proc_id = line.sale_order_line_id and line.sale_order_line_id.procurement_id and line.sale_order_line_id.procurement_id.id
+                        if proc_id:
+                            wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_cancel', cr)
                         continue
                     vals = {'product_id': line.product_id.id,
                             'product_uom': line.product_uom.id,
@@ -399,10 +406,15 @@ class tender(osv.osv):
                         proc_obj.write(cr, uid, [proc_id], vals, context=context)
                     elif line.created_by_rfq:   # Create procurement order to add the lines in a PO
                         create_vals = vals.copy()
+                        prep_lt = fields_tools.get_field_from_company(cr, uid, object='sale.order', field='preparation_lead_time', context=context)
+                        rts = datetime.strptime(tender.sale_order_id.ready_to_ship_date, db_date_format)       
+                        rts = rts - relativedelta(days=prep_lt or 0)                            
+                        rts = rts.strftime(db_date_format)                                      
                         create_vals.update({'procure_method': 'make_to_order',
                                             'is_tender': True,
                                             'tender_id': tender.id,
                                             'tender_line_id': line.id,
+                                            'date_planned': rts,
                                             'supplier': line.purchase_order_line_id.order_id.partner_id.id,
                                             'name': '[%s] %s' % (line.product_id.default_code, line.product_id.name),
                                             'location_id': tender.sale_order_id.warehouse_id.lot_stock_id.id,
@@ -835,6 +847,7 @@ class tender_line(osv.osv):
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
         tender_obj = self.pool.get('tender')
+        proc_obj = self.pool.get('procurement.order')
 
         # Variables
         wf_service = netsvc.LocalService("workflow")
@@ -845,6 +858,8 @@ class tender_line(osv.osv):
         sol_to_update = {}
         so_to_update = set()
         tender_to_update = set()
+        proc_to_cancel = []
+        proc_to_update = {}
 
         for line in self.browse(cr, uid, ids, context=context):
             tender_to_update.add(line.tender_id.id)
@@ -861,6 +876,8 @@ class tender_line(osv.osv):
                     sol_to_remove.append(line.sale_order_line_id.id)
                 else:
                     sol_to_update[line.sale_order_line_id.id] = line.sale_order_line_id.product_uom_qty - diff_qty
+                    if line.sale_order_line_id.procuremente_id:
+                        proc_to_update[line.sale_order_line_id.procurement_id.id] = line.sale_order_line_id.product_uom_qty - diff_qty
             elif line.tender_id.state == 'draft':
                 to_remove.append(line.id)
 
@@ -878,6 +895,10 @@ class tender_line(osv.osv):
         # Update sale order lines
         for sol in sol_to_update:
             sol_obj.write(cr, uid, [sol], {'product_uom_qty': sol_to_update[sol]}, context=context)
+
+        # Update procurement orders
+        for proc in proc_to_update:
+            proc_obj.write(cr, uid, [proc], {'product_qty': proc_to_update[proc]}, context=context)
 
         # Update the FO state
         for so in so_to_update:
