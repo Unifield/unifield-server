@@ -281,8 +281,6 @@ class product_likely_expire_report(osv.osv):
         '''
         Create one line by product for the period
         '''
-        # TODO
-        print 'process_lines', ids, context
         if context is None:
             context = {}
         if ids:

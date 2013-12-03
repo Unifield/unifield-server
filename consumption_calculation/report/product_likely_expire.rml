@@ -141,7 +141,7 @@
 	    	</tr>
 	    </blockTable>
 	    
-	    <blockTable colWidths="100.0,120.0,80.0,60.0,60.0,60.0,60.0,80.0,80.0,80.0" style="LinesTable" repeatRows="1">
+	    <blockTable colWidths="100.0,120.0,80.0,60.0,60.0,60.0,60.0,80.0,60.0,60.0,60.0" style="LinesTable" repeatRows="1">
             [[ repeatIn(getRmlTables(objects[0], 5), 't') ]]
             <tr>
 	    		<td>
@@ -173,6 +173,9 @@
 	    		</td>
 	    		<td>
 	    			<para style="TextInfoBoldRight">Total Expired</para>
+	    		</td>
+                <td>
+	    			<para style="TextInfoBoldRight">Total Value</para>
 	    		</td>
 	    	</tr>
 	    	<tr>
@@ -206,6 +209,9 @@
 	    		</td>
 	    		<td>
 	    			<para style="TextInfoRight">[[ formatLang(line.total_expired or 0.00) ]]</para>
+	    		</td>
+                <td>
+	    			<para style="TextInfoRight">[[ formatLang(line.total_value or 0.00) ]]</para>
 	    		</td>
 	    	</tr>
 	    </blockTable>
