@@ -28,6 +28,7 @@ ACCOUNT_RESTRICTED_AREA = {
         ('is_not_hq_correctible', '!=', True),
         '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
         '|', ('type', '!=', 'other'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
+        '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Disallow extra-accounting expenses accounts
     ],
     # HEADER OF:
     #+ Supplier Invoice
@@ -35,7 +36,8 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Supplier refund
     'in_invoice': [
         ('type', '!=', 'view'),
-        ('type', '=', 'payable'),
+        # Either Payable/Payables accounts or Regular / Debt accounts
+        '|', '&', ('type', '=', 'payable'), ('user_type_code', '=', 'payables'), '&', ('type', '=', 'other'), ('user_type_code', '=', 'debt'),
         ('type_for_register', '!=', 'donation'),
     ],
     # HEADER OF:
@@ -44,11 +46,14 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Debit Notes
     'out_invoice': [
         ('type', '!=', 'view'),
-        ('type', '!=', 'receivable'),
+        # Either Receivable/Receivables accounts or Regular / Cash accounts
+        '|', '&', ('type', '=', 'receivable'), ('user_type_code', '=', 'receivables'), '&', ('type', '=', 'other'), ('user_type_code', '=', 'cash'),
     ],
     # HEADER OF donation
     'donation_header': [
         ('type', '!=', 'view'),
+        ('user_type_code', '=', 'payables'),
+        ('type', '=', 'payable'),
         ('type_for_register', '=', 'donation'),
     ],
     # LINES OF:
@@ -63,13 +68,7 @@ ACCOUNT_RESTRICTED_AREA = {
         ('is_not_hq_correctible', '!=', True),
         '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
         '|', ('type', '!=', 'other'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
-    ],
-    # HEADER OF donation
-    'donation_header': [
-        ('type', '!=', 'view'),
-        ('user_type_code', '=', 'payables'),
-        ('type', '=', 'payable'),
-        ('type_for_register', '=', 'donation'),
+        '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Disallow extra-accounting expenses accounts
     ],
     # LINES OF donation
     'donation_lines': [
