@@ -63,7 +63,7 @@
                     <group col="6" colspan="4">
                         <separator colspan="6" string="Amount"/>
                         <newline/>
-                        <field name="account_id" select="1" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]" on_change="onchange_account_id(account_id)" colspan="2"/>
+                        <field name="account_id" select="1" domain="[('restricted_area', '=', 'account_move_lines')]" on_change="onchange_account_id(account_id)" colspan="2"/>
                         <field name="partner_type" select="1" on_change="onchange_partner_type(partner_type, credit, debit)" 
                             attrs="{'required': [('partner_type_mandatory', '=', True)]}" colspan="2"
                             domain="[('filter_for_third_party', '=', account_id)]"

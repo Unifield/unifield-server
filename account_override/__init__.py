@@ -112,7 +112,7 @@ ACCOUNT_RESTRICTED_AREA = {
     ],
     # MANUEL JOURNAL ENTRIES
     'account_move_lines': [
-        '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
+        ('type', 'not in', ['liquidity', 'view', 'consolidation', 'closed']),
     ]
 }
 

@@ -903,7 +903,7 @@
                         <field name="partner_type" context="{'search_default_active': True}"/>
                     </xpath>
                     <xpath expr="/form//tree//field[@name='account_id']" position="replace">
-                        <field name="account_id" on_change="onchange_account_id(account_id, partner_type)"/>
+                        <field name="account_id" on_change="onchange_account_id(account_id, partner_type)" domain="[('restricted_area', '=', 'account_move_lines')]"/>
                     </xpath>
                 </data>
             </field>
