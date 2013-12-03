@@ -27,7 +27,7 @@ ACCOUNT_RESTRICTED_AREA = {
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '!=', True),
         '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
-        '|', ('type', '!=', 'regular'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
+        '|', ('type', '!=', 'other'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
     ],
     # HEADER OF:
     #+ Supplier Invoice
@@ -62,13 +62,22 @@ ACCOUNT_RESTRICTED_AREA = {
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '!=', True),
         '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
-        '|', ('type', '!=', 'regular'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
+        '|', ('type', '!=', 'other'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
+    ],
+    # HEADER OF donation
+    'donation_header': [
+        ('type', '!=', 'view'),
+        ('user_type_code', '=', 'payables'),
+        ('type', '=', 'payable'),
+        ('type_for_register', '=', 'donation'),
     ],
     # LINES OF donation
     'donation_lines': [
         ('type', '!=', 'view'),
+        ('type', '=', 'other'),
         ('user_type_code', '=', 'expense'),
-        '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # To only use Expense extra-accounting accounts
+        ('user_type.report_type', '=', 'none'), # Only extra-accounting expenses
+        ('type_for_register', '=', 'donation'),
     ],
     # Commitment voucher lines
     'commitment_lines': [
