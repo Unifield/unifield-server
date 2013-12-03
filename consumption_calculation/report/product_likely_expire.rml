@@ -225,7 +225,7 @@
 	    	</tr>
 	    </blockTable>
 	    
-	    <blockTable colWidths="100.0,200.0,100.0,100.0,100.0,80.0,80.0" style="LinesTable" repeatRows="1">
+	    <blockTable colWidths="100.0,220.0,120.0,100.0,60.0,80.0,80.0" style="LinesTable" repeatRows="1">
             <tr>
 	    		<td>
 	    			<para style="TextInfoBold">Product Code</para>
