@@ -143,6 +143,18 @@ ACCOUNT_RESTRICTED_AREA = {
         ('user_type_code', '=', 'payables'),
         ('type_for_register', '=', 'donation'),
     ],
+    # PARTNER - PAYABLE DEFAULT ACCOUNT
+    'partner_payable': [
+        ('type', '!=', 'view'),
+        ('type', '=', 'payable'),
+        ('user_type_code', '=', 'payables'),
+        ('type_for_register', '!=', 'donation'),
+    ],
+    # PARTNER - RECEIVABLE DEFAULT ACCOUNT
+    'partner_receivable': [
+        ('type', '!=', 'view'),
+        ('type', '=', 'receivable'),
+    ],
 }
 
 import res_currency
