@@ -627,7 +627,7 @@ class sale_order(osv.osv):
         context = context or {}
 
         # Get the name of the original FO
-        old_order_name = self.get_original_name(cr, uid, order, context=context)
+        old_order_name = order.name
 #        order_name = '/'.join(x for x in order.name.split('/')[0:-1])
 
         order_ids = self.search(cr, uid, [('active', 'in', ('t', 'f')), ('fo_to_resource', '=', True), ('parent_order_name', '=', old_order_name)], context=dict(context, procurement_request=True))
@@ -1749,10 +1749,13 @@ class sale_order_line_unlink_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for wiz in self.browse(cr, uid, ids, context=context):
-            return self.pool.get('sale.order.line').ask_order_unlink(cr, uid, [wiz.order_line_id.id], context=context)
+        res = False
 
-        return {'type': 'ir.actions.act_window_close'}
+        for wiz in self.browse(cr, uid, ids, context=context):
+            res = self.pool.get('sale.order.line').ask_order_unlink(cr, uid, [wiz.order_line_id.id], context=context)
+            break
+
+        return res or {'type': 'ir.actions.act_window_close'}
 
     def resource_line(self, cr, uid, ids, context=None):
         '''

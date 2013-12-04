@@ -67,7 +67,11 @@
                         <field name="order_type" />
                         <field name="priority" />
                         <field name="categ" on_change="onchange_categ(categ)" />
-                        <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
+                        <group colspan="2" col="2">
+                            <field name="fo_to_resource" invisible="1" />
+                            <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
+                            <field name="parent_order_name" readonly="True" attrs="{'invisible': [('fo_to_resource', '=', False)]}" />
+                        </group>
                         <field name="details" />
                         <field name="noinvoice" invisible="1" />
                     </xpath>
