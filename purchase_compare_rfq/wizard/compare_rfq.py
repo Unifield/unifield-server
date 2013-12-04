@@ -62,15 +62,22 @@ class wizard_compare_rfq(osv.osv_memory):
         products = {}
         line_ids = []
         lines = {}
+
+        products = {}
         
 
         for o in order_obj.browse(cr, uid, ids, context=context):
             if o.state not in ('draft', 'rfq_updated'):
                 raise osv.except_osv(_('Error'), _('You cannot compare confirmed Purchase Order !'))
             for l in [line for line in o.order_line if line.price_unit > 0.00]:
-                if not lines.get(l.tender_line_id.id, False):
-                    lines[l.tender_line_id.id] = {'product_id': l.product_id.id, 'po_line_ids': []}
-                lines[l.tender_line_id.id]['po_line_ids'].append(l.id)
+                if not l.tender_line_id:
+                    if not products.get(l.product_id.id, False):
+                        products[l.product_id.id] = {'product_id': l.product_id.id, 'po_line_ids': []}
+                    products[l.product_id.id]['po_line_ids'].append(l.id)
+                else:
+                    if not lines.get(l.tender_line_id.id, False):
+                        lines[l.tender_line_id.id] = {'product_id': l.product_id.id, 'po_line_ids': []}
+                    lines[l.tender_line_id.id]['po_line_ids'].append(l.id)
 
         for l_id in lines:
             l = lines.get(l_id)
@@ -81,6 +88,20 @@ class wizard_compare_rfq(osv.osv_memory):
             if not cmp_line_ids or not context.get('end_wizard', False):
                 product_id = l.get('product_id')
                 values = {'product_id': product_id, 'tender_line_id': l_id,
+                          'po_line_ids': [(6,0,po_line_ids)], 'supplier_id': suppliers and suppliers.get(l_id, False)}
+                line_ids.append((0, 0, values))
+            else:
+                line_ids.append((0, 0, cmp_line_ids[0]))
+
+        for l_id in products:
+            l = products.get(l_id)
+            po_line_ids = []
+            for po_line in l.get('po_line_ids'):
+                po_line_ids.append(po_line)
+            cmp_line_ids = compare_line_obj.search(cr, uid, [('tender_line_id', '=', False), ('product_id', '=', l_id)])
+            if not cmp_line_ids or not context.get('end_wizard', False):
+                product_id = l.get('product_id')
+                values = {'product_id': product_id, 'tender_line_id': False,
                           'po_line_ids': [(6,0,po_line_ids)], 'supplier_id': suppliers and suppliers.get(l_id, False)}
                 line_ids.append((0, 0, values))
             else:
