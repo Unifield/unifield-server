@@ -64,7 +64,7 @@
     </Borders>
   </Style>
 </Styles>
-<Worksheet ss:Name="${_('Balance by analytic account')}">
+<Worksheet ss:Name="${_('Info')}">
 <Table >
   <Column ss:Width="37.3039"/>
   <Column ss:Width="293.5559"/>
@@ -93,6 +93,20 @@
       <Data ss:Type="String">${( data.get('currency', False) and data.get('currency') or _('No one specified'))|x}</Data>
     </Cell>
   </Row>
+</Table>
+<WorksheetOptions/>
+</Worksheet>
+% for cat in [(_('Cost Center'), 'OC'), (_('Destination'), 'DEST'), (_('Funding Pool'), 'FUNDING'), (_('Free 1'), 'FREE1'), (_('Free 2'), 'FREE2')]:
+<Worksheet ss:Name="${cat[0]}">
+<Table >
+  <Column ss:Width="37.3039"/>
+  <Column ss:Width="293.5559"/>
+  <Column ss:Width="34.2142"/>
+  <Column ss:Width="193.2094"/>
+  <Column ss:Width="78.9449"/>
+  <Column ss:Width="157.6913"/>
+  <Column ss:Width="58.1102"/>
+  <Column ss:Width="200.1543"/>
   <Row ss:Height="12.8126">
     <Cell ss:Index="2"/>
   </Row>
@@ -102,7 +116,7 @@
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Type')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Balance')}</Data></Cell>
   </Row>
-% for o in objects:
+% for o in [x for x in objects if x.category == cat[1]]:
   <Row>
     <Cell>
       <Data ss:Type="String">${o.name or ''|x}</Data>
@@ -121,4 +135,5 @@
 </Table>
 <WorksheetOptions/>
 </Worksheet>
+% endfor
 </Workbook>
