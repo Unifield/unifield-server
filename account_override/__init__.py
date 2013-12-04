@@ -136,6 +136,13 @@ ACCOUNT_RESTRICTED_AREA = {
         ('account_id.user_type_code', 'in', ['income', 'expense']),
         ('account_id.user_type_report_type', '!=', 'none'),
     ],
+    # PARTNER - DONATION DEFAULT ACCOUNT
+    'partner_donation': [
+        ('type', '!=', 'view'),
+        ('type', '=', 'payable'),
+        ('user_type_code', '=', 'payables'),
+        ('type_for_register', '=', 'donation'),
+    ],
 }
 
 import res_currency
