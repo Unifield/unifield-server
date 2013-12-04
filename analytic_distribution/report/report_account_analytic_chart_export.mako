@@ -98,8 +98,6 @@
   </Row>
   <Row>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Acct Code')}</Data></Cell>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Acct Desc')}</Data></Cell>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Category')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Parent')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Balance')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('For FX gain/loss')}</Data></Cell>
@@ -108,12 +106,6 @@
   <Row>
     <Cell>
       <Data ss:Type="String">${o.code or ''|x}</Data>
-    </Cell>
-    <Cell>
-      <Data ss:Type="String">${o.name or ''|x}</Data>
-    </Cell>
-    <Cell>
-      <Data ss:Type="String">${o.category and getSel(o, 'category') or ''|x}</Data>
     </Cell>
     <Cell>
       <Data ss:Type="String">${o.parent_id and o.parent_id.code or ''|x}</Data>
