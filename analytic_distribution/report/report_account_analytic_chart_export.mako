@@ -97,24 +97,24 @@
     <Cell ss:Index="2"/>
   </Row>
   <Row>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Acct Code')}</Data></Cell>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Parent')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Name')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Code')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Type')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Balance')}</Data></Cell>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('For FX gain/loss')}</Data></Cell>
   </Row>
 % for o in objects:
   <Row>
     <Cell>
+      <Data ss:Type="String">${o.name or ''|x}</Data>
+    </Cell>
+    <Cell>
       <Data ss:Type="String">${o.code or ''|x}</Data>
     </Cell>
     <Cell>
-      <Data ss:Type="String">${o.parent_id and o.parent_id.code or ''|x}</Data>
+      <Data ss:Type="String">${o.type and getSel(o, 'type') or ''|x}</Data>
     </Cell>
     <Cell>
       <Data ss:Type="Number" ss:Style="number">${o.balance or '0.0'|x}</Data>
-    </Cell>
-    <Cell>
-      <Data ss:Type="String">${o.for_fx_gain_loss and _('True') or _('False')|x}</Data>
     </Cell>
   </Row>
 % endfor
