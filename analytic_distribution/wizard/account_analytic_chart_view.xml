@@ -37,11 +37,11 @@
         </record>
 
     <!--
-         Redefine Chart of Analytic Accounts to "Balance by analytic accounts" (actions, menus, etc.)
+         Redefine Chart of Analytic Accounts to "Balance by analytic account" (actions, menus, etc.)
     -->
 
         <record id="account.action_account_analytic_chart" model="ir.actions.act_window">
-          <field name="name">Balance by analytic accounts</field>
+          <field name="name">Balance by analytic account</field>
           <field name="type">ir.actions.act_window</field>
           <field name="res_model">account.analytic.chart</field>
           <field name="view_type">form</field>
@@ -51,7 +51,7 @@
         </record>
 
         <menuitem
-          name="Balance by analytic accounts"
+          name="Balance by analytic account"
           parent="account.final_accounting_reports"
           action="account.action_account_analytic_chart"
           id="account.menu_action_analytic_account_tree2"
