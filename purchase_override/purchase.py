@@ -338,6 +338,7 @@ class purchase_order(osv.osv):
         '''
         line_obj = self.pool.get('purchase.order.line')
         wiz_obj = self.pool.get('purchase.order.cancel.wizard')
+        wf_service = netsvc.LocalService("workflow")
 
         if context is None:
             context = {}
@@ -893,6 +894,12 @@ stock moves which are already processed : '''
             for data in datas:
                 if data['order_id'] and data['order_id'][0] not in so_ids:
                     so_ids.append(data['order_id'][0])
+
+        for po in self.browse(cr, uid, ids, context=context):
+            for line in po.order_line:
+                if line.procurement_id and line.procurement_id.sale_id and line.procurement_id.sale_id.id not in so_ids:
+                    so_ids.append(line.procurement_id.sale_id.id)
+
         return so_ids
     
     def get_sol_ids_from_po_ids(self, cr, uid, ids, context=None):
@@ -2207,15 +2214,20 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        sol_to_update = {}
         for line in self.browse(cr, uid, ids, context=context):
-            if line.has_to_be_resourced:
-                sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
-                if sol_ids:
-                    sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
-                    diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line.product_qty, sol.product_uom.id)
+            sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
+            for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
+                diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line.product_qty, sol.product_uom.id)
+                sol_to_update.setdefault(sol.id, 0.00)
+                sol_to_update[sol.id] += diff_qty
+                if line.has_to_be_resourced:
                     sol_obj.add_resource_line(cr, uid, sol, False, diff_qty, context=context)
 
-        return
+        for sol in sol_to_update:
+            sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+
+        return True
 
     def fake_unlink(self, cr, uid, ids, context=None):
         '''

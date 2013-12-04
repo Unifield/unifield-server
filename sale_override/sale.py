@@ -1056,7 +1056,8 @@ class sale_order(osv.osv):
         proc_data = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
         # update proc_data for link to destination purchase order and purchase order line (for line number) during back update of sale order
         proc_data.update({'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id,
-                          'so_back_update_dest_pol_id_procurement_order': line.so_back_update_dest_pol_id_sale_order_line.id})
+                          'so_back_update_dest_pol_id_procurement_order': line.so_back_update_dest_pol_id_sale_order_line.id,
+                          'sale_id': line.order_id.id,})
         return proc_data
     
     def action_ship_proc_create(self, cr, uid, ids, context=None):
@@ -1344,6 +1345,50 @@ class sale_order_line(osv.osv):
 
         return True
 
+    def update_or_cancel_line(self, cr, uid, line, qty_diff, context=None):
+        '''
+        Update the quantity of the IR/FO line with the qty_diff - Update also
+        the quantity in procurement attached to the IR/Fo line.
+
+        If the qty_diff is equal or larger than the line quantity, delete the
+        line and its procurement.
+        '''
+        # Documents
+        proc_obj = self.pool.get('procurement.order')
+        
+        wf_service = netsvc.LocalService("workflow")
+
+        if context is None:
+            context = {}
+
+        if isinstance(line, (int, long)):
+            line = self.browse(cr, uid, line, context=context)
+
+        order = line.order_id and line.order_id.id
+
+        if qty_diff >= line.product_uom_qty:
+            proc = line.procurement_id and line.procurement_id.id
+            # Delete the line and the procurement
+            self.write(cr, uid, [line.id], {'state': 'cancel'}, context=context)
+            self.unlink(cr, uid, [line.id], context=context)
+
+            if proc:
+                proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
+                proc_obj.action_cancel(cr, uid, [proc])
+        else:
+            minus_qty = line.product_uom_qty - qty_diff
+            proc = line.procurement_id and line.procurement_id.id
+            # Update the line and the procurement
+            self.write(cr, uid, [line.id], {'product_uom_qty': minus_qty,
+                                            'product_uos_qty': minus_qty}, context=context)
+            if proc:
+                proc_obj.write(cr, uid, [proc], {'product_qty': minus_qty}, context=context)
+
+        if order:
+            wf_service.trg_write(uid, 'sale.order', order, cr)
+
+        return True
+
     def add_resource_line(self, cr, uid, line, order_id, qty_diff, context=None):
         '''
         Add a copy of the original line (line) into the new order (order_id)
@@ -1355,8 +1400,6 @@ class sale_order_line(osv.osv):
         order_obj = self.pool.get('sale.order')
         ad_obj = self.pool.get('analytic.distribution')
         data_obj = self.pool.get('ir.model.data')
-        proc_obj = self.pool.get('procurement.order')
-        wf_service = netsvc.LocalService("workflow")
 
         if context is None:
             context = {}
@@ -1384,11 +1427,6 @@ class sale_order_line(osv.osv):
             values['analytic_distribution_id'] = new_distrib
 
         line_id = self.copy(cr, uid, line.id, values, context=context)
-
-        if line.procurement_id:
-            proc_obj.write(cr, uid, [line.procurement_id.id], {'product_qty': line.procurement_id.product_qty - qty_diff}, context=context)
-            if line.procurement_id.product_qty <= qty_diff:
-                wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'subflow.cancel', cr)
 
         order_name = self.pool.get('sale.order').read(cr, uid, [order_id], ['name'], context=context)[0]['name']
 
@@ -1635,6 +1673,16 @@ class sale_order_line(osv.osv):
         return res
 
 sale_order_line()
+
+
+class procurement_order(osv.osv):
+    _inherit = 'procurement.order'
+
+    _columns = {
+        'sale_id': fields.many2one('sale.order', string='Sale'),
+    }
+
+procurement_order()
 
 
 class sale_config_picking_policy(osv.osv_memory):

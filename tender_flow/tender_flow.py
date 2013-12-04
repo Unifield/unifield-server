@@ -847,19 +847,15 @@ class tender_line(osv.osv):
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
         tender_obj = self.pool.get('tender')
-        proc_obj = self.pool.get('procurement.order')
 
         # Variables
         wf_service = netsvc.LocalService("workflow")
         to_remove = []
         to_cancel = []
         sol_ids = {}
-        sol_to_remove = []
         sol_to_update = {}
         so_to_update = set()
         tender_to_update = set()
-        proc_to_cancel = []
-        proc_to_update = {}
 
         for line in self.browse(cr, uid, ids, context=context):
             tender_to_update.add(line.tender_id.id)
@@ -872,12 +868,8 @@ class tender_line(osv.osv):
                 if line.has_to_be_resourced:
                     sol_ids.update({line.sale_order_line_id.id: diff_qty})
 
-                if diff_qty == line.sale_order_line_id.product_uom_qty:
-                    sol_to_remove.append(line.sale_order_line_id.id)
-                else:
-                    sol_to_update[line.sale_order_line_id.id] = line.sale_order_line_id.product_uom_qty - diff_qty
-                    if line.sale_order_line_id.procurement_id:
-                        proc_to_update[line.sale_order_line_id.procurement_id.id] = line.sale_order_line_id.product_uom_qty - diff_qty
+                sol_to_update.setdefault(line.sale_order_line_id.id, 0.00)
+                sol_to_update[line.sale_order_line_id.id] += diff_qty
             elif line.tender_id.state == 'draft':
                 to_remove.append(line.id)
 
@@ -888,17 +880,9 @@ class tender_line(osv.osv):
             for sol in sol_ids:
                 sol_obj.add_resource_line(cr, uid, sol, False, sol_ids[sol], context=context)
 
-        # Remove sale order lines
-        sol_obj.write(cr, uid, sol_to_remove, {'state': 'draft'}, context=context)
-        sol_obj.unlink(cr, uid, sol_to_remove, context=context)
-
         # Update sale order lines
         for sol in sol_to_update:
-            sol_obj.write(cr, uid, [sol], {'product_uom_qty': sol_to_update[sol]}, context=context)
-
-        # Update procurement orders
-        for proc in proc_to_update:
-            proc_obj.write(cr, uid, [proc], {'product_qty': proc_to_update[proc]}, context=context)
+            sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
 
         # Update the FO state
         for so in so_to_update:
