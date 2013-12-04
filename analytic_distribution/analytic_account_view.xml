@@ -171,9 +171,6 @@
                     <field name="name"/>
                     <field name="code"/>
                     <field name="description"/>
-                    <field name="category"/>
-                    <field name="type"/>
-                    <field name="balance"/>
                     <field name="parent_id" invisible="1"/>
                 </tree>
             </field>
