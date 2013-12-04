@@ -876,7 +876,7 @@ class tender_line(osv.osv):
                     sol_to_remove.append(line.sale_order_line_id.id)
                 else:
                     sol_to_update[line.sale_order_line_id.id] = line.sale_order_line_id.product_uom_qty - diff_qty
-                    if line.sale_order_line_id.procuremente_id:
+                    if line.sale_order_line_id.procurement_id:
                         proc_to_update[line.sale_order_line_id.procurement_id.id] = line.sale_order_line_id.product_uom_qty - diff_qty
             elif line.tender_id.state == 'draft':
                 to_remove.append(line.id)
@@ -1446,7 +1446,7 @@ class tender_line_cancel_wizard(osv.osv_memory):
 
     def just_cancel(self, cr, uid, ids, context=None):
         '''
-        Cancel the line and the related documents without re-sourced them
+        Cancel the line 
         '''
         # Objects
         line_obj = self.pool.get('tender.line')

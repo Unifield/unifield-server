@@ -1355,6 +1355,8 @@ class sale_order_line(osv.osv):
         order_obj = self.pool.get('sale.order')
         ad_obj = self.pool.get('analytic.distribution')
         data_obj = self.pool.get('ir.model.data')
+        proc_obj = self.pool.get('procurement.order')
+        wf_service = netsvc.LocalService("workflow")
 
         if context is None:
             context = {}
@@ -1382,6 +1384,11 @@ class sale_order_line(osv.osv):
             values['analytic_distribution_id'] = new_distrib
 
         line_id = self.copy(cr, uid, line.id, values, context=context)
+
+        if line.procurement_id:
+            proc_obj.write(cr, uid, [line.procurement_id.id], {'product_qty': line.procurement_id.product_qty - qty_diff}, context=context)
+            if line.procurement_id.product_qty <= qty_diff:
+                wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'subflow.cancel', cr)
 
         order_name = self.pool.get('sale.order').read(cr, uid, [order_id], ['name'], context=context)[0]['name']
 

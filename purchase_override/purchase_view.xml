@@ -381,14 +381,58 @@
         <!-- Here was an act_window to display all PO from products views.
              This action is defined on product_attributes module -->
 
-        <record id="purchase_order_unlink_wizard" model="ir.ui.view">
-            <field name="name">purcahse.order.unlink.wizard</field>
-            <field name="model">purchase.order.unlink.wizard</field>
+        <record id="purchase_order_line_unlink_wizard_form_view" model="ir.ui.view">
+            <field name="name">purchase.order.line.unlink.wizard.form.view</field>
+            <field name="model">purchase.order.line.unlink.wizard</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Unlink Purchase Order">
-                    <label colspan="4" string="You removed all lines of this purchase order, would you cancel it ?" />
-                    <label> </label>
+                <form string="Purchase order line cancelation">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">Would you re-source the needs sourced by this purchase order line ?</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" colspan="4" />
+                    <button name="just_cancel" string="No" type="object" icon="gtk-execute" colspan="2" />
+                    <button name="cancel_and_resource" string="Yes" type="object" icon="gtk-execute" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="purchase_order_cancel_wizard_form_view" model="ir.ui.view">
+            <field name="name">purchase.order.cancel.wizard.form.view</field>
+            <field name="model">purchase.order.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Cancel Purchase Order">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">If you click on 'Cancel &amp; Resource' button, all Field Order lines or Internal Request lines sourced by this Purchase Order will be re-sourced.</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" />
+                    <button name="cancel_po" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="ask_po_cancel_wizard_form_view" model="ir.ui.view">
+            <field name="name">ask.po.cancel.wizard.form.view</field>
+            <field name="model">purchase.order.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Cancel Purchase Order">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">You removed all lines of this purchase order, would you cancel it ?</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" colspan="4" />
                     <button colspan="1" type="object" icon="gtk-cancel" name="close_window" string="Close window" />
                     <button colspan="2" type="object" icon="gtk-execute" name="cancel_po" string="Cancel PO" />
                 </form>
