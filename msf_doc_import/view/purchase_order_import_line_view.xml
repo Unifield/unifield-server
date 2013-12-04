@@ -47,12 +47,46 @@
                     <xpath expr="//form//notebook" position="after">
                         <field name="to_correct_ok" readonly="1" invisible="1"/>
                         <field name="show_msg_ok" readonly="1" invisible="1"/>
-                        <field name="text_error" 
-                        nolabel="1" 
-                        readonly="1" 
-                        colspan="4" 
-                        attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}"/>
-                        <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" nolabel="1" colspan="4" />
+                        <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
+                            <html>
+                                <style>
+                                    #error_message_unifield 
+                                    {
+                                        border-style: solid;
+                                        border-width: 1px;
+                                        border-radius: 5px;
+                                        border-color: black;
+                                        background-color: #F0EBA4;
+                                    }
+
+                                    #view_form #error_message_unifield .readonlyfield
+                                    {
+                                        border-style: none;
+                                        padding: 5px;
+                                        color: red;
+                                        background-color: #F0EBA4;
+                                        font-weight: bold;
+                                        text-transform: uppercase;
+                                        width: 98%%;
+                                    }
+
+                                    #error_message_unifield p, #error_message_unifield span
+                                    {
+                                        height: 1em;
+                                        min-height: 1em;
+                                            color: red;
+                                        font-weight: bold;
+                                        text-transform: uppercase;
+                                        padding: 5px;
+                                    }
+                                </style>
+
+                                <div id="error_message_unifield">
+                                    <field name="text_error" nolabel="1" readonly="1" colspan="4" attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}"/>
+                                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" nolabel="1" colspan="4"/>
+                                </div>
+                           </html>
+                       </group>
                     </xpath>
                 </data>
             </field>
