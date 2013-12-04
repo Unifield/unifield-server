@@ -344,6 +344,8 @@
             - compute tax button (button_reset_taxes)
             - amount untaxed field
             - amount tax field
+            Update some other ones:
+            - account_id field to add a domain on accounts regarding "ACCOUNT_RESTRICTED_AREA" variable
         -->
         <record id="inherit_invoice_form" model="ir.ui.view">
             <field name="name">inherit.invoice.form</field>
@@ -355,6 +357,9 @@
                 <data>
                     <xpath expr="/form" position="attributes">
                         <attribute name="string">Stock Transfer Voucher</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='account_id']" position="attributes">
+                        <attribute name="domain">[('company_id', '=', company_id), ('restricted_area', '=', 'out_invoice')]</attribute>
                     </xpath>
                     <field name="fiscal_position" position="replace"/>
                     <field name="payment_term" position="replace"/>
