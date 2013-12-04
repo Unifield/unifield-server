@@ -92,7 +92,7 @@
     assert wiz_id, "Cancel FO line doesn't return a valid wizard"
     # Cancel the FO line without resourcing
     res = l_wiz_obj.cancel_fo_line(cr, uid, wiz_id, context=context)
-    assert not res, "Cancel w/o re-sourcing the line doesn't close the wizard window"
+    assert res.get('type') in ('ir.actions.act_window', 'ir.actions.act_window_close'), "Cancel w/o re-sourcing the line doesn't close the wizard window"
     # Check if the FO line is removed
     line_ids = self.search(cr, uid, [('id', '=', ref('cancel_fol_fo1_l1'))], context=context)
     assert not line_ids, "The first FO line has not been removed"
@@ -106,7 +106,7 @@
     assert wiz_id, "Cancel FO line doesn't return a valid wizard"
     # Cancel the FO line with re-sourcing of the line
     res = l_wiz_obj.resource_line(cr, uid, wiz_id, context=context)
-    assert not res, "Cancel FO line with re-sourcing the line doesn't close the wizard window"
+    assert res.get('type') in ('ir.actions.act_window', 'ir.actions.act_window_close'), "#1 - Cancel FO line with re-sourcing the line doesn't close the wizard window"
     # Check if the FO line is removed
     line_ids = self.search(cr, uid, [('id', '=', ref('cancel_fol_fo1_l2'))], context=context)
     assert not line_ids, "The second FO line has not been removed"
@@ -127,7 +127,7 @@
     assert wiz_id, "Cancel FO line doesn't return a valid wizard"
     # Cancel the FO line with re-sourcing of the line
     res = l_wiz_obj.resource_line(cr, uid, wiz_id, context=context)
-    assert not res, "Cancel FO line with re-sourcing the line doesn't close the wizard window"
+    assert res.get('type') in ('ir.actions.act_window', 'ir.actions.act_window_close'), "#2 - Cancel FO line with re-sourcing the line doesn't close the wizard window"
     # Check if the FO line is removed
     line_ids = self.search(cr, uid, [('id', '=', ref('cancel_fol_fo1_l3'))], context=context)
     assert not line_ids, "The third FO line has not been removed"
@@ -153,7 +153,7 @@
     assert wiz_id, "Cancel FO line doesn't return a valid wizard"
     # Cancel the FO line with re-sourcing of the line
     res = l_wiz_obj.resource_line(cr, uid, wiz_id, context=context)
-    assert not res, "Cancel FO line with re-sourcing the line doesn't close the wizard window"
+    assert res.get('type') in ('ir.actions.act_window', 'ir.actions.act_window_close'), "#3 - Cancel FO line with re-sourcing the line doesn't close the wizard window"
     # Check if the FO line is removed
     line_ids = self.search(cr, uid, [('id', '=', ref('cancel_fol_fo1_l4'))], context=context)
     assert not line_ids, "The fourth FO line has not been removed"
