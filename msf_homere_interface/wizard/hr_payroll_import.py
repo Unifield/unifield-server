@@ -33,6 +33,7 @@ from tools.translate import _
 from tools import config
 import time
 import sys
+from account_override import ACCOUNT_RESTRICTED_AREA
 
 class hr_payroll_import_period(osv.osv):
     _name = 'hr.payroll.import.period'
@@ -133,6 +134,10 @@ class hr_payroll_import(osv.osv_memory):
         is_counterpart = False
         if third and third[0] and third[0] != '':
             is_counterpart = True
+        # For non counterpart lines, check expected accounts
+        if not is_counterpart:
+            if account.id not in self.pool.get('account.account').search(cr, uid, ACCOUNT_RESTRICTED_AREA['payroll_lines']):
+                raise osv.except_osv(_('Warning'), _('This account is not authorized: %s') % (account.code,))
         # If expense type, fetch employee ID
         if account.user_type.code == 'expense':
             # Add default destination from account
