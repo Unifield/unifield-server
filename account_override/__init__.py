@@ -130,7 +130,12 @@ ACCOUNT_RESTRICTED_AREA = {
     'account_move_lines': [
         ('type', 'not in', ['view', 'consolidation', 'closed']),
         '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
-    ]
+    ],
+    # FINANCING CONTRACT - REPORTING LINES
+    'contract_reporting_lines': [
+        ('account_id.user_type_code', 'in', ['income', 'expense']),
+        ('account_id.user_type_report_type', '!=', 'none'),
+    ],
 }
 
 import res_currency
