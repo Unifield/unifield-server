@@ -82,6 +82,7 @@ class enter_reason(osv.osv_memory):
                 pol_ids.append(move.purchase_line_id.id)
 
         if cancel_type != 'update_out':
+            pol_obj.write(cr, uid, pol_ids, {'has_to_be_resourced': True}, context=context)
             pol_obj.cancel_sol(cr, uid, pol_ids, context=context)
                 
         return {'type': 'ir.actions.act_window_close'}
