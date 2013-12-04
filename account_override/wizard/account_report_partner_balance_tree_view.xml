@@ -38,9 +38,9 @@
                     />
                     <field name="account_type"/>
                     <field name="name"/>
-                    <field name="debit"/>
-                    <field name="credit"/>
-                    <field name="balance"/>
+                    <field name="debit" sum="Debit" />
+                    <field name="credit" sum="Credit" />
+                    <field name="balance" sum="Balance" />
                 </tree>
             </field>
         </record>
