@@ -154,7 +154,7 @@ class res_currency(osv.osv):
         '''
         pricelist_obj = self.pool.get('product.pricelist')
         version_obj = self.pool.get('product.pricelist.version')
-        
+
         if isinstance(ids, (int, long)):
             ids = [ids]
         
@@ -227,10 +227,7 @@ class res_currency(osv.osv):
         # If no error, unlink pricelists
         for p_list in self.check_in_use(cr, uid, ids, 'delete', context=context):
             pricelist_obj.unlink(cr, uid, p_list, context=context)
-        for cur_id in ids:
-            res = super(res_currency, self).unlink(cr, uid, cur_id, context=context)
-            
-        return res   
+        return super(res_currency, self).unlink(cr, uid, ids, context=context)
 
 #        remove this block because it has been moved to the sync module
 #    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):

@@ -113,10 +113,10 @@ class wizard_import_ir_line(osv.osv_memory):
                     'price_unit': 1,  # in case that the product is not found and we do not have price
                     'cost_price': 0,
                     'product_qty': 1,
-                    'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
-                    'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
-                    'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
-                    'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
+#                    'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
+#                    'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
+#                    'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
+#                    'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
                     'proc_type': 'make_to_order',
                     'default_code': False,
                     'confirmed_delivery_date': False,
@@ -162,6 +162,13 @@ class wizard_import_ir_line(osv.osv_memory):
                     uom_value = {}
                     uom_value = check_line.compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
+
+                    # Check rounding of qty according to UoM
+                    if qty_value['product_qty'] and uom_value['uom_id']:
+                        round_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_value['uom_id'], qty_value['product_qty'], 'product_qty')
+                        if round_qty.get('warning', {}).get('message'):
+                            to_write.update({'product_uom_qty': round_qty['value']['product_qty']})
+                            message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
     
                     # Cell 5: Currency
                     curr_value = {}
@@ -183,6 +190,20 @@ class wizard_import_ir_line(osv.osv_memory):
                     sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
                     # write order line on FO
                     sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
+
+                    if to_write.get('product_uom_qty', 0.00) <= 0.00:
+                        error_log += _("Line %s in the Excel file was ignored. Details: %s") % (line_num, _('Product Quantity must be greater than zero.\n'))
+                        line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                        ignore_lines += 1
+                        line_ignored_num.append(line_num)
+                        percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                        cr.rollback()
+                        continue
+
+                    # Check product restrictions
+                    if p_value.get('default_code'):
+                        product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'constraints': ['consumption']}, context=dict(context, noraise=False))
+
                     # write order line on FO
                     vals['order_line'].append((0, 0, to_write))
                     if sale_obj._check_service(cr, uid, fo_id, vals, context=context):
@@ -196,6 +217,15 @@ class wizard_import_ir_line(osv.osv_memory):
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
+                    percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                    cr.rollback()
+                    continue
+                except osv.except_osv as osv_error:
+                    osv_value = osv_error.value
+                    osv_name = osv_error.name
+                    message += _("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
+                    ignore_lines += 1
+                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     percent_completed = float(line_num)/float(total_line_num-1)*100.0
                     cr.rollback()
                     continue

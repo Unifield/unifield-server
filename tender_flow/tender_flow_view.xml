@@ -17,8 +17,10 @@
                         <field name="warehouse_id" widget="selection" on_change="onchange_warehouse(warehouse_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="location_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="company_id" invisible="True" />
-                        <field name="categ" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="categ" attrs="{'readonly': [('state', '!=', 'draft')]}" 
+                        on_change="onchange_categ(categ)"/>
                         <field name="priority" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="delivery_address" colspan="4" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('dest_address', '=', company_id)]"/>
                         <field name="details" />
                     </group>
                     <notebook colspan="5">
@@ -26,10 +28,11 @@
                             <field colspan="4" mode="tree,form,graph" name="tender_line_ids" nolabel="1" widget="one2many_list">
                                 <tree string="Tender Lines" editable="top">
                                 	<!-- <field name="date_planned" /> -->
-                                    <field name="product_id" on_change="on_product_change(product_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                    <field name="product_id" on_change="on_product_change(product_id, product_uom, qty)" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('purchase_type', '=', parent.categ)]" context="{'available_for_restriction': 'tender', 'search_default_not_restricted': 1}" />
                                     <field name="comment" />
-                                    <field name="qty" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                                    <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                    <field name="qty" attrs="{'readonly': [('state', '!=', 'draft')]}" 
+                                        on_change="onchange_uom_qty(product_uom, qty)" />
+                                    <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('uom_by_product', '=', product_id)]"/>
                                     <field name="supplier_id" />
                                     <field name="price_unit" />
                                     <field name="total_price" />
@@ -182,9 +185,15 @@
             <field name="arch" type="xml">
                 <data>
                     <field name="details" position="after">
-                        <field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
+                        <newline />
                         <field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'draft', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
+                        <field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
                         <field name="rfq_ok" invisible="1" />
+                        <field
+                            name="rfq_delivery_address" 
+                            colspan="4"
+                            domain="[('dest_address', '=', company_id)]"
+                            attrs="{'invisible': [('rfq_ok', '=', False)], 'readonly': ['|', ('tender_id', '!=', False), ('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
                     </field>
 
                     <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']" position="attributes">
@@ -443,7 +452,7 @@
             <field name="key2">client_action_relate</field>
             <field name="view_mode">tree,form,graph,calendar</field>
             <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid, 'purchase_order': True}</field>
-            <field name="domain">[('rfq_ok', '=', False), ('tender_id', '=', active_id)]</field>
+            <field name="domain">[('rfq_ok', '=', False), ('origin_tender_id', '=', active_id)]</field>
             <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
         </record>
         <record model="ir.values" id="relate_tender_purchase_order_values">

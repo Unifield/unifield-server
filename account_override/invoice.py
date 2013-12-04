@@ -62,11 +62,23 @@ class account_invoice(osv.osv):
         This is a method to redefine the journal_id domain with the current_instance taken into account
         """
         res = super(account_invoice, self).onchange_company_id(cr, uid, ids, company_id, part_id, type, invoice_line, currency_id)
-        if 'domain' in res and 'journal_id' in res['domain']:
-            journal_domain = res['domain']['journal_id']
-            journal_domain.append(('is_current_instance','=',True))
-            new_journal_ids = self.pool.get('account.journal').search(cr, uid, journal_domain)
-            res['domain']['journal_id'] = [('id','in',new_journal_ids)]
+        if company_id and type:
+            res.setdefault('domain', {})
+            res.setdefault('value', {})
+            ass = {
+                'out_invoice': 'sale',
+                'in_invoice': 'purchase',
+                'out_refund': 'sale_refund',
+                'in_refund': 'purchase_refund',
+            }
+            journal_ids = self.pool.get('account.journal').search(cr, uid, [
+                ('company_id','=',company_id), ('type', '=', ass.get(type, 'purchase')), ('is_current_instance', '=', True)
+            ])
+            if not journal_ids:
+                raise osv.except_osv(_('Configuration Error !'), _('Can\'t find any account journal of %s type for this company.\n\nYou can create one in the menu: \nConfiguration\Financial Accounting\Accounts\Journals.') % (ass.get(type, 'purchase'), ))
+            res['value']['journal_id'] = journal_ids[0]
+            # TODO: it's very bad to set a domain by onchange method, no time to rewrite UniField !
+            res['domain']['journal_id'] = [('id', 'in', journal_ids)]
         return res
 
     _columns = {
@@ -121,6 +133,15 @@ class account_invoice(osv.osv):
         # Create a sequence for this new invoice
         res_seq = self.create_sequence(cr, uid, vals, context)
         vals.update({'sequence_id': res_seq,})
+        # UTP-317 # Check that no inactive partner have been used to create this invoice
+        if 'partner_id' in vals:
+            partner_id = vals.get('partner_id')
+            if isinstance(partner_id, (str)):
+                partner_id = int(partner_id)
+            partner = self.pool.get('res.partner').browse(cr, uid, [partner_id])
+            active = True
+            if partner and partner[0] and not partner[0].active:
+                raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
         return super(account_invoice, self).create(cr, uid, vals, context)
 
     def _check_document_date(self, cr, uid, ids):
@@ -260,7 +281,7 @@ class account_invoice_line(osv.osv):
             invoice = self.pool.get('account.invoice').browse(cr, uid, vals['invoice_id'])
             if invoice and invoice.sequence_id:
                 sequence = invoice.sequence_id
-                line = sequence.get_id(test='id', context=context)
+                line = sequence.get_id(code_or_id='id', context=context)
                 vals.update({'line_number': line})
         return super(account_invoice_line, self).create(cr, uid, vals, context)
 
@@ -277,7 +298,7 @@ class account_invoice_line(osv.osv):
             for il in self.browse(cr, uid, ids):
                 if not il.line_number and il.invoice_id.sequence_id:
                     sequence = il.invoice_id.sequence_id
-                    il_number = sequence.get_id(test='id', context=context)
+                    il_number = sequence.get_id(code_or_id='id', context=context)
                     vals.update({'line_number': il_number})
         return super(account_invoice_line, self).write(cr, uid, ids, vals, context)
 

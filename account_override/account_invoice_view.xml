@@ -40,6 +40,12 @@
         - Salesman or user (user_id)
         - Total (amount_total)
         - Responsible button (group by)
+        - Proforma button
+        - Invoices button
+        - Unpaid button
+        And add some ones:
+        - Open button
+        - Paid button
     -->
         <record id="inherit_view_account_invoice_filter" model="ir.ui.view">
             <field name="name">inherit.view.account.invoice.filter</field>
@@ -49,9 +55,22 @@
             <field name="priority">17</field>
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/search/group[1]/filter[@name='proforma']" position="replace">
+                    </xpath>
+                    <xpath expr="/search/group[1]/filter[@name='invoices']" position="replace">
+                    </xpath>
+                    <xpath expr="/search/group[1]/filter[@name='unpaid']" position="attributes">
+                      <attribute name="string">Open</attribute>
+                      <attribute name="help">Open Invoices</attribute>
+                    </xpath>
                     <xpath expr="/search/group[1]/field[@name='user_id']" position="replace">
                     </xpath>
                     <xpath expr="/search/group[3]/filter[@string='Responsible']" position="replace">
+                    </xpath>
+                    <xpath expr="/search/group[1]/separator[1]" position="replace">
+                    </xpath>
+                    <xpath expr="/search/group[1]/filter[@name='unpaid']" position="after">
+                        <filter name="paid" icon="terp-dolar" string="Paid" domain="[('state', '=', 'paid')]"/>
                     </xpath>
                 </data>
             </field>
@@ -99,6 +118,9 @@
                 </data>
             </field>
         </record>
+
+    <!-- Delete payment lines link from invoices -->
+        <delete model="ir.actions.act_window" search="[('name', 'ilike', '%Payment Lines%')]"/>
 
     </data>
 </openerp>

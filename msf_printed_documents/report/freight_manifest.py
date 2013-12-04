@@ -28,6 +28,7 @@ class freight_manifest(report_sxw.rml_parse):
         super(freight_manifest, self).__init__(cr, uid, name, context=context)
         self.parcetot = 0
         self.kgtot = 0.0
+        self.getadditional_items_kgtot = 0.0
         self.voltot = 0.0
         self.valtot = 0.0
         self.cur = False
@@ -52,6 +53,16 @@ class freight_manifest(report_sxw.rml_parse):
             'getTotValue': self.getTotValue,
             'getTotKg': self.getTotKg,
             'getFonCur': self.getFonCur,
+            #addtional items
+            'get_additional_items': self.get_additional_items,
+            'getadditional_items_name': self.getadditional_items_name,
+            'getadditional_items_qty': self.getadditional_items_qty,
+            'getadditional_items_uom': self.getadditional_items_uom,
+            'getadditional_items_comment': self.getadditional_items_comment,
+            'getadditional_items_volume': self.getadditional_items_volume,
+            'getadditional_items_weight': self.getadditional_items_weight,
+            'getadditional_items_getTotKg': self.getadditional_items_getTotKg,
+            'getallTotKg': self.getallTotKg,
         })
 
     def getFonCur(self,ligne):
@@ -123,6 +134,34 @@ class freight_manifest(report_sxw.rml_parse):
             if x.np_check:
                 return 'X'
         return ''
+
+    def get_additional_items(self, o): 
+        return o[0].additional_items_ids
+
+    def getadditional_items_name(self, line):
+        return line.name
+
+    def getadditional_items_qty(self, line):
+        return line.quantity
+
+    def getadditional_items_uom(self, line):
+        return line.uom.name
+
+    def getadditional_items_comment(self, line):
+        return line.comment
+
+    def getadditional_items_volume(self, line):
+        return line.volume
+
+    def getadditional_items_weight(self, line):
+        self.getadditional_items_kgtot += line.weight
+        return line.weight
+
+    def getadditional_items_getTotKg(self):
+        return self.getadditional_items_kgtot and self.getadditional_items_kgtot or '0.0'
+
+    def getallTotKg(self):
+        return self.getadditional_items_kgtot + self.kgtot or '0.0'
 
 report_sxw.report_sxw('report.msf.freight_manifest', 'shipment', 'addons/msf_printed_documents/report/freight_manifest.rml', parser=freight_manifest, header=False,)
 

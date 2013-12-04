@@ -63,10 +63,10 @@
                     context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}">
                     <tree string="Products" editable="top" colors="red: consumed_qty>0 and (inactive_product or to_correct_ok or consumed_qty > product_qty or (batch_mandatory and not prodlot_id) or (date_mandatory and not expiry_date));blue: not prodlot_id and consumed_qty>product_qty and not to_correct_ok and not inactive_product">
                             <field name="product_id" on_change="product_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id)"
-                                context="{'location': parent.cons_location_id, 'compute_child': False}"
+                                context="{'location': parent.cons_location_id, 'compute_child': False, 'available_for_restriction': 'consumption', 'search_default_not_restricted': 1}"
                                 domain="[('list_ids', '=', parent.sublist_id)]" />
                             <field name="uom_id" 
-                                on_change="uom_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id)"/>
+                                on_change="uom_onchange(product_id, consumed_qty, parent.cons_location_id, uom_id, prodlot_id)"/>
                             <field name="product_qty" />
                             <field name="prodlot_id" 
                                 on_change="change_prodlot(product_id, prodlot_id, expiry_date, parent.cons_location_id, uom_id, remark)"
@@ -76,12 +76,17 @@
                             <field name="expiry_date"
                                 on_change="change_expiry(expiry_date, product_id, parent.cons_location_id, uom_id, remark)"
                                 attrs="{'required': [('date_mandatory', '=', True), ('batch_mandatory', '=', False)], 'readonly': ['|', ('batch_mandatory', '=', True), ('date_mandatory', '=', False)]}"/>
+                            <field name="asset_id"
+                                attrs="{'required': [('asset_mandatory', '=', True)], 'readonly': [('asset_mandatory', '=', False)]}"
+                                on_change="change_asset(asset_id, product_id, parent.cons_location_id, uom_id, remark)"
+                                domain="[('product_id', '=', product_id)]" />
                             <field name="consumed_qty" on_change="change_qty(consumed_qty, product_id, prodlot_id, parent.cons_location_id, uom_id)"/>
                             <field name="move_id" invisible="1" />
                             <button string="Duplicate line" icon="terp-stock_effects-object-colorize" name="copy" type="object" attrs="{'invisible': [('move_id', '!=', False)]}" />
                             <field name="remark" invisible="1" />
                             <field name="batch_mandatory" invisible="0" string="B.Num" readonly="1" />
                             <field name="date_mandatory" invisible="0" string="Exp" readonly="1" />
+                            <field name="asset_mandatory" invisible="0" string="Asset" readonly="1" />
                             <field name="to_correct_ok" invisible="1"/>
                             <field name="text_error" invisible="context.get('hide_column_error_ok', False) != True" />
                             <field name="inactive_product" invisible="1" />
@@ -91,12 +96,12 @@
                     <field name="created_ok" invisible="1" />
                     <group colspan="4" col="6">
                         <button name="button_update_stock" string="Update Indicative Stock" icon="gtk-refresh" colspan="2" type="object" attrs="{'invisible': [('state','!=','draft')]}" />
-			<button name="cancel_button" string="Cancel" icon="gtk-cancel" type="object" colspan="2" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+            <button name="cancel_button" string="Cancel" icon="gtk-cancel" type="object" colspan="2" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                         <button name="process_moves" string="Save &amp; Process" icon="gtk-execute" type="object" colspan="2" attrs="{'invisible': [('state','!=','draft')]}" />
-			<button name="draft_button" string="Draft" icon="gtk-apply" type="object" colspan="2" attrs="{'invisible': [('state', '!=', 'cancel')]}" />
+            <button name="draft_button" string="Draft" icon="gtk-apply" type="object" colspan="2" attrs="{'invisible': [('state', '!=', 'cancel')]}" />
                     </group>
                     <group colspan="4" >
-		 	<field name="state" />
+            <field name="state" />
                     </group>
                 </form>
             </field>
@@ -121,14 +126,14 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Real consumption reports">
-		    <field name="name" />
+            <field name="name" />
                     <field name="cons_location_id" />
                     <field name="activity_id" />
                     <field name="period_from" />
                     <field name="period_to" />
                     <field name="nb_lines" />
                     <field name="created_ok" />
-		 	<field name="state" />
+            <field name="state" />
                     <field name="sublist_id" invisible="1" />
                     <field name="nomen_manda_0" invisible="1" />
                     <field name="nomen_manda_1" invisible="1" />
@@ -154,14 +159,14 @@
                     </group>
                     <newline/>
                     <group expand="0" string="Group By...">
-                        <filter string="Consumer" icon="terp-stock" domain="" context="{'group_by': 'cons_location_id'}" />
-                        <filter string="Activity" icon="terp-administration" domain="" context="{'group_by':'activity_id'}"/>
+                        <filter string="Consumer" icon="terp-stock" domain="[]" context="{'group_by': 'cons_location_id'}" />
+                        <filter string="Activity" icon="terp-administration" domain="[]" context="{'group_by':'activity_id'}"/>
                         <separator orientation="vertical"/>
-                        <filter string="Sublist" icon="terp-go-week" domain="" context="{'group_by':'sublist_id'}"/>
-                        <filter string="Main type" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_0'}"/>
-                        <filter string="Group" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_1'}"/>
-                        <filter string="Family" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_2'}"/>
-                        <filter string="Root" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_3'}"/>
+                        <filter string="Sublist" icon="terp-go-week" domain="[]" context="{'group_by':'sublist_id'}"/>
+                        <filter string="Main type" icon="terp-tools" domain="[]" context="{'group_by':'nomen_manda_0'}"/>
+                        <filter string="Group" icon="terp-tools" domain="[]" context="{'group_by':'nomen_manda_1'}"/>
+                        <filter string="Family" icon="terp-tools" domain="[]" context="{'group_by':'nomen_manda_2'}"/>
+                        <filter string="Root" icon="terp-tools" domain="[]" context="{'group_by':'nomen_manda_3'}"/>
                     </group>
                 </search>
             </field>
@@ -249,14 +254,14 @@
                     context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}">
                         <tree string="Products" editable="top" colors="red: to_correct_ok==True"> 
                             <field name="name" on_change="product_onchange(name, parent.id, parent.period_from, parent.period_to)" 
-                            	domain="[('list_ids', '=', parent.sublist_id)]" />
+                                domain="[('list_ids', '=', parent.sublist_id)]" />
                             <field name="amc" />
                             <field name="fmc" on_change="fmc_change(amc, fmc, name)" attrs="{'readonly': [('valid_ok', '=', True)]}" />
                             <field name="last_reviewed" />
                             <field name="valid_ok" />
                             <field name="valid_until" />
-			    <field name="fmc2" invisible="1" />
-			    <field name="last_reviewed2" invisible="1" />
+                <field name="fmc2" invisible="1" />
+                <field name="last_reviewed2" invisible="1" />
                             <!--<button name="valid_line" type="object" string="Valid line" icon="gtk-execute" attrs="{'invisible': [('valid_ok', '=', True)]}" />-->
                             <button name="display_graph" type="object" string="Display graph" icon="terp-purchase" />
                             <field name="to_correct_ok" invisible="1"/>
@@ -292,17 +297,17 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Monthly consumption">
-                	<group col="10" colspan="4">
+                    <group col="10" colspan="4">
                         <field name="period_from"/>
                         <field name="period_to"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By...">
-                        <filter string="Sublist" icon="terp-go-week" domain="" context="{'group_by':'sublist_id'}"/>
-                        <filter string="Main type" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_0'}"/>
-                        <filter string="Group" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_1'}"/>
-                        <filter string="Family" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_2'}"/>
-                        <filter string="Root" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_3'}"/>
+                        <filter string="Sublist" icon="terp-go-week" domain="[]" context="{'group_by':'sublist_id'}"/>
+                        <filter string="Main type" icon="terp-tools" domain="[]" context="{'group_by':'nomen_manda_0'}"/>
+                        <filter string="Group" icon="terp-tools" domain="[]" context="{'group_by':'nomen_manda_1'}"/>
+                        <filter string="Family" icon="terp-tools" domain="[]" context="{'group_by':'nomen_manda_2'}"/>
+                        <filter string="Root" icon="terp-tools" domain="[]" context="{'group_by':'nomen_manda_3'}"/>
                     </group>
                 </search>
             </field>

@@ -116,7 +116,7 @@
     weight: 0.0
     weight_net: 0.0
     product_tmpl_id: gr_template1
-    international_status: itc
+    international_status: product_attributes.int_1
 - 
   Creating a product.supplierinfo record
 - 
@@ -151,7 +151,7 @@
     weight: 0.0
     weight_net: 0.0
     product_tmpl_id: gr_template2
-    international_status: itc
+    international_status: product_attributes.int_1
 - 
   Creating a product.supplierinfo record
 - 
@@ -186,7 +186,7 @@
     weight: 0.0
     weight_net: 0.0
     product_tmpl_id: gr_template3
-    international_status: itc
+    international_status: product_attributes.int_1
 - 
   Creating a product.supplierinfo record
 - 
@@ -221,7 +221,7 @@
     weight: 0.0
     weight_net: 0.0
     product_tmpl_id: gr_template4
-    international_status: itc
+    international_status: product_attributes.int_1
 - 
   Creating a product.supplierinfo record
 - 
@@ -256,7 +256,7 @@
     weight: 0.0
     weight_net: 0.0
     product_tmpl_id: gr_template5
-    international_status: itc
+    international_status: product_attributes.int_1
 - 
   Creating a product.supplierinfo record
 - 
@@ -484,6 +484,27 @@
     product_uom_qty: 5
     date_planned: !eval time.strftime('%Y-%m-%d')
     type: make_to_stock
+-
+  Create a Purchase Order for gr_supplier1
+-
+  !record {model: purchase.order, id: po_gr_sp1}:
+    partner_id: gr_supplier1
+    name: Regular1
+    company_id: base.main_company
+    date_order: !eval time.strftime('%Y-%m-%d')
+    invoice_method: order
+    location_id: stock.stock_location_stock
+    partner_address_id: gr_ad_supplier1
+    pricelist_id: purchase.list0
+    customer_id: gr_cust1
+-
+  Update the delivery requested date of the PO
+-
+  !python {model: purchase.order}: |
+    import datetime
+    from dateutil.relativedelta import relativedelta
+    req_date = (datetime.datetime.today() + relativedelta(days=1)).strftime('%Y-%m-%d 00:00:00')
+    self.write(cr, uid, [ref('po_gr_sp1')], {'delivery_requested_date': req_date})
 -
   I validate the sale order
 -

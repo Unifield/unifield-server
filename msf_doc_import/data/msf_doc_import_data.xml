@@ -57,7 +57,9 @@
         <field name="rounding" eval="1.0"/>
         <field name="active" eval="False" />
     </record>
-    
+
+
+
     <!-- Product to be defined -->
     <record id="product_tbd" model="product.product">
         <field name="default_code" >TBD</field>
@@ -71,7 +73,7 @@
         <field name="uom_po_id" ref="product.product_uom_unit"/>
         <field name="categ_id" ref="product.cat0"/>
         <field name="active" eval="False" />
-        <field name="international_status">temp</field>
+        <field name="international_status" ref="product_attributes.int_5"/>
     </record>
     
     <!-- Partner to be defined -->

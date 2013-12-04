@@ -34,6 +34,27 @@ class stock_picking(osv.osv):
         BE CAREFUL : For FO with PICK/PACK/SHIP, the invoice is not created on picking but on shipment
         """
         res = super(stock_picking, self)._invoice_line_hook(cr, uid, move_line, invoice_line_id)
+
+        # Modify the product UoM and the quantity of line according to move attributes
+        values = {'uos_id': move_line.product_uom.id,
+                  'quantity': move_line.product_qty}
+
+        price_unit = False
+        if move_line.price_unit:
+            price_unit = move_line.price_unit
+
+        # UTP-220: As now the price can be changed when making the reception, the system still needs to keep the PO price in the invoice!
+        # UF-2211: The price unit needs to be adapted to the UoM: so it needs to be retrieved from the move line, and not the po_line in another UoM 
+        # Finance may decide to change later, but for instance, this is not agreed by Finance. Check UTP-220 for further info
+        if move_line.picking_id:
+            inv_type = self._get_invoice_type(move_line.picking_id)
+            price_unit = self._get_price_unit_invoice(cr, uid, move_line, inv_type)
+            
+        if price_unit:
+            values.update({'price_unit': price_unit})
+
+        self.pool.get('account.invoice.line').write(cr, uid, [invoice_line_id], values)
+
         if move_line.picking_id and move_line.picking_id.purchase_id and move_line.picking_id.purchase_id.order_type == 'in_kind':
             order_line = move_line.purchase_line_id or False
             account_id = (order_line.product_id and order_line.product_id.donation_expense_account and order_line.product_id.donation_expense_account.id) \
@@ -74,6 +95,10 @@ class stock_picking(osv.osv):
             invoice_vals.update({'journal_id': journal_ids[0], 'account_id': account_id, 'is_inkind_donation': True,})
         if picking and picking.partner_id and picking.partner_id.partner_type == 'intermission':
             invoice_vals.update({'is_intermission': True})
+
+        if picking and picking.type == 'in' and picking.partner_id and (not picking.partner_id.property_account_payable or not picking.partner_id.property_account_receivable):
+            raise osv.except_osv(_('Error'), _('Partner of this incoming shipment has no account set. Please set appropriate accounts (receivable and payable) in order to process this IN'))
+
         return invoice_vals
 
     def action_invoice_create(self, cr, uid, ids, journal_id=False, group=False, type='out_invoice', context=None):

@@ -43,6 +43,10 @@
                         <field name="date" select='1'/>
                         <field name="account_id" select='1'/>
                         <field name="partner_txt" select='1'/>
+                        <newline/>
+                        <field name="destination_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"/>
+                        <field name="cost_center_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"/>
+                        <field name="analytic_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="12" col="10">
@@ -72,7 +76,7 @@
                     <field name="filename" invisible="1"/>
                     <group colspan="4" col="2">
                         <button string="Cancel" special="cancel" icon="gtk-cancel"/>
-                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                        <button name="button_validate" type="object" string="Import" icon="terp-camera_test"/>
                     </group>
                 </form>
             </field>

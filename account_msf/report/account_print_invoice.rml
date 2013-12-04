@@ -289,10 +289,13 @@
       <font color="white"> </font>
     </para>
 
-    <blockTable colWidths="305.0,80.0,60.0,85.0" style="Table7">
+    <blockTable colWidths="245.0,80.0,60.0,60.0,85.0" style="Table7">
       <tr>
         <td>
           <para style="terp_tblheader_General">DESCRIPTION</para>
+        </td>
+         <td>
+          <para style="terp_tblheader_General_Right">Account</para>
         </td>
         <td>
           <para style="terp_tblheader_General_Right">Quantity</para>
@@ -307,14 +310,16 @@
     </blockTable>
     <section>
       <para style="terp_default_2">[[ repeatIn(o.invoice_line,'l') ]]</para>
-      <blockTable colWidths="305.0,80.0,60.0,85.0" style="Table8">
+      <blockTable colWidths="245.0,80.0,60.0,60.0,85.0" style="Table8">
         <tr>
           <td>
             <para style="terp_default_9">[[ l.name ]]</para>
           </td>
           <td>
+            <para style="terp_default_Right_9">[[ l.account_id and l.account_id.code or '' ]]</para>
+          </td>
+          <td>
             <para style="terp_default_Right_9">[[ l.quantity ]] [[ (l.uos_id and l.uos_id.name) or '' ]]</para>
-
           </td>
           <td>
             <para style="terp_default_Right_9">[[ l.price_unit or '0.00' ]]</para>
@@ -325,20 +330,10 @@
         </tr>
         <tr>
           <td>
-            <para style="terp_default_Note">[[ format(l.note or '') or removeParentNode('tr') ]]</para>
+            <parawrap style="terp_default_Note">[[ format(l.note or '') or removeParentNode('tr') ]]</parawrap>
           </td>
           <td>
             <para style="terp_default_9">
-              <font color="white"> </font>
-            </para>
-          </td>
-          <td>
-            <para style="terp_default_Right_9">
-              <font color="white"> </font>
-            </para>
-          </td>
-          <td>
-            <para style="terp_default_Right_9">
               <font color="white"> </font>
             </para>
           </td>
@@ -419,8 +414,9 @@
     <blockTable  style="Table9a">
         <tr>
           <td>
-			<para style="terp_default_9" alignment="LEFT">Comments :</para>
-			<para style="terp_default_9">[[ o.comment and format(o.comment ) or ' ' ]]</para>
+            <para style="terp_default_9" alignment="LEFT">State: [[ o.state and getSel(o, 'state') or '' ]]</para>
+            <para style="terp_default_9" alignment="LEFT">Comments: </para>
+            <para style="terp_default_9">[[ o.comment and format(o.comment ) or ' ' ]]</para>
           </td>
         </tr>
         <tr>

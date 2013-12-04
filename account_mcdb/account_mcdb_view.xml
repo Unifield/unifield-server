@@ -129,13 +129,32 @@
                                 </field>
                             </group>
                         </group>
+                        <group col="2" colspan="2">
+                            <group col="4" colspan="2">
+                                <separator string="Periods" colspan="1"/>
+                                <field name="display_period" colspan="1" nolabel="1"/>
+                            </group>
+                            <group col="2" colspan="2" attrs="{'invisible': [('display_period', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_period_clear" type="object" string="Remove all Periods" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_period_add" type="object" string="Add all Periods" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_period_ids" colspan="2"/>
+                                <field name="period_ids" colspan="2" nolabel="1">
+                                    <tree string="Periods" editable="top" noteditable="1">
+                                        <field name="name" string="Name"/>
+                                        <field name="state"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
                     </group>
                     <group colspan="2" col="2">
                         <html>
                             <br />
                         </html>
                     </group>
-                    <group col="4" colspan="4">
+                    <group col="4" colspan="4" attrs="{'invisible': [('analytic_axis', '!=', 'fp')]}">
                         <group col="2" colspan="2">
                             <group col="4" colspan="2">
                                 <separator string="Cost Centers" colspan="3"/>
@@ -183,7 +202,7 @@
                             <br />
                         </html>
                     </group>
-                    <group col="4" colspan="4">
+                    <group col="4" colspan="4" attrs="{'invisible': [('analytic_axis', '!=', 'fp')]}">
                         <group col="2" colspan="2">
                             <group col="4" colspan="2">
                                 <separator string="Funding pools" colspan="3"/>
@@ -197,6 +216,56 @@
                                 <field name="rev_analytic_account_fp_ids"/>
                                 <field name="analytic_account_fp_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]">
                                     <tree string="Funding Pool" editable="top" noteditable="1">
+                                        <field name="code" string="Ana. Code"/>
+                                        <field name="name" string="Ana. Name"/>
+                                        <field name="type" string="Ana. Type"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
+                        <group col="2" colspan="2">
+                            <label string="" colspan="2"/>
+                        </group>
+                    </group>
+                    <group col="4" colspan="4" attrs="{'invisible': [('analytic_axis', '!=', 'f1')]}">
+                        <group col="2" colspan="2">
+                            <group col="4" colspan="2">
+                                <separator string="Free 1" colspan="3"/>
+                                <field name="display_free1" colspan="1" nolabel="1"/>
+                            </group>
+                            <group colspan="2" col="2" attrs="{'invisible': [('display_free1', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_free_1_clear" type="object" string="Remove all Free 1" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_free_1_add" type="object" string="Add all Free 1" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_analytic_account_f1_ids"/>
+                                <field name="analytic_account_f1_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1')]">
+                                    <tree string="Free 1" editable="top" noteditable="1">
+                                        <field name="code" string="Ana. Code"/>
+                                        <field name="name" string="Ana. Name"/>
+                                        <field name="type" string="Ana. Type"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
+                        <group col="2" colspan="2">
+                            <label string="" colspan="2"/>
+                        </group>
+                    </group>
+                    <group col="4" colspan="4" attrs="{'invisible': [('analytic_axis', '!=', 'f2')]}">
+                        <group col="2" colspan="2">
+                            <group col="4" colspan="2">
+                                <separator string="Free 2" colspan="3"/>
+                                <field name="display_free2" colspan="1" nolabel="1"/>
+                            </group>
+                            <group colspan="2" col="2" attrs="{'invisible': [('display_free2', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_free_2_clear" type="object" string="Remove all Free 2" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_free_2_add" type="object" string="Add all Free 2" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_analytic_account_f2_ids"/>
+                                <field name="analytic_account_f2_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FREE2')]">
+                                    <tree string="Free 2" editable="top" noteditable="1">
                                         <field name="code" string="Ana. Code"/>
                                         <field name="name" string="Ana. Name"/>
                                         <field name="type" string="Ana. Type"/>

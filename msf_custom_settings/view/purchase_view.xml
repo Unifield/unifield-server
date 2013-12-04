@@ -36,7 +36,7 @@
                                 attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" />
                             <field name="partner_type"  />
                             <field name="partner_address_id"  attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
-                            <field name="origin" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                            <field name="origin" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" widget="char"/>
                             <field name="internal_type" string="Zone"  />
                             <field name="pricelist_id" string="Currency" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"
                             colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
@@ -79,7 +79,9 @@
                             <field name="state" readonly="1"/>
                             <button name="dpo_received" string="Validate the reception" icon="terp-camera_test"
                                 attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" />
-                            <button name="purchase_cancel" states="draft,confirmed,rfq_sent" string="Cancel" icon="gtk-cancel"/>
+                            <button name="purchase_cancel" 
+                            attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'confirmed', 'rfq_sent']), '&amp;',('partner_type', '!=', 'external'), ('state', '=', 'confirmed')]}" 
+                            string="Cancel" icon="gtk-cancel"/>
                             <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', ('po_from_ir', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
                             <!-- UTP-469 − Remove the cancel button
                                  <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state','not in', ['approved','except_picking','except_invoice','wait'])]}"/> -->

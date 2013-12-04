@@ -13,6 +13,7 @@
             <field name="code">tender</field>
             <field name="prefix">%(y)s/%(hqcode)s/%(instance)s/T</field>
             <field name="padding">5</field>
+            <field name="implementation">psql</field>
         </record>
         
 	    <!-- Sequences for rfq -->
@@ -26,6 +27,7 @@
             <field name="code">rfq</field>
             <field name="prefix">%(y)s/RfQ</field>
             <field name="padding">5</field>
+            <field name="implementation">psql</field>
         </record>
 
 	</data>

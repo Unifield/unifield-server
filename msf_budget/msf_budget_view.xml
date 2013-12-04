@@ -11,6 +11,8 @@
                     <field name="name" colspan="1"/>
                     <field name="code" colspan="1"/>
                     <field name="fiscalyear_id"/>
+                    <field name="cost_center_id"/>
+                    <field name="instance_type"/>
                     <field name="state"/>
                     <field name="decision_moment_id"/>
                     <field name="version"/>
@@ -29,6 +31,11 @@
                        <filter string="Draft" icon="terp-document-new" domain="[('state','=','draft')]" help="Draft Budgets"/>
                        <filter name="validated" string="Validated" icon="terp-camera_test" domain="[('state','=','valid')]" help="Validated Budgets" />
                        <separator orientation="vertical"/>
+                       <filter name='hq' string="HQ" domain="[('instance_type', '=', 'section')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a HQ instance." icon="terp-go-home"/>
+                       <filter name='coordo' string="Coordo" domain="[('instance_type', '=', 'coordo')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a Coordo instance." icon="terp-go-home"/>
+                       <filter name='project' string="Project" domain="[('instance_type', '=', 'project')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a Project instance." icon="terp-go-home"/>
+                       <separator orientation="vertical"/>
+                       <newline/>
                        <field name="name" select="1"/>
                        <field name="code" select="1" />
                        <field name="cost_center_id"/>
@@ -63,21 +70,21 @@
                     <field name="budget_line_ids" colspan="4" nolabel="1" readonly="1">
                         <tree string="Budget Lines" editable="top" colors="black:line_type in ('normal');blue:line_type in ('view')">
                             <field name="name"/>
-                            <field name="budget_amount" real_sum="Budget Amount"/>
-                            <field name="comm_amount" real_sum="Comm. Amount"/>
-                            <field name="actual_amount" real_sum="Actual Amount"/>
-                            <field name="balance" real_sum="Balance"/>
-                            <field name="percentage"/>
+                            <field name="budget_amount" digits="(24,0)"/>
+                            <field name="comm_amount" digits="(24,0)"/>
+                            <field name="actual_amount" digits="(24,0)"/>
+                            <field name="balance" digits="(24,0)"/>
+                            <field name="percentage" digits="(24,0)"/>
                             <field name="line_type"/>
                         </tree>
                         <form string="Budget Line">
                             <group colspan="4">
                                 <field name="name" colspan="2" readonly="1"/>
-	                            <field name="budget_amount" colspan="1" readonly="1"/>
-	                            <field name="comm_amount" colspan="1" readonly="1"/>
-	                            <field name="actual_amount" colspan="1" readonly="1"/>
-	                            <field name="balance" colspan="1" readonly="1"/>
-	                            <field name="percentage" colspan="1" readonly="1"/>
+	                            <field name="budget_amount" colspan="1" readonly="1" digits="(24,0)"/>
+	                            <field name="comm_amount" colspan="1" readonly="1" digits="(24,0)"/>
+	                            <field name="actual_amount" colspan="1" readonly="1" digits="(24,0)"/>
+	                            <field name="balance" colspan="1" readonly="1" digits="(24,0)"/>
+	                            <field name="percentage" colspan="1" readonly="1" digits="(24,0)"/>
                             </group>
                         </form>
                     </field>
@@ -207,13 +214,14 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Local Expenses">
+                    <field name="cost_center_id"/>
                     <field name="fiscalyear_id"/>
-                    <field name="period_id"/>
+                    <field name="start_period_id"/>
+                    <field name="end_period_id"/>
                     <field name="breakdown"/>
                     <field name="granularity"/>
                     <field name="booking_currency_id"/>
                     <field name="output_currency_id"/>
-                    <field name="cost_center_id"/>
                     <separator colspan="4"/>
                     <group colspan="4" col="6">
                         <button special="cancel" string="No" icon="gtk-cancel"/>
@@ -255,8 +263,8 @@
                 <tree string="Budget Status">
                     <field name="code"/>
                     <field name="name"/>
-                    <field name="budget_amount"/>
-                    <field name="actual_amount"/>
+                    <field name="budget_amount" digits="(24,0)"/>
+                    <field name="actual_amount" digits="(24,0)"/>
                     <field name="parent_id" invisible="1"/>
                 </tree>
             </field>
@@ -310,5 +318,22 @@
 
         <menuitem action="action_account_analytic_account_budget_form" id="menu_action_account_analytic_account_budget_form" parent="next_id_31" />
 
+        <record id="action_open_analytic_lines_budget_button" model="ir.actions.act_window">
+            <field name="name">Analytic Items</field>
+            <field name="res_model">account.analytic.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="account.view_account_analytic_line_filter"/>
+            <field name="context">{'search_budget': 1, 'summary_id': active_id}</field>
+        </record>
+
+        <record id="ir_open_budget_summary_line" model="ir.values">
+            <field name="key2">tree_but_open</field>
+            <field name="model">msf.budget.summary</field>
+            <field name="name">Open Analytic Lines</field>
+            <field eval="'ir.actions.act_window,%d'%action_open_analytic_lines_budget_button" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+        
     </data>
 </openerp>

@@ -4,27 +4,27 @@
     Creating a product.nomenclature record
 - 
   !record {model: product.nomenclature, id: product_nomenclature_initial0}:
-    name: test
+    name: test init 0
 - 
   Creating a product.nomenclature record
 - 
   !record {model: product.nomenclature, id: product_nomenclature_initial1}:
     level: 1
-    name: test1
+    name: test init 1
     
 - 
   Creating a product.nomenclature record
 - 
   !record {model: product.nomenclature, id: product_nomenclature_initial2}:
     level: 2
-    name: test2
+    name: test init 2
     parent_id: product_nomenclature_initial1
 - 
   Creating a product.nomenclature record
 - 
   !record {model: product.nomenclature, id: product_nomenclature_initial3}:
     level: 3
-    name: test3
+    name: test init 3
     parent_id: product_nomenclature_initial2
 -  
   Creating a product.category record
@@ -64,7 +64,7 @@
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   Creating a new initial inventory
 -

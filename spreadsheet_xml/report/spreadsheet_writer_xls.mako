@@ -63,7 +63,7 @@ x:FullRows="1">
 <Row>
   % for index, h in enumerate(headers):
     <% result=row[index] %>
-    % if h[1] == 'date':
+    % if h[1] == 'date' and result and result != 'False':
         <Cell ss:StyleID="sShortDate">
             <Data ss:Type="DateTime">${result|n}T00:00:00.000</Data>
         </Cell>
@@ -76,7 +76,9 @@ x:FullRows="1">
             % if h[1] == 'bool':
                 <Data ss:Type="Boolean">${result=='True' and '1' or '0'}</Data>
             % elif h[1] in ('number', 'int', 'float'):
-                % if not isinstance(result, bool): 
+                % if isinstance(result, tuple) and len(result) > 1:
+                    <Data ss:Type="${result[1]}">${result[0]}</Data>
+                % elif not isinstance(result, bool): 
                     <Data ss:Type="Number">${result}</Data>
                 % else:
                     <Data ss:Type="String"></Data>

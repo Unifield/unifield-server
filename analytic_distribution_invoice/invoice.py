@@ -128,9 +128,12 @@ class account_invoice(osv.osv):
                 # Give false analytic lines for 'line' in order not to give an error
                 if 'analytic_line_ids' in el[2]:
                     el[2]['analytic_line_ids'] = False
-                # Give false order_line_id in order not to give an error
-                if 'order_line_id' in el[2]:
-                    el[2]['order_line_id'] = el[2].get('order_line_id', False) and el[2]['order_line_id'][0] or False
+                # Give false for (because not needed):
+                # - order_line_id
+                # - sale_order_line_id
+                for field in ['order_line_id', 'sale_order_line_id']:
+                    if field in el[2]:
+                        el[2][field] = el[2].get(field, False) and el[2][field][0] or False
         return res
 
     def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None):
@@ -205,7 +208,17 @@ class account_invoice_line(osv.osv):
             if line.from_yml_test:
                 res[line.id] = 'valid'
             else:
-                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.invoice_id.analytic_distribution_id.id, line.account_id.id)
+                # UF-2115: test for elements
+                line_distribution_id = False
+                invoice_distribution_id = False
+                line_account_id = False
+                if line.analytic_distribution_id:
+                    line_distribution_id = line.analytic_distribution_id.id
+                if line.invoice_id and line.invoice_id.analytic_distribution_id:
+                    invoice_distribution_id = line.invoice_id.analytic_distribution_id.id
+                if line.account_id:
+                    line_account_id = line.account_id.id
+                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distribution_id, invoice_distribution_id, line_account_id)
         return res
 
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):

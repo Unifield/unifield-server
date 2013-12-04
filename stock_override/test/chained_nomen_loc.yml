@@ -28,27 +28,27 @@
   Creating a product.nomenclature record
 -
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest1}:
-    name: nomenclature test 0
+    name: nomenclature test 10
 -
   Creating a product.nomenclature record
 -
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest11}:
     level: 1
-    name: nomenclature test 2
+    name: nomenclature test 11
     parent_id: product_nomenclature_nomenclaturetest1
 -
   Creating a product.nomenclature record
 -
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest12}:
     level: 2
-    name: nomenclature test 3
+    name: nomenclature test 12
     parent_id: product_nomenclature_nomenclaturetest11
 -
   Creating a product.nomenclature record
 -
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest13}:
     level: 3
-    name: nomenclature test 4
+    name: nomenclature test 13
     parent_id: product_nomenclature_nomenclaturetest12
 -
   I create a product category
@@ -85,7 +85,7 @@
     nomen_manda_1: product_nomenclature_nomenclaturetest01
     nomen_manda_2: product_nomenclature_nomenclaturetest02
     nomen_manda_3: product_nomenclature_nomenclaturetest03
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create the product P2
 -
@@ -109,7 +109,7 @@
     nomen_manda_1: product_nomenclature_nomenclaturetest11
     nomen_manda_2: product_nomenclature_nomenclaturetest12
     nomen_manda_3: product_nomenclature_nomenclaturetest13
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create a stock location with chained options
 -

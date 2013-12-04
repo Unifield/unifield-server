@@ -77,6 +77,10 @@
     # find the IN
     in_ids = self.search(cr, uid, [('purchase_id', '=', po_id)], context=context)
     pick = self.browse(cr, uid, in_ids[0], context=context)
+    # Convert to OUT to Simple OUT
+    # out_ids = self.search(cr, uid, [('sale_id', '=', ref("so_G"))], context=context)
+    # for out_id in out_ids:
+    #   self.convert_to_standard(cr, uid, [out_id], context=context)
     # get the weird openERP picking type
     picking_type = self.pool.get('stock.partial.picking').get_picking_type(cr, uid, pick, context=context)
     # process wizard
@@ -167,11 +171,11 @@
     # check the moves in OUT
     a_qty = [3.0]
     b_qty = [1.0]
-    c_qty = [2.0, 1.0]
-    d_qty = [5.0, 3.0]
+    c_qty = [2.0, 1.0, 0.0, 0.0]
+    d_qty = [5.0, 3.0, 0.0, 0.0]
     out_ids = self.search(cr, uid, [('sale_id', '=', ref("so_G"))], context=context)
     # only one OUT for the sale order
-    assert len(out_ids) == 1, 'number of out objects is wrong - 1 - %s'%len(out_ids)
+    assert len(out_ids) == 2, 'number of out objects is wrong - 2 - %s'%len(out_ids)
     for obj in self.browse(cr, uid, out_ids, context=context):
       for move in obj.move_lines:
         if move.product_id.id == ref("product_A"):
@@ -210,11 +214,11 @@
     # check the moves in OUT - back order contained 3 A and 1 B, should have been decreased in OUT
     a_qty = [0.0]
     b_qty = [0.0]
-    c_qty = [2.0, 1.0]
-    d_qty = [5.0, 3.0]
+    c_qty = [2.0, 1.0, 0.0, 0.0]
+    d_qty = [5.0, 3.0, 0.0, 0.0]
     out_ids = self.search(cr, uid, [('sale_id', '=', ref("so_G"))], context=context)
     # only one OUT for the sale order
-    assert len(out_ids) == 1, 'number of out objects is wrong - 1 - %s'%len(out_ids)
+    assert len(out_ids) == 2, 'number of out objects is wrong - 2 - %s'%len(out_ids)
     for obj in self.browse(cr, uid, out_ids, context=context):
       for move in obj.move_lines:
         if move.product_id.id == ref("product_A"):

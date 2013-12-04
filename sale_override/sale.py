@@ -36,6 +36,7 @@ from sale_override import SALE_ORDER_STATE_SELECTION
 from sale_override import SALE_ORDER_SPLIT_SELECTION
 from sale_override import SALE_ORDER_LINE_STATE_SELECTION
 
+
 class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
@@ -50,8 +51,14 @@ class sale_order(osv.osv):
         if default is None:
             default = {}
 
-        default.update({'loan_id': False,
-                        'order_policy': 'picking',
+        # if the copy comes from the button duplicate
+        if context.get('from_button'):
+            default.update({'is_a_counterpart': False})
+        
+        if 'loan_id' not in default:
+            default.update({'loan_id': False})
+
+        default.update({'order_policy': 'picking',
                         'active': True})
 
         if not context.get('keepClientOrder', False):
@@ -236,6 +243,8 @@ class sale_order(osv.osv):
                                                    store= {'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['state', 'split_type_sale_order'], 10)}),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'manually_corrected': fields.function(_get_manually_corrected, method=True, type='boolean', string='Manually corrected'),
+        'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
+        'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
     }
     
     _defaults = {
@@ -262,6 +271,21 @@ class sale_order(osv.osv):
 
         return True
 
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check restriction on products
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        line_obj = self.pool.get('sale.order.line')
+        res = True
+
+        for order in self.browse(cr, uid, ids, context=context):
+            res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in order.order_line], context=context)
+
+        return res
+    
     def onchange_partner_id(self, cr, uid, ids, part=False, order_type=False, *a, **b):
         '''
         Set the intl_customer_ok field if the partner is an ESC or an international partner
@@ -275,6 +299,17 @@ class sale_order(osv.osv):
                     res['value'].update(res2['value'])
                 else:
                     res.update({'value': res2['value']})
+        
+            # Check the restrction of product in lines
+            if ids:
+                product_obj = self.pool.get('product.product')
+                for order in self.browse(cr, uid, ids):
+                    for line in order.order_line:
+                        if line.product_id:
+                            res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': part, 'obj_type': 'sale.order'})
+                            if test:
+                                res.setdefault('value', {}).update({'partner_order_id': False, 'partner_shipping_id': False, 'partner_invoice_id': False})
+                                return res
 
         return res
 
@@ -314,6 +349,10 @@ class sale_order(osv.osv):
                  'service': _('Service')}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
+        if context.get('import_in_progress'):
+            return True
 
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:
@@ -379,7 +418,9 @@ class sale_order(osv.osv):
 
         self._check_service(cr, uid, ids, vals, context=context)
 
-        return super(sale_order, self).write(cr, uid, ids, vals, context=context)
+        res = super(sale_order, self).write(cr, uid, ids, vals, context=context)
+
+        return res
 
     
     def change_currency(self, cr, uid, ids, context=None):
@@ -411,6 +452,13 @@ class sale_order(osv.osv):
 
     def wkf_validated(self, cr, uid, ids, context=None):
         for order in self.browse(cr, uid, ids, context=context):
+            if order.order_type == 'loan':
+                line_ids = []
+                for l in order.order_line:
+                    line_ids.append(l.id)
+                self.pool.get('sale.order.line').write(cr, uid, line_ids, {'type': 'make_to_stock'}, context=context)
+
+
             pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('in_search', '=', order.partner_id.partner_type)], context=context)
             if order.pricelist_id.id not in pricelist_ids:
                 raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
@@ -434,7 +482,6 @@ class sale_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
         # objects
         line_obj = self.pool.get('sale.order.line')
         fields_tools = self.pool.get('fields.tools')
@@ -453,6 +500,7 @@ class sale_order(osv.osv):
             if so.split_type_sale_order != 'original_sale_order':
                 raise osv.except_osv(_('Error'), _('You cannot split a Fo which has already been split.'))
             # loop through lines
+            created_line = []
             for line in so.order_line:
                 # check that each line must have a supplier specified
                 if  line.type == 'make_to_order':
@@ -488,6 +536,7 @@ class sale_order(osv.osv):
                         fo_name = so.name + '-' + selec_name
                         split_id = self.copy(cr, uid, so.id, {'name': fo_name,
                                                               'order_line': [],
+                                                              'loan_id': so.loan_id and so.loan_id.id or False,
                                                               'delivery_requested_date': so.delivery_requested_date,
                                                               'split_type_sale_order': fo_type,
                                                               'ready_to_ship_date': line.order_id.ready_to_ship_date,
@@ -495,15 +544,22 @@ class sale_order(osv.osv):
                         # log the action of split
                         self.log(cr, uid, split_id, _('The %s split %s has been created.')%(selec_name, fo_name))
                         split_fo_dic[fo_type] = split_id
+                        # For loans, change the subflow
+                        if fo_type == 'stock_split_sale_order':
+                            po_ids = self.pool.get('purchase.order').search(cr, uid, [('loan_id', '=', so.id)], context=context)
+                            netsvc.LocalService("workflow").trg_change_subflow(uid, 'purchase.order', po_ids, 'sale.order', [so.id], split_id, cr)
                 # copy the line to the split Fo - the state is forced to 'draft' by default method in original add-ons
                 # -> the line state is modified to sourced when the corresponding procurement is created in action_ship_proc_create
-                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
-                                                 'original_line_id': line.id}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True))
+                new_context = dict(context, keepDateAndDistrib=True, keepLineNumber=True, no_store_function=True)
+                new_line_id = line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
+                                                 'original_line_id': line.id}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True, no_store_function=['sale.order.line']))
+                created_line.append(new_line_id)
+
+            line_obj._call_store_function(cr, uid, created_line, keys=None, result=None, bypass=False, context=context)
             # the sale order is treated, we process the workflow of the new so
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_confirm', cr)
-        
         return True
 
     def sale_except_correction(self, cr, uid, ids, context=None):
@@ -589,6 +645,10 @@ class sale_order(osv.osv):
         partner_obj = self.pool.get('res.partner')
             
         for order in self.browse(cr, uid, ids):
+            # UTP-392: don't create a PO if it is created by sync ofr the loan
+            if order.is_a_counterpart or (order.order_type == 'loan' and order.fo_created_by_po_sync):
+                return
+
             two_months = today() + RelativeDateTime(months=+2)
             # from yml test is updated according to order value
             values = {'partner_id': order.partner_id.id,
@@ -603,7 +663,9 @@ class sale_order(osv.osv):
                       'location_id': order.shop_id.warehouse_id.lot_input_id.id,
                       'priority': order.priority,
                       'from_yml_test': order.from_yml_test,
+                      'is_a_counterpart': True,
                       }
+            context['is_a_counterpart'] = True
             order_id = purchase_obj.create(cr, uid, values, context=context)
             for line in order.order_line:
                 purchase_line_obj.create(cr, uid, {'product_id': line.product_id and line.product_id.id or False,
@@ -612,7 +674,7 @@ class sale_order(osv.osv):
                                                    'price_unit': line.price_unit,
                                                    'product_qty': line.product_uom_qty,
                                                    'date_planned': (today() + RelativeDateTime(months=+order.loan_duration)).strftime('%Y-%m-%d'),
-                                                   'name': line.name,})
+                                                   'name': line.name,}, context)
             self.write(cr, uid, [order.id], {'loan_id': order_id})
             
             purchase = purchase_obj.browse(cr, uid, order_id)
@@ -1137,6 +1199,23 @@ class sale_order_line(osv.osv):
         ('product_qty_check', 'CHECK( product_uom_qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]
 
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check if there is restriction on lines
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not context:
+            context = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.order_id and line.order_id.partner_id and line.product_id:
+                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'partner_id': line.order_id.partner_id.id, 'obj_type': 'sale.order'}, context=context):
+                    return False
+
+        return True
+
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
         Open the wizard to split the line
@@ -1168,6 +1247,7 @@ class sale_order_line(osv.osv):
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
             default.update({'so_back_update_dest_po_id_sale_order_line': False,
                             'so_back_update_dest_pol_id_sale_order_line': False,})
+        default.update({'sync_order_line_db_id': False, 'manually_corrected': False})
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
     def open_order_line_to_correct(self, cr, uid, ids, context=None):
@@ -1233,20 +1313,35 @@ class sale_order_line(osv.osv):
         If there isn't product, the default procurement method is 'From Order' (make_to_order).
         Both remains changeable manually.
         """
+        product_obj = self.pool.get('product.product')
+
         res = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
             uom, qty_uos, uos, name, partner_id,
             lang, update_tax, date_order, packaging, fiscal_position, flag)
+
+        if 'domain' in res:
+            del res['domain']
+
         if product:
-            type = self.pool.get('product.product').read(cr, uid, [product], 'procure_method')[0]['procure_method']
+            if partner_id:
+                # Test the compatibility of the product with the partner of the order
+                res, test = product_obj._on_change_restriction_error(cr, uid, product, field_name='product_id', values=res, vals={'partner_id': partner_id, 'obj_type': 'sale.order'})
+                if test:
+                    return res
+
+            type = product_obj.read(cr, uid, [product], 'procure_method')[0]['procure_method']
             if 'value' in res:
                 res['value'].update({'type': type})
             else:
                 res.update({'value':{'type': type}})
+            res['value'].update({'product_uom_qty': qty, 'product_uos_qty': qty})
         elif not product:
             if 'value' in res:
                 res['value'].update({'type': 'make_to_order'})
             else:
                 res.update({'value':{'type': 'make_to_order'}})
+            res['value'].update({'product_uom_qty': 0.00, 'product_uos_qty': 0.00})
+
         return res
 
     def default_get(self, cr, uid, fields, context=None):
@@ -1277,6 +1372,7 @@ class sale_order_line(osv.osv):
             self.pool.get('sale.order').write(cr, uid, [context.get('sale_id')], data, context=context)
 
         default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
+        default_data.update({'product_uom_qty': 0.00, 'product_uos_qty': 0.00})
         sale_id = context.get('sale_id', [])
         if not sale_id:
             return default_data
@@ -1294,7 +1390,7 @@ class sale_order_line(osv.osv):
         if not default:
             default = {}
             
-        default.update({'sync_order_line_db_id': False})
+        default.update({'sync_order_line_db_id': False, 'manually_corrected': False})
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
     def create(self, cr, uid, vals, context=None):
@@ -1330,7 +1426,7 @@ class sale_order_line(osv.osv):
             if vals.get('order_id', False):
                 name = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).name
                 super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_order_line_db_id': name + "_" + str(so_line_ids), } , context=context)
-            
+
         return so_line_ids
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -1340,13 +1436,22 @@ class sale_order_line(osv.osv):
         """
         if context is None:
             context = {}
-        if not vals.get('product_id') and context.get('sale_id', []):
+        
+        # UTP-392: fixed from the previous code: check if the sale order line contains the product, and not only from vals!
+        product_id = vals.get('product_id')
+        if not product_id:
+            product_id = self.browse(cr, uid, ids, context=context)[0].product_id
+        
+        if not product_id and context.get('sale_id', []):
             vals.update({'type': 'make_to_order'})
         # Internal request
         order_id = vals.get('order_id', False)
         if order_id and self.pool.get('sale.order').read(cr, uid, order_id,['procurement_request'], context)['procurement_request']:
             vals.update({'cost_price': vals.get('cost_price', False)})
-        return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
+
+        res = super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
+
+        return res
 
 sale_order_line()
 

@@ -273,8 +273,35 @@ class stock_warehouse_orderpoint(osv.osv):
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
         
         return result
+        
+        
+    def onchange_uom_qty(self, cr, uid, ids, product_id=False, product_uom=False, product_min_qty=False, product_max_qty=False, res=None, context=None):
+        '''
+        Check the round of the quantity values according to the UoM
+        '''
+        if not res:
+            res = {}
+
+        if product_min_qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_min_qty, 'product_min_qty', result=res)
+
+        if product_max_qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_max_qty, 'product_max_qty', result=res)
+
+        uom_id = product_uom
+        if uom_id and product_id:
+            product_obj = self.pool.get('product.product')
+            uom_obj = self.pool.get('product.uom')
+        
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            uom = uom_obj.browse(cr, uid, uom_id, context=context)
+        
+            if product.uom_id.category_id.id != uom.category_id.id:
+                raise osv.except_osv(_('Wrong Product UOM !'), _('You have to select a product UOM in the same category than the purchase UOM of the product'))
+
+        return res
     
-    def onchange_product_id(self, cr, uid, ids, product_id, context=None):
+    def onchange_product_id(self, cr, uid, ids, product_id, product_uom=False, product_min_qty=False, product_max_qty=False, context=None):
         '''
         Add domain on UoM to have only UoM on the same category of the
         product standard UoM
@@ -301,6 +328,9 @@ class stock_warehouse_orderpoint(osv.osv):
         else:
             res.update({'domain': domain})
             
+        product_uom = res.get('value', {}).get('product_uom', product_uom)
+        res = self.onchange_uom_qty(cr, uid, ids, product_id, product_uom, product_min_qty, product_max_qty, res=res)
+            
         return res
     
     def onchange_uom(self, cr, uid, ids, product_id, uom_id, context=None):
@@ -308,13 +338,7 @@ class stock_warehouse_orderpoint(osv.osv):
         Check if the UoM is convertible to product standard UoM
         '''
         if uom_id and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-        
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, uom_id, context=context)
-        
-            if product.uom_id.category_id.id != uom.category_id.id:
+            if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, uom_id, context):
                 raise osv.except_osv(_('Wrong Product UOM !'), _('You have to select a product UOM in the same category than the purchase UOM of the product'))
         
         return {}
@@ -328,7 +352,16 @@ class product_uom(osv.osv):
     _inherit = 'product.uom'
     
     def _get_uom_by_product(self, cr, uid, ids, field_name, args, context=None):
-        return {}
+        '''
+        return false for each id
+        '''
+        if isinstance(ids,(long, int)):
+           ids = [ids]
+        
+        result = {}
+        for id in ids:
+          result[id] = False
+        return result
     
     def _search_uom_by_product(self, cr, uid, obj, name, args, context=None):
         dom = []
@@ -338,16 +371,48 @@ class product_uom(osv.osv):
                 raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
             elif arg[0] == 'uom_by_product':
                 product_id = arg[2]
-                if isinstance(product_id, (int, long)):
+                if product_id and isinstance(product_id, (int, long)):
                     product_id = [product_id]
-                product = self.pool.get('product.product').browse(cr, uid, product_id[0], context=context)
-                dom.append(('category_id', '=', product.uom_id.category_id.id))
+                
+                if product_id:
+                    product = self.pool.get('product.product').browse(cr, uid, product_id[0], context=context)
+                    dom.append(('category_id', '=', product.uom_id.category_id.id))
                 
         return dom
-    
+
+    def _get_uom_by_parent(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        return false for each id
+        '''
+        if isinstance(ids,(long, int)):
+           ids = [ids]
+        
+        result = {}
+        for id in ids:
+          result[id] = False
+        return result
+
+    def _search_uom_by_parent(self, cr, uid, obj, name, args, context=None):
+        dom = []
+        
+        for arg in args:
+            if arg[0] == 'uom_by_parent' and arg[1] != '=':
+                raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
+            elif arg[0] == 'uom_by_parent':
+                product_uom = arg[2]
+                if product_uom:
+                    if isinstance(product_uom, (int, long)):
+                        product_uom = [product_uom]
+                    product_uom_obj = self.browse(cr, uid, product_uom[0], context=context)
+                    dom.append(('category_id', '=', product_uom_obj.category_id.id))
+                
+        return dom
+
     _columns = {
         'uom_by_product': fields.function(_get_uom_by_product, fnct_search=_search_uom_by_product, string='UoM by Product', 
-                                          help='Field used to filter the UoM for a specific product'),
+                                          method=True, help='Field used to filter the UoM for a specific product'),
+        'uom_by_parent': fields.function(_get_uom_by_parent, fnct_search=_search_uom_by_parent, string='UoM by Parent', 
+                                          method=True, help='Field used to filter the UoM for a specific product'),
     }
     
 product_uom()
@@ -563,7 +628,14 @@ class stock_move(osv.osv):
         
         return result
     
-    def _check_batch_management(self, cr, uid, ids, context=None):
+    def _check_product_lot(self, cr, uid, ids, context=None):
+        """
+        By pass the standard openerp check
+        this one is done in _check_tracking
+        """
+        return True
+
+    def _check_tracking(self, cr, uid, ids, context=None):
         """
         check for batch management
         @return: True or False
@@ -573,49 +645,42 @@ class stock_move(osv.osv):
                 if move.product_id.batch_management:
                     if not move.prodlot_id and move.product_qty:
                         raise osv.except_osv(_('Error!'),  _('You must assign a Batch Number for this product (Batch Number Mandatory).'))
-        return True
-    
-    def _check_perishable(self, cr, uid, ids, context=None):
-        """
-        check for perishable
-        @return: True or False
-        """
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 if move.product_id.perishable:
                     if not move.prodlot_id and move.product_qty:
                         raise osv.except_osv(_('Error!'),  _('You must assign an Expiry Date for this product (Expiry Date Mandatory).'))
-        return True
-    
-    def _check_prodlot_need(self, cr, uid, ids, context=None):
-        """
-        If the move has a prodlot but does not need one, return False.
-        """
-        for move in self.browse(cr, uid, ids, context=context):
             if move.prodlot_id:
                 if not move.product_id.perishable and not move.product_id.batch_management:
                     raise osv.except_osv(_('Error!'),  _('The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory.'))
-        return True
-    
-    def _check_prodlot_need_batch_management(self, cr, uid, ids, context=None):
-        """
-        If the product is batch management while the selected prodlot is 'internal'.
-        """
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.prodlot_id:
                 if move.prodlot_id.type == 'internal' and move.product_id.batch_management:
                     raise osv.except_osv(_('Error!'),  _('The selected product is Batch Number Mandatory while the selected Batch number corresponds to Expiry Date Mandatory.'))
-        return True
-    
-    def _check_prodlot_need_perishable(self, cr, uid, ids, context=None):
-        """
-        If the product is perishable ONLY while the selected prodlot is 'standard'.
-        """
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.prodlot_id:
                 if move.prodlot_id.type == 'standard' and not move.product_id.batch_management and move.product_id.perishable:
                     raise osv.except_osv(_('Error!'),  _('The selected product is Expiry Date Mandatory while the selected Batch number corresponds to Batch Number Mandatory.'))
+            if not move.prodlot_id and move.product_qty and \
+               (move.state == 'done' and \
+               ( \
+                   (move.product_id.track_production and move.location_id.usage == 'production') or \
+                   (move.product_id.track_production and move.location_dest_id.usage == 'production') or \
+                   (move.product_id.track_incoming and move.location_id.usage == 'supplier') or \
+                   (move.product_id.track_outgoing and move.location_dest_id.usage == 'customer') \
+               )):
+                raise osv.except_osv(_('Error!'),  _('You must assign a batch number for this product.'))
+
         return True
+
+    def onchange_uom(self, cr, uid, ids, product_uom, product_qty):
+        '''
+        Check the rounding of the qty according to the UoM
+        '''
+        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_qty, ['product_qty', 'product_uos_qty'])
+
+    def onchange_quantity(self, cr, uid, ids, product_id, product_qty,
+                          product_uom, product_uos):
+        '''
+        Check the rounding of the qty according to the UoM
+        '''
+        res = super(stock_move, self).onchange_quantity(cr, uid, ids, product_id, product_qty, product_uom, product_uos)
+
+        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_qty, ['product_qty', 'product_uos_qty'], res)
     
     def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False, parent_type=False, purchase_line_id=False, out=False,):
         '''
@@ -623,6 +688,11 @@ class stock_move(osv.osv):
         '''
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
                                                              loc_dest_id, address_id)
+
+        if prod_id and parent_type in ('in', 'out'):
+            prod_obj = self.pool.get('product.product')
+            # Test the compatibility of the product with a stock move
+            result, test = prod_obj._on_change_restriction_error(cr, uid, prod_id, field_name='product_id', values=result, vals={'constraints': ['picking']})
 
         # product changes, prodlot is always cleared
         result.setdefault('value', {})['prodlot_id'] = False
@@ -694,22 +764,6 @@ class stock_move(osv.osv):
             
         return result
     
-    def _check_tracking(self, cr, uid, ids, context=None):
-        """ Checks if production lot is assigned to stock move or not.
-        @return: True or False
-        """
-        for move in self.browse(cr, uid, ids, context=context):
-            if not move.prodlot_id and move.product_qty and \
-               (move.state == 'done' and \
-               ( \
-                   (move.product_id.track_production and move.location_id.usage == 'production') or \
-                   (move.product_id.track_production and move.location_dest_id.usage == 'production') or \
-                   (move.product_id.track_incoming and move.location_id.usage == 'supplier') or \
-                   (move.product_id.track_outgoing and move.location_dest_id.usage == 'customer') \
-               )):
-                raise osv.except_osv(_('Error!'),  _('You must assign a batch number for this product.'))
-        return True
-            
     _columns = {
         'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),
         # if prodlot needs to be mandatory, add 'required': ['|', ('hidden_batch_management_mandatory','=',True), ('hidden_perishable_mandatory','=',True)] in attrs
@@ -725,25 +779,9 @@ class stock_move(osv.osv):
         'prodlot_id': fields.many2one('stock.production.lot', 'Batch', states={'done': [('readonly', True)]}, help="Batch number is used to put a serial number on the production", select=True),
     }
     
-    _constraints = [(_check_batch_management,
-                     'You must assign a Batch Number for this product (Batch Number Mandatory).',
-                     ['prodlot_id']),
-                    (_check_perishable,
-                     'You must assign an Expiry Date for this product (Expiry Date Mandatory).',
-                     ['prodlot_id']),
-                    (_check_prodlot_need,
-                     'The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory.',
-                     ['prodlot_id']),
-                    (_check_prodlot_need_batch_management,
-                     'The selected product is Batch Number Mandatory while the selected Batch number corresponds to Expiry Date Mandatory.',
-                     ['prodlot_id']),
-                    (_check_prodlot_need_perishable,
-                     'The selected product is Expiry Date Mandatory while the selected Batch number corresponds to Batch Number Mandatory.',
-                     ['prodlot_id']),
-                     (_check_tracking,
-                      'You must assign a batch number for this product.',
-                      ['prodlot_id']),
-                    ]
+    _constraints = [
+            (_check_tracking, 'You must assign a batch number for this product.', ['prodlot_id']),
+    ]
 
 stock_move()
 
@@ -849,7 +887,7 @@ class stock_production_lot(osv.osv):
         
         for lot in self.browse(cr, uid, ids, context=context):
            # create revision object for each lot
-           version_number = lot.sequence_id.get_id(test='id', context=context)
+           version_number = lot.sequence_id.get_id(code_or_id='id', context=context)
            values = {'name': 'Auto Revision Logging',
                      'description': 'The batch number has been modified, this revision log has been created automatically.',
                      'date': time.strftime('%Y-%m-%d'),
@@ -1044,6 +1082,23 @@ class stock_production_lot(osv.osv):
                 res[batch_id] = False
 
         return res
+
+    def _is_expired(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns True if the lot is expired
+        '''
+        res = {}
+        context = context or {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for batch in self.read(cr, uid, ids, ['life_date'], context=context):
+            res[batch['id']] = False
+            if batch['life_date'] < time.strftime('%Y-%m-%d'):
+                res[batch['id']] = True
+
+        return res
     
     _columns = {'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
                 # readonly is True, the user is only allowed to create standard lots - internal lots are system-created
@@ -1066,6 +1121,7 @@ class stock_production_lot(osv.osv):
                 'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
                 'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
                 'delete_ok': fields.function(_get_delete_ok, method=True, string='Possible deletion ?', type='boolean', readonly=True),
+                'is_expired': fields.function(_is_expired, method=True, string='Expired ?', type='boolean', store=False, readonly=True),
                 }
     
     _defaults = {'type': 'standard',
@@ -1074,9 +1130,7 @@ class stock_production_lot(osv.osv):
                  'life_date': False,
                  }
     
-    _sql_constraints = [('name_uniq', 'unique (product_id,name)', 'For a given product, the batch number must be unique.'),
-                        ]
-
+    # UF-2148: Removed the name unique constraint here, and use only the constraint with 3 attrs: name, prod and instance
     _constraints = [(_check_batch_type_integrity,
                     'You can\'t create a standard batch number for a product which is not batch mandatory. If the product is perishable, the system will create automatically an internal batch number on reception/inventory.',
                     ['Type', 'Product']),
@@ -1306,6 +1360,7 @@ class stock_inventory(osv.osv):
         '''
         prodlot_obj = self.pool.get('stock.production.lot')
         product_obj = self.pool.get('product.product')
+        line_ids = []
         # treat the needed production lot
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.inventory_line_id:
@@ -1316,6 +1371,11 @@ class stock_inventory(osv.osv):
                     raise osv.except_osv(_('Error'), _('The product %s is perishable but the line with this product has no expiry date') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
                 if line.hidden_batch_management_mandatory and not line.prod_lot_id:
                     raise osv.except_osv(_('Error'), _('The product %s is batch mandatory but the line with this product has no batch') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
+
+                if line.product_id:
+                    # Check constraints on lines
+                    product_obj._get_restriction_error(cr, uid, [line.product_id.id], {'location_id': line.location_id.id}, context=context)
+
                 # if perishable product
                 if line.hidden_perishable_mandatory and not line.hidden_batch_management_mandatory:
                     # integrity test
@@ -1339,6 +1399,9 @@ class stock_inventory(osv.osv):
                             prodlot_id = prodlot_ids[0]
                         # update the line
                         line.write({'prod_lot_id': prodlot_id,},)
+                line_ids.append(line.id)
+
+        self.pool.get('%s.line' % (self._name)).write(cr, uid, line_ids, {'comment': ''}, context=context)
         
         # super function after production lot creation - production lot are therefore taken into account at stock move creation
         result = super(stock_inventory, self).action_confirm(cr, uid, ids, context=context)      
@@ -1353,6 +1416,12 @@ class stock_inventory_line(osv.osv):
     '''
     _inherit = 'stock.inventory.line'
     _rec_name = 'product_id'
+
+    def onchange_uom_qty(self, cr, uid, ids, product_uom, product_qty):
+        '''
+        Check the rounding of the qty according to the UoM
+        '''
+        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_qty, 'product_qty')
     
     def common_on_change(self, cr, uid, ids, location_id, product, prod_lot_id, uom=False, to_date=False, result=None):
         '''
@@ -1363,14 +1432,19 @@ class stock_inventory_line(osv.osv):
         if not product:
             return result
         product_obj = self.pool.get('product.product').browse(cr, uid, product)
-        uom = uom or product_obj.uom_id.id
-        stock_context = {'uom': uom, 'to_date': to_date,
+        product_uom = product_obj.uom_id.id
+        if uom:
+            uom_obj = self.pool.get('product.uom').browse(cr, uid, uom)
+            if uom_obj.category_id.id == product_obj.uom_id.category_id.id:
+                product_uom = uom
+        #uom = uom or product_obj.uom_id.id
+        stock_context = {'uom': product_uom, 'to_date': to_date,
                          'prodlot_id':prod_lot_id,}
         if location_id:
             # if a location is specified, we do not list the children locations, otherwise yes
             stock_context.update({'compute_child': False,})
         amount = self.pool.get('stock.location')._product_get(cr, uid, location_id, [product], stock_context)[product]
-        result.setdefault('value', {}).update({'product_qty': amount, 'product_uom': uom})
+        result.setdefault('value', {}).update({'product_qty': amount, 'product_uom': product_uom})
         return result
     
     def change_lot(self, cr, uid, ids, location_id, product, prod_lot_id, uom=False, to_date=False,):
@@ -1434,6 +1508,13 @@ class stock_inventory_line(osv.osv):
             # do nothing
             result.setdefault('value', {}).update({'product_qty': 0.0,})
             return result
+
+        if product and location_id:
+            product_obj = self.pool.get('product.product')
+            result, test = product_obj._on_change_restriction_error(cr, uid, product, field_name='location_id', values=result, vals={'location_id': location_id})
+            if test:
+                return result
+
         # compute qty
         result = self.common_on_change(cr, uid, ids, location_id, product, prod_lot_id, uom, to_date, result=result)
         return result
@@ -1446,20 +1527,44 @@ class stock_inventory_line(osv.osv):
         # product changes, prodlot is always cleared
         result.setdefault('value', {})['prod_lot_id'] = False
         result.setdefault('value', {})['expiry_date'] = False
+        result.setdefault('value', {})['lot_check'] = False
+        result.setdefault('value', {})['exp_check'] = False
+        result.setdefault('value', {})['dg_check'] = False
+        result.setdefault('value', {})['kc_check'] = False
+        result.setdefault('value', {})['np_check'] = False
         # reset the hidden flags
         result.setdefault('value', {})['hidden_batch_management_mandatory'] = False
         result.setdefault('value', {})['hidden_perishable_mandatory'] = False
         if product:
             product_obj = self.pool.get('product.product').browse(cr, uid, product)
+            if location_id:
+                result, test = self.pool.get('product.product')._on_change_restriction_error(cr, uid, product, field_name='product_id', values=result, vals={'location_id': location_id})
+                if test:
+                    return result
             if product_obj.batch_management:
                 result.setdefault('value', {})['hidden_batch_management_mandatory'] = True
+                result.setdefault('value', {})['lot_check'] = True
+                result.setdefault('value', {})['exp_check'] = True
             elif product_obj.perishable:
                 result.setdefault('value', {})['hidden_perishable_mandatory'] = True
+                result.setdefault('value', {})['exp_check'] = True
+            # keep cool
+            if product_obj.heat_sensitive_item:
+                result.setdefault('value', {})['kc_check'] = True
+            # ssl
+            if product_obj.short_shelf_life:
+                result.setdefault('value', {})['ssl_check'] = True
+            # dangerous goods
+            if product_obj.dangerous_goods:
+                result.setdefault('value', {})['dg_check'] = True
+            # narcotic
+            if product_obj.narcotic:
+                result.setdefault('value', {})['np_check'] = True
             # if not product, result is 0.0 by super
             # compute qty
             result = self.common_on_change(cr, uid, ids, location_id, product, prod_lot_id, uom, to_date, result=result)
         return result
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         complete info normally generated by javascript on_change function
@@ -1602,7 +1707,13 @@ class stock_inventory_line(osv.osv):
                  'type_check': 'in',
                  'dont_move': lambda *a: False,
                  }
-    
+
+    def _uom_constraint(self, cr, uid, ids, context=None):
+        for obj in self.browse(cr, uid, ids, context=context):
+            if not self.pool.get('uom.tools').check_uom(cr, uid, obj.product_id.id, obj.product_uom.id, context):
+                raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
+        return True
+
     _constraints = [(_check_batch_management,
                      'You must assign a Batch Number which corresponds to Batch Number Mandatory Products.',
                      ['prod_lot_id']),
@@ -1612,6 +1723,7 @@ class stock_inventory_line(osv.osv):
                     (_check_prodlot_need,
                      'The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory',
                      ['prod_lot_id']),
+                    (_uom_constraint, 'Constraint error on Uom', [])
                     ]
 
 stock_inventory_line()
@@ -1633,12 +1745,16 @@ CREATE OR REPLACE view report_stock_inventory AS (
         m.product_id as product_id, pt.categ_id as product_categ_id, l.usage as location_type,
         m.company_id,
         m.state as state, m.prodlot_id as prodlot_id,
-        coalesce(sum(-pt.standard_price * m.product_qty)::decimal, 0.0) as value,
+        CASE when pt.uom_id = m.product_uom
+        THEN
+        coalesce(sum(-pt.standard_price * m.product_qty)::decimal, 0.0)
+        ELSE
+        coalesce(sum((-pt.standard_price * m.product_qty) / u.factor * pu.factor)::decimal, 0.0) END as value,
         CASE when pt.uom_id = m.product_uom
         THEN
         coalesce(sum(-m.product_qty)::decimal, 0.0)
         ELSE
-        coalesce(sum(-m.product_qty * pu.factor)::decimal, 0.0) END as product_qty
+        coalesce(sum(-m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty
     FROM
         stock_move m
             LEFT JOIN stock_picking p ON (m.picking_id=p.id)
@@ -1658,12 +1774,16 @@ CREATE OR REPLACE view report_stock_inventory AS (
         m.product_id as product_id, pt.categ_id as product_categ_id, l.usage as location_type,
         m.company_id,
         m.state as state, m.prodlot_id as prodlot_id,
-        coalesce(sum(pt.standard_price * m.product_qty )::decimal, 0.0) as value,
+        CASE when pt.uom_id = m.product_uom
+        THEN
+        coalesce(sum(pt.standard_price * m.product_qty )::decimal, 0.0)
+        ELSE
+        coalesce(sum((pt.standard_price * m.product_qty) / u.factor * pu.factor )::decimal, 0.0) END as value,
         CASE when pt.uom_id = m.product_uom
         THEN
         coalesce(sum(m.product_qty)::decimal, 0.0)
         ELSE
-        coalesce(sum(m.product_qty * pu.factor)::decimal, 0.0) END as product_qty
+        coalesce(sum(m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty
     FROM
         stock_move m
             LEFT JOIN stock_picking p ON (m.picking_id=p.id)

@@ -28,8 +28,13 @@ report_project_expenses('report.financing.project.expenses', 'financing.contract
 
 class report_project_expenses2(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
+        if not context:
+            context={}
         super(report_project_expenses2, self).__init__(cr, uid, name, context=context)
-        self.reporting_type = 'project'
+        if 'reporting_type' in context:
+            self.reporting_type = context['reporting_type']
+        else:
+            self.reporting_type = 'project'
         self.len1 = 0
         self.len2 = 0
         self.lines = {}
@@ -100,17 +105,18 @@ class report_project_expenses2(report_sxw.rml_parse):
         contract_obj = self.pool.get('financing.contract.contract')
         contract_domain = contract_obj.get_contract_domain(self.cr, self.uid, contract, reporting_type=self.reporting_type)
         analytic_line_obj = self.pool.get('account.analytic.line')
-        analytic_lines = analytic_line_obj.search(self.cr, self.uid, contract_domain ,context=None)
+        analytic_lines = analytic_line_obj.search(self.cr, self.uid, contract_domain, context=None)
 
         for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines, context=None):
-            ids_adl = self.pool.get('account.destination.link').search(self.cr, self.uid,[('account_id', '=', analytic_line.general_account_id.id),('destination_id','=',analytic_line.general_account_id.default_destination_id.id) ])
-            temp = [analytic_line.general_account_id.default_destination_id.id]
-            ids_fcfl = self.pool.get('financing.contract.format.line').search(self.cr, self.uid, [('account_destination_ids','in',ids_adl)])
+            ids_adl = self.pool.get('account.destination.link').search(self.cr, self.uid,[('account_id', '=', analytic_line.general_account_id.id),('destination_id','=',analytic_line.destination_id.id) ])
+            ids_fcfl = self.pool.get('financing.contract.format.line').search(self.cr, self.uid, [('account_destination_ids','in',ids_adl), ('format_id', '=', contract.format_id.id)])
             for fcfl in self.pool.get('financing.contract.format.line').browse(self.cr, self.uid, ids_fcfl):
+                ana_tuple = (analytic_line, fcfl.code, fcfl.name)
                 if lines.has_key(fcfl.code):
-                    lines[fcfl.code] += [(analytic_line, fcfl)]
+                    if not ana_tuple in lines[fcfl.code]:
+                        lines[fcfl.code] += [ana_tuple]
                 else:
-                    lines[fcfl.code] = [(analytic_line, fcfl)]
+                    lines[fcfl.code] = [ana_tuple]
         
         self.lines = lines
         for x in lines:
@@ -126,9 +132,7 @@ class report_project_expenses2(report_sxw.rml_parse):
 
 class report_project_expenses3(report_project_expenses2):
     def __init__(self, cr, uid, name, context=None):
-        report_project_expenses2.__init__(self, cr, uid, name, context=None)
-        super(report_project_expenses3, self).__init__(cr, uid, name, context=context)
-        self.reporting_type = 'allocated'
+        super(report_project_expenses3, self).__init__(cr, uid, name, context={'reporting_type': 'allocated'})
 
 SpreadsheetReport('report.financing.project.expenses.2','financing.contract.contract','addons/financing_contract/report/project_expenses_xls.mako', parser=report_project_expenses2)
 

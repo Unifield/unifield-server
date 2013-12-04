@@ -88,7 +88,10 @@ class purchase_order_line(osv.osv):
         # drop modification to comment attribute
         if 'comment' in result['value']:
             del result['value']['comment']
-            
+
+        if qty:
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'product_qty', result=result)
+
         return result
     
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty, uom,
@@ -103,10 +106,14 @@ class purchase_order_line(osv.osv):
         
         if not product and not comment and not nomen_manda_0 and qty != 0.00:
             return {}
+
+        prod_context = context.copy()
+        if 'categ' in prod_context:
+            del prod_context['categ']
         
         result = self.product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order, fiscal_position, date_planned,
-            name, price_unit, notes, state, old_unit_price,nomen_manda_0,comment,context=context)
+            name, price_unit, notes, state, old_unit_price,nomen_manda_0,comment,context=prod_context)
         
         # drop modification to name attribute
         if 'name' in result['value']:
@@ -114,6 +121,10 @@ class purchase_order_line(osv.osv):
         # drop modification to comment attribute
         if 'comment' in result['value']:
             del result['value']['comment']
+
+        if qty:
+            uom = uom or result.get('value', {}).get('product_uom')
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'product_qty', result=result)
         
         return result
     
@@ -128,7 +139,7 @@ class purchase_order_line(osv.osv):
             # update the name (comment) of order line
             # the 'name' is no more the get_name from product, but instead
             # the name of product
-            productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'])
+            productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
             vals.update({'name':productObj.name})
             vals.update({'default_code':productObj.default_code})
             vals.update({'default_name':productObj.name})
@@ -316,7 +327,11 @@ class sale_order_line(osv.osv):
         # drop modification to comment attribute
         if 'comment' in result['value']:
             del result['value']['comment']
-            
+
+        # Round up the quantity
+        if qty:
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'product_qty', result=result)
+
         return result
     
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty=0,
@@ -328,13 +343,18 @@ class sale_order_line(osv.osv):
         result = self.product_id_change(cr, uid, ids, pricelist, product, qty,
                                         uom, qty_uos, uos, name, partner_id,
                                         lang, update_tax, date_order, packaging, fiscal_position, flag)
+
         # drop modification to name attribute
         if 'name' in result['value']:
             del result['value']['name']
         # drop modification to comment attribute
         if 'comment' in result['value']:
             del result['value']['comment']
-            
+
+        # Round up the quantity
+        if qty:
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, ['product_uom_qty', 'product_uos_qty'], result=result)
+
         return result
     
     def product_packaging_change(self, cr, uid, ids, pricelist, product, qty=0,
@@ -360,7 +380,7 @@ class sale_order_line(osv.osv):
             # update the name (comment) of order line
             # the 'name' is no more the get_name from product, but instead
             # the name of product
-            productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'])
+            productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
             vals.update({'name':productObj.name})
             vals.update({'default_code':productObj.default_code})
             vals.update({'default_name':productObj.name})

@@ -140,11 +140,25 @@ class wizard_account_invoice(osv.osv):
         # Retrieve period
         register = self.pool.get('account.bank.statement').browse(cr, uid, [inv['register_id'][0]], context=context)[0]
         period = register and register.period_id and register.period_id.id or False
-        vals.update({'date_invoice': vals['date_invoice'] or time.strftime('%Y-%m-%d')})
-        vals.update({'register_posting_date': vals['register_posting_date'] or time.strftime('%Y-%m-%d')})
+        # Check the dates
+        if vals['date_invoice'] and vals['register_posting_date']:
+            if vals['date_invoice'] < register.period_id.date_start or \
+               vals['date_invoice'] > register.period_id.date_stop:
+                raise osv.except_osv(_('Warning'), _('Direct Invoice posting date is outside of the register period!'))
+            elif vals['register_posting_date'] < register.period_id.date_start or \
+                 vals['register_posting_date'] > register.period_id.date_stop:
+                raise osv.except_osv(_('Warning'), _('Register Line posting date is outside of the register period!'))
+            elif vals['date_invoice'] > vals['register_posting_date']:
+                raise osv.except_osv(_('Warning'), _('Direct Invoice posting date must be sooner or equal to the register line posting date!'))
+            
+        vals.update({'date_invoice': vals['date_invoice']})
+        vals.update({'register_posting_date': vals['register_posting_date']})
         
         # Create invoice
         inv_id = inv_obj.create(cr, uid, vals, context=context)
+        # Set this invoice as direct invoice (since UTP-551, is_direct_invoice is a boolean and not a function)
+        self.pool.get('account.invoice').write(cr, uid, [inv_id], {'is_direct_invoice': True})
+
         
         # Create the attached register line and link the invoice to the register
         reg_line_id = absl_obj.create(cr, uid, {

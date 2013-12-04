@@ -26,7 +26,8 @@ class wizard_local_expenses(osv.osv_memory):
 
     _columns = {
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', required=True),
-        'period_id': fields.many2one('account.period', 'Year-to-date'),
+        'start_period_id': fields.many2one('account.period', 'Period From'),
+        'end_period_id': fields.many2one('account.period', 'Period To'),
         'breakdown': fields.selection([('month','By month'),
                                        ('year','Total figure')], 'Breakdown', select=1, required=True),
         'granularity': fields.selection([('all','By expense account'),
@@ -42,7 +43,7 @@ class wizard_local_expenses(osv.osv_memory):
         'breakdown': 'year',
         'granularity': 'parent',
         'output_currency_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
-        'cost_center_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.cost_center_id.id,
+        'cost_center_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.top_cost_center_id.id,
     }
 
     def button_create_report(self, cr, uid, ids, context=None):
@@ -56,11 +57,17 @@ class wizard_local_expenses(osv.osv_memory):
         data['form'].update({'cost_center_id': wizard.cost_center_id.id})
         data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
         # Month stop for YTD
+        month_start = 1
         month_stop = 12
-        if wizard.period_id:
-            data['form'].update({'period_id': wizard.period_id.id})
-            period = self.pool.get('account.period').browse(cr, uid, wizard.period_id.id, context=context)
+        if wizard.start_period_id:
+            data['form'].update({'start_period_id': wizard.start_period_id.id})
+            period = self.pool.get('account.period').browse(cr, uid, wizard.start_period_id.id, context=context)
+            month_start = datetime.datetime.strptime(period.date_start, '%Y-%m-%d').month
+        if wizard.end_period_id:
+            data['form'].update({'end_period_id': wizard.end_period_id.id})
+            period = self.pool.get('account.period').browse(cr, uid, wizard.end_period_id.id, context=context)
             month_stop = datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').month
+        data['form'].update({'month_start': month_start})
         data['form'].update({'month_stop': month_stop})
         if wizard.booking_currency_id:
             data['form'].update({'booking_currency_id': wizard.booking_currency_id.id})
@@ -68,4 +75,4 @@ class wizard_local_expenses(osv.osv_memory):
         return {'type': 'ir.actions.report.xml', 'report_name': 'local.expenses', 'datas': data}
 
 wizard_local_expenses()
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftw
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4

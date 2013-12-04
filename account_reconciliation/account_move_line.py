@@ -22,6 +22,7 @@
 ##############################################################################
 
 from osv import osv
+from osv import fields
 import time
 import netsvc
 from tools.translate import _
@@ -85,7 +86,16 @@ class account_move_line(osv.osv):
                 raise osv.except_osv(_('Warning !'), _('To reconcile the entries company should be the same for all entries'))
             company_list.append(line.company_id.id)
 
+        # UTP-752: Add an attribute to reconciliation element if different instance levels
+        previous_level = False
+        different_level = False
         for line in self.browse(cr, uid, ids, context=context):
+            # Do level check only if we don't know if more than 1 different level exists between lines
+            if not different_level:
+                if not previous_level:
+                    previous_level = line.instance_id.level
+                if previous_level != line.instance_id.level:
+                    different_level = True
             company_currency_id = line.company_id.currency_id
             if line.reconcile_id:
                 raise osv.except_osv(_('Warning'), _('Already Reconciled!'))
@@ -100,13 +110,20 @@ class account_move_line(osv.osv):
             else:
                 unmerge.append(line.id)
                 total += (line.debit_currency or 0.0) - (line.credit_currency or 0.0)
+
         if self.pool.get('res.currency').is_zero(cr, uid, company_currency_id, total):
             res = self.reconcile(cr, uid, merges+unmerge, context=context)
             return res
         r_id = move_rec_obj.create(cr, uid, {
             'type': type,
-            'line_partial_ids': map(lambda x: (4,x,False), merges+unmerge)
+            'line_partial_ids': map(lambda x: (4,x,False), merges+unmerge),
+            'is_multi_instance': different_level,
         })
+        
+        # UF-2011: synchronize move lines (not "marked" after reconcile creation)
+        if self.pool.get('sync.client.orm_extended'):
+            self.pool.get('account.move.line').synchronize(cr, uid, merges+unmerge, context=context)
+        
         move_rec_obj.reconcile_partial_check(cr, uid, [r_id] + merges_rec, context=context)
         # @@@end
         return True
@@ -130,10 +147,20 @@ class account_move_line(osv.osv):
         if context is None:
             context = {}
         company_list = []
+        # Check company's field
+        # UTP-752: Check if lines comes from the same instance level
+        previous_level = False
+        different_level = False
         for line in self.browse(cr, uid, ids, context=context):
             if company_list and not line.company_id.id in company_list:
                 raise osv.except_osv(_('Warning !'), _('To reconcile the entries company should be the same for all entries'))
             company_list.append(line.company_id.id)
+            # instance level
+            if not different_level:
+                if not previous_level:
+                    previous_level = line.instance_id.level
+                if previous_level != line.instance_id.level:
+                    different_level = True
         for line in unrec_lines:
             if line.state <> 'valid':
                 raise osv.except_osv(_('Error'),
@@ -182,8 +209,14 @@ class account_move_line(osv.osv):
         r_id = move_rec_obj.create(cr, uid, {
             'type': type,
             'line_id': map(lambda x: (4, x, False), ids),
-            'line_partial_ids': map(lambda x: (3, x, False), ids)
+            'line_partial_ids': map(lambda x: (3, x, False), ids),
+            'is_multi_instance': different_level,
         })
+        
+        # UF-2011: synchronize move lines (not "marked" after reconcile creation)
+        if self.pool.get('sync.client.orm_extended'):
+            self.pool.get('account.move.line').synchronize(cr, uid, ids, context=context)
+        
         wf_service = netsvc.LocalService("workflow")
         # the id of the move.reconcile is written in the move.line (self) by the create method above
         # because of the way the line_id are defined: (4, x, False)
@@ -269,6 +302,14 @@ class account_move_reconcile(osv.osv):
     _name = 'account.move.reconcile'
     _inherit = 'account.move.reconcile'
 
+    _columns = {
+        'is_multi_instance': fields.boolean(string="Reconcile at least 2 lines that comes from different instance levels."),
+    }
+
+    _defaults = {
+        'is_multi_instance': lambda *a: False,
+    }
+
     def create(self, cr, uid, vals, context=None):
         """
         Write reconcile_txt on linked account_move_lines if any changes on this reconciliation.
@@ -302,10 +343,7 @@ class account_move_reconcile(osv.osv):
             ids = [ids]
         res = super(account_move_reconcile, self).write(cr, uid, ids, vals, context)
         if res:
-            tmp_res = res
-            if isinstance(res, (int, long)):
-                tmp_res = [tmp_res]
-            for r in self.browse(cr, uid, tmp_res):
+            for r in self.browse(cr, uid, ids):
                 t = [x.id for x in r.line_id]
                 p = [x.id for x in r.line_partial_ids]
                 d = self.name_get(cr, uid, [r.id])

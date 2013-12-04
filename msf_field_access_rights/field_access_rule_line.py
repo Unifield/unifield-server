@@ -32,6 +32,7 @@ class field_access_rule_line(osv.osv):
 
     _name = "msf_field_access_rights.field_access_rule_line"
     _description = 'Field Access Rule Line'
+    _rec_name = "field_name"
     
     _columns = {
         'field': fields.many2one('ir.model.fields', 'Field', help='The field of the model for which this rule applies', required=True),

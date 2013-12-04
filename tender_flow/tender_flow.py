@@ -111,6 +111,7 @@ class tender(osv.osv):
                 'internal_state': fields.selection([('draft', 'Draft'),('updated', 'Rfq Updated'), ], string="Internal State", readonly=True),
                 'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',),
                 'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product'),
+                'delivery_address': fields.many2one('res.partner.address', string='Delivery address', required=True),
                'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
                 }
     
@@ -126,6 +127,37 @@ class tender(osv.osv):
                  }
     
     _order = 'name desc'
+
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check if there is no restrictive products in lines
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        line_obj = self.pool.get('tender.line')
+
+        res = True
+        for tender in self.browse(cr, uid, ids, context=context):
+            res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in tender.tender_line_ids], context=context)
+
+        return res
+
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Set default data
+        '''
+        # Object declaration
+        partner_obj = self.pool.get('res.partner')
+        user_obj = self.pool.get('res.users')
+
+        res = super(tender, self).default_get(cr, uid, fields, context=context)
+
+        # Get the delivery address
+        company = user_obj.browse(cr, uid, uid, context=context).company_id
+        res['delivery_address'] = partner_obj.address_get(cr, uid, company.partner_id.id, ['delivery'])['delivery']
+
+        return res
 
     def _check_tender_from_fo(self, cr, uid, ids, context=None):
         if not context:
@@ -149,8 +181,67 @@ class tender(osv.osv):
         '''
         if not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'tender')})
+
         return super(tender, self).create(cr, uid, vals, context=context)
-    
+
+    def _check_service(self, cr, uid, ids, vals, context=None):
+        '''
+        Avoid the saving of a Tender with non service products on Service Tender
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        categ = {'transport': _('Transport'),
+                 'service': _('Service')}
+        if context is None:
+            context = {}
+        if context.get('import_in_progress'):
+            return True
+        for tender in self.browse(cr, uid, ids, context=context):
+            for line in tender.tender_line_ids:
+                if vals.get('categ', tender.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):
+                    raise osv.except_osv(_('Error'), _('The product [%s]%s is not a \'Transport\' product. You can have only \'Transport\' products on a \'Transport\' tender. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
+                    return False
+                elif vals.get('categ', tender.categ) == 'service' and line.product_id and line.product_id.type not in ('service', 'service_recep'):
+                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Service\' product. You can have only \'Service\' products on a \'Service\' tender. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
+                    return False
+                
+        return True
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check consistency between lines and categ of tender
+        """
+        self._check_service(cr, uid, ids, vals, context=context)
+        return super(tender, self).write(cr, uid, ids, vals, context=context)
+
+    def onchange_categ(self, cr, uid, ids, categ, context=None):
+        """ Check that the categ is compatible with the product
+        @param categ: Changed value of categ.
+        @return: Dictionary of values.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        message = {}
+        if ids and categ in ['service', 'transport']:
+            # Avoid selection of non-service producs on Service Tender
+            category = categ=='service' and 'service_recep' or 'transport'
+            transport_cat = ''
+            if category == 'transport':
+                transport_cat = 'OR p.transport_ok = False'
+            cr.execute('''SELECT p.default_code AS default_code, t.name AS name
+                          FROM tender_line l
+                            LEFT JOIN product_product p ON l.product_id = p.id
+                            LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
+                            LEFT JOIN tender t ON l.tender_id = t.id
+                          WHERE (pt.type != 'service_recep' %s) AND t.id in (%s) LIMIT 1''' % (transport_cat, ','.join(str(x) for x in ids)))
+            res = cr.fetchall()
+            if res:
+                cat_name = categ=='service' and 'Service' or 'Transport'
+                message.update({'title': _('Warning'),
+                                'message': _('The product [%s] %s is not a \'%s\' product. You can have only \'%s\' products on a \'%s\' tender. Please remove this line before saving.') % (res[0][0], res[0][1], cat_name, cat_name, cat_name)})
+                
+        return {'warning': message}
+
     def onchange_warehouse(self, cr, uid, ids, warehouse_id, context=None):
         '''
         on_change function for the warehouse
@@ -173,6 +264,7 @@ class tender(osv.osv):
         partner_obj = self.pool.get('res.partner')
         pricelist_obj = self.pool.get('product.pricelist')
         obj_data = self.pool.get('ir.model.data')
+
         # no suppliers -> raise error
         for tender in self.browse(cr, uid, ids, context=context):
             # check some supplier have been selected
@@ -198,7 +290,7 @@ class tender(osv.osv):
                 raise osv.except_osv(_('Warning !'), _('You must select at least one product!'))
             for supplier in tender.supplier_ids:
                 # create a purchase order for each supplier
-                address_id = partner_obj.address_get(cr, uid, [supplier.id], ['delivery'])['delivery']
+                address_id = partner_obj.address_get(cr, uid, [supplier.id], ['default'])['default']
                 if not address_id:
                     raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!')%(supplier.name,))
                 pricelist_id = supplier.property_product_pricelist_purchase.id
@@ -216,6 +308,7 @@ class tender(osv.osv):
                           'priority': tender.priority,
                           'details': tender.details,
                           'delivery_requested_date': tender.requested_date,
+                          'rfq_delivery_address': tender.delivery_address and tender.delivery_address.id or False,
                           }
                 # create the rfq - dic is udpated for default partner_address_id at purchase.order level
                 po_id = po_obj.create(cr, uid, values, context=dict(context, partner_id=supplier.id, rfq_ok=True))
@@ -436,13 +529,13 @@ class tender(osv.osv):
                                                                }))
                     
                 # fill data corresponding to po creation
-                address_id = partner_obj.address_get(cr, uid, [line.supplier_id.id], ['delivery'])['delivery']
+                address_id = partner_obj.address_get(cr, uid, [line.supplier_id.id], ['default'])['default']
                 pricelist = line.supplier_id.property_product_pricelist_purchase.id,
                 if line.currency_id:
                     price_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('currency_id', '=', line.currency_id.id)], context=context)
                     if price_ids:
                         pricelist = price_ids[0]
-                po_values = {'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + ';' + tender.name,
+                po_values = {'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + '; ' + tender.name,
                              'partner_id': line.supplier_id.id,
                              'partner_address_id': address_id,
                              'location_id': tender.location_id.id,
@@ -456,6 +549,7 @@ class tender(osv.osv):
                              'warehouse_id': tender.warehouse_id.id,
                              'details': tender.details,
                              'delivery_requested_date': tender.requested_date,
+                             'dest_address_id': tender.delivery_address.id,
                              }
                 data[line.supplier_id.id].update(po_values)
             
@@ -536,16 +630,43 @@ class tender_line(osv.osv):
     
     _SELECTION_TENDER_STATE = [('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Closed'),]
     
-    def on_product_change(self, cr, uid, id, product_id, context=None):
+    def on_product_change(self, cr, uid, id, product_id, uom_id, product_qty, context=None):
         '''
         product is changed, we update the UoM
         '''
+        if not context:
+            context = {}
+
         prod_obj = self.pool.get('product.product')
         result = {'value': {}}
         if product_id:
-            result['value']['product_uom'] = prod_obj.browse(cr, uid, product_id, context=context).uom_po_id.id
-            
+            # Test the compatibility of the product with a tender
+            result, test = prod_obj._on_change_restriction_error(cr, uid, product_id, field_name='product_id', values=result, vals={'constraints': ['external', 'esc', 'internal']}, context=context)
+            if test:
+                return result
+
+            product = prod_obj.browse(cr, uid, product_id, context=context)
+            result['value']['product_uom'] = product.uom_id.id
+            result['value']['text_error'] = False
+            result['value']['to_correct_ok'] = False
+        
+        result = self.onchange_uom_qty(cr, uid, id, uom_id, product_qty)
+        
+        if uom_id:
+            result['value']['product_uom'] = uom_id
+
         return result
+
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, qty):
+        '''
+        Check round of qty according to the UoM
+        '''
+        res = {}
+
+        if qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'qty', result=res)
+
+        return res
     
     def _get_total_price(self, cr, uid, ids, field_name, arg, context=None):
         '''
@@ -595,7 +716,7 @@ class tender_line(osv.osv):
                 'func_total_price': fields.function(_get_total_price, method=True, type='float', string="Func. Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
                 'func_currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Func. Cur.', multi='total'),
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
-                'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
+                'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="char", string="Related Line Number", readonly=True,),
                 'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
                 'comment': fields.char(size=128, string='Comment'),
                 }
@@ -603,6 +724,20 @@ class tender_line(osv.osv):
                  'state': lambda *a: 'draft',
                  }
     
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check if there is no restrictive products in lines
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.tender_id and line.product_id:
+                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'constraints': ['external']}, context=context):
+                    return False
+
+        return True
+
     _sql_constraints = [
         ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]
@@ -764,7 +899,13 @@ class procurement_order(osv.osv):
         '''
         values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         procurement = kwargs['procurement']
-        
+
+        values['partner_address_id'] = self.pool.get('res.partner').address_get(cr, uid, [values['partner_id']], ['default'])['default']
+
+        # set tender link in purchase order
+        if procurement.tender_id:
+            values['origin_tender_id'] = procurement.tender_id.id
+
         values['date_planned'] = procurement.date_planned
         
         if procurement.product_id:
@@ -798,6 +939,7 @@ class purchase_order(osv.osv):
                 return False
         return True
     _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
+                'rfq_delivery_address': fields.many2one('res.partner.address', string='Delivery address'),
                 'origin_tender_id': fields.many2one('tender', string='Tender', readonly=True),
                 'rfq_ok': fields.boolean(string='Is RfQ ?'),
                 'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Closed'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
@@ -813,6 +955,22 @@ class purchase_order(osv.osv):
         (_check_valid_till,
             'You must specify a Valid Till date.',
             ['valid_till']),]
+
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Set default data
+        '''
+        # Object declaration
+        partner_obj = self.pool.get('res.partner')
+        user_obj = self.pool.get('res.users')
+
+        res = super(purchase_order, self).default_get(cr, uid, fields, context=context)
+
+        # Get the delivery address
+        company = user_obj.browse(cr, uid, uid, context=context).company_id
+        res['rfq_delivery_address'] = partner_obj.address_get(cr, uid, company.partner_id.id, ['delivery'])['delivery']
+
+        return res
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -877,6 +1035,8 @@ class purchase_order(osv.osv):
         '''
         res = True
         return res
+
+    
         
         
     def rfq_sent(self, cr, uid, ids, context=None):

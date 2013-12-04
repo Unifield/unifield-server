@@ -21,13 +21,13 @@
                 rml="addons/msf_outgoing/report/invoice.rml"
                 string="Invoice" />
                 
-        <report auto="False" 
+            <!--<report auto="False" 
                 id="report_certificate_donation" 
                 model="shipment" 
                 name="certificate.donation"
                 header="False"
                 rml="addons/msf_outgoing/report/certificate_donation.rml"
-                string="Certificate of Donation" />
+                string="Certificate of Donation" />-->
                 
         <report auto="False" 
                 id="report_certificate_free_gift" 

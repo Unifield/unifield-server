@@ -311,6 +311,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 vals.update({'percentage': abs((vals.get('amount') / wiz[0].total_amount) * 100.0)})
         if vals.get('percentage', False) == 0.0:
             raise osv.except_osv(_('Error'), _('0 is not allowed as percentage value!'))
+        if vals.get('percentage', False) < 0.0:
+            raise osv.except_osv(_('Error'), _('Negative percentage value is not allowed!'))
         res = super(analytic_distribution_wizard_lines, self).create(cr, uid, vals, context=context)
         # Validate wizard
         if vals.get('wizard_id', False) and not context.get('skip_validation', False):
@@ -531,6 +533,17 @@ class analytic_distribution_wizard(osv.osv_memory):
                 res[wiz.id] = abs(wiz.total_amount)
         return res
 
+    def _get_register_line_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Get register line state if present.
+        """
+        res = {}
+        for wiz in self.browse(cr, uid, ids):
+            res[wiz.id] = 'unknown'
+            if wiz.register_line_id:
+                res[wiz.id] = wiz.register_line_id.state
+        return res
+
     _columns = {
         'total_amount': fields.float(string="Total amount", size=64, readonly=True),
         'state': fields.selection([('draft', 'Draft'), ('cc', 'Cost Center only'), ('dispatch', 'All other elements'), ('done', 'Done')], 
@@ -558,7 +571,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
         'have_header': fields.function(_have_header, method=True, string='Is this wizard come from an invoice line?', 
             type='boolean', readonly=True, help="This informs the wizard if we are on a line and if the parent has an distrib."),
-        'account_id': fields.many2one('account.account', string="Account from invoice", readonly=True,
+        'account_id': fields.many2one('account.account', string="G/L Account", readonly=True,
             help="This account come from an invoice line. When filled in it permits to test compatibility for each funding pool and display those that was linked with."),
         'direct_invoice_id': fields.many2one('wizard.account.invoice', string="Direct Invoice"),
         'direct_invoice_line_id': fields.many2one('wizard.account.invoice.line', string="Direct Invoice Line"),
@@ -569,6 +582,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'posting_date': fields.date('Posting date', readonly=True),
         'document_date': fields.date('Document date', readonly=True),
         'partner_type': fields.char('Partner Type', readonly=1, size=128),
+        'register_line_state': fields.function(_get_register_line_state, method=True, string='Register line state', type='selection', selection=[('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')], readonly=True, store=False),
     }
 
     _defaults = {
@@ -929,10 +943,14 @@ class analytic_distribution_wizard(osv.osv_memory):
         """
         if not context:
             context = {}
+
         if isinstance(ids, (int, long)):
             ids = [ids]
+        o2m_toreload = {}
+        if context.get('from_list_grid'):
+            o2m_toreload['o2m_refresh'] = context['from_list_grid']
         for wiz in self.browse(cr, uid, ids, context=context):
-            # Then update cost center lines
+            # Update cost center lines
             if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
                 raise osv.except_osv(_('Error'), _('Cost center update failure.'))
             # First do some verifications before writing elements
@@ -1005,18 +1023,23 @@ class analytic_distribution_wizard(osv.osv_memory):
             self.pool.get('account.move').validate(cr, uid, [move_id])
         # Validate account_move if we come from a temp posted register line
         if wiz and (wiz.register_line_id and wiz.register_line_id.state == 'temp'):
-            # write analytic distribution on move line and validate move
+            # check account presence
+            if not wiz.account_id:
+                raise osv.except_osv(_('Warning'), _('Seems that no G/L account was found for this Register Analytic Distribution Wizard. Please give one.'))
             distribution_id = wiz.distribution_id and wiz.distribution_id.id or False
+            # write analytic distribution on move line and validate move
             ml_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', wiz.register_line_id.account_id.id), ('id', 'not in', [wiz.register_line_id.first_move_line_id.id]), ('move_id', 'in', [x and x.id for x in wiz.register_line_id.move_ids])])
             # copy distribution
             new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, distribution_id, {}, context=context)
-            # write changes
-            self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id}, check=False, update_check=False)
+            new_register_distribution_id = self.pool.get('analytic.distribution').copy(cr, uid, distribution_id, {}, context=context)
+            # write changes - first on account move line WITH account_id from wizard, THEN on register line with given account
+            self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id, 'account_id': wiz.account_id.id}, check=False, update_check=False)
+            self.pool.get('account.bank.statement.line').write(cr, uid, [wiz.register_line_id.id], {'account_id': wiz.account_id.id, 'analytic_distribution_id': new_register_distribution_id}, context=context)
             self.pool.get('account.move').validate(cr, uid, [x.id for x in wiz.register_line_id.move_ids])
         # Update analytic lines
         self.update_analytic_lines(cr, uid, ids, context=context)
         
-        return_wiz =  {'type': 'ir.actions.act_window_close'}
+        return_wiz =  dict(type='ir.actions.act_window_close', **o2m_toreload)
         if context.get("from_cash_return_analytic_dist"):
             # If the wizard was called from the cash return line, the perform some actions before returning back to the caller wizard
             wizard_name = context.get('from')
@@ -1059,8 +1082,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             if wizard_obj.entry_mode == 'percentage':
                 percentage = wizard_line['percentage']
                 # Check that the value is in the correct range
-                if percentage < 0.0 or percentage > 100.0:
-                    raise osv.except_osv(_('Percentage not valid!'),_("Percentage not valid!"))
+                if abs(percentage) > 100.0+10**-4 or percentage < 0.0:
+                    raise osv.except_osv(_('Error'),_("Percentage not valid! (%s)") % (percentage,))
                 # Fill the other value
                 amount = round(wizard_obj.total_amount * percentage) / 100.0
                 wizard_line['amount'] = amount
@@ -1112,6 +1135,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             elif wiz.model_line_id:
                 pl = wiz.model_line_id
                 distrib = pl.model_id and pl.model_id.analytic_distribution_id or False
+            elif wiz.direct_invoice_line_id:
+                il = wiz.direct_invoice_line_id
+                distrib = il.invoice_id and il.invoice_id.analytic_distribution_id and il.invoice_id.analytic_distribution_id or False
 
             if distrib:
                 # Check if distribution if valid with wizard account
@@ -1144,6 +1170,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        o2m_toreload = {}
+        if context.get('from_list_grid'):
+            o2m_toreload['o2m_refresh'] = context['from_list_grid']
         # Retrieve some values to verify if we come from a direct invoice
         wiz = self.browse(cr, uid, ids, context=context)[0]
         if wiz and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):
@@ -1172,7 +1202,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 }
         elif wiz.from_direct_inv:
             return self.pool.get('account.bank.statement.line').button_open_invoice(cr, uid, [wiz.from_direct_inv.id], context)
-        return {'type' : 'ir.actions.act_window_close'}
+
+        return dict(type='ir.actions.act_window_close', **o2m_toreload)
 
     def update_analytic_lines(self, cr, uid, ids, context=None):
         """

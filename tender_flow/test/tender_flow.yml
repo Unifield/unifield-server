@@ -63,7 +63,7 @@
     weight: 0.0
     weight_net: 0.0
     product_tmpl_id: product_template_p0
-    international_status: itc
+    international_status: product_attributes.int_1
     
     
 - 
@@ -290,7 +290,7 @@
     so_obj = self.pool.get('sale.order')
     so = so_obj.browse(cr, uid, ref("sale_order_tender_so0"))
     so_ids = po_obj.search(cr, uid, [])
-    ids = po_obj.search(cr, uid, [('origin', '=', so.name + ';' + tender.name),('id', '=', po_id)])
+    ids = po_obj.search(cr, uid, [('origin', '=', so.name + '; ' + tender.name),('id', '=', po_id)])
     assert ids, 'The origin of the generated purchase order is not correct'
     po = po_obj.browse(cr, uid, ids[0])
     assert po.state == 'draft', 'the state of purchase order is wrong. %s-draft'%po.state # state depends on the installation or not of double validation module for purchase order

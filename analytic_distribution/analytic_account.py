@@ -220,9 +220,11 @@ class analytic_account(osv.osv):
             funding_pool_parent = self.search(cr, uid, [('category', '=', 'FUNDING'), ('parent_id', '=', False)])[0]
             vals['parent_id'] = funding_pool_parent
 
-    def _check_date(self, vals):
+    def _check_date(self, vals, context=None):
+        if context is None:
+            context = {}
         if 'date' in vals and vals['date'] is not False:
-            if vals['date'] <= datetime.date.today().strftime('%Y-%m-%d'):
+            if vals['date'] <= datetime.date.today().strftime('%Y-%m-%d') and not context.get('sync_update_execution', False):
                 # validate the date (must be > today)
                 raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
             elif 'date_start' in vals and not vals['date_start'] < vals['date']:
@@ -233,7 +235,7 @@ class analytic_account(osv.osv):
         """
         Some verifications before analytic account creation
         """
-        self._check_date(vals)
+        self._check_date(vals, context=context)
         self.set_funding_pool_parent(cr, uid, vals)
         return super(analytic_account, self).create(cr, uid, vals, context=context)
 
@@ -241,7 +243,7 @@ class analytic_account(osv.osv):
         """
         Some verifications before analytic account write
         """
-        self._check_date(vals)
+        self._check_date(vals, context=context)
         self.set_funding_pool_parent(cr, uid, vals)
         return super(analytic_account, self).write(cr, uid, ids, vals, context=context)
 
@@ -310,7 +312,7 @@ class analytic_account(osv.osv):
         account = self.search(cr, uid, ['|', ('code', 'ilike', '%%%s%%' % name), ('name', 'ilike', '%%%s%%' % name)]+args, limit=limit, context=context)
         return self.name_get(cr, uid, account, context=context)
 
-    def name_get(self, cr, uid, ids, context={}):
+    def name_get(self, cr, uid, ids, context=None):
         """
         Get name for analytic account with analytic account code.
         Example: For an account OC/Project/Mission, we have something like this:
@@ -408,6 +410,14 @@ class analytic_account(osv.osv):
                 if contract.state in ['soft_closed', 'hard_closed']:
                     res.append(aa.id)
         return res
+
+    def button_cc_clear(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'cost_center_ids':[(6, 0, [])]}, context=context)
+        return True
+
+    def button_dest_clear(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'tuple_destination_account_ids':[(6, 0, [])]}, context=context)
+        return True
 
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

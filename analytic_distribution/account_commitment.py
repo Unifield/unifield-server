@@ -28,6 +28,7 @@ from time import strftime
 import decimal_precision as dp
 from account_tools import get_period_from_date
 from tools.misc import flatten
+from time import strftime, strptime
 
 class account_commitment(osv.osv):
     _name = 'account.commitment'
@@ -52,16 +53,31 @@ class account_commitment(osv.osv):
                 res[co.id] += line.amount
         return res
 
+    def _get_cv(self, cr, uid, ids, context=None):
+        """
+        Get CV linked to given lines
+        """
+        res = []
+        if not context:
+            context = {}
+        for cvl in self.pool.get('account.commitment.line').browse(cr, uid, ids):
+            if not cvl.commit_id in res:
+                res.append(cvl.commit_id.id)
+        return res
+
     _columns = {
         'journal_id': fields.many2one('account.analytic.journal', string="Journal", readonly=True, required=True),
         'name': fields.char(string="Number", size=64, readonly=True, required=True),
-        'currency_id': fields.many2one('res.currency', string="Currency", readonly=True, required=True),
-        'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=True),
+        'currency_id': fields.many2one('res.currency', string="Currency", required=True),
+        'partner_id': fields.many2one('res.partner', string="Supplier", required=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True, required=True),
         'state': fields.selection([('draft', 'Draft'), ('open', 'Validated'), ('done', 'Done')], readonly=True, string="State", required=True),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
-        'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total"),
+        'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total", 
+            store={
+                'account.commitment.line': (_get_cv, ['amount'],10),
+        }),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'type': fields.selection([('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Manual - ESC supplier')], string="Type", readonly=True),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
@@ -69,7 +85,6 @@ class account_commitment(osv.osv):
     }
 
     _defaults = {
-        'name': lambda s, cr, uid, c: s.pool.get('ir.sequence').get(cr, uid, 'account.commitment') or '',
         'state': lambda *a: 'draft',
         'date': lambda *a: strftime('%Y-%m-%d'),
         'type': lambda *a: 'manual',
@@ -81,6 +96,7 @@ class account_commitment(osv.osv):
     def create(self, cr, uid, vals, context=None):
         """
         Update period_id regarding date.
+        Add sequence.
         """
         # Some verifications
         if not context:
@@ -88,6 +104,34 @@ class account_commitment(osv.osv):
         if not 'period_id' in vals:
             period_ids = get_period_from_date(self, cr, uid, vals.get('date', strftime('%Y-%m-%d')), context=context)
             vals.update({'period_id': period_ids and period_ids[0]})
+        # UTP-317 # Check that no inactive partner have been used to create this commitment
+        if 'partner_id' in vals:
+            partner_id = vals.get('partner_id')
+            if isinstance(partner_id, (str)):
+                partner_id = int(partner_id)
+            partner = self.pool.get('res.partner').browse(cr, uid, [partner_id])
+            active = True
+            if partner and partner[0] and not partner[0].active:
+                raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
+        # Add sequence
+        sequence_number = self.pool.get('ir.sequence').get(cr, uid, self._name)
+        instance = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id
+        if not instance:
+            raise osv.except_osv(_('Error'), _('No instance found!'))
+        journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement'), ('instance_id', '=', instance.id)], limit=1, context=context)
+        if not journal_ids:
+            raise osv.except_osv(_('Error'), _('No Engagement journal found!'))
+        journal_id = journal_ids[0]
+        journal = self.pool.get('account.analytic.journal').browse(cr, uid, [journal_id])
+        if not journal:
+            raise osv.except_osv(_('Error'), _('No Engagement journal found!'))
+        journal_name = journal[0].code
+        # UF-2139: add fiscal year last 2 numbers in sequence
+        fy_numbers = vals.get('date', False) and strftime('%Y', strptime(vals.get('date'), '%Y-%m-%d'))[2:4] or False
+        if instance and sequence_number and journal_name and fy_numbers:
+            vals.update({'name': "%s-%s-%s%s" % (instance.move_prefix, journal_name, fy_numbers, sequence_number)})
+        else:
+            raise osv.except_osv(_('Error'), _('Error creating commitment sequence!'))
         return super(account_commitment, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -300,7 +344,7 @@ class account_commitment(osv.osv):
                     # Create engagement journal lines
                     self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], c.name, c.date, 
                         cl.amount, c.journal_id and c.journal_id.id, c.currency_id and c.currency_id.id, c.date or False, 
-                        c.purchase_id and c.purchase_id.name or False, c.date, cl.account_id and cl.account_id.id or False, False, False, 
+                        (c.purchase_id and c.purchase_id.name) or c.name or False, c.date, cl.account_id and cl.account_id.id or False, False, False, 
                         cl.id, context=context)
         return True
 
@@ -346,6 +390,7 @@ class account_commitment_line(osv.osv):
     _name = 'account.commitment.line'
     _description = "Account Commitment Voucher Line"
     _order = "id desc"
+    _rec_name = 'account_id'
 
     def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
         """

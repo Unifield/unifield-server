@@ -63,6 +63,30 @@ class procurement_request(osv.osv):
         
         return res
 
+    def _amount_by_type(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        Compute the amount of line by type of procurement
+        '''
+        line_obj = self.pool.get('sale.order.line')
+
+        res = {}
+
+        for id in ids:
+            res[id] = {'purchase_amount': 0.00, 'stock_amount': 0.00, 'proc_amount': 0.00}
+
+        line_ids = line_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
+
+        for line_data in line_obj.read(cr, uid, line_ids, ['product_uom_qty', 'cost_price', 'order_id', 'type'], context=context):
+            order_id = line_data['order_id'][0]
+            line_amount = line_data['product_uom_qty']*line_data['cost_price']
+            res[order_id]['proc_amount'] += line_amount
+            if line_data['type'] == 'make_to_stock':
+                res[order_id]['stock_amount'] += line_amount
+            else:
+                res[order_id]['purchase_amount'] += line_amount
+
+        return res
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         Returns the procurement request search view instead of default sale order search view
@@ -116,6 +140,24 @@ class procurement_request(osv.osv):
                 'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
             },
             multi='sums', help="The total amount."),
+        'purchase_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Purchase Total',
+            store = {
+                'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
+                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
+            },
+            multi='by_type', help="The amount of lines sourced on order"),
+        'stock_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total',
+            store = {
+                'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
+                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
+            },
+            multi='by_type', help="The amount of lines sourced from stock"),
+        'proc_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total',
+            store = {
+                'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
+                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
+            },
+            multi='by_type', help="The amount of lines sourced from stock"),
         'state': fields.selection(SALE_ORDER_STATE_SELECTION, 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
         'name': fields.char('Order Reference', size=64, required=True, readonly=True, select=True),
     }
@@ -158,6 +200,7 @@ class procurement_request(osv.osv):
         '''
         Update date_planned of lines
         '''
+        res = True
         for req in self.browse(cr, uid, ids, context=context):
             # Only in case of Internal request
             if req.procurement_request and 'delivery_requested_date' in vals:
@@ -165,7 +208,7 @@ class procurement_request(osv.osv):
                 vals['ready_to_ship_date'] = rts
                 for line in req.order_line:
                     self.pool.get('sale.order.line').write(cr, uid, line.id, {'date_planned': vals['delivery_requested_date']}, context=context)
-        
+
         return super(procurement_request, self).write(cr, uid, ids, vals, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
@@ -367,12 +410,29 @@ class procurement_request_line(osv.osv):
         
         return res
     
+    def write(self, cr, uid, ids, vals, context):
+        """
+        Check if product or comment exist and set the the fields required accordingly.
+        """
+        if context is None:
+            context = {}
+        if vals.get('product_id', False):
+            vals.update({'comment_ok': True})
+        if vals.get('comment', False):
+            vals.update({'product_ok': True})
+        return super(procurement_request_line, self).write(cr, uid, ids, vals, context=context)
+    
     def create(self, cr, uid, vals, context=None):
         '''
-        Adds the date_planned value
+        Adds the date_planned value.
+        Check if product or comment exist and set the the fields required accordingly.
         '''
         if context is None:
             context = {}
+        if vals.get('product_id', False):
+            vals.update({'comment_ok': True})
+        if vals.get('comment', False):
+            vals.update({'product_ok': True})
 
         if not 'date_planned' in vals and context.get('procurement_request'):
             if 'date_planned' in context:
@@ -381,7 +441,26 @@ class procurement_request_line(osv.osv):
                 date_planned = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).delivery_requested_date
                 vals.update({'date_planned': date_planned})
 
+        # Compute the rounding of the product qty
+        if vals.get('product_uom') and vals.get('product_uom_qty'):
+            vals['product_uom_qty'] = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, vals.get('product_uom'), vals.get('product_uom_qty'), context=context)
+
         return super(procurement_request_line, self).create(cr, uid, vals, context=context)
+       
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Compute the UoM qty according to UoM rounding value
+        '''
+        res = True
+        for req in self.browse(cr, uid, ids, context=context):
+            new_vals = vals.copy()
+            # Compute the rounding of the product qty
+            uom_id = new_vals.get('product_uom', req.product_uom.id)
+            uom_qty = new_vals.get('product_uom_qty', req.product_uom_qty)
+            new_vals['product_uom_qty'] = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_id, uom_qty, context=context)
+            res = res and super(procurement_request_line, self).write(cr, uid, [req.id], new_vals, context=context)
+
+        return res
     
     def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
         if isinstance(ids, (int, long)):
@@ -447,12 +526,16 @@ class procurement_request_line(osv.osv):
         value = {}
         domain = {}
         if not product_id:
-            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order', 'comment_ok': False, 'cost_price': False, 'price_subtotal': False}
+            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order', 'comment_ok': False, 'cost_price': False, 'price_subtotal': False, 'product_uom_qty': 0.00, 'product_uos_qty': 0.00}
             domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
         elif product_id:
             product = product_obj.browse(cr, uid, product_id)
+            # Test the compatibility of the product with a consumption report
+            res, test = product_obj._on_change_restriction_error(cr, uid, product_id, field_name='product_id', values={'value': value}, vals={'constraints': 'consumption'}, context=context)
+            if test:
+                return res
             value = {'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 
-                     'type': product.procure_method, 'comment_ok': True, 'cost_price': product.standard_price}
+                     'type': product.procure_method, 'comment_ok': True, 'cost_price': product.standard_price,}
             if value['type'] != 'make_to_stock':
                 value.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
             uom_val = uom_obj.read(cr, uid, [product.uom_id.id], ['category_id'])

@@ -29,7 +29,7 @@ class procurement_batch_cron(osv.osv):
     _inherit = 'ir.cron'
     
     _columns = {
-        'name': fields.char(size=64, string='Name'),
+        'name': fields.char(size=64, string='Name', required=True),
         'type': fields.selection([('standard', 'POs creation Batch (from orders)'), ('rules', 'POs creation Batch (replenishment rules)')], string='Type', required=True),
         'request_ids': fields.one2many('res.request', 'batch_id', string='Associated Requests', readonly=True),
         'cron_ids': fields.one2many('ir.cron', 'batch_id', string='Associated Cron tasks'),
@@ -60,6 +60,7 @@ class procurement_batch_cron(osv.osv):
                 'interval_number': vals.get('interval_number'),
                 'interval_type': vals.get('interval_type'),
                 'nextcall': vals.get('nextcall'),
+                'doall': False,
                 'numbercall': -1,
                 'batch_id': int(batch_id),
                 'model': 'procurement.order',
@@ -133,13 +134,10 @@ class procurement_batch_cron(osv.osv):
         if not fields_to_read:
             fields_to_read = []
 
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
         res = super(procurement_batch_cron, self).read(cr, uid, ids, fields_to_read, context=context)
 
         if 'nextcall' in fields_to_read:
-            for data in res:
+            for data in ([res] if isinstance(res, dict) else res):
                 cron_ids = self.pool.get('ir.cron').search(cr, uid, [('batch_id', '=', data['id'])])
                 if cron_ids:
                     nextcall = self.pool.get('ir.cron').browse(cr, uid, cron_ids[0]).nextcall

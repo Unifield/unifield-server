@@ -50,7 +50,7 @@ class base_language_export(osv.osv_memory):
 
     def _export(self, dbname, uid, ids, context=None):
         #modules = ['account_mcdb']
-        modules = 'all'
+        modules = 'all_installed'
         try:
             cr = pooler.get_db(dbname).cursor()
 
@@ -62,9 +62,9 @@ class base_language_export(osv.osv_memory):
             if this.lang:
                 filename = get_iso_codes(this.lang)
             this.name = "%s.%s" % (filename, this.format)
-
+            ignore_name = ['ir.filters,model_id', 'ir.actions.server,copy_object', 'ir.ui.menu,icon', 'ir.sequence,code', 'stock.location,icon']
             if this.format == 'xls':
-                trans = tools.trans_generate(this.lang, modules, cr)
+                trans = tools.trans_generate(this.lang, modules, cr, ignore_name=ignore_name)
                 if trans:
                     headers = []
                     for h in trans.pop(0):
@@ -74,7 +74,7 @@ class base_language_export(osv.osv_memory):
                     out = base64.encodestring(xml.get_xml(default_filters=['decode.utf8']))
             else:
                 buf=cStringIO.StringIO()
-                tools.trans_export(this.lang, modules, buf, this.format, cr)
+                tools.trans_export(this.lang, modules, buf, this.format, cr, ignore_name=ignore_name)
                 out = base64.encodestring(buf.getvalue())
                 buf.close()
 
@@ -161,6 +161,14 @@ class base_language_import(osv.osv_memory):
                 fileformat = first_line.endswith("type,name,res_id,src,value") and 'csv' or 'po'
                 fileobj.seek(0)
 
+            lang_obj = self.pool.get('res.lang')
+            lang_ids = lang_obj.search(cr, uid, [('code', '=', import_data.name)])
+            if lang_ids:
+                lang_data = lang_obj.read(cr, uid, lang_ids[0], ['translatable'])
+                if not lang_data['translatable']:
+                    lang_obj.write(cr, uid, [lang_ids[0]], {'translatable': True})
+
+
             tools.trans_load_data(cr, fileobj, fileformat, import_data.code, lang_name=import_data.name, context={'overwrite': 1})
             tools.trans_update_res_ids(cr)
             fileobj.close()
@@ -212,3 +220,61 @@ class res_request(osv.osv):
         'import_trans': lambda *a: False,
     }
 res_request()
+
+class res_lang(osv.osv):
+    _name = 'res.lang'
+    _inherit = 'res.lang'
+
+    def install_new_lang(self, cr, uid, ids, context=None):
+        lang = self.read(cr, uid, ids[0], ['code'])
+        self.write(cr, uid, [ids[0]], {'translatable': True})
+        thread = threading.Thread(target=self._install_new_lang_bg, args=(cr.dbname, uid, ids[0], lang['code'], context))
+        thread.start()
+        return lang_tools.open_requests(self, cr, uid, ids, 'import', context)
+
+    def _install_new_lang_bg(self, dbname, uid, id, code, context):
+        try:
+            cr = pooler.get_db(dbname).cursor()
+            self.write(cr, uid, [id], {'translatable': True})
+            modobj = self.pool.get('ir.module.module')
+            mids = modobj.search(cr, uid, [('state', '=', 'installed')])
+            modobj.update_translations(cr, uid, mids, code, context=context)
+        except Exception, e:
+            cr.rollback()
+            req_id = self.pool.get('res.request').create(cr, uid, {
+                'name': _('Failed to install new language %s') % code,
+                'act_from': uid,
+                'act_to': uid,
+                'import_trans': True,
+                'body': _('''The process to install new language %s failed !
+                    %s
+                ''') % (code, e)
+            })
+        else:
+            req_id = self.pool.get('res.request').create(cr, uid, {
+                'name': _('New language %s installed') % code,
+                'act_from': uid,
+                'act_to': uid,
+                'import_trans': True,
+                'body': _("New language %s terms successfully loaded") % code
+            })
+
+        cr.commit()
+        cr.close()
+
+    def unlink(self, cr, uid, ids, context=None):
+        languages = self.read(cr, uid, ids, ['code','active'], context=context)
+        for lang in languages:
+            if lang['code'] in ('es_MF', 'fr_MF', 'en_MF', 'en_US'):
+                raise osv.except_osv(_('User Error'), _("Base Language '%s' can not be deleted !") % lang['code'])
+        return super(res_lang, self).unlink(cr, uid, ids, context=context)
+res_lang()
+
+class base_language_install(osv.osv_memory):
+    _name = "base.language.install"
+    _inherit = "base.language.install"
+
+    _columns = {
+        'lang': fields.selection([('fr_MF', 'MSF French'), ('es_MF', 'MSF Spanish')],'Language', required=True),
+    }
+base_language_install()

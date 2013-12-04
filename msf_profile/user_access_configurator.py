@@ -38,6 +38,7 @@ class user_access_configurator(osv.osv_memory):
                 'number_of_non_group_columns_uac': fields.integer(string='Number of columns not containing group name')}
     _defaults = {'number_of_non_group_columns_uac': 4}
     
+
     def _row_is_empty(self, cr, uid, ids, context=None, *args, **kwargs):
         """
         return True if row is empty
@@ -224,11 +225,11 @@ class user_access_configurator(osv.osv_memory):
                     
                     # skip information rows - find related groups
                     for i in range(obj.number_of_non_group_columns_uac, len(row)):
+                        # name of group
+                        menu_group_list = data_structure[obj.id]['menus_groups'].setdefault(menu_id, [])
                         # group is true for this menu
                         if self._cell_is_true(cr, uid, ids, context=context, cell=row.cells[i]):
-                            # name of group
                             group_name = data_structure[obj.id]['group_name_list'][i - obj.number_of_non_group_columns_uac]
-                            menu_group_list = data_structure[obj.id]['menus_groups'].setdefault(menu_id, [])
                             # if the column is defined multiple times, we only add one time the name, but the access selection is aggregated from all related columns
                             if group_name not in menu_group_list:
                                 menu_group_list.append(group_name)
@@ -321,7 +322,8 @@ class user_access_configurator(osv.osv_memory):
                 data_structure[obj.id]['group']['created'].append(missing_group_name)
                 
             # deactivate the groups not present in the file
-            self._set_active_group_name(cr, uid, ids, context=context, group_names=deactivate_group_names, active_value=False)
+            # UF-1996 : Don't deactivate groups not present in the file
+            #self._set_active_group_name(cr, uid, ids, context=context, group_names=deactivate_group_names, active_value=False)
         
         return True
     
@@ -414,8 +416,9 @@ class user_access_configurator(osv.osv_memory):
             # get all users
             all_user_ids = user_obj.search(cr, uid, [], context=context)
             # deactivate user not present in the file and not ADMIN
-            deactivate_user_ids = [x for x in all_user_ids if x not in user_ids_list]
-            self._set_active_user_ids(cr, uid, ids, context=context, user_ids=deactivate_user_ids, active_value=False)
+            # UF-1996 : Don't deactivate user not present in the file
+            #deactivate_user_ids = [x for x in all_user_ids if x not in user_ids_list]
+            #self._set_active_user_ids(cr, uid, ids, context=context, user_ids=deactivate_user_ids, active_value=False)
             # activate user from the file (could have been deactivate previously)
             self._set_active_user_ids(cr, uid, ids, context=context, user_ids=user_ids_list, active_value=True)
             # get admin group id
@@ -451,7 +454,9 @@ class user_access_configurator(osv.osv_memory):
             for db_menu_id in db_menu_ids:
                 # group ids to be linked to
                 group_ids = []
-                if db_menu_id not in data_structure[obj.id]['menus_groups'] or not data_structure[obj.id]['menus_groups'][db_menu_id]:
+                # UF-1996 : If the items found in the import file, then modify accordingly (do not delete and re create).
+                # If the menu entry is in file but with no groups, set the Admin rights on it
+                if db_menu_id in data_structure[obj.id]['menus_groups'] and not data_structure[obj.id]['menus_groups'].get(db_menu_id):
                     # we modify the groups to admin only if the menu is not linked to one of the group of DNCGL
                     skip_update = False
                     db_menu = menu_obj.browse(cr, uid, db_menu_id, context=context)
@@ -464,7 +469,7 @@ class user_access_configurator(osv.osv_memory):
                     if not skip_update:
                         admin_group_id = self._get_admin_user_rights_group_id(cr, uid, context=context)
                         group_ids = [admin_group_id]
-                else:
+                elif data_structure[obj.id]['menus_groups'].get(db_menu_id, []):
                     # find the id of corresponding groups, and write (6,0, ids) in groups_id
                     group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=data_structure[obj.id]['menus_groups'][db_menu_id])
                 # link the menu to selected group ids
@@ -492,7 +497,7 @@ class user_access_configurator(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-            
+
         # objects
         model_obj = self.pool.get('ir.model')
         access_obj = self.pool.get('ir.model.access')
@@ -584,7 +589,8 @@ class user_access_configurator(osv.osv_memory):
         # process menus - groups relation
         self._process_menus_uac(cr, uid, ids, context=dict(context, data_structure=data_structure))
         # process ACL
-        self._process_objects_uac(cr, uid, context=context)
+        # UF-1996 : Don't reset the Object ACL at reloading of Menu Access from file
+        # self._process_objects_uac(cr, uid, context=context)
         # process rules
         self._process_record_rules_uac(cr, uid, context=context)
         return data_structure
@@ -610,17 +616,39 @@ class user_access_configurator(osv.osv_memory):
                                                                                                 data_structure=data_structure))
         return res
     
-    def do_update_after_module_install(self, cr, uid, context=None):
+    def do_update_after_module_install(self, cr, uid, mode, context=None):
         '''
         special method called after module install
         
         reset data potentially reset to default values
         '''
-        # process ACL
-        self._process_objects_uac(cr, uid, context=context)
-        # process rules
-        self._process_record_rules_uac(cr, uid, context=context)
-        
+        if mode == 'init':
+            # process ACL
+            self._process_objects_uac(cr, uid, context=context)
+            # process rules
+            self._process_record_rules_uac(cr, uid, context=context)
+            # deactivate all default groups (except Admin)
+            no_group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=['Useability / Extended View', 'Useability / No One', 'Sync / User'])
+            no_group_ids.append(self._get_admin_user_rights_group_id(cr, uid, context=context))
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('id', 'not in', no_group_ids)], context=context)
+            self.pool.get('res.groups').write(cr, uid, group_ids, {'visible_res_groups': False}, context=context)
+        else:
+            """
+                if addons modules updated we have to clean default OpenERP user access defined in data.xml
+                OpenERP data records have a xmlid with a specific module name (!= sd)
+
+            """
+            models_to_clean = ['ir.model.access', 'ir.rule']
+            for model in models_to_clean:
+                m_obj = self.pool.get(model)
+                cr.execute('''select m.id from '''+ m_obj._table+''' m
+                    left join ir_model_data d on d.res_id = m.id and d.model = %s
+                    where module not in ('sd', 'sync_client', 'sync_server', 'sync_common', 'sync_so', 'update_client', 'update_server')
+                ''', (model,))
+                ids_to_del = [x[0] for x in cr.fetchall()]
+                if ids_to_del:
+                    m_obj.unlink(cr, 1, ids_to_del)
+
         return True
 
 user_access_configurator()
@@ -741,7 +769,7 @@ class res_groups(osv.osv):
     add an active column
     '''
     _inherit = 'res.groups'
-    _columns = {'visible_res_groups': fields.boolean('Visible', readonly=True),
+    _columns = {'visible_res_groups': fields.boolean('Visible', readonly=False),
                 'from_file_import_res_groups': fields.boolean('From file Import', readonly=True),
                 'is_an_admin_profile': fields.boolean('Is an admin profile'),
                 }
@@ -749,6 +777,121 @@ class res_groups(osv.osv):
                  'from_file_import_res_groups': False,
                  'is_an_admin_profile': False,
                  }
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        '''
+        If 'show_invisible' is in context, return only not Visible groups
+        '''
+        if context is None:
+            context = {}
+
+        if context.get('show_invisible'):
+            new_args = [('visible_res_groups', '=', False)]
+            for arg in args:
+                if arg[0] != 'visible_res_groups':
+                    new_args.append(arg)
+
+            args = new_args
+
+        return super(res_groups, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+
+    def _update_inactive(self, cr, uid, ids, vals, context=None):
+        '''
+        If the group becomes inactive, remove :
+            * the inactive group should be removed from all users who got it
+            * the access control list line for the inactive group should be removed
+            * the associated button control list should be removed for the inactive group
+            * associated field access rule (lines) should be removed for the inactive group
+        '''
+        conf_obj = self.pool.get('user.access.configurator')
+        data_obj = self.pool.get('ir.model.data')
+        user_obj = self.pool.get('res.users')
+        menu_obj = self.pool.get('ir.ui.menu')
+        far_obj = self.pool.get('msf_field_access_rights.field_access_rule')
+        bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+        acl_obj = self.pool.get('ir.model.access')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if 'visible_res_groups' in vals and not vals['visible_res_groups']:
+            admin_group_id = conf_obj._get_admin_user_rights_group_id(cr, uid, context=context)
+            no_one_id = conf_obj._get_DNCGL_ids(cr, uid, ids, context=context)
+            extended_ids = conf_obj._get_ids_from_group_names(cr, uid, context=context, group_names=['Useability / Extended View'])
+            hidden_menu_id = data_obj.get_object_reference(cr, uid, 'useability_dashboard_and_menu', 'menu_hidden')[1]
+
+            if admin_group_id in ids:
+                raise osv.except_osv(_('Error'), _('You cannot remove or inactive the Administration / Access Rights group'))
+
+            if no_one_id in ids:
+                raise osv.except_osv(_('Error'), _('You cannot remove or inactive the Useability / No One group'))
+
+            if extended_ids and extended_ids[0] in ids:
+                raise osv.except_osv(_('Error'), _('You cannot remove or inactive the Useability / Extended View group'))
+
+            for id in ids:
+                # Remove the link between groups and users
+                user_ids = user_obj.search(cr, uid, [('groups_id', '=', id)], context=context)
+                user_obj.write(cr, uid, user_ids, {'groups_id': [(3, id)]}, context=context)
+
+                # Remove the link between groups and menu
+                # Change the context because of the filtering of top menus
+                # in base module (i.e. : addons/base/ir/ir_ui_menu.py:115)
+                menu_context = context.copy()
+                menu_context.update({'ir.ui.menu.full_list': True})
+                menu_ids = menu_obj.search(cr, uid, [('groups_id', '=', id)], context=menu_context)
+                # If the removing of group in menus give back public access of 
+                # the menu, add Admin groups on menus accesses
+                for menu in menu_obj.browse(cr, uid, menu_ids, context=context):
+                    menu_vals = {'groups_id': [(3, id)]}
+                    if menu.id == hidden_menu_id:
+                        menu_vals['groups_id'].append((6, 0, no_one_id))
+                    elif len(menu.groups_id) == 1:
+                        menu_vals['groups_id'].append((6, 0, [admin_group_id]))
+                    menu_obj.write(cr, uid, [menu.id], menu_vals, context=context)
+
+                # Remove the field access rules associated to this group
+                far_ids = far_obj.search(cr, uid, [('group_ids', '=', id), ('active', 'in', ('t', 'f'))], context=context)
+                far_obj.write(cr, uid, far_ids, {'group_ids': [(3, id)]}, context=context)
+
+                # Remove the button access rules associated to this group
+                bar_ids = bar_obj.search(cr, uid, [('group_ids', '=', id)], context=context)
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(3, id)]}, context=context)
+
+            # Remove the control list lines associated to this group
+            acl_ids = acl_obj.search(cr, uid, [('group_id', 'in', ids)], context=context)
+            acl_obj.unlink(cr, uid, acl_ids, context=context)
+
+            # Add Useability / Extended View group to Admin user
+            user_obj.write(cr, uid, [1], {'view': 'extended'}, context=context)
+
+        return True
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Call the inactive function if the group is inactive
+        '''
+        res = super(res_groups, self).create(cr, uid, vals, context=context)
+        self._update_inactive(cr, uid, res, vals, context=context)
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Call the inactive function if the group is inactive
+        '''
+        res = super(res_groups, self).write(cr, uid, ids, vals, context=context)
+        self._update_inactive(cr, uid, ids, vals, context=context)
+        return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        Call the inactive function if the group is deleted
+        '''
+        self._update_inactive(cr, uid, ids, dict(visible_res_groups=False), context=context)
+        return super(res_groups, self).unlink(cr, uid, ids, context=context)
 
 res_groups()
 
@@ -767,6 +910,9 @@ class res_users(osv.osv):
                     return True
         return False
 
+    _defaults = {
+        'groups_id': lambda *a: [],
+    }
 res_users()
 
 

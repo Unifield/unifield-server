@@ -21,5 +21,8 @@
 
 import report_stock_move
 import destruction_location
+import internal_move
+import stock_card_report
+import delivery_order
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

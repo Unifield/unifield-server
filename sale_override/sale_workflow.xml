@@ -26,16 +26,22 @@
             <field name="act_to" ref="act_sale_order_validated" />
             <field name="signal">order_validated</field>
         </record>
-        
+
+        <record id="trans_draft_cancel" model="workflow.transition">
+            <field name="act_from" ref="act_sale_order_validated"/>
+            <field name="act_to" ref="sale.act_cancel"/>
+            <field name="signal">cancel</field>
+        </record>
+
         <record id="trans_sale_router_loan" model="workflow.transition">
             <field name="act_from" ref="sale.act_router" />
             <field name="act_to" ref="act_sale_loan" />
-            <field name="condition">order_type=='loan' and not loan_id</field>
+            <field name="condition">order_type=='loan' and not loan_id and not is_a_counterpart</field>
         </record>
         <record id="trans_sale_router_loan_done" model="workflow.transition">
             <field name="act_from" ref="sale.act_router" />
             <field name="act_to" ref="act_sale_loan_done" />
-            <field name="condition">order_type!='loan' or loan_id</field>
+            <field name="condition">order_type!='loan' or loan_id or is_a_counterpart</field>
         </record>
         <record id="trans_sale_loan_done" model="workflow.transition">
             <field name="act_from" ref="act_sale_loan"/>
