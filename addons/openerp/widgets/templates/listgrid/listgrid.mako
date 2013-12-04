@@ -130,7 +130,7 @@
             % elif o2m:
                 <img src="/openerp/static/images/iconset-b-remove.gif" class="listImage"
                     border="0" title="${_('Delete')}"
-                    onclick="new One2Many('${name}').rm(${data['id']}); return false;"/>
+                    onclick="new One2Many('${name}').rm(${data['id']}, this); return false;"/>
             % else:
                 <img src="/openerp/static/images/iconset-b-remove.gif" class="listImage"
                     border="0" title="${_('Delete')}"
@@ -395,6 +395,12 @@
                             </script>
                         % endif
                     % endif
+                    <script type="text/javascript">
+                        // force attrs evaluation after listgrid loading
+                        // (otherwise this won't be catched by form_hookAttrChange() as we don't have any 'id')
+                        list_hookStateChange('${name}');
+                        list_hookAttrChange('${name}');
+                    </script>
                 </td>
             </tr>
             % if pageable:

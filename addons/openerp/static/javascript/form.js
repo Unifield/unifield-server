@@ -59,7 +59,7 @@ function openRecord(id, src, target, readonly){
         'notebook_tab': jQuery('#_terp_notebook_tab').val() || 0,
         'action_id': jQuery('#_terp_action_id').val() || null
     };
-
+    get_sidebar_status(args, true);
     var action = readonly ? 'view' : 'edit';
 
     if (target == '_blank') {
@@ -195,6 +195,19 @@ function error_display(msg) {
     window.top.jQuery.fancybox(error, {scrolling: 'no'});
 }
 
+function get_sidebar_status(args, noterp) {
+    var sidebar = $('#a_main_sidebar')
+    var view_type=$('#_terp_view_type')
+    if (sidebar && view_type && view_type.val() == 'form') {
+        if (sidebar.hasClass('closed')) {
+            if (noterp) {
+                args['sidebar_closed'] = 1;
+            } else {
+                args['_terp_sidebar_closed'] = 1;
+            }
+        }
+    }
+}
 
 function submit_form(action, src, target){
 
@@ -219,7 +232,7 @@ function submit_form(action, src, target){
         action = 'save';
         args['_terp_close'] = 1;
     }
-
+    get_sidebar_status(args);
     action = get_form_action(action, args);
 
     var $form = jQuery('#view_form');
@@ -238,6 +251,13 @@ function pager_action(src){
     var $src = jQuery(src);
     var action = $src.attr('action');
     var relation = $src.attr('relation');
+    if (relation) {
+        var lv = ListView(relation);
+        var sel = lv.$getSelectedItems().map(function () {
+                return parseInt(this.value, 10);
+            }).get()
+        lv.set_previously_selected(sel);
+    }
     return relation ? new ListView(relation).go(action) : submit_form(action ? action : 'find');
 }
 
@@ -646,6 +666,7 @@ function onChange(caller){
                         fld.value = value[0] || '';
                         try {
                             openobject.dom.get(prefix + k + '_text').value = value[1] || '';
+                            fld._m2o.change_icon();
                         }
                         catch (e) {
                         }
@@ -787,7 +808,7 @@ function eval_domain_context_request(options){
     }
 
     var parent_context = openobject.dom.get(prefix.concat('_terp_context').join('/'));
-    var search_domain = openobject.dom.get(prefix.concat('_terp_domain').join('/'));
+    var search_domain = openobject.dom.get(prefix.concat('_terp_search_domain').join('/'));
     if (search_domain) {
         params['_terp_search_domain'] = search_domain.value;
     }
@@ -918,7 +939,7 @@ function makeContextMenu(id, kind, relation, val){
         var menu_width = $menu.width();
         var body_width = jQuery(document.body).width();
         if (parseInt($menu.css("left")) + menu_width > body_width) {
-            $menu.offset({ left: body_width - menu_width - 10 });
+            $menu.css({left: body_width - menu_width - 10 + 'px'});
         }
         showContextMenu();
     });
@@ -1343,4 +1364,15 @@ function validate_action() {
         action(params);
     }
     return true;
+}
+
+function fullscreen(mode) {
+    // switch left panel
+    $('#nav2').toggle(!mode);
+    $('#main-sidebar-toggler').toggleClass('closed', mode);
+
+    // switch right panel
+    var to_remove = mode && 'open' || 'closed';
+    var to_add = mode && 'closed' || 'open';
+    $('#tertiary,#a_main_sidebar').addClass(to_add).removeClass(to_remove);
 }

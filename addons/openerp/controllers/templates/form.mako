@@ -25,6 +25,9 @@
             /*
             % endif
             */
+            setTimeout(function() {
+                jQuery('[autofocus="autofocus"]').focus();
+            }, 10);
         });
     </script>
 
@@ -169,13 +172,15 @@
             </td>
             % if form.sidebar:
                 <%
-                  if form.screen.view_type in ['form', 'calendar', 'gantt']:
+                  if sidebar_closed:
+                      sidebar_class="closed"
+                  elif form.screen.view_type in ['form', 'calendar', 'gantt']:
                       sidebar_class="open"
                   else:
                       sidebar_class="closed"
                 %>
                 <td id="main_sidebar" valign="top">
-                    <a class="toggle-sidebar ${sidebar_class}" href="javascript:void(0)">Toggle</a>
+                    <a class="toggle-sidebar ${sidebar_class}" href="javascript:void(0)" id="a_main_sidebar">Toggle</a>
                     <div id="tertiary" class="${sidebar_class}">
                         <div id="tertiary_wrap">
                             ${form.sidebar.display()}

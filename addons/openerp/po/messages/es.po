@@ -1606,6 +1606,22 @@ msgstr "Añadir registros..."
 msgid "Delete record(s)."
 msgstr "Eliminar registro(s)."
 
+#: controllers/templates/tree.mako:47
+msgid "Expand all"
+msgstr "Desplegar todo"
+
+#: controllers/templates/tree.mako:47
+msgid "Expand all tree elements."
+msgstr "Desplegar los tres elementos"
+
+#: widgets/templates/listgrid/listgroup.mako:25
+msgid "Expand all."
+msgstr "Desplegar todo"
+
+#: widgets/templates/listgrid/listgroup.mako:25
+msgid "Expand All"
+msgstr "Desplegar todo"
+
 #~ msgid "Image"
 #~ msgstr "Imagen"
 

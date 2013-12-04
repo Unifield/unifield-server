@@ -64,8 +64,8 @@ ManyToOne.prototype.__init__ = function(name) {
     this.relation = jQuery(this.field).attr('relation');
     jQuery(this.text).attr('autocomplete', 'OFF');
 
-    if(this.editable) {
-        jQuery(this.field).change(jQuery.proxy(this, 'on_change'));
+    // test on this.text: if it doesn't exist the field is hidden (ie: composition_list_id when processing an Incoming Shipment
+    if(this.editable && this.text) {
         jQuery(this.text).bind({
             keydown: jQuery.proxy(this, 'on_keydown'),
             keypress: jQuery.proxy(this, 'on_keypress'),
@@ -73,7 +73,6 @@ ManyToOne.prototype.__init__ = function(name) {
             focus: jQuery.proxy(this, 'gotFocus'),
             blur: jQuery.proxy(this, 'lostFocus')
         }).removeAttr('callback');
-
         this.lastTextResult = this.text.value;
 
         if(this.select_img)
@@ -111,7 +110,9 @@ ManyToOne.prototype.lostFocus = function() {
         // clicked outside the box, with some text entered
         // do as if tabbed out
         this.lastKey = null;
-        this.get_matched();
+        if (!jQuery(this.field).hasClass('m2o_search')) {
+            this.get_matched();
+        }
         this.clearResults();
     }
 };
@@ -121,7 +122,12 @@ ManyToOne.prototype.select = function() {
         return;
     }
     if(!jQuery(this.field).hasClass('readonlyfield')) {
-        this.get_matched();
+        // test added:
+        // on form view: to open only 1 popup when a text is entered and the magnifying glass clicked (the popup is opened by lostFocus).
+        // on search view: lostFocus doesn't open a popup and the m2o can have a value not associated to an id
+        if (!this.text.value  || this.field.value || jQuery(this.field).hasClass('m2o_search')) {
+            this.get_matched();
+        }
     }
 };
 
@@ -294,10 +300,7 @@ ManyToOne.prototype.on_keydown = function(evt) {
                 var $selectedRow = jQuery(idSelector("autoComplete" + this.name + "_" + this.selectedResultRow));
 
                 this.setCompletionText($selectedRow);
-
-                if(this.callback) {
-                    onChange(this.name);
-                }
+                $(this.field).change();
                 this.change_icon();
                 this.clearResults();
                 break;
@@ -337,10 +340,13 @@ ManyToOne.prototype.on_keydown = function(evt) {
         this.text.value = '';
         this.field.value = '';
         this.on_change(evt);
+        //$(this.field).change();
     }
 
     //Tab
-    if((evt.which == 9) && this.text.value && !this.field.value) {
+    //if((evt.which == 9) && this.text.value && !this.field.value) {
+    // check with m2o_search added to disable the popup in search view on tab
+    if((evt.which == 9) && this.text.value && !this.field.value && !jQuery(this.field).hasClass('m2o_search')) {
         this.get_matched();
     }
 
@@ -374,14 +380,14 @@ ManyToOne.prototype.on_keypress = function(evt) {
 };
 
 ManyToOne.prototype.get_matched = function() {
-    if (jQuery(this.field).hasClass('m2o_search') &&
+    /* disabled to open the popup in *search view* when a text is entered and the magnifying glass is clicked */
+    /*if (jQuery(this.field).hasClass('m2o_search') &&
             this.delayedRequest == null &&
             this.numResultRows == 0 &&
             this.text.value != '') {
         // Allow substring search (press ESC at the combobox)
         return;
-    }
-
+    }*/
     if(openobject.http.AJAX_COUNT > 0) {
         callLater(0, jQuery.proxy(this, 'get_matched'));
         return;
@@ -426,7 +432,8 @@ ManyToOne.prototype.get_matched = function() {
                     var id = jQuery(m2o.field).attr('id');
                     // If the text on m2o field is related to any existing ID,
                     // we won't set the text to blank while clicking on search
-                    if (!m2o.field.value) {
+                    // if we are on a search view, don't set to blank
+                    if (!m2o.field.value && !jQuery(m2o.field).hasClass('m2o_search')) {
                         jQuery(idSelector(id + '_text')).val('');
                     }
                     open_search_window(m2o.relation, domain, context, m2o.name, 1, text);

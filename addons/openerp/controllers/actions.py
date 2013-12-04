@@ -120,6 +120,7 @@ PRINT_FORMATS = {
      'csv' : 'text/csv',
      'rtf' : 'application/rtf',
      'txt' : 'text/plain',
+     'zip' : 'application/zip',
 }
 
 def _print_data(data):
@@ -191,8 +192,8 @@ def execute_report(name, **data):
     except rpc.RPCException, e:
         raise e
 
-def act_window_close(*args):
-    return close_popup()
+def act_window_close(action=False, *args, **b):
+    return close_popup(o2m_refresh=action.get('o2m_refresh'))
 
 def act_window(action, data):
     if not action.get('opened'):
@@ -497,7 +498,7 @@ def execute_by_keyword(keyword, adds=None, **data):
 
 
 @tools.expose(template="/openerp/controllers/templates/closepopup.mako")
-def close_popup(reload=True):
+def close_popup(reload=True, o2m_refresh=False):
     """ Closes an opened dialog box or popup.
 
     :param reload: whether the background view should be reloaded when closing the popup
@@ -510,7 +511,7 @@ def close_popup(reload=True):
     if getattr(cherrypy.request, 'params', []):
         if getattr(cherrypy.request.params, 'context', {}):
             active_id = cherrypy.request.params.context.get('active_id')
-    return {'reload': reload, 'active_id': active_id}
+    return {'reload': reload, 'active_id': active_id, 'o2m_refresh': o2m_refresh}
 
 @tools.expose(template="/openerp/controllers/templates/report.mako")
 def report_link(report_name, **kw):

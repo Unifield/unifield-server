@@ -747,7 +747,7 @@ class Form(TinyInputWidget):
     params = ['id']
     member_widgets = ['frame', 'concurrency_info']
 
-    def __init__(self, prefix, model, view, ids=[], domain=[], context=None, editable=True, readonly=False, nodefault=False, nolinks=1):
+    def __init__(self, prefix, model, view, ids=[], domain=[], context=None, editable=True, readonly=False, nodefault=False, nolinks=1, get_source=False):
 
         super(Form, self).__init__(prefix=prefix, model=model, editable=editable, readonly=readonly, nodefault=nodefault)
         dom = xml.dom.minidom.parseString(view['arch'].encode('utf-8'))
@@ -772,13 +772,24 @@ class Form(TinyInputWidget):
         defaults = {}
         try:
             if ids:
-                lval = proxy.read(ids[:1], fields.keys() + ['__last_update'], self.context)
+                if get_source:
+                    fields_to_read = [get_source.split('/')[0]]
+                    if 'state' in fields:
+                        fields_to_read.append('state')
+                    newfields = {}
+                    for k in fields_to_read:
+                        newfields[k] = fields[k]
+                    fields = newfields
+                else:
+                    fields_to_read = fields.keys()
+                lval = proxy.read(ids[:1], fields_to_read + ['__last_update'], self.context)
+                
                 if lval:
                     values = lval[0]
                     self.id = ids[0]
                     
                     for f in fields:
-                        if fields[f]['type'] == 'many2one' and isinstance(values[f], tuple):
+                        if fields[f]['type'] == 'many2one' and f in values and isinstance(values[f], tuple):
                             values[f] = values[f][0]
                             
                     ConcurrencyInfo.update(self.model, [values])
@@ -895,7 +906,8 @@ class Form(TinyInputWidget):
 
             elif node.localName == 'field':
                 name = attrs['name']
-
+                if name not in fields:
+                    continue
                 try:
                     fields[name]['link'] = attrs.get('link', '1')
                     fields[name].update(attrs)
@@ -987,7 +999,6 @@ class Form(TinyInputWidget):
         if attrs.get('get_selection') and kind == 'selection' and attrs.get('type2') == 'many2one' and self.id:
             proxy = rpc.RPCProxy(self.model)
             attrs['selection'] = getattr(proxy, attrs['get_selection'])(self.id, name)
-           
         field = get_widget(kind)(**attrs)
 
         if isinstance(field, TinyInputWidget):

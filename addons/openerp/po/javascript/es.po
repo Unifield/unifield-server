@@ -61,6 +61,10 @@ msgstr ""
 "Aviso, el registro ha sido modificado,\n"
 "sus cambios serán descartados."
 
+#: static/javascript/form.js
+msgid "Warning Message"
+msgstr "Mensaje de advertencia"
+
 #: static/javascript/listgrid.js:542 static/javascript/o2m.js:123
 msgid "To edit Record, please first save it."
 msgstr "Para editar un registro, guárdelo primero."
