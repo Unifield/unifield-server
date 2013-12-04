@@ -28,7 +28,7 @@
         </record>
          
         <!-- journal items from view_account_partner_balance_tree !-->
-        <record model="ir.ui.view" id="view_move_line_tree">
+        <record model="ir.ui.view" id="view_account_partner_balance_tree_move_line_tree">
             <field name="name">account.move.line.tree</field>
             <field name="model">account.move.line</field>
             <field name="type">tree</field>

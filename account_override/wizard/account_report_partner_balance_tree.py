@@ -67,6 +67,7 @@ class account_partner_balance_tree(osv.osv):
             where += "l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
     
         # inspired from account_report_balance.py report query
+        # but group only per 'account type'/'partner'
         query = "SELECT ac.type as account_type," \
         " p.id as partner_id, p.ref as partner_ref, p.name as partner_name," \
         " sum(debit) AS debit, sum(credit) AS credit," \
@@ -80,11 +81,8 @@ class account_partner_balance_tree(osv.osv):
         " AND " + where + "" \
         " GROUP BY ac.type,p.id,p.ref,p.name" \
         " ORDER BY ac.type,p.name"
-        print query
         cr.execute(query)
         res = cr.dictfetchall()
-        print 'RES rows', len(res)
-        print res
         if data['form'].get('display_partner', '') == 'non-zero_balance':
             res2 = [r for r in res if r['sdebit'] > 0 or r['scredit'] > 0]
         else:
@@ -167,7 +165,6 @@ class account_partner_balance_tree(osv.osv):
                 'credit': self._currency_conv(cr, uid, r['credit'], comp_currency_id, output_currency_id),
                 'balance': self._currency_conv(cr, uid, r['debit'] - r['credit'], comp_currency_id, output_currency_id),
             }
-            print 'line', vals
             self.create(cr, uid, vals, context=context)
             
     def open_journal_items(self, cr, uid, ids, context=None):
@@ -186,14 +183,20 @@ class account_partner_balance_tree(osv.osv):
                                                 r[0]['partner_id'][0],
                                                 context['data'])
                 if move_line_ids:
+                    view_id = self.pool.get('ir.model.data').get_object_reference(
+                                cr, uid, 'account_override',
+                                'view_account_partner_balance_tree_move_line_tree')[1]
+                    print 'open_journal_items view_id', view_id
                     res = {
-                        "name": "Journal Items",
-                        "type": "ir.actions.act_window",
-                        "res_model": "account.move.line",
-                        "view_mode": "tree,form",
-                        "view_type": "form",
-                        "domain": [('id','in',tuple(move_line_ids))],
+                        'name': 'Journal Items',
+                        'type': 'ir.actions.act_window',
+                        'res_model': 'account.move.line',
+                        'view_mode': 'tree,form',
+                        'view_type': 'form',
+                        'domain': [('id','in',tuple(move_line_ids))],
                     }
+                    if view_id:
+                        res['view_id'] = [view_id]
                 return res
         return res
             
