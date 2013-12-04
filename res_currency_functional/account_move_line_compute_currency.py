@@ -516,6 +516,24 @@ class account_move_line_compute_currency(osv.osv):
     def _store_journal_account_type(self, cr, uid, ids, context=None):
         return self.pool.get('account.move.line').search(cr, uid, [('account_id.user_type', 'in', ids)])
 
+    def _search_reconcile_total_partial(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Search either total reconciliation name or partial reconciliation name
+        """
+        if context is None:
+            context = {}
+        arg = []
+        for x in args:
+            if x[0] == 'reconcile_total_partial_id' and x[1] in ['=','ilike','like'] and x[2]:
+                arg.append('|')
+                arg.append(('reconcile_id', x[1], x[2]))
+                arg.append(('reconcile_partial_id', x[1], x[2]))
+            elif x[0] == 'reconcile_total_partial_id':
+                raise osv.except_osv(_('Error'), _('Operator not supported!'))
+            else:
+                arg.append(x)
+        return arg
+
     _columns = {
         'debit_currency': fields.float('Book. Debit', digits_compute=dp.get_precision('Account')),
         'credit_currency': fields.float('Book. Credit', digits_compute=dp.get_precision('Account')),
@@ -529,7 +547,7 @@ class account_move_line_compute_currency(osv.osv):
                     'account.account.type': (_store_journal_account_type, ['name'], 10),
                 }
             ),
-        'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
+        'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, fnct_search=_search_reconcile_total_partial, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
     }
 
     _defaults = {
