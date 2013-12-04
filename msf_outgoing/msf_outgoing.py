@@ -3387,6 +3387,7 @@ class stock_move(osv.osv):
         
         # purchase order line to re-source
         pol_ids = []
+        pol_to_resource = []
 
         for move in self.browse(cr, uid, ids, context=context):
             """
@@ -3411,19 +3412,22 @@ class stock_move(osv.osv):
             pick_type = move.picking_id.type
 
             if pick_type == 'in' and move.purchase_line_id:
+                if move.has_to_be_resourced:
+                    pol_to_resource.append(move.purchase_line_id.id)
                 pol_ids.append(move.purchase_line_id.id)
             elif pick_type in ('internal', 'out') and move.sale_line_id:
-                diff_qty = move.sale_line_id.product_uom_qty - (move.sale_line_id.product_uom_qty - move.product_qty)
-                diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, diff_qty, move.sale_line_id.product_uom.id)
+                diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if move.has_to_be_resourced:
                     sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
+                sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, context=context)
+
+        # Re-source PO lines
+        pol_obj.write(cr, uid, pol_to_resource, {'has_to_be_resourced': True}, context=context)
+        pol_obj.cancel_sol(cr, uid, pol_ids, context=context)
 
         res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
         
         wf_service = netsvc.LocalService("workflow")
-
-        # Re-source PO lines
-        pol_obj.cancel_sol(cr, uid, pol_ids, context=context)
 
         proc_obj = self.pool.get('procurement.order')
         proc_ids = proc_obj.search(cr, uid, [('move_id', 'in', ids)], context=context)

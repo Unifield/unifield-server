@@ -573,8 +573,7 @@
                                     <field name="dg_check"/>
                                     <field name="np_check"/>
                                     <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
-                                    <button name="action_cancel" icon="gtk-cancel" string="Cancel &amp; Resource" type="object"
-                                           attrs="{'invisible': [('fake_state', 'in', ('cancel', 'done'))]}" />
+                                    <button name="call_cancel_wizard" type="object" string="Cancel" attrs="{'invisible': [('fake_state', 'in', ('cancel', 'done'))}" icon="gtk-del" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
