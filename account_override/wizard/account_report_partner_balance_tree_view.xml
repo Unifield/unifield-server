@@ -2,6 +2,24 @@
 <openerp>
      <data>
          
+    <record model="ir.ui.view" id="view_account_partner_balance_search" >
+        <field name="name">account.partner.balance.tree.search</field>
+        <field name="model">account.partner.balance.tree</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search string="Partner Balance Search">
+                <field name="account_type"/>
+                <field name="partner_id" string="Partner" />
+                <group expand="0" string="Group By...">
+                    <filter string="Payable/Receivable"
+                        icon="terp-personal" domain="[]"
+                        context="{'group_by':'account_type'}"
+                    />
+                </group>
+            </search>
+        </field>
+    </record>
+         
         <record model="ir.ui.view" id="view_account_partner_balance_tree">
             <field name="name">account.partner.balance.tree.view</field>
             <field name="model">account.partner.balance.tree</field>
@@ -78,6 +96,24 @@
                 <field name="instance_ids"/>
                 <newline/>
             </xpath>
+            
+            <xpath expr="//field[@name='journal_ids']" position="replace">
+                <group col="4" colspan="4">
+                    <button name="remove_journals" string="Remove all journals" type="object" colspan="1" />
+                    <label string="" colspan="3" />
+                    <!-- exclude extra-accounting journals from this report (IKD, ODX). -->
+                    <field name="journal_ids" colspan="4" nolabel="1" noteditable="1"
+                        domain="[('type', 'not in', ['inkind', 'extra'])]">
+                        <tree noteditable="1" editable="top" string="Account Journal">
+                            <field name="instance_id" />
+                            <field name="code" />
+                            <field name="name" />
+                            <field name="type" />
+                        </tree>
+                    </field>
+                </group>
+            </xpath>
+            
             <xpath expr="//group[1]" position="replace">
              <group col="4" colspan="4">
                 <button icon="gtk-cancel" special="cancel" string="Cancel" colspan="2"/>

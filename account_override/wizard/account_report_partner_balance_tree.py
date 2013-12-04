@@ -28,7 +28,11 @@ class account_partner_balance_tree(osv.osv):
     _description = 'Print Account Partner Balance View'
     _columns = {
         'uid': fields.many2one('res.users', 'Uid', invisible=True),
-        'account_type': fields.char('Account type', size=16),
+        'account_type': fields.selection([
+                ('payable', 'Payable'),
+                ('receivable', 'Receivable')
+            ],
+            'Account type'),
         'partner_id': fields.many2one('res.partner', 'Partner', invisible=True),
         'name': fields.char('Partner', size=168),  # partner name
         'partner_ref': fields.char('Partner Ref', size=64 ),  
@@ -81,6 +85,7 @@ class account_partner_balance_tree(osv.osv):
         " AND " + where + "" \
         " GROUP BY ac.type,p.id,p.ref,p.name" \
         " ORDER BY ac.type,p.name"
+        print '_execute_query_aggregate WHERE', where
         cr.execute(query)
         res = cr.dictfetchall()
         if data['form'].get('display_partner', '') == 'non-zero_balance':
@@ -157,7 +162,7 @@ class account_partner_balance_tree(osv.osv):
  
             vals = {
                 'uid': uid,
-                'account_type': r['account_type'].capitalize(),
+                'account_type': r['account_type'].lower(),
                 'partner_id': r['partner_id'],
                 'name': r['partner_name'],
                 'partner_ref': r['partner_ref'],
@@ -186,7 +191,6 @@ class account_partner_balance_tree(osv.osv):
                     view_id = self.pool.get('ir.model.data').get_object_reference(
                                 cr, uid, 'account_override',
                                 'view_account_partner_balance_tree_move_line_tree')[1]
-                    print 'open_journal_items view_id', view_id
                     res = {
                         'name': 'Journal Items',
                         'type': 'ir.actions.act_window',
@@ -302,6 +306,12 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             'report_name': 'account.partner.balance.tree_xls',
             'datas': data,
         }
+            
+    def remove_journals(self, cr, uid, ids, context=None):
+        if ids:
+            self.write(cr, uid, ids, { 'journal_ids': [(6, 0, [])] },
+                       context=context)
+        return {}
 
 wizard_account_partner_balance_tree()
 
