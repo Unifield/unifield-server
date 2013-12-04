@@ -92,7 +92,7 @@
     assert wiz_id, "Cancel FO line doesn't return a valid wizard"
     # Cancel the FO line without resourcing
     res = l_wiz_obj.cancel_fo_line(cr, uid, wiz_id, context=context)
-    assert res.get('type', False) == 'ir.actions.act_window_close', "Cancel w/o re-sourcing the line doesn't close the wizard window"
+    assert not res, "Cancel w/o re-sourcing the line doesn't close the wizard window"
     # Check if the FO line is removed
     line_ids = self.search(cr, uid, [('id', '=', ref('cancel_fol_fo1_l1'))], context=context)
     assert not line_ids, "The first FO line has not been removed"
@@ -106,18 +106,17 @@
     assert wiz_id, "Cancel FO line doesn't return a valid wizard"
     # Cancel the FO line with re-sourcing of the line
     res = l_wiz_obj.resource_line(cr, uid, wiz_id, context=context)
-    assert res.get('type', False) == 'ir.actions.act_window_close', "Cancel FO line with re-sourcing the line doesn't close the wizard window"
+    assert not res, "Cancel FO line with re-sourcing the line doesn't close the wizard window"
     # Check if the FO line is removed
     line_ids = self.search(cr, uid, [('id', '=', ref('cancel_fol_fo1_l2'))], context=context)
     assert not line_ids, "The second FO line has not been removed"
     # Check if the line is re-sourced
-    new_fo_ids = order_obj.search(cr, uid, [('fo_to_resource', '=', True), ('name', '=', '%s/1' % cancel_fol_fo1.name)], context=context)
+    new_fo_ids = order_obj.search(cr, uid, [('fo_to_resource', '=', True), ('parent_order_name', '=', cancel_fol_fo1.name)], context=context)
     new_line_ids = self.search(cr, uid, [('order_id', 'in', new_fo_ids), ('product_id', '=', ref('test_product2'))], context=context)
-    assert new_line_ids, "Cancel FO line with re-sourcing the line doesn't create new FO line"
+    assert new_line_ids, "#1 Cancel FO line with re-sourcing the line doesn't create new FO line"
     new_lines = self.browse(cr, uid, new_line_ids, context=context)
     for l in new_lines:
         assert l.order_id, "Cancel FO line with re-sourcing the line doesn't create a new FO"
-        assert l.order_id.name == '%s/1' % cancel_fol_fo1.name, "The name of the new FO is not consistent with the expected name - Expected : %s/1 :: Result : %s" % (cancel_fol_fo1.name, l.order_id.name)
         first_created_fo_name = l.order_id.name
 
     # Ask unlink of FO line => Must return a wizard
@@ -128,14 +127,14 @@
     assert wiz_id, "Cancel FO line doesn't return a valid wizard"
     # Cancel the FO line with re-sourcing of the line
     res = l_wiz_obj.resource_line(cr, uid, wiz_id, context=context)
-    assert res.get('type', False) == 'ir.actions.act_window_close', "Cancel FO line with re-sourcing the line doesn't close the wizard window"
+    assert not res, "Cancel FO line with re-sourcing the line doesn't close the wizard window"
     # Check if the FO line is removed
     line_ids = self.search(cr, uid, [('id', '=', ref('cancel_fol_fo1_l3'))], context=context)
     assert not line_ids, "The third FO line has not been removed"
     # Check if the line is re-sourced in the same FO as the last line
-    new_fo_ids = order_obj.search(cr, uid, [('fo_to_resource', '=', True), ('name', '=', '%s/1' % cancel_fol_fo1.name)], context=context)
+    new_fo_ids = order_obj.search(cr, uid, [('fo_to_resource', '=', True), ('parent_order_name', '=', cancel_fol_fo1.name)], context=context)
     new_line_ids = self.search(cr, uid, [('order_id', 'in', new_fo_ids), ('product_id', '=', ref('test_product3'))], context=context)
-    assert new_line_ids, "Cancel FO line with re-sourcing the line doesn't create new FO line"
+    assert new_line_ids, "#2 Cancel FO line with re-sourcing the line doesn't create new FO line"
     new_lines = self.browse(cr, uid, new_line_ids, context=context)
     for l in new_lines:
         assert l.order_id, "Cancel FO line with re-sourcing the line doesn't create a new FO"
@@ -154,19 +153,18 @@
     assert wiz_id, "Cancel FO line doesn't return a valid wizard"
     # Cancel the FO line with re-sourcing of the line
     res = l_wiz_obj.resource_line(cr, uid, wiz_id, context=context)
-    assert res.get('type', False) == 'ir.actions.act_window_close', "Cancel FO line with re-sourcing the line doesn't close the wizard window"
+    assert not res, "Cancel FO line with re-sourcing the line doesn't close the wizard window"
     # Check if the FO line is removed
     line_ids = self.search(cr, uid, [('id', '=', ref('cancel_fol_fo1_l4'))], context=context)
     assert not line_ids, "The fourth FO line has not been removed"
     # Check if the line is re-sourced in another FO than the two last lines
-    new_fo_ids = order_obj.search(cr, uid, [('fo_to_resource', '=', True), ('name', '=', '%s/2' % cancel_fol_fo1.name)], context=context)
+    new_fo_ids = order_obj.search(cr, uid, [('fo_to_resource', '=', True), ('parent_order_name', '=', cancel_fol_fo1.name)], context=context)
     new_line_ids = self.search(cr, uid, [('order_id', 'in', new_fo_ids), ('product_id', '=', ref('test_product4'))], context=context)
-    assert new_line_ids, "Cancel FO line with re-sourcing the line doesn't create new FO line"
+    assert new_line_ids, "#3 Cancel FO line with re-sourcing the line doesn't create new FO line"
     new_lines = self.browse(cr, uid, new_line_ids, context=context)
     for l in new_lines:
         assert l.order_id, "Cancel FO line with re-sourcing the line doesn't create a new FO"
         assert l.order_id.name != first_created_fo_name, "The cancelation and re-sourcing of a third line of a FO doesn't create a new FO if the last resourcirng FO is not in Draft state"
-        assert l.order_id.name == '%s/2' % cancel_fol_fo1.name, "The name of the now FO created to re-source an initial FO is not good - Expected : %s/2 :: Result : %s" % (cancel_fol_fo1.name, l.order_id.name)
 
     # Ask unlink of the last line of a FO => Ask user if he wants to cancel the empty FO
     logger.log(logging.TEST, "Unlink the fifth FO line")

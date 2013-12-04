@@ -105,10 +105,11 @@
                         <field name="state" invisible="1" />
                         <field name="fake_state" invisible="1" />
                         <button string="Split line" icon="terp-stock_effects-object-colorize" 
-				name="open_split_wizard" type="object" 
-                attrs="{'invisible': [('state', 'in', ('sourced', 'confirmed', 'done', 'cancel', 'exception'))]}" />
+                				name="open_split_wizard" type="object" 
+                                attrs="{'invisible': [('state', 'in', ('sourced', 'confirmed', 'done', 'cancel', 'exception'))]}" />
                         <button string="Delete" icon="gtk-del" type="object" name="ask_unlink"
-                attrs="{'invisible': [('state', 'in', ('sourced', 'confirmed', 'done', 'cancel', 'exception'))]}" />
+                                confirm="Do you really want to delete selected record ?"
+                                attrs="{'invisible': [('state', 'in', ('sourced', 'confirmed', 'done', 'cancel', 'exception'))]}" />
                     </xpath>
 
                     <xpath expr="/form/notebook//field[@name='incoterm']" position="attributes">
@@ -452,11 +453,15 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Delete Field Order Line">
-                    <label colspan="4" string="Do you wish to re-source this line ?" />
-                    <label> </label>
-                    <button colspan="1" type="object" icon="gtk-cancel" name="close_window" string="Close window" />
-                    <button colspan="1" type="object" icon="gtk-execute" name="resource_line" string="Yes" />
-                    <button colspan="1" type="object" icon="gtk-execute" name="cancel_fo_line" string="No" />
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">Do you wish to re-source this line ?</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator colspan="4" string="Actions" />
+                    <button type="object" icon="gtk-execute" name="resource_line" string="Yes" colspan="2" />
+                    <button type="object" icon="gtk-execute" name="cancel_fo_line" string="No" colspan="2" />
                 </form>
             </field>
         </record>
@@ -469,14 +474,12 @@
                 <form string="Delete Field Order">
                     <group colspan="4" col="1">
                         <html>
-                            <h3 style="text-align: center; margin: 10px">You removed all lines of this field order, would you cancel it ?</h3>
+                            <h4 style="text-align: center; margin: 10px">You removed all lines of this field order, would you cancel it ?</h4>
                         </html>
                     </group>
                     <newline />
-                    <label> </label>
-                    <button colspan="1" type="object" icon="gtk-execute" name="cancel_fo" string="Yes" />
-                    <button colspan="1" type="object" icon="gtk-cancel" name="close_window" string="No" />
-                    <label> </label>
+                    <button colspan="2" type="object" icon="gtk-execute" name="cancel_fo" string="Yes" />
+                    <button colspan="2" type="object" icon="gtk-execute" name="close_window" string="No" />
                 </form>
             </field>
         </record>
@@ -489,14 +492,12 @@
                 <form string="Cancel Field Order">
                     <group colspan="4" col="1">
                         <html>
-                            <h3 style="text-align: center; margin: 10px">Do you want to re-source all lines of this order ?</h3>
+                            <h4 style="text-align: center; margin: 10px">Do you want to re-source all lines of this order ?</h4>
                         </html>
                     </group>
                     <newline/>
-                    <label> </label>
-                    <button colspan="1" type="object" icon="gtk-execute" name="resource_lines" string="Yes"/>
-                    <button colspan="1" type="object" icon="gtk-cancel" name="only_cancel" string="No"/>
-                    <label> </label>
+                    <button colspan="2" type="object" icon="gtk-execute" name="resource_lines" string="Yes"/>
+                    <button colspan="2" type="object" icon="gtk-execute" name="only_cancel" string="No"/>
                 </form>
             </field>
         </record>

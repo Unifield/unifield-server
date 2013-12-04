@@ -79,6 +79,7 @@
     fo_obj = self.pool.get('sale.order')
     fol_obj = self.pool.get('sale.order.line')
     pol_obj = self.pool.get('purchase.order.line')
+    wiz_obj = self.pool.get('purchase.order.cancel.wizard')
 
     # Objects instances
     cancel_po_fo1 = fo_obj.browse(cr, uid, ref('cancel_po_fo1'), context=context)
@@ -87,16 +88,26 @@
     assert len(po_ids) == 2, "Number of POs is not correct - Expected : 2 :: Result : %s" % len(po_ids)
 
     logger.log(logging.TEST, "We cancel the first PO")
-    wf_service.trg_validate(uid, 'purchase.order', po_ids[0], 'purchase_cancel', cr)
+    res = self.purchase_cancel(cr, uid, po_ids, context=context)
+    assert res.get('type', False) == 'ir.actions.act_window', "#1 - The cancelation of the PO doesn't return a wizard"
+    assert res.get('res_model', False) == 'purchase.order.cancel.wizard', "#1 - The cancelation of the PO doesn't return the good wizard"
+    wiz_id = res.get('res_id', False)
+    assert wiz_id, "#1 - The cancelation of the PO doesn't create a wizard"
+    wiz_obj.cancel_and_resource(cr, uid, wiz_id, context=context)
     logger.log(logging.TEST, "Check if the FO line sourced by this PO has been resourced")
-    new_fo_ids = fo_obj.search(cr, uid, [('name', '=', '%s/1' % cancel_po_fo1.name)], context=context)
+    new_fo_ids = fo_obj.search(cr, uid, [('parent_order_name', '=', cancel_po_fo1.name)], context=context)
     assert new_fo_ids, "No FO created to re-source the FO line sourced by the canceled PO"
     new_fol_ids = fol_obj.search(cr, uid, [('order_id', 'in', new_fo_ids)], context=context)
     assert len(new_fol_ids) == 1, "No FO lines created to re-source the FO line sourced by the canceled PO"
 
     logger.log(logging.TEST, "We cancel the second PO")
-    wf_service.trg_validate(uid, 'purchase.order', po_ids[1], 'purchase_cancel', cr)
+    res = self.purchase_cancel(cr, uid, po_ids, context=context)
+    assert res.get('type', False) == 'ir.actions.act_window', "#2 - The cancelation of the PO doesn't return a wizard"
+    assert res.get('res_model', False) == 'purchase.order.cancel.wizard', "#2 - The cancelation of the PO doesn't return the good wizard"
+    wiz_id = res.get('res_id', False)
+    assert wiz_id, "#2 - The cancelation of the PO doesn't create a wizard"
+    wiz_obj.cancel_and_resource(cr, uid, wiz_id, context=context)
     logger.log(logging.TEST, "Check if the FO line sourced by this PO has been resourced with the same FO as the first canceled PO")
-    new_fo_ids = fo_obj.search(cr, uid, [('name', '=', '%s/1' % cancel_po_fo1.name)], context=context)
+    new_fo_ids = fo_obj.search(cr, uid, [('parent_order_name', '=', cancel_po_fo1.name)], context=context)
     new_fol_ids = fol_obj.search(cr, uid, [('order_id', 'in', new_fo_ids)], context=context)
     assert len(new_fol_ids) == 2, "No new FO lines created to re-source the FO line sourced by the second canceled PO"

@@ -1332,7 +1332,7 @@ class sale_order_line(osv.osv):
             if len(order['order_line']) == 0:
                 res = self.pool.get('sale.order.unlink.wizard').ask_unlink(cr, uid, order['id'], context=context)
 
-        return res or {'type': 'ir.actions.act_window_close'}
+        return res
 
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
@@ -1784,6 +1784,7 @@ class sale_order_unlink_wizard(osv.osv_memory):
         context = context or {}
 
         wiz_id = self.create(cr, uid, {'order_id': order_id}, context=context)
+        context['view_id'] = False
 
         return {'type': 'ir.actions.act_window',
                 'res_model': self._name,
