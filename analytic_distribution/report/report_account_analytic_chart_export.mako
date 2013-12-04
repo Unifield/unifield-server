@@ -116,7 +116,9 @@
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Type')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Balance')}</Data></Cell>
   </Row>
+<% total = 0.0 %>
 % for o in [x for x in objects if x.category == cat[1]]:
+<% total += o.balance or 0.0 %>
   <Row>
     <Cell>
       <Data ss:Type="String">${o.name or ''|x}</Data>
@@ -128,10 +130,18 @@
       <Data ss:Type="String">${o.type and getSel(o, 'type') or ''|x}</Data>
     </Cell>
     <Cell>
-      <Data ss:Type="Number" ss:Style="number">${o.balance or '0.0'|x}</Data>
+      <Data ss:Type="Number" ss:Style="number">${o.balance or 0.0|x}</Data>
     </Cell>
   </Row>
 % endfor
+  <Row>
+    <Cell ss:Index="3">
+      <Data ss:Type="String">${_('Total')}</Data>
+    </Cell>
+    <Cell>
+      <Data ss:Type="Number" ss:Style="number">${total or 0.0|x}</Data>
+    </Cell>
+  </Row>
 </Table>
 <WorksheetOptions/>
 </Worksheet>
