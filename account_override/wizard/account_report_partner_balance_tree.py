@@ -245,8 +245,15 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
     }
 
+    def _get_journals(self, cr, uid, context=None):
+        """exclude extra-accounting journals from this report (IKD, ODX)."""
+        domain = [('type', 'not in', ['inkind', 'extra'])]
+        #domain = []
+        return self.pool.get('account.journal').search(cr, uid, domain, context=context)
+
     _defaults = {
         'display_partner': 'non-zero_balance',
+        'journal_ids': _get_journals,
     }
        
     def default_get(self, cr, uid, fields, context=None):
