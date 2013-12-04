@@ -29,7 +29,6 @@ class account_partner_balance_tree(osv.osv):
     _columns = {
         'uid': fields.many2one('res.users', 'Uid', invisible=True),
         'account_type': fields.char('Account type', size=16),
-        #'account_type_display': fields.boolean('Display account type ?', invisible=True),
         'partner_id': fields.many2one('res.partner', 'Partner', invisible=True),
         'name': fields.char('Partner', size=168),  # partner name
         'partner_ref': fields.char('Partner Ref', size=64 ),  
@@ -84,17 +83,9 @@ class account_partner_balance_tree(osv.osv):
             res2 = [r for r in res]
         return res2, account_type, move_state
         
-    def _execute_query_selected_partner_move_line_ids(self, cr, uid, partner_id, data):
+    def _execute_query_selected_partner_move_line_ids(self, cr, uid, account_type, partner_id, data):
         obj_move = self.pool.get('account.move.line')
         where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
-         
-        result_selection = data['form'].get('result_selection', '')
-        if (result_selection == 'customer'):
-            account_type = "('receivable')"
-        elif (result_selection == 'supplier'):
-            account_type = "('payable')"
-        else:
-            account_type = "('payable', 'receivable')"
         
         move_state = "('draft','posted')"
         if data['form'].get('target_move', 'all') == 'posted':
@@ -105,7 +96,7 @@ class account_partner_balance_tree(osv.osv):
         " JOIN account_account ac ON (l.account_id = ac.id)" \
         " JOIN account_move am ON (am.id = l.move_id)" \
         " WHERE l.partner_id = " + str(partner_id) + "" \
-        " AND ac.type IN " + account_type + "" \
+        " AND ac.type = '" + account_type + "'" \
         " AND am.state IN " + move_state + "" \
         " AND " + where + ""
         cr.execute(query)
@@ -178,11 +169,12 @@ class account_partner_balance_tree(osv.osv):
             return res
         if isinstance(ids, (int, long)):
             ids = [ids]
-        r = self.read(cr, uid, ids, ['partner_id'], context=context)
+        r = self.read(cr, uid, ids, ['account_type', 'partner_id'], context=context)
         if r and r[0] and r[0]['partner_id']:
             if context and 'data' in context and 'form' in context['data']:
                 move_line_ids = self._execute_query_selected_partner_move_line_ids(
                                                 cr, uid,
+                                                r[0]['account_type'].lower(),
                                                 r[0]['partner_id'][0],
                                                 context['data'])
                 if move_line_ids:
