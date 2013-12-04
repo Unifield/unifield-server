@@ -37,8 +37,10 @@
                 <tree string="Account Entry Line" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1">
                     <field name="journal_id"/>
                     <field name="move_id"/>
+                    <!--
                     <field name="name"/>
                     <field name="ref"/>
+                    -->
                     <field name="document_date"/>
                     <field name="date"/>
                     <field name="period_id" domain="[('state','=','draft')]"/>
@@ -73,6 +75,7 @@
                 <field name="result_selection"/>
                 <field name="display_partner"/>
                 <field name="output_currency"/>
+                <field name="instance_ids"/>
                 <newline/>
             </xpath>
             <xpath expr="//group[1]" position="replace">

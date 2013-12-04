@@ -57,6 +57,14 @@ class account_partner_balance_tree(osv.osv):
         move_state = "('draft','posted')"
         if data['form'].get('target_move', 'all') == 'posted':
             move_state = "('posted')"
+            
+        # proprietary instances filter
+        instance_ids = data['form']['instance_ids'] 
+        if instance_ids:
+            # we add instance filter in 'where'
+            if where:
+                where += " AND "
+            where += "l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
     
         # inspired from account_report_balance.py report query
         query = "SELECT ac.type as account_type," \
@@ -227,6 +235,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
                                              ('all', 'All Partners')]
                                             ,'Display Partners'),
         'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
+        'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
     }
 
     _defaults = {
@@ -253,7 +262,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         data['form']['used_context'] = used_context
         
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['display_partner', 'output_currency'], context=context)[0])
+        data['form'].update(self.read(cr, uid, ids, ['display_partner', 'output_currency', 'instance_ids'], context=context)[0])
         return data
     
     def show(self, cr, uid, ids, context=None):

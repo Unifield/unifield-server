@@ -52,6 +52,33 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             self.ACCOUNT_TYPE = ('payable',)
         else:
             self.ACCOUNT_TYPE = ('payable', 'receivable')
+            
+        """
+        # output currency
+        self.output_currency_id = data['form']['output_currency']
+        self.output_currency_code = ''
+        if self.output_currency_id:
+            ouput_cur_r = self.pool.get('res.currency').read(self.cr,
+                                            self.uid,
+                                            [self.output_currency_id],
+                                            ['name'])
+            if ouput_cur_r and ouput_cur_r[0] and ouput_cur_r[0]['name']:
+                self.output_currency_code = ouput_cur_r[0]['name']
+                
+        # proprietary instances filter
+        self.instance_ids = data['form']['instance_ids'] 
+        if self.instance_ids:
+            # we add instance filter in clauses 'self.query/self.init_query' 
+            instance_ids_in = "l.instance_id in(%s)" % (",".join(map(str, self.instance_ids)))
+            if not self.query:
+                self.query = instance_ids_in
+            else:
+                self.query += ' AND ' + instance_ids_in
+            if not self.init_query:
+                self.init_query = instance_ids_in
+            else:
+                self.init_query += ' AND ' + instance_ids_in
+        """
 
         return super(account_partner_balance_tree, self).set_context(objects, data, ids, report_type=report_type)
 
