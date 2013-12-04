@@ -39,11 +39,11 @@
         </record>
 
     <!--
-         Redefine "Chart of Accounts" to "Balance by accounts" (actions and menus)
+         Redefine "Chart of Accounts" to "Balance by account" (actions and menus)
     -->
 
         <record id="account.action_account_chart" model="ir.actions.act_window">
-          <field name="name">Balance by accounts</field>
+          <field name="name">Balance by account</field>
           <field name="res_model">account.chart</field>
           <field name="view_type">form</field>
           <field name="view_mode">tree,form</field>
@@ -54,10 +54,10 @@
 
         <menuitem icon="STOCK_INDENT" action="account.action_account_chart"
               id="account.menu_action_account_tree2"
-                  parent="account.final_accounting_reports" string="Balance by accounts" sequence="100"/>
+                  parent="account.final_accounting_reports" string="Balance by account" sequence="100"/>
 
     <!--
-      Renew account move line tree when you come from balance by accounts and chart of accounts wizards
+      Renew account move line tree when you come from balance by account and chart of account wizards
     -->
         <record id="inherit_view_move_line_tree" model="ir.ui.view">
           <field name="name">inherit.move.line.tree</field>
@@ -131,9 +131,9 @@
           </field>
         </record>
 
-    <!-- Change name of result to "Balance by accounts" instead of "Chart of accounts" -->
+    <!-- Change name of result to "Balance by account" instead of "Chart of accounts" -->
         <record id="account.action_account_tree" model="ir.actions.act_window">
-          <field name="name">Balance by accounts</field>
+          <field name="name">Balance by account</field>
           <field name="res_model">account.account</field>
           <field name="view_type">tree</field>
           <field name="view_id" ref="account.view_account_tree"/>
