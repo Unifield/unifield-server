@@ -1303,6 +1303,12 @@ class sale_order_line(osv.osv):
         '''
         Call the user to know if the line must be re-sourced
         '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         for line in self.browse(cr, uid, ids, context=context):
             if line.order_id and line.order_id.state != 'draft':
                 return self.pool.get('sale.order.line.unlink.wizard').ask_unlink(cr, uid, ids, context=context)
