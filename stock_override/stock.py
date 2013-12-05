@@ -1019,6 +1019,7 @@ class stock_move(osv.osv):
         'expired_lot': fields.function(_is_expired_lot, method=True, type='boolean', string='Lot expired', store=False, multi='attribute'),
         'product_tbd': fields.function(_is_expired_lot, method=True, type='boolean', string='TbD', store=False, multi='attribute'),
         'has_to_be_resourced': fields.boolean(string='Has to be resourced'),
+        'from_wkf': fields.related('picking_id', 'from_wkf', type='boolean', string='From wkf'),
     }
 
     _defaults = {
@@ -1043,15 +1044,19 @@ class stock_move(osv.osv):
         if backmove_ids:
             raise osv.except_osv(_('Error'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
 
-        wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, {'move_id': ids[0]}, context=context)
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.sale_line_id and move.sale_line_id.order_id:
+                wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, {'move_id': ids[0]}, context=context)
 
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.move.cancel.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': wiz_id,
-                'context': context}
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'stock.move.cancel.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'target': 'new',
+                        'res_id': wiz_id,
+                        'context': context}
+
+        return self.unlink(cr, uid, ids, context=context)
 
     def force_assign(self, cr, uid, ids, context=None):
         product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]

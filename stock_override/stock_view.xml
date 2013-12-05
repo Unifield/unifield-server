@@ -346,6 +346,7 @@
                                     <field name="date" string="Actual Move Date"/>
                                     <field name="state"/>
                                     <field name="fake_state" invisible="1"/>
+                                    <field name="from_wkf" invisible="1" />
                                     <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" />
                                     <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                     <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
@@ -359,8 +360,9 @@
                                     <field name="inactive_product" invisible="1" />
                                     <field name="to_correct_ok" invisible="1" />
                                     <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
-                                    <button name="action_cancel" icon="gtk-cancel" string="Cancel &amp; Resource" type="object" 
-                                           attrs="{'invisible': [('fake_state', 'in', ('cancel', 'done'))]}" />
+                                    <button name="call_cancel_wizard" icon="gtk-del" string="Cancel &amp; Resource" type="object" 
+                                            confirm="Do you really want to delete selected record ?"
+                                           attrs="{'invisible': ['|', ('from_wkf', '=', False), ('fake_state', 'in', ('cancel', 'done'))]}" />
                                 </tree>
 
                                 <form string="Stock Moves">
