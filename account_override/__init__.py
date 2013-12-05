@@ -166,7 +166,7 @@ ACCOUNT_RESTRICTED_AREA = {
         ('type', '!=', 'view'),
         ('user_type_code', '=', 'expense'),
         ('type_for_register', '=', 'donation'),
-    ]
+    ],
 }
 
 import res_currency
