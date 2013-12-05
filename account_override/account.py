@@ -105,6 +105,30 @@ class account_account(osv.osv):
                 arg.append(x)
         return arg
 
+    def _get_fake_cash_domain(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Fake method for domain
+        """
+        if context is None:
+            context = {}
+        res = {}
+        for cd_id in ids:
+            res[cd_id] = True
+        return res
+
+    def _search_cash_domain(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Return a given domain (defined in ACCOUNT_RESTRICTED_AREA variable)
+        """
+        if context is None:
+            context = {}
+        arg = []
+        for x in args:
+            if x[0] and x[1] == '=' and x[2]:
+                if x[2] in ['cash', 'bank', 'cheque']:
+                    arg.append(('restricted_area', '=', 'journals'))
+        return arg
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'), 
@@ -115,7 +139,8 @@ class account_account(osv.osv):
             """),
         'shrink_entries_for_hq': fields.boolean("Shrink entries for HQ export", help="Check this attribute if you want to consolidate entries on this account before they are exported to the HQ system."),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
-        'restricted_area': fields.function(_get_restricted_area, fnct_search=_search_restricted_area, type='boolean', method=True, string="Is this account allowed?")
+        'restricted_area': fields.function(_get_restricted_area, fnct_search=_search_restricted_area, type='boolean', method=True, string="Is this account allowed?"),
+        'cash_domain': fields.function(_get_fake_cash_domain, fnct_search=_search_cash_domain, method=True, type='boolean', string="Domain used to search account in journals", help="This is only to change domain in journal's creation."),
     }
 
     _defaults = {

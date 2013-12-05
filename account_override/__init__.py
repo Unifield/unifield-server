@@ -167,6 +167,12 @@ ACCOUNT_RESTRICTED_AREA = {
         ('user_type_code', '=', 'expense'),
         ('type_for_register', '=', 'donation'),
     ],
+    # JOURNALS
+    'journals': [
+        ('type', '!=', 'view'),
+        ('user_type_code', '=', 'cash'),
+        ('type', '=', 'liquidity'),
+    ],
 }
 
 import res_currency

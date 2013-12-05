@@ -27,6 +27,8 @@ import tools
 
 from tools.translate import _
 
+from account_override import ACCOUNT_RESTRICTED_AREA
+
 class account_journal(osv.osv):
     _inherit = "account.journal"
 
@@ -75,7 +77,7 @@ class account_journal(osv.osv):
                 ('sale_refund','Sale Refund'),
                 ('stock', 'Stock'),
         ]
-    
+
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True),
         'code': fields.char('Code', size=10, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
@@ -124,14 +126,20 @@ class account_journal(osv.osv):
             analytic_cash_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CAS'),
                                                                           ('is_current_instance', '=', True)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cash_journal
+            value['domain']['default_debit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
+            value['domain']['default_credit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
         elif type == 'bank': 
             analytic_bank_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'BNK'),
                                                                           ('is_current_instance', '=', True)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_bank_journal
+            value['domain']['default_debit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
+            value['domain']['default_credit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
         elif type == 'cheque': 
             analytic_cheque_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CHK'),
                                                                             ('is_current_instance', '=', True)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cheque_journal
+            value['domain']['default_debit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
+            value['domain']['default_credit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
         elif type == 'cur_adj':
             debit_default_dom = [('type','<>','view'),('type','<>','consolidation')]
             credit_default_dom = [('type','<>','view'),('type','<>','consolidation')]
