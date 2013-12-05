@@ -187,6 +187,14 @@ class account_partner_balance_tree(osv.osv):
                                                 r[0]['partner_id'][0],
                                                 context['data'])
                 if move_line_ids:
+                    if context:
+                        new_context = context.copy()
+                        comp_currency_id = self._get_company_currency(cr, uid, context=context)
+                        output_currency_id = context['data']['form'].get('output_currency', comp_currency_id)
+                        if comp_currency_id and output_currency_id \
+                            and comp_currency_id != output_currency_id:
+                            # output currency in action context
+                            new_context['output_currency_id'] = output_currency_id
                     view_id = self.pool.get('ir.model.data').get_object_reference(
                                 cr, uid, 'account_override',
                                 'view_account_partner_balance_tree_move_line_tree')[1]
@@ -197,6 +205,7 @@ class account_partner_balance_tree(osv.osv):
                         'view_mode': 'tree,form',
                         'view_type': 'form',
                         'domain': [('id','in',tuple(move_line_ids))],
+                        'context': new_context,
                     }
                     if view_id:
                         res['view_id'] = [view_id]

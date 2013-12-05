@@ -73,6 +73,9 @@
                     <field name="currency_id"/>
                     <field name="debit" sum="Total Func. Debit"/>
                     <field name="credit" sum="Total Func. Credit"/>
+                    <field name="output_amount_debit" />
+                    <field name="output_amount_credit" />
+                    <field name="output_currency" />
                     <field name="functional_currency_id"/>
                     <field name="reconcile_txt"/>
                     <field name="state"/>

@@ -110,6 +110,7 @@ else:
     display_account = (data['form']['display_account']=='bal_all' and 'All') or (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0'
 %>
 <Table x:FullColumns="1" x:FullRows="1">
+## header (criteria)
 % for x in range(0, col_count):
 <Column ss:AutoFitWidth="1" ss:Width="150" />
 % endfor
@@ -156,6 +157,7 @@ else:
 </Cell>
 % endfor
 </Row>
+## partner row
 % for p_obj in p_entries:
 <Row>
 <Cell ss:StyleID="ssHeader" ss:MergeAcross="4">
@@ -171,6 +173,7 @@ else:
     <Data ss:Type="String">${formatLang(currency_conv(p_obj.balance))}</Data>
 </Cell>
 </Row>
+## account move line row
 % for aml in get_partner_account_move_lines(p_entries[0].account_type, p_obj.partner_id.id, data):
 <%
 debit = currency_conv(aml.debit)
