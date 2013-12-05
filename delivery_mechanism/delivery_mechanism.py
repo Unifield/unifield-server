@@ -775,6 +775,7 @@ class stock_picking(osv.osv):
 #            move_obj.action_assign(cr, uid, second_assign_moves)
 #            move_obj.action_assign(cr, uid, to_assign_moves)
 
+        # If a line has been canceled on PICK/OUT
         for so in self.pool.get('sale.order').browse(cr, uid, list(so_to_check), context=context):
             if so.state == 'shipping_except':
                 wf_service.trg_validate(uid, 'sale.order', so.id, 'ship_corrected', cr)

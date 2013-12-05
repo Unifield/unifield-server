@@ -2253,8 +2253,7 @@ class purchase_order_line(osv.osv):
             if line.order_id.id not in purchase_ids:
                 purchase_ids.append(line.order_id.id)
 
-            if line.has_to_be_resourced:
-                self.cancel_sol(cr, uid, [line.id], context=context)
+            self.cancel_sol(cr, uid, [line.id], context=context)
             # we want to skip resequencing because unlink is performed on merged purchase order lines
             tmp_Resequencing = context.get('skipResequencing', False)
             context['skipResequencing'] = True
