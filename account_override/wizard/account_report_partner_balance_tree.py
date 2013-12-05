@@ -171,18 +171,6 @@ class account_partner_balance_tree(osv.osv):
             }
             self.create(cr, uid, vals, context=context)
             
-    def get_data(self, cr, uid, account_types, context=None):
-        """ browse with account_type filter 'payable' or 'receivable'"""
-        domain = [('uid', '=', uid)]
-        if account_types:
-            domain += [('account_type', 'in', account_types)]
-        ids = self.search(cr, uid, domain, context=context)
-        if ids:
-            if isinstance(ids, (int, long)):
-                ids = [ids]
-            return self.browse(cr, uid, ids, context=context)
-        return False
-            
     def open_journal_items(self, cr, uid, ids, context=None):
         # get related partner
         res = {}
@@ -237,6 +225,30 @@ class account_partner_balance_tree(osv.osv):
         if not amount:
             amount = 0.
         return amount
+           
+    def get_partner_data(self, cr, uid, account_types, context=None):
+        """ browse with account_type filter 'payable' or 'receivable'"""
+        domain = [('uid', '=', uid)]
+        if account_types:
+            domain += [('account_type', 'in', account_types)]
+        ids = self.search(cr, uid, domain, context=context)
+        if ids:
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            return self.browse(cr, uid, ids, context=context)
+        return []
+        
+    def get_partner_account_move_lines_data(self, cr, uid, account_type, partner_id, data, context=None):
+        ids = self._execute_query_selected_partner_move_line_ids(cr, uid,
+                                                        account_type,
+                                                        partner_id,
+                                                        data)
+        if ids:
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            res = self.pool.get('account.move.line').browse(cr, uid, ids, context=context)
+            return res
+        return []
 account_partner_balance_tree()
 
 

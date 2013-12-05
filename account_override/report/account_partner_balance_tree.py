@@ -30,6 +30,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
 
     def __init__(self, cr, uid, name, context=None):
         super(account_partner_balance_tree, self).__init__(cr, uid, name, context=context)
+        self.apbt_obj = self.pool.get('account.partner.balance.tree')
         self.uid = uid
         self.localcontext.update({
             # header
@@ -47,7 +48,23 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             
             # data
             'get_partners': self._get_partners,
+            'get_partner_account_move_lines': self._get_partner_account_move_lines,
+            
+            # currency
+            'get_output_currency_code': self._get_output_currency_code,
+            'currency_conv': self._currency_conv,
         })
+        
+        # company currency
+        self.currency_id = False
+        self.instance_id = False
+        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+        if user and user[0] and user[0].company_id:
+            self.currency_id = user[0].company_id.currency_id.id
+            if user[0].company_id.instance_id:
+                self.instance_id = user[0].company_id.instance_id.id
+        if not self.currency_id:
+            raise osv.except_osv(_('Error !'), _('Company has no default currency'))
 
     def set_context(self, objects, data, ids, report_type=None):
         self.sortby = data['form'].get('sortby', 'sort_date')
@@ -63,7 +80,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         else:
             self.ACCOUNT_TYPE = ('payable', 'receivable')
             
-        """
         # output currency
         self.output_currency_id = data['form']['output_currency']
         self.output_currency_code = ''
@@ -74,21 +90,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
                                             ['name'])
             if ouput_cur_r and ouput_cur_r[0] and ouput_cur_r[0]['name']:
                 self.output_currency_code = ouput_cur_r[0]['name']
-                
-        # proprietary instances filter
-        self.instance_ids = data['form']['instance_ids'] 
-        if self.instance_ids:
-            # we add instance filter in clauses 'self.query/self.init_query' 
-            instance_ids_in = "l.instance_id in(%s)" % (",".join(map(str, self.instance_ids)))
-            if not self.query:
-                self.query = instance_ids_in
-            else:
-                self.query += ' AND ' + instance_ids_in
-            if not self.init_query:
-                self.init_query = instance_ids_in
-            else:
-                self.init_query += ' AND ' + instance_ids_in
-        """
 
         return super(account_partner_balance_tree, self).set_context(objects, data, ids, report_type=report_type)
 
@@ -96,16 +97,15 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         """ return a list of 1 or 2 elements each element containing browse objects
         only [payable] or only [receivable] or [payable, receivable]
         """
-        apbt_obj = self.pool.get('account.partner.balance.tree')
         res = []
         for at in self.ACCOUNT_TYPE:
-            objects = apbt_obj.get_data(self.cr, self.uid, [at])
+            objects = self.apbt_obj.get_partner_data(self.cr, self.uid, [at])
             if objects:
                 res.append(objects)
-        # !!! TODO
-        print '_get_partners res', res
-        print '_get_partners res[0]', res[0]
         return res
+        
+    def _get_partner_account_move_lines(self, account_type, partner_id, data):
+        return self.apbt_obj.get_partner_account_move_lines_data(self.cr, self.uid, account_type, partner_id, data)
     
     def _get_account(self, data):
         if data['model'] == 'account.account':
@@ -139,39 +139,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         elif self.sortby == 'sort_journal_partner':
             return 'Journal & Partner'
         return 'Date'
-
-    def _sum_debit(self, period_id=False, journal_id=False):
-        if journal_id and isinstance(journal_id, int):
-            journal_id = [journal_id]
-        if period_id and isinstance(period_id, int):
-            period_id = [period_id]
-        if not journal_id:
-            journal_id = self.journal_ids
-        if not period_id:
-            period_id = self.period_ids
-        if not (period_id and journal_id):
-            return 0.0
-        self.cr.execute('SELECT SUM(debit) FROM account_move_line l '
-                        'WHERE period_id IN %s AND journal_id IN %s ' + self.query_get_clause + ' ',
-                        (tuple(period_id), tuple(journal_id)))
-        return self.cr.fetchone()[0] or 0.0
-
-    def _sum_credit(self, period_id=False, journal_id=False):
-        if journal_id and isinstance(journal_id, int):
-            journal_id = [journal_id]
-        if period_id and isinstance(period_id, int):
-            period_id = [period_id]
-        if not journal_id:
-            journal_id = self.journal_ids
-        if not period_id:
-            period_id = self.period_ids
-        if not (period_id and journal_id):
-            return 0.0
-        self.cr.execute('SELECT SUM(credit) FROM account_move_line l '
-                        'WHERE period_id IN %s AND journal_id IN %s '+ self.query_get_clause+'',
-                        (tuple(period_id), tuple(journal_id)))
-        return self.cr.fetchone()[0] or 0.0
-
+        
     def _get_start_date(self, data):
         if data.get('form', False) and data['form'].get('date_from', False):
             return data['form']['date_from']
@@ -212,25 +180,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
                 return _('Periods')
         return _('No Filter')
 
-    def _sum_debit_period(self, period_id, journal_id=None):
-        journals = journal_id or self.journal_ids
-        if not journals:
-            return 0.0
-        self.cr.execute('SELECT SUM(debit) FROM account_move_line l '
-                        'WHERE period_id=%s AND journal_id IN %s '+ self.query_get_clause +'',
-                        (period_id, tuple(journals)))
-
-        return self.cr.fetchone()[0] or 0.0
-
-    def _sum_credit_period(self, period_id, journal_id=None):
-        journals = journal_id or self.journal_ids
-        if not journals:
-            return 0.0
-        self.cr.execute('SELECT SUM(credit) FROM account_move_line l '
-                        'WHERE period_id=%s AND journal_id IN %s ' + self.query_get_clause +' ',
-                        (period_id, tuple(journals)))
-        return self.cr.fetchone()[0] or 0.0
-
     def _get_fiscalyear(self, data):
         if data.get('form', False) and data['form'].get('fiscalyear_id', False):
             return self.pool.get('account.fiscalyear').browse(self.cr, self.uid, data['form']['fiscalyear_id']).name
@@ -248,10 +197,32 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             codes = [x for x, in self.cr.fetchall()]
         return codes
 
-    def _get_currency(self, data):
-        if data.get('form', False) and data['form'].get('chart_account_id', False):
-            return self.pool.get(self.cr.dbname).get('account.account').browse(self.cr, self.uid, data['form']['chart_account_id']).company_id.currency_id.symbol
-        return ''
+    def _get_output_currency_code(self):
+        if not self.output_currency_code:
+            return ''
+        return self.output_currency_code
+        
+    def _is_company_currency(self):
+        if not self.output_currency_id or not self.currency_id \
+           or self.output_currency_id == self.currency_id:
+            # ouput currency == company currency
+            return True
+        else:
+            # is other currency
+            return False
+        
+    def _currency_conv(self, amount):
+        if not amount or amount == 0.:
+            return 0.
+        if self._is_company_currency():
+            return amount
+        amount = self.pool.get('res.currency').compute(self.cr, self.uid,
+                                                self.currency_id,
+                                                self.output_currency_id,
+                                                amount)
+        if not amount:
+            amount = 0.
+        return amount
 
 class account_partner_balance_tree_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
