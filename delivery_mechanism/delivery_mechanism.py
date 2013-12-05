@@ -58,7 +58,7 @@ class stock_move(osv.osv):
             if not vals.get('line_number', False):
                 # new number needed - gather the line number from the sequence
                 sequence_id = picking_obj.read(cr, uid, [vals['picking_id']], ['move_sequence_id'], context=context)[0]['move_sequence_id'][0]
-                line = seq_pool.get_id(cr, uid, sequence_id, test='id', context=context)
+                line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
                 # update values with line value
                 vals.update({'line_number': line})
         

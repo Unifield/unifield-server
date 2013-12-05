@@ -411,5 +411,13 @@ class analytic_account(osv.osv):
                     res.append(aa.id)
         return res
 
+    def button_cc_clear(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'cost_center_ids':[(6, 0, [])]}, context=context)
+        return True
+
+    def button_dest_clear(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'tuple_destination_account_ids':[(6, 0, [])]}, context=context)
+        return True
+
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
