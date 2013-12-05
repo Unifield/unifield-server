@@ -49,6 +49,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             # data
             'get_partners': self._get_partners,
             'get_partner_account_move_lines': self._get_partner_account_move_lines,
+            'get_partners_total_debit_credit_by_account_type': self._get_partners_total_debit_credit_by_account_type,
             
             # currency
             'get_output_currency_code': self._get_output_currency_code,
@@ -107,6 +108,9 @@ class account_partner_balance_tree(report_sxw.rml_parse):
     def _get_partner_account_move_lines(self, account_type, partner_id, data):
         return self.apbt_obj.get_partner_account_move_lines_data(self.cr, self.uid, account_type, partner_id, data)
     
+    def _get_partners_total_debit_credit_by_account_type(self, account_type, data):
+        return self.apbt_obj.get_partners_total_debit_credit_by_account_type(self.cr, self.uid, account_type, data)
+
     def _get_account(self, data):
         if data['model'] == 'account.account':
             return self.pool.get('account.account').browse(self.cr, self.uid, data['form']['id']).company_id.name
@@ -223,7 +227,8 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         if not amount:
             amount = 0.
         return amount
-
+        
+        
 class account_partner_balance_tree_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         super(account_partner_balance_tree_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)

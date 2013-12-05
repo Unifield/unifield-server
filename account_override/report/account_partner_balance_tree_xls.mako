@@ -205,17 +205,24 @@ balance = debit - credit
 % endfor
 </Row>
 <Row>
+## total debit / credit / balance row
+<%
+debit, credit = get_partners_total_debit_credit_by_account_type(p_entries[0].account_type, data)
+debit = currency_conv(aml.debit)
+credit = currency_conv(aml.credit)
+balance = debit - credit
+%>
 <Cell ss:StyleID="ssHeader" ss:MergeAcross="4">
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="String">total debit</Data>
+    <Data ss:Type="String">${formatLang(debit)}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="String">total credit</Data>
+    <Data ss:Type="String">${formatLang(credit)}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="String">total balance</Data>
+    <Data ss:Type="String">${formatLang(balance)}</Data>
 </Cell>
 </Row>
 % endfor

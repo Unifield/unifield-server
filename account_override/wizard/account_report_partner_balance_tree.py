@@ -43,7 +43,7 @@ class account_partner_balance_tree(osv.osv):
     
     _order = "account_type, partner_id"
     
-    def _execute_query_aggregate(self, cr, uid, data):
+    def _execute_query_partners(self, cr, uid, data):
         """
         return res, account_type, move_state
         """
@@ -153,7 +153,7 @@ class account_partner_balance_tree(osv.osv):
         comp_currency_id = self._get_company_currency(cr, uid, context=context)
         output_currency_id = data['form'].get('output_currency', comp_currency_id)
 
-        res, account_type, move_state = self._execute_query_aggregate(cr, uid, data)
+        res, account_type, move_state = self._execute_query_partners(cr, uid, data)
         
         for r in res:
             if not r.get('partner_name', False):
@@ -249,6 +249,47 @@ class account_partner_balance_tree(osv.osv):
             res = self.pool.get('account.move.line').browse(cr, uid, ids, context=context)
             return res
         return []
+        
+    def get_partners_total_debit_credit_by_account_type(self, cr, uid, account_type, data):
+        """Compute all partners total debit/credit 
+        for given account_types (tuple) payable/receivable or both
+        return total_debit, total_credit 'tuple'
+        """
+        obj_move = self.pool.get('account.move.line')
+        where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
+ 
+        move_state = "('draft','posted')"
+        if data['form'].get('target_move', 'all') == 'posted':
+            move_state = "('posted')"
+            
+        # proprietary instances filter
+        instance_ids = data['form']['instance_ids'] 
+        if instance_ids:
+            # we add instance filter in 'where'
+            if where:
+                where += " AND "
+            where += "l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
+    
+        # inspired from account_report_balance.py report query
+        # but group only per 'account type'/'partner'
+        query = "SELECT " \
+        " sum(debit) AS debit, sum(credit) AS credit," \
+        " CASE WHEN sum(debit) > sum(credit) THEN sum(debit) - sum(credit) ELSE 0 END AS sdebit," \
+        " CASE WHEN sum(debit) < sum(credit) THEN sum(credit) - sum(debit) ELSE 0 END AS scredit" \
+        " FROM account_move_line l LEFT JOIN res_partner p ON (l.partner_id=p.id)" \
+        " JOIN account_account ac ON (l.account_id = ac.id)" \
+        " JOIN account_move am ON (am.id = l.move_id)" \
+        " WHERE ac.type IN ('" + account_type + "')" \
+        " AND am.state IN " + move_state + "" \
+        " AND " + where + "" \
+        " GROUP BY p.id"
+        cr.execute(query)
+        res = cr.dictfetchall()
+        if data['form'].get('display_partner', '') == 'non-zero_balance':
+            res2 = [r for r in res if r['sdebit'] > 0 or r['scredit'] > 0]
+        else:
+            res2 = [r for r in res]
+        return res2[0]['debit'], res2[0]['credit']
 account_partner_balance_tree()
 
 
