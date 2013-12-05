@@ -30,7 +30,9 @@ class account_partner_balance_tree(report_sxw.rml_parse):
 
     def __init__(self, cr, uid, name, context=None):
         super(account_partner_balance_tree, self).__init__(cr, uid, name, context=context)
+        self.uid = uid
         self.localcontext.update({
+            # header
             'get_account': self._get_account,
             'get_fiscalyear': self._get_fiscalyear,
             'get_journal': self._get_journal,
@@ -42,6 +44,9 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             'get_start_period': self.get_start_period,
             'get_end_period': self.get_end_period,
             'get_target_move': self._get_target_move,
+            
+            # data
+            'get_partners': self._get_partners,
         })
 
     def set_context(self, objects, data, ids, report_type=None):
@@ -87,6 +92,18 @@ class account_partner_balance_tree(report_sxw.rml_parse):
 
         return super(account_partner_balance_tree, self).set_context(objects, data, ids, report_type=report_type)
 
+    def _get_partners(self, data):
+        """ return a list of 1 or 2 elements each element containing browse objects
+        only [payable] or only [receivable] or [payable, receivable]
+        """
+        apbt_obj = self.pool.get('account.partner.balance.tree')
+        res = []
+        for at in self.ACCOUNT_TYPE:
+            objects = apbt_obj.get_data(self.cr, self.uid, [at])
+            if objects:
+                res.append(objects)
+        return res
+    
     def _get_account(self, data):
         if data['model'] == 'account.account':
             return self.pool.get('account.account').browse(self.cr, self.uid, data['form']['id']).company_id.name

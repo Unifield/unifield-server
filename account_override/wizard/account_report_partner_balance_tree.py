@@ -171,6 +171,16 @@ class account_partner_balance_tree(osv.osv):
             }
             self.create(cr, uid, vals, context=context)
             
+    def get_data(self, cr, uid, account_types, context=None):
+        """ browse with account_type filter 'payable' or 'receivable'"""
+        domain = [('uid', '=', uid)]
+        if account_types:
+            domain += [('account_type', 'in', account_types)]
+        ids = self.search(cr, uid, domain, context=context)
+        if ids:
+            return self.browse(cr, uid, ids, context=context)
+        return False
+            
     def open_journal_items(self, cr, uid, ids, context=None):
         # get related partner
         res = {}

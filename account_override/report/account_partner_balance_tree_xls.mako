@@ -88,7 +88,14 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <NumberFormat ss:Format="#,##0.00"/>
 </Style>
 </Styles>
-<Worksheet ss:Name="Sheet">
+% for p in get_partners(data):
+<%
+if p[0].account_type == 'payable':
+    worsheet_name = 'Payable Accounts'
+else:
+    worsheet_name = 'Receivable Accounts'
+%>
+<Worksheet ss:Name="${worsheet_name}">
 <%
     max = 11
     if data['model'] == 'account.account':
@@ -164,4 +171,5 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <AutoFilter x:Range="R1C1:R1C18" xmlns="urn:schemas-microsoft-com:office:excel">
 </AutoFilter>
 </Worksheet>
+% endfor
 </Workbook>
