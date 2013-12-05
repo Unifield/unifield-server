@@ -149,7 +149,14 @@ class supplier_catalogue(osv.osv):
                                                         vals.get('currency_id', False),
                                                         vals.get('partner_id', context.get('partner_id', False)),
                                                         vals.get('period_to', False), context=context)
-        return super(supplier_catalogue, self).create(cr, uid, vals, context=context)
+        res = super(supplier_catalogue, self).create(cr, uid, vals, context=context)
+        
+        # UTP-746: now check if the partner is inactive, then set this catalogue also to become inactive
+        catalogue = self.browse(cr, uid, [res], context=context)[0]
+        if not catalogue.partner_id.active:
+            self.write(cr, uid, [res], {'active': False}, context=context)
+        
+        return res
     
     def write(self, cr, uid, ids, vals, context=None):
         '''
