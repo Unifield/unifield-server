@@ -102,6 +102,9 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             objects = apbt_obj.get_data(self.cr, self.uid, [at])
             if objects:
                 res.append(objects)
+        # !!! TODO
+        print '_get_partners res', res
+        print '_get_partners res[0]', res[0]
         return res
     
     def _get_account(self, data):

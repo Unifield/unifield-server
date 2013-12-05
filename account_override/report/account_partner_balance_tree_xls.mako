@@ -95,9 +95,9 @@ if p[0].account_type == 'payable':
 else:
     worsheet_name = 'Receivable Accounts'
 %>
-<Worksheet ss:Name="${worsheet_name}">
+<Worksheet ss:Name="${worsheet_name} TEST">
 <%
-    max = 11
+    max = 8
     if data['model'] == 'account.account':
         header_company_or_chart_of_account = 'Company'
     else:
@@ -110,22 +110,18 @@ else:
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 % for x in range(0,max):
-<Column ss:AutoFitWidth="1" ss:Width="70" />
+<Column ss:AutoFitWidth="1" ss:Width="100" />
 % endfor
 <Row>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header_company_or_chart_of_account}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Journals</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Display Account</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Filter By ${(get_filter(data) or '')|x}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Entries Sorted By</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Target Moves</Data></Cell>
-<Cell ss:StyleID="ssH"></Cell>
-<Cell ss:StyleID="ssH"></Cell>
-<Cell ss:StyleID="ssH"></Cell>
-<Cell ss:StyleID="ssH"></Cell>
 </Row>
-% for p in objects:
 <Row>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${(get_account(data) or '')|x}</Data>
@@ -133,7 +129,7 @@ else:
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${(get_fiscalyear(data) or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssHeader">
+<Cell ss:StyleID="ssHeader" ss:MergeAcross="1">
     <Data ss:Type="String">${(journals or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
@@ -148,23 +144,28 @@ else:
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssHeader"></Cell>
-<Cell ss:StyleID="ssHeader"></Cell>
-<Cell ss:StyleID="ssHeader"></Cell>
-<Cell ss:StyleID="ssHeader"></Cell>
 </Row>
 <Row>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
-<Cell></Cell>
+% for n in range(max):
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String"></Data>
+</Cell>
+% endfor
+</Row>
+% for p_obj in p:
+<Row>
+<Cell ss:StyleID="ssHeader" ss:MergeAcross="4">
+    <Data ss:Type="String">${(p_obj.name or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${formatLang(p_obj.debit or 0.)}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${formatLang(p_obj.credit or 0.)}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${formatLang(p_obj.balance) or 0.}</Data>
+</Cell>
 </Row>
 % endfor
 </Table>
@@ -172,4 +173,5 @@ else:
 </AutoFilter>
 </Worksheet>
 % endfor
+## endfor Worksheet
 </Workbook>

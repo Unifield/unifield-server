@@ -178,6 +178,8 @@ class account_partner_balance_tree(osv.osv):
             domain += [('account_type', 'in', account_types)]
         ids = self.search(cr, uid, domain, context=context)
         if ids:
+            if isinstance(ids, (int, long)):
+                ids = [ids]
             return self.browse(cr, uid, ids, context=context)
         return False
             
