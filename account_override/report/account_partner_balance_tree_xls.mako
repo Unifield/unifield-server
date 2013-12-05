@@ -95,7 +95,10 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         header_company_or_chart_of_account = 'Company'
     else:
         header_company_or_chart_of_account = 'Chart of Account'
-    journals = ', '.join([ lt or '' for lt in get_journal(data) ])
+    if 'all_journals' in data['form']:
+       journals = 'All Journals'
+    else:
+       journals = ', '.join([lt or '' for lt in get_journal(data)])
     display_account = (data['form']['display_account']=='bal_all' and 'All') or (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0'
 %>
 <Table x:FullColumns="1" x:FullRows="1">
@@ -115,7 +118,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"></Cell>
 <Cell ss:StyleID="ssH"></Cell>
 </Row>
-% for a in objects:
+% for p in objects:
 <Row>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${(get_account(data) or '')|x}</Data>
@@ -156,80 +159,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell></Cell>
 <Cell></Cell>
 </Row>
-<Row>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Date</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">JRNL</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Partner</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Ref</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Move</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Entry Label</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Counterpart</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Debit</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Credit</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Balance</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
-</Row>
-% for o in get_children_accounts(a):
-<Row>
-<Cell ss:StyleID="ssBorder">
-</Cell>
-<Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${(o.code or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssBorder" ss:MergeAcross="4">
-    <Data ss:Type="String">${(o.name or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssNumber">
-    <Data ss:Type="Number">${sum_debit_account(o)}</Data>
-</Cell>
-<Cell ss:StyleID="ssNumber">
-    <Data ss:Type="Number">${sum_credit_account(o)}</Data>
-</Cell>
-<Cell ss:StyleID="ssNumber">
-    <Data ss:Type="Number">${sum_balance_account(o)}</Data>
-</Cell>
-<Cell ss:StyleID="ssBorder">
-    <Data ss:Type="String">${get_output_currency_code(data)}</Data>
-</Cell>
-</Row>
-% for line in lines(o):
-<Row>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${(formatLang(line['ldate'],date=True)) or ''}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${(line['lcode'] or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${(line['partner_name'] or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${(line['lref'] or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${(line['move'] or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${(line['lname'] or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${((strip_name(line['line_corresp'].replace(', ',','),25)) or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${get_line_debit(line)}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${get_line_credit(line)}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${get_line_balance(line)}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine2">
-    <Data ss:Type="String">${get_output_currency_code(data)}</Data>
-</Cell>
-</Row>
-% endfor
-% endfor
 % endfor
 </Table>
 <AutoFilter x:Range="R1C1:R1C18" xmlns="urn:schemas-microsoft-com:office:excel">

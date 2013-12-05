@@ -10,6 +10,7 @@
             <search string="Partner Balance Search">
                 <field name="account_type"/>
                 <field name="partner_id" string="Partner" />
+                <newline />
                 <group expand="0" string="Group By...">
                     <filter string="Payable/Receivable"
                         icon="terp-personal" domain="[]"

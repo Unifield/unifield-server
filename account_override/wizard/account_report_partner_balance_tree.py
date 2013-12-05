@@ -85,7 +85,6 @@ class account_partner_balance_tree(osv.osv):
         " AND " + where + "" \
         " GROUP BY ac.type,p.id,p.ref,p.name" \
         " ORDER BY ac.type,p.name"
-        print '_execute_query_aggregate WHERE', where
         cr.execute(query)
         res = cr.dictfetchall()
         if data['form'].get('display_partner', '') == 'non-zero_balance':
@@ -248,7 +247,6 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
     def _get_journals(self, cr, uid, context=None):
         """exclude extra-accounting journals from this report (IKD, ODX)."""
         domain = [('type', 'not in', ['inkind', 'extra'])]
-        #domain = []
         return self.pool.get('account.journal').search(cr, uid, domain, context=context)
 
     _defaults = {
@@ -270,7 +268,12 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         data = {}
         data['ids'] = context.get('active_ids', [])
         data['model'] = context.get('active_model', 'ir.ui.menu')
-        data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from', 'period_to',  'filter',  'chart_account_id', 'target_move'])[0]
+        data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from', 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_account'])[0]
+        if data['form']['journal_ids']:
+            default_journals = self._get_journals(cr, uid, context=context)
+            if default_journals:
+                if len(default_journals) == len(data['form']['journal_ids']):
+                    data['form']['all_journals'] = True
         used_context = self._build_contexts(cr, uid, ids, data, context=context)
         data['form']['periods'] = used_context.get('periods', False) and used_context['periods'] or []
         data['form']['used_context'] = used_context
