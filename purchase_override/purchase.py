@@ -362,6 +362,15 @@ class purchase_order(osv.osv):
 
         return True
 
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        No unlink for PO linked to a FO
+        '''
+        if self.get_so_ids_from_po_ids(cr, uid, ids, context=context):
+            raise osv.except_osv(_('Error'), _('You cannot remove a Purchase order that is linked to a Field Order or an Internal Request. Please cancel it instead.'))
+
+        return super(purchase_order, self).unlink(cr, uid, ids, context=context)
+
 
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
@@ -2201,7 +2210,7 @@ class purchase_order_line(osv.osv):
                         'target': 'new',
                         'context': context}
 
-        return True
+        return self.unlink(cr, uid, ids, context=context)
 
     def cancel_sol(self, cr, uid, ids, context=None):
         '''
