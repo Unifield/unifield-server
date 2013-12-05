@@ -131,7 +131,7 @@
           </field>
         </record>
 
-    <!-- Change name of result to "Balance by account" instead of "Chart of accounts" -->
+    <!-- Change name of result to "Balance by account" instead of "Chart of Accounts" -->
         <record id="account.action_account_tree" model="ir.actions.act_window">
           <field name="name">Balance by account</field>
           <field name="res_model">account.account</field>
@@ -149,7 +149,7 @@
             <field name="model">account.coa</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Chart of accounts">
+                <form string="Chart of Accounts">
                     <field name="fiscalyear"/>
                     <field name="show_inactive"/>
                     <group colspan="4" col="6">

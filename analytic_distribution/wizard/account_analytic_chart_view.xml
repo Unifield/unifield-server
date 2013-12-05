@@ -79,7 +79,7 @@
         </record>
 
         <record id="action_account_analytic_coa" model="ir.actions.act_window">
-          <field name="name">Chart of analytic accounts</field>
+          <field name="name">Chart of Analytic Accounts</field>
           <field name="type">ir.actions.act_window</field>
           <field name="res_model">account.analytic.coa</field>
           <field name="view_type">form</field>
@@ -89,7 +89,7 @@
         </record>
 
         <menuitem
-          name="Chart of analytic accounts"
+          name="Chart of Analytic Accounts"
           parent="account.menu_finance_charts"
           action="action_account_analytic_coa"
           id="menu_action_account_analytic_coa"
