@@ -388,7 +388,7 @@ class purchase_order_sync(osv.osv):
                 old_lines, new_lines = map(set, changes['order_line'])
                 logger.is_product_added |= (len(new_lines - old_lines) > 0)
                 logger.is_product_removed |= (len(old_lines - new_lines) > 0)
-            logger.is_date_modified |= ('date_order' in changes)
+            logger.is_date_modified |= ('delivery_confirmed_date' in changes)
             logger.is_status_modified |= ('state' in changes)
             # handle line's changes
             for line_id, line_changes in lines.get(id, {}).items():
