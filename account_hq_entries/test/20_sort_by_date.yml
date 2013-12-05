@@ -57,7 +57,7 @@
     # Test that 7 JE are on HQ journal
     logging.getLogger('tests').log(logging.INFO, "7 JE on HQ")
     je_hq_ids = self.search(cr, uid, [('journal_id.type', '=', 'hq')])
-    assert len(je_hq_ids) == 7, "Expect 7 moves in HQ Journal. Current: %s" % len(res_ids)
+    assert len(je_hq_ids) == 7, "Expect 7 moves in HQ Journal. Current: %s" % len(je_hq_ids)
     # Test that 2 JE are done January the 9th
     logging.getLogger('tests').log(logging.INFO, "2 JE on HQ, January the 9th")
     je_9_ids = self.search(cr, uid, [('journal_id.type', '=', 'hq'), ('date', '=', time.strftime('%Y-01-09'))])
