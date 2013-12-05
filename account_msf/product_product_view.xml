@@ -11,7 +11,7 @@
                 <page string="Accounting" position="inside">
                     <group colspan="4" col="2">
                         <separator string="Donation Properties"/>
-                        <field name="donation_expense_account"/>
+                        <field name="donation_expense_account" domain="[('restricted_area', '=', 'product_donation')]"/>
                     </group>
                 </page>
             </field>
