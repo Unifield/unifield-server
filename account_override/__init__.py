@@ -161,6 +161,12 @@ ACCOUNT_RESTRICTED_AREA = {
         ('user_type_code', '=', 'expense'),
         ('type_for_register', '=', 'donation'),
     ],
+    # PRODUCT CATEGORY - DONATION ACCOUNT
+    'product_category_donation': [
+        ('type', '!=', 'view'),
+        ('user_type_code', '=', 'expense'),
+        ('type_for_register', '=', 'donation'),
+    ]
 }
 
 import res_currency

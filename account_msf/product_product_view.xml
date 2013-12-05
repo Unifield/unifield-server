@@ -27,7 +27,7 @@
                 <form position="inside">
                     <group col="2" colspan="2">
                         <separator string="Donation Properties" colspan="2"/>
-                        <field name="donation_expense_account"/>
+                        <field name="donation_expense_account" domain="[('restricted_area', '=', 'product_category_donation')]"/>
                     </group>
                 </form>
             </field>
