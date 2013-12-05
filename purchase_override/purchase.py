@@ -672,7 +672,9 @@ class purchase_order(osv.osv):
                 
                 for cc_line in distrib.cost_center_lines:
                     if is_intermission and cc_line.analytic_id.id != intermission_cc:
-                        cc_line.write({'analytic_id': intermission_cc})
+                        # UTP-952: remove the default intermission cc
+                        #cc_line.write({'analytic_id': intermission_cc})
+                        pass
                     elif not is_intermission and cc_line.analytic_id.id == intermission_cc:
                         raise osv.except_osv(_('Warning'), _("The PO partner type is not intermission, so you can not use the Cost Center Intermission in line: %s!") % (pol.name or '',))
 
