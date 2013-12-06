@@ -31,7 +31,7 @@ class account_bank_statement_line(osv.osv):
         """
         Return True for all element that correspond to some criteria:
          - The entry state is draft
-         - The account is an expense account
+         - The account is analytic-a-holic
         """
         res = {}
         for absl in self.browse(cr, uid, ids, context=context):
@@ -39,8 +39,8 @@ class account_bank_statement_line(osv.osv):
             # False if st_line is hard posted
             if absl.state == 'hard':
                 res[absl.id] = False
-            # False if account not an expense account
-            if absl.account_id.user_type.code not in ['expense']:
+            # False if account not allocatable
+            if not absl.account_id.is_analytic_addicted:
                 res[absl.id] = False
         return res
 

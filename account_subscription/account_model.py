@@ -67,14 +67,14 @@ class account_model_line(osv.osv):
 
     def _get_is_allocatable(self, cr, uid, ids, name, arg, context=None):
         """
-        If expense account, then this account is allocatable.
+        If analytic-a-holic account, then this account is allocatable.
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = {}
         for model_line in self.browse(cr, uid, ids):
             res[model_line.id] = True
-            if model_line.account_id and model_line.account_id.user_type and model_line.account_id.user_type.code and model_line.account_id.user_type.code != 'expense':
+            if model_line.account_id and not model_line.account_id.is_analytic_addicted:
                 res[model_line.id] = False
         return res
 

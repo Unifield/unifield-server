@@ -30,16 +30,13 @@ class account_move_line(osv.osv):
         """
         Return True for all element that correspond to some criteria:
          - The journal entry state is draft (unposted)
-         - The account is an expense account
+         - The account is analytic-a-holic
         """
         res = {}
         for ml in self.browse(cr, uid, ids, context=context):
             res[ml.id] = True
-#            # False if journal entry is posted
-#            if ml.move_id.state == 'posted':
-#                res[ml.id] = False
-            # False if account not an expense account
-            if ml.account_id.user_type.code not in ['expense']:
+            # False if account not anlaytic-a-holic
+            if not ml.account_id.is_analytic_addicted:
                 res[ml.id] = False
         return res
 
@@ -94,7 +91,8 @@ class account_move_line(osv.osv):
                 from_header = _(' (from header)')
             d_state = get_sel(cr, uid, ml, 'analytic_distribution_state', context)
             res[ml.id] = "%s%s" % (d_state, from_header)
-            if ml.account_id and ml.account_id.user_type and ml.account_id.user_type.code != 'expense':
+            # Do not show any recap for non analytic-a-holic accounts
+            if ml.account_id and not ml.account_id.is_analytic_addicted:
                 res[ml.id] = ''
         return res
 

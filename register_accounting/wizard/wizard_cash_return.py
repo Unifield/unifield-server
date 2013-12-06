@@ -55,13 +55,13 @@ class wizard_advance_line(osv.osv_memory):
         """
         Return True for all element that correspond to some criteria:
          - The entry state is draft
-         - The account is an expense account
+         - The account is analytic-a-holic
         """
         res = {}
         for absl in self.browse(cr, uid, ids, context=context):
             res[absl.id] = True
-            # False if account not an expense account
-            if absl.account_id.user_type.code not in ['expense']:
+            # False if account not an analytic-a-holic account
+            if not absl.account_id.is_analytic_addicted:
                 res[absl.id] = False
         return res
 
@@ -346,7 +346,7 @@ class wizard_cash_return(osv.osv_memory):
         absl_obj.write(cr, uid, [st_line_id], {'move_ids': [(4, move_id, False)]}, context=context)
         
         # hard post for this expense account line
-#        if move_line.account_id.user_type.code in ['expense']:
+#        if move_line.account_id.is_analytic_addicted:
 #            absl_obj.posting(cr, uid, [move_line.id], 'hard', context=context)
          
         return True
@@ -479,11 +479,11 @@ class wizard_cash_return(osv.osv_memory):
         if context is None:
             context = {}
 
-        # check if any line with expense account missing the distribution_id value
+        # check if any line with an analytic-a-holic account missing the distribution_id value
         wizard = self.browse(cr, uid, ids[0], context=context)      
         for st_line in wizard.advance_line_ids:
-            if st_line.account_id.user_type.code in ['expense'] and not st_line.analytic_distribution_id:  
-                raise osv.except_osv(_('Warning'), _('All advance lines with expense account must have analytic distribution'))
+            if st_line.account_id.is_analytic_addicted and not st_line.analytic_distribution_id:  
+                raise osv.except_osv(_('Warning'), _('All advance lines with account that depends on analytic distribution must have an allocation.'))
 
         # Do computation of total_amount
         self.compute_total_amount(cr, uid, ids, context=context)
