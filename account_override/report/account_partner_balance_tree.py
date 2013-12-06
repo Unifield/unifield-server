@@ -49,7 +49,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             # data
             'get_partners': self._get_partners,
             'get_partner_account_move_lines': self._get_partner_account_move_lines,
-            'get_partners_total_debit_credit_by_account_type': self._get_partners_total_debit_credit_by_account_type,
+            'get_partners_total_debit_credit_balance_by_account_type': self._get_partners_total_debit_credit_balance_by_account_type,
             
             # currency
             'get_output_currency_code': self._get_output_currency_code,
@@ -100,8 +100,8 @@ class account_partner_balance_tree(report_sxw.rml_parse):
     def _get_partner_account_move_lines(self, account_type, partner_id, data):
         return self.apbt_obj.get_partner_account_move_lines_data(self.cr, self.uid, account_type, partner_id, data)
     
-    def _get_partners_total_debit_credit_by_account_type(self, account_type, data):
-        return self.apbt_obj.get_partners_total_debit_credit_by_account_type(self.cr, self.uid, account_type, data)
+    def _get_partners_total_debit_credit_balance_by_account_type(self, account_type, data):
+        return self.apbt_obj.get_partners_total_debit_credit_balance_by_account_type(self.cr, self.uid, account_type, data)
 
     def _get_account(self, data):
         if data['model'] == 'account.account':
