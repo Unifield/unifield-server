@@ -118,7 +118,10 @@
   </Row>
 <% total = 0.0 %>
 % for o in [x for x in objects if x.category == cat[1] and not x.parent_id] + sorted([x for x in objects if x.category == cat[1] and x.parent_id], key=lambda y: y.code):
-<% total += o.balance or 0.0 %>
+<%
+  if not o.parent_id:
+    total += o.balance or 0.0
+%>
   <Row>
     <Cell>
       <Data ss:Type="String">${o.name or ''|x}</Data>
