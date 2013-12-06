@@ -2035,6 +2035,9 @@ class purchase_order_line(osv.osv):
         other_lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom)], context=context)
         stages = self._get_stages_price(cr, uid, product_id, product_uom, order, context=context)
 
+        if vals.get('origin') and not vals.get('procurement_id'):
+            vals.update(self.update_origin_link(cr, uid, vals.get('origin'), context=context))
+
         if (other_lines and stages and order.state != 'confirmed'):
             context.update({'change_price_ok': False})
 
@@ -2119,6 +2122,9 @@ class purchase_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok:
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
+
+            if vals.get('origin', line.origin) and not vals.get('procurement_id', line.procurement_id):
+                vals.update(self.update_origin_link(cr, uid, vals.get('origin', line.origin), context=context))
         
         if not context.get('update_merge'):
             for line in ids:
@@ -2130,6 +2136,21 @@ class purchase_order_line(osv.osv):
         res = super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
 
         return res
+
+    def update_origin_line(self, cr, uid, origin, context=None):
+        '''
+        Return the FO/IR that matches with the origin value
+        '''
+        so_obj = self.pool.get('sale.order')
+
+        tmp_proc_context = context.get('procurement_request')
+        context['procurement_request'] = True
+        so_ids = so_obj.search(cr, uid, [('name', '=', origin)], context=context)
+        context['procurement_request'] = tmp_proc_context
+        if so_ids:
+            return {'link_so_id': so_ids[0]}
+
+        return {}
 
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -2238,6 +2259,7 @@ class purchase_order_line(osv.osv):
         'parent_line_id': fields.many2one('purchase.order.line', string='Parent line', ondelete='set null'),
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=64, string='Origin'),
+        'link_so_id': fields.many2one('sale.order', string='Linked FO/IR', readonly=True),
         'change_price_ok': fields.function(_get_price_change_ok, type='boolean', method=True, string='Price changing'),
         'change_price_manually': fields.boolean(string='Update price manually'),
         # openerp bug: eval invisible in p.o use the po line state and not the po state !
