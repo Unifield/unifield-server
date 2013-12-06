@@ -112,7 +112,7 @@ class account_move_line(osv.osv):
 
     def create_analytic_lines(self, cr, uid, ids, context=None):
         """
-        Create analytic lines on expense accounts that have an analytical distribution.
+        Create analytic lines on analytic-a-holic accounts that have an analytical distribution.
         """
         # Some verifications
         if not context:
@@ -131,8 +131,8 @@ class account_move_line(osv.osv):
                 for other_line in obj_line.move_id.line_id:
                     if other_line.state != 'valid':
                         other_lines_are_ok = False
-            # Check that line have expense account and have a distribution
-            if line_distrib_id and obj_line.account_id.user_type_code == 'expense' and other_lines_are_ok:
+            # Check that line have analytic-a-holic account and have a distribution
+            if line_distrib_id and obj_line.account_id.is_analytic_addicted and other_lines_are_ok:
                 ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distrib_id, {}, obj_line.account_id.id)
                 # For manual journal entries, do not raise an error. But delete all analytic distribution linked to other_lines because if one line is invalid, all lines should not create analytic lines
                 if ana_state == 'invalid' and obj_line.move_id.status == 'manu':
