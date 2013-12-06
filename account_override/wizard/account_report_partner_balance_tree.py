@@ -22,12 +22,16 @@
 from osv import fields, osv
 from tools.translate import _
 import decimal_precision as dp
+import time
+import datetime
+from datetime import timedelta
 
 class account_partner_balance_tree(osv.osv):
     _name = 'account.partner.balance.tree'
     _description = 'Print Account Partner Balance View'
     _columns = {
         'uid': fields.many2one('res.users', 'Uid', invisible=True),
+        'build_ts': fields.datetime('Build timestamp', invisible=True),
         'account_type': fields.selection([
                 ('payable', 'Payable'),
                 ('receivable', 'Receivable')
@@ -120,7 +124,14 @@ class account_partner_balance_tree(osv.osv):
             return False
     
     def _delete_previous_data(self, cr, uid, context=None):
-        ids = self.search(cr, uid, [('uid', '=', uid)], context=context)
+        """ delete older user request than 15 days"""
+        dt = datetime.datetime.now() - timedelta(days=15)
+        dt_orm = dt.strftime(self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context))
+        domain = [
+            ('uid', '=', uid),
+            ('build_ts', '<', dt_orm),
+        ]
+        ids = self.search(cr, uid, domain, context=context)
         if ids:
             if isinstance(ids, (int, long)):
                 ids = [ids]
@@ -129,7 +140,7 @@ class account_partner_balance_tree(osv.osv):
     def build_data(self, cr, uid, data, context=None):
         """
         data
-        {'model': 'ir.ui.menu', 'ids': [494], 
+        {'model': 'ir.ui.menu', 'ids': [494], 'build_ts': build_timestamp,
          'form': {
             'output_currency': 1,
             'display_partner': 'non-zero_balance', 'chart_account_id': 1,
@@ -161,6 +172,7 @@ class account_partner_balance_tree(osv.osv):
  
             vals = {
                 'uid': uid,
+                'build_ts': data['build_ts'],
                 'account_type': r['account_type'].lower(),
                 'partner_id': r['partner_id'],
                 'name': r['partner_name'],
@@ -243,9 +255,12 @@ class account_partner_balance_tree(osv.osv):
             amount = 0.
         return amount
            
-    def get_partner_data(self, cr, uid, account_types, context=None):
+    def get_partner_data(self, cr, uid, account_types, data, context=None):
         """ browse with account_type filter 'payable' or 'receivable'"""
-        domain = [('uid', '=', uid)]
+        domain = [
+            ('uid', '=', uid),
+            ('build_ts', '=', data['build_ts']),
+        ]
         if account_types:
             domain += [('account_type', 'in', account_types)]
         ids = self.search(cr, uid, domain, context=context)
@@ -275,7 +290,9 @@ class account_partner_balance_tree(osv.osv):
         query = "SELECT" \
         " sum(debit) AS debit, sum(credit) AS credit, sum(balance) as balance" \
         " FROM account_partner_balance_tree" \
-        " WHERE account_type IN ('" + account_type + "')"
+        " WHERE account_type IN ('" + account_type + "')" \
+        " AND uid = " + str(uid) + "" \
+        " AND build_ts='" + data['build_ts'] + "'"
         cr.execute(query)
         res = cr.dictfetchall()
         return res[0]['debit'], res[0]['credit'], res[0]['balance']
@@ -324,6 +341,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         data = {}
         data['ids'] = context.get('active_ids', [])
         data['model'] = context.get('active_model', 'ir.ui.menu')
+        data['build_ts'] = datetime.datetime.now().strftime(self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context))
         data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from', 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_account'])[0]
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)
@@ -358,7 +376,10 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             'view_type': 'form',
             'view_mode': 'tree,form',
             'ref': 'view_account_partner_balance_tree',
-            'domain': [('uid', '=', uid)],
+            'domain': [
+                ('uid', '=', uid),
+                ('build_ts', '=', data['build_ts']),
+            ],
             'context': context,
         }
    

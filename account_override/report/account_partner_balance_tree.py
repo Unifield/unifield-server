@@ -92,7 +92,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         """
         res = []
         for at in self.ACCOUNT_TYPE:
-            objects = self.apbt_obj.get_partner_data(self.cr, self.uid, [at])
+            objects = self.apbt_obj.get_partner_data(self.cr, self.uid, [at], data)
             if objects:
                 res.append(objects)
         return res

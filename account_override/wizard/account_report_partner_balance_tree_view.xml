@@ -97,7 +97,12 @@
                 <field name="result_selection"/>
                 <field name="display_partner"/>
                 <field name="output_currency"/>
-                <field name="instance_ids"/>
+                <field name="instance_ids">
+                    <tree noteditable="1" editable="top" string="Proprietary Instances">
+                            <field name="code" />
+                            <field name="name" />
+                    </tree>
+                </field>
                 <newline/>
             </xpath>
             
