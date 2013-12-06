@@ -45,6 +45,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             'get_start_period': self.get_start_period,
             'get_end_period': self.get_end_period,
             'get_target_move': self._get_target_move,
+            'get_prop_instances': self._get_prop_instances,
             
             # data
             'get_partners': self._get_partners,
@@ -197,6 +198,14 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         if not self.output_currency_code:
             return ''
         return self.output_currency_code
+        
+    def _get_prop_instances(self, data):
+        instances = []
+        print data['form']
+        if data.get('form', False) and data['form'].get('instance_ids', False):
+            self.cr.execute('select code from msf_instance where id IN %s',(tuple(data['form']['instance_ids']),))
+            instances = [x for x, in self.cr.fetchall()]
+        return instances
         
     def _currency_conv(self, amount, date):
         return self.apbt_obj._currency_conv(self.cr, self.uid, amount,

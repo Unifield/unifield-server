@@ -170,6 +170,11 @@ else:
     else:
        journals = ', '.join([lt or '' for lt in get_journal(data)])
     display_account = (data['form']['display_account']=='bal_all' and 'All') or (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0'
+    prop_instances_list = get_prop_instances(data)
+    if prop_instances_list:
+        prop_instances = ', '.join([lt or '' for lt in get_prop_instances(data)])
+    else:
+        prop_instances = 'All Instances'
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 ## header (criteria)
@@ -182,21 +187,18 @@ else:
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Row>
-<Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}</Data></Cell>
-<Cell ss:StyleID="ssHeader"><Data ss:Type="String">Fiscal Year</Data></Cell>
+<Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}&#10;Fiscal Year</Data></Cell>
 <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Journals</Data></Cell>
 <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Display Account</Data></Cell>
 <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Filter By ${(get_filter(data) or '')|x}</Data></Cell>
 <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Entries Sorted By</Data></Cell>
 <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Target Moves</Data></Cell>
 <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Output Currency</Data></Cell>
+<Cell ss:StyleID="ssHeader"><Data ss:Type="String">Proprietary Instances</Data></Cell>
 </Row>
 <Row>
 <Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${(get_account(data) or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${(get_fiscalyear(data) or '')|x}</Data>
+    <Data ss:Type="String">${(get_account(data) or '')|x}&#10;&#10;${(get_fiscalyear(data) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderCell">
     <Data ss:Type="String">${(journals or '')|x}</Data>
@@ -215,6 +217,9 @@ else:
 </Cell>
 <Cell ss:StyleID="ssHeaderCell">
     <Data ss:Type="String">${get_output_currency_code()|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderCell">
+    <Data ss:Type="String">${(prop_instances or '')|x}</Data>
 </Cell>
 </Row>
 <Row>

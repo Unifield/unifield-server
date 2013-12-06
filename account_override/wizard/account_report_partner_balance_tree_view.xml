@@ -111,7 +111,7 @@
                 <button icon="gtk-cancel" special="cancel" string="Cancel" colspan="2"/>
                 <button icon="terp-gtk-go-back-rtl" name="show" string="Show Balances" type="object" colspan="2" default_focus="1" />
                 <label string="" colspan="2" />
-                <button icon="gtk-print" name="export" string="Print" type="object" colspan="2" />
+                <button icon="gtk-print" name="export" string="Print Excel" type="object" colspan="2" />
             </group>
             </xpath>
             
