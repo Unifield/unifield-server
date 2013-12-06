@@ -32,15 +32,18 @@ class account_account(osv.osv):
         """
         If this account is the same as default intermission counterpart, then return True. Otherwise return nothing.
         """
+        # Checks
         if context is None:
             context = {}
+        # Prepare some values
         res = {}
-        for account in self.browse(cr, uid, ids):
-            res[account.id] = False
-            intermission = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
-            intermission_id = intermission and intermission.id or False
-            if account.id == intermission_id:
-                res[account.id] = True
+        intermission = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
+        intermission_id = intermission and intermission.id or False
+
+        for account_id in ids:
+            res[account_id] = False
+        if intermission_id in ids:
+            res[intermission_id] = True
         return res
 
     def _search_is_intermission_counterpart(self, cr, uid, ids, field_names, args, context=None):
