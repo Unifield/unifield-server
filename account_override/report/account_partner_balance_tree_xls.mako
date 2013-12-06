@@ -207,6 +207,7 @@ balance = debit - credit
 </Cell>
 </Row>
 % endfor
+% endfor
 <Row>
 ## total debit / credit / balance row
 <%
@@ -219,16 +220,15 @@ balance = debit - credit
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="String">${formatLang(debit)}</Data>
+    <Data ss:Type="String">${formatLang(debit)} TOTAL</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="String">${formatLang(credit)}</Data>
+    <Data ss:Type="String">${formatLang(credit)} TOTAL</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="String">${formatLang(balance)}</Data>
+    <Data ss:Type="String">${formatLang(balance)} TOTAL</Data>
 </Cell>
 </Row>
-% endfor
 </Table>
 <AutoFilter x:Range="R1C1:R1C18" xmlns="urn:schemas-microsoft-com:office:excel">
 </AutoFilter>

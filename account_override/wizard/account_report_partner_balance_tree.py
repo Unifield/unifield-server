@@ -298,8 +298,9 @@ class account_partner_balance_tree(osv.osv):
         " JOIN account_move am ON (am.id = l.move_id)" \
         " WHERE ac.type IN ('" + account_type + "')" \
         " AND am.state IN " + move_state + "" \
-        " AND " + where + "" \
-        " GROUP BY p.id"
+        #~ " AND " + where + "" \
+        #~ " GROUP BY p.id"
+        " AND " + where
         cr.execute(query)
         res = cr.dictfetchall()
         if data['form'].get('display_partner', '') == 'non-zero_balance':
