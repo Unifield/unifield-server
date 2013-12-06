@@ -221,16 +221,24 @@ class account_partner_balance_tree(osv.osv):
             raise osv.except_osv(_('Error !'), _('Company has no default currency'))
         return res
             
-    def _currency_conv(self, cr, uid, amount, comp_currency_id, output_currency_id):
+    def _currency_conv(self, cr, uid, amount,
+                       comp_currency_id, output_currency_id,
+                       date=False):
         if not amount or amount == 0.:
-            return amount
+            return 0.
         if not comp_currency_id or not output_currency_id \
             or comp_currency_id == output_currency_id:
+            # unset currencies or ouput currency == company currency
             return amount
+        if date:
+            context={'date': date}
+        else:
+            context=None
         amount = self.pool.get('res.currency').compute(cr, uid,
                                                 comp_currency_id,
                                                 output_currency_id,
-                                                amount)
+                                                amount,
+                                                context=context)
         if not amount:
             amount = 0.
         return amount

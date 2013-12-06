@@ -57,16 +57,8 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         })
         
         # company currency
-        self.currency_id = False
-        self.instance_id = False
-        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
-        if user and user[0] and user[0].company_id:
-            self.currency_id = user[0].company_id.currency_id.id
-            if user[0].company_id.instance_id:
-                self.instance_id = user[0].company_id.instance_id.id
-        if not self.currency_id:
-            raise osv.except_osv(_('Error !'), _('Company has no default currency'))
-
+        self.currency_id = self.apbt_obj._get_company_currency(cr, uid, context=context)
+ 
     def set_context(self, objects, data, ids, report_type=None):
         self.sortby = data['form'].get('sortby', 'sort_date')
         
@@ -206,27 +198,11 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             return ''
         return self.output_currency_code
         
-    def _is_company_currency(self):
-        if not self.output_currency_id or not self.currency_id \
-           or self.output_currency_id == self.currency_id:
-            # ouput currency == company currency
-            return True
-        else:
-            # is other currency
-            return False
-        
-    def _currency_conv(self, amount):
-        if not amount or amount == 0.:
-            return 0.
-        if self._is_company_currency():
-            return amount
-        amount = self.pool.get('res.currency').compute(self.cr, self.uid,
+    def _currency_conv(self, amount, date):
+        return self.apbt_obj._currency_conv(self.cr, self.uid, amount,
                                                 self.currency_id,
                                                 self.output_currency_id,
-                                                amount)
-        if not amount:
-            amount = 0.
-        return amount
+                                                date)
         
         
 class account_partner_balance_tree_xls(SpreadsheetReport):

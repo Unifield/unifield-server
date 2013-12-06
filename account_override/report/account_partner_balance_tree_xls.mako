@@ -164,20 +164,20 @@ else:
     <Data ss:Type="String">${(p_obj.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="String">${formatLang(currency_conv(p_obj.debit))}</Data>
+    <Data ss:Type="String">${formatLang(p_obj.debit or 0.)}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="String">${formatLang(currency_conv(p_obj.credit))}</Data>
+    <Data ss:Type="String">${formatLang(p_obj.credit or 0.)}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="String">${formatLang(currency_conv(p_obj.balance))}</Data>
+    <Data ss:Type="String">${formatLang(p_obj.balance or 0.)}</Data>
 </Cell>
 </Row>
 ## account move line row
 % for aml in get_partner_account_move_lines(p_entries[0].account_type, p_obj.partner_id.id, data):
 <%
-debit = currency_conv(aml.debit)
-credit = currency_conv(aml.credit)
+debit = currency_conv(aml.debit, aml.date)
+credit = currency_conv(aml.credit, aml.date)
 balance = debit - credit
 %>
 <Row>
@@ -211,8 +211,8 @@ balance = debit - credit
 ## total debit / credit / balance row
 <%
 debit, credit = get_partners_total_debit_credit_by_account_type(p_entries[0].account_type, data)
-debit = currency_conv(aml.debit)
-credit = currency_conv(aml.credit)
+debit = currency_conv(debit, False)
+credit = currency_conv(credit, False)
 balance = debit - credit
 %>
 <Cell ss:StyleID="ssHeader" ss:MergeAcross="4">
