@@ -50,13 +50,16 @@ class account_account(osv.osv):
         """
         Return the intermission counterpart ID.
         """
+        # Checks
         if context is None:
             context = {}
+        # Prepare some values
         arg = []
+        intermission = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
+        intermission_id = intermission and intermission.id or False
+
         for x in args:
             if x[0] == 'is_intermission_counterpart' and x[2] is True:
-                intermission = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
-                intermission_id = intermission and intermission.id or False
                 if intermission_id:
                   arg.append(('id', '=', intermission_id))
         return arg
