@@ -30,6 +30,13 @@ ACCOUNT_RESTRICTED_AREA = {
         '|', ('type', '!=', 'other'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
         '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Disallow extra-accounting expenses accounts
     ],
+    # CASH RETURN - ADVANCE LINES
+    'cash_return': [
+        ('type', '!=', 'view'),
+        ('user_type_code', 'in', ['income', 'expense']),
+        ('user_type_report_type', '!=', 'none'),
+        ('is_not_hq_correctible', '=', False),
+    ],
     # HEADER OF:
     #+ Supplier Invoice
     #+ Direct Invoice
@@ -117,8 +124,9 @@ ACCOUNT_RESTRICTED_AREA = {
     # PAYROLLS
     'payroll_lines': [
         ('type', '!=', 'view'),
+        ('user_type_code', 'in', ['income', 'expense']),
+        ('user_type_report_type', '!=', 'none'),
         ('is_not_hq_correctible', '=', False),
-        '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Exclude non-extra accounting expense accounts
     ],
     # HQ ENTRIES
     'hq_lines': [
