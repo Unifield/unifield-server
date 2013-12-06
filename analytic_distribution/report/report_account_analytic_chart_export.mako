@@ -146,7 +146,17 @@
     </Cell>
   </Row>
 </Table>
-<WorksheetOptions/>
+<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+  <FitToPage/>
+  <Print>
+    <ValidPrinterInfo/>
+    <PaperSizeIndex>9</PaperSizeIndex>
+    <Scale>83</Scale>
+    <HorizontalResolution>600</HorizontalResolution>
+    <VerticalResolution>600</VerticalResolution>
+  </Print>
+  <Selected/>
+</WorksheetOptions>
 </Worksheet>
 % endfor
 </Workbook>
