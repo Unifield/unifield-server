@@ -337,8 +337,10 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         return res
         
     def _get_data(self, cr, uid, ids, context=None):
+        """return data, account_type (tuple)""" 
         if context is None:
             context = {}
+        
         data = {}
         data['ids'] = context.get('active_ids', [])
         data['model'] = context.get('active_model', 'ir.ui.menu')
@@ -354,10 +356,6 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         data['form'].update(self.read(cr, uid, ids, ['display_partner', 'output_currency', 'instance_ids'], context=context)[0])
-        return data
-    
-    def show(self, cr, uid, ids, context=None):
-        data = self._get_data(cr, uid, ids, context=context)
         
         result_selection = data['form'].get('result_selection', '')
         if (result_selection == 'customer'):
@@ -366,7 +364,10 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             account_type = 'Payable'
         else:
             account_type = 'Receivable and Payable'
-        
+        return data, account_type
+    
+    def show(self, cr, uid, ids, context=None):
+        data, account_type = self._get_data(cr, uid, ids, context=context)
         self.pool.get('account.partner.balance.tree').build_data(cr,
                                                         uid, data,
                                                         context=context)
@@ -384,7 +385,10 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
     def export(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        data = self._get_data(cr, uid, ids, context=context)
+        data, account_type = self._get_data(cr, uid, ids, context=context)
+        self.pool.get('account.partner.balance.tree').build_data(cr,
+                                                        uid, data,
+                                                        context=context)
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.partner.balance.tree_xls',

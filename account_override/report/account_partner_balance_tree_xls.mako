@@ -205,8 +205,8 @@ balance = debit - credit
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="String">${formatLang(balance)}</Data>
 </Cell>
-% endfor
 </Row>
+% endfor
 <Row>
 ## total debit / credit / balance row
 <%
