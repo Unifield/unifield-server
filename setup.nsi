@@ -204,7 +204,7 @@ Section OpenERP_Server SectionOpenERP_Server
     WriteIniStr "$INSTDIR\openerp-server.conf" "options" "db_password" $TextPostgreSQLPassword
     WriteIniStr "$INSTDIR\openerp-server.conf" "options" "db_port" $TextPostgreSQLPort
 
-    nsExec::Exec '"$INSTDIR\openerp-server.exe" --stop-after-init --logfile "$INSTDIR\..\ServerLog\openerp-server.log" -s'
+    nsExec::Exec '"$INSTDIR\openerp-server.exe" --stop-after-init --updater-logfile "$INSTDIR\..\Logs\Auto-updater\auto-updater.log" --logfile "$INSTDIR\..\Logs\Server\openerp-server.log" -s'
     nsExec::Exec '"$INSTDIR\service\OpenERPServerService.exe" -auto -install'
     nsExec::Exec 'sc failure openerp-server-6.0 reset= 0 actions= restart/0/restart/0/restart/0'
     nsExec::Exec 'reg add HKLM\SYSTEM\CurrentControlSet\services\openerp-server-6.0 /v Environment /t REG_MULTI_SZ /d LANG=en_US /f'

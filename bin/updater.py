@@ -21,7 +21,7 @@ else:
 __all__ = ('isset_lock', 'server_version', 'base_version', 'do_prepare', 'base_module_upgrade', 'restart_server')
 
 restart_required = False
-log_file = 'updater.log'
+log_file = 'auto-updater.log'
 lock_file = 'update.lock'
 update_dir = '.update'
 server_version_file = 'unifield-version.txt'
@@ -238,6 +238,12 @@ def update_path():
     from tools import config
     for v in ('log_file', 'lock_file', 'update_dir', 'server_version_file', 'new_version_file'):
         globals()[v] = os.path.join(config['root_path'], globals()[v])
+    if config['updater_logfile']:
+        log_file = config['updater_logfile']
+    log_dir = os.path.dirname(log_file)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
     global server_version
     server_version = get_server_version()
 
