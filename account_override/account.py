@@ -68,6 +68,39 @@ class account_account(osv.osv):
                 arg.append(('inactivation_date', '<=', cmp_date))
         return arg
 
+    def _get_is_analytic_addicted(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        An account is dependant on analytic distribution in these cases:
+        - the account is expense (user_type_code == 'expense')
+
+        Some exclusive cases can be add in the system if you configure your company:
+        - either you also take all income account (user_type_code == 'income') 
+        - or you take accounts that are income + 7xx (account code begins with 7)
+        """
+        # Some checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = {}
+        # FIXME: really add 2 options in company to define these values!
+        company_allocation_on = True
+        company_account = 7
+        company_account_active = True
+        # Prepare result
+        for account in self.browse(cr, uid, ids, context=context):
+            res[account.id] = False
+            if account.user_type_code == 'expense':
+                res[account.id] = True
+                continue
+            if company_allocation_on and account.user_type_code == 'income':
+                if not company_account_active:
+                    res[account.id] = True
+                    continue
+                elif company_account_active and account.code.startswith(str(company_account)):
+                    res[account.id] = True
+                    continue
+        return res
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'), 
@@ -78,6 +111,7 @@ class account_account(osv.osv):
             """),
         'shrink_entries_for_hq': fields.boolean("Shrink entries for HQ export", help="Check this attribute if you want to consolidate entries on this account before they are exported to the HQ system."),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
+        'is_analytic_addicted': fields.function(_get_is_analytic_addicted, method=True, type='boolean', string='Analytic-a-holic?', help="Is this account addicted on analytic distribution?", store=False),
     }
 
     _defaults = {
