@@ -79,7 +79,8 @@
                         <field name="functional_currency_id" />
                     </field>
                     <field name="third_manufacturer_id" position="after">
-                        <field name="origin" />
+                        <field name="procurement_id" invisible="1" />
+                        <field name="origin" on_change="on_change_origin(origin, procurement_id)" />
 					</field>
 				</data>
 			</field>

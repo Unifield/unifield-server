@@ -915,6 +915,18 @@ stock moves which are already processed : '''
                     line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
         # MOVE code for COMMITMENT into wkf_approve_order
         return True
+
+    def create_extra_lines_on_fo(cr, uid, ids, context=None):
+        '''
+        Creates FO/IR lines according to PO extra lines
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        return True
     
     def wkf_confirm_wait_order(self, cr, uid, ids, context=None):
         """
@@ -937,6 +949,9 @@ stock moves which are already processed : '''
         # objects
         sol_obj = self.pool.get('sale.order.line')
         so_obj =  self.pool.get('sale.order')
+
+        # Create extra lines on the linked FO/IR
+        self.create_extra_lines_on_fo(cr, uid, ids, context=context)
         
         # code from wkf_approve_order
         self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
@@ -2181,6 +2196,19 @@ class purchase_order_line(osv.osv):
             if line.merged_id and len(line.merged_id.order_line_ids) > 1 and line.order_id.state != 'confirmed' and stages and not line.order_id.rfq_ok:
                 res[line.id] = False
                         
+        return res
+
+    def on_change_origin(self, cr, uid, ids, origin, procurement_id=False, context=None):
+        '''
+        Check if the origin is a known FO/IR
+        '''
+        res = {}
+        if not procurement_id and origin:
+            sale_id = self.pool.get('sale.order').search(cr, uid, [('name', '=', origin)], context=context)
+            if not sale_id:
+                res['warning'] = {'title': _('Warning'),
+                                  'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR. No FO/IR line will be created for this PO line') % origin}
+
         return res
     
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
