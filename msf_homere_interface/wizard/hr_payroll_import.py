@@ -136,7 +136,7 @@ class hr_payroll_import(osv.osv_memory):
             is_counterpart = True
         # For non counterpart lines, check expected accounts
         if not is_counterpart:
-            if account.id not in self.pool.get('account.account').search(cr, uid, ACCOUNT_RESTRICTED_AREA['payroll_lines']):
+            if not self.pool.get('account.account').search(cr, uid, ACCOUNT_RESTRICTED_AREA['payroll_lines'] + [('id', '=', account.id)]):
                 raise osv.except_osv(_('Warning'), _('This account is not authorized: %s') % (account.code,))
         # If expense type, fetch employee ID
         if account.user_type.code == 'expense':
