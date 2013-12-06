@@ -916,15 +916,50 @@ stock moves which are already processed : '''
         # MOVE code for COMMITMENT into wkf_approve_order
         return True
 
-    def create_extra_lines_on_fo(cr, uid, ids, context=None):
+    def create_extra_lines_on_fo(self, cr, uid, ids, context=None):
         '''
         Creates FO/IR lines according to PO extra lines
         '''
+        sol_obj = self.pool.get('sale.order.line')
+        so_obj = self.pool.get('sale.order')
+        proc_obj = self.pool.get('procurement.order')
+        ad_obj = self.pool.get('analytic.distribution')
+
         if context is None:
             context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        lines = []
+        sol_ids = set()
+        for order in self.browse(cr, uid, ids, context=context):
+            lines.extend([l for l in order.order_line if l.link_so_id and not l.procurement_id])
+
+        for l in lines:
+            # Copy the AD
+            new_distrib = False
+            if l.analytic_distribution_id:
+                new_distrib = ad_obj.copy(cr, uid, l.analytic_distribution_id.id, {}, context=context)
+            elif not l.analytic_distribution_id and l.order_id and l.order_id.analytic_distribution_id:
+                new_distrib = ad_obj.copy(cr, uid, l.order_id.analytic_distribution_id.id, {}, context=context)
+            # Creates the FO lines
+            tmp_sale_context = context.get('sale_id')
+            context['sale_id'] = l.link_so_id.id
+            sol_id = sol_obj.create(cr, uid, {'order_id': l.link_so_id.id,
+                                              'product_id': l.product_id.id,
+                                              'product_uom': l.product_uom.id,
+                                              'product_uom_qty': l.product_qty,
+                                              'price_unit': l.price_unit,
+                                              'type': 'make_to_order',
+                                              'analytic_distribution_id': new_distrib,
+                                              'created_by_po': l.order_id.id,
+                                              'created_by_po_line': l.id,
+                                              'name': '[%s] %s' % (l.product_id.default_code, l.product_id.name),}, context=context)
+            context['sale_id'] = tmp_sale_context
+            sol_ids.add(l.link_so_id.id)
+
+        so_obj.action_ship_proc_create(cr, uid, list(sol_ids), context=context)
 
         return True
     
@@ -2137,7 +2172,7 @@ class purchase_order_line(osv.osv):
 
         return res
 
-    def update_origin_line(self, cr, uid, origin, context=None):
+    def update_origin_link(self, cr, uid, origin, context=None):
         '''
         Return the FO/IR that matches with the origin value
         '''
@@ -2145,7 +2180,7 @@ class purchase_order_line(osv.osv):
 
         tmp_proc_context = context.get('procurement_request')
         context['procurement_request'] = True
-        so_ids = so_obj.search(cr, uid, [('name', '=', origin)], context=context)
+        so_ids = so_obj.search(cr, uid, [('name', '=', origin), ('state', 'in', ('sourced', 'progress', 'manual'))], context=context)
         context['procurement_request'] = tmp_proc_context
         if so_ids:
             return {'link_so_id': so_ids[0]}
@@ -2225,7 +2260,7 @@ class purchase_order_line(osv.osv):
         '''
         res = {}
         if not procurement_id and origin:
-            sale_id = self.pool.get('sale.order').search(cr, uid, [('name', '=', origin)], context=context)
+            sale_id = self.pool.get('sale.order').search(cr, uid, [('name', '=', origin), ('state', 'in', ('sourced', 'progress', 'manual'))], context=context)
             if not sale_id:
                 res['warning'] = {'title': _('Warning'),
                                   'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR. No FO/IR line will be created for this PO line') % origin}
