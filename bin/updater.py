@@ -241,7 +241,7 @@ def update_path():
     if config['updater_logfile']:
         log_file = config['updater_logfile']
     log_dir = os.path.dirname(log_file)
-    if not os.path.exists(log_dir):
+    if log_dir and not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
     global server_version
