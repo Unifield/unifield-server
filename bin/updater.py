@@ -240,6 +240,7 @@ def update_path():
         globals()[v] = os.path.join(config['root_path'], globals()[v])
     if config['updater_logfile']:
         log_file = config['updater_logfile']
+        globals()['log_file'] = log_file
     log_dir = os.path.dirname(log_file)
     if log_dir and not os.path.exists(log_dir):
         os.makedirs(log_dir)
