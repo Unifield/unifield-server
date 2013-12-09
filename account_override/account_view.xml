@@ -58,8 +58,8 @@
                 <xpath expr="//field[@name='type']" position="replace">
                 </xpath>
                 <xpath expr="//field[@name='user_type']" position="after">
-                    <field name="type"/>
-                    <field name="type_for_register"/>
+                    <field name="type" invisible="1"/>
+                    <field name="type_for_register" invisible="1"/>
                     <field name="accrual_account" invisible="1"/>
                 </xpath>
             </field>

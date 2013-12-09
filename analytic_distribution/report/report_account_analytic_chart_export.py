@@ -18,31 +18,19 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name" : "MSF Proprietary Instance",
-    "version": "1.1",
-    "author" : "MSF, TeMPO Consulting",
-    "developer": "Matthieu Dietrich",
-    "category" : "Generic Modules/Projects & Services",
-    "depends" : ["account_msf", "res_currency_functional"],
-    "description": """Module for defining proprietary instances, their informations
-    """,
-    "init_xml" : [],
-    "update_xml": [
-        'msf_instance_installer_view.xml',
-        'security/ir.model.access.csv',
-        'msf_instance_view.xml',
-        'wizard/wizard_add_cost_centers_view.xml',
-        'wizard/account_chart_view.xml',
-        'wizard/account_analytic_chart_view.xml',
-    ],
-    "additional_xml": [
-        'data/instance_data.xml',
-    ],
-    'demo_xml': [
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+import time
+import csv
+import StringIO
+import pooler
+from report import report_sxw
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+
+class report_account_analytic_chart_export(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        if not context:
+            context = {}
+        super(report_account_analytic_chart_export, self).__init__(cr, uid, name, context=context)
+
+SpreadsheetReport('report.account.analytic.chart.export','account.analytic.account','addons/analytic_distribution/report/report_account_analytic_chart_export.mako', parser=report_account_analytic_chart_export)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

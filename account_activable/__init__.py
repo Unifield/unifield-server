@@ -21,6 +21,7 @@
 
 import account_activable
 import account_move_line_activable
+import report
 import wizard
 import account
 
