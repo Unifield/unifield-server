@@ -2148,6 +2148,7 @@
             <field name="format_id" ref="financing_contract_format_format_5"/>
             <field name="donor_id" ref="financing_contract_donor_european_commission_humanitarian_aid_1"/>
             <field name="reporting_currency" ref="base.EUR"/>
+            <field name="instance_id" ref="msf_instance.instance_section" />
         </record>
 
         <!--model: financing.contract.contract, id: 2-->
@@ -2161,6 +2162,7 @@
             <field name="format_id" ref="financing_contract_format_format_7"/>
             <field name="donor_id" ref="financing_contract_donor_swedish_international_development_co_2"/>
             <field name="reporting_currency" ref="base.SEK"/>
+            <field name="instance_id" ref="msf_instance.instance_section" />
         </record>
 
         <!--model: financing.contract.contract, id: 3-->
@@ -2174,6 +2176,7 @@
             <field name="format_id" ref="financing_contract_format_format_8"/>
             <field name="donor_id" ref="financing_contract_donor_the_global_fund_3"/>
             <field name="reporting_currency" ref="base.USD"/>
+            <field name="instance_id" ref="msf_instance.instance_section" />
         </record>
 
         <!--model: financing.contract.contract, id: 4-->
@@ -2187,6 +2190,7 @@
             <field name="format_id" ref="financing_contract_format_format_9"/>
             <field name="donor_id" ref="financing_contract_donor_the_global_fund_3"/>
             <field name="reporting_currency" ref="base.USD"/>
+            <field name="instance_id" ref="msf_instance.instance_section" />
         </record>
 
         <!--model: financing.contract.contract, id: 5-->
@@ -2199,6 +2203,7 @@
             <field name="format_id" ref="financing_contract_format_format_6"/>
             <field name="donor_id" ref="financing_contract_donor_norway_ministry_of_foreign_affairs_4"/>
             <field name="reporting_currency" ref="base.NOK"/>
+            <field name="instance_id" ref="msf_instance.instance_section" />
         </record>
 
         <!--model: financing.contract.contract, id: 6-->
@@ -2211,6 +2216,7 @@
             <field name="format_id" ref="financing_contract_format_format_8"/>
             <field name="donor_id" ref="financing_contract_donor_fundacion_barca_5"/>
             <field name="reporting_currency" ref="base.EUR"/>
+            <field name="instance_id" ref="msf_instance.instance_section" />
         </record>
 
         <!--model: financing.contract.contract, id: 7-->
@@ -2223,6 +2229,7 @@
             <field name="format_id" ref="financing_contract_format_format_9"/>
             <field name="donor_id" ref="financing_contract_donor_fundacion_la_caixa_6"/>
             <field name="reporting_currency" ref="base.EUR"/>
+            <field name="instance_id" ref="msf_instance.instance_section" />
         </record>
 
         <!--model: financing.contract.contract, id: 8-->
@@ -2235,6 +2242,7 @@
             <field name="format_id" ref="financing_contract_format_format_10"/>
             <field name="donor_id" ref="financing_contract_donor_european_commission_humanitarian_aid_1"/>
             <field name="reporting_currency" ref="base.EUR"/>
+            <field name="instance_id" ref="msf_instance.instance_section" />
         </record>
 
         <!--model: financing.contract.contract, id: 9-->
@@ -2247,6 +2255,7 @@
             <field name="format_id" ref="financing_contract_format_format_11"/>
             <field name="donor_id" ref="financing_contract_donor_gobierno_espanol-aeci_7"/>
             <field name="reporting_currency" ref="base.EUR"/>
+            <field name="instance_id" ref="msf_instance.instance_section" />
         </record>
     </data>
 </openerp>

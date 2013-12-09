@@ -208,7 +208,7 @@ class account_move_line_compute_currency(osv.osv):
         Update addendum line for reconciled lines
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -288,6 +288,17 @@ class account_move_line_compute_currency(osv.osv):
                     continue
                 total = self._accounting_balance(cr, uid, reconciled_line_ids, context=context)[0]
                 if total != 0.0:
+                    # UTP-752: Do not make FX Adjustement line (addendum line) if the reconciliation comes from a multi instance and that we are in synchronization
+                    multi_instance = reconciled.is_multi_instance
+                    from_sync = context.get('sync_update_execution', False) and context.get('sync_update_execution') is True or False
+                    from_another_instance = False
+                    reconciliation_instance = reconciled.instance_id and reconciled.instance_id.id or False
+                    current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id
+                    if reconciliation_instance and reconciliation_instance != current_instance:
+                        from_another_instance = True
+                    if multi_instance and (from_sync or from_another_instance):
+                        continue
+                    # If no exception, do main process about new addendum lines
                     partner_line_id = self.create_addendum_line(cr, uid, reconciled_line_ids, total)
                     # Add it to reconciliation (same that other lines)
                     reconcile_txt = ''

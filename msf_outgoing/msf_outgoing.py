@@ -335,7 +335,7 @@ class shipment(osv.osv):
             address_id = shipment_obj.read(cr, uid, [draft_shipment.id], ['address_id'], context=context)[0]['address_id'][0]
             partner_id = shipment_obj.read(cr, uid, [draft_shipment.id], ['partner_id'], context=context)[0]['partner_id'][0]
             sequence = draft_shipment.sequence_id
-            shipment_number = sequence.get_id(test='id', context=context)
+            shipment_number = sequence.get_id(code_or_id='id', context=context)
             # state is a function - not set
             shipment_name = draft_shipment.name + '-' + shipment_number
             # 
@@ -349,7 +349,7 @@ class shipment(osv.osv):
                 # creation of moves and update of initial in picking create method
                 context.update(draft_shipment_id=draft_shipment.id, draft_packing_id=draft_packing.id)
                 sequence = draft_packing.sequence_id
-                packing_number = sequence.get_id(test='id', context=context)
+                packing_number = sequence.get_id(code_or_id='id', context=context)
                 new_packing_id = pick_obj.copy(cr, uid, draft_packing.id,
                                                {'name': draft_packing.name + '-' + packing_number,
                                                 'backorder_id': draft_packing.id,
@@ -1382,7 +1382,7 @@ class stock_picking(osv.osv):
                     # picking ticket, use draft sequence, keep other fields
                     base = obj.name
                     base = base.split('-')[0] + '-'
-                    default.update(name=base + obj.backorder_id.sequence_id.get_id(test='id', context=context),
+                    default.update(name=base + obj.backorder_id.sequence_id.get_id(code_or_id='id', context=context),
                                    date=date.today().strftime('%Y-%m-%d'),
                                    )
                     
@@ -1392,7 +1392,7 @@ class stock_picking(osv.osv):
 #                if obj.previous_step_id and obj.previous_step_id.backorder_id:
 #                    base = obj.name
 #                    base = base.split('-')[0] + '-'
-#                    default.update(name=base + obj.previous_step_id.backorder_id.sequence_id.get_id(test='id', context=context))
+#                    default.update(name=base + obj.previous_step_id.backorder_id.sequence_id.get_id(code_or_id='id', context=context))
 #                else:
 #                    default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'ppl'))
                 
@@ -2407,7 +2407,7 @@ class stock_picking(osv.osv):
             # create the new picking object
             # a sequence for each draft picking ticket is used for the picking ticket
             sequence = pick.sequence_id
-            ticket_number = sequence.get_id(test='id', context=context)
+            ticket_number = sequence.get_id(code_or_id='id', context=context)
             new_pick_id = self.copy(cr, uid, pick.id, {'name': (pick.name or 'NoName/000') + '-' + ticket_number,
                                                        'backorder_id': pick.id,
                                                        'move_lines': []}, context=dict(context, allow_copy=True,))
