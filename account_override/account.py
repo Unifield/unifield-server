@@ -120,13 +120,13 @@ class account_account(osv.osv):
 #                     arg.append(('&'))
                 arg.append(('user_type.code', '=', 'income'))
                 if company_account_active:
-                    arg.append(('account_id.code', '=like', '7%%'))
+                    arg.append(('code', '=like', '%s%%' % company_account))
             elif x[0] == 'is_analytic_addicted' and x[1] == '=' and x[2] is False:
                 arg.append(('user_type.code', '!=', 'expense'))
                 if company_account_active:
                     arg.append(('|'))
                     arg.append(('user_type.code', '!=', 'income'))
-                    arg.append(('account_id.code', '!like', '%s%%' % company_account))
+                    arg.append(('code', 'not like', '%s%%' % company_account))
                 else:
                     arg.append(('user_type.code', '!=', 'income'))
             elif x[0] != 'is_analytic_addicted':
