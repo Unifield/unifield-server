@@ -95,7 +95,10 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         header_company_or_chart_of_account = 'Company'
     else:
         header_company_or_chart_of_account = 'Chart of Account'
-    journals = ', '.join([ lt or '' for lt in get_journal(data) ])
+    if 'all_journals' in data['form']:
+       journals = 'All Journals'
+    else:
+       journals = ', '.join([lt or '' for lt in get_journal(data)])
     display_account = (data['form']['display_account']=='bal_all' and 'All') or (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0'
     prop_instances_list = get_prop_instances(data)
     if prop_instances_list:

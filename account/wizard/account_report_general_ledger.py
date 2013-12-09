@@ -37,6 +37,12 @@ class account_report_general_ledger(osv.osv_memory):
         #'export_format': fields.selection([('xls', 'Excel'), ('csv', 'CSV'), ('pdf', 'PDF')], string="Export format", required=True),
         'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
     }
+    
+    def _get_journals(self, cr, uid, context=None):
+        """exclude extra-accounting journals from this report (IKD, ODX)."""
+        domain = [('type', 'not in', ['inkind', 'extra'])]
+        return self.pool.get('account.journal').search(cr, uid, domain, context=context)
+    
     _defaults = {
         'landscape': True,
         'amount_currency': True,
@@ -44,6 +50,7 @@ class account_report_general_ledger(osv.osv_memory):
         'initial_balance': False,
         'amount_currency': True,
         'export_format': 'pdf',
+        'journal_ids': _get_journals,  # exclude extra-accounting journals from this report (IKD, ODX)
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -73,6 +80,11 @@ class account_report_general_ledger(osv.osv_memory):
         data['form'].update(self.read(cr, uid, ids, ['landscape',  'initial_balance', 'amount_currency', 'sortby', 'output_currency', 'instance_ids', 'export_format'])[0])
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
             data['form'].update({'initial_balance': False})
+        if data['form']['journal_ids']:
+            default_journals = self._get_journals(cr, uid, context=context)
+            if default_journals:
+                if len(default_journals) == len(data['form']['journal_ids']):
+                    data['form']['all_journals'] = True
         if data['form']['export_format'] \
            and data['form']['export_format'] == 'xls':
             return { 
