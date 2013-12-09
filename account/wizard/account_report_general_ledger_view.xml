@@ -28,11 +28,6 @@
                     <tree noteditable="1" editable="top" string="Proprietary Instances">
                         <field name="code" />
                         <field name="name" />
-                        <field name="level" />
-                        <field name="mission" />
-                        <field name="instance" />
-                        <field name="parent_id" />
-                        <field name="state" />
                     </tree>
                 </field>
                 <newline/>
