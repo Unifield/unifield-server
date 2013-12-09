@@ -97,6 +97,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         header_company_or_chart_of_account = 'Chart of Account'
     journals = ', '.join([ lt or '' for lt in get_journal(data) ])
     display_account = (data['form']['display_account']=='bal_all' and 'All') or (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0'
+    prop_instances_list = get_prop_instances(data)
+    if prop_instances_list:
+        prop_instances = ', '.join([lt or '' for lt in get_prop_instances(data)])
+    else:
+        prop_instances = 'All Instances'
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 % for x in range(0,max):
@@ -110,7 +115,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Filter By ${(get_filter(data) or '')|x}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Entries Sorted By</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Target Moves</Data></Cell>
-<Cell ss:StyleID="ssH"></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Proprietary Instances</Data></Cell>
 <Cell ss:StyleID="ssH"></Cell>
 <Cell ss:StyleID="ssH"></Cell>
 <Cell ss:StyleID="ssH"></Cell>
@@ -138,7 +143,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssHeader"></Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${(prop_instances or '')|x}</Data>
+</Cell>
 <Cell ss:StyleID="ssHeader"></Cell>
 <Cell ss:StyleID="ssHeader"></Cell>
 <Cell ss:StyleID="ssHeader"></Cell>

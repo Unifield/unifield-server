@@ -1422,7 +1422,7 @@ class stock_picking(osv.osv):
             # modify the list of views
             message = type_list.get(pick.type, _('Document')) + " '" + (pick.name or '?') + "' "
             if pick.min_date:
-                msg= _(' for the ')+ datetime.strptime(pick.min_date, '%Y-%m-%d %H:%M:%S').strftime(date_format)
+                msg= _(' for the ')+ datetime.strptime(pick.min_date, '%Y-%m-%d %H:%M:%S').strftime(date_format).decode('utf-8')
             state_list = {
                 'confirmed': _("is scheduled") + msg +'.',
                 'assigned': _('is ready to process.'),
@@ -2435,7 +2435,7 @@ class stock_move(osv.osv):
             context = {}
         ctx = context.copy()
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state != 'draft' and not ctx.get('call_unlink',False):
+            if move.state != 'draft' and not ctx.get('call_unlink',False) and not ctx.get('sync_update_execution'):
                 raise osv.except_osv(_('UserError'),
                         _('You can only delete draft moves.'))
         return super(stock_move, self).unlink(

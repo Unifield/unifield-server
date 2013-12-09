@@ -121,6 +121,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_line_credit': self._get_line_credit,
             'get_line_balance': self._get_line_balance,
             'currency_conv': self._currency_conv,
+            'get_prop_instances': self._get_prop_instances,
         })
         
         # company currency
@@ -407,6 +408,13 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if not amount:
             amount = 0.
         return amount
+        
+    def _get_prop_instances(self, data):
+        instances = []
+        if data.get('form', False) and data['form'].get('instance_ids', False):
+            self.cr.execute('select code from msf_instance where id IN %s',(tuple(data['form']['instance_ids']),))
+            instances = [x for x, in self.cr.fetchall()]
+        return instances
                                             
 report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
