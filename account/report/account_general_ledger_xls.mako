@@ -8,6 +8,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Title>General Ledger</Title>
 </DocumentProperties>
 <Styles>
+<Style ss:ID="ssCell">
+<Alignment ss:Vertical="Top" ss:WrapText="1"/>
+</Style>
 <Style ss:ID="ssH">
 <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
 <Font ss:Bold="1" />
@@ -107,9 +110,10 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         prop_instances = 'All Instances'
 %>
 <Table x:FullColumns="1" x:FullRows="1">
-% for x in range(0,max):
-<Column ss:AutoFitWidth="1" ss:Width="70" />
+% for x in range(0,max-1):
+<Column ss:AutoFitWidth="1" ss:Width="64" />
 % endfor
+<Column ss:AutoFitWidth="1" ss:Width="50" />
 <Row>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header_company_or_chart_of_account}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>
@@ -119,9 +123,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Entries Sorted By</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Target Moves</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Proprietary Instances</Data></Cell>
-<Cell ss:StyleID="ssH"></Cell>
-<Cell ss:StyleID="ssH"></Cell>
-<Cell ss:StyleID="ssH"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
 </Row>
 % for a in objects:
 <Row>
@@ -149,9 +153,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${(prop_instances or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssHeader"></Cell>
-<Cell ss:StyleID="ssHeader"></Cell>
-<Cell ss:StyleID="ssHeader"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
 </Row>
 <Row>
 <Cell></Cell>
@@ -242,6 +246,26 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 % endfor
 % endfor
 </Table>
+<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <PageSetup>
+    <Layout x:Orientation="Landscape"/>
+   </PageSetup>
+   <Print>
+    <ValidPrinterInfo/>
+    <PaperSizeIndex>9</PaperSizeIndex>
+    <HorizontalResolution>600</HorizontalResolution>
+    <VerticalResolution>600</VerticalResolution>
+   </Print>
+   <Selected/>
+   <Panes>
+    <Pane>
+     <Number>3</Number>
+     <ActiveRow>17</ActiveRow>
+    </Pane>
+   </Panes>
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+</WorksheetOptions>
 <AutoFilter x:Range="R1C1:R1C18" xmlns="urn:schemas-microsoft-com:office:excel">
 </AutoFilter>
 </Worksheet>
