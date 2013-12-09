@@ -86,7 +86,28 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             else:
                 self.init_query += ' AND ' + instance_ids_in
         
-        return super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
+        res = super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
+
+        # UF-1714
+        # accounts 8*, 9* are not displayed:
+        # we have to deduce debit/credit/balance amounts of MSF account view (root account)
+        self._deduce_accounts = { 
+            '8': {'debit': 0., 'credit': 0., 'balance': 0. },
+            '9': {'debit': 0., 'credit': 0., 'balance': 0. },
+        }
+        a_obj = self.pool.get('account.account')
+        for a_code in self._deduce_accounts:
+            a_ids = a_obj.search(self.cr, self.uid, [('code', '=', a_code)])
+            if a_ids:
+                if isinstance(a_ids, (int, long)):
+                    a_ids = [a_ids]
+                account = a_obj.browse(self.cr, self.uid, a_ids)[0]
+                if account:
+                    self._deduce_accounts[a_code]['debit'] = self._sum_debit_account(account)
+                    self._deduce_accounts[a_code]['credit'] = self._sum_credit_account(account)
+                    self._deduce_accounts[a_code]['balance'] = self._sum_balance_account(account)
+        
+        return res
 
     def __init__(self, cr, uid, name, context=None):
         if context is None:
@@ -135,7 +156,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.instance_id = user[0].company_id.instance_id.id
         if not self.currency_id:
             raise osv.except_osv(_('Error !'), _('Company has no default currency'))
-        
+
         self.context = context
 
     def _sum_currency_amount_account(self, account):
@@ -153,9 +174,13 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
     def get_children_accounts(self, account):
         res = []
         currency_obj = self.pool.get('res.currency')
+         
         ids_acc = self.pool.get('account.account')._get_children_and_consol(self.cr, self.uid, account.id)
         currency = account.currency_id and account.currency_id or account.company_id.currency_id
         for child_account in self.pool.get('account.account').browse(self.cr, self.uid, ids_acc, context=self.context):
+            if child_account.code.startswith('8'):
+                # UF-1714: exclude accounts '8*'/'9*'
+                continue
             sql = """
                 SELECT count(id)
                 FROM account_move_line AS l
@@ -263,7 +288,14 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def _sum_debit_account(self, account):
         if account.type == 'view':
-            return self._currency_conv(account.debit)
+            amount = account.debit
+            if not account.parent_id:
+                # UF-1714
+                # accounts 8*, 9* are not displayed:
+                # we have to deduce debit/credit/balance amounts of MSF account view (root account)
+                for a_code in self._deduce_accounts:
+                    amount -= self._deduce_accounts[a_code]['debit']
+            return self._currency_conv(amount)
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
@@ -274,6 +306,16 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 AND (am.state IN %s) \
                 AND '+ self.query +' '
                 ,(account.id, tuple(move_state)))
+        #~ self.cr.execute("SELECT sum(debit)" \
+                #~ " FROM account_move_line l" \
+                #~ " JOIN account_move am ON (am.id = l.move_id)" \
+                #~ " JOIN account_account a  ON (a.id = l.account_id)" \
+                #~ " WHERE (l.account_id = %s)" \
+                #~ " AND (am.state IN %s)" \
+                #~ " AND (a.code not like '8%%')" \
+                #~ " AND (a.code not like '9%%')" \
+                #~ " AND "+ self.query + " "
+                #~ ,(account.id, tuple(move_state)))
         sum_debit = self.cr.fetchone()[0] or 0.0
         if self.init_balance:
             self.cr.execute('SELECT sum(debit) \
@@ -283,6 +325,16 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     AND (am.state IN %s) \
                     AND '+ self.init_query +' '
                     ,(account.id, tuple(move_state)))
+            #~ self.cr.execute("SELECT sum(debit)" \
+                    #~ "FROM account_move_line l" \
+                    #~ " JOIN account_move am ON (am.id = l.move_id)" \
+                    #~ " JOIN account_account a  ON (a.id = l.account_id)" \
+                    #~ " WHERE (l.account_id = %s)" \
+                    #~ " AND (am.state IN %s)" \
+                    #~ " AND (a.code not like '8%%')" \
+                    #~ " AND (a.code not like '9%%')" \
+                    #~ " AND " + self.init_query + " "
+                    #~ ,(account.id, tuple(move_state)))
             # Add initial balance to the result
             sum_debit += self.cr.fetchone()[0] or 0.0
         sum_debit = self._currency_conv(sum_debit)
@@ -290,7 +342,14 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def _sum_credit_account(self, account):
         if account.type == 'view':
-            return self._currency_conv(account.credit)
+            amount = account.credit
+            if not account.parent_id:
+                # UF-1714
+                # accounts 8*, 9* are not displayed:
+                # we have to deduce debit/credit/balance amounts of MSF account view (root account)
+                for a_code in self._deduce_accounts:
+                    amount -= self._deduce_accounts[a_code]['credit']
+            return self._currency_conv(amount)
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
@@ -317,7 +376,14 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def _sum_balance_account(self, account):
         if account.type == 'view':
-            return self._currency_conv(account.balance)
+            amount = account.balance
+            if not account.parent_id:
+                # UF-1714
+                # accounts 8*, 9* are not displayed:
+                # we have to deduce debit/credit/balance amounts of MSF account view (root account)
+                for a_code in self._deduce_accounts:
+                    amount -= self._deduce_accounts[a_code]['balance']
+            return self._currency_conv(amount)
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
