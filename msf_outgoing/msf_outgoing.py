@@ -335,7 +335,7 @@ class shipment(osv.osv):
             address_id = shipment_obj.read(cr, uid, [draft_shipment.id], ['address_id'], context=context)[0]['address_id'][0]
             partner_id = shipment_obj.read(cr, uid, [draft_shipment.id], ['partner_id'], context=context)[0]['partner_id'][0]
             sequence = draft_shipment.sequence_id
-            shipment_number = sequence.get_id(test='id', context=context)
+            shipment_number = sequence.get_id(code_or_id='id', context=context)
             # state is a function - not set
             shipment_name = draft_shipment.name + '-' + shipment_number
             # 
@@ -349,7 +349,7 @@ class shipment(osv.osv):
                 # creation of moves and update of initial in picking create method
                 context.update(draft_shipment_id=draft_shipment.id, draft_packing_id=draft_packing.id)
                 sequence = draft_packing.sequence_id
-                packing_number = sequence.get_id(test='id', context=context)
+                packing_number = sequence.get_id(code_or_id='id', context=context)
                 new_packing_id = pick_obj.copy(cr, uid, draft_packing.id,
                                                {'name': draft_packing.name + '-' + packing_number,
                                                 'backorder_id': draft_packing.id,
@@ -497,7 +497,8 @@ class shipment(osv.osv):
                     self.log(cr, uid, draft_shipment_id, _("Packs from the draft Shipment (%s) have been returned to stock.")%(draft_shipment_name,))
                     log_flag = True
                 res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-                self.pool.get('stock.picking').log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(draft_picking.name,), context={'view_id': res,})
+                context.update({'view_id': res, 'picking_type': 'picking.ticket'})
+                self.pool.get('stock.picking').log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(draft_picking.name,), context=context)
             
         # call complete_finished on the shipment object
         # if everything is alright (all draft packing are finished) the shipment is done also 
@@ -517,6 +518,7 @@ class shipment(osv.osv):
             'res_id': draft_picking_id ,
             'type': 'ir.actions.act_window',
             'target': 'crush',
+            'context': context
         }
     
     def return_packs_from_shipment(self, cr, uid, ids, context=None):
@@ -1380,7 +1382,7 @@ class stock_picking(osv.osv):
                     # picking ticket, use draft sequence, keep other fields
                     base = obj.name
                     base = base.split('-')[0] + '-'
-                    default.update(name=base + obj.backorder_id.sequence_id.get_id(test='id', context=context),
+                    default.update(name=base + obj.backorder_id.sequence_id.get_id(code_or_id='id', context=context),
                                    date=date.today().strftime('%Y-%m-%d'),
                                    )
                     
@@ -1390,7 +1392,7 @@ class stock_picking(osv.osv):
 #                if obj.previous_step_id and obj.previous_step_id.backorder_id:
 #                    base = obj.name
 #                    base = base.split('-')[0] + '-'
-#                    default.update(name=base + obj.previous_step_id.backorder_id.sequence_id.get_id(test='id', context=context))
+#                    default.update(name=base + obj.previous_step_id.backorder_id.sequence_id.get_id(code_or_id='id', context=context))
 #                else:
 #                    default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'ppl'))
                 
@@ -2405,7 +2407,7 @@ class stock_picking(osv.osv):
             # create the new picking object
             # a sequence for each draft picking ticket is used for the picking ticket
             sequence = pick.sequence_id
-            ticket_number = sequence.get_id(test='id', context=context)
+            ticket_number = sequence.get_id(code_or_id='id', context=context)
             new_pick_id = self.copy(cr, uid, pick.id, {'name': (pick.name or 'NoName/000') + '-' + ticket_number,
                                                        'backorder_id': pick.id,
                                                        'move_lines': []}, context=dict(context, allow_copy=True,))
@@ -2849,7 +2851,8 @@ class stock_picking(osv.osv):
             res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
             self.log(cr, uid, picking.id, _("Products from Pre-Packing List (%s) have been returned to stock.")%(picking.name,), context={'view_id': res,})
             res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-            self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.previous_step_id.backorder_id.name,), context={'view_id': res,})
+            context.update({'view_id': res, 'picking_type': 'picking_ticket'})
+            self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.previous_step_id.backorder_id.name,), context=context)
             # if all moves are done or canceled, the ppl is canceled
             cancel_ppl = True
             for move in picking.move_lines:
@@ -2935,7 +2938,8 @@ class stock_picking(osv.osv):
                     # TODO refactoring needed
                     obj_data = self.pool.get('ir.model.data')
                     res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-                    self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.backorder_id.name,), context={'view_id': res,})
+                    context.update({'view_id': res, 'picking_type': 'picking_ticket'})
+                    self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.backorder_id.name,), context=context)
                     
             if picking.subtype == 'packing':
                 # for each packing we get the draft packing

@@ -144,7 +144,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="200" />
             <field name="arch" type="xml">
-                <tree string="Expiry Dates" hide_new_button="True" hide_delete_button="True">
+                <tree string="Expiry Dates" hide_new_button="True" hide_delete_button="True" colors="red:life_date &lt; current_date">
                     <field name="prefix" invisible="True" />
                     <field name="type" invisible="True" />
                     <field name="life_date" />

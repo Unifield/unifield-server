@@ -289,13 +289,13 @@ class analytic_distribution(osv.osv):
         # Some verifications
         if not context:
             context = {}
+        # Return False if no line_ids
+        if not account_id or not line_ids: # fix bug on UF-2205 with analytic lines that comes from INTL Engagement journal without any distribution
+            return False
         if isinstance(line_ids, (int, long)):
             line_ids = [line_ids]
-        if not account_id:
-            return False
         # Prepare some values
         account = self.pool.get('account.analytic.account').browse(cr, uid, [account_id], context=context)[0]
-
         if account.category == 'OC':
             vals = {'cost_center_id': account_id}
         else:
