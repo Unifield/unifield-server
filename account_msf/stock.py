@@ -39,13 +39,19 @@ class stock_picking(osv.osv):
         values = {'uos_id': move_line.product_uom.id,
                   'quantity': move_line.product_qty}
 
+        price_unit = False
         if move_line.price_unit:
-            values.update({'price_unit': move_line.price_unit})
+            price_unit = move_line.price_unit
 
         # UTP-220: As now the price can be changed when making the reception, the system still needs to keep the PO price in the invoice!
+        # UF-2211: The price unit needs to be adapted to the UoM: so it needs to be retrieved from the move line, and not the po_line in another UoM 
         # Finance may decide to change later, but for instance, this is not agreed by Finance. Check UTP-220 for further info
-        if move_line.purchase_line_id:
-            values.update({'price_unit': move_line.purchase_line_id.price_unit})
+        if move_line.picking_id:
+            inv_type = self._get_invoice_type(move_line.picking_id)
+            price_unit = self._get_price_unit_invoice(cr, uid, move_line, inv_type)
+            
+        if price_unit:
+            values.update({'price_unit': price_unit})
 
         self.pool.get('account.invoice.line').write(cr, uid, [invoice_line_id], values)
 

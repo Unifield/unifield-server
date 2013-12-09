@@ -296,9 +296,6 @@ class account_partner_balance_tree(osv.osv):
         cr.execute(query)
         res = cr.dictfetchall()
         return res[0]['debit'], res[0]['credit'], res[0]['balance']
-        
-    def export(self, cr, uid, context):
-        print 'export', context
 account_partner_balance_tree()
 
 
