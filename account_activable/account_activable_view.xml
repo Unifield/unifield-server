@@ -37,6 +37,7 @@
                     <field name="activation_date"/>
                     <field name="inactivation_date"/>
                     <field name="parent_id" invisible="1"/>
+                    <field name="is_analytic_addicted" invisible="1"/>
                 </tree>
             </field>
         </record>

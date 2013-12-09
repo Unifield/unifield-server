@@ -101,6 +101,40 @@ class account_account(osv.osv):
                     continue
         return res
 
+    def _search_is_analytic_addicted(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Search analytic addicted accounts regarding same criteria as those from _get_is_analytic_addicted method.
+        """
+        # Checks
+        if context is None:
+            context = {}
+        arg = []
+        # FIXME: really add the company's option
+        company_account_active = True
+        company_account = "7"
+        for x in args:
+            if x[0] == 'is_analytic_addicted' and x[1] == '=' and x[2] is True:
+                arg.append(('|'))
+                arg.append(('user_type.code', '=', 'expense'))
+#                 if company_account_active:
+#                     arg.append(('&'))
+                arg.append(('user_type.code', '=', 'income'))
+                if company_account_active:
+                    arg.append(('account_id.code', '=like', '7%%'))
+            elif x[0] == 'is_analytic_addicted' and x[1] == '=' and x[2] is False:
+                arg.append(('user_type.code', '!=', 'expense'))
+                if company_account_active:
+                    arg.append(('|'))
+                    arg.append(('user_type.code', '!=', 'income'))
+                    arg.append(('account_id.code', '!like', '%s%%' % company_account))
+                else:
+                    arg.append(('user_type.code', '!=', 'income'))
+            elif x[0] != 'is_analytic_addicted':
+                arg.append(x)
+            else:
+                raise osv.except_osv(_('Error'), _('Operation not implemented!'))
+        return arg
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'), 
@@ -111,7 +145,7 @@ class account_account(osv.osv):
             """),
         'shrink_entries_for_hq': fields.boolean("Shrink entries for HQ export", help="Check this attribute if you want to consolidate entries on this account before they are exported to the HQ system."),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
-        'is_analytic_addicted': fields.function(_get_is_analytic_addicted, method=True, type='boolean', string='Analytic-a-holic?', help="Is this account addicted on analytic distribution?", store=False),
+        'is_analytic_addicted': fields.function(_get_is_analytic_addicted, fnct_search=_search_is_analytic_addicted, method=True, type='boolean', string='Analytic-a-holic?', help="Is this account addicted on analytic distribution?", store=False, readonly=True),
     }
 
     _defaults = {
