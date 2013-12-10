@@ -113,7 +113,7 @@ class account_account(osv.osv):
         company_account_active = True
         company_account = "7"
         for x in args:
-            if x[0] == 'is_analytic_addicted' and x[1] == '=' and x[2] is True:
+            if x[0] == 'is_analytic_addicted' and ((x[1] in ['=', 'is'] and x[2] is True) or (x[1] in ['!=', 'is not', 'not'] and x[2] is False)):
                 arg.append(('|'))
                 arg.append(('user_type.code', '=', 'expense'))
                 if company_account_active:
@@ -121,7 +121,7 @@ class account_account(osv.osv):
                 arg.append(('user_type.code', '=', 'income'))
                 if company_account_active:
                     arg.append(('code', '=like', '%s%%' % company_account))
-            elif x[0] == 'is_analytic_addicted' and x[1] == '=' and x[2] is False:
+            elif x[0] == 'is_analytic_addicted' and ((x[1] in ['=', 'is'] and x[2] is False) or (x[1] in ['!=', 'is not', 'not'] and x[2] is True)):
                 arg.append(('user_type.code', '!=', 'expense'))
                 if company_account_active:
                     arg.append(('|'))
