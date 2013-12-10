@@ -41,7 +41,7 @@ class msf_budget_summary(osv.osv_memory):
             if summary_line.budget_id.type == 'view':
                 for child_line in summary_line.child_ids:
                     child_amounts = self._get_amounts(cr, uid, [child_line.id], context=context)
-                    actual_amount += abs(child_amounts[child_line.id]['actual_amount'])  # utp-857 abs
+                    actual_amount += child_amounts[child_line.id]['actual_amount']
                     budget_amount += child_amounts[child_line.id]['budget_amount']
             else:
                 #  Budget Amount, normal budget
@@ -53,14 +53,14 @@ class msf_budget_summary(osv.osv_memory):
                 analytic_line_obj = self.pool.get('account.analytic.line')
                 analytic_lines = analytic_line_obj.search(cr, uid, actual_domain ,context=context)
                 for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-                    actual_amount += abs(analytic_line.amount)  # utp-857 abs
+                    actual_amount += analytic_line.amount
             
+            actual_amount = abs(actual_amount)
             res[summary_line.id] = {
                 'actual_amount': actual_amount,
                 'budget_amount': budget_amount,
                 'balance_amount': budget_amount - actual_amount,  # utp-857
             }
-            
         return res
     
     _columns = {
