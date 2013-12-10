@@ -80,11 +80,11 @@
                         <form string="Budget Line">
                             <group colspan="4">
                                 <field name="name" colspan="2" readonly="1"/>
-	                            <field name="budget_amount" colspan="1" readonly="1" digits="(24,0)"/>
-	                            <field name="comm_amount" colspan="1" readonly="1" digits="(24,0)"/>
-	                            <field name="actual_amount" colspan="1" readonly="1" digits="(24,0)"/>
-	                            <field name="balance" colspan="1" readonly="1" digits="(24,0)"/>
-	                            <field name="percentage" colspan="1" readonly="1" digits="(24,0)"/>
+                                <field name="budget_amount" colspan="1" readonly="1" digits="(24,0)"/>
+                                <field name="comm_amount" colspan="1" readonly="1" digits="(24,0)"/>
+                                <field name="actual_amount" colspan="1" readonly="1" digits="(24,0)"/>
+                                <field name="balance" colspan="1" readonly="1" digits="(24,0)"/>
+                                <field name="percentage" colspan="1" readonly="1" digits="(24,0)"/>
                             </group>
                         </form>
                     </field>
