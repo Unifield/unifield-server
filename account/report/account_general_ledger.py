@@ -56,10 +56,12 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             ctx['date_from'] = data['form']['date_from']
             ctx['date_to'] =  data['form']['date_to']
         ctx['state'] = data['form']['target_move']
+        if 'instance_ids' in data['form']:
+            ctx['instance_ids'] = data['form']['instance_ids']
         self.context.update(ctx)
         if (data['model'] == 'ir.ui.menu'):
             new_ids = [data['form']['chart_account_id']]
-            objects = self.pool.get('account.account').browse(self.cr, self.uid, new_ids)
+            objects = self.pool.get('account.account').browse(self.cr, self.uid, new_ids, context=self.context)
         
         # output currency
         self.output_currency_id = data['form']['output_currency']
@@ -101,7 +103,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if a_ids:
                 if isinstance(a_ids, (int, long)):
                     a_ids = [a_ids]
-                account = a_obj.browse(self.cr, self.uid, a_ids)[0]
+                account = a_obj.browse(self.cr, self.uid, a_ids, context=self.context)[0]
                 if account:
                     self._deduce_accounts[a_code]['debit'] = self._sum_debit_account(account)
                     self._deduce_accounts[a_code]['credit'] = self._sum_credit_account(account)
@@ -178,7 +180,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         ids_acc = self.pool.get('account.account')._get_children_and_consol(self.cr, self.uid, account.id)
         currency = account.currency_id and account.currency_id or account.company_id.currency_id
         for child_account in self.pool.get('account.account').browse(self.cr, self.uid, ids_acc, context=self.context):
-            if child_account.code.startswith('8'):
+            if child_account.code.startswith('8') or child_account.code.startswith('9'):
                 # UF-1714: exclude accounts '8*'/'9*'
                 continue
             sql = """
@@ -410,7 +412,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def _get_account(self, data):
         if data['model'] == 'account.account':
-            return self.pool.get('account.account').browse(self.cr, self.uid, data['form']['id']).company_id.name
+            return self.pool.get('account.account').browse(self.cr, self.uid, data['form']['id'], context=self.context).company_id.name
         return super(general_ledger ,self)._get_account(data)
 
     def _get_sortby(self, data):
