@@ -97,25 +97,24 @@ class account_account(osv.osv):
         accounts = {}
         sums = {}
         # Add some query/query_params regarding context
-        if 'balance' in field_names:
-            link = " "
-            if context.get('currency_id', False):
-                if query:
-                    link = " AND "
-                query += link + 'currency_id = %s'
-                query_params += tuple([context.get('currency_id')])
-            link = " "
-            if context.get('instance_ids', False):
-                if query:
-                    link = " AND "
-                instance_ids = context.get('instance_ids')
-                if isinstance(instance_ids, (int, long)):
-                    instance_ids = [instance_ids]
-                if len(instance_ids) == 1:
-                    query += link + 'instance_id = %s'
-                else:
-                    query += link + 'instance_id in %s'
-                query_params += tuple(instance_ids)
+        link = " "
+        if context.get('currency_id', False):
+            if query:
+                link = " AND "
+            query += link + 'currency_id = %s'
+            query_params += tuple([context.get('currency_id')])
+        link = " "
+        if context.get('instance_ids', False):
+            if query:
+                link = " AND "
+            instance_ids = context.get('instance_ids')
+            if isinstance(instance_ids, (int, long)):
+                instance_ids = [instance_ids]
+            if len(instance_ids) == 1:
+                query += link + 'l.instance_id = %s'
+            else:
+                query += link + 'l.instance_id in %s'
+            query_params += tuple(instance_ids)
         # Do normal process
         if children_and_consolidated:
             aml_query = self.pool.get('account.move.line')._query_get(cr, uid, context=context)
@@ -185,10 +184,13 @@ class account_account(osv.osv):
         company_currency = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         for id in ids:
             res[id] = sums.get(id, null_result)
-            # If output_currency_id in context, we change balance computation
-            if context.get('output_currency_id', False) and res[id].get('balance', False):
-                new_balance = currency_obj.compute(cr, uid, context.get('output_currency_id'), company_currency, res[id].get('balance'), context=context)
-                res[id].update({'balance': new_balance,})
+            # If output_currency_id in context, we change computation
+            for f_name in ('debit', 'credit', 'balance'):
+                if context.get('output_currency_id', False) and res[id].get(f_name, False):
+                    new_amount = currency_obj.compute(cr, uid, context.get('output_currency_id'), company_currency, res[id].get(f_name), context=context)
+                    res[id][f_name] = context
+        # !!! TODO
+        print 'account _compute() field_names, res', field_names, res
         return res
     #@@@end
 
@@ -203,6 +205,8 @@ class account_account(osv.osv):
         'shrink_entries_for_hq': fields.boolean("Shrink entries for HQ export", help="Check this attribute if you want to consolidate entries on this account before they are exported to the HQ system."),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
         'balance': fields.function(_compute, digits_compute=dp.get_precision('Account'), method=True, string='Balance', multi='balance'),
+        'debit': fields.function(_compute, digits_compute=dp.get_precision('Account'), method=True, string='Debit', multi='balance'),
+        'credit': fields.function(_compute, digits_compute=dp.get_precision('Account'), method=True, string='Credit', multi='balance'),        
     }
 
     _defaults = {
