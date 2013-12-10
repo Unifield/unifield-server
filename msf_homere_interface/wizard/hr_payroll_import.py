@@ -133,11 +133,11 @@ class hr_payroll_import(osv.osv_memory):
         is_counterpart = False
         if third and third[0] and third[0] != '':
             is_counterpart = True
-        # If expense type, fetch employee ID
-        if account.user_type.code == 'expense':
+        # If account is analytic-a-holic, fetch employee ID
+        if account.is_analytic_addicted:
             # Add default destination from account
             if not account.default_destination_id:
-                raise osv.except_osv(_('Warning'), _('No default Destination defined for expense account: %s') % (account.code or '',))
+                raise osv.except_osv(_('Warning'), _('No default Destination defined for this account: %s') % (account.code or '',))
             destination_id = account.default_destination_id and account.default_destination_id.id or False
             if second_description and second_description[0] and not is_payroll_rounding:
                 if not is_counterpart:

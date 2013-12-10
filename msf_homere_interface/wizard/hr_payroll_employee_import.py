@@ -111,7 +111,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
                 domain = "[('employee_type', '=', 'local')]"
             if context.get('from') == 'payroll_import':
                 result = ('view_hr_payroll_msf_tree', 'hr.payroll.msf')
-                domain = "[('state', '=', 'draft'), ('account_id.user_type.code', '=', 'expense')]"
+                domain = "[('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', True)]"
             if context.get('from') == 'hq_entries_import':
                 result = ('hq_entries_tree', 'hq.entries', 'account_hq_entries')
                 domain = ""
