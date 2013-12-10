@@ -275,6 +275,8 @@ class purchase_order(osv.osv):
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
         'origin': fields.text('Source Document', 
                         help="Reference of the document that generated this purchase order request."),
+        'project_ref': fields.char(size=256, string='Project Ref.'),
+        'message_esc': fields.text(string='ESC Message'),
     }
     
     _defaults = {
@@ -2221,6 +2223,8 @@ class purchase_order_line(osv.osv):
 
         # This field is used to identify the FO PO line between 2 instances of the sync
         'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
+        'external_ref': fields.char(size=256, string='Ext. Ref.'),
+        'project_ref': fields.char(size=256, string='Project Ref.'),
     }
 
     _defaults = {

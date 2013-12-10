@@ -36,6 +36,22 @@ from msf_doc_import import MAX_LINES_NB
 from msf_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration, PO_COLUMNS_HEADER_FOR_INTEGRATION, NEW_COLUMNS_HEADER
 from msf_doc_import import check_line
 
+from lxml import etree
+
+
+def get_selection(self, cr, uid, o, field):
+    """
+    Retourne le libellé d'un champ sélection
+    """
+    sel = self.pool.get(o._name).fields_get(cr, uid, [field])
+    res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+    name = '%s,%s' % (o._name, field)
+    tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
+    if tr_ids:
+        return self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
+    else:
+        return res
+
 
 class purchase_order(osv.osv):
     _inherit = 'purchase.order'
@@ -153,59 +169,24 @@ class purchase_order(osv.osv):
 
     def export_po_integration(self, cr, uid, ids, context=None):
         '''
-        Creates an XML file and launches the wizard to save it
+        Call the report of validated PO
         '''
         if context is None:
             context = {}
-        po = self.browse(cr, uid, ids[0], context=context)
-        header_columns = NEW_COLUMNS_HEADER
-        #header_columns = [(column, 'string') for column in columns_for_po_integration]
-        header_index = {}
-        [header_index.update({value: index})for (index, value) in enumerate(columns_for_po_integration)]
-        list_of_lines = []
-        for line in po.order_line:
-            new_list = []
-            new_list.insert(header_index['Line'], line.line_number)
-            new_list.insert(header_index['Product Code'], line.product_id.default_code and check_line.get_xml(line.product_id.default_code))
-            new_list.insert(header_index['Product Description'], line.product_id.name and check_line.get_xml(line.product_id.name))
-            new_list.insert(header_index['Quantity'], line.product_qty)
-            new_list.insert(header_index['UoM'], line.product_uom.name and check_line.get_xml(line.product_uom.name))
-            new_list.insert(header_index['Price'], line.price_unit)
-            new_list.insert(header_index['Delivery Request Date'], line.date_planned and strptime(line.date_planned,'%Y-%m-%d').strftime('%Y-%m-%d') or '')
-            new_list.insert(header_index['Delivery Confirmed Date'], line.confirmed_delivery_date and strptime(line.confirmed_delivery_date,'%Y-%m-%d').strftime('%Y-%m-%d') or '')
-            #new_list.insert(header_index['Order Reference*'], po.name)
-            #new_list.insert(header_index['Delivery Confirmed Date (PO)*'], po.delivery_confirmed_date and strptime(po.delivery_confirmed_date,'%Y-%m-%d').strftime('%Y-%m-%d') or '')
-            new_list.insert(header_index['Origin'], line.origin and check_line.get_xml(line.origin))
-            new_list.insert(header_index['Comment'], line.comment and check_line.get_xml(line.comment))
-            new_list.insert(header_index['Notes'], line.notes and check_line.get_xml(line.notes))
-            new_list.insert(header_index['Supplier Reference'], po.partner_ref or '')
-            #new_list.insert(header_index['Destination Partner'], po.dest_partner_id and po.dest_partner_id.name or '')
-            #new_list.insert(header_index['Destination Address'], po.dest_address_id and po.dest_address_id.name or po.dest_address_id.city or '')
-            #new_list.insert(header_index['Invoicing Address'], po.invoice_address_id and po.invoice_address_id.name or '')
-            #new_list.insert(header_index['Est. Transport Lead Time'], po.est_transport_lead_time or '')
-            #new_list.insert(header_index['Transport Mode'], po.transport_type or '')
-            #new_list.insert(header_index['Arrival Date in the country'], po.arrival_date and strptime(po.arrival_date,'%Y-%m-%d').strftime('%Y-%m-%d') or '')
-            new_list.insert(header_index['Incoterm'], po.incoterm_id and po.incoterm_id.name and check_line.get_xml(po.incoterm_id.name) or '')
-            #new_list.insert(header_index['Notes (PO)'], po.notes)
-            list_of_lines.append(new_list)
-        if any([f_line for f_line in list_of_lines if len(f_line) != len(header_columns)]):
-            raise osv.except_osv(_('Error'), _("""The number of columns in the header should be equal to the number of columns you want to export, please check
-            that what you have in the NEW_COLUMNS_HEADER (global variable defined in the __init__.py of the wizard) is the same as what you have in the lines of the list list_of_lines."""))
-        instanciate_class = SpreadsheetCreator('PO', header_columns, list_of_lines)
-        file = base64.encodestring(instanciate_class.get_xml(default_filters=['decode.utf8']))
-        
-        export_id = self.pool.get('wizard.export.po').create(cr, uid, {'po_id': ids[0], 
-                                                                        'file': file, 
-                                                                        'filename': 'po_%s.xls' % (po.name.replace(' ', '_')), 
-                                                                        'message': 'The PO has been exported. Please click on Save As button to download the file'}, context=context)
-        
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.export.po',
-                'res_id': export_id,
-                'view_mode': 'form',
-                'view_type': 'form',
-                'target': 'new',
-                }
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        datas = {}
+        datas['ids'] = ids
+        report_name = 'validated.purchase.order_xls'
+
+        return {                                                                
+                'type': 'ir.actions.report.xml',                                    
+                'report_name': report_name,                                         
+                'datas': datas,                                                     
+                'context': context,                                                 
+               }
 
     def wizard_import_po_line(self, cr, uid, ids, context=None):
         '''
