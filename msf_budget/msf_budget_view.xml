@@ -119,7 +119,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Budget vs. Actuals Export">
-                    <field name="currency_table_id"/>
+                    <field name="currency_table_id" domain="[('state','=','valid')]" />
                     <field name="period_id"/>
                     <field name="commitment"/>
                     <field name="breakdown"/>
@@ -139,7 +139,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Actuals by CC Export">
-                    <field name="currency_table_id"/>
+                    <field name="currency_table_id" domain="[('state','=','valid')]"/>
                     <newline/>
                     <field name="cost_center_ids"/>
                     <separator colspan="4"/>
