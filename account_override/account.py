@@ -189,8 +189,6 @@ class account_account(osv.osv):
                 if context.get('output_currency_id', False) and res[id].get(f_name, False):
                     new_amount = currency_obj.compute(cr, uid, context.get('output_currency_id'), company_currency, res[id].get(f_name), context=context)
                     res[id][f_name] = context
-        # !!! TODO
-        print 'account _compute() field_names, res', field_names, res
         return res
     #@@@end
 
