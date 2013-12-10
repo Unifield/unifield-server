@@ -74,4 +74,4 @@ import wizard_import_ir_line
 import wizard_import_int_line
 import wiz_common_import
 import wizard_import_tender_line
-
+import wizard_po_simulation_screen

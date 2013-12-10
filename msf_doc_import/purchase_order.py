@@ -132,12 +132,18 @@ class purchase_order(osv.osv):
         context.update({'active_id': ids[0]})
         columns_header = NEW_COLUMNS_HEADER
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        export_id = self.pool.get('wizard.import.po').create(cr, uid, {'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])),
-                                                                        'filename_template': 'template.xls',
-                                                                        'filename': 'Lines_Not_Imported.xls',
-                                                                        'po_id': ids[0]}, context)
+        export_id = self.pool.get('wizard.import.po.simulation.screen').create(cr, uid, {
+#                                                                        'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])),
+#                                                                        'filename_template': 'template.xls',
+#                                                                        'filename': 'Lines_Not_Imported.xls',
+                                                                        'order_id': ids[0]}, context)
+                                                                        
+#        for l in self.pool.get('purchase.order').browse(cr, uid, ids[0], context=context).order_line:
+#            self.pool.get('wizard.simu.import.po.line').create(cr, uid, {'line_id': l.id,
+#									         							 'import_id': export_id}, context=context)
+        
         return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.import.po',
+                'res_model': 'wizard.import.po.simulation.screen',
                 'res_id': export_id,
                 'view_type': 'form',
                 'view_mode': 'form',

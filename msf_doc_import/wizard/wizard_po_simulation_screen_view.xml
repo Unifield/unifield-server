@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="wizard_import_po_simulation_screen_form_view" model="ir.ui.view">
+            <field name="name">wizard.import.po.simulation.screen.form.view</field>
+            <field name="model">wizard.import.po.simulation.screen</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="PO Import - Simulation Screen">
+                    <separator colspan="4" string="Purchase Order Information" />
+                    <field name="order_id" />
+                    <field name="in_creation_date" />
+                    <group colspan="4" name="file" string="Import data">
+                        <field name="file_to_import" filename="filename" />
+                        <field name="filename" invisible="1" />
+                        <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('state', '=', 'draft')]}" />
+                        <field name="error_file" filename="error_filename" readonly="1"
+                               attrs="{'invisible': [('import_error_ok', '!=', False), ('state', '!=', 'done')]}" />
+                        <field name="error_filename" invisible="1" />
+                        <field name="import_error_ok" invisible="1" />
+                        <field name="state" invisible="1" />
+                    </group>
+                    <!-- Buttons -->
+                    <group name="buttons" colspan="4" col="6">
+                        <button name="return_to_po" string="Cancel" icon="gtk-cancel" type="object" />
+                    </group>
+                    <notebook colspan="4">
+                        <page string="Purchase Order">
+                            <field name="in_supplier_ref" />
+                            <field name="imp_supplier_ref" nolabel="1" />
+                            <label> </label>
+                            <field name="in_dest_addr" colspan="3" />
+                            <field name="in_transport_mode" />
+                            <field name="imp_transport_mode" nolabel="1" />
+                            <label> </label>
+                            <group colspan="4" string="Header notes">
+                                <field name="in_notes" colspan="4" nolabel="1" />
+                            </group>
+                            <group colspan="4" string="Message ESC Header">
+                                <field name="imp_message_esc" colspan="4" nolabel="1" />
+                            </group>
+                            <group colspan="4" col="12">
+                                <field name="in_currency" />
+                                <field name="in_amount_untaxed" />
+                                <field name="imp_amount_untaxed" nolabel="1" />
+                                <field name="in_amount_tax" />
+                                <label> </label>
+                                <field name="in_amount_total" />
+                                <field name="imp_amount_total" nolabel="1" />
+                                <field name="amount_discrepancy" />
+                                <newline />
+                                <field name="in_transport_cost" />
+                                <label> </label>
+                                <field name="in_total_price_include_transport" />
+                                <field name="imp_total_price_include_transport" nolabel="1"/>
+                            </group>
+                        </page>
+                        <page string="Details">
+                        <!-- LINES -->
+                        </page>
+                        <page string="Information">
+                        </page>
+                        <page string="Previous simulations">
+                        </page>
+                    </notebook>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>
