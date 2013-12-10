@@ -239,7 +239,7 @@ class account_model(osv.osv):
                     'journal_id': model.journal_id.id,
                     'period_id': period_id,
                 }
-                if line.account_id.user_type_code == 'expense':
+                if line.account_id.is_analytic_addicted:
                     if line.analytic_distribution_state == 'invalid':
                         raise osv.except_osv(_('Invalid Analytic Distribution !'),_("You have to define a valid analytic distribution on the '%s' line or header!") % (line.name))
                     if not model.journal_id.analytic_journal_id:

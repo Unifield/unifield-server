@@ -267,7 +267,7 @@ class account_move_line(osv.osv):
             # Do not continue if no employee or no cost center (could not be invented)
             if not l.employee_id or not l.employee_id.cost_center_id:
                 continue
-            if l.account_id and l.account_id.user_type.code == 'expense':
+            if l.account_id and l.account_id.is_analytic_addicted:
                 vals = {'cost_center_id': l.employee_id.cost_center_id.id}
                 if l.employee_id.destination_id:
                     if l.employee_id.destination_id.id in [x and x.id for x in l.account_id.destination_ids]:

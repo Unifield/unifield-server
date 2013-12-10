@@ -62,11 +62,11 @@ class analytic_distribution1(osv.osv):
         """
         if context is None:
             context = {}
-        # Have an analytic distribution on another account than expense account make no sense. So their analytic distribution is valid
+        # Have an analytic distribution on another account than analytic-a-holic account make no sense. So their analytic distribution is valid
         logger = netsvc.Logger()
         if account_id:
             account =  self.pool.get('account.account').browse(cr, uid, account_id)
-            if account and account.user_type and account.user_type.code != 'expense':
+            if account and not account.is_analytic_addicted:
                 return 'valid'
         if not id:
             if parent_id:
@@ -342,7 +342,7 @@ class analytic_distribution(osv.osv):
                     # Search default destination if no one given
                     if account_id and not vals.get('destination_id'):
                         account = self.pool.get('account.account').browse(cr, uid, account_id)
-                        if account and account.user_type and account.user_type.code == 'expense':
+                        if account and account.is_analytic_addicted:
                             vals.update({'destination_id': account.default_destination_id and account.default_destination_id.id or False})
                     new_pf_line_id = self.pool.get('funding.pool.distribution.line').create(cr, uid, vals, context=context)
             res[distrib.id] = True

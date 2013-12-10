@@ -610,7 +610,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Retrieve right journal
             journal_id = j_corr_id
 
-            # Abort process if the move line is a donation expense account and that new account is not a donation expense account
+            # Abort process if the move line is a donation account (type for specific treatment) and that new account is not a donation account
             if ml.account_id.type_for_register == 'donation':
                 journal_id = j_extra_id
                 if not journal_id:

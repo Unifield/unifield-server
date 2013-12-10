@@ -116,8 +116,8 @@ class account_account(osv.osv):
             if x[0] == 'is_analytic_addicted' and x[1] == '=' and x[2] is True:
                 arg.append(('|'))
                 arg.append(('user_type.code', '=', 'expense'))
-#                 if company_account_active:
-#                     arg.append(('&'))
+                if company_account_active:
+                     arg.append(('&'))
                 arg.append(('user_type.code', '=', 'income'))
                 if company_account_active:
                     arg.append(('code', '=like', '%s%%' % company_account))

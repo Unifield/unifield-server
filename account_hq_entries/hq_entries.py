@@ -78,7 +78,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 if not account_id:
                     raise osv.except_osv(_('Error'), _('An account is missing!'))
                 account = self.pool.get('account.account').browse(cr, uid, account_id)
-                # create new distribution (only for expense accounts)
+                # create new distribution (only for non-counterpart accounts)
                 distrib_id = False
                 cc_id = line.get('cost_center_id_first_value', False) and line.get('cost_center_id_first_value')[0] or (line.get('cost_center_id') and line.get('cost_center_id')[0]) or False
                 fp_id = line.get('analytic_id', False) and line.get('analytic_id')[0] or False
