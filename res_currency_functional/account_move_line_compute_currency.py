@@ -82,11 +82,11 @@ class account_move_line_compute_currency(osv.osv):
         addendum_line_credit_account_id = journal.default_credit_account_id.id
         addendum_line_debit_account_default_destination_id = journal.default_debit_account_id.default_destination_id.id
         addendum_line_credit_account_default_destination_id = journal.default_credit_account_id.default_destination_id.id
-        # Create analytic distribution if this account is an expense account
+        # Create analytic distribution if this account is an analytic-a-holic account
         distrib_id = False
         different_currency = False
         prev_curr = False
-        if journal.default_debit_account_id.user_type.code == 'expense':
+        if journal.default_debit_account_id.is_analytic_addicted:
             ## Browse all lines to fetch some values
             partner_id = employee_id = transfer_journal_id = False
             oldiest_date = False
@@ -137,9 +137,9 @@ class account_move_line_compute_currency(osv.osv):
                 partner_cr = addendum_db = abs(total)
                 addendum_line_account_id = addendum_line_debit_account_id
                 addendum_line_account_default_destination_id = addendum_line_debit_account_default_destination_id
-            # create an analytic distribution if addendum_line_account_id is an expense account
+            # create an analytic distribution if addendum_line_account_id is an analytic-a-holic account
             account = self.pool.get('account.account').browse(cr, uid, addendum_line_account_id)
-            if account and account.user_type and account.user_type.code == 'expense':
+            if account and account.is_analytic_addicted:
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context={})
                 # add a cost center for analytic distribution
                 distrib_line_vals = {

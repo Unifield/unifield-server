@@ -345,7 +345,7 @@ class wizard_cash_return(osv.osv_memory):
         # Make a link between the statement line and the move line
         absl_obj.write(cr, uid, [st_line_id], {'move_ids': [(4, move_id, False)]}, context=context)
         
-        # hard post for this expense account line
+        # hard post for this account line
 #        if move_line.account_id.is_analytic_addicted:
 #            absl_obj.posting(cr, uid, [move_line.id], 'hard', context=context)
          
