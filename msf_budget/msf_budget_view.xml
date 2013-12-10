@@ -334,6 +334,44 @@
             <field eval="'ir.actions.act_window,%d'%action_open_analytic_lines_budget_button" name="value"/>
             <field eval="True" name="object"/>
         </record>
+
+        <!-- msf.budget.decision.moment -->
+
+        <record id="view_msf_budget_decision_moment_tree" model="ir.ui.view">
+            <field name="name">msf.budget.decision.moment.tree</field>
+            <field name="model">msf.budget.decision.moment</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Decision Moments">
+                    <field name="name"/>
+                    <field name="order"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_msf_budget_decision_moment_form" model="ir.ui.view">
+            <field name="name">msf.budget.decision.moment.form</field>
+            <field name="model">msf.budget.decision.moment</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Decision Moment">
+                    <field name="name"/>
+                    <field name="order"/>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_msf_budget_decision_moment_tree">
+            <field name="name">Decision Moments</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">msf.budget.decision.moment</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_msf_budget_decision_moment_tree"/>
+        </record>
+        
+        <menuitem id="menu_action_msf_budget_decision_moment_tree"
+            parent="next_id_31"
+            action="action_msf_budget_decision_moment_tree"/>
         
     </data>
 </openerp>
