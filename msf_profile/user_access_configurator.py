@@ -965,7 +965,7 @@ class ir_values(osv.osv):
             dom.append(('user_id', 'in', [uid, False]))
         new_ids = self.search(cr, uid, dom)
         if new_ids:
-            self.unlink(cr, uid, new_ids)
+            self.unlink(cr, 1, new_ids)
         return True
 
 ir_values()
