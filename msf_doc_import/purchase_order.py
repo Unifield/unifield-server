@@ -154,9 +154,10 @@ class purchase_order(osv.osv):
 #                                                                        'filename': 'Lines_Not_Imported.xls',
                                                                         'order_id': ids[0]}, context)
                                                                         
-#        for l in self.pool.get('purchase.order').browse(cr, uid, ids[0], context=context).order_line:
-#            self.pool.get('wizard.simu.import.po.line').create(cr, uid, {'line_id': l.id,
-#									         							 'import_id': export_id}, context=context)
+        for l in self.pool.get('purchase.order').browse(cr, uid, ids[0], context=context).order_line:
+            self.pool.get('wizard.import.po.simulation.screen.line').create(cr, uid, {'po_line_id': l.id,
+                                                                                      'in_line_number': l.line_number,
+									         				                          'simu_id': export_id}, context=context)
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.po.simulation.screen',

@@ -24,6 +24,7 @@
                     <!-- Buttons -->
                     <group name="buttons" colspan="4" col="6">
                         <button name="return_to_po" string="Cancel" icon="gtk-cancel" type="object" />
+                        <button name="simulate" string="Import" icon="gtk-execute" type="object" />
                     </group>
                     <notebook colspan="4">
                         <page string="Purchase Order">
@@ -33,6 +34,9 @@
                             <field name="in_dest_addr" colspan="3" />
                             <field name="in_transport_mode" />
                             <field name="imp_transport_mode" nolabel="1" />
+                            <label> </label>
+                            <field name="in_ready_to_ship_date" />
+                            <field name="imp_ready_to_ship_date" nolabel="1" />
                             <label> </label>
                             <group colspan="4" string="Header notes">
                                 <field name="in_notes" colspan="4" nolabel="1" />
@@ -57,9 +61,33 @@
                             </group>
                         </page>
                         <page string="Details">
-                        <!-- LINES -->
+                            <!-- LINES -->
+                            <field name="simu_line_ids" nolabel="1" colspan="4">
+                                <tree string="Lines" colors="red: change_ok==True; blue: type_change=='split'; green: type_change=='new'">
+                                    <field name="in_product_id" />
+                                    <field name="in_nomen" />
+                                    <field name="in_comment" />
+                                    <field name="in_qty" />
+                                    <field name="in_uom" />
+                                    <field name="in_drd" />
+                                    <field name="in_price" />
+                                    <field name="in_currency" />
+                                    <field name="in_line_number" />
+                                    <field name="type_change" />
+                                    <field name="imp_product_id" />
+                                    <field name="imp_qty" />
+                                    <field name="imp_price" />
+                                    <field name="imp_discrepancy" />
+                                    <field name="imp_currency" />
+                                    <field name="imp_drd" />
+                                    <field name="imp_esc1" />
+                                    <field name="imp_esc2" />
+                                    <field name="change_ok" invisible="1" />
+                                </tree>
+                            </field>
                         </page>
                         <page string="Information">
+                            <field name="message" nolabel="1" colspan="4" readonly="1" />
                         </page>
                         <page string="Previous simulations">
                         </page>

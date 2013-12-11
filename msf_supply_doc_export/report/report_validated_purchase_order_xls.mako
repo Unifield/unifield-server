@@ -80,7 +80,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Creation Date')}</Data></Cell>
-        % if o.date_order:
+        % if o.date_order not in ('False', False):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
@@ -96,7 +96,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery Requested Date')}</Data></Cell>
-        % if o.delivery_requested_date:
+        % if o.delivery_requested_date not in (False, 'False'):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
@@ -108,7 +108,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('RTS Date')}</Data></Cell>
-        % if o.ready_to_ship_date:
+        % if o.ready_to_ship_date not in ('False', False):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.ready_to_ship_date|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
@@ -139,16 +139,24 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.country_id and o.dest_address_id.country_id.name or ''|x}</Data></Cell>
     </Row>
     <Row>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Shipment Date')}</Data></Cell>
+        % if o.shipment_date not in ('False', False):
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.shipment_date|n}T00:00:00.000</Data></Cell>
+        % else:
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        % endif
+    </Row>
+    <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Notes')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.notes|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.notes or ''|x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Origin')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.origin|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.origin or ''|x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Project Ref.')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.project_ref|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.project_ref or ''|x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Message ESC Header')}</Data></Cell>
@@ -173,6 +181,8 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Notes')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Project Ref*')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('ESC Message 1')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('ESC Message 2')}</Data></Cell>
     </Row>
     % for line in o.order_line:
     <Row>
@@ -185,19 +195,19 @@
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.pricelist_id.currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.origin or '')|x}</Data></Cell>
-        % if line.date_planned :
+        % if line.date_planned not in (False, 'False'):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date_planned|n}T00:00:00.000</Data></Cell>
-        % elif o.delivery_requested_date:
+        % elif o.delivery_requested_date not in (False, 'False'):
         ## if the date does not exist in the line we take the one from the header
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
-        % if line.confirmed_delivery_date:
+        % if line.confirmed_delivery_date not in ('False', False):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.confirmed_delivery_date|n}T00:00:00.000</Data></Cell>
-        % elif o.confirmed_delivery_date:
+        % elif o.delivery_confirmed_date not in ('False', False):
         ## if the date does not exist in the line we take the one from the header
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.confirmed_delivery_date|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_confirmed_date|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
@@ -207,6 +217,8 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.notes or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.project_ref or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     </Row>
     % endfor
 </Table>
