@@ -110,9 +110,16 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         prop_instances = 'All Instances'
 %>
 <Table x:FullColumns="1" x:FullRows="1">
-% for x in range(0,max-1):
 <Column ss:AutoFitWidth="1" ss:Width="64" />
-% endfor
+<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="64" />
+<Column ss:AutoFitWidth="1" ss:Width="64" />
+<Column ss:AutoFitWidth="1" ss:Width="64" />
 <Column ss:AutoFitWidth="1" ss:Width="50" />
 <Row>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header_company_or_chart_of_account}</Data></Cell>
@@ -177,7 +184,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Ref</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Move</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Entry Label</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Counterpart</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Counter part</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Debit</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Credit</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Balance</Data></Cell>
