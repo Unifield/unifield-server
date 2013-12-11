@@ -970,11 +970,11 @@ class sale_order(osv.osv):
         if context.get('from_followup'):
             ids = []
             if name and len(name) > 1:
-                ids.extend(self.search(cr, uid, [('client_order_ref', operator, name)], context=context))
-
-            return self.name_get(cr, uid, ids, context=context)
+                ids.extend(self.search(cr, uid, [('client_order_ref', operator, name)] + args, context=context))
+            res = self.name_get(cr, uid, ids, context=context)
         else:
-            return super(sale_order, self).name_search(cr, uid, name, args, operator, context, limit)
+            res = super(sale_order, self).name_search(cr, uid, name, args, operator, context, limit)
+        return res
 
     def name_get(self, cr, uid, ids, context=None):
         '''
