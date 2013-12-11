@@ -769,14 +769,16 @@ class res_groups(osv.osv):
     add an active column
     '''
     _inherit = 'res.groups'
-    _columns = {'visible_res_groups': fields.boolean('Visible', readonly=False),
-                'from_file_import_res_groups': fields.boolean('From file Import', readonly=True),
-                'is_an_admin_profile': fields.boolean('Is an admin profile'),
-                }
-    _defaults = {'visible_res_groups': True,
-                 'from_file_import_res_groups': False,
-                 'is_an_admin_profile': False,
-                 }
+    _columns = {
+        'visible_res_groups': fields.boolean('Visible', readonly=False),
+        'from_file_import_res_groups': fields.boolean('From file Import', readonly=True),
+        'is_an_admin_profile': fields.boolean('Is an admin profile', help="User group members allowed to set default value for all users."),
+    }
+    _defaults = {
+        'visible_res_groups': True,
+        'from_file_import_res_groups': False,
+        'is_an_admin_profile': False,
+    }
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         '''
@@ -947,3 +949,23 @@ class ir_model_access(osv.osv):
         return True
     
 ir_model_access()
+
+class ir_values(osv.osv):
+    _inherit = 'ir.values'
+    _name = 'ir.values'
+
+    def delete_default(self, cr, uid, ids, model, field, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        is_admin = self.pool.get('res.users').get_admin_profile(cr, uid, context)
+        dom = [('id', 'in', ids), ('key', '=', 'default'), ('model', '=', model), ('name', '=', field)]
+        if not is_admin:
+            dom.append(('user_id', '=', uid))
+        else:
+            dom.append(('user_id', 'in', [uid, False]))
+        new_ids = self.search(cr, uid, dom)
+        if new_ids:
+            self.unlink(cr, uid, new_ids)
+        return True
+
+ir_values()
