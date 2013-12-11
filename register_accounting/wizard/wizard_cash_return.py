@@ -147,7 +147,7 @@ class wizard_cash_return(osv.osv_memory):
     _name = "wizard.cash.return"
     _description = "A wizard that link some advance lines to some account move lines"
 
-    def changeline(self, cr, uid, ids, lines, returned_amount, date, context=None):
+    def changeline(self, cr, uid, ids, lines, returned_amount, date, reference, context=None):
         total_amount = returned_amount or 0.0
         for line in lines:
             if line[0] == 1:
@@ -155,7 +155,7 @@ class wizard_cash_return(osv.osv_memory):
 
         # write the modifiable values to the cash return wizard, because the opening of the distribution analytic wizard could
         # reset all entered values!
-        self.write(cr, uid, ids, {'returned_amount': returned_amount, 'total_amount': total_amount, 'date': date}, context=context)
+        self.write(cr, uid, ids, {'returned_amount': returned_amount, 'total_amount': total_amount, 'date': date, 'reference': reference}, context=context)
         return {'value': {'total_amount': total_amount}}
 
 
@@ -171,6 +171,7 @@ class wizard_cash_return(osv.osv_memory):
         'advance_st_line_id': fields.many2one('account.bank.statement.line', string='Advance Statement Line', required=True),
         'currency_id': fields.many2one('res.currency', string='Currency'),
         'date': fields.date(string='Date for cash return', required=True),
+        'reference': fields.char(string='Advance Return Reference', size=64),
     }
 
     _defaults = {
@@ -217,7 +218,7 @@ class wizard_cash_return(osv.osv_memory):
         return {'value': res}
 
     def create_move_line(self, cr, uid, ids, date=None, document_date=None, description='/', journal=False, register=False, partner_id=False, employee_id=False, account_id=None, \
-        debit=0.0, credit=0.0, move_id=None, analytic_distribution_id=None, partner_mandatory=False, context=None):
+        debit=0.0, credit=0.0, reference=None, move_id=None, analytic_distribution_id=None, partner_mandatory=False, context=None):
         """
         Create a move line with some params:
         - description: description of our move line
@@ -287,6 +288,7 @@ class wizard_cash_return(osv.osv_memory):
             'amount_currency': amount_currency,
             'analytic_distribution_id': analytic_distribution_id,
             'partner_type_mandatory': partner_mandatory or False,
+            'ref': reference or False,
         }
         move_line_id = move_line_obj.create(cr, uid, move_line_vals, context=context)
 
@@ -315,6 +317,7 @@ class wizard_cash_return(osv.osv_memory):
         employee_id = move_line.employee_id.id or False
         statement_id = register_id
         seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
+        reference = move_line.ref or False
 
         # Verify that the currency is the same as those of the Register
         register = self.pool.get('account.bank.statement').browse(cr, uid, register_id, context=context)
@@ -335,6 +338,7 @@ class wizard_cash_return(osv.osv_memory):
             'statement_id': register_id,
             'from_cash_return': True, # this permits to disable the return function on the statement line
             'sequence_for_reference': seq,
+            'ref': reference,
         }
         # Add invoice link if exists
         if invoice_id:
@@ -510,6 +514,7 @@ class wizard_cash_return(osv.osv_memory):
             'journal_id': journal.id,
             'period_id': period_id,
             'date': wizard.date,
+            'ref': wizard.reference,
             # name have been deleted by UTP-330
             #'name': move_name,
         }
@@ -521,7 +526,7 @@ class wizard_cash_return(osv.osv_memory):
         if wizard.returned_amount > 0:
             return_acc_id = register.journal_id.default_credit_account_id.id
             return_id = self.create_move_line(cr, uid, ids, wizard.date, wizard.date, adv_closing_name, journal, register, False, wizard.advance_st_line_id.employee_id.id, return_acc_id, \
-                wizard.returned_amount, 0.0, move_id, False, context=context)
+                wizard.returned_amount, 0.0, wizard.reference, move_id, False, context=context)
         if wizard.display_invoice:
             # make treatment for invoice lines
             # create invoice lines
@@ -534,7 +539,7 @@ class wizard_cash_return(osv.osv_memory):
                 credit = 0.0
                 account_id = invoice.account_id.id
                 inv_id = self.create_move_line(cr, uid, ids, wizard.date, inv_doc_date, inv_name, journal, register, partner_id, False, account_id, \
-                    debit, credit, move_id, False, context=context)
+                    debit, credit, wizard.reference, move_id, False, context=context)
                 inv_move_line_ids.append((inv_id, invoice.invoice_id.id))
         else:
             # make treatment for advance lines
@@ -560,7 +565,7 @@ class wizard_cash_return(osv.osv_memory):
                 distrib_id = advance.analytic_distribution_id and advance.analytic_distribution_id.id or False
 
                 adv_id = self.create_move_line(cr, uid, ids, wizard.date, adv_date, adv_name, journal, register, partner_id, False, account_id, \
-                    debit, credit, move_id, distrib_id, context=context)
+                    debit, credit, wizard.reference, move_id, distrib_id, context=context)
                 adv_move_line_ids.append(adv_id)
                 
         # create the advance closing line
@@ -569,7 +574,7 @@ class wizard_cash_return(osv.osv_memory):
         employee_id = wizard.advance_st_line_id.employee_id.id
         analytic_account_id =  wizard.advance_st_line_id.analytic_account_id
         adv_closing_id = self.create_move_line(cr, uid, ids, adv_closing_date, wizard.date, adv_closing_name, journal, register, False, employee_id, adv_closing_acc_id, \
-            0.0, wizard.initial_amount, move_id, False, partner_mandatory=True, context=context)
+            0.0, wizard.initial_amount, wizard.reference, move_id, False, partner_mandatory=True, context=context)
         # Verify that the balance of the move is null
         st_currency = wizard.advance_st_line_id.statement_id.journal_id.currency.id
         if st_currency and st_currency != wizard.advance_st_line_id.statement_id.company_id.currency_id.id:
@@ -637,9 +642,9 @@ class wizard_cash_return(osv.osv_memory):
                         supp_move_id = move_obj.create(cr, uid, supp_move_vals, context=context)
                         # Create move_lines
                         supp_move_line_debit_id = self.create_move_line(cr, uid, ids, wizard.date, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
-                            account_id, total, 0.0, supp_move_id, False, context=context)
+                            account_id, total, 0.0, wizard.reference, supp_move_id, False, context=context)
                         supp_move_line_credit_id = self.create_move_line(cr, uid, ids, wizard.date, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
-                            account_id, 0.0, total, supp_move_id, False, context=context)
+                            account_id, 0.0, total, wizard.reference, supp_move_id, False, context=context)
                         # We hard post the move
                         supp_res_id = move_obj.post(cr, uid, [supp_move_id], context=context)
                         # Verify that the posting has succeed
