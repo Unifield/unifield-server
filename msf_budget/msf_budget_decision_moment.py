@@ -24,7 +24,7 @@ from osv import fields, osv
 class msf_budget_decision_moment(osv.osv):
     _name = "msf.budget.decision.moment"
     _order = '"order"'
-    
+
     def _check_order(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -36,7 +36,7 @@ class msf_budget_decision_moment(osv.osv):
                 if len(bad_ids) and len(bad_ids) > 1:
                     return False
         return True
-    
+
     def _check_name(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -48,10 +48,10 @@ class msf_budget_decision_moment(osv.osv):
                 if len(bad_ids) and len(bad_ids) > 1:
                     return False
         return True
-    
+
     _columns = {
-        'name': fields.char('Decision Moment', size=32),
-        'order': fields.integer('Order'),
+        'name': fields.char('Decision Moment', size=32, required=True),
+        'order': fields.integer('Order', required=True),
     }
 
     _constraints = [
@@ -60,4 +60,5 @@ class msf_budget_decision_moment(osv.osv):
     ]
 
 msf_budget_decision_moment()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
