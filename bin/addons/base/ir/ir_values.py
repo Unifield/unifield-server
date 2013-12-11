@@ -161,7 +161,7 @@ class ir_values(osv.osv):
             ids_res.append(self.create(cr, uid, vals))
         return ids_res
 
-    def get(self, cr, uid, key, key2, models, meta=False, context={}, res_id_req=False, without_user=True, key2_req=True, only_for_you=None):
+    def get(self, cr, uid, key, key2, models, meta=False, context={}, res_id_req=False, without_user=True, key2_req=True):
         result = []
         for m in models:
             if isinstance(m, (list, tuple)):
@@ -190,15 +190,8 @@ class ir_values(osv.osv):
                     where.append('res_id=%s')
                     params.append(res_id)
             
-            if only_for_you is None or key!='default':
-                where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
-                params.append(uid)
-            elif only_for_you:
-                where.append('(user_id=%s) order by sequence,id')
-                params.append(uid)
-            else:
-                where.append('(user_id IS NULL) order by sequence,id')
-
+            where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
+            params.append(uid)
             clause = ' and '.join(where)
             cr.execute('select id,name,value,object,meta, key from ir_values where ' + clause, params)
             result = cr.fetchall()
