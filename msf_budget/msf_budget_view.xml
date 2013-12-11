@@ -342,7 +342,9 @@
             <field name="model">msf.budget.decision.moment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Decision Moments">
+                <tree string="Decision Moments" editable="bottom"
+                    hide_new_button="PROP_INSTANCE_HIDE_BUTTON"
+                    hide_delete_button="PROP_INSTANCE_HIDE_BUTTON">
                     <field name="name"/>
                     <field name="order"/>
                 </tree>
