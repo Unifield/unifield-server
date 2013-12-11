@@ -995,6 +995,14 @@ function set_as_default(field, model){
     });
 }
 
+function reset_default(field, model){
+    jQuery.frame_dialog({src:openobject.http.getURL('/openerp/fieldpref/reset_default', {
+                '_terp_model': model,
+                '_terp_field': field,
+            })
+        });
+}
+
 function do_report(id, relation){
 
     id = openobject.dom.get(id).value;
