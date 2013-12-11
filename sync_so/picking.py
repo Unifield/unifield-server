@@ -550,6 +550,7 @@ class stock_picking(osv.osv):
         """
         Trigger a close on a stock.stock_picking
         """
+        context = dict(context or {}, changes={})
         # get stock pickings to process using name from message
         stock_picking_ids = self.search(cr, uid, [('name','=',stock_picking.name)])
 
