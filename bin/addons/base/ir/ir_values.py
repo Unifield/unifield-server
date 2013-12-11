@@ -31,6 +31,17 @@ EXCLUDED_FIELDS = set((
 class ir_values(osv.osv):
     _name = 'ir.values'
 
+    def _real_unpickle(self, cr, uid, ids, name, arg, context=None):
+        res = {}
+        for ir_value in self.read(cr, uid, ids, ['value'], context=context):
+            res[ir_value['id']] = False
+            if ir_value['value']:
+                try:
+                    res[ir_value['id']] = pickle.loads(ir_value['value'].encode('utf-8'))
+                except:
+                    pass
+        return res
+
     def _value_unpickle(self, cursor, user, ids, name, arg, context=None):
         res = {}
         for report in self.browse(cursor, user, ids, context=context):
@@ -77,6 +88,7 @@ class ir_values(osv.osv):
         'value': fields.text('Value'),
         'value_unpickle': fields.function(_value_unpickle, fnct_inv=_value_pickle,
             method=True, type='text', string='Value'),
+        'real_value':  fields.function(_real_unpickle, method=True, type='text', string='Value'),
         'object': fields.boolean('Is Object'),
         'key': fields.selection([('action','Action'),('default','Default')], 'Type', size=128, select=True),
         'key2' : fields.char('Event Type',help="The kind of action or button in the client side that will trigger the action.", size=128, select=True),
@@ -138,6 +150,9 @@ class ir_values(osv.osv):
                 'meta': meta,
                 'user_id': preserve_user and uid,
             }
+            if preserve_user and key == 'default':
+                vals['sequence'] = 50
+
             if company:
                 cid = self.pool.get('res.users').browse(cr, uid, uid, context={}).company_id.id
                 vals['company_id']=cid
@@ -146,7 +161,7 @@ class ir_values(osv.osv):
             ids_res.append(self.create(cr, uid, vals))
         return ids_res
 
-    def get(self, cr, uid, key, key2, models, meta=False, context={}, res_id_req=False, without_user=True, key2_req=True):
+    def get(self, cr, uid, key, key2, models, meta=False, context={}, res_id_req=False, without_user=True, key2_req=True, only_for_you=None):
         result = []
         for m in models:
             if isinstance(m, (list, tuple)):
@@ -174,9 +189,16 @@ class ir_values(osv.osv):
                 else:
                     where.append('res_id=%s')
                     params.append(res_id)
+            
+            if only_for_you is None or key!='default':
+                where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
+                params.append(uid)
+            elif only_for_you:
+                where.append('(user_id=%s) order by sequence,id')
+                params.append(uid)
+            else:
+                where.append('(user_id IS NULL) order by sequence,id')
 
-            where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
-            params.append(uid)
             clause = ' and '.join(where)
             cr.execute('select id,name,value,object,meta, key from ir_values where ' + clause, params)
             result = cr.fetchall()
@@ -225,4 +247,5 @@ class ir_values(osv.osv):
                     if r[1] == 'Menuitem' and not res2:
                         raise osv.except_osv('Error !','You do not have the permission to perform this operation !!!')
         return res2
+
 ir_values()
