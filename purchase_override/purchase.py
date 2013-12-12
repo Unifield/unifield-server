@@ -275,6 +275,7 @@ class purchase_order(osv.osv):
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
         'origin': fields.text('Source Document', 
                         help="Reference of the document that generated this purchase order request."),
+        'dest_partner_ids': fields.many2many('res.partner', 'res_partner_purchase_order_rel', 'purchase_order_id', 'partner_id', 'Destination Partners'),  # uf-2223
     }
     
     _defaults = {
