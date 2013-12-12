@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
+        <!-- see msf_budget/wizard/wizard_budget_criteria_export.py for real filename -->
         <report id="budget_criteria_2"
         string="Budget vs. Actuals"
         model="msf.budget"
