@@ -121,51 +121,32 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 ## CONTENT OF LINES -------------------------
 % if data.get('form').get('report_lines'):
 % for line in data.get('form').get('report_lines'):
+<%
+  isView = False
+  if line[0:1] and line[0:1][0] and line[0:1][0] == 'view':
+    isView = True
+%>
 <Row>
 ## Account code
-% for code in line[0:1]:
-% if code in ['61','62','63','64','65','66','67','68','69']:
-<Cell ss:StyleID="ssBoldCenter">
-   <Data ss:Type="String">${code}</Data>
+% for code in line[1:2]:
+<Cell ss:StyleID="${"%s"%( isView and 'ssBoldCenter' or 'ssBorderCenter' )}">
+    <Data ss:Type="String">${code}</Data>
 </Cell>
-% else:
-<Cell ss:StyleID="ssBorderCenter">
-   <Data ss:Type="String">${code}</Data>
-</Cell>
-% endif
 ## Account name
-% for name in line[1:2]:
-% if code in ['61','62','63','64','65','66','67','68','69']:
-<Cell ss:StyleID="ssBoldLeft">
+% for name in line[2:3]:
+<Cell ss:StyleID="${"%s"%( isView and 'ssBoldLeft' or 'ssBorderLeft' )}">
    <Data ss:Type="String">${name}</Data>
 </Cell>
-% else:
-<Cell ss:StyleID="ssBorderLeft">
-   <Data ss:Type="String">${name}</Data>
-</Cell>
-% endif
 % endfor
 ## Total
-% for total in line[2:-1]:
-% if code in ['61','62','63','64','65','66','67','68','69']:
-<Cell ss:StyleID="ssBoldRight">
+% for total in line[3:-1]:
+<Cell ss:StyleID="${"%s"%( isView and 'ssBoldRight' or 'ssBorderRight' )}">
    <Data ss:Type="Number">${total}</Data>
 </Cell>
-% else:
-<Cell ss:StyleID="ssBorderRight">
-   <Data ss:Type="Number">${total}</Data>
-</Cell>
-% endif
 % endfor
-% if code in ['61','62','63','64','65','66','67','68','69']:
-<Cell ss:StyleID="ssBoldRight">
+<Cell ss:StyleID="${"%s"%( isView and 'ssBoldRight' or 'ssBorderRight' )}">
    <Data ss:Type="Number">${line[-1]}</Data>
 </Cell>
-% else:
-<Cell ss:StyleID="ssBorderRight">
-   <Data ss:Type="Number">${line[-1]}</Data>
-</Cell>
-%endif
 </Row>
 % endfor
 % endfor

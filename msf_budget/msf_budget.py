@@ -132,8 +132,8 @@ class msf_budget(osv.osv):
                                                 'decision_moment_id': budget.decision_moment_id.id,
                                                 'type': 'view'}, context=context)
                 # Create all lines for all accounts/destinations (no budget values, those are retrieved)
-                expense_account_ids = self.pool.get('account.account').search(cr, uid, [('user_type_code', '=', 'expense'),
-                                                                                        ('user_type_report_type', '=', 'expense'),
+                expense_account_ids = self.pool.get('account.account').search(cr, uid, [('is_analytic_addicted', '=', True),
+                                                                                        ('user_type_report_type', '!=', 'none'),
                                                                                         ('type', '!=', 'view')], context=context)
                 destination_obj = self.pool.get('account.destination.link')
                 destination_link_ids = destination_obj.search(cr, uid, [('account_id', 'in',  expense_account_ids)], context=context)
