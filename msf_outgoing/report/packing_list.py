@@ -35,9 +35,9 @@ class packing_list(report_sxw.rml_parse):
         '''
         opening check
         '''
-        for obj in objects:
-            if not obj.backshipment_id:
-                raise osv.except_osv(_('Warning !'), _('Packing List is only available for Shipment Objects (not draft)!'))
+        #for obj in objects:
+            #if not obj.backshipment_id:
+                #raise osv.except_osv(_('Warning !'), _('Packing List is only available for Shipment Objects (not draft)!'))
         
         return super(packing_list, self).set_context(objects, data, ids, report_type=report_type)
 
