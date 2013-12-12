@@ -191,8 +191,8 @@
             <td class="side_spacing">
                 <table>
                     <tr>
-                        <td class="label"><label for="import_compat">${_("Export Type:")}</label></td>
-                        <td>
+                        <td class="label" style="${group_by_no_leaf and 'display:none' or ''}"><label for="import_compat">${_("Export Type:")}</label></td>
+                        <td style="${group_by_no_leaf and 'display:none' or ''}">
                             <select id="import_compat" name="import_compat" onchange="do_import_cmp();">
                                 <option value="1">${_("Import Compatible Export")}</option>
                                 <option value="0"
@@ -226,7 +226,7 @@
         </tr> 
         <tr>
             <td class="side_spacing">
-                <table class="fields-selector-export" cellspacing="5" border="0">
+                <table class="fields-selector-export" cellspacing="5" border="0" style="${group_by_no_leaf and 'display:none' or ''}">
                     <tr>
                         <th class="fields-selector-left">${_("Available fields")}</th>
                         <th class="fields-selector-center">&nbsp;</th>

@@ -62,7 +62,8 @@ x:FullRows="1">
 </Row>
 % for row in result:
 <Row>
-  % for d in row:
+  % for k in row:
+     <% d = '%s'%k %>
      % if d in ('True', 'False'):
        <Cell ss:StyleID="ssBorder">
         <Data ss:Type="Boolean">${d=='True' and '1' or '0'}</Data>
