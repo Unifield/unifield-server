@@ -24502,7 +24502,7 @@ msgstr "Pas de ligne"
 
 #. module: sale
 #: report:msf.freight_manifest:0
-msgid "Parcels missing :"
+msgid "Parcels Missing :"
 msgstr "Parcelles manquantes :"
 
 #. module: account_hq_entries
@@ -70683,7 +70683,7 @@ msgstr "Montants Réels"
 
 #. module: sale
 #: report:msf.freight_manifest:0
-msgid "Freight clame report made ? Yes / No"
+msgid "Freight Claim Report Made ? Yes / No"
 msgstr "Rapport de réclamation de Frêt fait ? Oui / Non"
 
 #. modules: tender_flow, financing_contract, account_voucher, account_hq_entries, account_corrections, base_report_designer, register_accounting, procurement_cycle, msf_accrual, account_msf, sync_client, purchase_followup, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, purchase, purchase_compare_rfq, board, msf_doc_import, analytic_distribution, threshold_value, account_payment, msf_homere_interface, account_reconciliation, consumption_calculation, purchase_override, specific_rules, kit, sale_override, base, account_period_closing_level, product_list, res_currency_functional, procurement_report, msf_budget, account_invoice_split, account, stock_move_tracking, procurement_auto, documents_done, sale, msf_config_locations, sales_followup, procurement, sourcing, msf_custom_settings, msf_audittrail, stock, msf_profile, account_override, msf_instance
