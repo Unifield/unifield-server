@@ -165,6 +165,40 @@ class account_move_line(osv.osv):
                 for p in line.reconcile_partial_id.line_partial_ids:
                     res.append(p.id)
         return res
+    
+    def _balance_currency(self, cr, uid, ids, name, arg, context=None):
+        # UTP-31
+        if context is None:
+            context = {}
+        c = context.copy()
+        c['initital_bal'] = True
+        sql = """SELECT l2.id, SUM(l1.debit_currency-l1.credit_currency)
+                    FROM account_move_line l1, account_move_line l2
+                    WHERE l2.account_id = l1.account_id
+                      AND l1.id <= l2.id
+                      AND l2.id IN %s AND """ + \
+                self._query_get(cr, uid, obj='l1', context=c) + \
+                " GROUP BY l2.id"
+
+        cr.execute(sql, [tuple(ids)])
+        result = dict(cr.fetchall())
+        for id in ids:
+            result.setdefault(id, 0.0)
+        return result
+        
+    def _balance_currency_search(self, cursor, user, obj, name, args, domain=None, context=None):
+        # UTP-31
+        if context is None:
+            context = {}
+        if not args:
+            return []
+        where = ' AND '.join(map(lambda x: '(abs(sum(debit_currency-credit_currency))'+x[1]+str(x[2])+')',args))
+        cursor.execute('SELECT id, SUM(debit_currency-credit_currency) FROM account_move_line \
+                     GROUP BY id, debit_currency, credit_currency having '+where)
+        res = cursor.fetchall()
+        if not res:
+            return [('id', '=', '0')]
+        return [('id', 'in', [x[0] for x in res])]
 
     def _get_is_reconciled(self, cr, uid, ids, field_names, args, context=None):
         """
@@ -227,6 +261,7 @@ class account_move_line(osv.osv):
             }
         ),
         'is_reconciled': fields.function(_get_is_reconciled, fnct_search=_search_is_reconciled, type='boolean', method=True, string="Is reconciled", help="Is that line partially/totally reconciled?"),
+        'balance_currency': fields.function(_balance_currency, fnct_search=_balance_currency_search, method=True, string='Balance Booking'),
     }
 
     _defaults = {

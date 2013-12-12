@@ -151,9 +151,13 @@
                         <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
                     </group>
                     <newline/>
+                    <group col="10" colspan="4">
+                        <field name="balance" string="Debit/Credit Fonctional" select='1'/>
+                        <field name="balance_currency" string="Debit/Credit Booking" select='1'/>
+                    </group>
+                    <newline/>
                     <group expand="0" string="Extended Filters...">
                         <field name="narration" select="1"/>
-                        <field name="balance" string="Debit/Credit" select='1'/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="12" col="10">
