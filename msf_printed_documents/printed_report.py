@@ -111,6 +111,7 @@ class ir_actions_report_xml(osv.osv):
             model_obj = self.pool.get(active_model)
 
             for field_name in values_to_compute:
+                vals_dict[field_name] = ''
                 model_doc = model_obj.browse(cr, uid, active_id, context=context)
                 # Use a function to compute the name
                 if field_name.startswith('eval'):
