@@ -160,6 +160,8 @@ class ImpEx(SecuredController):
             default = [x for x in default if x[0] not in product_remove_fields]
         default = simplejson.dumps(default)
         group_by_no_leaf = ctx and  ctx.get('group_by_no_leaf', False)
+        if params.search_data and ctx and not ctx.get('group_by') and params.search_data.get('group_by_ctx'):
+            ctx['group_by'] = params.search_data['group_by_ctx']
         return dict(existing_exports=existing_exports, model=params.model, ids=params.ids, ctx=ctx,
                     search_domain=params.search_domain, source=params.source, group_by_no_leaf=group_by_no_leaf,
                     tree=tree, import_compat=import_compat, default=default, export_format=export_format, all_records=all_records, export_id=export_id)
@@ -432,7 +434,7 @@ class ImpEx(SecuredController):
         if ctx.get('group_by_no_leaf'):
             rpc_obj = rpc.RPCProxy(params.model)
             domain = params.search_domain or []
-            to_group = ctx.get('group_by')
+            to_group = ctx.get('group_by', [])
             group_by = []
             for gr in to_group:
                 gr = gr.replace('group_', '')

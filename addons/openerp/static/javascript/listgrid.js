@@ -1023,7 +1023,7 @@ MochiKit.Base.update(ListView.prototype, {
             _terp_source: this.name,
             _terp_context: openobject.dom.get('_terp_context').value,
             _terp_search_domain: openobject.dom.get('_terp_search_domain').value,
-            _terp_search_data: search_data_field && search_data_field.value || false,
+            _terp_search_data: search_data_field && search_data_field.value || '',
             _terp_ids: ids,
             _terp_view_ids : this.view_ids,
             _terp_listheaders: listeleme,
