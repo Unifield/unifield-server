@@ -103,6 +103,7 @@
                     </xpath> -->
                     <xpath expr="/form//field[@name='order_line']/tree" position="attributes">
                         <attribute name="hide_delete_button">True</attribute>
+                        <attribute name="noteditable">state=='cancel'</attribute>
                     </xpath>
 
                     <xpath expr="/form/notebook//tree/field[@name='price_subtotal']" position="after">
