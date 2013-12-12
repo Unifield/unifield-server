@@ -452,7 +452,7 @@ class product_asset(osv.osv):
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         asset = self.browse(cr, uid, res_id)
         #UF-2148: use the xmlid_name for building the xml for this object
-        return get_valid_xml_name('product_asset', (asset.instance_id.code or 'noinstance'), (asset.product_id.code or 'noprod'), (asset.xmlid_name or 'noname'))
+        return get_valid_xml_name('product_asset', (asset.partner_name or 'no_partner'), (asset.product_id.code or 'noprod'), (asset.xmlid_name or 'noname'))
     
 product_asset()
 
@@ -463,7 +463,7 @@ class batch_number(osv.osv):
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         batch = self.browse(cr, uid, res_id)
         #UF-2148: use the xmlid_name for building the xml for this object
-        return get_valid_xml_name('batch_numer', (batch.instance_id.code or 'noinstance'), (batch.product_id.code or 'noprod'), (batch.xmlid_name or 'noname'))
+        return get_valid_xml_name('batch_numer', (batch.partner_name or 'no_partner'), (batch.product_id.code or 'noprod'), (batch.xmlid_name or 'noname'))
     
 batch_number()
 

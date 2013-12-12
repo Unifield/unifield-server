@@ -134,10 +134,14 @@ class so_po_common(osv.osv_memory):
     def update_next_line_number_fo_po(self, cr, uid, order_id, fo_po_obj, order_line_object, context):
         sequence_id = fo_po_obj.read(cr, uid, [order_id], ['sequence_id'], context=context)[0]['sequence_id'][0]
         
+        # Make sure that even if the FO/PO has no line, then the default value is 1
         cr.execute("select max(line_number) from " + order_line_object + " where order_id = " + str(order_id))
         for x in cr.fetchall():
             seq_tools = self.pool.get('sequence.tools')
-            seq_tools.reset_next_number(cr, uid, sequence_id, int(x[0]) + 1, context=context)
+            val = 1
+            if x and x[0]:
+                val = int(x[0]) + 1
+            seq_tools.reset_next_number(cr, uid, sequence_id, val, context=context)
         
         return True
 

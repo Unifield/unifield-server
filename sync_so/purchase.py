@@ -109,8 +109,8 @@ class purchase_order_sync(osv.osv):
                 orig_line = line_obj.browse(cr, uid, orig_line[0], context=context)
                 line[2].update({'move_dest_id': orig_line.move_dest_id and orig_line.move_dest_id.id or False})
 
-        # If partner is intermission, copy the ADs from the lines of original PO                
-        if partner_type == 'intermission':
+        # If partner is intermission or section, copy the ADs from the lines of original PO                
+        if partner_type in ['section', 'intermission']:
             for line in default['order_line']:
                 orig_line = line_obj.search(cr, uid, [('order_id', '=', po_id), ('line_number', '=', line[2].get('line_number'))])
                 if orig_line:
