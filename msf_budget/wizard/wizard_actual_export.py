@@ -19,7 +19,7 @@
 #
 ##############################################################################
 from osv import osv, fields
-import datetime
+import time
 from tools.translate import _
 
 class wizard_actual_export(osv.osv_memory):
@@ -31,6 +31,8 @@ class wizard_actual_export(osv.osv_memory):
     }
 
     def button_create_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         wizard = self.browse(cr, uid, ids[0], context=context)
         data = {}
         # add parameters
@@ -41,6 +43,9 @@ class wizard_actual_export(osv.osv_memory):
             data['form'].update({'cost_center_ids': [x.id for x in wizard.cost_center_ids]})
         if wizard.currency_table_id:
             data['form'].update({'currency_table_id': wizard.currency_table_id.id})
+        if context.get('active_id'):
+            budget_code = self.pool.get('msf.budget').read(cr, uid, context['active_id'], ['code'])
+            data['target_filename'] = 'Actuals by CC_%s_%s' % (budget_code['code'] or '', time.strftime('%Y%m%d'))
 
         return {'type': 'ir.actions.report.xml', 'report_name': 'msf.budget.actual', 'datas': data}
         
