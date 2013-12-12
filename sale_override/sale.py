@@ -549,8 +549,6 @@ class sale_order(osv.osv):
             # loop through lines
             created_line = []
             for line in so.order_line:
-                if line.state == 'cancel':
-                    continue
                 # check that each line must have a supplier specified
                 if  line.type == 'make_to_order':
                     if not line.product_id:
@@ -1122,7 +1120,7 @@ class sale_order(osv.osv):
                 # when the line is sourced, we already get a procurement for the line
                 # when the line is confirmed, the corresponding procurement order has already been processed
                 # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
-                if line.state in ['cancel', 'sourced', 'confirmed', 'done']:
+                if line.state in ['sourced', 'confirmed', 'done']:
                     continue
 
                 if line.product_id:
@@ -1328,12 +1326,11 @@ class sale_order_line(osv.osv):
             if line['order_id'][0] not in sale_ids:
                 sale_ids.append(line['order_id'][0])
 
-        #self.unlink(cr, uid, ids, context=context)
-        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        self.unlink(cr, uid, ids, context=context)
 
-        for order in sale_ids:
-            if len(self.search(cr, uid, [('order_id', '=', order), ('state', '!=', 'cancel')], context=context)) <= 0:
-                res = self.pool.get('sale.order.unlink.wizard').ask_unlink(cr, uid, order, context=context)
+        for order in self.pool.get('sale.order').read(cr, uid, sale_ids, ['order_line'], context=context):
+            if len(order['order_line']) == 0:
+                res = self.pool.get('sale.order.unlink.wizard').ask_unlink(cr, uid, order['id'], context=context)
 
         return res
 
@@ -1379,7 +1376,7 @@ class sale_order_line(osv.osv):
             proc = line.procurement_id and line.procurement_id.id
             # Delete the line and the procurement
             self.write(cr, uid, [line.id], {'state': 'cancel'}, context=context)
-#            self.unlink(cr, uid, [line.id], context=context)
+            self.unlink(cr, uid, [line.id], context=context)
 
             if proc:
                 proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)

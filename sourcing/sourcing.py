@@ -657,7 +657,7 @@ class sourcing_line(osv.osv):
             # check if all order lines have been confirmed
             linesConfirmed = True
             for ol in sl.sale_order_id.order_line:
-                if ol.state not in (state_to_use, 'cancel'):
+                if ol.state != state_to_use:
                     linesConfirmed = False
                     break
             # the line reads estimated_dd, after trg_validate, the lines are deleted, so all read/write must be performed before
@@ -900,8 +900,7 @@ class sale_order(osv.osv):
         # we set all line state to 'sourced' of the original Fo
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.order_line:
-                if line.state not in ('done', 'cancel'):
-                    sol_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
+                sol_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
             # trigger workflow signal
             wf_service.trg_validate(uid, 'sale.order', obj.id, 'order_confirm', cr)
         
