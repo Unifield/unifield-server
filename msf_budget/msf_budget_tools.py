@@ -41,8 +41,8 @@ class msf_budget_tools(osv.osv):
         # get the last parent
         chart_of_account_ids = account_obj.search(cr, uid, [('code', '=', 'MSF')], context=context)
         # get normal expense accounts
-        general_account_ids = account_obj.search(cr, uid, [('user_type_code', '=', 'expense'),
-                                                           ('user_type_report_type', '=', 'expense'),
+        general_account_ids = account_obj.search(cr, uid, [('is_analytic_addicted', '=', True),
+                                                           ('user_type_report_type', '!=', 'none'),
                                                            ('type', '!=', 'view')], context=context)
         expense_account_ids = [(account_id, False) for account_id in general_account_ids]
         # go through parents
