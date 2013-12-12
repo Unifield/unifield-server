@@ -51,6 +51,63 @@ class wizard_advance_line(osv.osv_memory):
     """
     _name = 'wizard.advance.line'
     
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Get state of distribution:
+         - if compatible with the line, then "valid"
+         - if no distribution on line, then "none"
+         - all other case are "invalid"
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse all given lines
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = 'none'
+            cash_return_distrib_id = line.wizard_id.analytic_distribution_id and line.wizard_id.analytic_distribution_id.id or False
+            line_distrib_id = line.analytic_distribution_id and line.analytic_distribution_id.id or False
+            account_id = line.account_id and line.account_id.id or False
+            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(
+                cr, uid, line_distrib_id, cash_return_distrib_id, account_id)
+        return res
+
+    def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
+        """
+        Get a recap from analytic distribution state and if it come from header or not.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = ''
+            if not line.display_analytic_button:
+                continue
+            from_header = ''
+            if line.have_analytic_distribution_from_header:
+                from_header = _(' (from header)')
+            res[line.id] = '%s%s' % (self.pool.get('ir.model.fields').get_browse_selection(cr, uid, line, 'analytic_distribution_state', context), from_header)
+        return res
+
+    def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
+        """
+        If invoice have an analytic distribution, return False, else return True
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = True
+            if line.analytic_distribution_id:
+                res[line.id] = False
+        return res
+
     def _display_analytic_button(self, cr, uid, ids, name, args, context=None):
         """
         Return True for all element that correspond to some criteria:
@@ -73,12 +130,26 @@ class wizard_advance_line(osv.osv_memory):
         'amount': fields.float(string="Amount", size=(16,2), required=True),
         'wizard_id': fields.many2one('wizard.cash.return', string='wizard'),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'analytic_distribution_state': fields.function(
+            _get_distribution_state, method=True, type='selection',
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+            string="Distribution state",
+            help="Informs from distribution state among 'none', 'valid', 'invalid."),
+        'analytic_distribution_state_recap': fields.function(
+            _get_distribution_state_recap, method=True, type='char', size=30,
+            string="Distribution",
+            help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
+        'have_analytic_distribution_from_header': fields.function(
+            _have_analytic_distribution_from_header, method=True, type='boolean',
+            string='Header Distrib.?'),
         'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True, 
             help="This informs system that we can display or not an analytic button", store=False),
     }
     
     _defaults = {
         'display_analytic_button': lambda *a: True,
+        'analytic_distribution_state_recap': lambda *a: '',
+        'have_analytic_distribution_from_header': lambda *a: True,
     }
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
@@ -171,6 +242,8 @@ class wizard_cash_return(osv.osv_memory):
         'advance_st_line_id': fields.many2one('account.bank.statement.line', string='Advance Statement Line', required=True),
         'currency_id': fields.many2one('res.currency', string='Currency'),
         'date': fields.date(string='Date for cash return', required=True),
+        'analytic_distribution_id': fields.many2one(
+            'analytic.distribution', 'Analytic Distribution', readonly=True),
     }
 
     _defaults = {
@@ -482,7 +555,7 @@ class wizard_cash_return(osv.osv_memory):
         # check if any line with expense account missing the distribution_id value
         wizard = self.browse(cr, uid, ids[0], context=context)      
         for st_line in wizard.advance_line_ids:
-            if st_line.account_id.user_type.code in ['expense'] and not st_line.analytic_distribution_id:  
+            if st_line.account_id.user_type.code in ['expense'] and st_line.analytic_distribution_state != 'valid':
                 raise osv.except_osv(_('Warning'), _('All advance lines with expense account must have analytic distribution'))
 
         # Do computation of total_amount
@@ -665,6 +738,69 @@ class wizard_cash_return(osv.osv_memory):
 
         # Close Wizard
         return { 'type': 'ir.actions.act_window_close', }
+
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Launch analytic distribution wizard on a Cash Return
+        """
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        cash_return = self.browse(cr, uid, ids[0], context=context)
+        amount = 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(
+            cr, uid, uid, context=context).company_id.currency_id.id
+        currency = cash_return.currency_id and cash_return.currency_id.id \
+            or company_currency
+        # Compute amount for this Cash Return
+        amount = cash_return.initial_amount - cash_return.returned_amount
+        # Get analytic_distribution_id
+        distrib_id = cash_return.analytic_distribution_id \
+            and cash_return.analytic_distribution_id.id
+        # Prepare values for wizard
+        account_id = cash_return.advance_st_line_id \
+            and cash_return.advance_st_line_id.account_id \
+            and cash_return.advance_st_line_id.account_id.id \
+            or False
+        vals = {
+            'total_amount': amount,
+            'cash_return_id': cash_return.id,
+            'currency_id': currency or False,
+            'state': 'dispatch',
+            'account_id': False,
+            'date': cash_return.date,
+            'posting_date': cash_return.date,
+            'document_date': cash_return.date,
+            'distribution_id': distrib_id,
+        }
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # Update some context values
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        context.update({
+            'from_cash_return_analytic_dist': True,
+            'from': 'wizard.cash.return',
+            'wiz_id': ids[0],
+            'cash_return_id': ids[0]})
+        # Open it!
+        return {
+            'name': _('Global analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
+        }
     
 wizard_cash_return()
 

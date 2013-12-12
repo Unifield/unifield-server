@@ -188,7 +188,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                     if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
                         or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)) \
                         or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
-                        or (context.get('from_move', False) and isinstance(context.get('from_move'), int)):
+                        or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
+                        or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
                     else:
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
@@ -211,7 +212,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                     # If context with 'from' exist AND its content is an integer (so an invoice_id)
                     elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
                       or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
-                      or (context.get('from_move', False) and isinstance(context.get('from_move'), int)):
+                      or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
+                      or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
                         # Filter is only on cost_center and MSF Private Fund on invoice header
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), ('hide_closed_fp', '=', True), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
                     else:
@@ -224,7 +226,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                         or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)) \
                         or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
                         or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
-                        or (context.get('from_move', False) and isinstance(context.get('from_move'), int)):
+                        or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
+                        or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
 
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
                     else:
@@ -583,6 +586,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'document_date': fields.date('Document date', readonly=True),
         'partner_type': fields.char('Partner Type', readonly=1, size=128),
         'register_line_state': fields.function(_get_register_line_state, method=True, string='Register line state', type='selection', selection=[('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')], readonly=True, store=False),
+        'cash_return_id': fields.many2one('wizard.cash.return', string="Advance Return"),
     }
 
     _defaults = {
@@ -724,7 +728,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             # Verify that Funding Pool Lines are done if we come from an invoice, invoice line, direct invoice, direct invoice line, register line, 
             #+ move line, commitment, commitment line, model
-            for obj in ['invoice_id', 'invoice_line_id', 'direct_invoice_id', 'direct_invoice_line_id', 'register_line_id', 'move_id', 'move_line_id', 'commitment_id', 'commitment_line_id', 'accrual_line_id', 'model_line_id']:
+            for obj in ['invoice_id', 'invoice_line_id', 'direct_invoice_id', 'direct_invoice_line_id', 'register_line_id', 'move_id', 'move_line_id', 'commitment_id', 'commitment_line_id', 'accrual_line_id', 'model_line_id', 'cash_return_id']:
                 if getattr(wiz, obj, False) and not wiz.fp_line_ids:
                     raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             # Verify that allocation is 100% on each type of distribution, but only if there some lines
@@ -1044,13 +1048,24 @@ class analytic_distribution_wizard(osv.osv_memory):
             # If the wizard was called from the cash return line, the perform some actions before returning back to the caller wizard
             wizard_name = context.get('from')
             wizard_id = context.get('wiz_id')
+            cash_return_id = context.get('cash_return_id')
             cash_return_line_id = context.get('cash_return_line_id')
             
             distr_id = False
             if wiz and wiz.distribution_id and wiz.distribution_id.id: 
                 distr_id = wiz.distribution_id.id
-            # write the distribution analytic to this cash return line    
-            self.pool.get('wizard.advance.line').write(cr, uid, [cash_return_line_id], {'analytic_distribution_id': distr_id}, context=context)
+            # Write the distribution analytic to the cash return
+            if cash_return_id:
+                self.pool.get('wizard.cash.return').write(
+                    cr, uid, [cash_return_id],
+                    {'analytic_distribution_id': distr_id},
+                    context=context)
+            # Write the distribution analytic to the cash return line    
+            if cash_return_line_id:
+                self.pool.get('wizard.advance.line').write(
+                    cr, uid, [cash_return_line_id],
+                    {'analytic_distribution_id': distr_id},
+                    context=context)
             return_wiz = {
                  'name': "Cash Return- Wizard",
                     'type': 'ir.actions.act_window',
