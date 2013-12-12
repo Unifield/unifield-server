@@ -40,6 +40,16 @@ class import_table_currencies(osv.osv_memory):
     }
     
     def import_table_rates(self, cr, uid, ids, context=None):
+        # UTP-894 get company currency code
+        comp_ccy_code = False
+        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+        if user and user[0] and user[0].company_id:
+            comp_ccy_id = user[0].company_id.currency_id.id
+            if comp_ccy_id:
+                comp_ccy_name = self.pool.get('res.currency').name_get(cr, uid, [comp_ccy_id], context=context)
+                if comp_ccy_name:
+                    comp_ccy_code = comp_ccy_name[0][1]
+                                        
         if context is None:
             context = {}
         currency_obj = self.pool.get('res.currency')
@@ -52,7 +62,13 @@ class import_table_currencies(osv.osv_memory):
                 import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
                 if not import_data:
                     raise osv.except_osv(_('Warning'), _('File is empty.'))
-
+                    
+                if comp_ccy_code:
+                    # UTP-894 pre-check: currency table MUST contain company/reference currency
+                    ccy_codes = [line[0] for line in import_data]
+                    if comp_ccy_code not in ccy_codes:
+                        raise osv.except_osv(_('Error'), _('The reference currency %s is not defined in the table to import!') % comp_ccy_code)
+                    
                 for line in import_data:
                     if len(line) > 0 and len(line[0]) == 3:
                         # we have a currency ISO code; search it and its rates in the table first
