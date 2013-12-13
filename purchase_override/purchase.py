@@ -2269,8 +2269,8 @@ class purchase_order_line(osv.osv):
             self._update_merged_line(cr, uid, line.id, False, context=context)
             context['skipResequencing'] = tmp_Resequencing
 
-            if line.order_id.state == 'draft':
-                line_to_cancel.append(line.id)
+#            if line.order_id.state == 'draft':
+            line_to_cancel.append(line.id)
 
         # Cancel the listed procurement orders
         for proc_id in proc_ids:
