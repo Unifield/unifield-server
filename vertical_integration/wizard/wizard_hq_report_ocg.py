@@ -22,7 +22,7 @@
 from osv import fields, osv
 from tools.translate import _
 
-import datetime
+import time
 import base64
 import StringIO
 import csv
@@ -37,7 +37,7 @@ class wizard_hq_report_ocg(osv.osv_memory):
     }
     
     _defaults = {
-        'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, datetime.datetime.today().strftime('%Y-%m-%d'), context=c)
+        'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, time.strftime('%Y-%m-%d'), context=c)
     }
     
     def button_create_report(self, cr, uid, ids, context=None):
@@ -51,6 +51,7 @@ class wizard_hq_report_ocg(osv.osv_memory):
         if wizard.period_id:
             data['form'].update({'period_id': wizard.period_id.id})
 
+        data['target_filename'] = '%s_%s_%s' % (_('Export to HQ System'), wizard.instance_id and wizard.instance_id.code or '', time.strftime('%Y%m%d'))
         return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocg', 'datas': data}
     
 wizard_hq_report_ocg()
