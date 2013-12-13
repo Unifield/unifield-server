@@ -63,12 +63,60 @@ class account_period(osv.osv):
         
         # Do verifications for draft periods
         for period in self.browse(cr, uid, ids, context=context):
+            # Check state consistency about previous and next periods
             # UF-550: A period now can only be opened if all previous periods (of the same fiscal year) have been already opened
-            if period.state == 'created':
-                previous_period_ids = self.search(cr, uid, [('date_start', '<', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id)], context=context,)
-                for pp in self.browse(cr, uid, previous_period_ids, context=context):
-                    if pp.state == 'created':
-                        raise osv.except_osv(_('Warning'), _("Cannot open this period. All previous periods must be opened before opening this one."))
+            # UTP-755: More global than the UF-550:
+            #       - A period now can only be set to the next state if all
+            #         previous periods (of the same fiscal year) are set at a
+            #         higher state,
+            #       - A period now can only be set to a previous state if all
+            #         next periods (of the same fiscal year) are set at a lower
+            #         state.
+            check_errors = {
+                'created': _(
+                    "Cannot open this period. "
+                    "All previous periods must be opened before opening this one."),
+                'draft': _(
+                    "Cannot close this period at the field level. "
+                    "All previous periods must be closed before closing this one."),
+                'field-closed': _(
+                    "Cannot close this period at the mission level. "
+                    "All previous periods must be closed before closing this one."),
+                'mission-closed': _(
+                    "Cannot close this period at the HQ level. "
+                    "All previous periods must be closed before closing this one."),
+            }
+            check_states = ['created', 'draft', 'field-closed', 'mission-closed']
+            if not context.get('state'):
+                raise osv.except_osv(
+                    _("Error"),
+                    _("Next state unknown"))
+            backward_asked = check_states.index(context['state']) < check_states.index(period.state)
+            # Forward operation, no check for 'created' state
+            if period.state in check_states[1:] and not backward_asked:
+                pp_ids = self.search(
+                    cr, uid,
+                    [('date_start', '<', period.date_start),
+                    ('fiscalyear_id', '=', period.fiscalyear_id.id)],
+                    context=context)
+                for pp in self.browse(cr, uid, pp_ids, context=context):
+                    if check_states.index(pp.state) <= check_states.index(period.state):
+                        raise osv.except_osv(_('Warning'), check_errors[period.state])
+            # For backward operation, all next periods have to be at the
+            # same state or higher than the current period
+            elif backward_asked:
+                np_ids = self.search(
+                    cr, uid,
+                    [('date_start', '>', period.date_start),
+                    ('fiscalyear_id', '=', period.fiscalyear_id.id)],
+                    context=context)
+                for np in self.browse(cr, uid, np_ids, context=context):
+                    if check_states.index(np.state) >= check_states.index(period.state):
+                        raise osv.except_osv(
+                            _('Warning'),
+                            _("Cannot backward the state of this period. "
+                              "All next periods must be at a lower state."))
+            # / Check state consistency
             
             if period.state == 'draft':
                 # first verify that all existent registers for this period are closed
