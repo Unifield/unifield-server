@@ -285,6 +285,8 @@ class purchase_order_followup_from_menu(osv.osv_memory):
                 new_ids.append(menu.order_id.id)
             elif menu.cust_order_id.id:
                 new_ids.append(menu.cust_order_id.id)
+            elif menu.cust_order_id2.id:
+                new_ids.append(menu.cust_order_id2.id)
             else:
                 new_ids.append(menu.incoming_id.purchase_id.id)
 
