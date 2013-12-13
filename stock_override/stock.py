@@ -1040,11 +1040,11 @@ class stock_move(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        backmove_ids = self.search(cr, uid, [('backmove_id', 'in', ids)], context=context)
-        if backmove_ids:
-            raise osv.except_osv(_('Error'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
+        backmove_ids = self.search(cr, uid, [('backmove_id', 'in', ids), ('state', 'not in', ('done', 'cancel'))], context=context)
 
         for move in self.browse(cr, uid, ids, context=context):
+            if backmove_ids or move.product_qty == 0.00:
+                raise osv.except_osv(_('Error'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
             if (move.sale_line_id and move.sale_line_id.order_id) or (move.purchase_line_id and move.purchase_line_id.order_id):
                 wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, {'move_id': ids[0]}, context=context)
 
