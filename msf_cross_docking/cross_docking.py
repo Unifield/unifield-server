@@ -291,10 +291,15 @@ class stock_picking(osv.osv):
 
     _columns = {
         'cross_docking_ok': fields.boolean('Cross docking'),
+        'direct_incoming': fields.boolean('Direct to stock'),
         'allocation_setup': fields.function(_get_allocation_setup, type='selection',
                                             selection=[('allocated', 'Allocated'),
                                                        ('unallocated', 'Unallocated'),
                                                        ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
+    }
+
+    _defaults = {
+        'direct_incoming': False,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -471,6 +476,11 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                     # treat moves towards STOCK if NOT SERVICE
                     values.update({'location_dest_id': stock_location_input})
                 values.update({'cd_from_bo': False})
+
+            # Set the 'Direct to stock' boolean field
+            if var.dest_type != 'to_cross_docking':
+                values['direct_incoming'] = var.direct_incoming
+
         return values
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
@@ -540,10 +550,15 @@ class stock_move(osv.osv):
 
     _columns = {
         'move_cross_docking_ok': fields.boolean('Cross docking'),
+        'direct_incoming': fields.boolean('Direct incoming'),
         'allocation_setup': fields.function(_get_allocation_setup, type='selection',
                                             selection=[('allocated', 'Allocated'),
                                                        ('unallocated', 'Unallocated'),
                                                        ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
+    }
+
+    _defaults = {
+        'direct_incoming': False,
     }
 
     def default_get(self, cr, uid, fields, context=None):
