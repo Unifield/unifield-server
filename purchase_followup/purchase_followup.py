@@ -272,6 +272,7 @@ class purchase_order_followup_from_menu(osv.osv_memory):
         'order_id': fields.many2one('purchase.order', string='PO reference', required=True),
         'cust_order_id': fields.many2one('purchase.order', string='Supplier reference', required=True),
         'incoming_id': fields.many2one('stock.picking', string='Incoming shipment', required=True),
+        'cust_order_id2': fields.many2one('purchase.order', string='Customer Name', required=True),
     }
 
     def go_to_followup(self, cr, uid, ids, context=None):
