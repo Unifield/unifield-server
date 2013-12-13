@@ -557,7 +557,26 @@ class composition_kit(osv.osv):
                 
             res += [(obj.id, name)]
         return res
-    
+
+    def _get_report_name(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj = self.browse(cr, uid, ids[0], context)
+        db_date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
+
+        data = {
+            'prodcode': obj.composition_product_id.code.replace('/',''),
+            'version': obj.composition_version_txt or '',
+            'date': time.strftime(db_date_format).replace('/','_')
+        }
+        if obj.composition_type == 'theoretical':
+            name = 'TKL %(prodcode)s %(version)s %(date)s' % data
+        else:
+            data['ref'] = obj.composition_reference
+            name = 'KCL %(prodcode)s %(version)s %(date)s %(ref)s' % data
+
+        return name
+
     def on_change_product_id(self, cr, uid, ids, product_id, context=None):
         '''
         when the product is changed, lot checks are updated - mandatory workaround for attrs use
