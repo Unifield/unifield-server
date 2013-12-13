@@ -224,6 +224,18 @@ class purchase_order(osv.osv):
                         retour = True
             res[po.id] = retour
         return res
+        
+    def _get_dest_partner_names(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for po_r in self.read(cr, uid, ids, ['dest_partner_ids'], context=context):
+            names = ''
+            if po_r['dest_partner_ids']:
+                name_tuples = self.pool.get('res.partner').name_get(cr, uid, po_r['dest_partner_ids'], context=context)
+                if name_tuples:
+                    names_list = [nt[1] for nt in name_tuples]
+                    names = "; ".join(names_list)
+            res[po_r['id']] = names
+        return res
 
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
@@ -275,7 +287,8 @@ class purchase_order(osv.osv):
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
         'origin': fields.text('Source Document', 
                         help="Reference of the document that generated this purchase order request."),
-        'dest_partner_ids': fields.many2many('res.partner', 'res_partner_purchase_order_rel', 'purchase_order_id', 'partner_id', 'Destination Partners'),  # uf-2223
+        'dest_partner_ids': fields.many2many('res.partner', 'res_partner_purchase_order_rel', 'purchase_order_id', 'partner_id', 'Customers'),  # uf-2223
+        'dest_partner_names': fields.function(_get_dest_partner_names, type='string', string='Customers', method=True)  # uf-2223
     }
     
     _defaults = {
