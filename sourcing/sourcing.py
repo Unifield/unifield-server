@@ -1327,6 +1327,7 @@ class procurement_order(osv.osv):
         
         # Set the analytic distribution on PO line if an analytic distribution is on SO line or SO    
         sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
+        sol = False
         location_id = False
         categ = False
         if sol_ids:
@@ -1356,6 +1357,7 @@ class procurement_order(osv.osv):
 
         if purchase_ids:
             line_values = values['order_line'][0][2]
+            
             line_values.update({'order_id': purchase_ids[0],'origin': procurement.origin})
             po = self.pool.get('purchase.order').browse(cr, uid, purchase_ids[0], context=context)
             # Update the origin of the PO with the origin of the procurement 
@@ -1371,7 +1373,11 @@ class procurement_order(osv.osv):
             if values.get('priority') and values['priority'] in priority_sorted.keys() and values['priority']!= po.priority:
                 if priority_sorted[values['priority']] < priority_sorted[po.priority]:
                     write_values['priority'] = values['priority']
-
+            
+            if sol and sol.order_id and sol.order_id.partner_id:
+                # UF-2223 : setting customer_id/purchase m2m ''dest_partner_ids' of purchase order
+                write_values['dest_partner_ids'] = [(4, sol.order_id.partner_id.id)]
+                values['dest_partner_ids'] = [(4, sol.order_id.partner_id.id)]
             self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], write_values, context=dict(context, import_in_progress=True))
             
             po_values = {}
@@ -1386,10 +1392,13 @@ class procurement_order(osv.osv):
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
             return purchase_ids[0]
         else:
+            sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
+            if sol_ids:
+                sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
+            else:
+                sol = False
             if procurement.po_cft == 'dpo':
-                sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
-                if sol_ids:
-                    sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
+                if sol:
                     if not sol.procurement_request:
                         values.update({'order_type': 'direct', 
                                        'dest_partner_id': sol.order_id.partner_id.id, 
@@ -1403,6 +1412,9 @@ class procurement_order(osv.osv):
                     values.update({'location_id': input_id,})
             if categ:
                 values.update({'categ': categ})
+            if sol and sol.order_id and sol.order_id.partner_id:
+                # UF-2223 : setting customer_id/purchase m2m ''dest_partner_ids' of purchase order
+                values['dest_partner_ids'] = [(4, sol.order_id.partner_id.id)]
             purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
             return purchase_id
     
