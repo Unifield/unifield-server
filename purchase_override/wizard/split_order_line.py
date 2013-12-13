@@ -186,6 +186,8 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                                     'change_price_manually': split.purchase_line_id.change_price_manually,
                                     'price_unit': split.purchase_line_id.price_unit,
                                     'move_dest_id': split.purchase_line_id.move_dest_id.id,
+                                    'sale_line_id': split.corresponding_so_line_id_split_po_line_wizard.id,
+                                    'procurement_id': split.corresponding_so_line_id_split_po_line_wizard.procurement_id and split.corresponding_so_line_id_split_po_line_wizard.procurement_id.id or False,
                                     'product_qty': split.new_line_qty}
                     # following new sequencing policy, we check if resequencing occur (behavior 1).
                     # if not (behavior 2), the split line keeps the same line number as original line
