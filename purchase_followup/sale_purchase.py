@@ -103,6 +103,12 @@ class purchase_order(osv.osv):
                                 if po_id not in po2_ids:
                                     po2_ids.append(po_id)
                         ids = po2_ids
+                    if ids:
+                        domain = [
+                            ('rfq_ok', '=', False),
+                            ('id', 'in', ids),
+                        ]
+                        ids = self.search(cr, uid, domain, context=context)
                 else:
                     ids = []
             return self.name_get(cr, uid, ids, context=context)
