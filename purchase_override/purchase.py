@@ -2132,7 +2132,10 @@ class purchase_order_line(osv.osv):
 
         for line_id in ids:
             # we want to skip resequencing because unlink is performed on merged purchase order lines
-            self._update_merged_line(cr, uid, line_id, False, context=dict(context, skipResequencing=True))
+            tmp_skip_resourcing = context.get('skipResourcing')
+            context['skipResourcing'] = True
+            self._update_merged_line(cr, uid, line_id, False, context=context)
+            context['skipResourcing'] = tmp_skip_resourcing
 
         return super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
 

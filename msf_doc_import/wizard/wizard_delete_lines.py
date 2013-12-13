@@ -505,7 +505,8 @@ class wizard_delete_lines(osv.osv_memory):
             for line in wiz.line_ids:
                 for l in line[2]:
                     line_ids.append(l)
-
+            
+            context['noraise'] = True
             line_obj.unlink(cr, uid, line_ids, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
