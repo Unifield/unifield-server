@@ -117,6 +117,7 @@ class hq_entries_split_lines(osv.osv_memory):
         Check that:
         - no negative value is given for amount
         - amount and all other line's amount is not superior to original line
+        - amount is not null
         """
         if not context:
             context = {}
@@ -130,6 +131,9 @@ class hq_entries_split_lines(osv.osv_memory):
             line = self.browse(cr, uid, res)
             expected_max_amount = line.wizard_id.original_amount
             for line in line.wizard_id.line_ids:
+                # Check line amount
+                if line.amount == 0.0:
+                    raise osv.except_osv(_('Error'), _('Null amount is not allowed!'))
                 expected_max_amount -= line.amount
             expected_max_amount += line.amount
             # Case where amount is superior to expected
@@ -139,6 +143,21 @@ class hq_entries_split_lines(osv.osv_memory):
                     # WARNING: On osv.memory, no rollback. That's why we should unlink the previous line before raising this error
                     self.unlink(cr, uid, [res], context=context)
                     raise osv.except_osv(_('Error'), _('Expected max amount: %.2f') % (expected_max_amount or 0.0,))
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check that amount is not Null.
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = super(hq_entries_split_lines, self).write(cr, uid, ids, vals, context=context)
+        for line in self.browse(cr, uid, ids, context=context):
+            # Check line amount
+            if line.amount == 0.0:
+                raise osv.except_osv(_('Error'), _('Null amount is not allowed!'))
         return res
 
 hq_entries_split_lines()
@@ -156,6 +175,7 @@ class hq_entries_split(osv.osv_memory):
     def button_validate(self, cr, uid, ids, context=None):
         """
         Validate wizard lines and create new split HQ lines.
+        Do not allow line that have a null amount!
         """
         # Some checks
         if not context:
@@ -170,13 +190,17 @@ class hq_entries_split(osv.osv_memory):
             total = 0.00
             for line in wiz.line_ids:
                 total += line.amount
-            if total != wiz.original_amount:
+            if abs(wiz.original_amount - total) > 10**-2:
                 raise osv.except_osv(_('Error'), _('Wrong total: %.2f, instead of: %.2f') % (total or 0.00, wiz.original_amount or 0.00,))
             # If all is OK, do process of lines
             # Mark original line as it is: an original one :-)
             hq_obj.write(cr, uid, wiz.original_id.id, {'is_original': True,})
             # Create new lines
             for line in wiz.line_ids:
+                # Check line amount
+                if line.amount == 0.0:
+                    raise osv.except_osv(_('Error'), _('Null amount is not allowed!'))
+                # Prepare line values
                 line_vals = {
                     'original_id': wiz.original_id.id,
                     'is_split': True,
