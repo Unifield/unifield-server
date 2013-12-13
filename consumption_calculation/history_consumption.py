@@ -66,7 +66,7 @@ class product_history_consumption(osv.osv):
     _defaults = {
         'date_to': lambda *a: (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
         'requestor_id': lambda obj, cr, uid, c: uid,
-        'requestor_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+        'requestor_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'status': 'draft',
     }
 

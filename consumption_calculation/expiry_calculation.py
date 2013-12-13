@@ -231,7 +231,7 @@ class product_likely_expire_report(osv.osv):
         'consumption_type': lambda *a: 'fmc',
         'msf_instance': lambda *a: 'MSF Instance',
         'requestor_id': lambda obj, cr, uid, c: uid,
-        'requestor_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+        'requestor_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'status': 'draft',
     }
 
