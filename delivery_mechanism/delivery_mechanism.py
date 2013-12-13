@@ -84,9 +84,10 @@ class stock_move(osv.osv):
         if context.get('from_button'):
             # UF-1797: when we duplicate a doc we delete the link with the poline
             defaults.update(purchase_line_id=False)
-            # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
-            input_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
-            defaults.update(location_dest_id=input_loc)
+            if context.get('subtype', False) == 'incoming':
+                # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
+                input_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+                defaults.update(location_dest_id=input_loc)
         return super(stock_move, self).copy_data(cr, uid, id, defaults, context=context)
     
     def unlink(self, cr, uid, ids, context=None):
