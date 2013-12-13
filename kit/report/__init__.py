@@ -18,9 +18,5 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-SELECTION_AVAILABLE = [('available', 'Available'), ('not_available', 'Not Available')]
 
-import kit
-import wizard
-import kit_creation
-import report
+import kit_report
