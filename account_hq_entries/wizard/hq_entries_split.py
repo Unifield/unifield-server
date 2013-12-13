@@ -132,10 +132,13 @@ class hq_entries_split_lines(osv.osv_memory):
             for line in line.wizard_id.line_ids:
                 expected_max_amount -= line.amount
             expected_max_amount += line.amount
+            # Case where amount is superior to expected
             if line.amount > expected_max_amount:
-                # WARNING: On osv.memory, no rollback. That's why we should unlink the previous line before raising this error
-                self.unlink(cr, uid, [res], context=context)
-                raise osv.except_osv(_('Error'), _('Expected max amount: %.2f') % (expected_max_amount or 0.0,))
+                # Allow those where difference is inferior to 10^-2
+                if (line.amount - abs(expected_max_amount)) > 10 ** -2:
+                    # WARNING: On osv.memory, no rollback. That's why we should unlink the previous line before raising this error
+                    self.unlink(cr, uid, [res], context=context)
+                    raise osv.except_osv(_('Error'), _('Expected max amount: %.2f') % (expected_max_amount or 0.0,))
         return res
 
 hq_entries_split_lines()
