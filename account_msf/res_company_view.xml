@@ -13,15 +13,19 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <page string="Configuration" position="inside">
-            <group col="2" colspan="2">
-                <separator string="Re-billing Inter-section account" colspan="2"/>
-                <field name="import_invoice_default_account" colspan="2"
-                domain="[('type', '!=', 'view'), ('user_type_code', '=', 'receivables')]"/>
-            </group>
-            <group col="2" colspan="2">
-                <separator string="Intermission configuration" colspan="2"/>
-                <field name="intermission_default_counterpart" domain="[('type', '!=', 'view')]" colspan="2"/>
-            </group>
+                <group col="2" colspan="2">
+                    <separator string="Re-billing Inter-section account" colspan="2"/>
+                    <field name="import_invoice_default_account" colspan="2"
+                    domain="[('type', '!=', 'view'), ('user_type_code', '=', 'receivables')]"/>
+                </group>
+                <group col="2" colspan="2">
+                    <separator string="Intermission configuration" colspan="2"/>
+                    <field name="intermission_default_counterpart" domain="[('type', '!=', 'view')]" colspan="2"/>
+                </group>
+                <group col="2" colspan="2">
+                    <separator string="Income specific configuration" colspan="2"/>
+                    <field name="supplementary_allocation" colspan="2"/>
+                </group>
             </page>
             <xpath expr="/form//field[@name='currency_id']" position="replace">
                 <field name="currency_id" readonly="1" />

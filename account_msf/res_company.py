@@ -33,6 +33,7 @@ class res_company(osv.osv):
             help="Default account for an import invoice on a Debit note"),
         'intermission_default_counterpart': fields.many2one('account.account', string="Intermission counterpart", 
             help="Default account used for partner in Intermission Voucher IN/OUT"),
+        'supplementary_allocation': fields.boolean('Supplementary allocation condition?', help="Is the supplementary condition on income account available? If this option is set, only income accounts that are 7xx accounts are analytic-a-holic so that they need an analytic distribution. If not, ALL income accounts need an analytic distribution. Be careful to reconfigure all income accounts to be sure they have a destination default account."),
     }
 
 res_company()

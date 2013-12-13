@@ -82,17 +82,18 @@ class account_account(osv.osv):
             context = {}
         # Prepare some values
         res = {}
-        # FIXME: really add 2 options in company to define these values!
-        company_allocation_on = True
-        company_account = 7
-        company_account_active = True
+        company_account_active = False
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        if company and company.supplementary_allocation:
+            company_account_active = company.supplementary_allocation
+        company_account = 7 # User for accounts that begins by "7"
         # Prepare result
         for account in self.browse(cr, uid, ids, context=context):
             res[account.id] = False
             if account.user_type_code == 'expense':
                 res[account.id] = True
                 continue
-            if company_allocation_on and account.user_type_code == 'income':
+            elif account.user_type_code == 'income':
                 if not company_account_active:
                     res[account.id] = True
                     continue
@@ -108,9 +109,12 @@ class account_account(osv.osv):
         # Checks
         if context is None:
             context = {}
+        # Prepare some values
         arg = []
-        # FIXME: really add the company's option
-        company_account_active = True
+        company_account_active = False
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        if company and company.supplementary_allocation:
+            company_account_active = company.supplementary_allocation
         company_account = "7"
         for x in args:
             if x[0] == 'is_analytic_addicted' and ((x[1] in ['=', 'is'] and x[2] is True) or (x[1] in ['!=', 'is not', 'not'] and x[2] is False)):
