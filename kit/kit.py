@@ -566,13 +566,14 @@ class composition_kit(osv.osv):
 
         data = {
             'prodcode': obj.composition_product_id.code.replace('/',''),
-            'version': obj.composition_version_txt or '',
             'date': time.strftime(db_date_format).replace('/','_')
         }
         if obj.composition_type == 'theoretical':
+            data['version'] = obj.composition_version_txt or ''
             name = 'TKL %(prodcode)s %(version)s %(date)s' % data
         else:
             data['ref'] = obj.composition_reference
+            data['version'] = obj.composition_version_id and obj.composition_version_id.composition_version_txt or ''
             name = 'KCL %(prodcode)s %(version)s %(date)s %(ref)s' % data
 
         return name
