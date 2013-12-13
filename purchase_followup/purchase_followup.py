@@ -294,15 +294,17 @@ class purchase_order_followup_from_menu(osv.osv_memory):
 
         return self.pool.get('purchase.order.followup').start_order_followup(cr, uid, ids, context=new_context)
 
-    def change_order_id(self, cr, uid, ids, order_id, cust_order_id, incoming_id, type='order_id'):
+    def change_order_id(self, cr, uid, ids, order_id, cust_order_id, incoming_id, cust_order_id2, type='order_id'):
         res = {}
 
         if type == 'cust_order_id' and cust_order_id:
-            res.update({'order_id': False, 'incoming_id': False})
+            res.update({'order_id': False, 'incoming_id': False, 'cust_order_id2': False})
         elif type == 'order_id' and order_id:
-            res.update({'cust_order_id': False, 'incoming_id': False})
+            res.update({'cust_order_id': False, 'incoming_id': False, 'cust_order_id2': False})
         elif type == 'incoming_id' and incoming_id:
-            res.update({'cust_order_id': False, 'order_id': False})
+            res.update({'cust_order_id': False, 'order_id': False, 'cust_order_id2': False})
+        if type == 'cust_order_id2' and cust_order_id2:
+            res.update({'cust_order_id': False, 'order_id': False, 'incoming_id': False})
         
         return {'value': res}
  
