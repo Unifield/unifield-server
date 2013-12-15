@@ -121,12 +121,15 @@ class so_po_common(osv.osv_memory):
     # Update the next line number for the FO, PO that have been created by the synchro
     def update_next_line_number_fo_po(self, cr, uid, order_id, fo_po_obj, order_line_object, context):
         sequence_id = fo_po_obj.read(cr, uid, [order_id], ['sequence_id'], context=context)[0]['sequence_id'][0]
+        seq_tools = self.pool.get('sequence.tools')
         
         cr.execute("select max(line_number) from " + order_line_object + " where order_id = " + str(order_id))
         for x in cr.fetchall():
-            seq_tools = self.pool.get('sequence.tools')
-            seq_tools.reset_next_number(cr, uid, sequence_id, int(x[0]) + 1, context=context)
-        
+            # For the FO without any line
+            val = 1
+            if x and x[0]:
+                val = int(x[0]) + 1
+            seq_tools.reset_next_number(cr, uid, sequence_id, val, context=context)
         return True
 
     def get_original_so_id(self, cr, uid, so_ref, context):

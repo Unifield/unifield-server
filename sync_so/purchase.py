@@ -246,6 +246,11 @@ class purchase_order_sync(osv.osv):
                 
         return True
 
+    # UTP-872: If the PO is a split one, then still allow it to be confirmed without po_line 
+    def _hook_check_po_no_line(self, po):
+        if not po.split_po and not po.order_line:
+            raise osv.except_osv(_('Error !'), _('You can not confirm purchase order without Purchase Order Lines.'))
+
     def validated_fo_update_original_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}

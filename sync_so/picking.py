@@ -596,8 +596,8 @@ class stock_picking(osv.osv):
                     cr, uid,
                     context['changes']['stock.move'].keys(),
                     context=context):
-                lines.setdefault(rec_line.picking_id.id, {})[rec_line.id] = \
-                     context['changes']['stock.move'][rec_line.id]
+                if self.pool.get('stock.move').exists(cr, uid, rec_line.id, context): # check the line exists
+                    lines.setdefault(rec_line.picking_id.id, {})[rec_line.id] = context['changes']['stock.move'][rec_line.id]
         # monitor changes on purchase.order
         for id, changes in changes.items():
             logger = get_sale_purchase_logger(cr, uid, self, id, \
