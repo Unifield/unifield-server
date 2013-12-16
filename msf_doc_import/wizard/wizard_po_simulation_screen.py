@@ -48,6 +48,17 @@ CURRENCY_NAME_ID = {}
 
 SIMU_LINES = {}
 
+MANDATORY_LINES_COLUMNS = [(0, _('Line number')),
+                           (2, _('Product Code')),
+                           (4, _('Product Qty')),
+                           (5, _('Product UoM')),
+                           (6, _('Price Unit')),
+                           (7, _('Currency')),
+#                           (8, _('Origin')),
+#                           (10, _('Delivery Confirmed Date')),
+#                           (16, _('Project Ref.'))
+                            ]
+
 
 class wizard_import_po_simulation_screen(osv.osv):
     _name = 'wizard.import.po.simulation.screen'
@@ -194,7 +205,7 @@ class wizard_import_po_simulation_screen(osv.osv):
             ids = [ids]
 
         for wiz in self.read(cr, uid, ids, ['order_id'], context=context):
-            order_id = wiz['order_id']
+            order_id = wiz['order_id'][0]
             return {'type': 'ir.actions.act_window',
                     'res_model': 'purchase.order',
                     'view_type': 'form',
@@ -360,6 +371,8 @@ of the field for PO lines.')
 information must be on 17 columns. The line %s has %s columns') % (x, x, len(values.get(x, [])))
                     file_format_errors.append(error_msg)
 
+
+
             if len(file_format_errors):
                 message = '''## IMPORT STOPPED ##
 
@@ -469,6 +482,19 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
             new_po_lines = []
             # Loop on lines
             for x in xrange(NB_OF_HEADER_LINES+2, len(values)+1):
+
+                # Check mandatory fields
+                not_ok = False
+                for manda_field in MANDATORY_LINES_COLUMNS:
+                    if not values.get(x, [])[manda_field[0]]:
+                        not_ok = True
+                        err = _('The column \'%s\' mustn\'t be empty') % manda_field[1]
+                        err = _('Line %s of the Excel file: %s') % (x, err)
+                        values_line_errors.append(err)
+
+                if not_ok:
+                    continue
+
                 line_number = int(values.get(x, [])[0])
 
                 # Get the better matching line
