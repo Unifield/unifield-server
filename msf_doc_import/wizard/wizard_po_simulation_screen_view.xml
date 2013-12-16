@@ -24,7 +24,8 @@
                     <!-- Buttons -->
                     <group name="buttons" colspan="4" col="6">
                         <button name="return_to_po" string="Cancel" icon="gtk-cancel" type="object" />
-                        <button name="simulate" string="Import" icon="gtk-execute" type="object" />
+                        <button name="simulate" string="Simulate" icon="gtk-execute" type="object" />
+                        <button name="run_import" string="Import" icon="gtk-execute" type="object" />
                     </group>
                     <notebook colspan="4">
                         <page string="Purchase Order">
@@ -63,7 +64,7 @@
                         <page string="Details">
                             <!-- LINES -->
                             <field name="simu_line_ids" nolabel="1" colspan="4">
-                                <tree string="Lines" colors="orange: change_ok==True; blue: type_change=='split'; green: type_change=='new'">
+                                <tree string="Lines" colors="red: type_change == 'del'; orange: change_ok==True and type_change != 'del'; blue: type_change=='split'; green: type_change=='new'">
                                     <field name="in_product_id" />
                                     <field name="in_nomen" />
                                     <field name="in_comment" />

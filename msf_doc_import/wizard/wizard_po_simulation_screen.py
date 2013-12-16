@@ -23,6 +23,7 @@
 import threading
 import pooler
 import base64
+import time
 
 from mx import DateTime
 
@@ -306,7 +307,6 @@ Otherwise, you can continue to use Unifield.""") % po_name
             # Variables
             values = {}
             lines_to_ignored = []   # Bad formatting lines
-            lines_with_errors = []  # Bad values lines
             file_format_errors = []
             values_header_errors = []
             values_line_errors = []
@@ -464,7 +464,6 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
             The header values have been imported, start the importation of
             lines
             '''
-            lines_by_number = {}
             file_lines = {}
             file_po_lines = {}
             new_po_lines = []
@@ -636,7 +635,29 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
             self.write(cr, uid, [wiz.id], header_values, context=context)
 
             return self.go_to_simulation(cr, uid, [wiz.id], context=context)
-            
+
+        return {'type': 'ir.actions.act_window_close'}
+    
+    def run_import(self, cr, uid, ids, context=None):
+        '''
+        Launch the real import
+        '''
+        line_obj = self.pool.get('wizard.import.po.simulation.screen.line')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            lines = [x.id for x in wiz.simu_line_ids]
+            line_obj.update_po_line(cr, uid, lines, context=context)
+
+        if ids:
+            return self.go_to_simulation(cr, uid, [wiz.id], context=context)
+        else:
+            return {'type': 'ir.actions.act_window_close'}
 
 wizard_import_po_simulation_screen()
 
@@ -666,7 +687,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             'imp_discrepancy': 0.00,
                             'change_ok': False}
 
-            if line.po_line_id:
+            if line.po_line_id and line.type_change != 'del':
                 l = line.po_line_id
                 res[line.id]['in_product_id'] = l.product_id and l.product_id.id or False
                 res[line.id]['in_nomen'] = l.nomenclature_description
@@ -826,7 +847,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # Currency
             currency_value = values[7]
-            print currency_value
             if str(currency_value) == line.in_currency.name:
                 write_vals['imp_currency'] = line.in_currency.id
             else:
@@ -848,5 +868,70 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             self.write(cr, uid, [line.id], write_vals, context=context)
     
         return errors
+
+    def update_po_line(self, cr, uid, ids, context=None):
+        '''
+        Update the corresponding PO lines with the imported values
+        according to the change type
+        '''
+        line_obj = self.pool.get('purchase.order.line')
+        split_obj = self.pool.get('split.purchase.order.line.wizard')
+        simu_obj = self.pool.get('wizard.import.po.simulation.screen')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.po_line_id and line.type_change != 'del' and not line.change_ok:
+                continue
+
+            print line.in_line_number
+
+            if line.type_change == 'del':
+                # Delete the PO line
+                if line.po_line_id:
+                    line_obj.unlink(cr, uid, line.po_line_id.id, context=context)
+            elif line.type_change ==  'split' and line.parent_line_id:
+                # Call the split line wizard
+                po_line_id = False
+                orig_qty = 0.00
+                if line.parent_line_id and line.parent_line_id.po_line_id:
+                    po_line_id = line.parent_line_id.po_line_id.id
+                    orig_qty = line.parent_line_id.in_qty + line.imp_qty
+
+                    context['from_simu_screen'] = True
+                    split_id = split_obj.create(cr, uid, {'purchase_line_id': po_line_id,
+                                                          'original_qty': orig_qty,
+                                                          'new_line_qty': line.imp_qty}, context=context)
+
+                    new_po_line_id = split_obj.split_line(cr, uid, split_id, context=context)
+                    context['from_simu_screen'] = False
+                    
+                    line_obj.write(cr, uid, [new_po_line_id], {'product_uom': line.imp_uom.id,
+                                                               'product_id': line.imp_product_id.id,
+                                                               'price_unit': line.imp_price}, context=context)
+            elif line.type_change == 'new':
+                line_obj.create(cr, uid, {'order_id': line.simu_id.order_id.id,
+                                          'product_id': line.imp_product_id.id,
+                                          'product_uom': line.imp_uom.id,
+                                          'price_unit': line.imp_price,
+                                          'product_qty': line.imp_qty,
+                                          'line_number': line.in_line_number,
+                                          'date_planned': line.imp_drd}, context=context)
+            elif line.po_line_id:
+                line_obj.write(cr, uid, [line.po_line_id.id], {'product_id': line.imp_product_id.id,
+                                                               'product_uom': line.imp_uom.id,
+                                                               'price_unit': line.imp_price,
+                                                               'product_qty': line.imp_qty,
+                                                               'date_planned': line.imp_drd}, context=context)
+
+        if ids:
+            return simu_obj.go_to_simulation(cr, uid, line.simu_id.id, context=context)
+        else:
+            return {'type': 'ir.actions.act_window_close'}
+              
 
 wizard_import_po_simulation_screen_line()
