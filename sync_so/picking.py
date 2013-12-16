@@ -274,8 +274,16 @@ class stock_picking(osv.osv):
                 # Cancel the IN object
                 wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_cancel', cr)
                 return True
+            else:
+                # UTP-872: If there is no IN corresponding to the give OUT/SHIP/PICK, then check if the PO has any line
+                # if it has no line, then no need to raise error, because PO without line does not generate any IN
+                po = po_obj.browse(cr, uid, [po_id], context=context)[0]
+                if len(po.order_line) == 0:
+                    message = "The message is ignored as there is no corresponding IN (because the PO " + po.name + " has no line)"
+                    self._logger.info(message)
+                    return message
 
-        raise Exception("There is a problem when cancel of the IN at project")
+        raise Exception("There is a problem (no PO or IN found) when cancel of the IN at project")
 
     def closed_in_validates_delivery_out_ship(self, cr, uid, source, out_info, context=None):
         if not context:
