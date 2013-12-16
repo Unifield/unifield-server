@@ -40,6 +40,14 @@ NB_OF_HEADER_LINES = 20
 NB_LINES_COLUMNS = 19
 
 
+PRODUCT_NAME_ID = {}
+PRODUCT_CODE_ID = {}
+UOM_NAME_ID = {}
+CURRENCY_NAME_ID = {}
+
+SIMU_LINES = {}
+
+
 class wizard_import_po_simulation_screen(osv.osv):
     _name = 'wizard.import.po.simulation.screen'
     _rec_name = 'order_id'
@@ -262,6 +270,39 @@ Otherwise, you can continue to use Unifield.""") % po_name
                 self.write(cr, uid, [wiz.id], {'message': _('No file to import'),
                                                'state': 'draft'}, context=context)
 
+            for line in wiz.simu_line_ids:
+                # Put data in cache
+                if line.in_product_id:
+                    PRODUCT_NAME_ID.setdefault(line.in_product_id.name, line.in_product_id.id)
+                    PRODUCT_CODE_ID.setdefault(line.in_product_id.default_code, line.in_product_id.id)
+                if line.in_uom:
+                    UOM_NAME_ID.setdefault(line.in_uom.name, line.in_uom.id)
+                if line.in_currency:
+                    CURRENCY_NAME_ID.setdefault(line.in_currency.name, line.in_currency.id)
+
+                l_num = line.in_line_number
+                l_prod = line.in_product_id and line.in_product_id.id or False
+                l_uom = line.in_uom and line.in_uom.id or False
+                # By simulation screen
+                SIMU_LINES.setdefault(wiz.id, {})
+                SIMU_LINES[wiz.id].setdefault('line_ids', [])
+                SIMU_LINES[wiz.id]['line_ids'].append(line.id)
+                # By line number
+                SIMU_LINES[wiz.id].setdefault(l_num, {})
+                SIMU_LINES[wiz.id][l_num].setdefault('line_ids', [])
+                SIMU_LINES[wiz.id][l_num]['line_ids'].append(line.id)
+                # By product
+                SIMU_LINES[wiz.id][l_num].setdefault(l_prod, {})
+                SIMU_LINES[wiz.id][l_num][l_prod].setdefault('line_ids', [])
+                SIMU_LINES[wiz.id][l_num][l_prod]['line_ids'].append(line.id)
+                # By UoM
+                SIMU_LINES[wiz.id][l_num][l_prod].setdefault(l_uom, {})
+                SIMU_LINES[wiz.id][l_num][l_prod][l_uom].setdefault('line_ids', [])
+                SIMU_LINES[wiz.id][l_num][l_prod][l_uom]['line_ids'].append(line.id)
+                # By Qty
+                SIMU_LINES[wiz.id][l_num][l_prod][l_uom].setdefault(line.in_qty, [])
+                SIMU_LINES[wiz.id][l_num][l_prod][l_uom][line.in_qty].append(line.id)
+
             # Variables
             values = {}
             lines_to_ignored = []   # Bad formatting lines
@@ -424,39 +465,157 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
             lines
             '''
             lines_by_number = {}
+            file_lines = {}
+            file_po_lines = {}
+            new_po_lines = []
             # Loop on lines
             for x in xrange(NB_OF_HEADER_LINES+2, len(values)+1):
-                line_number = values.get(x, [])[0]
-                wl_ids = wl_obj.search(cr, uid, [('in_line_number', '=', line_number), 
-                                                 ('id', 'not in', lines_by_number.get(line_number,[]))], context=context)
-                # The line is already treated or no line with this line number
-                if not wl_ids:
-                    # Line already treated
-                    if lines_by_number.get(line_number, []):
-                        origin_wl_id = lines_by_number.get(line_number, [])[0]
-                        new_wl_id = wl_obj.copy(cr, uid, origin_wl_id,
-                                                         {'type_change': 'split',
-                                                          'parent_line_id': origin_wl_id,
-                                                          'po_line_id': False}, context=context)
-                        err_msg = wl_obj.import_line(cr, uid, new_wl_id, values.get(x, []), context=context)
-                    else:
-                        new_wl_id = wl_obj.create(cr, uid, {'type_change': 'new',
-                                                            'in_line_number': int(values.get(x, [])[0]),
-                                                            'simu_id': wiz.id}, context=context)
-                        err_msg = wl_obj.import_line(cr, uid, new_wl_id, values.get(x, []), context=context)
-                    lines_by_number.setdefault(line_number, [])
-                    lines_by_number[line_number].append(new_wl_id)
-                else:
-                    err_msg = wl_obj.import_line(cr, uid, wl_ids[0], values.get(x, []), context=context)
-                    lines_by_number.setdefault(line_number, [])
-                    lines_by_number[line_number].append(wl_ids[0])
+                line_number = int(values.get(x, [])[0])
 
+                # Get the better matching line
+                product_id = False
+                uom_id = False
+                qty = 0.00
+
+                vals = values.get(x, [])
+
+                # Product
+                if vals[2]:
+                    product_id = PRODUCT_CODE_ID.get(vals[2], False)
+                if not product_id and vals[3]:
+                    product_id = PRODUCT_NAME_ID.get(vals[3], False)
+
+                # UoM
+                if vals[5]:
+                    uom_id = UOM_NAME_ID.get(vals[5], False)
+
+                # Qty
+                if vals[4]:
+                    qty = vals[4]
+
+                file_lines[x] = (line_number, product_id, uom_id, qty)
+
+            to_del = []
+            for x, fl in file_lines.iteritems():
+                # Search lines with same product, same UoM and same qty
+                matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
+                tmp_wl_ids = matching_lines.get(fl[1], {}).get(fl[2], {}).get(fl[3], [])
+                no_match = True
+                for l in tmp_wl_ids:
+                    if l not in file_po_lines:
+                        file_po_lines[l] = [(x, 'match')]
+                        to_del.append(x)
+                        no_match = False
+                        break
+                if tmp_wl_ids and no_match:
+                    file_po_lines[l].append((x, 'split'))
+                    to_del.append(x)
+            # Clear the dict
+            for x in to_del:
+                del file_lines[x]
+            to_del = []
+
+
+            for x, fl in file_lines.iteritems():
+                # Search lines with same product, same UoM
+                matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
+                tmp_wl_ids = matching_lines.get(fl[1], {}).get(fl[2], {}).get('line_ids', [])
+                no_match = True
+                for l in tmp_wl_ids:
+                    if l not in file_po_lines:
+                        file_po_lines[l] = [(x, 'match')]
+                        to_del.append(x)
+                        no_match = False
+                        break
+                if tmp_wl_ids and no_match:
+                    file_po_lines[l].append((x, 'split'))
+                    to_del.append(x)
+            # Clear the dict
+            for x in to_del:
+                del file_lines[x]
+            to_del = []
+
+            for x, fl in file_lines.iteritems():
+                # Search lines with same product
+                matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
+                tmp_wl_ids = matching_lines.get(fl[1], {}).get('line_ids', [])
+                no_match = True
+                for l in tmp_wl_ids:
+                    if l not in file_po_lines:
+                        file_po_lines[l] = [(x, 'match')]
+                        to_del.append(x)
+                        no_match = False
+                        break
+                if tmp_wl_ids and no_match:
+                    file_po_lines[l].append((x, 'split'))
+                    to_del.append(x)
+            # Clear the dict
+            for x in to_del:
+                del file_lines[x]
+            to_del = []
+
+            for x, fl in file_lines.iteritems():
+                # Search lines with same line number
+                matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
+                tmp_wl_ids = matching_lines.get('line_ids', [])
+                no_match = True
+                for l in tmp_wl_ids:
+                    if l not in file_po_lines:
+                        file_po_lines[l] = [(x, 'match')]
+                        to_del.append(x)
+                        no_match = False
+                        break
+                if tmp_wl_ids and no_match:
+                    file_po_lines[l].append((x, 'split'))
+                    to_del.append(x)
+            # Clear the dict
+            for x in to_del:
+                del file_lines[x]
+            to_del = []
+
+            for x in file_lines.keys():
+                new_po_lines.append(x)
+
+            for po_line, file_lines in file_po_lines.iteritems():
+                if po_line in SIMU_LINES[wiz.id]['line_ids']:
+                    index_po_line = SIMU_LINES[wiz.id]['line_ids'].index(po_line)
+                    SIMU_LINES[wiz.id]['line_ids'].pop(index_po_line)
+                for file_line in file_lines:
+                    vals = values.get(file_line[0], [])
+                    if file_line[1] == 'match':
+                        err_msg = wl_obj.import_line(cr, uid, po_line, vals, context=context)
+                    elif file_line[1] == 'split':
+                        new_wl_id = wl_obj.copy(cr, uid, po_line,
+                                                         {'type_change': 'split',
+                                                          'parent_line_id': po_line,
+                                                          'po_line_id': False}, context=context)
+                        err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
 
                 if err_msg:
                     for err in err_msg:
-                        err = 'Line %s of the Excel file: %s' % (x, err)
+                        err = 'Line %s of the Excel file: %s' % (file_line[0], err)
                         values_line_errors.append(err)
 
+
+            # Create new lines
+            for po_line in new_po_lines:
+                if po_line in SIMU_LINES[wiz.id]['line_ids']:
+                    index_po_line = SIMU_LINES[wiz.id]['line_ids'].index(po_line)
+                    SIMU_LINES[wiz.id]['line_ids'].pop(index_po_line)
+                vals = values.get(po_line, [])
+                new_wl_id = wl_obj.create(cr, uid, {'type_change': 'new',
+                                                    'in_line_number': int(values.get(po_line, [])[0]),
+                                                    'simu_id': wiz.id}, context=context)
+                err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
+
+                if err_msg:
+                    for err in err_msg:
+                        err = 'Line %s of the Excel file: %s' % (file_line[0], err)
+                        values_line_errors.append(err)
+
+            # Lines to delete
+            for po_line in SIMU_LINES[wiz.id]['line_ids']:
+                wl_obj.write(cr, uid, po_line, {'type_change': 'del'}, context=context)
 
             '''
             We generate the message which will be displayed on the simulation
@@ -531,6 +690,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
                 if prod_change or qty_change or price_change or drd_change:
                     res[line.id]['change_ok'] = True
+            elif line.type_change == 'del':
+                res[line.id]['imp_discrepancy'] = -(line.in_qty*line.in_price)
+            else:
+                res[line.id]['imp_discrepancy'] = line.imp_qty*line.imp_price
 
         return res
 
@@ -606,13 +769,22 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                (values[3] and values[3] == line.in_product_id.name):
                 write_vals['imp_product_id'] = line.in_product_id and line.in_product_id.id or False
             else:
-                prod_ids = prod_obj.search(cr, uid, ['|', ('default_code', '=', values[2]),
-                                                          ('name', '=', values[3])], context=context)
-                if not prod_ids:
-                    errors.append(_('Product not found in database − Product of the initial line kept.'))
-                    write_vals['imp_product_id'] = line.in_product_id and line.in_product_id.id or False
+                prod_id = False
+                if values[2]:
+                    prod_id = PRODUCT_CODE_ID.get(values[2])
+                if not prod_id and values[3]:
+                    prod_id = PRODUCT_NAME_ID.get(values[3])
+
+                if not prod_id:
+                    prod_ids = prod_obj.search(cr, uid, ['|', ('default_code', '=', values[2]),
+                                                              ('name', '=', values[3])], context=context)
+                    if not prod_ids:
+                        errors.append(_('Product not found in database − Product of the initial line kept.'))
+                        write_vals['imp_product_id'] = line.in_product_id and line.in_product_id.id or False
+                    else:
+                        write_vals['imp_product_id'] = prod_ids[0]
                 else:
-                    write_vals['imp_product_id'] = prod_ids[0]
+                    write_vals['imp_product_id'] = prod_id
 
             # Qty
             err_msg = _('Incorrect float value for field \'Product Qty\' - Quantity of the initial line kept.')
@@ -630,12 +802,16 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             if str(uom_value) == line.in_uom.name:
                 write_vals['imp_uom'] = line.in_uom.id
             else:
-                uom_ids = uom_obj.search(cr, uid, [('name', '=', str(uom_value))], context=context)
-                if uom_ids:
-                    write_vals['imp_uom'] = uom_ids[0]
+                uom_id = UOM_NAME_ID.get(str(uom_value))
+                if not uom_id:
+                    uom_ids = uom_obj.search(cr, uid, [('name', '=', str(uom_value))], context=context)
+                    if uom_ids:
+                        write_vals['imp_uom'] = uom_ids[0]
+                    else:
+                        errors.apppend(_('UoM not found in database - UoM of the initial line kept.'))
+                        write_vals['imp_uom'] = line.in_uom.id
                 else:
-                    errors.apppend(_('UoM not found in database - UoM of the initial line kept.'))
-                    write_vals['imp_uom'] = line.in_uom.id
+                    write_vals['imp_uom'] = uom_id
 
             # Unit price
             err_msg = _('Incorrect float value for field \'Price Unit\' - Price Unit of the initial line kept.')
@@ -650,6 +826,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # Currency
             currency_value = values[7]
+            print currency_value
             if str(currency_value) == line.in_currency.name:
                 write_vals['imp_currency'] = line.in_currency.id
             else:

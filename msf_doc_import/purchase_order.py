@@ -143,21 +143,27 @@ class purchase_order(osv.osv):
         '''
         Launches the wizard to import lines from a file
         '''
+        export_obj = self.pool.get('wizard.import.po.simulation.screen')
+        export_line_obj = self.pool.get('wizard.import.po.simulation.screen.line')
+
         if context is None:
             context = {}
+
         context.update({'active_id': ids[0]})
         columns_header = NEW_COLUMNS_HEADER
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        export_id = self.pool.get('wizard.import.po.simulation.screen').create(cr, uid, {
-#                                                                        'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])),
-#                                                                        'filename_template': 'template.xls',
-#                                                                        'filename': 'Lines_Not_Imported.xls',
-                                                                        'order_id': ids[0]}, context)
+        export_ids = export_obj.search(cr, uid, [('order_id', '=', ids[0])], context=context)
+        export_obj.unlink(cr, uid, export_ids, context=context)
+        export_id = export_obj.create(cr, uid, {
+#                                               'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])),
+#                                               'filename_template': 'template.xls',
+#                                               'filename': 'Lines_Not_Imported.xls',
+                                                'order_id': ids[0]}, context)
                                                                         
         for l in self.pool.get('purchase.order').browse(cr, uid, ids[0], context=context).order_line:
-            self.pool.get('wizard.import.po.simulation.screen.line').create(cr, uid, {'po_line_id': l.id,
-                                                                                      'in_line_number': l.line_number,
-									         				                          'simu_id': export_id}, context=context)
+            export_line_obj.create(cr, uid, {'po_line_id': l.id,
+                                             'in_line_number': l.line_number,
+                                             'simu_id': export_id}, context=context)
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.po.simulation.screen',
