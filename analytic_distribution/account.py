@@ -335,7 +335,10 @@ class account_move(osv.osv):
                     # Copy analytic distribution from header
                     if not ml.analytic_distribution_id:
                         new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, ml.move_id.analytic_distribution_id.id, {}, context=context)
-                        self.pool.get('account.move.line').write(cr, uid, [ml.id], {'analytic_distribution_id': new_distrib_id})
+                        # UF-2248: Improve the code by using a sql directly, and not a write -- make no impact on the validation, as it will be done in the call super.validate_button
+                        #self.pool.get('account.move.line').write(cr, uid, [ml.id], {'analytic_distribution_id': new_distrib_id})
+                        cr.execute('update account_move_line set analytic_distribution_id=%s where id=%s', (new_distrib_id, ml.id))
+                        
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
 
     def validate(self, cr, uid, ids, context=None):
