@@ -14,9 +14,9 @@
                     <field name="reversable_revaluations"/>
                     <newline/>
                     <label colspan="1"/>
-                    <separator string="LOSS"/>
-                    <separator string="GAIN"/>
-                    <separator string="ANALYTIC ACCOUNT"/>
+                    <separator string="LOSS" colspan="1"/>
+                    <separator string="GAIN" colspan="1"/>
+                    <separator string="ANALYTIC ACCOUNT" colspan="1"/>
                     <newline/>
                     <label string="Revaluation accounts:" colspan="1"/>
                     <field name="revaluation_loss_account_id" nolabel="1"/>

@@ -266,5 +266,17 @@
             <field name="type">migration</field>
             <field name="analytic_journal_id" ref="account_journal.analytic_migration_journal"/>
         </record>
+
+        <record id="account_journal.analytic_currency_revaluation" model="account.analytic.journal">
+            <field name="name">Revaluation</field>
+            <field name="code">REVAL</field>
+            <field name="type">revaluation</field>
+        </record>
+        <record id="account_journal.currency_revaluation" model="account.journal">
+            <field name="name">Revaluation</field>
+            <field name="code">REVAL</field>
+            <field name="type">revaluation</field>
+            <field name="analytic_journal_id" ref="account_journal.analytic_currency_revaluation"/>
+        </record>
     </data>
 </openerp>

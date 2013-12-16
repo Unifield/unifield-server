@@ -8,11 +8,11 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="account.view_account_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//page[@string='General Information']/group[2]" position="after">
-                   <group col="2" colspan="2">
-                       <separator string="Currency Revaluation"/>
-                       <field name="currency_revaluation"/>
-                   </group>
+                <xpath expr="//notebook" position="inside">
+                    <page string="Currency Revaluation">
+                        <field name="currency_revaluation"
+                            attrs="{'readonly': [('type', 'not in', ['receivable', 'payable', 'liquidity'])]}"/>
+                    </page>
                 </xpath>
             </field>
         </record>

@@ -71,6 +71,7 @@ class account_journal(osv.osv):
                 ('situation', 'Opening/Closing Situation'),
                 ('purchase', 'Purchase'),
                 ('purchase_refund','Purchase Refund'),
+                ('revaluation', 'Revaluation'),
                 ('sale', 'Sale'),
                 ('sale_refund','Sale Refund'),
                 ('stock', 'Stock'),

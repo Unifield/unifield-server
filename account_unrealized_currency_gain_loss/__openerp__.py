@@ -3,6 +3,9 @@
 #
 #    Author: Yannick Vaucher
 #    Copyright 2012 Camptocamp SA
+
+#    Author: Sebastien Alix
+#    Copyright 2013 TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,9 +23,12 @@
 ##############################################################################
 
 {"name": "Unrealized currency gain & loss",
- "version": "6.1",
+ "version": "6.0",
  "category": "Finance",
  "description": """
+NOTE: Module 'account_unrealized_currency_gain_loss' ported from OpenERP 6.1
+and adapted to UniField.
+
 Add a wizard to generate the unrealized currency gain & loss entries. This adjusts accounts' balance of account with a foreign currency.
 
 To configure it, Foreign currency gain & loss account have been added in company parameters.
@@ -47,18 +53,17 @@ For FR
 
 """,
 
-    "author": "Camptocamp",
+    "author": "Camptocamp, TeMPO Consulting",
     "license": 'AGPL-3',
     "depends": ["base",
                 "account",
                 "account_reversal",
-                "base_headers_webkit"],
+                "msf_chart_of_account"],
     "init_xml": ["res_company_view.xml",
                  "res_currency_view.xml",
                  "account_view.xml",
-                 "wizard/wizard_currency_revaluation_view.xml",
-                 "wizard/print_currency_unrealized_report_view.xml"],
-    "update_xml": ['report/report.xml'],
+                 "wizard/wizard_currency_revaluation_view.xml"],
+    "update_xml": [],
     #"test": ["test/currency_revaluation.yml"],
     "demo_xml": [],
     "installable": True,

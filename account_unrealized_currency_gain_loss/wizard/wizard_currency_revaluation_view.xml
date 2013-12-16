@@ -8,13 +8,16 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Currency Revaluation" col="4">
-                    <field name="revaluation_date" on_change="on_change_revaluation_date(revaluation_date)"/>
+                    <field name="revaluation_date"/>
+                    <newline/>
+                    <field name="fiscalyear_id"
+                        on_change="on_change_fiscalyear_id(fiscalyear_id)"/>
+                    <newline/>
+                    <separator string="" colspan="6"/>
+                    <field name="period_id"/>
                     <newline/>
                     <field name="journal_id"/>
                     <newline/>
-                    <field name="currency_type"/>
-                    <newline/>
-                    <separator string="" colspan="6"/>
                     <field name="label"/>
                     <newline/>
                     <label/>
@@ -42,7 +45,7 @@
         <menuitem
             action="action_view_account_currency_revaluation_wizard"
             id="menu_view_account_currency_revaluation_wizard"
-            parent="account.menu_account_end_year_treatments"/>
+            parent="account.menu_finance_periodical_processing"/>
 
     </data>
 </openerp>

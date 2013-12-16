@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
+from tools.translate import _
 
 
 class AccountAccountLine(osv.osv):
@@ -36,8 +37,10 @@ class AccountAccount(osv.osv):
 
     _inherit = 'account.account'
 
-    _columns = {'currency_revaluation':
-                    fields.boolean("Allow Currency revaluation")}
+    _columns = {
+        'currency_revaluation': fields.boolean(
+            string=_("Included in revaluation?")),
+    }
 
     _defaults = {'currency_revaluation': False}
 
@@ -46,12 +49,8 @@ class AccountAccount(osv.osv):
             'debit': "COALESCE(SUM(l.debit), 0) as debit",
             'credit': "COALESCE(SUM(l.credit), 0) as credit",
             'foreign_balance': "COALESCE(SUM(l.amount_currency), 0) as foreign_balance"}
-    def _revaluation_query(self,
-                           cr, uid,
-                           ids,
-                           revaluation_date,
-                           context=None):
 
+    def _revaluation_query(self, cr, uid, ids, revaluation_date, context=None):
         lines_where_clause = self.pool.get('account.move.line').\
             _query_get(cr, uid, context=context)
         query = ("SELECT l.account_id as id, l.partner_id, l.currency_id, " +
