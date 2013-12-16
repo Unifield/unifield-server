@@ -32,6 +32,9 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 'fiscalyear_id': fields.many2one(
                     'account.fiscalyear', string=u"Fiscal year",
                     required=True),
+                'currency_table_id': fields.many2one(
+                    'res.currency.table', string=u"Currency table",
+                    required=True),
                 'journal_id': fields.many2one(
                     'account.journal', string=_("Entry journal"),
                     #domain="[('type','=','general')]",
@@ -365,6 +368,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         account_obj = self.pool.get('account.account')
         fiscalyear_obj = self.pool.get('account.fiscalyear')
         move_obj = self.pool.get('account.move')
+        currency_obj = self.pool.get('res.currency')
+        currency_table_obj = self.pool.get('res.currency.table')
 
         company = user_obj.browse(cr, uid, uid).company_id
 
@@ -386,6 +391,16 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         form = self.browse(cr, uid, ids[0], context=context)
+
+        # Check the revaluation date and dates in the currency table
+        currency_ids_from_table = []
+        for currency in form.currency_table_id.currency_ids:
+            if currency.date != form.revaluation_date:
+                raise osv.except_osv(
+                    _("Error"),
+                    _("The revaluation date seems to differ with the data of "
+                      "the currency table."))
+            currency_ids_from_table.append(currency.id)
 
         # Search for accounts Balance Sheet to be eevaluated
         # on those criterions
@@ -446,6 +461,13 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             context=context)
         for account_id, account_tree in account_sums.iteritems():
             for currency_id, currency_tree in account_tree.iteritems():
+                # Check if the account move currency is declared in the
+                # currency table
+                if currency_id not in currency_ids_from_table:
+                    currency = currency_obj.browse(cr, uid, currency_id, context=context)
+                    raise osv.except_osv(
+                        _("Error"),
+                        _("The currency %s is not declared in the currency table." % currency.name))
                 for partner_id, sums in currency_tree.iteritems():
                     if not sums['balance']:
                         continue

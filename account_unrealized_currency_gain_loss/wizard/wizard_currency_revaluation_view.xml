@@ -13,6 +13,8 @@
                     <field name="fiscalyear_id"
                         on_change="on_change_fiscalyear_id(fiscalyear_id)"/>
                     <newline/>
+                    <field name="currency_table_id"/>
+                    <newline/>
                     <separator string="" colspan="6"/>
                     <field name="period_id"/>
                     <newline/>

@@ -57,14 +57,14 @@ class ResCompany(osv.osv):
                     fields.many2one('account.journal',
                                     'Currency gain & loss Default Journal',
                                     domain=[('type', '=', 'general')]),
-                'reversable_revaluations':
-                    fields.boolean('Reversable Revaluations',
-                    help="Revaluations entries will be created"
-                         " as \"To Be Reversed\".")
+                #'reversable_revaluations':
+                #    fields.boolean('Reversable Revaluations',
+                #    help="Revaluations entries will be created"
+                #         " as \"To Be Reversed\".")
                 }
 
     _defaults = {
-        'reversable_revaluations': True,
+        #'reversable_revaluations': True,
     }
 
 ResCompany()

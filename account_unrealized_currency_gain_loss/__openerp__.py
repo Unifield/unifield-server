@@ -57,7 +57,7 @@ For FR
     "license": 'AGPL-3',
     "depends": ["base",
                 "account",
-                "account_reversal",
+                #"account_reversal",
                 "msf_chart_of_account"],
     "init_xml": ["res_company_view.xml",
                  "res_currency_view.xml",
