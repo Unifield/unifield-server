@@ -86,6 +86,10 @@ class sale_order(osv.osv):
                 raise osv.except_osv(_('Error'), _('Only Draft and Canceled %s can be deleted.') % type)
         return super(sale_order, self).unlink(cr, uid, ids, context=context)
 
+    def action_cancel(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'delivery_confirmed_date': time.strftime('%Y-%m-%d')}, context=context)
+        return super(sale_order, self).action_cancel(cr, uid, ids, context=context)
+
     #@@@override sale.sale_order._invoiced
     def _invoiced(self, cr, uid, ids, name, arg, context=None):
         '''
