@@ -686,7 +686,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
             log_sequence = self.pool.get('audittrail.log.sequence').search(cr, uid, [('model', '=', fct_object.model), ('res_id', '=', seq_res_id)])
             if log_sequence:
                 log_seq = self.pool.get('audittrail.log.sequence').browse(cr, uid, log_sequence[0]).sequence
-                log = log_seq.get_id(test='id')
+                log = log_seq.get_id(code_or_id='id')
             else:
                 # Create a new sequence
                 seq_pool = self.pool.get('ir.sequence')
@@ -704,7 +704,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
                 }
                 seq_id = seq_pool.create(cr, uid, seq)
                 self.pool.get('audittrail.log.sequence').create(cr, uid, {'model': fct_object.model, 'res_id': seq_res_id, 'sequence': seq_id})
-                log = self.pool.get('ir.sequence').browse(cr, uid, seq_id).get_id(test='id')
+                log = self.pool.get('ir.sequence').browse(cr, uid, seq_id).get_id(code_or_id='id')
 
 
         if field_id:

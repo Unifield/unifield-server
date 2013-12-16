@@ -184,6 +184,7 @@ class account_bank_statement(osv.osv):
         'balance_gap': fields.function(_balance_gap_compute, method=True, string='Gap', readonly=True),
         'notes': fields.text('Comments'),
         'period_number': fields.related('period_id', 'number', relation='account.period', string="Period number", type="integer", store=True, readonly=True),
+        'closing_date': fields.date("Closed On"),
     }
 
     _order = 'state asc, period_number desc'
@@ -259,11 +260,9 @@ class account_bank_statement(osv.osv):
                 if line.state != 'hard':
                     raise osv.except_osv(_('Warning'), _('All entries must be hard posted before closing this Register!'))
         # @@@override@account.account_bank_statement.button_confirm_bank()
-#        done = []
         obj_seq = self.pool.get('ir.sequence')
         if context is None:
             context = {}
-
 
         for st in self.browse(cr, uid, ids, context=context):
             j_type = st.journal_id.type
@@ -298,18 +297,10 @@ class account_bank_statement(osv.osv):
                         raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") % (st.journal_id.name,))
                 if not st_line.amount:
                     continue
-#                st_line_number = self.get_next_st_line_number(cr, uid, st_number, st_line, context)
-                # Lines are hard posted. That's why create move lines is useless
-#                self.create_move_from_st_line(cr, uid, st_line.id, company_currency_id, st_line_number, context)
-
-            # Verify lines reconciliation status
-            #if not totally_or_partial_reconciled(self, cr, uid, [x.id for x in st.line_ids], context=context):
-            #    raise osv.except_osv(_('Warning'), _("Some lines are not reconciled. Please verify that all lines are reconciled totally or partially."))
-            self.write(cr, uid, [st.id], {'name': st_number}, context=context)
-            # Verify that the closing balance is freezed
+            self.write(cr, uid, [st.id], {'name': st_number, 'closing_date': time.strftime("%Y-%m-%d")}, context=context)
+            # Verify that the closing balance is frozen
             if not st.closing_balance_frozen and st.journal_id.type in ['bank', 'cash']:
                 raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')
-#            done.append(st.id)
         # Display the bank confirmation wizard
         title = "Bank"
         if context.get('confirm_from', False) and context.get('confirm_from') == 'cheque':
@@ -527,7 +518,7 @@ class account_bank_statement(osv.osv):
 
     def get_analytic_register_lines(self, cr, uid, ids, context=None):
         """
-        Return all analytic lines attached to register lines from first given register
+        Return all FP analytic lines attached to register lines from first given register
         """
         # Some verifications
         if not context:
@@ -554,7 +545,7 @@ class account_bank_statement(osv.osv):
         Give the search + tree view of account cash statement with a pre-filled instance field
         """
         # Some checks
-        if not context:
+        if context is None:
             context = {}
         # Prepare some values
         domain = [('journal_id.type', '=', st_type)]
@@ -615,7 +606,54 @@ The starting balance will be proposed automatically and the closing balance is t
             'domain': domain,
             'target': 'current',
             'help': st_help,
+        }
 
+    def get_analytic_register_free1_lines(self, cr, uid, ids, context=None):
+        """
+        Return all FREE1 analytic lines attached to register lines from first given register
+        """
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Search valid ids
+        reg = self.browse(cr, uid, ids[0])
+        domain = [('account_id.category', '=', 'FREE1'), ('move_id.statement_id', 'in', [ids[0]])]
+        context.update({'display_fp': False, 'categ': 'FREE1'})
+        return {
+            'name': reg and 'Free 1 Analytic Entries from ' + reg.name or 'Free 1 Analytic Entries',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.analytic.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
+
+    def get_analytic_register_free2_lines(self, cr, uid, ids, context=None):
+        """
+        Return all FREE2 analytic lines attached to register lines from first given register
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Search valid ids
+        reg = self.browse(cr, uid, ids[0])
+        domain = [('account_id.category', '=', 'FREE2'), ('move_id.statement_id', 'in', [ids[0]])]
+        context.update({'display_fp': False, 'categ': 'FREE2'})
+        return {
+            'name': reg and 'Free 2 Analytic Entries from ' + reg.name or 'Free 2 Analytic Entries',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.analytic.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'context': context,
+            'domain': domain,
+            'target': 'current',
         }
 
 account_bank_statement()
