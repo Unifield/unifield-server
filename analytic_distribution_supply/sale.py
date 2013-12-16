@@ -55,6 +55,7 @@ class sale_order(osv.osv):
         vals = {
             'total_amount': amount,
             'sale_order_id': so.id,
+            'partner_type': so.partner_type, #UF-2138: Add partner_type to the analytic distribution
             'currency_id': currency or False,
             'state': 'cc',
             'posting_date': strftime('%Y-%m-%d'),
@@ -359,6 +360,7 @@ class sale_order_line(osv.osv):
         vals = {
             'total_amount': amount,
             'sale_order_line_id': sol.id,
+            'partner_type': sol.order_id.partner_type, #UF-2138: Add partner_type to the analytic distribution
             'currency_id': currency or False,
             'state': 'cc',
             'account_id': account_id or False,
