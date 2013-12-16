@@ -545,8 +545,16 @@
       </Row>
 
 <!-- Direct invoice and invoice that comes from a PL (in a cash return) -->
+<% invoice_lines = [] %>
 % if line.invoice_id:
-% for inv_line in line.invoice_id.invoice_line:
+<% invoice_lines = line.invoice_id.invoice_line %>
+% elif line.imported_invoice_line_ids:
+% for ji in line.imported_invoice_line_ids:
+<% invoice_lines += ji.invoice.invoice_line %>
+% endfor
+% endif
+
+% for inv_line in invoice_lines:
       <Row>
         <Cell ss:Index="4" ss:StyleID="text_center">
           <Data ss:Type="String">${inv_line.line_number or ''|x}</Data>
@@ -570,42 +578,39 @@
           <Data ss:Type="Number">${inv_line.price_subtotal or 0.0}</Data>
         </Cell>
       </Row>
-% endfor
-% endif
-
-<!-- Imported invoice (pending payments) -->
-% if line.imported_invoice_line_ids:
-% for ji in line.imported_invoice_line_ids:
-% for imp_inv_line in ji.invoice.invoice_line:
+% for ana_line in sorted(inv_line.analytic_lines, key=lambda x: x.id):
+<%
+line_color = 'blue'
+if ana_line.is_reallocated:
+    line_color = 'darkblue'
+elif ana_line.is_reversal:
+    line_color = 'green'
+elif ana_line.last_corrected_id:
+    line_color = 'red'
+endif
+%>
       <Row>
-        <Cell ss:Index="4" ss:StyleID="text_center">
-          <Data ss:Type="String">${imp_inv_line.line_number or ''|x}</Data>
+        <Cell ss:Index="10" ss:StyleID="${line_color}_ana_amount">
+          <Data ss:Type="Number">${ana_line.amount_currency}</Data>
         </Cell>
-        <Cell ss:StyleID="left">
-          <Data ss:Type="String">${imp_inv_line.product_id and imp_inv_line.product_id.name or ''|x}</Data>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.destination_id and ana_line.destination_id.code or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="left">
-          <Data ss:Type="String">${imp_inv_line.name or ''|x}</Data>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.cost_center_id and ana_line.cost_center_id.code or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="left">
-          <Data ss:Type="String">${imp_inv_line.account_id and imp_inv_line.account_id.code + ' ' + imp_inv_line.account_id.name or ''|x}</Data>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="left">
-          <Data ss:Type="String"></Data>
-        </Cell>
-        <Cell ss:StyleID="left">
-          <Data ss:Type="String"></Data>
-        </Cell>
-        <Cell ss:StyleID="amount">
-          <Data ss:Type="Number">${imp_inv_line.price_subtotal or 0.0}</Data>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
         </Cell>
       </Row>
 % endfor
 % endfor
-% endif
 
 <!-- Display analytic lines linked to this register line -->
-% if line.fp_analytic_lines:
+% if line.fp_analytic_lines and not line.invoice_id and not line.imported_invoice_line_ids:
 % for ana_line in sorted(line.fp_analytic_lines, key=lambda x: x.id):
 <%
 line_color = 'blue'

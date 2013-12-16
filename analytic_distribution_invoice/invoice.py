@@ -283,6 +283,21 @@ class account_invoice_line(osv.osv):
                 
         return res
 
+    def _get_analytic_lines(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = {}
+        for invl in self.browse(cr, uid, ids):
+            res[invl.id] = []
+            for ml in invl.move_lines or []:
+                if ml.analytic_lines:
+                    res[invl.id] = self.pool.get('account.analytic.line').get_corrections_history(cr, uid, [x.id for x in ml.analytic_lines])
+        return res
+
     _columns = {
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
@@ -296,6 +311,7 @@ class account_invoice_line(osv.osv):
             help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
+        'analytic_lines': fields.function(_get_analytic_lines, method=True, type='one2many', relation='account.analytic.line', store=False, string='Analytic lines', help='Give all analytic lines linked to this invoice line. With correction ones.'),
     }
     
     _defaults = {
