@@ -176,7 +176,48 @@ class purchase_order(osv.osv):
 
     def export_po_integration(self, cr, uid, ids, context=None):
         '''
-        Call the report of validated PO
+        Call the wizard to choose the export file format
+        '''
+        wiz_obj = self.pool.get('wizard.export.po.validated')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wiz_id = wiz_obj.create(cr, uid, {'order_id': ids[0]}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': wiz_obj._name,
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context}
+        
+
+    def export_xml_po_integration(self, cr, uid, ids, context=None):
+        '''
+        Call the Pure XML report of validated PO
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        datas = {}
+        datas['ids'] = ids
+        report_name = 'validated.purchase.order_xml'
+
+        return {                                                                
+                'type': 'ir.actions.report.xml',                                    
+                'report_name': report_name,                                         
+                'datas': datas,                                                     
+                'context': context,                                                 
+               }
+
+    def export_excel_po_integration(self, cr, uid, ids, context=None):
+        '''
+        Call the Excel report of validated PO
         '''
         if context is None:
             context = {}
@@ -422,3 +463,31 @@ class purchase_order_line(osv.osv):
         return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
 
 purchase_order_line()
+
+
+class wizard_export_po_validated(osv.osv_memory):
+    _name = 'wizard.export.po.validated'
+
+    _columns = {
+        'order_id': fields.many2one('purchase.order', string='Purchase Order', required=True),
+        'file_type': fields.selection([('xml', 'XML file'),
+                                       ('excel', 'Excel file')], string='File type', required=True),
+    }
+
+    def export_file(self, cr, uid, ids, context=None):
+        '''
+        Launch the good method to download the good file
+        '''
+        order_obj = self.pool.get('purchase.order')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        
+        if wiz.file_type == 'xml':
+            return order_obj.export_xml_po_integration(cr, uid, wiz.order_id.id, context=context)
+        else:
+            return order_obj.export_excel_po_integration(cr, uid, wiz.order_id.id, context=context)
+
+wizard_export_po_validated()
