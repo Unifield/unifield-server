@@ -95,8 +95,7 @@ class AccountAccount(osv.osv):
 
             accounts.setdefault(account_id, {})
             accounts[account_id].setdefault(currency_id, {})
-            accounts[account_id][currency_id].\
-                setdefault(partner_id, {})
+            accounts[account_id][currency_id].setdefault(partner_id, {})
             accounts[account_id][currency_id][partner_id] = line
 
         return accounts
