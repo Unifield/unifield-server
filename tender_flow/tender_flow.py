@@ -47,6 +47,8 @@ class tender(osv.osv):
         if not default:
             default = {}
         default['internal_state'] = 'draft' # UF-733: Reset the internal_state
+        if not 'sale_order_id' in default:
+            default['sale_order_id'] = False
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
     
     def unlink(self, cr, uid, ids, context=None):
@@ -838,6 +840,16 @@ class tender_line(osv.osv):
     _sql_constraints = [
         ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]
+
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+
+        if not 'created_by_rf' in default:
+            default['created_by_rfq'] = False
+
+        return super(tender_line, self).copy(cr, uid, id, default, context=context)
 
     def cancel_sourcing(self,cr, uid, ids, context=None):
         '''
