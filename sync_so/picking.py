@@ -319,11 +319,18 @@ class stock_picking(osv.osv):
                 self.write(cr, uid, in_id, {'state': 'done'}, context) # UTP-872: reset state of the IN to become closed
                 return True
             else:
-                # UTP-872: If there is no IN corresponding to the give OUT/SHIP/PICK, then check if the PO has any line
-                # if it has no line, then no need to raise error, because PO without line does not generate any IN
                 po = po_obj.browse(cr, uid, [po_id], context=context)[0]
                 if len(po.order_line) == 0:
                     message = "The message is ignored as there is no corresponding IN (because the PO " + po.name + " has no line)"
+                    self._logger.info(message)
+                    return message
+                
+                # UTP-872: If there is no IN corresponding to the give OUT/SHIP/PICK, then check if the PO has any line
+                # if it has no line, then no need to raise error, because PO without line does not generate any IN
+                # still try to check whether this IN has already been manually processed
+                in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po.name, ['done'], context)
+                if in_id:
+                    message = "The IN linked to " + po.name + " has been closed already, this message is thus ignored!"
                     self._logger.info(message)
                     return message
 
