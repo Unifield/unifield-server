@@ -504,6 +504,8 @@ class stock_picking(osv.osv):
                               'asset_id': partial['asset_id'],
                               'change_reason': partial['change_reason'],
                               }
+                    if 'state' in partial: # UTP-872: Added also the state into the move line if the state comes from the sync
+                        values.update({'state': partial['state']})
                     if 'product_price' in partial:
                         values.update({'price_unit': partial['product_price']})
                     elif 'product_uom' in partial and partial['product_uom'] != move.product_uom.id:
