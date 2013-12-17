@@ -134,6 +134,44 @@ class hq_entries(osv.osv):
                     continue
         return res
 
+    def _get_cc_changed(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Return True if the CC value is different from the original one or if this line is a split from an original entry that have a different cost center value
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = {}
+        for e in self.browse(cr, uid, ids):
+            res[e.id] = False
+            if e.cost_center_id.id != e.cost_center_id_first_value.id:
+                res[e.id] = True
+                continue
+            if e.original_id and e.original_id.cost_center_id.id != e.cost_center_id.id:
+                res[e.id] = True
+                continue
+        return res
+
+    def _get_account_changed(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Return True if the account is different from the original one or if this line is a split from an original entry that have a different account value
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = {}
+        for e in self.browse(cr, uid, ids):
+            res[e.id] = False
+            if e.account_id.id != e.account_id_first_value.id:
+                res[e.id] = True
+                continue
+            if e.original_id and e.original_id.account_id.id != e.account_id.id:
+                res[e.id] = True
+                continue
+        return res
+
     _columns = {
         'account_id': fields.many2one('account.account', "Account", required=True),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True, domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
@@ -160,6 +198,8 @@ class hq_entries(osv.osv):
         'is_split': fields.boolean("Is split?", help="This line comes from a split.", readonly=True),
         'original_id': fields.many2one("hq.entries", "Original HQ Entry", help="The Original HQ Entry from which this line comes from."),
         'split_ids': fields.one2many('hq.entries', 'original_id', "Split lines", help="All lines linked to this original HQ Entry."),
+        'cc_changed': fields.function(_get_cc_changed, method=True, type='boolean', string='Have Cost Center changed?', help="When you change the cost center from the initial value (from a HQ Entry or a Split line), so the Cost Center changed is True."),
+        'account_changed': fields.function(_get_account_changed, method=True, type='boolean', string='Have account changed?', help="When your entry have a different account from the initial one or from the original one."),
     }
 
     _defaults = {
