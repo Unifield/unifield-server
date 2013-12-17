@@ -184,6 +184,10 @@ class wizard_import_po_simulation_screen(osv.osv):
                                                 type='date',
                                                 string='RTS Date',
                                                 readonly=True),
+        'in_shipment_date': fields.related('order_id', 'shipment_date',
+                                           type='date',
+                                           string='Shipment date',
+                                           readonly=True),
         'in_amount_untaxed': fields.related('order_id', 'amount_untaxed',
                                             string='Untaxed Amount',
                                             readonly=True),
@@ -209,6 +213,8 @@ class wizard_import_po_simulation_screen(osv.osv):
                                                readonly=True),
         'imp_ready_to_ship_date': fields.date(string='RTS Date',
                                               readonly=True),
+        'imp_shipment_date': fields.date(string='Shipment date',
+                                         readonly=True),
         'imp_message_esc': fields.text(string='Message ESC Header',
                                        readonly=True),
         'imp_amount_untaxed': fields.function(_get_totals, method=True,
@@ -296,6 +302,14 @@ class wizard_import_po_simulation_screen(osv.osv):
         cr = pooler.get_db(dbname).cursor()
         #cr = dbname
         wl_obj = self.pool.get('wizard.import.po.simulation.screen.line')
+
+        # Declare global variables (need this explicit declaration to clear
+        # them at the end of the treatment)
+        global PRODUCT_NAME_ID
+        global PRODUCT_CODE_ID
+        global UOM_NAME_ID
+        global CURRENCY_NAME_ID
+        global SIMU_LINES
 
         if context is None:
             context = {}
@@ -467,7 +481,7 @@ SCREEN !'''
             transport_select = self.fields_get(cr, uid, ['imp_transport_mode'], context=context)
             for x in transport_select['imp_transport_mode']['selection']:
                 if x[1] == transport_mode:
-                    header_values['imp_transport_mode'] = transport_mode
+                    header_values['imp_transport_mode'] = x[0]
                     break
             else:
                 possible_mode = ', '.join(x[1] for x in transport_select['imp_transport_mode']['selection'] if x[1])
@@ -476,14 +490,20 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 values_header_errors.append(err_msg)
 
 
-
             # Line 9: RTS Date
             rts_date = values.get(9, [])[1]
             if rts_date:
-                rts_date = time.strptime(rts_date)
-                err_msg = _('Line 9 of the Excel file: The date \'%s\' is not \
+                if type(rts_date) == type(DateTime.now()):
+                    rts_date = rts_date.strftime('%Y-%m-%d')
+                    header_values['imp_ready_to_ship_date'] = rts_date
+                else:
+                    try:
+                        rts_date = time.strptime(rts_date)
+                        header_values['imp_ready_to_ship_date'] = rts_date
+                    except:
+                        err_msg = _('Line 9 of the Excel file: The date \'%s\' is not \
 a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
-                values_header_errors.append(err_msg)
+                        values_header_errors.append(err_msg)
 
             # Line 10: Address name
             # Nothing to do
@@ -504,7 +524,19 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
             # Nothing to do
             
             # Line 16: Shipment date
-            # Nothing to do
+            shipment_date = values.get(16, [])[1]
+            if shipment_date:
+                if type(shipment_date) == type(DateTime.now()):
+                    shipment_date = shipment_date.strftime('%Y-%m-%d')
+                    header_values['imp_ready_to_ship_date'] = shipment_date
+                else:
+                    try:
+                        shipment_date = time.strptime(shipment_date)
+                        header_values['imp_shipment_date'] = shipment_date
+                    except:
+                        err_msg = _('Line 9 of the Excel file: The date \'%s\' is not \
+a valid date. A date must be formatted like \'YYYY-MM-DD\'') % shipment_date
+                        values_header_errors.append(err_msg)
 
             # Line 17: Notes
             # Nothing to do
@@ -750,6 +782,14 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
 
         cr.commit()
         cr.close()
+
+        # Clear the cache
+        del PRODUCT_NAME_ID
+        del PRODUCT_CODE_ID
+        del UOM_NAME_ID
+        del CURRENCY_NAME_ID
+        del SIMU_LINES
+
         return {'type': 'ir.actions.act_window_close'}
 
     def launch_import(self, cr, uid, ids, context=None):
@@ -782,7 +822,11 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
         cr = pooler.get_db(dbname).cursor()
 
         for wiz in self.browse(cr, uid, ids, context=context):
-            self.write(cr, uid, [wiz.id], {'state': 'import_progress'}, context=context)
+            po_vals = {'state': 'import_progress',
+                       'partner_ref': wiz.imp_supplier_ref or wiz.in_supplier_ref,
+                       'transport_type': wiz.imp_transport_mode or wiz.in_transport_mode,
+                       'ready_to_ship_date': wiz.imp_ready_to_ship_date or wiz.in_ready_to_ship_date}
+            self.write(cr, uid, [wiz.id], po_vals, context=context)
             lines = [x.id for x in wiz.simu_line_ids]
             line_obj.update_po_line(cr, uid, lines, context=context)
 

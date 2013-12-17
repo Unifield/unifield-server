@@ -30,6 +30,7 @@
           <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
+        <Protection />
     </Style>
     <Style ss:ID="line">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -39,6 +40,7 @@
           <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
+        <Protection ss:Protected="0" />
     </Style>
   <Style ss:ID="short_date">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -49,11 +51,12 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <NumberFormat ss:Format="Short Date"/>
+   <Protection ss:Protected="0" />
   </Style>
 </Styles>
 ## ==================================== we loop over the purchase_order "objects" == purchase_order  ====================================================
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
+<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}" ss:Protected="1">
 ## definition of the columns' size
 <% nb_of_columns = 17 %>
 <Table x:FullColumns="1" x:FullRows="1">
@@ -222,7 +225,12 @@
     </Row>
     % endfor
 </Table>
-<x:WorksheetOptions/>
+<x:WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+    <ProtectObjects>True</ProtectObjects>
+    <ProtectScenarios>True</ProtectScenarios>
+    <EnableSelection>UnlockedCells</EnableSelection>
+    <AllowInsertRows />
+</x:WorksheetOptions>
 </ss:Worksheet>
 % endfor
 </Workbook>
