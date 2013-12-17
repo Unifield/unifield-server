@@ -872,6 +872,8 @@ class tender_line(osv.osv):
                 sol_to_update[line.sale_order_line_id.id] += diff_qty
             elif line.tender_id.state == 'draft':
                 to_remove.append(line.id)
+            else:
+                to_cancel.append(line.id)
 
         if to_cancel:
             self.write(cr, uid, to_cancel, {'line_state': 'cancel'}, context=context)
@@ -926,7 +928,9 @@ class tender_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        tender_id = False
         for line in self.browse(cr, uid, ids, context=context):
+            tender_id = line.tender_id.id
             if line.sale_order_line_id:
                 wiz_id = wiz_obj.create(cr, uid, {'tender_line_id': line.id}, context=context)
         
@@ -938,7 +942,15 @@ class tender_line(osv.osv):
                         'target': 'new',
                         'context': context}
         
-        return self.fake_unlink(cr, uid, ids, context=context)
+        self.fake_unlink(cr, uid, ids, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'tender',
+                'view_type': 'form',
+                'view_mode': 'form,tree',
+                'res_id': tender_id,
+                'target': 'crush',
+                'context': context}
     
 tender_line()
 
