@@ -275,6 +275,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         company = user_obj.browse(cr, uid, uid).company_id
         account = account_obj.browse(cr, uid, account_id, context=context)
+        revaluation_account_id = model_data_obj.get_object_reference(
+            cr, uid, 'msf_chart_of_account', '6940')[1]
 
         # Prepare the analytic distribution for the account revaluation entry
         # if the account has a 'expense' or 'income' type
@@ -312,14 +314,14 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         created_ids = []
         # over revaluation
         if amount >= 0.01:
-            if company.revaluation_gain_account_id:
+            if revaluation_account_id:
                 move_id = create_move()
                 # Create a move line to Debit account to be revaluated
                 line_data = {
                     'debit': amount,
                     'debit_currency': False,
                     'move_id': move_id,
-                    'account_id': company.revaluation_gain_account_id.id,
+                    'account_id': revaluation_account_id,
                 }
                 created_ids.append(create_move_line(move_id, line_data, sums))
                 # Create a move line to Credit revaluation gain account
@@ -329,13 +331,12 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     'account_id': account_id,
                     'move_id': move_id,
                     'analytic_distribution_id': distribution_id,
-                    #'analytic_account_id' : company.revaluation_analytic_account_id and company.revaluation_analytic_account_id.id or False,
                 }
                 created_ids.append(create_move_line(move_id, line_data, sums))
         # under revaluation
         elif amount <= -0.01:
             amount = -amount
-            if company.revaluation_loss_account_id:
+            if revaluation_account_id:
                 move_id = create_move()
 
                 # Create a move line to Debit revaluation loss account
@@ -344,7 +345,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     'move_id': move_id,
                     'account_id': account_id,
                     'analytic_distribution_id': distribution_id,
-                    #'analytic_account_id' : company.revaluation_analytic_account_id and company.revaluation_analytic_account_id.id or False,
                 }
 
                 created_ids.append(create_move_line(move_id, line_data, sums))
@@ -352,7 +352,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 line_data = {
                     'credit': amount,
                     'move_id': move_id,
-                    'account_id': company.revaluation_loss_account_id.id,
+                    'account_id': revaluation_account_id,
                 }
                 created_ids.append(create_move_line(move_id, line_data, sums))
         return created_ids
@@ -372,19 +372,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         currency_obj = self.pool.get('res.currency')
 
         company = user_obj.browse(cr, uid, uid).company_id
-
-        #if (not company.revaluation_loss_account_id or
-        #    not company.revaluation_gain_account_id):
-        #    raise osv.except_osv(
-        #        _("Error!"),
-        #        _("Revaluation accounts are not all defined for your company."))
-
-        #if (not company.revaluation_destination_id or
-        #    not company.revaluation_cost_center_id or
-        #    not company.revaluation_funding_pool_id):
-        #    raise osv.except_osv(
-        #        _("Error!"),
-        #        _("Revaluation analytic accounts are not all defined for your company."))
 
         created_ids = []
 

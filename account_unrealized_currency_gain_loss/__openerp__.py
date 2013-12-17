@@ -59,8 +59,8 @@ For FR
                 "account",
                 #"account_reversal",
                 "msf_chart_of_account"],
-    "init_xml": ["res_company_view.xml",
-                 "res_currency_view.xml",
+    "init_xml": [
+                 #"res_currency_view.xml",
                  "account_view.xml",
                  "wizard/wizard_currency_revaluation_view.xml"],
     "update_xml": [],
