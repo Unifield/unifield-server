@@ -102,7 +102,9 @@ class wizard_import_po_simulation_screen(osv.osv):
         'message': fields.text(string='Import message',
                                readonly=True),
         'state': fields.selection([('draft', 'Draft'),
-                                   ('in_progress', 'In Progress'),
+                                   ('simu_progress', 'Simulation in progress'),
+                                   ('simu_done', 'Simulation done'),
+                                   ('import_progress', 'Import in progress'),
                                    ('done', 'Done')], 
                                    string='State',
                                    readonly=True),
@@ -194,6 +196,10 @@ class wizard_import_po_simulation_screen(osv.osv):
                                          'simu_id', string='Lines', readonly=True),
     }
 
+    _defaults = {
+        'state': 'draft',
+    }
+
     '''
     Action buttons
     '''
@@ -215,34 +221,6 @@ class wizard_import_po_simulation_screen(osv.osv):
                     'context': context,
                     }
 
-    def import_file(self, cr, uid, ids, context=None):
-        '''
-        Launch a thread to import the file
-        '''
-        po_obj = self.pool.get('purchase.order')
-        po_name = False
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        for wiz in self.browse(cr, uid, ids, context=context):
-            if not wiz.file_to_import:
-                raise osv.except_osv(_('Error'), _('Nothing to import'))
-            
-            po_obj.write(cr, uid, wiz.order_id.id, {'state': 'done', 'import_in_progress': True}, context=context)
-            po_name = wiz.order_id.name
-            break
-
-        thread = threading.Thread(target=self._simulate, args=(cr.dbname, uid, ids, context))
-        thread.start()
-
-        msg_to_return = _("""
-Important, please do not update the Purchase Order %s
-Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
-Otherwise, you can continue to use Unifield.""") % po_name
-        
-        return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
-
     def go_to_simulation(self, cr, uid, ids, context=None):
         '''
         Display the simulation screen
@@ -258,6 +236,21 @@ Otherwise, you can continue to use Unifield.""") % po_name
                 'target': 'crush',
                 'context': context}
 
+    def launch_simulate(self, cr, uid, ids, context=None):
+        '''
+        Launch the simulation routine in background
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'simu_progress'}, context=context)
+        cr.commit()
+        new_thread = threading.Thread(target=self.simulate, args=(cr.dbname, uid, ids, context))
+        new_thread.start()
+        new_thread.join(10.0)
+        
+        return self.go_to_simulation(cr, uid, ids, context=context)
+
 
     '''
     Simulate routine
@@ -266,8 +259,8 @@ Otherwise, you can continue to use Unifield.""") % po_name
         '''
         Import the file and fill the data in simulation screen
         '''
-        #cr = pooler.get_db(dbname).cursor()
-        cr = dbname
+        cr = pooler.get_db(dbname).cursor()
+        #cr = dbname
         wl_obj = self.pool.get('wizard.import.po.simulation.screen.line')
 
         if context is None:
@@ -281,6 +274,7 @@ Otherwise, you can continue to use Unifield.""") % po_name
             if not wiz.file_to_import:
                 self.write(cr, uid, [wiz.id], {'message': _('No file to import'),
                                                'state': 'draft'}, context=context)
+                continue
 
             for line in wiz.simu_line_ids:
                 # Put data in cache
@@ -292,6 +286,9 @@ Otherwise, you can continue to use Unifield.""") % po_name
                 if line.in_currency:
                     CURRENCY_NAME_ID.setdefault(line.in_currency.name, line.in_currency.id)
 
+                '''
+                First of all, we build a cache for simulation screen lines
+                '''
                 l_num = line.in_line_number
                 l_prod = line.in_product_id and line.in_product_id.id or False
                 l_uom = line.in_uom and line.in_uom.id or False
@@ -383,7 +380,10 @@ Nothing has been imported because of bad file format. See below :
                     message += '%s\n' % err
 
                 self.write(cr, uid, [wiz.id], {'message': message}, context)
-                return self.go_to_simulation(cr, uid, [wiz.id], context=context)
+                res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
+                cr.commit()
+                cr.close()
+                return res
 
             '''
             Now, we know that the file has the good format, you can import
@@ -400,7 +400,10 @@ IN THE FILE IS NOT THE SAME AS THE ORDER REFERENCE OF THE SIMULATION SCREEN.\
 YOU SHOULD IMPORT A FILE THAT HAS THE SAME ORDER REFERENCE THAN THE SIMULATION\
 SCREEN !'''
                 self.write(cr, uid, [wiz.id], {'message': message}, context)
-                return self.go_to_simulation(cr, uid, [wiz.id], context=context)
+                res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
+                cr.commit()
+                cr.close()
+                return res
 
             # Line 2: Order Type
             # Nothing to do
@@ -480,46 +483,59 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
             file_lines = {}
             file_po_lines = {}
             new_po_lines = []
+            not_ok_file_lines = {}
             # Loop on lines
             for x in xrange(NB_OF_HEADER_LINES+2, len(values)+1):
 
                 # Check mandatory fields
                 not_ok = False
+                file_line_error = []
                 for manda_field in MANDATORY_LINES_COLUMNS:
                     if not values.get(x, [])[manda_field[0]]:
                         not_ok = True
-                        err = _('The column \'%s\' mustn\'t be empty') % manda_field[1]
-                        err = _('Line %s of the Excel file: %s') % (x, err)
+                        err1 = _('The column \'%s\' mustn\'t be empty') % manda_field[1]
+                        err = _('Line %s of the Excel file: %s') % (x, err1)
                         values_line_errors.append(err)
+                        file_line_error.append(err1)
 
-                if not_ok:
+                if not values.get(x, [])[0]:
                     continue
 
                 line_number = int(values.get(x, [])[0])
 
-                # Get the better matching line
+                if not_ok:
+                    not_ok_file_lines[x] = ' - '.join(err for err in file_line_error)
+
+                # Get values
                 product_id = False
                 uom_id = False
                 qty = 0.00
 
                 vals = values.get(x, [])
-
                 # Product
                 if vals[2]:
                     product_id = PRODUCT_CODE_ID.get(vals[2], False)
                 if not product_id and vals[3]:
                     product_id = PRODUCT_NAME_ID.get(vals[3], False)
-
                 # UoM
                 if vals[5]:
                     uom_id = UOM_NAME_ID.get(vals[5], False)
-
                 # Qty
                 if vals[4]:
-                    qty = vals[4]
+                    qty = float(vals[4])
 
                 file_lines[x] = (line_number, product_id, uom_id, qty)
 
+            '''
+            Get the best matching line :
+                1/ Within lines with same line number, same product, same UoM and same qty
+                2/ Within lines with same line number, same product and same UoM
+                3/ Within lines with same line number and same product
+                4/ Within lines with same line number
+
+            If a matching line is found in one of these cases, keep the link between the
+            file line and the simulation screen line.
+            '''
             to_del = []
             for x, fl in file_lines.iteritems():
                 # Search lines with same product, same UoM and same qty
@@ -598,9 +614,13 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
                 del file_lines[x]
             to_del = []
 
+            # For file lines with no simu. screen lines with same line number,
+            # create a new simu. screen line
             for x in file_lines.keys():
                 new_po_lines.append(x)
 
+            # Split the simu. screen line or/and update the values according
+            # to linked file line.
             for po_line, file_lines in file_po_lines.iteritems():
                 if po_line in SIMU_LINES[wiz.id]['line_ids']:
                     index_po_line = SIMU_LINES[wiz.id]['line_ids'].index(po_line)
@@ -609,12 +629,16 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
                     vals = values.get(file_line[0], [])
                     if file_line[1] == 'match':
                         err_msg = wl_obj.import_line(cr, uid, po_line, vals, context=context)
+                        if file_line[0] in not_ok_file_lines:
+                            wl_obj.write(cr, uid, [po_line], {'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                     elif file_line[1] == 'split':
                         new_wl_id = wl_obj.copy(cr, uid, po_line,
                                                          {'type_change': 'split',
                                                           'parent_line_id': po_line,
                                                           'po_line_id': False}, context=context)
                         err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
+                        if file_line[0] in not_ok_file_lines:
+                            wl_obj.write(cr, uid, [new_wl_id], {'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
 
                 if err_msg:
                     for err in err_msg:
@@ -632,10 +656,12 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
                                                     'in_line_number': int(values.get(po_line, [])[0]),
                                                     'simu_id': wiz.id}, context=context)
                 err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
+                if po_line in not_ok_file_lines:
+                    wl_obj.write(cr, uid, [new_wl_id], {'error_msg': not_ok_file_lines[po_line]}, context=context)
 
                 if err_msg:
                     for err in err_msg:
-                        err = 'Line %s of the Excel file: %s' % (file_line[0], err)
+                        err = 'Line %s of the Excel file: %s' % (po_line, err)
                         values_line_errors.append(err)
 
             # Lines to delete
@@ -658,13 +684,34 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
                     message += '%s\n' % err
 
             header_values['message'] = message
+            header_values['state'] = 'simu_done'
             self.write(cr, uid, [wiz.id], header_values, context=context)
 
-            return self.go_to_simulation(cr, uid, [wiz.id], context=context)
+            res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
+            cr.commit()
+            cr.close()
+            return res
 
+        cr.commit()
+        cr.close()
         return {'type': 'ir.actions.act_window_close'}
+
+    def launch_import(self, cr, uid, ids, context=None):
+        '''
+        Launch the simulation routine in background
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'import_progress'}, context=context)
+        cr.commit()
+        new_thread = threading.Thread(target=self.run_import, args=(cr.dbname, uid, ids, context))
+        new_thread.start()
+        new_thread.join(10.0)
+        
+        return self.go_to_simulation(cr, uid, ids, context=context)
     
-    def run_import(self, cr, uid, ids, context=None):
+    def run_import(self, dbname, uid, ids, context=None):
         '''
         Launch the real import
         '''
@@ -676,14 +723,22 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        cr = pooler.get_db(dbname).cursor()
+
         for wiz in self.browse(cr, uid, ids, context=context):
+            self.write(cr, uid, [wiz.id], {'state': 'import_progress'}, context=context)
             lines = [x.id for x in wiz.simu_line_ids]
             line_obj.update_po_line(cr, uid, lines, context=context)
 
         if ids:
-            return self.go_to_simulation(cr, uid, [wiz.id], context=context)
+            self.write(cr, uid, ids, {'state': 'done'}, context=context)
+            res =self.go_to_simulation(cr, uid, [wiz.id], context=context)
         else:
-            return {'type': 'ir.actions.act_window_close'}
+            res = {'type': 'ir.actions.act_window_close'}
+
+        cr.commit()
+        cr.close()
+        return res
 
 wizard_import_po_simulation_screen()
 
@@ -791,11 +846,25 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'imp_esc2': fields.char(size=256, string='Message ESC2', readonly=True),
         'change_ok': fields.function(_get_line_info, method=True, multi='line',
                                      type='boolean', string='Change', store=False),
+        'error_msg': fields.text(string='Error message', readonly=True),
         'parent_line_id': fields.many2one('wizard.import.po.simulation.screen.line',
                                           string='Parent line id',
                                           help='Use to split the good PO line',
                                           readonly=True),
     }
+
+    def get_error_msg(self, cr, uid, ids, context=None):
+        '''
+        Display the error message
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.error_msg:
+                raise osv.except_osv(_('Warning'), line.error_msg)
+
+        return True
 
     def import_line(self, cr, uid, ids, values, context=None):
         '''
@@ -822,7 +891,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 if not prod_id and values[3]:
                     prod_id = PRODUCT_NAME_ID.get(values[3])
 
-                if not prod_id:
+                if not prod_id and (values[2] or values[3]):
                     prod_ids = prod_obj.search(cr, uid, ['|', ('default_code', '=', values[2]),
                                                               ('name', '=', values[3])], context=context)
                     if not prod_ids:
@@ -875,7 +944,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             currency_value = values[7]
             if str(currency_value) == line.in_currency.name:
                 write_vals['imp_currency'] = line.in_currency.id
-            else:
+            elif line.in_currency.name:
                 err_msg = _('The currency on the Excel file is not the same as the currency of the PO line - You must have the same currency on both side - Currency of the initial line kept.')
                 errors.append(err_msg)
 
@@ -913,8 +982,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             if line.po_line_id and line.type_change != 'del' and not line.change_ok:
                 continue
-
-            print line.in_line_number
 
             if line.type_change == 'del':
                 # Delete the PO line
