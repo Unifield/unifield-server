@@ -261,6 +261,9 @@ class stock_picking(osv.osv):
 
 
     def cancel_out_pick_cancel_in(self, cr, uid, source, out_info, context=None):
+        '''
+        ' Cancel the OUT/PICK at the supplier side cancels the corresponding IN at the project side
+        '''
         if not context:
             context = {}
         self._logger.info("+++ Cancel the relevant IN at %s due to the cancel of OUT at supplier %s"%(cr.dbname, source))
@@ -289,7 +292,43 @@ class stock_picking(osv.osv):
                     self._logger.info(message)
                     return message
 
-        raise Exception("There is a problem (no PO or IN found) when cancel of the IN at project")
+        raise Exception("There is a problem (no PO or IN found) when cancel the IN at project")
+
+    def cancel_stock_move_of_pick_cancel_in(self, cr, uid, source, out_info, context=None):
+        '''
+        ' UTP-872: Cancel only a few move lines of a closed PICK ticket in Coordo will also need to cancel the relevant lines at the IN
+        '''
+        if not context:
+            context = {}
+        self._logger.info("+++ Cancel the relevant IN at %s due to the cancel of some specific move of the Pick ticket at supplier %s"%(cr.dbname, source))
+
+        wf_service = netsvc.LocalService("workflow")
+        so_po_common = self.pool.get('so.po.common')
+        po_obj = self.pool.get('purchase.order')
+        pick_dict = out_info.to_dict()
+
+        # Look for the PO name, which has the reference to the FO on Coordo as source.out_info.origin
+        so_ref = source + "." + pick_dict['origin']
+        po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
+        if po_id:
+            # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
+            in_id = so_po_common.get_in_id_from_po_id(cr, uid, po_id, context)
+            if in_id:
+                # Cancel the IN object to have all lines cancelled, but the IN object remained as closed, so the update of state is done right after
+                wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_cancel', cr)
+                self.write(cr, uid, in_id, {'state': 'done'}, context) # UTP-872: reset state of the IN to become closed
+                return True
+            else:
+                # UTP-872: If there is no IN corresponding to the give OUT/SHIP/PICK, then check if the PO has any line
+                # if it has no line, then no need to raise error, because PO without line does not generate any IN
+                po = po_obj.browse(cr, uid, [po_id], context=context)[0]
+                if len(po.order_line) == 0:
+                    message = "The message is ignored as there is no corresponding IN (because the PO " + po.name + " has no line)"
+                    self._logger.info(message)
+                    return message
+
+        raise Exception("There is a problem (no PO or IN found) when cancel the IN at project")
+
 
     def closed_in_validates_delivery_out_ship(self, cr, uid, source, out_info, context=None):
         if not context:

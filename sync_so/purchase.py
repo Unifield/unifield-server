@@ -325,8 +325,8 @@ class purchase_order_sync(osv.osv):
                     cr, uid,
                     context['changes']['purchase.order.line'].keys(),
                     context=context):
-                lines.setdefault(rec_line.order_id.id, {})[rec_line.id] = \
-                     context['changes']['purchase.order.line'][rec_line.id]
+                if self.pool.get('purchase.order.line').exists(cr, uid, rec_line.id, context): # check the line exists
+                    lines.setdefault(rec_line.order_id.id, {})[rec_line.id] = context['changes']['purchase.order.line'][rec_line.id]
         # monitor changes on purchase.order
         for id, changes in changes.items():
             logger = get_sale_purchase_logger(cr, uid, self, id, \
