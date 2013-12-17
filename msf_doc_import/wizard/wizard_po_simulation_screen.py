@@ -54,9 +54,9 @@ MANDATORY_LINES_COLUMNS = [(0, _('Line number')),
                            (5, _('Product UoM')),
                            (6, _('Price Unit')),
                            (7, _('Currency')),
-#                           (8, _('Origin')),
-#                           (10, _('Delivery Confirmed Date')),
-#                           (16, _('Project Ref.'))
+                           (8, _('Origin')),
+                           (10, _('Delivery Confirmed Date')),
+                           (16, _('Project Ref.'))
                             ]
 
 
@@ -441,6 +441,7 @@ SCREEN !'''
                 cr.close()
                 return res
 
+            
             # Line 2: Order Type
             # Nothing to do
 
@@ -466,9 +467,14 @@ SCREEN !'''
             transport_select = self.fields_get(cr, uid, ['imp_transport_mode'], context=context)
             for x in transport_select['imp_transport_mode']['selection']:
                 if x[1] == transport_mode:
-                    transport_mode = x[0]
+                    header_values['imp_transport_mode'] = transport_mode
                     break
-            header_values['imp_transport_mode'] = transport_mode
+            else:
+                possible_mode = ', '.join(x[1] for x in transport_select['imp_transport_mode']['selection'] if x[1])
+                err_msg = _('Line 8 of the Excel file: The transport mode \'%s\' is not \
+a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_mode)
+                values_header_errors.append(err_msg)
+
 
 
             # Line 9: RTS Date
@@ -477,6 +483,7 @@ SCREEN !'''
                 rts_date = time.strptime(rts_date)
                 err_msg = _('Line 9 of the Excel file: The date \'%s\' is not \
 a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
+                values_header_errors.append(err_msg)
 
             # Line 10: Address name
             # Nothing to do

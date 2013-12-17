@@ -95,8 +95,8 @@
                             <field name="nb_treated_lines" />
                             <field name="message" nolabel="1" colspan="4" readonly="1" />
                         </page>
-                        <page string="Previous simulations">
-                        </page>
+                        <!--<page string="Previous simulations">
+                        </page>-->
                     </notebook>
                 </form>
             </field>
