@@ -71,6 +71,11 @@ class stock_picking(osv.osv):
 
         expired_date = data['expired_date']
 
+        # UTP-872: Add also the state into the move line, but if it is done, then change it to assigned (available)
+        state = data['state'] 
+        if state == 'done':
+            state = 'assigned'
+
         # build a dic which can be used directly to update the stock move
         result = {'line_number': data['line_number'],
                   'product_id': product_id,
@@ -78,6 +83,7 @@ class stock_picking(osv.osv):
                   'product_uos': uom_id,
                   'date': data['date'],
                   'date_expected': data['date_expected'],
+                  'state': state, 
 
                   'prodlot_id': batch_id,
                   'expired_date': expired_date,
@@ -143,7 +149,7 @@ class stock_picking(osv.osv):
             shipment_ref = source + "." +  pick_dict.get('name', False) # the case of OUT
         
         # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
-        in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, 'assigned', context)
+        in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned'], context)
         if in_id:
             partial_datas = {}
             partial_datas[in_id] = {}
@@ -201,7 +207,7 @@ class stock_picking(osv.osv):
             return message
         else:
             # still try to check whether this IN has already been manually processed
-            in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, 'done', context)
+            in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['done', 'shipped'], context)
             if not in_id:
                 message = "The IN linked to " + po_name + " is not found in the system!"
                 self._logger.info(message)

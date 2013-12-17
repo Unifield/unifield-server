@@ -110,12 +110,12 @@ class so_po_common(osv.osv_memory):
             return False
         return in_ids[0]
 
-    def get_in_id_by_state(self, cr, uid, po_id, po_ref, state, context):
+    def get_in_id_by_state(self, cr, uid, po_id, po_ref, states, context):
         # Get the Id of the original PO to update these info back 
         if not po_id:
             return False
 
-        in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', '=', state)], 0, None, None, context)
+        in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', 'in', states)], 0, None, None, context)
         return in_ids[0] if in_ids else False 
 
     # Update the next line number for the FO, PO that have been created by the synchro
