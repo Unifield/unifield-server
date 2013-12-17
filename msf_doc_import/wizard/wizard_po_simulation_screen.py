@@ -94,6 +94,40 @@ class wizard_import_po_simulation_screen(osv.osv):
 
         return res
 
+    def _get_totals(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return the totals after the simulation
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            imp_amount_untaxed = 0.00
+            amount_discrepancy = 0.00
+
+            cr.execute('''SELECT 
+                            sum(l.imp_qty * l.imp_price) AS imp_amount_untaxed,
+                            sum(imp_discrepancy) AS amount_discrepancy
+                          FROM
+                            wizard_import_po_simulation_screen_line l
+                          WHERE l.simu_id = %(simu_id)s''', {'simu_id': wiz.id})
+            db_res = cr.dictfetchall()
+            for r in db_res:
+                imp_amount_untaxed += r['imp_amount_untaxed'] or 0.00
+                amount_discrepancy += r['amount_discrepancy'] or 0.00
+
+            res[wiz.id] = {'imp_amount_untaxed': imp_amount_untaxed,
+                           # TODO: Take into account of Taxes
+                           'imp_amount_total': imp_amount_untaxed,
+                           'imp_total_price_include_transport': imp_amount_untaxed + wiz.in_transport_cost,
+                           'amount_discrepancy': amount_discrepancy}
+
+        return res
 
     _columns = {
         'order_id': fields.many2one('purchase.order', string='Order',
@@ -177,18 +211,18 @@ class wizard_import_po_simulation_screen(osv.osv):
                                               readonly=True),
         'imp_message_esc': fields.text(string='Message ESC Header',
                                        readonly=True),
-        'imp_amount_untaxed': fields.float(digits=(16,2),
-                                           string='Untaxed Amount',
-                                           readonly=True),
-        'imp_amount_total': fields.float(digits=(16,2),
-                                         string='Total Amount',
-                                         readonly=True),
-        'imp_total_price_include_transport': fields.float(digits=(16,2),
-                                                          string='Total incl. transport',
-                                                          readonly=True),
-        'amount_discrepancy': fields.float(digits=(16,2),
-                                           string='Discrepancy',
-                                           readonly=True),
+        'imp_amount_untaxed': fields.function(_get_totals, method=True,
+                                           type='float', string='Untaxed Amount',
+                                           readonly=True, store=False, multi='simu'),
+        'imp_amount_total': fields.function(_get_totals, method=True,
+                                           type='float', string='Total Amount',
+                                           readonly=True, store=False, multi='simu'),
+        'imp_total_price_include_transport': fields.function(_get_totals, method=True,
+                                                             type='float', string='Total incl. transport',
+                                                             readonly=True, store=False, multi='simu'),
+        'amount_discrepancy': fields.function(_get_totals, method=True,
+                                           type='float', string='Discrepancy',
+                                           readonly=True, store=False, multi='simu'),
         'imp_nb_po_lines': fields.function(_get_import_lines, methode=True,
                                            type='integer', string='Nb Import lines',
                                            readonly=True),
@@ -270,6 +304,7 @@ class wizard_import_po_simulation_screen(osv.osv):
             ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
+            nb_treated_lines = 0
             # No file => Return to the simulation screen
             if not wiz.file_to_import:
                 self.write(cr, uid, [wiz.id], {'message': _('No file to import'),
@@ -368,7 +403,8 @@ of the field for PO lines.')
 information must be on 17 columns. The line %s has %s columns') % (x, x, len(values.get(x, [])))
                     file_format_errors.append(error_msg)
 
-
+            nb_file_lines = len(values) - NB_OF_HEADER_LINES - 1
+            self.write(cr, uid, [wiz.id], {'nb_file_lines': nb_file_lines}, context=context)
 
             if len(file_format_errors):
                 message = '''## IMPORT STOPPED ##
@@ -493,7 +529,7 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
                 for manda_field in MANDATORY_LINES_COLUMNS:
                     if not values.get(x, [])[manda_field[0]]:
                         not_ok = True
-                        err1 = _('The column \'%s\' mustn\'t be empty') % manda_field[1]
+                        err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
                         err = _('Line %s of the Excel file: %s') % (x, err1)
                         values_line_errors.append(err)
                         file_line_error.append(err1)
@@ -626,6 +662,10 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
                     index_po_line = SIMU_LINES[wiz.id]['line_ids'].index(po_line)
                     SIMU_LINES[wiz.id]['line_ids'].pop(index_po_line)
                 for file_line in file_lines:
+                    nb_treated_lines += 1
+                    percent_completed = nb_treated_lines / nb_file_lines * 100
+                    self.write(cr, uid, [wiz.id], {'nb_treated_lines': nb_treated_lines,
+                                                   'percent_completed': percent_completed}, context=context)
                     vals = values.get(file_line[0], [])
                     if file_line[1] == 'match':
                         err_msg = wl_obj.import_line(cr, uid, po_line, vals, context=context)
@@ -639,6 +679,8 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
                         err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
                         if file_line[0] in not_ok_file_lines:
                             wl_obj.write(cr, uid, [new_wl_id], {'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
+                    # Commit modifications
+                    cr.commit()
 
                 if err_msg:
                     for err in err_msg:
@@ -648,6 +690,10 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
 
             # Create new lines
             for po_line in new_po_lines:
+                nb_treated_lines += 1
+                percent_completed = nb_treated_lines / nb_file_lines * 100
+                self.write(cr, uid, [wiz.id], {'nb_treated_lines': nb_treated_lines,
+                                               'percent_completed': percent_completed}, context=context)
                 if po_line in SIMU_LINES[wiz.id]['line_ids']:
                     index_po_line = SIMU_LINES[wiz.id]['line_ids'].index(po_line)
                     SIMU_LINES[wiz.id]['line_ids'].pop(index_po_line)
@@ -663,6 +709,8 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
                     for err in err_msg:
                         err = 'Line %s of the Excel file: %s' % (po_line, err)
                         values_line_errors.append(err)
+                # Commit modifications
+                cr.commit()
 
             # Lines to delete
             for po_line in SIMU_LINES[wiz.id]['line_ids']:
@@ -685,6 +733,7 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
 
             header_values['message'] = message
             header_values['state'] = 'simu_done'
+            header_values['percent_completed'] = 100.0
             self.write(cr, uid, [wiz.id], header_values, context=context)
 
             res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
@@ -839,7 +888,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'imp_uom': fields.many2one('product.uom', string='UoM', readonly=True),
         'imp_price': fields.float(digits=(16,2), string='Price Unit', readonly=True),
         'imp_discrepancy': fields.function(_get_line_info, method=True, multi='line',
-                                           type='float', string='Discrepancy', store=False),
+                                           type='float', string='Discrepancy', 
+                                           store={'wizard.import.po.simulation.screen.line': (lambda self, cr, uid, ids, c={}: ids, ['imp_qty', 'imp_price', 'in_qty', 'in_price', 'type_change', 'po_line_id'], 20),}),
         'imp_currency': fields.many2one('res.currency', string='Currency', readonly=True),
         'imp_drd': fields.date(string='Delivery Requested Date', readonly=True),
         'imp_esc1': fields.char(size=256, string='Message ESC1', readonly=True),

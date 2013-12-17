@@ -91,6 +91,8 @@
                             </field>
                         </page>
                         <page string="Information">
+                            <field name="nb_file_lines" />
+                            <field name="nb_treated_lines" />
                             <field name="message" nolabel="1" colspan="4" readonly="1" />
                         </page>
                         <page string="Previous simulations">
