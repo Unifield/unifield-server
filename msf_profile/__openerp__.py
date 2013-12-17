@@ -115,6 +115,7 @@
         "msf_button_access_rights",
         "msf_field_access_rights",
         "vertical_integration",
+        "msf_currency_revaluation",
     ],
     "update_xml": [
         "report.xml",
