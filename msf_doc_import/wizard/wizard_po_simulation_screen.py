@@ -576,7 +576,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     header_values['imp_ready_to_ship_date'] = rts_date
                 else:
                     try:
-                        rts_date = time.strptime(rts_date)
+                        time.strptime(rts_date, '%Y-%m-%d')
                         header_values['imp_ready_to_ship_date'] = rts_date
                     except:
                         err_msg = _('Line 9 of the Excel file: The date \'%s\' is not \
@@ -609,7 +609,7 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
                     header_values['imp_ready_to_ship_date'] = shipment_date
                 else:
                     try:
-                        shipment_date = time.strptime(shipment_date)
+                        time.strptime(shipment_date, '%Y-%m-%d')
                         header_values['imp_shipment_date'] = shipment_date
                     except:
                         err_msg = _('Line 9 of the Excel file: The date \'%s\' is not \
@@ -941,6 +941,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             'in_qty': 0.00,
                             'in_uom': False,
                             'in_drd': False,
+                            'in_dcd': False,
                             'in_price': 0.00,
                             'in_currency': False,
                             'imp_discrepancy': 0.00,
@@ -953,6 +954,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 res[line.id]['in_qty'] = l.product_qty
                 res[line.id]['in_uom'] = l.product_uom and l.product_uom.id or False
                 res[line.id]['in_drd'] = l.date_planned
+                res[line.id]['in_dcd'] = l.confirmed_delivery_date
                 res[line.id]['in_price'] = l.price_unit
                 res[line.id]['in_currency'] = l.currency_id and l.currency_id.id or False
                 if line.imp_qty and line.imp_price:
@@ -967,8 +969,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 qty_change = not(res[line.id]['in_qty'] == line.imp_qty)
                 price_change = not(res[line.id]['in_price'] == line.imp_price)
                 drd_change = not(res[line.id]['in_drd'] == line.imp_drd)
+                dcd_change = not(res[line.id]['in_dcd'] == line.imp_dcd)
 
-                if line.simu_id.state != 'draft' and (prod_change or qty_change or price_change or drd_change):
+                if line.simu_id.state != 'draft' and (prod_change or qty_change or price_change or drd_change or dcd_change):
                     res[line.id]['change_ok'] = True
             elif line.type_change == 'del':
                 res[line.id]['imp_discrepancy'] = -(line.in_qty*line.in_price)
@@ -1001,6 +1004,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'in_drd': fields.function(_get_line_info, method=True, multi='line',
                                   type='date', string='Delivery Requested Date',
                                   readonly=True, store=True),
+        'in_dcd': fields.function(_get_line_info, method=True, multi='line',
+                                  type='date', string='Delivery Confirmed Date',
+                                  readonly=True, store=True),
         'in_price': fields.function(_get_line_info, method=True, multi='line',
                                     type='float', string='Price Unit',
                                     readonly=True, store=True),
@@ -1021,6 +1027,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                                            store={'wizard.import.po.simulation.screen.line': (lambda self, cr, uid, ids, c={}: ids, ['imp_qty', 'imp_price', 'in_qty', 'in_price', 'type_change', 'po_line_id'], 20),}),
         'imp_currency': fields.many2one('res.currency', string='Currency', readonly=True),
         'imp_drd': fields.date(string='Delivery Requested Date', readonly=True),
+        'imp_dcd': fields.date(string='Delivery Confirmed Date', readonly=True),
         'imp_esc1': fields.char(size=256, string='Message ESC1', readonly=True),
         'imp_esc2': fields.char(size=256, string='Message ESC2', readonly=True),
         'change_ok': fields.function(_get_line_info, method=True, multi='line',
@@ -1132,9 +1139,26 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             if drd_value and type(drd_value) == type(DateTime.now()):
                 write_vals['imp_drd'] = drd_value.strftime('%Y-%m-%d')
             elif drd_value and isinstance(drd_value, str):
-                write_vals['imp_drd'] = drd_value
+                try:
+                    time.strptime(drd_value, '%Y-%m-%d')
+                    write_vals['imp_drd'] = drd_value
+                except ValueError:
+                    err_msg = _('Incorrect date value for field \'Delivery Requested Date\' - Delivery Requested Date of the initial line kept.')
             elif drd_value:
                 err_msg = _('Incorrect date value for field \'Delivery Requested Date\' - Delivery Requested Date of the initial line kept.')
+
+            # Delivery Confirmed Date
+            dcd_value = values[10]
+            if dcd_value and type(dcd_value) == type(DateTime.now()):
+                write_vals['imp_dcd'] = dcd_value.strftime('%Y-%m-%d')
+            elif dcd_value and isinstance(dcd_value, str):
+                try:
+                    time.strptime(dcd_value, '%Y-%m-%d')
+                    write_vals['imp_dcd'] = dcd_value
+                except ValueError:
+                    err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\' - Delivery Confirmed Date of the initial line kept.')
+            elif dcd_value:
+                err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\' - Delivery Confirmed Date of the initial line kept.')
 
             # Message ESC1
             write_vals['imp_esc1'] = values[17]
@@ -1184,23 +1208,33 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     new_po_line_id = split_obj.split_line(cr, uid, split_id, context=context)
                     context['from_simu_screen'] = False
                     
-                    line_obj.write(cr, uid, [new_po_line_id], {'product_uom': line.imp_uom.id,
-                                                               'product_id': line.imp_product_id.id,
-                                                               'price_unit': line.imp_price}, context=context)
+                    line_vals = {'product_uom': line.imp_uom.id,
+                                 'product_id': line.imp_product_id.id,
+                                 'price_unit': line.imp_price}
+                    if line.imp_dcd:
+                        line_vals['confirmed_delivery_date'] = line.imp_dcd
+                    line_obj.write(cr, uid, [new_po_line_id], line_vals, context=context)
+
             elif line.type_change == 'new':
-                line_obj.create(cr, uid, {'order_id': line.simu_id.order_id.id,
+                line_vals = {'order_id': line.simu_id.order_id.id,
                                           'product_id': line.imp_product_id.id,
                                           'product_uom': line.imp_uom.id,
                                           'price_unit': line.imp_price,
                                           'product_qty': line.imp_qty,
                                           'line_number': line.in_line_number,
-                                          'date_planned': line.imp_drd}, context=context)
+                                          'date_planned': line.imp_drd}
+                if line.imp_dcd:
+                    line_vals['confirmed_delivery_date'] = line.imp_dcd
+                line_obj.create(cr, uid, line_vals, context=context)
             elif line.po_line_id:
-                line_obj.write(cr, uid, [line.po_line_id.id], {'product_id': line.imp_product_id.id,
-                                                               'product_uom': line.imp_uom.id,
-                                                               'price_unit': line.imp_price,
-                                                               'product_qty': line.imp_qty,
-                                                               'date_planned': line.imp_drd}, context=context)
+                line_vals = {'product_id': line.imp_product_id.id,
+                             'product_uom': line.imp_uom.id,
+                             'price_unit': line.imp_price,
+                             'product_qty': line.imp_qty,
+                             'date_planned': line.imp_drd}
+                if line.imp_dcd:
+                    line_vals['confirmed_delivery_date'] = line.imp_dcd
+                line_obj.write(cr, uid, [line.po_line_id.id], line_vals, context=context)
 
         if ids:
             return simu_obj.go_to_simulation(cr, uid, line.simu_id.id, context=context)
