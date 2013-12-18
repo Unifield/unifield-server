@@ -256,6 +256,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
+    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14General Ledger"/>
+    <Footer x:Data="Page &amp;P of &amp;N"/>
    </PageSetup>
    <Print>
     <ValidPrinterInfo/>
