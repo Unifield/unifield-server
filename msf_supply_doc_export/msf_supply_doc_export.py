@@ -97,7 +97,6 @@ class validated_purchase_order_report_xls(WebKitParser):
     def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
         report_xml.webkit_debug = 1
         report_xml.header= " "
-        print report_xml._name
         report_xml.webkit_header.html = "${_debug or ''|n}"
         return super(validated_purchase_order_report_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
 
@@ -116,7 +115,7 @@ class validated_purchase_order_report_xml(WebKitParser):
     def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
         report_xml.webkit_debug = 1
         report_xml.header = " "
-        report_xml.webkit_header.html = "${_debug or ''}"
+        report_xml.webkit_header.html = "${_debug or ''|n}"
         return super(validated_purchase_order_report_xml, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
 
     def create(self, cr, uid, ids, data, context=None):
