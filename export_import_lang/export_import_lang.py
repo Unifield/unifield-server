@@ -235,6 +235,7 @@ class res_lang(osv.osv):
     def _install_new_lang_bg(self, dbname, uid, id, code, context):
         try:
             cr = pooler.get_db(dbname).cursor()
+            self.write(cr, uid, [id], {'translatable': True})
             modobj = self.pool.get('ir.module.module')
             mids = modobj.search(cr, uid, [('state', '=', 'installed')])
             modobj.update_translations(cr, uid, mids, code, context=context)

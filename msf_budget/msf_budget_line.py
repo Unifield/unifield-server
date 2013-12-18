@@ -39,6 +39,9 @@ class one2many_budget_lines(fields.one2many):
         for budget in obj.read(cr, uid, ids, ['display_type']):
             res[budget['id']] = []
             display_type[budget['id']] = budget['display_type']
+            # Override display_type if we come from a report
+            if context.get('report', False) and context.get('granularity', False):
+                display_type[budget['id']] = context.get('granularity')
 
         budget_line_obj = obj.pool.get('msf.budget.line')
         budget_line_ids = budget_line_obj.search(cr, uid, [('budget_id', 'in', ids)])

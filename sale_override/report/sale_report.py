@@ -107,6 +107,21 @@ class sale_report(osv.osv):
                 if not '__count' in data or data['__count'] != 0:
                     currency = self.pool.get('res.users').browse(cr,uid, uid, context=context).company_id.currency_id
                     data.update({'currency_id': (currency.id,currency.name)})
+
+                product_id = 'product_id' in data and data['product_id'] and data['product_id'][0] or False
+                if data.get('__domain'):
+                    for x in data.get('__domain'):
+                        if x[0] == 'product_id':
+                            product_id = x[2]
+
+                if product_id:
+                    uom = self.pool.get('product.product').browse(cr, uid, product_id, context=context).uom_id
+                    data.update({'uom_name': uom.name})
+
+                if not product_id and 'product_uom_qty' in data:
+                    data.update({'product_uom_qty': ''})
+
+
         return res
 
     def init(self, cr):
@@ -141,19 +156,16 @@ class sale_report(osv.osv):
                     (
                     select l.id as id,
                         l.product_id as product_id,
-                        (case when u.uom_type not in ('reference') then
-                            (select name from product_uom where uom_type='reference' and category_id=u.category_id and active LIMIT 1)
-                        else
-                            u.name
-                        end) as uom_name,
-                        sum(l.product_uom_qty * u.factor) as product_uom_qty,
+                        u.name as uom_name,
+                        sum(l.product_uom_qty / u.factor * pu.factor) as product_uom_qty,
                         sum(l.product_uom_qty * l.price_unit) as price_total,
                         pt.categ_id, l.order_id
                     from
-                     sale_order_line l ,product_uom u, product_product p, product_template pt
+                     sale_order_line l ,product_uom u, product_product p, product_template pt, product_uom pu
                      where u.id = l.product_uom
                      and pt.id = p.product_tmpl_id
                      and p.id = l.product_id
+                     and pu.id = pt.uom_id
                       group by l.id, l.order_id, l.product_id, u.name, pt.categ_id, u.uom_type, u.category_id) el
                 where s.id = el.order_id
                 group by el.id,

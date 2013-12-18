@@ -27,8 +27,8 @@ import base64
 import StringIO
 import csv
 
-class wizard_hq_report(osv.osv_memory):
-    _name = "wizard.hq.report"
+class wizard_hq_report_oca(osv.osv_memory):
+    _name = "wizard.hq.report.oca"
     
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True),
@@ -51,7 +51,7 @@ class wizard_hq_report(osv.osv_memory):
         if wizard.period_id:
             data['form'].update({'period_id': wizard.period_id.id})
 
-        return {'type': 'ir.actions.report.xml', 'report_name': 'hq.export', 'datas': data}
+        return {'type': 'ir.actions.report.xml', 'report_name': 'hq.oca', 'datas': data}
     
-wizard_hq_report()
+wizard_hq_report_oca()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

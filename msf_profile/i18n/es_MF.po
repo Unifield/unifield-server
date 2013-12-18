@@ -14145,7 +14145,7 @@ msgstr "Este valor se calcula como la fecha mínima prevista para la compra de t
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:411
 #, python-format
-msgid "Some documents linked to this partner needs to be closed or canceled before deactivating the partner: %s"
+msgid "Some documents linked to this partner need to be closed or cancelled before deactivating the partner: %s"
 msgstr "Deben cerrarse o cancelarse algunos documentos relacionados con este tercero antes de desactivar el tercero: %s"
 
 #. modules: base_setup, unifield_setup
@@ -25032,7 +25032,7 @@ msgstr "Falta ubicación "
 
 #. module: account_invoice_split
 #: view:wizard.split.invoice:0
-msgid "Select the lines to be splitted; the wizard will create a new invoice and adjust the original one."
+msgid "Select the lines to be split; the wizard will create a new invoice and adjust the original one."
 msgstr "Seleccione las líneas que desea dividir, el asistente creará una nueva factura y ajustará la original."
 
 #. module: product

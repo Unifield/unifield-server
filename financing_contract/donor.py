@@ -31,12 +31,11 @@ class financing_contract_donor(osv.osv):
         'code': fields.char('Donor code', size=16, required=True),
         'active': fields.boolean('Active'),
         # Define for _inherits
-        'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade", required=True),
+        'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade"),
     }
     
     _defaults = {
         'active': True,
-        'format_id': lambda self,cr,uid,context: self.pool.get('financing.contract.format').create(cr, uid, {}, context=context)
     }
 
     def _check_unicity(self, cr, uid, ids, context=None):

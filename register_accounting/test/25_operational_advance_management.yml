@@ -62,6 +62,8 @@
     address_contact_id: res_partner_address_tempo
     address_invoice_id: res_partner_address_tempo
     check_total: 400.0
+    document_date: !eval time.strftime('%Y-%m-02')
+    date_invoice: !eval time.strftime('%Y-%m-10')
     company_id: base.main_company
     currency_id: base.EUR
     invoice_line:
@@ -101,8 +103,8 @@
     statement_id: account_bank_statement_7
     account_id: account_account_advance0
     amount: -500.0
-    date: !eval time.strftime('%Y-%m-%d')
-    document_date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-%m-12')
+    document_date: !eval time.strftime('%Y-%m-10')
     name: Food for staff
     employee_id: employee_brikabrak
     sequence: 0.0
@@ -146,7 +148,7 @@
   !record {model: wizard.cash.return, id: wiz_advance0, context: {'active_id': ref("account_bank_statement_line0"), 'active_ids': [ref("account_bank_statement_line0")], 'amount': -500.0, 'statement_id': ref("account_bank_statement_7")}}:
     returned_amount: 100.0
     invoice_id: account_invoice_food_for_staff0
-    date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-%m-14')
 -
   I check that the Justified Amount is calculated
 -
@@ -188,12 +190,15 @@
 -
   !python {model: account.bank.statement.line}: |
     advance_line = self.browse(cr, uid, ref("account_bank_statement_line0"))
-    res = self.search(cr, uid, [('amount', '=', 500.0), ('employee_id', '=', ref("employee_brikabrak")), ('account_id', '=', ref("account_account_advance0")), ('statement_id', '=', ref("account_bank_statement_7"))])
+    res = self.search(cr, uid, [('amount', '=', 500.0), ('employee_id', '=', ref("employee_brikabrak")), ('account_id', '=', ref("account_account_advance0")), ('statement_id', '=', ref("account_bank_statement_7")), ('id', '!=', ref("account_bank_statement_line0"))])
     res_line = self.browse(cr, uid, res[0])
     assert advance_line.account_id.id == res_line.account_id.id, "Found line don't have the same account."
     assert advance_line.employee_id.id == res_line.employee_id.id, "Found line don't have the same employee."
     assert advance_line.amount == -res_line.amount, "Found line don't have the opposite amount."
     assert advance_line.move_ids != res_line.move_ids, "Found line have the same move !"
+    import time
+    assert res_line.document_date == time.strftime('%Y-%m-14'), "Wrong document date: %s. Expected: %s" % (advance_line.document_date, time.strftime('%Y-%m-14'))
+    assert res_line.date == time.strftime('%Y-%m-14'), "Wrong posting date: %s. Expected: %s" % (advance_line.date, time.strftime('%Y-%m-14'))
 -
   I check that there is a journal entry with the invoice amount and that the lines are reconciled
 -
@@ -233,8 +238,8 @@
     statement_id: account_bank_statement_8
     account_id: account_account_advance0
     amount: -500.0
-    date: !eval time.strftime('%Y-%m-%d')
-    document_date: !eval time.strftime('%Y-%m-%d')
+    document_date: !eval time.strftime('%Y-%m-16')
+    date: !eval time.strftime('%Y-%m-17')
     name: Food for staff
     employee_id: employee_brikabrak
     sequence: 0.0
@@ -259,7 +264,7 @@
 -
   !record {model: wizard.cash.return, id: wiz_advance1, context: {'active_id': ref("account_bank_statement_line1"), 'active_ids': [ref("account_bank_statement_line1")], 'amount': -500.0, 'statement_id': ref("account_bank_statement_8"), 'statement_line_id': ref("account_bank_statement_line1")}}:
     returned_amount: 100.0
-    date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-%m-18')
 -
   I check that the Justified Amount is calculated
 -
@@ -304,7 +309,7 @@
   I register an expense of 400 EUR and select a Supplier as a Third Party
 -
   !record {model: wizard.advance.line, id: wiz_adv_line0}:
-    date: !eval time.strftime('%Y-%m-%d')
+    document_date: !eval time.strftime('%Y-%m-05')
     description: Food for staff
     account_id: account_account_expense0
     partner_id: res_partner_supplier_0
@@ -331,13 +336,232 @@
       st_line = self.browse(cr, uid, st_line_id)
       assert st_line.state == 'hard', "Line %s is not in hard posted state" % st_line_id
 -
-  I check that the Cash Register have a line which correspond to the advance. So that entries are matched.
+  I check that the Cash Register have a line which correspond to the advance return. So that entries are matched.
 -
   !python {model: account.bank.statement.line}: |
     advance_line = self.browse(cr, uid, ref("account_bank_statement_line1"))
-    res = self.search(cr, uid, [('amount', '=', 500.0), ('employee_id', '=', ref("employee_brikabrak")), ('account_id', '=', ref("account_account_advance0")), ('statement_id', '=', ref("account_bank_statement_8"))])
+    res = self.search(cr, uid, [('amount', '=', 500.0), ('employee_id', '=', ref("employee_brikabrak")), ('account_id', '=', ref("account_account_advance0")), ('statement_id', '=', ref("account_bank_statement_8")), ('id', '!=', ref("account_bank_statement_line1"))])
     res_line = self.browse(cr, uid, res[0])
     assert advance_line.account_id.id == res_line.account_id.id, "Found line don't have the same account."
     assert advance_line.employee_id.id == res_line.employee_id.id, "Found line don't have the same employee."
     assert advance_line.amount == -res_line.amount, "Found line don't have the opposite amount."
     assert advance_line.move_ids != res_line.move_ids, "Found line have the same move !"
+    import time
+    date = time.strftime('%Y-%m-18')
+    assert res_line.document_date == date, "Wrong document date: %s. Expected: %s" % (res_line.document_date, date)
+    assert res_line.date == date, "Wrong date: %s. Expected: %s" % (res_line.date, date)
+-
+  I check that the Cash Register have a line that correspond to the wizard advance line and that this line have right document/posting date.
+-
+  !python {model: account.bank.statement.line}: |
+    res = self.search(cr, uid, [('amount', '=', -400.0), ('name', '=', 'Food for staff')])
+    assert len(res) == 1, "Expected register line found: 1. Find: %s" % len(res)
+    res_line = self.browse(cr, uid, res[0])
+    import time
+    ddate = time.strftime('%Y-%m-05')
+    date = time.strftime('%Y-%m-18')
+    assert res_line.document_date == ddate, "Wrong document date: %s. Expected: %s" % (res_line.document_date, ddate)
+    assert res_line.date == date, "Wrong date: %s. Expected: %s" % (res_line.date, date)
+-
+  In order to test an advanced use case I create a new advance line on which I will return 5 advance line.
+-
+  I create supplier Sup 1 with 401 account
+-
+  !record {model: res.partner, id: supplier_1}:
+    address:
+      - country_id: base.in
+      - street: Somewhere
+    name: 'Supplier 1'
+    supplier: true
+    property_account_payable: account_account_payable_supplier0
+-
+  I create supplier Sup 2 with 401 account
+-
+  !record {model: res.partner, id: supplier_2}:
+    address:
+      - country_id: base.in
+      - street: Anywhere
+    name: 'Supplier 2'
+    supplier: true
+    property_account_payable: account_account_payable_supplier0
+-
+  I create the register line
+-
+  !record {model: account.bank.statement.line, id: absl_touchy_case}:
+    statement_id: account_bank_statement_8
+    account_id: account_account_advance0
+    amount: -1000.0
+    document_date: !eval time.strftime('%Y-%m-20')
+    date: !eval time.strftime('%Y-%m-21')
+    name: Touchy case
+    employee_id: employee_brikabrak
+    sequence: 0.0
+    type: general
+-
+  I hard post the Cash advance
+-
+   !python {model: account.bank.statement.line}: |
+        self.button_hard_posting(cr, uid, [ref("absl_touchy_case")], context={'from_yml':True})
+-
+  I create the cash advance wizard
+-
+  !record {model: wizard.cash.return, id: wiz_advance2, context: {'active_id': ref("absl_touchy_case"), 'active_ids': [ref("absl_touchy_case")], 'amount': -100.0, 'statement_id': ref("account_bank_statement_8"), 'statement_line_id': ref("absl_touchy_case")}}:
+    returned_amount: 0.0
+    date: !eval time.strftime('%Y-%m-22')
+-
+ I create some advance lines, first Advance Line 1
+-
+  !record {model: wizard.advance.line, id: adv_01}:
+    document_date: !eval time.strftime('%Y-%m-01')
+    description: Touchy 1
+    account_id: account_6270
+    partner_id: supplier_1
+    amount: 100.0
+    wizard_id: wiz_advance2
+    analytic_distribution_id: analytic_distrib1
+-
+  Then Advance Line 2
+-
+  !record {model: wizard.advance.line, id: adv_02}:
+    document_date: !eval time.strftime('%Y-%m-01')
+    description: Touchy 2
+    account_id: account_6270
+    partner_id: supplier_1
+    amount: 200.0
+    wizard_id: wiz_advance2
+    analytic_distribution_id: analytic_distrib1
+-
+  Advance Line 3
+-
+  !record {model: wizard.advance.line, id: adv_03}:
+    document_date: !eval time.strftime('%Y-%m-02')
+    description: Touchy 3
+    account_id: account_6301
+    partner_id: supplier_1
+    amount: 150.0
+    wizard_id: wiz_advance2
+    analytic_distribution_id: analytic_distrib1
+-
+  Advance Line 4
+-
+  !record {model: wizard.advance.line, id: adv_04}:
+    document_date: !eval time.strftime('%Y-%m-02')
+    description: Touchy 4
+    account_id: account_6301
+    partner_id: supplier_2
+    amount: 150.0
+    wizard_id: wiz_advance2
+    analytic_distribution_id: analytic_distrib1
+-
+  And finally Advance Line 5
+-
+  !record {model: wizard.advance.line, id: adv_05}:
+    document_date: !eval time.strftime('%Y-%m-02')
+    description: Touchy 5
+    account_id: account_6270
+    partner_id: supplier_2
+    amount: 400.0
+    wizard_id: wiz_advance2
+    analytic_distribution_id: analytic_distrib1
+-
+  I attach these lines to the wizard
+-
+  !python {model: wizard.cash.return, id: wiz_advance2}: |
+        self.write(cr, uid, [ref("wiz_advance2")], {'advance_line_ids': [(4, ref("adv_01")), (4, ref('adv_02')), (4, ref('adv_03')), (4, ref('adv_04')), (4, ref('adv_05'))]}, context={'active_id': ref("absl_touchy_case"), 'amount': -1000.0, 'statement_line_id': ref("absl_touchy_case"), 'statement_line_id': ref("absl_touchy_case")})
+-
+  I check that the Justified Amount is calculated
+-
+  !python {model: wizard.cash.return}: |
+    # Call of default function that initialize some fields
+    begin_wizard = self.default_get(cr, uid, [ref("wiz_advance2")], context={'active_id': ref("absl_touchy_case"), 'amount': -1000.0, 'statement_line_id': ref("absl_touchy_case")})
+    self.write(cr, uid, [ref("wiz_advance2")], begin_wizard)
+    # prepare some values
+    returned_amount = self.pool.get('wizard.cash.return').browse(cr, uid, ref("wiz_advance2")).returned_amount
+    # update the total_amount when a user give a returned amount and do a modification on the wizard
+    onchange_res = self.onchange_returned_amount(cr, uid, [ref("wiz_advance2")], returned_amount)
+    # writting changes
+    self.write(cr, uid, [ref("wiz_advance2")], onchange_res.get('value'))
+    total = self.pool.get('wizard.cash.return').browse(cr, uid, ref("wiz_advance2")).total_amount
+    assert total == 0.0, "Error on dynamic change on the returned_amount field. Expected 0. Current: %s" % total
+-
+  I click on the 'Ok' button
+-
+  !python {model: wizard.cash.return}: |
+    res = self.action_confirm_cash_return(cr, uid, [ref("wiz_advance2")], {'active_id': ref("absl_touchy_case"), 'active_ids': [ref("absl_touchy_case")], 'amount': -1000.0, 'statement_id': ref("account_bank_statement_8"), 'statement_line_id': ref("absl_touchy_case")})
+    assert res.get('type') == 'ir.actions.act_window_close', "Wizard is not closed correctly"
+-
+  I check that register have right returned lines
+-
+  !python {model: account.bank.statement.line}: |
+    import time, logging
+    # Prepare some values
+    wizard_date = time.strftime('%Y-%m-22')
+    first_date = time.strftime('%Y-%m-01')
+    second_date = time.strftime('%Y-%m-02')
+    # Check returned line
+    logging.getLogger('tests').log(logging.TEST, "I check returned line. Should have an amount of 1000.0")
+    return_ids = self.search(cr, uid, [('statement_id', '=', ref('account_bank_statement_8')), ('amount', '=', 1000.0), ('account_id', '=', ref('account_account_advance0'))])
+    assert len(return_ids) == 1, "Should be only 1 returned line. Current: %s" % len(return_ids)
+    return_line = self.browse(cr, uid, return_ids)[0]
+    assert return_line.date == wizard_date, "Wrong posting date on returned line: %s. Expected: %s." % (return_line.date, wizard_date)
+    assert return_line.document_date == wizard_date, "Wrong document date on returned line: %s. Expected: %s." % (return_line.document_date, wizard_date)
+    assert return_line.employee_id != False, "Returned line should have an employee as Third Party."
+    assert return_line.employee_id.id == ref('employee_brikabrak'), "Wrong employee on returned line. Expected: Brik Abrak"
+    # Check Advance line 1
+    logging.getLogger('tests').log(logging.TEST, "I check advance line 1")
+    adv_01_ids = self.search(cr, uid, [('statement_id', '=', ref('account_bank_statement_8')), ('account_id', '=', ref('account_6270')), ('amount', '=', -100.0), ('partner_id', '=', ref('supplier_1'))])
+    assert len(adv_01_ids) == 1, "One advance line 1 expected. Current: %s" % len(adv_01_ids)
+    line = self.browse(cr, uid, adv_01_ids)[0]
+    assert line.date == wizard_date, "Wrong date on Advance Line 1: %s. Expected: %s" % (line.date, wizard_date)
+    assert line.document_date == first_date, "Wrong document date on Advance Line 1: %s. Expected: %s" % (line.document_date, first_date)
+    # Check Advance line 2
+    logging.getLogger('tests').log(logging.TEST, "I check advance line 2")
+    adv_02_ids = self.search(cr, uid, [('statement_id', '=', ref('account_bank_statement_8')), ('account_id', '=', ref('account_6270')), ('amount', '=', -200.0), ('partner_id', '=', ref('supplier_1'))])
+    assert len(adv_02_ids) == 1, "One advance line 2 expected. Current: %s" % len(adv_02_ids)
+    line = self.browse(cr, uid, adv_02_ids)[0]
+    assert line.date == wizard_date, "Wrong date on Advance Line 2: %s. Expected: %s" % (line.date, wizard_date)
+    assert line.document_date == first_date, "Wrong document date on Advance Line 2: %s. Expected: %s" % (line.document_date, first_date)
+    # Check Advance line 3
+    logging.getLogger('tests').log(logging.TEST, "I check advance line 3")
+    adv_03_ids = self.search(cr, uid, [('statement_id', '=', ref('account_bank_statement_8')), ('account_id', '=', ref('account_6301')), ('amount', '=', -150.0), ('partner_id', '=', ref('supplier_1'))])
+    assert len(adv_03_ids) == 1, "One advance line 3 expected. Current: %s" % len(adv_03_ids)
+    line = self.browse(cr, uid, adv_03_ids)[0]
+    assert line.date == wizard_date, "Wrong date on Advance Line 3: %s. Expected: %s" % (line.date, wizard_date)
+    assert line.document_date == second_date, "Wrong document date on Advance Line 3: %s. Expected: %s" % (line.document_date, second_date)
+    # Check Advance line 4
+    logging.getLogger('tests').log(logging.TEST, "I check advance line 4")
+    adv_04_ids = self.search(cr, uid, [('statement_id', '=', ref('account_bank_statement_8')), ('account_id', '=', ref('account_6301')), ('amount', '=', -150.0), ('partner_id', '=', ref('supplier_2'))])
+    assert len(adv_04_ids) == 1, "One advance line 4 expected. Current: %s" % len(adv_04_ids)
+    line = self.browse(cr, uid, adv_04_ids)[0]
+    assert line.date == wizard_date, "Wrong date on Advance Line 4: %s. Expected: %s" % (line.date, wizard_date)
+    assert line.document_date == second_date, "Wrong document date on Advance Line 4: %s. Expected: %s" % (line.document_date, second_date)
+    # Check Advance line 5
+    logging.getLogger('tests').log(logging.TEST, "I check advance  line 5")
+    adv_05_ids = self.search(cr, uid, [('statement_id', '=', ref('account_bank_statement_8')), ('account_id', '=', ref('account_6270')), ('amount', '=', -400.0), ('partner_id', '=', ref('supplier_2'))])
+    assert len(adv_05_ids) == 1, "One advance line 5 expected. Current: %s" % len(adv_05_ids)
+    line = self.browse(cr, uid, adv_05_ids)[0]
+    assert line.date == wizard_date, "Wrong date on Advance Line 5: %s. Expected: %s" % (line.date, wizard_date)
+    assert line.document_date == second_date, "Wrong document date on Advance Line 5: %s. Expected: %s" % (line.document_date, second_date)
+-
+  I check for each supplier that their is a Journal Entry
+-
+  !python {model: account.move.line}: |
+    import time
+    # Prepare some values
+    wizard_date = time.strftime('%Y-%m-22')
+    # Fetch supplier 1 line(s)
+    sup1 = self.search(cr, uid, [('partner_id', '=', ref('supplier_1')), ('credit', '=', 450.0)])
+    # Fetch supplier 2 line(s)
+    sup2 = self.search(cr, uid, [('partner_id', '=', ref('supplier_2')), ('credit', '=', 550.0)])
+    # Check supplier 1 result
+    assert len(sup1) == 1, "Do not find right supplier line number. Expected: 1. Current: %s" % len(sup1)
+    line = self.browse(cr, uid, sup1)[0]
+    assert line.date == wizard_date, "Wrong posting date for Supplier 1: %s. Expected: %s" % (line.date, wizard_date)
+    assert line.move_id.date == wizard_date, "Wrong posting date for the JE from Supplier 1: %s. Expected: %s" % (line.move_id.date, wizard_date)
+    assert line.move_id.document_date == wizard_date, "Wrong document date for the JE from Supplier 1: %s. Expected: %s" % (line.move_id.document_date, wizard_date)
+    # Check supplier 2 result
+    assert len(sup2) == 1, "Do not find right supplier line number. Expected: 1. Current: %s" % len(sup2)
+    line2 = self.browse(cr, uid, sup2)[0]
+    assert line2.date == wizard_date, "Wrong posting date for Supplier 2: %s. Expected: %s" % (line2.date, wizard_date)
+    assert line2.move_id.date == wizard_date, "Wrong posting date for the JE from Supplier 2: %s. Expected: %s" % (line2.move_id.date, wizard_date)
+    assert line2.move_id.document_date == wizard_date, "Wrong document date for the JE from Supplier 2: %s. Expected: %s" % (line2.document_date, wizard_date)

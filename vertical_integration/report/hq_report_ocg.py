@@ -29,7 +29,7 @@ import os
 
 from report import report_sxw
 
-class report_hq_export(report_sxw.report_sxw):
+class hq_report_ocg(report_sxw.report_sxw):
             
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
@@ -49,29 +49,6 @@ class report_hq_export(report_sxw.report_sxw):
             else:
                 return browse_account.code
         return ""
-
-# Commented for OCG, but can be useful for other OCs
-#    def create_counterpart(self, cr, uid, line_key, line_debit, counterpart_date, period_name):
-#        pool = pooler.get_pool(cr.dbname)
-#        # method to create counterpart line
-#        if len(line_key) > 3 and line_debit != 0.0:
-#            journal = pool.get('account.journal').browse(cr, uid, line_key[1])
-#            currency = pool.get('res.currency').browse(cr, uid, line_key[2])
-#            return [journal.instance_id and journal.instance_id.code or "",
-#                    line_key[0],
-#                    "",
-#                    line_key[3],
-#                    "",
-#                    counterpart_date,
-#                    counterpart_date,
-#                    period_name,
-#                    "10100055 - Buffer Account",
-#                    "",
-#                    "",
-#                    "",
-#                    line_debit > 0 and "0.00" or round(-line_debit, 2),
-#                    line_debit > 0 and round(line_debit, 2) or "0.00",
-#                    currency.name]
     
     def create_subtotal(self, cr, uid, line_key, line_debit, counterpart_date, period_name, department_info):
         pool = pooler.get_pool(cr.dbname)
@@ -111,22 +88,6 @@ class report_hq_export(report_sxw.report_sxw):
                      line_debit > 0 and round(line_debit, 2) or "0.00",
                      line_debit > 0 and "0.00" or round(-line_debit, 2),
                      currency.name]]
-# Commented for OCG, but can be useful for other OCs
-#                    ,[journal.instance_id and journal.instance_id.code or "",
-#                     journal.code,
-#                     "",
-#                     "",
-#                     "",
-#                     counterpart_date,
-#                     counterpart_date,
-#                     period_name,
-#                     "10100055 - Buffer Account",
-#                     "",
-#                     "",
-#                     "",
-#                     line_debit > 0 and "0.00" or round(-line_debit, 2),
-#                     line_debit > 0 and round(line_debit, 2) or "0.00",
-#                     currency.name]]
         
     def create(self, cr, uid, ids, data, context=None):
         pool = pooler.get_pool(cr.dbname)
@@ -167,14 +128,14 @@ class report_hq_export(report_sxw.report_sxw):
                          'Third Parties',
                          'Booking Debit',
                          'Booking Credit',
-                         'Booking Currency']
+                         'Booking Currency',
+                         'Field Activity']
         
         # Initialize lists: one for the first report...
         first_result_lines = []
         # ...and subdivisions for the second report.
         second_result_lines = []
         main_lines = {}
-        main_lines_debit = {}
         account_lines_debit = {}
         # Get department info code: 3 first characters of main instance's code
         department_info = ""
@@ -217,7 +178,7 @@ class report_hq_export(report_sxw.report_sxw):
             first_result_lines.append(formatted_data)
             
             # For second report: add to corresponding sub
-            if journal.type in ['correction', 'intermission'] or account.is_settled_at_hq:
+            if journal.type in ['correction', 'intermission'] or not account.shrink_entries_for_hq:
                 if (journal.code, journal.id, currency.id) not in main_lines:
                     main_lines[(journal.code, journal.id, currency.id)] = []
                 main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + formatted_data[11:12] + formatted_data[13:17])
@@ -266,25 +227,15 @@ class report_hq_export(report_sxw.report_sxw):
                               analytic_line.functional_currency_id and analytic_line.functional_currency_id.name or ""]
             first_result_lines.append(formatted_data)
             
-            # For second report: add to regular lines
+            cost_center = formatted_data[11][:5] or " "
+            field_activity = formatted_data[11][6:] or " "
             
-# Commented for OCG, but can be useful for other OCs
-#            line_name = ""
-#            if journal.type == 'cash':
-#                line_name = "Tresorerie des missions cash " + journal.code + " - Contrepartie compte d'expense"
-#            elif journal.type == 'bank':
-#                line_name = "Tresorerie des missions banque " + journal.code + " - Contrepartie compte d'expense"
-#            elif journal.type == 'cheque':
-#                line_name = "Tresorerie des missions cheque " + journal.code + " - Contrepartie compte d'expense"
-#            elif account.user_type and account.user_type.code == 'payable':
-#                line_name = "Local A/P - Contrepartie compte d'expense"
-#            elif account.user_type and account.user_type.code == 'receivable':
-#                line_name = "Local A/R - Contrepartie compte d'expense"
-#            elif account.accrual_account:
-#                line_name = "Local accrual - Contrepartie compte d'expense"
             if (journal.code, journal.id, currency.id) not in main_lines:
                 main_lines[(journal.code, journal.id, currency.id)] = []
-            main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + formatted_data[11:12] + formatted_data[13:17])
+            #main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + formatted_data[11:12] + formatted_data[13:17])
+            main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + [cost_center] + formatted_data[13:17] + [field_activity])
+
+        
         
         first_result_lines = sorted(first_result_lines, key=lambda line: line[2])
         first_report = [first_header] + first_result_lines
@@ -343,5 +294,5 @@ class report_hq_export(report_sxw.report_sxw):
         os.unlink(second_fileobj.name)
         return (out, 'zip')
 
-report_hq_export('report.hq.export', 'account.move.line', False, parser=False)
+hq_report_ocg('report.hq.ocg', 'account.move.line', False, parser=False)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
