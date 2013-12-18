@@ -112,9 +112,9 @@ class account_account(osv.osv):
                 if isinstance(instance_ids, (int, long)):
                     instance_ids = [instance_ids]
                 if len(instance_ids) == 1:
-                    query += link + 'instance_id = %s'
+                    query += link + 'l.instance_id = %s'
                 else:
-                    query += link + 'instance_id in %s'
+                    query += link + 'l.instance_id in %s'
                 query_params += tuple(instance_ids)
         # Do normal process
         if children_and_consolidated:
