@@ -1182,14 +1182,15 @@ class Form(SecuredController):
 
         defaults += [
             {'text': _('Set to default value'), 'action': "set_to_default('%s', '%s')" % (field, model)},
-            {'text': _('Set as default'), 'action': "set_as_default('%s', '%s')"  % (field, model)}
+            {'text': _('Set as default'), 'action': "set_as_default('%s', '%s')"  % (field, model)},
+            {'text': _('Reset default'), 'action': "reset_default('%s', '%s')"  % (field, model)},
         ]
 
         if kind=='many2one':
 
             act = (value or None) and "javascript: void(0)"
 
-            actions = [{'text': _('Action'), 'relation': relation, 'field': field, 'action': act and "do_action(this, true)"},
+            actions += [{'text': _('Action'), 'relation': relation, 'field': field, 'action': act and "do_action(this, true)"},
                        {'text': _('Report'), 'action': act and "do_report('%s', '%s')" %(field, relation)}]
             
             res = rpc.RPCProxy('ir.values').get('action', 'client_action_relate', [(relation, False)], False, rpc.session.context)
