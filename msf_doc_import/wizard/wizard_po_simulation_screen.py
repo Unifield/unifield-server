@@ -24,6 +24,7 @@ import threading
 import pooler
 import base64
 import time
+import xml.etree.ElementTree as ET
 
 from mx import DateTime
 
@@ -139,6 +140,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                                    ('simu_progress', 'Simulation in progress'),
                                    ('simu_done', 'Simulation done'),
                                    ('import_progress', 'Import in progress'),
+                                   ('error', 'Error'),
                                    ('done', 'Done')], 
                                    string='State',
                                    readonly=True),
@@ -291,6 +293,97 @@ class wizard_import_po_simulation_screen(osv.osv):
         
         return self.go_to_simulation(cr, uid, ids, context=context)
 
+    def get_values_from_xml(self, cr, uid, file_to_import, context=None):
+        '''
+        Read the XML file and put data in values
+        '''
+        values = {}
+        # Read the XML file
+        xml_file = base64.decodestring(file_to_import)
+
+        root = ET.fromstring(xml_file)
+        if root.tag != 'data':
+            return values
+    
+        records = []
+        rec_lines = []
+        rec = False
+
+        index = 0
+        for record in root:
+            if record.tag == 'record':
+                records.append(record)
+
+        if len(records) > 0:
+            rec = records[0]
+
+        def get_field_index(node, index):
+            if not index:
+                index = 0
+            if node.getchildren():
+                for subnode in node:
+                    index = get_field_index(subnode, index)
+                return index
+            else:
+                index += 1
+                values[index] = [node.attrib['name'], node.text or '']
+                return index
+
+        for field in rec:
+            if field.attrib['name'] != 'order_line':
+                index = get_field_index(field, index)
+            else:
+                index += 1
+                values[index] = ['line_number', 'external_ref', 
+                                 'product_code', 'product_name', 
+                                 'product_qty', 'product_uom',
+                                 'price_unit', 'currency_id',
+                                 'origin', 'date_planned',
+                                 'confirmed_delivery_date',
+                                 'nomen_manda_0', 'nomen_manda_1',
+                                 'nomen_manda_2', 'comment',
+                                 'notes', 'project_ref',
+                                 'message_esc1', 'message_esc2']
+                for line in field:
+                    rec_lines.append(line)
+
+        for line in rec_lines:
+            index += 1
+            values[index] = []
+            for fl in line:
+                if not fl.getchildren():
+                    values[index].append(fl.text or '')
+                else:
+                    for sfl in fl:
+                        values[index].append(sfl.text or '')
+
+        return values
+
+
+    def get_values_from_excel(self, cr, uid, file_to_import, context=None):
+        '''
+        Read the Excel XML file and put data in values
+        '''
+        values = {}
+        # Read the XML Excel file
+        xml_file = base64.decodestring(file_to_import)
+        fileobj = SpreadsheetXML(xmlstring=xml_file)
+           
+        # Read all lines
+        rows = fileobj.getRows()
+ 
+        # Get values per line
+        index = 0
+        for row in rows:
+            index += 1
+            values.setdefault(index, [])
+            for cell_nb in range(len(row)):
+                cell_data = row.cells and row.cells[cell_nb] and \
+                            row.cells[cell_nb].data
+                values[index].append(cell_data)
+
+        return values
+
 
     '''
     Simulate routine
@@ -362,7 +455,6 @@ class wizard_import_po_simulation_screen(osv.osv):
                 SIMU_LINES[wiz.id][l_num][l_prod][l_uom][line.in_qty].append(line.id)
 
             # Variables
-            values = {}
             lines_to_ignored = []   # Bad formatting lines
             file_format_errors = []
             values_header_errors = []
@@ -371,22 +463,8 @@ class wizard_import_po_simulation_screen(osv.osv):
 
             header_values = {}
 
-            # Read the XML Excel file
-            xml_file = base64.decodestring(wiz.file_to_import)
-            fileobj = SpreadsheetXML(xmlstring=xml_file)
-             
-            # Read all lines
-            rows = fileobj.getRows()
- 
-            # Get values per line
-            index = 0
-            for row in rows:
-                index += 1
-                values.setdefault(index, [])
-                for cell_nb in range(len(row)):
-                    cell_data = row.cells and row.cells[cell_nb] and \
-                                row.cells[cell_nb].data
-                    values[index].append(cell_data)
+#            values = self.get_values_from_excel(cr, uid, wiz.file_to_import, context=context)
+            values = self.get_values_from_xml(cr, uid, wiz.file_to_import, context=context)
 
             '''
             We check for each line if the number of columns is consistent
@@ -406,15 +484,15 @@ information must be on two columns : Column A for name of the field and column\
 
             if len(values.get(NB_OF_HEADER_LINES+1, [])) != NB_LINES_COLUMNS:
                 error_msg = _('Line 20 of the Excel file: This line is \
-mandatory and must have 17 columns. The values on this line must be the name \
-of the field for PO lines.')
+mandatory and must have %s columns. The values on this line must be the name \
+of the field for PO lines.') % NB_LINES_COLUMNS
                 file_format_errors.append(error_msg)
 
             for x in xrange(NB_OF_HEADER_LINES+2, len(values)+1):
                 if len(values.get(x, [])) != NB_LINES_COLUMNS:
                     lines_to_ignored.append(x)
                     error_msg = _('Line %s of the imported file: The line \
-information must be on 17 columns. The line %s has %s columns') % (x, x, len(values.get(x, [])))
+information must be on %s columns. The line %s has %s columns') % (x, NB_LINES_COLUMNS, x, len(values.get(x, [])))
                     file_format_errors.append(error_msg)
 
             nb_file_lines = len(values) - NB_OF_HEADER_LINES - 1
@@ -429,7 +507,7 @@ Nothing has been imported because of bad file format. See below :
                 for err in file_format_errors:
                     message += '%s\n' % err
 
-                self.write(cr, uid, [wiz.id], {'message': message}, context)
+                self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
                 res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
                 cr.commit()
                 cr.close()
@@ -449,7 +527,7 @@ IN THE FILE IS NOT THE SAME AS THE ORDER REFERENCE OF THE SIMULATION SCREEN.\
 
 YOU SHOULD IMPORT A FILE THAT HAS THE SAME ORDER REFERENCE THAN THE SIMULATION\
 SCREEN !'''
-                self.write(cr, uid, [wiz.id], {'message': message}, context)
+                self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
                 res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
                 cr.commit()
                 cr.close()

@@ -26,7 +26,7 @@
         <field name="origin">${o.origin or ''}</field>
         <field name="project_ref">${o.project_ref or ''}</field>
         <field name="message_esc">${o.message_esc or ''}</field>
-        <field name="">
+        <field name="order_line">
         % for l in o.order_line:
 			<record>
 				<field name="line_number">${l.line_number or ''}</field>
@@ -45,6 +45,7 @@
 				</field>
 				<field name="origin">${l.origin}</field>
 				<field name="date_planned">${l.date_planned}</field>
+				<field name="confirmed_delivery_date">${l.confirmed_delivery_date}</field>
 				<field name="nomen_manda_0" key="name">
 					<field name="name">${l.nomen_manda_0 and l.nomen_manda_0.name or ''}</field>
 				</field>
