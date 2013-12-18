@@ -33,6 +33,7 @@ class analytic_distribution(osv.osv):
         'purchase_line_ids': fields.one2many('purchase.order.line', 'analytic_distribution_id', string="Purchase Lines"),
         'sale_order_ids': fields.one2many('sale.order', 'analytic_distribution_id', string="Sales"),
         'sale_order_line_ids': fields.one2many('sale.order.line', 'analytic_distribution_id', string="Sale Order Lines"),
+        'partner_type': fields.text(string='Partner Type of FO/PO', required=False, readonly=True),#UF-2138: added the ref to partner type of FO/PO
     }
 
     def copy(self, cr, uid, id, default=None, context=None):
