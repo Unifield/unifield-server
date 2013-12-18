@@ -147,10 +147,8 @@ class hq_entries(osv.osv):
             res[e.id] = False
             if e.cost_center_id.id != e.cost_center_id_first_value.id:
                 res[e.id] = True
-                continue
-            if e.original_id and e.original_id.cost_center_id.id != e.cost_center_id.id:
+            elif e.original_id and e.original_id.cost_center_id.id != e.cost_center_id.id:
                 res[e.id] = True
-                continue
         return res
 
     def _get_account_changed(self, cr, uid, ids, field_name, arg, context=None):
@@ -166,10 +164,8 @@ class hq_entries(osv.osv):
             res[e.id] = False
             if e.account_id.id != e.account_id_first_value.id:
                 res[e.id] = True
-                continue
-            if e.original_id and e.original_id.account_id.id != e.account_id.id:
+            elif e.original_id and e.original_id.account_id.id != e.account_id.id:
                 res[e.id] = True
-                continue
         return res
 
     _columns = {
