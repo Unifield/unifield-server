@@ -26,6 +26,18 @@ class so_po_common(osv.osv_memory):
     _name = "so.po.common"
     _description = "Common methods for SO - PO"
     
+    # UTP-952: get the partner type, for the case of intermission and section
+    def get_partner_type(self, cr, uid, partner_name, context=None):
+        if not context:
+            context = {}
+        context.update({'active_test': False})
+        partner_obj = self.pool.get('res.partner')
+        ids = partner_obj.search(cr, uid, [('name', '=', partner_name)], context=context)
+        if not ids:
+            raise Exception("The partner %s is not found in the system. The operation is thus interrupted." % partner_name)
+        
+        return partner_obj.read(cr, uid, ids, ['partner_type'], context=context)[0]['partner_type']
+
     def get_partner_id(self, cr, uid, partner_name, context=None):
         if not context:
             context = {}
@@ -122,10 +134,14 @@ class so_po_common(osv.osv_memory):
     def update_next_line_number_fo_po(self, cr, uid, order_id, fo_po_obj, order_line_object, context):
         sequence_id = fo_po_obj.read(cr, uid, [order_id], ['sequence_id'], context=context)[0]['sequence_id'][0]
         
+        # Make sure that even if the FO/PO has no line, then the default value is 1
         cr.execute("select max(line_number) from " + order_line_object + " where order_id = " + str(order_id))
         for x in cr.fetchall():
             seq_tools = self.pool.get('sequence.tools')
-            seq_tools.reset_next_number(cr, uid, sequence_id, int(x[0]) + 1, context=context)
+            val = 1
+            if x and x[0]:
+                val = int(x[0]) + 1
+            seq_tools.reset_next_number(cr, uid, sequence_id, val, context=context)
         
         return True
 
@@ -172,7 +188,6 @@ class so_po_common(osv.osv_memory):
             header_result['transport_type'] = header_info.get('transport_type')
         if 'ready_to_ship_date' in header_info:
             header_result['ready_to_ship_date'] = header_info.get('ready_to_ship_date')
-            
             
         if 'analytic_distribution_id' in header_info: 
             header_result['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, header_info, context)
@@ -222,8 +237,9 @@ class so_po_common(osv.osv_memory):
         if 'is_a_counterpart' in header_info:
             header_result['is_a_counterpart'] = header_info.get('is_a_counterpart')
 
-        analytic_id = header_info.get('analytic_distribution_id', False)
-        if analytic_id:
+        # UTP-952: only retrieve the AD from the source if the partner type is not intermission or section        
+        partner_type = self.get_partner_type(cr, uid, source, context)
+        if partner_type not in ['section', 'intermission'] and header_info.get('analytic_distribution_id', False):
             header_result['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, header_info, context)
         
         partner_id = self.get_partner_id(cr, uid, source, context)
@@ -239,7 +255,7 @@ class so_po_common(osv.osv_memory):
         
         return header_result
     
-    def get_lines(self, cr, uid, line_values, po_id, so_id, for_update, so_called, context):
+    def get_lines(self, cr, uid, source, line_values, po_id, so_id, for_update, so_called, context):
         line_result = []
         update_lines = []
         
@@ -325,7 +341,9 @@ class so_po_common(osv.osv_memory):
                 if rec_id:
                     values['nomen_manda_3'] = rec_id
                 
-            if line_dict.get('analytic_distribution_id'):
+            # UTP-952: set empty AD for lines if the partner is intermission or section
+            partner_type = self.get_partner_type(cr, uid, source, context)
+            if partner_type not in ['section', 'intermission'] and line_dict.get('analytic_distribution_id'):
                 values['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, line_dict, context)
                     
             line_ids = False
