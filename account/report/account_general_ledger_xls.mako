@@ -233,8 +233,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['lname'] or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${((strip_name(line['line_corresp'].replace(', ',','),25)) or '')|x}</Data>
+<Cell ss:StyleID="ssAccountLineNumber">
+    <Data ss:Type="Number">${((strip_name(line['line_corresp'].replace(', ',''),25)) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${get_line_debit(line)}</Data>
@@ -275,7 +275,5 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
    <ProtectObjects>False</ProtectObjects>
    <ProtectScenarios>False</ProtectScenarios>
 </WorksheetOptions>
-<AutoFilter x:Range="R1C1:R1C18" xmlns="urn:schemas-microsoft-com:office:excel">
-</AutoFilter>
 </Worksheet>
 </Workbook>
