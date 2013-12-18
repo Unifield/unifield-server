@@ -1186,7 +1186,6 @@ class Form(SecuredController):
             {'text': _('Reset default'), 'action': "reset_default('%s', '%s')"  % (field, model)},
         ]
 
-        actions = [{'text': _('ActionJFB'), 'relation': 'ir.values', 'field': field, 'action_id': 787, 'action':'do_action(this, true)'}]
         if kind=='many2one':
 
             act = (value or None) and "javascript: void(0)"
