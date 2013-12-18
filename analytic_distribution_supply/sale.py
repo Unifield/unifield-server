@@ -135,10 +135,13 @@ class sale_order(osv.osv):
                         'cost_center_lines': [(0, 0, {'destination_id': destination_id[0], 'analytic_id': intermission_cc[1] , 'percentage':'100', 'currency_id': so.currency_id.id})]})
                     self.pool.get('sale.order.line').write(cr, uid, [line.id], {'analytic_distribution_id': distrib_id})
                     line = self.pool.get('sale.order.line').browse(cr, uid, line.id)
-                elif distrib_id and so.partner_id.partner_type == 'intermission':
-                    # Change CC lines
-                    for cc_line in ana_obj.browse(cr, uid, distrib_id).cost_center_lines:
-                        self.pool.get('cost.center.distribution.line').write(cr, uid, cc_line.id, {'analytic_id': intermission_cc[1]})
+                # UTP-952: remove the default intermission cc
+                #elif distrib_id and so.partner_id.partner_type == 'intermission':
+                #    # Change CC lines
+                #    for cc_line in ana_obj.browse(cr, uid, distrib_id).cost_center_lines:
+                #        # self.pool.get('cost.center.distribution.line').write(cr, uid, cc_line.id, {'analytic_id': intermission_cc[1]})
+                #        pass
+                        
                 if not distrib_id and not so.from_yml_test and not so.order_type in ('loan', 'donation_st', 'donation_exp'):
                     raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',))
                 # check distribution state

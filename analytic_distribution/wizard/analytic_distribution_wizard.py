@@ -81,12 +81,13 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, [context.get('parent_id')], context=context)
         if wiz and wiz[0]:
             purchase = wiz[0].purchase_id or wiz[0].purchase_line_id.order_id
-            if purchase and wiz[0].partner_type == 'intermission':
-                try:
-                    res['analytic_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                            'analytic_account_project_intermission')[1]
-                except ValueError:
-                    pass
+            # UTP-952: Remove the default intermission CC
+#            if purchase and wiz[0].partner_type == 'intermission':
+#                try:
+#                    res['analytic_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+#                            'analytic_account_project_intermission')[1]
+#                except ValueError:
+#                    pass
             if 'destination_id' in fields and wiz[0].account_id:
                 res['destination_id'] = wiz[0].account_id.default_destination_id and wiz[0].account_id.default_destination_id.id or False
 
@@ -181,7 +182,10 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 # Change OC field
                 fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fields:
-                    field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s]),  ('intermission_restricted', '=', [parent.purchase_id, parent.purchase_line_id, parent.partner_type])]" % oc_id)
+                    # UTP-952: Replaced the line below by another field.set by removing the intermission_restricted param
+                    # field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s]),  ('intermission_restricted', '=', [parent.purchase_id, parent.purchase_line_id, parent.partner_type])]" % oc_id)
+                    field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s])]" % oc_id)
+                    
                 # Change Destination field
                 dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
                 for field in dest_fields:
