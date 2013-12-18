@@ -29,10 +29,18 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
     _columns = {'revaluation_date': fields.date(
                     'Revaluation Date', readonly=True),
+                'revaluation_method': fields.selection(
+                    [('liquidity', u"Liquidity"),
+                     ('other_bs', u"Other B/S"),
+                     ],
+                    string=u"Revaluation method", required=True),
                 'fiscalyear_id': fields.many2one(
                     'account.fiscalyear', string=u"Fiscal year",
                     domain=[('state', '=', 'draft')],
                     required=True),
+                'period_id': fields.many2one(
+                    'account.period', string=u"Period",
+                    domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', '!=', 'created')]"),
                 'currency_table_id': fields.many2one(
                     'res.currency.table', string=u"Currency table",
                     domain=[('state', '=', 'valid')],
@@ -42,10 +50,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     #domain="[('type','=','general')]",
                     help=_("Journal used for revaluation entries."),
                     readonly=True),
-                'period_id': fields.many2one(
+                'result_period_id': fields.many2one(
                     'account.period', string=_(u"Entry period"),
-                    help=_("Period used for revaluation entries."),
-                    readonly=True),
+                    domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', '!=', 'created')]",
+                    help=_("Period used for revaluation entries.")),
                 'label': fields.char(
                     'Entry description',
                      size=100,
@@ -94,7 +102,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 _(u"No revaluation journal found!"))
         return journal_ids and journal_ids[0] or False
 
-    def _get_default_period_id(self, cr, uid, context=None):
+    def _get_default_result_period_id(self, cr, uid, context=None):
         """Get period (period 13) of the fiscal year."""
         if context is None:
             context = {}
@@ -103,46 +111,61 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         if fiscalyear_id:
             period_ids = period_obj.search(
                 cr, uid,
-                [('number', '=', 13), ('special', '=', True)],
+                [('number', '=', 13), ('fiscalyear_id', '=', fiscalyear_id),
+                 ('state', '!=', 'created')],
                 context=context)
             return period_ids and period_ids[0] or False
         return False
 
-    _defaults = {'label': "%(currency)s %(account)s "
-                          "%(rate)s currency revaluation",
-                 'revaluation_date': _get_default_revaluation_date,
-                 'fiscalyear_id': _get_default_fiscalyear_id,
-                 'period_id': _get_default_period_id,
-                 'journal_id': _get_default_journal_id}
+    _defaults = {
+        'label': "%(currency)s %(account)s %(rate)s currency revaluation",
+        'revaluation_method': lambda *args: 'liquidity',
+        #'revaluation_date': _get_default_revaluation_date,
+        'fiscalyear_id': _get_default_fiscalyear_id,
+        'result_period_id': _get_default_result_period_id,
+        'journal_id': _get_default_journal_id,
+    }
 
-    def on_change_fiscalyear_id(self, cr, uid, ids, fiscalyear_id):
-        if not fiscalyear_id:
+    def on_change_revaluation_method(
+            self, cr, uid, ids, method, fiscalyear_id, period_id):
+        """'on_change' method for the 'revaluation_method', 'fiscalyear_id' and
+        'period_id' fields.
+        """
+        if not method or not fiscalyear_id:
             return {}
+        value = {}
         warning = {}
         fiscalyear_obj = self.pool.get('account.fiscalyear')
+        period_obj = self.pool.get('account.period')
         move_obj = self.pool.get('account.move')
-        value = {'revaluation_date': False}
-        if fiscalyear_id:
-            fiscalyear = fiscalyear_obj.browse(cr, uid, fiscalyear_id)
+        fiscalyear = fiscalyear_obj.browse(cr, uid, fiscalyear_id)
+        # Check
+        previous_fiscalyear_ids = fiscalyear_obj.search(
+            cr, uid,
+            [('date_stop', '<', fiscalyear.date_start),
+             ('company_id', '=', fiscalyear.company_id.id)],
+            limit=1)
+        if previous_fiscalyear_ids:
+            special_period_ids = [p.id for p in fiscalyear.period_ids
+                                  if p.special == True]
+            opening_move_ids = []
+            if special_period_ids:
+                opening_move_ids = move_obj.search(
+                    cr, uid, [('period_id', '=', special_period_ids[0])])
+            if not opening_move_ids or not special_period_ids:
+                warning = {
+                    'title': _('Warning!'),
+                    'message': _('No opening entries in opening period for this fiscal year')
+                }
+        # Set values according to the user input
+        value['period_id'] = period_id
+        value['revaluation_date'] = False
+        if method == 'liquidity':
+            if period_id:
+                period = period_obj.browse(cr, uid, period_id)
+                value['revaluation_date'] = period.date_stop
+        else:
             value['revaluation_date'] = fiscalyear.date_stop
-            previous_fiscalyear_ids = fiscalyear_obj.search(
-                cr, uid,
-                [('date_stop', '<', fiscalyear.date_start),
-                 ('company_id', '=', fiscalyear.company_id.id)],
-                limit=1)
-            if previous_fiscalyear_ids:
-                special_period_ids = [p.id for p in fiscalyear.period_ids
-                                      if p.special == True]
-                opening_move_ids = []
-                if special_period_ids:
-                    opening_move_ids = move_obj.search(
-                        cr, uid, [('period_id', '=', special_period_ids[0])])
-                if not opening_move_ids or not special_period_ids:
-                    warning = {
-                        'title': _('Warning!'),
-                        'message': _('No opening entries in opening period for this fiscal year')
-                    }
-
         res = {'value': value, 'warning': warning}
         return res
 
@@ -240,7 +263,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             base_move = {'name': label,
                          'ref': "%s - %s" % (account.code, currency.name),
                          'journal_id': form.journal_id.id,
-                         'period_id': form.period_id.id,
+                         'period_id': form.result_period_id.id,
                          'document_date': form.revaluation_date,
                          'date': form.revaluation_date}
             return move_obj.create(cr, uid, base_move, context=context)
@@ -393,13 +416,19 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             #          "the currency table."))
             currency_codes_from_table[currency.name] = currency.id
 
-        # Search for accounts Balance Sheet to be eevaluated
-        # on those criterions
-        # - deferral method of account type is not None
-        account_ids = account_obj.search(
-            cr, uid,
-            [('currency_revaluation', '=', True)])
-             #('user_type.close_method', '!=', 'none'),
+        # Search for accounts Balance Sheet or Liquidity to be eevaluated
+        account_ids = []
+        if form.revaluation_method == 'liquidity':
+            account_ids = account_obj.search(
+                cr, uid,
+                [('currency_revaluation', '=', True), ('type', '=', 'liquidity')],
+                 #('user_type.close_method', '!=', 'none'),
+                context=context)
+        elif form.revaluation_method == 'other_bs':
+            account_ids = account_obj.search(
+                cr, uid,
+                [('currency_revaluation', '=', True), ('type', '!=', 'liquidity')],
+                context=context)
         if not account_ids:
             raise osv.except_osv(
                 _('Settings Error!'),
@@ -437,18 +466,18 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         #                    fiscalyear.code,)))
 
         period_ids = [p.id for p in form.fiscalyear_id.period_ids]
-        if not period_ids:
-            raise osv.except_osv(
-                _('Error!'),
-                _('No period found for the fiscalyear %s' % (form.fiscalyear_id.code,)))
+        if form.revaluation_method == 'other_bs':
+            if not period_ids:
+                raise osv.except_osv(
+                    _('Error!'),
+                    _('No period found for the fiscalyear %s' % (
+                        form.fiscalyear_id.code,)))
+        else:
+            period_ids = [form.period_id.id]
 
         # Get balance sums
         account_sums = account_obj.compute_revaluations(
-            cr, uid,
-            account_ids,
-            period_ids,
-            form.revaluation_date,
-            context=context)
+            cr, uid, account_ids, period_ids, form.revaluation_date, context=context)
         for account_id, account_tree in account_sums.iteritems():
             for currency_id, currency_tree in account_tree.iteritems():
                 # Check if the account move currency is declared in the
@@ -464,10 +493,9 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                         continue
                     # Update sums with compute amount currency balance
                     diff_balances = self._compute_unrealized_currency_gl(
-                        cr, uid, new_currency_id,
-                        sums, form, context=context)
-                    account_sums[account_id][currency_id][partner_id].\
-                        update(diff_balances)
+                        cr, uid, new_currency_id, sums, form, context=context)
+                    account_sums[account_id][currency_id][partner_id].update(
+                        diff_balances)
         # Create entries only after all computation have been done
         for account_id, account_tree in account_sums.iteritems():
             for currency_id, currency_tree in account_tree.iteritems():
@@ -484,14 +512,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     # Write an entry to adjust balance
                     new_ids = self._write_adjust_balance(
                         cr, uid,
-                        account_id,
-                        currency_id,
-                        partner_id,
-                        adj_balance,
-                        label,
-                        form,
-                        sums,
-                        context=context)
+                        account_id, currency_id, partner_id, adj_balance,
+                        label, form, sums, context=context)
                     created_ids.extend(new_ids)
 
         if created_ids:
