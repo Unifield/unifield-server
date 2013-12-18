@@ -86,7 +86,7 @@ class account_period(osv.osv):
                     "Cannot close this period at the HQ level. "
                     "All previous periods must be closed before closing this one."),
             }
-            check_states = ['created', 'draft', 'field-closed', 'mission-closed']
+            check_states = ['created', 'draft', 'field-closed', 'mission-closed', 'done']
             if not context.get('state'):
                 raise osv.except_osv(
                     _("Error"),
