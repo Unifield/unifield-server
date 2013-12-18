@@ -87,6 +87,7 @@ class account_chart(osv.osv_memory):
         if data['period_from'] and data['period_to']:
             result['periods'] = period_obj.build_ctx_periods(cr, uid, data['period_from'], data['period_to'])
         result['context'] = str({'fiscalyear': data['fiscalyear'], 'periods': result['periods'], \
+                                    'target_filename_prefix': 'Chart of Accounts',
                                     'state': data['target_move']})
         if data['fiscalyear']:
             result['name'] += ':' + fy_obj.read(cr, uid, [data['fiscalyear']], context=context)[0]['code']
