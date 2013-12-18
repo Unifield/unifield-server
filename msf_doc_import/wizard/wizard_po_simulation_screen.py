@@ -968,7 +968,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 price_change = not(res[line.id]['in_price'] == line.imp_price)
                 drd_change = not(res[line.id]['in_drd'] == line.imp_drd)
 
-                if prod_change or qty_change or price_change or drd_change:
+                if line.simu_id.state != 'draft' and (prod_change or qty_change or price_change or drd_change):
                     res[line.id]['change_ok'] = True
             elif line.type_change == 'del':
                 res[line.id]['imp_discrepancy'] = -(line.in_qty*line.in_price)
@@ -1131,6 +1131,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             drd_value = values[9]
             if drd_value and type(drd_value) == type(DateTime.now()):
                 write_vals['imp_drd'] = drd_value.strftime('%Y-%m-%d')
+            elif drd_value and isinstance(drd_value, str):
+                write_vals['imp_drd'] = drd_value
             elif drd_value:
                 err_msg = _('Incorrect date value for field \'Delivery Requested Date\' - Delivery Requested Date of the initial line kept.')
 
