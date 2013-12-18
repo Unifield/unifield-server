@@ -219,7 +219,7 @@ class hq_entries_validation(osv.osv_memory):
                 res_reverse = self.pool.get('account.move').reverse(cr, uid, move_id, date=line.date, context=context)
                 if not res_reverse:
                     raise osv.except_osv(_('Error'), _('An unexpected error occured. Please contact an administrator.'))
-                new_res_move = self.create_move(cr, uid, split_lines, line.period_id.id, line.currency_id.id, date=line.date, journal=od_journal_id)
+                new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id, line.currency_id.id, date=line.date, journal=od_journal_id)
                 # original move line
                 original_ml_result = res_move[line.id]
                 # Mark new journal items as corrections for the first one
