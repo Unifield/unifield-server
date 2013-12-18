@@ -21,6 +21,7 @@
 from osv import osv, fields
 
 import datetime
+import time
 from dateutil.relativedelta import relativedelta
 from tools.translate import _
 
@@ -46,6 +47,8 @@ class wizard_report_currency_table(osv.osv_memory):
             else:
                 data['form'].update({'start_date': wizard.start_period_id.date_start})
                 data['form'].update({'end_date': wizard.end_period_id.date_start})
+        instance = self.pool.get('ir.sequence')._get_instance(cr, uid)
+        data['target_filename'] = _('FX rates by currency_%s_%s' % (instance, time.strftime('%Y%m%d')))
         return {'type': 'ir.actions.report.xml', 'report_name': 'msf.currency.table', 'datas': data}
         
 
