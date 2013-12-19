@@ -75,7 +75,7 @@ class product_asset(osv.osv):
             default = {}
         default.update({
             'name': self.pool.get('ir.sequence').get(cr, uid, 'product.asset'),
-            'partner_name': None,
+            'partner_name': False,
         })
         # call to super
         return super(product_asset, self).copy(cr, uid, id, default, context=context)
@@ -88,7 +88,7 @@ class product_asset(osv.osv):
             default = {}
         default.update({
             'event_ids': [],
-            'partner_name': None,
+            'partner_name': False,
         })
         return super(product_asset, self).copy_data(cr, uid, id, default, context=context)
 

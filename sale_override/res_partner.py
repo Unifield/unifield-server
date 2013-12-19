@@ -59,7 +59,7 @@ class res_partner(osv.osv):
                 if order_type in ['regular']:
                     p_list = ['internal', 'intermission', 'external'] # UTP-953: Cannot create an FO regular for Intersection due to the Push Flow sync
                 elif order_type in ['donation_st', 'loan']:
-                    p_list = ['internal', 'intermission', 'section', 'esc', 'external']
+                    p_list = ['internal', 'intermission', 'section', 'external']
                 elif order_type in ['direct', 'in_kind']:
                     p_list = ['internal', 'intermission', 'section', 'esc', 'external']
                 elif order_type in ['donation_exp']:
