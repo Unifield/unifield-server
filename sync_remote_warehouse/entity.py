@@ -253,7 +253,7 @@ class Entity(osv.osv):
         ################# create updates ##################
         ###################################################
 
-        logger.replace(logger_index, _('Update(s) to package: %d' % updates_todo))
+        logger.replace(logger_index, _('Update(s) to package: %d') % updates_todo)
         
         if updates_todo:        
             package = update_create_package()
@@ -367,7 +367,7 @@ class Entity(osv.osv):
             logger.switch('msg_push', 'ok')            
             logger.switch('status', 'ok')
         except Exception, e:
-            logger.append(_('Error while creating zip file: %s' % str(e)))
+            logger.append(_('Error while creating zip file: %s') % str(e))
             logger.switch('data_push', 'failed')
             logger.switch('msg_push', 'failed')
             logger.switch('status', 'failed')
@@ -407,7 +407,7 @@ class Entity(osv.osv):
         if rule_ids:
             for rule_id in rule_ids:
                 updates_count += sum(update_pool.create_update(cr, uid, rule_id, session, context=context))
-                logger.replace(logger_index, _('Update(s) created: %d' % updates_count))
+                logger.replace(logger_index, _('Update(s) created: %d') % updates_count)
                     
             if updates_count:
                 cr.commit()
@@ -433,7 +433,7 @@ class Entity(osv.osv):
         if rule_ids:
             for rule in rule_pool.browse(cr, uid, rule_ids, context=context):
                 messages_count += message_pool.create_from_rule(cr, uid, rule, context=context)
-                logger.replace(logger_index, _('Message(s) created: %s' % messages_count))
+                logger.replace(logger_index, _('Message(s) created: %s') % messages_count)
         
             if messages_count:
                 cr.commit()
@@ -532,7 +532,7 @@ class Entity(osv.osv):
             logger.switch('status','failed')
             raise e
         except Exception, e:
-            logger.append(_('Error while reading uploaded zip file: %s' % str(e)))
+            logger.append(_('Error while reading uploaded zip file: %s') % str(e))
             logger.switch('status', 'failed')
             raise e
     
@@ -576,7 +576,7 @@ class Entity(osv.osv):
                 else:
                     data_to_import_data.append(row)
                     
-            logger.replace(logger_index, _('Update(s) to import: %d' % len(data_to_import_data)))
+            logger.replace(logger_index, _('Update(s) to import: %d') % len(data_to_import_data))
             
             # do importation and set result[model] = [True/False, [any error messages,...]]
             model_pool = self.pool.get(self.usb_pull_update_received_model_name)
@@ -590,17 +590,17 @@ class Entity(osv.osv):
             context.update({'update_received_model':'sync_remote_warehouse.update_received'})
             
             if not import_error:
-                logger.replace(logger_index, _('Update(s) imported: %d' % len(data_to_import_data)))
+                logger.replace(logger_index, _('Update(s) imported: %d') % len(data_to_import_data))
                 try:
                     number_of_updates_ran = self.execute_updates(cr, uid, context=context)
                     self._usb_change_sync_step(cr, uid, 'pull_performed')
                     logger.switch('data_pull','ok')
                 except AttributeError, e:
                     run_error = '%s: %s' % (type(e), str(e))
-                    logger.append(_('Error while processing update(s): %s' % run_error))
+                    logger.append(_('Error while processing update(s): %s') % run_error)
                     logger.switch('data_pull','failed')
             else:
-                logger.replace(logger_index, _('Error while importing update(s): %s' % import_error))
+                logger.replace(logger_index, _('Error while importing update(s): %s') % import_error)
                 logger.switch('data_pull','failed')
                 
         else:
@@ -636,7 +636,7 @@ class Entity(osv.osv):
                 else:
                     data_to_import_data.append(row)
                     
-            logger.replace(logger_index, _('Message(s) to import: %d' % len(data_to_import_data)))
+            logger.replace(logger_index, _('Message(s) to import: %d') % len(data_to_import_data))
             model_pool = self.pool.get(self.usb_pull_message_received_model_name)
             
             try:
@@ -648,17 +648,17 @@ class Entity(osv.osv):
             context.update({'message_received_model':'sync_remote_warehouse.message_received'})
             
             if not import_error:
-                logger.replace(logger_index, _('Message(s) imported: %d' % len(data_to_import_data)))
+                logger.replace(logger_index, _('Message(s) imported: %d') % len(data_to_import_data))
                 try:
                     number_of_messages_ran = self.execute_message(cr, uid, context=context)
                     self._usb_change_sync_step(cr, uid, 'pull_performed')
                     logger.switch('msg_pull','ok')
                 except AttributeError, e:
                     run_error = '%s: %s' % (type(e), str(e))
-                    logger.append(_('Error while processing message(s): %s' % run_error))
+                    logger.append(_('Error while processing message(s): %s') % run_error)
                     logger.switch('msg_pull','failed')
             else:
-                logger.replace(logger_index, _('Error while importing: %s' % import_error))
+                logger.replace(logger_index, _('Error while importing: %s') % import_error)
                 logger.switch('msg_pull','failed')
         else:
             logger.replace(logger_index, _('Message(s) to import: 0'))
