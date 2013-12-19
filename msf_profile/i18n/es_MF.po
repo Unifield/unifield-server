@@ -380,7 +380,7 @@ msgstr "wizard.actual.export"
 #. module: financing_contract
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:472
 msgid "Total Project - %used"
-msgstr "Total del proyecto -% utilizado"
+msgstr "Total del proyecto -%utilizado"
 
 #. module: product
 #: view:product.pricelist.item:0
@@ -704,7 +704,7 @@ msgstr "Remote Warehouse to Central Platform"
 #: code:addons/stock/product.py:122
 #, python-format
 msgid "There is no stock input account defined for this product: \"%s\" (id: %d)"
-msgstr "No existe una cuenta de entradas de stock definida para este producto: \"%s\" (id%d)"
+msgstr "No existe una cuenta de entradas de stock definida para este producto: \"%s\" (id: %d)"
 
 #. module: base
 #: help:workflow.transition,act_to:0
@@ -3768,7 +3768,7 @@ msgstr "Valor no sincronizado en Escribir"
 #: code:addons/stock/product.py:148
 #, python-format
 msgid "There is no stock output account defined for this product: \"%s\" (id: %d)"
-msgstr "No existe una cuenta de entradas de stock definida para este producto: \"%s\" (id%d)"
+msgstr "No existe una cuenta de entradas de stock definida para este producto: \"%s\" (id: %d)"
 
 #. module: product
 #: field:product.packaging,ul:0
@@ -3795,7 +3795,7 @@ msgstr "wizard.local.expenses"
 #: code:addons/account_hq_entries/wizard/hq_entries_import.py:94
 #, python-format
 msgid "Wrong format for date: %s: %s"
-msgstr "Formato incorrecto para la fecha:%s:%s"
+msgstr "Formato incorrecto para la fecha: %s: %s"
 
 #. module: msf_budget
 #: selection:wizard.budget.criteria.export,breakdown:0
@@ -4497,7 +4497,7 @@ msgstr "Ubicación encadenada, si es fija"
 #: code:addons/sale/sale.py:392
 #, python-format
 msgid "There is no sales journal defined for this company: \"%s\" (id:%d)"
-msgstr "No hay diario de compras definido para esta empresa: \"%s\" (id:% d)"
+msgstr "No hay diario de compras definido para esta empresa: \"%s\" (id:%d)"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -6228,7 +6228,8 @@ msgstr "Consumo Mensual Medio"
 #, python-format
 msgid "The following lines couldn't be imported:\n"
 "%s"
-msgstr "Las siguientes líneas no pudieron importarse: %s"
+msgstr "Las siguientes líneas no pudieron importarse:\n"
+"%s"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:182
@@ -6678,7 +6679,9 @@ msgstr "Marcar como antiguo"
 msgid "The product UOM must be in the same category than the UOM of the product.\n"
 "The category of the UoM of the product is '%s' whereas the category of the UoM you have chosen is '%s'.\n"
 "                "
-msgstr "La UdM del producto debe estar en la misma categoría que la UdM del producto. La categoría de la unidad de medida de los productos es '%s', mientras que la categoría de la unidad de medida que ha elegido es '%s'.                 "
+msgstr "La UdM del producto debe estar en la misma categoría que la UdM del producto.\n"
+"La categoría de la unidad de medida de los productos es '%s', mientras que la categoría de la unidad de medida que ha elegido es '%s'.\n"
+"                "
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/check_line.py:388
@@ -7661,7 +7664,8 @@ msgstr "Compare y elija"
 #, python-format
 msgid "Line %s ignored: an error appeared in the Excel file. Details: %s\n"
 ""
-msgstr "Ignorada línea %s: surgió un error en el archivo Excel. Detalles: %s "
+msgstr "Ignorada línea %s: surgió un error en el archivo Excel. Detalles: %s\n"
+""
 
 #. module: base
 #: help:ir.actions.server,loop_action:0
@@ -8229,7 +8233,8 @@ msgstr "sync.client.log_sale_purchase"
 #, python-format
 msgid "Line %s of the imported file: Batch Number required.\n"
 ""
-msgstr "La línea%s del archivo importado: Número de lote requerido. "
+msgstr "La línea%s del archivo importado: Número de lote requerido.\n"
+""
 
 #. modules: msf_doc_import, register_accounting, consumption_calculation, sourcing
 #: view:product.history.consumption:0
@@ -10228,7 +10233,10 @@ msgid " * The 'Draft' state is set automatically when purchase order in draft st
 "* The 'Confirmed' state is set automatically as confirm when purchase order in confirm state.                                        \n"
 "* The 'Done' state is set automatically when purchase order is set as done.                                        \n"
 "* The 'Cancelled' state is set automatically when user cancel purchase order."
-msgstr " * El estado 'Borrador' se ajusta automáticamente cuando la orden de compra está en estado de borrador. * El estado \"Confirmada\" se define automáticamente cuando la orden de compra está en estado 'Confirmada' * El estado 'Realizada' se ajusta automáticamente cuando la orden de compra se establece como 'Realizada'. * El estado \"Cancelada\" se ajusta automáticamente cuando el usuario cancela la orden de compra."
+msgstr " * El estado 'Borrador' se ajusta automáticamente cuando la orden de compra está en estado de borrador.           \n"
+"* El estado \"Confirmada\" se define automáticamente cuando la orden de compra está en estado 'Confirmada'               \n"
+"* El estado 'Realizada' se ajusta automáticamente cuando la orden de compra se establece como 'Realizada'.         \n"
+"* El estado \"Cancelada\" se ajusta automáticamente cuando el usuario cancela la orden de compra."
 
 #. module: account_override
 #: view:account.move.line:0
@@ -10344,7 +10352,7 @@ msgstr "Planificador"
 #. module: base
 #: view:res.lang:0
 msgid "%W - Week number of the year (Monday as the first day of the week) as a decimal number [00,53]. All days in a new year preceding the first Monday are considered to be in week 0."
-msgstr "%U - Número de la semana del año (el lunes como el primer día de la semana) como un número decimal [00,53]. Todos los días en un nuevo año que preceden al primer domingo del año se consideran como pertenecientes a la semana 0."
+msgstr "%W - Número de la semana del año (el lunes como el primer día de la semana) como un número decimal [00,53]. Todos los días en un nuevo año que preceden al primer domingo del año se consideran como pertenecientes a la semana 0."
 
 #. module: financing_contract
 #: view:financing.contract.contract:0
@@ -11984,7 +11992,7 @@ msgstr "Coordinación"
 #. module: base
 #: view:ir.sequence:0
 msgid "Month: %(month)s"
-msgstr "Mes: %(mes)es"
+msgstr "Mes: %(month)es"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -12226,7 +12234,8 @@ msgstr "¡No puede emitir una orden de compra a su propia empresa!"
 #, python-format
 msgid "Line %s in your Excel file ignored: Product Code [%s] not found ! Details: %s \n"
 ""
-msgstr "Ignorada línea %s de su archivo Excel: ¡No se encontró el código de producto [%s]! Detalles: %s  "
+msgstr "Ignorada línea %s de su archivo Excel: ¡No se encontró el código de producto [%s]! Detalles: %s \n"
+""
 
 #. module: account_mcdb
 #: model:ir.model,name:account_mcdb.model_mass_reallocation_search
@@ -13877,23 +13886,6 @@ msgstr "Dividir en lotes de producción"
 msgid "Sourcing"
 msgstr "Abastecimiento"
 
-#. module: base
-#: code:addons/fields.py:551
-#, python-format
-msgid "The second argument of the many2many field %s must be a SQL table !You used %s, which is not a valid SQL table name."
-msgstr "The second argument of the many2many field %s must be a SQL table !You used %s, which is not a valid SQL table name."
-
-#. modules: product_nomenclature, kit
-#: constraint:product.nomenclature:0
-#: constraint:product.nomenclature:0
-msgid "Error! The nomenclature complete name must be unique."
-msgstr "Error! The nomenclature complete name must be unique."
-
-#. module: base
-#: selection:ir.actions.server,trigger_name:0
-msgid "validate - (msf.budget)"
-msgstr "Validate - (msf.budget)"
-
 #. module: msf_field_access_rights
 #: sql_constraint:msf_field_access_rights.field_access_rule:0
 msgid "Due to technical constraints, you cannot use the operator \"ilike\" in a domain"
@@ -14098,11 +14090,6 @@ msgstr "No hay destino por defecto definido para la cuenta de gastos: %s"
 msgid "Volume [dm³]"
 msgstr "Volumen [dm ³]"
 
-#. module: base
-#: view:res.lang:0
-msgid "5.  %y, %Y         ==> 08, 2008"
-msgstr "5.  %y, %Y         ==> 08, 2008"
-
 #. module: useability_dashboard_and_menu
 #: model:ir.actions.act_window,name:useability_dashboard_and_menu.order_action_sourced
 msgid "Order Sourced"
@@ -14214,11 +14201,6 @@ msgstr "Máximo permitido"
 #: field:res.request,export_trans:0
 msgid "Export Translations request"
 msgstr "Solicitud de exportación de traducción"
-
-#. module: procurement_request
-#: report:procurement.request.report:0
-msgid "Order Reference :"
-msgstr "Order Reference :"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/stock_partial_picking.py:455
@@ -14431,18 +14413,13 @@ msgstr "Le permite crear facturas y hacer un seguimiento de los pagos. Se trata 
 #, python-format
 msgid "Line %s in the Excel file: You should have exactly %s columns in this order: %s \n"
 ""
-msgstr "La línea %s del archivo Excel:  debe tener exactamente%s columnas en este orden: %s  "
+msgstr "La línea %s del archivo Excel:  debe tener exactamente %s columnas en este orden: %s\n"
+""
 
 #. module: analytic_distribution
 #: field:account.analytic.line,imported_commitment:0
 msgid "From imported commitment?"
 msgstr "From imported commitment?"
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_split.py:227
-#, python-format
-msgid "Analytic distribution is invalid for the line \"%s\" with %.2f amount."
-msgstr "Analytic distribution is invalid for the line \"%s\" with %.2f amount."
 
 #. module: base
 #: view:ir.actions.report.xml:0
@@ -14958,12 +14935,6 @@ msgstr "Previsiones"
 msgid "SSN No"
 msgstr "Nº seguridad social"
 
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_register_import.py:340
-#, python-format
-msgid "Line %s. Document date '%s' should be inferior or equal to Posting date '%s'."
-msgstr "Line %s. Document date '%s' should be inferior or equal to Posting date '%s'."
-
 #. module: stock
 #: help:stock.move,move_dest_id:0
 msgid "Optional: next stock move when chaining them"
@@ -15030,12 +15001,6 @@ msgstr "Búsqueda"
 #: field:procurement.order,date_close:0
 msgid "Date Closed"
 msgstr "Fecha cerrada"
-
-#. module: base
-#: code:addons/orm.py:158
-#, python-format
-msgid "Object %s does not exists"
-msgstr "Object %s does not exists"
 
 #. module: stock
 #: model:ir.model,name:stock.model_stock_move_track
@@ -15188,12 +15153,6 @@ msgstr "¡%s: La cantidad debe ser inferior o igual a la cantidad inicial!"
 msgid "Invoices Created Within Past 15 Days"
 msgstr "Facturas creadas en los últimos 15 días"
 
-#. module: tender_flow
-#: code:addons/tender_flow/tender_flow.py:205
-#, python-format
-msgid "The product [%s] %s is not a 'Service' product. You can have only 'Service' products on a 'Service' tender. Please remove this line."
-msgstr "The product [%s] %s is not a 'Service' product. You can have only 'Service' products on a 'Service' tender. Please remove this line."
-
 #. modules: stock_batch_recall, stock_move_tracking
 #: code:addons/stock_batch_recall/stock.py:49
 #: code:addons/stock_move_tracking/wizard/stock_tracking.py:47
@@ -15268,12 +15227,6 @@ msgstr "Módulo %s: Certificado de calidad no válido"
 #: field:product.product,life_time:0
 msgid "Product Life Time"
 msgstr "Tiempo de vida del producto"
-
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/analytic_line.py:361
-#, python-format
-msgid "No period found for this date: %s"
-msgstr "No period found for this date: %s"
 
 #. modules: msf_processes, account_msf, account, sale, msf_homere_interface
 #: model:ir.ui.menu,name:account.menu_finance
@@ -15447,12 +15400,6 @@ msgstr "Force record recreation"
 #: report:purchase.quotation:0
 msgid "Regards,"
 msgstr "Atentamente,"
-
-#. module: export_import_lang
-#: code:addons/export_import_lang/export_import_lang.py:271
-#, python-format
-msgid "New language %s installed"
-msgstr "New language %s installed"
 
 #. modules: account_reconciliation, account
 #: code:addons/account/account_move_line.py:808
@@ -15669,12 +15616,6 @@ msgstr "Crédito funcional total"
 msgid "Partner type is not compatible with given Order Type!"
 msgstr "¡El tipo de tercero no es compatible con tipo de orden dado!"
 
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_register_import.py:261
-#, python-format
-msgid "the import's currency is %s whereas the register's currency is %s"
-msgstr "the import's currency is %s whereas the register's currency is %s"
-
 #. modules: account, msf_instance
 #: selection:account.journal,type:0
 #: selection:account.journal.fake,type:0
@@ -15879,14 +15820,6 @@ msgstr "Tipo de motivo"
 msgid "Right"
 msgstr "Derecha"
 
-#. module: sync_remote_warehouse
-#: code:addons/sync_remote_warehouse/entity.py:603
-#, python-format
-msgid "Error while importing update(s): %s' % import_error))\n"
-"                logger.switch('data_pull','failed"
-msgstr "Error while importing update(s): %s' % import_error))\n"
-"                logger.switch('data_pull','failed"
-
 #. module: mission_stock
 #: model:ir.module.module,shortdesc:mission_stock.module_meta_information
 msgid "Mission Stock"
@@ -15901,12 +15834,6 @@ msgstr "Fecha de inicio de validez de esta versión de la lista de precios."
 #: selection:sync.client.entity,usb_sync_step:0
 msgid "First Synchronisation"
 msgstr "First Synchronisation"
-
-#. module: account_override
-#: code:addons/account_override/account.py:203
-#, python-format
-msgid "Journal item does not have same posting date (%s) as journal entry (%s)."
-msgstr "Journal item does not have same posting date (%s) as journal entry (%s)."
 
 #. module: return_claim
 #: code:addons/return_claim/return_claim.py:528
@@ -15975,7 +15902,8 @@ msgstr "Orden de entrega"
 #, python-format
 msgid "Export translation %s %s\n"
 "    Find the file in attachment in the right panel."
-msgstr "Exportar traducción %s%s El archivo está adjunto en el panel derecho."
+msgstr "Exportar traducción %s %s\n"
+"    El archivo está adjunto en el panel derecho."
 
 #. modules: account_override, register_accounting
 #: selection:account.account,type_for_register:0
@@ -16020,7 +15948,11 @@ msgid "You selected a quantity of %d Units.\n"
 "Here is a proposition of quantities according to the packaging:\n"
 "\n"
 "EAN: %s Quantity: %s Type of ul: %s"
-msgstr "Seleccionó una cantidad de %d unidades. Pero no es compatible con el envase seleccionado. La propuesta de cantidad de acuerdo con el embalaje: EAN:%s Cantidad:%s Tipo de ul:%s"
+msgstr "Seleccionó una cantidad de %d unidades.\n"
+"Pero no es compatible con el envase seleccionado.\n"
+"La propuesta de cantidad de acuerdo con el embalaje:\n"
+"\n"
+"EAN:%s Cantidad:%s Tipo de ul:%s"
 
 #. module: base
 #: field:multi_company.default,company_dest_id:0
@@ -16628,7 +16560,8 @@ msgstr "Mantenimiento"
 #, python-format
 msgid "The column \"%s\" is not taken into account. Please remove it. The list of columns accepted is: \n"
 " %s"
-msgstr "La columna \"%s\" no se tiene en cuenta. Por favor, elimínela. La lista de columnas aceptadas es: %s"
+msgstr "La columna \"%s\" no se tiene en cuenta. Por favor, elimínela. La lista de columnas aceptadas es: \n"
+" %s"
 
 #. module: base
 #: view:base.module.update:0
@@ -16933,22 +16866,6 @@ msgstr "Informe"
 #: model:ir.actions.act_window,name:base.action_view_base_module_upgrade_install
 msgid "Module Upgrade Install"
 msgstr "Instalación de actualización del módulo"
-
-#. module: sync_remote_warehouse
-#: code:addons/sync_remote_warehouse/entity.py:410
-#, python-format
-msgid "Update(s) created: %d' % updates_count))\n"
-"                    \n"
-"            if updates_count:\n"
-"                cr.commit()\n"
-"        else:\n"
-"            logger.replace(logger_index, _('No applicable update rules found"
-msgstr "Update(s) created: %d' % updates_count))\n"
-"                    \n"
-"            if updates_count:\n"
-"                cr.commit()\n"
-"        else:\n"
-"            logger.replace(logger_index, _('No applicable update rules found"
 
 #. module: account
 #: field:account.payment.term.line,days2:0
@@ -17533,7 +17450,7 @@ msgstr "Asignado - Reales"
 #: code:addons/export_import_lang/data_import.py:99
 #, python-format
 msgid "Line %s Record %s not found"
-msgstr "No se encontró la línea%s del registro %s "
+msgstr "No se encontró la línea %s del registro %s "
 
 #. module: stock_schedule
 #: model:ir.ui.menu,name:stock_schedule.stock_automatic_procurements_menu
@@ -18277,7 +18194,9 @@ msgstr "Nombre de archivo"
 msgid "Import blocked by the Line %s in the Excel file that was added to the file of the lines with errors because it needs to have at least the \"Line number\" and the \"Product\" as identifier. \n"
 " Please make sure that all the lines got at least a \"Product\" and a \"Line Number\".\n"
 ""
-msgstr "Importación bloqueada por la línea %s del archivo Excel que se añadió al archivo de las líneas con errores, ya que tiene que tener, al menos, el \"número de línea\" y el \"Producto\" como identificador. Asegúrese de que todas las líneas tienen al menos un \"producto\" y un \"número de línea\". "
+msgstr "Importación bloqueada por la línea %s del archivo Excel que se añadió al archivo de las líneas con errores, ya que tiene que tener, al menos, el \"número de línea\" y el \"Producto\" como identificador. \n"
+"Asegúrese de que todas las líneas tienen al menos un \"producto\" y un \"número de línea\". \n"
+""
 
 #. module: consumption_calculation
 #: view:product.history.consumption:0
@@ -18289,12 +18208,6 @@ msgstr "Parámetros del periodo"
 #: selection:sourcing.line,type:0
 msgid "from stock"
 msgstr "desde stock"
-
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:1097
-#, python-format
-msgid "Percentage not valid! (%s)"
-msgstr "Percentage not valid! (%s)"
 
 #. module: purchase
 #: model:process.node,name:purchase.process_node_rfq_done
@@ -18549,12 +18462,6 @@ msgstr "Informe de stock por seguimiento de lotes"
 msgid "First posting date"
 msgstr "Fecha de la primera contabilización"
 
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_register_import.py:318
-#, python-format
-msgid "Line %s: Document date is missing."
-msgstr "Line %s: Document date is missing."
-
 #. module: unifield_setup
 #: field:field.orders.setup,field_orders_ok:0
 #: field:unifield.setup.configuration,field_orders_ok:0
@@ -18613,12 +18520,6 @@ msgstr "Estado del envío enviado."
 msgid "Country restrictions"
 msgstr "Restricciones del país"
 
-#. module: supplier_catalogue
-#: code:addons/supplier_catalogue/supplier_catalogue.py:477
-#, python-format
-msgid "Please, format the line number %s, column \"Unit Price\"."
-msgstr "Please, format the line number %s, column \"Unit Price\"."
-
 #. module: stock_schedule
 #: field:stock.frequence,monthly_choose_freq:0
 #: field:stock.frequence,yearly_choose_freq:0
@@ -18646,13 +18547,6 @@ msgstr "Producir"
 #: field:report.stock.inventory,product_categ_id:0
 msgid "Product Category"
 msgstr "Categoría de producto"
-
-#. modules: account_corrections, analytic_distribution
-#: code:addons/account_corrections/wizard/analytic_distribution_wizard.py:244
-#: code:addons/analytic_distribution/analytic_line.py:364
-#, python-format
-msgid "Period (%s) is not open."
-msgstr "Period (%s) is not open."
 
 #. module: product
 #: code:addons/product/pricelist.py:371
@@ -19121,7 +19015,7 @@ msgstr "Ancho [cm]"
 #: code:addons/account_msf/stock.py:94
 #, python-format
 msgid "No Donation Payable account for this partner: %s"
-msgstr "Este tercero no tiene cuenta por pagar de donaciones:%s"
+msgstr "Este tercero no tiene cuenta por pagar de donaciones: %s"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -19280,7 +19174,7 @@ msgstr "1. %c         ==> vie 05 de diciembre 2008 18:25:20"
 #: code:addons/analytic_distribution_supply/purchase.py:193
 #, python-format
 msgid "There is no expense account defined for this line: %s (id:%d)"
-msgstr "No existe una cuenta de gastos definida para esta línea: %s (id%d)"
+msgstr "No existe una cuenta de gastos definida para esta línea: %s (id: %d)"
 
 #. module: account
 #: help:account.account,currency_id:0
@@ -19738,7 +19632,7 @@ msgstr " Información - Tipo de activo"
 #: code:addons/sourcing/sourcing.py:514
 #, python-format
 msgid "You cannot choose 'from stock' as method to source a %s product !"
-msgstr "¡No puede elegir \"desde stock\" como método para abastecer un producto % s!"
+msgstr "¡No puede elegir \"desde stock\" como método para abastecer un producto %s!"
 
 #. module: sync_client
 #: field:sync.client.message_rule,filter_method:0
@@ -19893,81 +19787,6 @@ msgstr "Back Order of :"
 msgid "Commitments:"
 msgstr "Comprometido:"
 
-#. module: account_override
-#: code:addons/account_override/wizard/wizard_import_mapping.py:75
-#, python-format
-msgid "The instance code %s is not in the database!"
-msgstr "The instance code %s is not in the database!"
-
-#. module: account_mcdb
-#: code:addons/account_mcdb/report/account_mcdb_export.py:175
-#: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:79
-#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:63
-#, python-format
-msgid "Output Amount"
-msgstr "Output Amount"
-
-#. module: account_period_closing_level
-#: model:ir.model,name:account_period_closing_level.model_account_period_create
-msgid "account.period.create"
-msgstr "account.period.create"
-
-#. module: sync_remote_warehouse
-#: code:addons/sync_remote_warehouse/entity.py:256
-#, python-format
-msgid "Update(s) to package: %d' % updates_todo))\n"
-"        \n"
-"        if updates_todo:        \n"
-"            package = update_create_package()\n"
-"            \n"
-"            while package:\n"
-"                # add the package to the update_csv_contents dictionary and mark it has 'sent'\n"
-"                updates, deletions = update_add_and_mark_as_sent(*package)\n"
-"                total_updates += updates\n"
-"                total_deletions += deletions\n"
-"                update_ids += package[0]\n"
-"                package = update_create_package()\n"
-"                \n"
-"            # finished all packages so update logger\n"
-"            if total_updates or total_deletions:\n"
-"                logger.replace(logger_index, _(\"Update(s) packaged: %d update(s) and %d deletion(s) = %d in total\") % (total_updates, total_deletions, (total_updates + total_deletions)))\n"
-"        \n"
-"        ################################################### \n"
-"        ################# create messages #################\n"
-"        ###################################################\n"
-"        \n"
-"        logger_index = logger.append(_('Message(s) to package: %d' % messages_todo))\n"
-"\n"
-"        if messages_todo:\n"
-"            # prepare packets\n"
-"            messages_pool = self.pool.get('sync_remote_warehouse.message_to_send"
-msgstr "Update(s) to package: %d' % updates_todo))\n"
-"        \n"
-"        if updates_todo:        \n"
-"            package = update_create_package()\n"
-"            \n"
-"            while package:\n"
-"                # add the package to the update_csv_contents dictionary and mark it has 'sent'\n"
-"                updates, deletions = update_add_and_mark_as_sent(*package)\n"
-"                total_updates += updates\n"
-"                total_deletions += deletions\n"
-"                update_ids += package[0]\n"
-"                package = update_create_package()\n"
-"                \n"
-"            # finished all packages so update logger\n"
-"            if total_updates or total_deletions:\n"
-"                logger.replace(logger_index, _(\"Update(s) packaged: %d update(s) and %d deletion(s) = %d in total\") % (total_updates, total_deletions, (total_updates + total_deletions)))\n"
-"        \n"
-"        ################################################### \n"
-"        ################# create messages #################\n"
-"        ###################################################\n"
-"        \n"
-"        logger_index = logger.append(_('Message(s) to package: %d' % messages_todo))\n"
-"\n"
-"        if messages_todo:\n"
-"            # prepare packets\n"
-"            messages_pool = self.pool.get('sync_remote_warehouse.message_to_send"
-
 #. module: delivery_mechanism
 #: view:change.product.memory.move:0
 #: model:ir.model,name:delivery_mechanism.model_change_product_memory_move
@@ -20030,12 +19849,6 @@ msgstr "26º"
 #: view:wizard.budget.import.confirm:0
 msgid "Do you want to overwrite the following budgets:"
 msgstr "¿Desea sobrescribir los siguientes presupuestos?:"
-
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/wizard/import_commitment_wizard.py:139
-#, python-format
-msgid "This currency was not found or is not active: %s"
-msgstr "This currency was not found or is not active: %s"
 
 #. module: msf_outgoing
 #: field:stock.move,backmove_id:0
@@ -20469,28 +20282,6 @@ msgstr "Asia / Singapur"
 msgid "Unit Price must be greater than 0.0"
 msgstr "El precio unitario debe ser mayor que 0,0"
 
-#. module: sync_remote_warehouse
-#: code:addons/sync_remote_warehouse/entity.py:579
-#, python-format
-msgid "Update(s) to import: %d' % len(data_to_import_data)))\n"
-"            \n"
-"            # do importation and set result[model] = [True/False, [any error messages,...]]\n"
-"            model_pool = self.pool.get(self.usb_pull_update_received_model_name)\n"
-"            \n"
-"            try:\n"
-"                model_pool.import_data(cr, uid, data_to_import_fields, data_to_import_data, context=context)\n"
-"            except Exception as e:\n"
-"                import_error =  '%s %s: %s' % (_('Error while importing: "
-msgstr "Update(s) to import: %d' % len(data_to_import_data)))\n"
-"            \n"
-"            # do importation and set result[model] = [True/False, [any error messages,...]]\n"
-"            model_pool = self.pool.get(self.usb_pull_update_received_model_name)\n"
-"            \n"
-"            try:\n"
-"                model_pool.import_data(cr, uid, data_to_import_fields, data_to_import_data, context=context)\n"
-"            except Exception as e:\n"
-"                import_error =  '%s %s: %s' % (_('Error while importing: "
-
 #. module: stock_schedule
 #: view:stock.frequence:0
 msgid "Monthly configuration"
@@ -20522,7 +20313,8 @@ msgstr "se encuentra en estado de borrador."
 #, python-format
 msgid " Import in progress... \n"
 " Please wait that the import is finished before editing %s."
-msgstr " Importación en curso... Por favor, espere a que la importación haya finalizado antes de editar %s."
+msgstr " Importación en curso...  \n"
+" Por favor, espere a que la importación haya finalizado antes de editar %s."
 
 #. module: purchase_override
 #: model:ir.model,name:purchase_override.model_purchase_order_confirm_wizard
@@ -20881,12 +20673,6 @@ msgstr "America / Indiana / Petersburg"
 msgid "Split Selected Stock Move"
 msgstr "Dividir movimiento de stock seleccionado"
 
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_register_import.py:382
-#, python-format
-msgid "Line %s. %s not found: %s"
-msgstr "Line %s. %s not found: %s"
-
 #. module: msf_homere_interface
 #: model:ir.actions.act_window,name:msf_homere_interface.action_payroll_validation
 msgid "Validate draft entries"
@@ -21021,7 +20807,8 @@ msgstr "África / Accra"
 #, python-format
 msgid "No period defined for this date: %s !\n"
 "Please create a fiscal year."
-msgstr "¡No existe un año fiscal definido para esta fecha! Por favor, cree un año fiscal."
+msgstr "¡No existe un año fiscal definido para esta fecha %s !\n"
+"Por favor, cree un año fiscal."
 
 #. module: msf_budget
 #: view:wizard.budget.criteria.export:0
@@ -21638,7 +21425,8 @@ msgstr "No es posible actualizar el módulo \"%s\" porque no se cumple una depen
 #, python-format
 msgid "Line %s in the Excel file: %s: %s\n"
 ""
-msgstr "Línea %s del archivo Excel: %s: %s "
+msgstr "Línea %s del archivo Excel: %s: %s\n"
+""
 
 #. module: sale
 #: model:process.node,note:sale.process_node_saleorder0
@@ -21719,17 +21507,6 @@ msgstr "Pensilvania"
 msgid "A6  10  105 x 148 mm"
 msgstr "A6 10 105 x 148 mm"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_int_line.py:242
-#, python-format
-msgid "Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
-msgstr "Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
-
-#. module: account_mcdb
-#: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:79
-msgid "Journal Code"
-msgstr "Journal Code"
-
 #. modules: purchase, account, analytic_distribution_supply
 #: code:addons/account/account_analytic_line.py:90
 #: code:addons/analytic_distribution_supply/invoice.py:161
@@ -21738,13 +21515,7 @@ msgstr "Journal Code"
 #: code:addons/purchase/wizard/purchase_line_invoice.py:123
 #, python-format
 msgid "There is no expense account defined for this product: \"%s\" (id:%d)"
-msgstr "No existe una cuenta de gastos definida para este producto: \"%s\" (id%d)"
-
-#. module: product_attributes
-#: code:addons/product_attributes/product_attributes.py:539
-#, python-format
-msgid "be %s externally' % (sale_obj and _('shipped"
-msgstr "be %s externally' % (sale_obj and _('shipped"
+msgstr "No existe una cuenta de gastos definida para este producto: \"%s\" (id:%d)"
 
 #. modules: msf_budget, account, account_period_closing_level
 #: field:account.aged.trial.balance,fiscalyear_id:0
@@ -21815,7 +21586,7 @@ msgstr "Recibo de compra"
 #: code:addons/account/account_cash_statement.py:329
 #, python-format
 msgid "User %s does not have rights to access %s journal !"
-msgstr "¡El usuario%s no tiene derechos de acceso diario%s!"
+msgstr "¡El usuario %s no tiene derechos de acceso diario %s!"
 
 #. module: product_asset
 #: selection:product.asset.event,event_type:0
@@ -21868,7 +21639,8 @@ msgstr "Caja"
 #, python-format
 msgid "Line %s in the Excel file was added to the file of the lines with errors: the line number %s does not exist for %s \n"
 ""
-msgstr "La línea %s del archivo Excel se agregó al archivo de líneas con errores: el número de línea %s no existe para %s  "
+msgstr "La línea %s del archivo Excel se agregó al archivo de líneas con errores: el número de línea %s no existe para %s \n"
+""
 
 #. module: base
 #: view:res.company:0
@@ -22127,12 +21899,6 @@ msgstr "América / Guyana"
 msgid "A Pick list generates a supplier invoice. Depending on the Invoicing control of the purchase order, the invoice is based on received or on ordered quantities."
 msgstr "Una lista de picking genera una factura de proveedor. Dependiendo del control de facturación de la orden de compra, la factura se basa en cantidades recibidas o pedidas."
 
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:2472
-#, python-format
-msgid "The Delivery order (%s) has been converted to draft Picking Ticket (%s)."
-msgstr "The Delivery order (%s) has been converted to draft Picking Ticket (%s)."
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -22204,17 +21970,6 @@ msgstr "Error en la importación"
 #, python-format
 msgid "The new internal Picking %s has been created."
 msgstr "Se ha creado el nuevo picking interno %s."
-
-#. module: product_attributes
-#: model:ir.model,name:product_attributes.model_product_section_code
-msgid "product.section.code"
-msgstr "product.section.code"
-
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_register_import.py:330
-#, python-format
-msgid "Line %s: Document date wrong excel format. Use a date one."
-msgstr "Line %s: Document date wrong excel format. Use a date one."
 
 #. module: account
 #: help:account.invoice.tax,sequence:0
@@ -23006,12 +22761,6 @@ msgstr "Lista de precios - Tipo"
 msgid "Compute Total"
 msgstr "Calcular total"
 
-#. module: base
-#: code:addons/orm.py:3638
-#, python-format
-msgid "One of the records you are trying to modify has already been deleted (Document type: %s)."
-msgstr "One of the records you are trying to modify has already been deleted (Document type: %s)."
-
 #. module: stock_schedule
 #: selection:stock.frequence,recurrence_type:0
 msgid "Day(s)"
@@ -23121,7 +22870,8 @@ msgstr "Diferencia de arqueo"
 #, python-format
 msgid "Line %s in your Excel file ignored: FMC should be a number and not %s \n"
 ""
-msgstr "Ignorada línea %s de su archivo Excel: PCM debería ser una cifra y no %s  "
+msgstr "Ignorada línea %s de su archivo Excel: PCM debería ser una cifra y no %s \n"
+""
 
 #. modules: account, sale
 #: view:account.invoice.report:0
@@ -23404,7 +23154,7 @@ msgstr "Instancia de sincronización"
 #: code:addons/msf_doc_import/wizard/wizard_import_po.py:388
 #, python-format
 msgid "The Line %s has a wrong value. Details: %s."
-msgstr "La línea %s tiene un valor incorrecto. Detalles: % s."
+msgstr "La línea %s tiene un valor incorrecto. Detalles: %s."
 
 #. modules: threshold_value, procurement_auto, supplier_catalogue, consumption_calculation, stock_forecast, procurement
 #: code:addons/consumption_calculation/consumption_calculation.py:364
@@ -23474,12 +23224,6 @@ msgstr "Depuración de registro del servidor"
 #, python-format
 msgid "You have to configure account base code and account tax code on the '%s' tax!"
 msgstr "¡Debe configurar los códigos base y de impuestos de la cuenta con el impuesto '%s'!"
-
-#. module: msf_partner
-#: code:addons/msf_partner/partner.py:322
-#, python-format
-msgid "%s Donation(s)"
-msgstr "%s Donation(s)"
 
 #. module: base
 #: code:addons/base/ir/ir_model.py:564
@@ -23694,12 +23438,6 @@ msgstr "Cuenta"
 msgid "New currency"
 msgstr "Nueva moneda"
 
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/wizard/import_commitment_wizard.py:108
-#, python-format
-msgid "Cost Center \"%s\" doesn't exist!"
-msgstr "Cost Center \"%s\" doesn't exist!"
-
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/hr.py:134
 #, python-format
@@ -23716,12 +23454,6 @@ msgstr "Asia / Kabul"
 #: selection:ir.translation,lang:0
 msgid "Albanian / Shqip"
 msgstr "Albania / Shqip"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_po.py:326
-#, python-format
-msgid "\"Arrival Date in the country\" %s has a wrong format. Please format the cell in Excel as date."
-msgstr "\"Arrival Date in the country\" %s has a wrong format. Please format the cell in Excel as date."
 
 #. module: base
 #: selection:ir.translation,lang:0
@@ -25353,24 +25085,6 @@ msgstr "¡No ha cambiado ninguna cuenta!"
 msgid "Partners"
 msgstr "Terceros"
 
-#. module: account
-#: model:account.payment.term,name:account.account_payment_term
-#: model:account.payment.term,note:account.account_payment_term
-msgid "30 Days End of Month"
-msgstr "30 Days End of Month"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:228
-#, python-format
-msgid "'%s' column not found in file."
-msgstr "'%s' column not found in file."
-
-#. module: tender_flow
-#: code:addons/tender_flow/tender_flow.py:241
-#, python-format
-msgid "The product [%s] %s is not a '%s' product. You can have only '%s' products on a '%s' tender. Please remove this line before saving."
-msgstr "The product [%s] %s is not a '%s' product. You can have only '%s' products on a '%s' tender. Please remove this line before saving."
-
 #. modules: sale_override, tender_flow, sale
 #: help:sale.order,invoiced:0
 #: help:sale.report,invoiced:0
@@ -25568,7 +25282,7 @@ msgstr "El código se usará para generar los números de los asientos contables
 #: code:addons/register_accounting/wizard/import_invoice_on_registers.py:76
 #, python-format
 msgid "Amount %.2f can't be greater than 'Amount to pay': %.2f"
-msgstr "El importe %.2f no puede ser mayor que \"La cantidad a pagar ': %.2f"
+msgstr "El importe %.2f no puede ser mayor que 'La cantidad a pagar ': %.2f"
 
 #. module: delivery_mechanism
 #: view:enter.reason:0
@@ -25734,7 +25448,8 @@ msgstr "Indonesia"
 #, python-format
 msgid "You plan to sell %.2f %s but you only have %.2f %s available !\n"
 "The real stock is %.2f %s. (without reservations)"
-msgstr "¡Planea vender %.2f %s pero solo dispone de  %.2f %s! El stock real es %.2f %s. (Sin reservas)"
+msgstr "¡Planea vender %.2f %s pero solo dispone de  %.2f %s!\n"
+"El stock real es %.2f %s. (Sin reservas)"
 
 #. module: sale
 #: report:msf.sale.order:0
@@ -25767,7 +25482,7 @@ msgstr "Ha seleccionado una unidad de medida que no es compatible con el product
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:140
 #, python-format
 msgid "No default Destination defined for expense account: %s"
-msgstr "No hay un destino definido por defecto para la cuenta de gastos: % s"
+msgstr "No hay un destino definido por defecto para la cuenta de gastos: %s"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -25869,12 +25584,6 @@ msgstr "The write method is not implemented on this object !"
 msgid "Zimbabwe"
 msgstr "Zimbabue"
 
-#. module: msf_partner
-#: code:addons/msf_partner/partner.py:323
-#, python-format
-msgid "%s Supplier Invoice(s)"
-msgstr "%s Supplier Invoice(s)"
-
 #. module: msf_outgoing
 #: view:stock.picking:0
 msgid "Cancel Move"
@@ -25947,12 +25656,6 @@ msgstr "Financiación interactiva"
 #: view:substitute:0
 msgid "Products to remove from the Kit"
 msgstr "Productos que extraer del kit"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/check_line.py:455
-#, python-format
-msgid "The expiry date %s not corresponding to the expiry date of the Batch Number %s − The expiry date of the batch has been set instead."
-msgstr "The expiry date %s not corresponding to the expiry date of the Batch Number %s − The expiry date of the batch has been set instead."
 
 #. module: base
 #: help:res.partner.address,partner_id:0
@@ -26039,17 +25742,6 @@ msgstr "Referencia del documento que generó este informe de factura."
 #: help:procurement.order,procure_method:0
 msgid "If you encode manually a Procurement, you probably want to use a make to order method."
 msgstr "Si codifica manualmente una compra, es probable que desee utilizar un método de fabricación por encargo."
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:166
-#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:171
-#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:163
-#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:149
-#, python-format
-msgid "Line %s in the Excel file: %s\n"
-""
-msgstr "Line %s in the Excel file: %s\n"
-""
 
 #. module: account
 #: model:ir.model,name:account.model_account_move_bank_reconcile
@@ -26682,12 +26374,6 @@ msgstr "Filtro no implementado"
 msgid "Source lines"
 msgstr "Abastecer líneas"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_po.py:555
-#, python-format
-msgid "Line %s of the Excel file updated the PO %s."
-msgstr "Line %s of the Excel file updated the PO %s."
-
 #. module: msf_budget
 #: code:addons/msf_budget/wizard/wizard_budget_import.py:132
 #, python-format
@@ -27141,12 +26827,6 @@ msgstr "CHELÍN KENIANO"
 msgid "Available for the partner"
 msgstr "Available for the partner"
 
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_register_import.py:445
-#, python-format
-msgid "Line %s. A problem occured for line registration. Please contact an Administrator."
-msgstr "Line %s. A problem occured for line registration. Please contact an Administrator."
-
 #. module: unifield_setup
 #: code:addons/unifield_setup/installer/project_leadtime.py:62
 #, python-format
@@ -27238,12 +26918,6 @@ msgstr "1. Las reglas globales se combinan junto con un operador lógico Y, y co
 msgid "Customers (also called Partners in other areas of the system) helps you manage your address book of companies whether they are prospects, customers and/or suppliers. The partner form allows you to track and record all the necessary information to interact with your partners from the company address to their contacts as well as pricelists, and much more. If you installed the CRM, with the history tab, you can track all the interactions with a partner such as opportunities, emails, or sales orders issued."
 msgstr "El módulo Clientes (también llamados terceros en otras áreas del sistema) le ayuda a gestionar la libreta de direcciones de empresas ya sean clientes potenciales, clientes y/o proveedores. El formulario de tercero permite realizar un seguimiento y registrar toda la información necesaria para interactuar con los terceros, desde la dirección de la empresa a las personas de contacto, así como listas de precios, y mucho más. Si ha instalado el CRM, en la lengüeta del historial, puede seguir todas las interacciones con un tercero: oportunidades, correos electrónicos o las órdenes de venta emitidas."
 
-#. module: msf_audittrail
-#: code:addons/msf_audittrail/audittrail.py:842
-#, python-format
-msgid "'%s' Model does not exist..."
-msgstr "'%s' Model does not exist..."
-
 #. module: stock_schedule
 #: field:stock.frequence,recurrence_type:0
 msgid "Type of reccurence"
@@ -27280,12 +26954,6 @@ msgstr "Zona"
 #: selection:res.users,context_tz:0
 msgid "America/Rainy_River"
 msgstr "America / Rainy_River"
-
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_register_import.py:321
-#, python-format
-msgid "Line %s: Posting date is missing."
-msgstr "Line %s: Posting date is missing."
 
 #. modules: account_msf, account, msf_homere_interface, hr, product_attributes, msf_instance, sale, account_hq_entries, purchase, procurement, base, object_query
 #: model:ir.ui.menu,name:account.menu_finance_configuration
@@ -27369,12 +27037,6 @@ msgstr "Este campo se utiliza para asientos contables de débito y de crédito. 
 msgid "Enable Related Account"
 msgstr "Habilitar cuenta asociada"
 
-#. module: base
-#: code:addons/orm.py:2557
-#, python-format
-msgid "The value \"%s\" for the field \"%s\" is not in the selection"
-msgstr "The value \"%s\" for the field \"%s\" is not in the selection"
-
 #. module: account
 #: help:account.move.line,currency_id:0
 msgid "The optional other currency if it is a multi-currency entry."
@@ -27431,14 +27093,6 @@ msgid "Order Number"
 msgstr "Número de orden"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:200
-#: code:addons/msf_doc_import/wizard/wizard_import_int_line.py:223
-#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:195
-#, python-format
-msgid "Line %s in the Excel file was ignored. Details: %s"
-msgstr "Line %s in the Excel file was ignored. Details: %s"
-
-#. module: msf_doc_import
 #: field:wizard.import.int.line,filename_template:0
 msgid "Templates"
 msgstr "Templates"
@@ -27454,12 +27108,6 @@ msgstr "Cant. mín."
 #: view:ir.ui.view:0
 msgid "Architecture"
 msgstr "Arquitectura"
-
-#. module: res_currency_tables
-#: code:addons/res_currency_tables/wizard/wizard_report_currency_table.py:51
-#, python-format
-msgid "FX rates by currency_%s_%s"
-msgstr "FX rates by currency_%s_%s"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -27515,12 +27163,6 @@ msgstr "Material"
 #: model:res.currency,currency_name:base.MYR
 msgid "MALAYSIAN RINGGIT"
 msgstr "MALAYSIAN RINGGIT"
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:255
-#, python-format
-msgid "An error occured in analytic distribution read on this journal item: %s"
-msgstr "An error occured in analytic distribution read on this journal item: %s"
 
 #. module: base
 #: code:addons/orm.py:1147
@@ -28271,12 +27913,6 @@ msgstr "product.cold_chain"
 #: view:res.users:0
 msgid "Current Activity"
 msgstr "Actividad actual"
-
-#. module: base
-#: code:addons/orm.py:1027
-#, python-format
-msgid "Error occurred while validating the field(s) %s: %s"
-msgstr "Error occurred while validating the field(s) %s: %s"
 
 #. module: msf_outgoing
 #: field:stock.picking,flow_type:0
@@ -29119,12 +28755,6 @@ msgstr "Porcentaje total"
 msgid "No tender"
 msgstr "Ninguna licitación"
 
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_register_import.py:246
-#, python-format
-msgid "Journal %s not found."
-msgstr "Journal %s not found."
-
 #. module: base
 #: view:ir.ui.view:0
 msgid "Advanced"
@@ -29500,28 +29130,6 @@ msgstr "Cerrar estados del año fiscal y periodos"
 msgid "Percentage of direct costs"
 msgstr "Porcentaje de los gastos directos"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_int_line.py:268
-#, python-format
-msgid " \n"
-"Importation completed in %s!\n"
-"# of imported lines : %s on %s lines\n"
-"# of ignored lines: %s\n"
-"# of lines to correct: %s\n"
-"%s\n"
-"\n"
-"%s\n"
-""
-msgstr " \n"
-"Importation completed in %s!\n"
-"# of imported lines : %s on %s lines\n"
-"# of ignored lines: %s\n"
-"# of lines to correct: %s\n"
-"%s\n"
-"\n"
-"%s\n"
-""
-
 #. module: analytic_distribution
 #: field:account.analytic.line,from_write_off:0
 msgid "Write-off?"
@@ -29651,23 +29259,6 @@ msgstr "Pro-forma"
 #: help:ir.property,res_id:0
 msgid "If not set, acts as a default value for new resources"
 msgstr "Si no se establece, actúa como un valor por defecto para los nuevos recursos"
-
-#. modules: financing_contract, msf_instance
-#: view:financing.contract.donor:0
-#: view:msf.instance:0
-msgid "Inactive"
-msgstr "Inactive"
-
-#. module: sync_client
-#: code:addons/sync_client/update.py:255
-#, python-format
-msgid "Push finished: %d updates"
-msgstr "Push finished: %d updates"
-
-#. module: base
-#: model:ir.model,name:base.model_ir_ui_view_custom
-msgid "ir.ui.view.custom"
-msgstr "ir.ui.view.custom"
 
 #. module: base_setup
 #: model:ir.module.module,shortdesc:base_setup.module_meta_information
@@ -30012,12 +29603,6 @@ msgstr "La fecha no es correcta. Verifique que está en el periodo de registro. 
 #, python-format
 msgid "You cannot validate a Journal Entry unless all journal items are in same chart of accounts !"
 msgstr "¡No puede validar un asiento contable a menos que todas las partidas contables estén en el mismo plan de cuentas!"
-
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_cash_return.py:498
-#, python-format
-msgid "Initial advance amount (%s) does not match the amount you justified (%s). First correct. Then press Compute button"
-msgstr "Initial advance amount (%s) does not match the amount you justified (%s). First correct. Then press Compute button"
 
 #. module: analytic_distribution
 #: field:funding.pool.distribution.line,cost_center_id:0
@@ -30587,19 +30172,6 @@ msgstr "IRAQI DINAR"
 msgid "You can only do import invoice on a Debit Note!"
 msgstr "¡Solo se puede hacer la importación de factura de una nota de débito!"
 
-#. module: supplier_catalogue
-#: code:addons/supplier_catalogue/supplier_catalogue.py:486
-#, python-format
-msgid "Please, format the line number %s, column \"Rounding\"."
-msgstr "Please, format the line number %s, column \"Rounding\"."
-
-#. module: msf_budget
-#: model:ir.actions.act_window,name:msf_budget.action_msf_budget_decision_moment_tree
-#: model:ir.ui.menu,name:msf_budget.menu_action_msf_budget_decision_moment_tree
-#: view:msf.budget.decision.moment:0
-msgid "Decision Moments"
-msgstr "Decision Moments"
-
 #. modules: account_override, register_accounting
 #: selection:account.account,type_for_register:0
 #: view:account.bank.statement:0
@@ -30647,7 +30219,8 @@ msgstr "Abrir planes contables"
 #, python-format
 msgid "Line %s in the Excel file was added to the file of the lines with errors: %s \n"
 ""
-msgstr "La línea %s del archivo Excel se agregó al archivo de líneas con errores: %s  "
+msgstr "La línea %s del archivo Excel se agregó al archivo de líneas con errores: %s \n"
+""
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -30809,13 +30382,6 @@ msgstr "Error de procesamiento"
 #: selection:ir.property,value_reference:0
 msgid "product.pricelist"
 msgstr "product.pricelist"
-
-#. module: supplier_catalogue
-#: code:addons/supplier_catalogue/supplier_catalogue.py:421
-#: code:addons/supplier_catalogue/supplier_catalogue.py:427
-#, python-format
-msgid "The product '%s' was not found."
-msgstr "The product '%s' was not found."
 
 #. module: object_query
 #: view:object.query:0
@@ -31036,12 +30602,6 @@ msgstr "¡Error! No puede seleccionar un departamento en el que el empleado es e
 #: view:kit.selection.sale.line:0
 msgid "Replacement Items"
 msgstr "Artículos de sustitución"
-
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/wizard/import_commitment_wizard.py:132
-#, python-format
-msgid "No ESC partner found for code %s !"
-msgstr "No ESC partner found for code %s !"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -31520,7 +31080,7 @@ msgstr "Orden de pago"
 #. module: base
 #: view:res.lang:0
 msgid "%c - Appropriate date and time representation."
-msgstr "%C - representación adecuada de fecha y hora."
+msgstr "%c - representación adecuada de fecha y hora."
 
 #. module: import_data
 #: view:import_product:0
@@ -32104,16 +31664,6 @@ msgstr "Cuando vende productos a un cliente, puede darle un recibo o una factura
 #: view:product.uom:0
 msgid "Unit of Measure Properties"
 msgstr "Propiedades de unidad de medida"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/check_line.py:182
-#, python-format
-msgid "The Kit \"%s\" does not exist for this product.' % kit_name))\n"
-"        else:\n"
-"            msg = _('The Kit Name has to be a string"
-msgstr "The Kit \"%s\" does not exist for this product.' % kit_name))\n"
-"        else:\n"
-"            msg = _('The Kit Name has to be a string"
 
 #. module: vertical_integration
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:292
@@ -33054,12 +32604,6 @@ msgstr "Import lines"
 msgid "lang.setup"
 msgstr "lang.setup"
 
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_register_import.py:265
-#, python-format
-msgid "The given register does not correspond to register's information from the file. Instance code: %s. Journal's code: %s. Currency code: %s."
-msgstr "The given register does not correspond to register's information from the file. Instance code: %s. Journal's code: %s. Currency code: %s."
-
 #. module: base
 #: field:ir.exports,export_fields:0
 msgid "Export ID"
@@ -33894,7 +33438,7 @@ msgstr "Ubicación de destino"
 #: code:addons/purchase/purchase.py:406
 #, python-format
 msgid "There is no purchase journal defined for this company: \"%s\" (id:%d)"
-msgstr "No hay diario de compras definido para esta empresa: \"%s\" (id:% d)"
+msgstr "No hay diario de compras definido para esta empresa: \"%s\" (id:%d)"
 
 #. module: sale_override
 #: code:addons/sale_override/sale.py:501
@@ -34714,12 +34258,6 @@ msgstr "No account code found!"
 msgid "The selected product is Batch Management."
 msgstr "El producto seleccionado es Gestión de lotes."
 
-#. module: supplier_catalogue
-#: code:addons/supplier_catalogue/supplier_catalogue.py:466
-#, python-format
-msgid "Please, format the line number %s, column \"Min Qty\"."
-msgstr "Please, format the line number %s, column \"Min Qty\"."
-
 #. module: sale
 #: field:sale.order.line,delay:0
 msgid "Delivery Lead Time"
@@ -34744,7 +34282,7 @@ msgstr "Tipo de cuenta bancaria"
 #. module: base
 #: view:ir.sequence:0
 msgid "Current Year with Century: %(year)s"
-msgstr "Año actual con siglo: %(año)s"
+msgstr "Año actual con siglo: %(year)s"
 
 #. module: msf_budget
 #: code:addons/msf_budget/report/report_budget_criteria.py:182
@@ -34959,12 +34497,6 @@ msgstr "POSICIÓN DE LIQUIDEZ"
 #: field:purchase.order.line,order_state_purchase_order_line:0
 msgid "State of Po"
 msgstr "Estado de OC"
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:103
-#, python-format
-msgid "%s: No CC"
-msgstr "%s: No CC"
 
 #. module: base
 #: field:partner.sms.send,app_id:0
@@ -35455,14 +34987,6 @@ msgstr "Suriname"
 msgid "Product"
 msgstr "Producto"
 
-#. module: msf_printed_documents
-#: code:addons/msf_printed_documents/printed_report.py:232
-#, python-format
-msgid "%s : The field '%s' is not a many2one field. Cannot parse this expression.\n"
-""
-msgstr "%s : The field '%s' is not a many2one field. Cannot parse this expression.\n"
-""
-
 #. module: account
 #: field:account.analytic.Journal.report,date2:0
 #: field:account.analytic.balance,date2:0
@@ -35520,7 +35044,7 @@ msgstr "Secuencias año fiscal"
 #. module: base
 #: view:ir.sequence:0
 msgid "Day: %(day)s"
-msgstr "Día: %(día)s"
+msgstr "Día: %(day)s"
 
 #. module: account_corrections
 #: help:account.move.line,reversal:0
@@ -38556,12 +38080,6 @@ msgstr "Country Code Mapping"
 msgid "Import product in progress"
 msgstr "Importación de productos en curso"
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:92
-#, python-format
-msgid "%s: inactive FP (%s)"
-msgstr "%s: inactive FP (%s)"
-
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:691
 #, python-format
@@ -39007,12 +38525,6 @@ msgstr "Esta pantalla le muestra un análisis de sus asientos analíticos según
 msgid "Entry lines"
 msgstr "Líneas de asiento"
 
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_register_import.py:327
-#, python-format
-msgid "Line %s: Account is missing."
-msgstr "Line %s: Account is missing."
-
 #. module: return_claim
 #: help:claim.event,replacement_picking_expected_claim_event:0
 #: help:stock.partial.picking,replacement_picking_expected_partial_picking:0
@@ -39120,12 +38632,6 @@ msgstr "Composition List"
 #: selection:sale.order.line.followup,po_cft:0
 msgid "CFT"
 msgstr "Anuncio de licitación"
-
-#. module: msf_budget
-#: code:addons/msf_budget/wizard/wizard_budget_import.py:162
-#, python-format
-msgid "The value '%s' is not an float!"
-msgstr "The value '%s' is not an float!"
 
 #. module: analytic_distribution_supply
 #: code:addons/analytic_distribution_supply/sale.py:147
@@ -39445,7 +38951,7 @@ msgstr "Ordenes de compra abastecidas"
 #, python-format
 msgid "The given file is probably corrupted!\n"
 "%s"
-msgstr "¡El archivo dado probablemente esté dañado! % s"
+msgstr "¡El archivo dado probablemente esté dañado! %s"
 
 #. module: msf_audittrail
 #: code:addons/msf_audittrail/audittrail.py:269
@@ -39821,7 +39327,7 @@ msgstr "Fecha de entrega confirmada"
 #: code:addons/msf_doc_import/check_line.py:352
 #, python-format
 msgid "The UOM Name was empty. (Details: %s)"
-msgstr "El nombre de la UdM estaba vacío. (Detalles:% s)"
+msgstr "El nombre de la UdM estaba vacío. (Detalles: %s)"
 
 #. module: base
 #: model:ir.actions.act_window,name:base.action_res_widget_wizard
@@ -40606,22 +40112,6 @@ msgstr "Cambiar el protocolo puede implicar cambiar el número de puerto"
 #: view:stock.reason.type:0
 msgid "Reason Types Moves"
 msgstr "Tipos de motivos de movimientos"
-
-#. module: sync_remote_warehouse
-#: code:addons/sync_remote_warehouse/entity.py:436
-#, python-format
-msgid "Message(s) created: %s' % messages_count))\n"
-"        \n"
-"            if messages_count:\n"
-"                cr.commit()\n"
-"        else:\n"
-"            logger.replace(logger_index, _('No applicable message rules found"
-msgstr "Message(s) created: %s' % messages_count))\n"
-"        \n"
-"            if messages_count:\n"
-"                cr.commit()\n"
-"        else:\n"
-"            logger.replace(logger_index, _('No applicable message rules found"
 
 #. module: account
 #: field:account.installer.modules,account_anglo_saxon:0
@@ -42787,7 +42277,7 @@ msgstr "Usted debe indicar un número entero para the_compute_next_weekly_date"
 #, python-format
 msgid "Line %s of the imported file: expiry date %s has a wrong format (day/month/year).'\n"
 ""
-msgstr "Línea %s del archivo importado: Fecha de caducidad%s tiene un formato incorrecto (día / mes / año). "
+msgstr "Línea %s del archivo importado: Fecha de caducidad %s tiene un formato incorrecto (día / mes / año). "
 
 #. module: financing_contract
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:466
@@ -42968,24 +42458,6 @@ msgstr "Código de cuenta"
 #: selection:sale.order,split_type_sale_order:0
 msgid "Original"
 msgstr "Original"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/initial_stock_inventory.py:224
-#, python-format
-msgid "No batch found for the expiry date %s.' % expiry))\n"
-"                    else:\n"
-"                        batch = batch_ids[0]\n"
-"                elif expiry and batch:\n"
-"                    b_expiry = batch_obj.browse(cr, uid, batch, context=context).life_date\n"
-"                    if expiry != b_expiry:\n"
-"                        err_exp_message = _('Expiry date inconsistent with %s"
-msgstr "No batch found for the expiry date %s.' % expiry))\n"
-"                    else:\n"
-"                        batch = batch_ids[0]\n"
-"                elif expiry and batch:\n"
-"                    b_expiry = batch_obj.browse(cr, uid, batch, context=context).life_date\n"
-"                    if expiry != b_expiry:\n"
-"                        err_exp_message = _('Expiry date inconsistent with %s"
 
 #. module: register_accounting
 #: view:wizard.cash.return:0
@@ -44919,7 +44391,7 @@ msgstr "Este plazo de pago se utilizará en lugar del plazo por defecto para el 
 #: code:addons/sync_client/sync_client.py:636
 #, python-format
 msgid "Message(s) sent: %d/%d"
-msgstr "Mensaje(s) enviado(s): %d%d"
+msgstr "Mensaje(s) enviado(s): %d/%d"
 
 #. module: base
 #: field:ir.default,ref_id:0
@@ -44936,14 +44408,6 @@ msgstr "Sale Order"
 #, python-format
 msgid "is cancelled."
 msgstr "está cancelada."
-
-#. module: sync_remote_warehouse
-#: code:addons/sync_remote_warehouse/entity.py:661
-#, python-format
-msgid "Error while importing: %s' % import_error))\n"
-"                logger.switch('msg_pull','failed"
-msgstr "Error while importing: %s' % import_error))\n"
-"                logger.switch('msg_pull','failed"
 
 #. modules: msf_order_date, msf_outgoing
 #: code:addons/msf_order_date/order_dates.py:1491
@@ -47256,7 +46720,7 @@ msgstr "Artículos"
 #. module: base
 #: view:ir.sequence:0
 msgid "Current Year without Century: %(y)s"
-msgstr "Año actual sin siglo: %(a)s"
+msgstr "Año actual sin siglo: %(y)s"
 
 #. module: account
 #: selection:account.aged.trial.balance,target_move:0
@@ -47302,7 +46766,8 @@ msgstr "Tarball Patches"
 #, python-format
 msgid "Line %s ignored: the system reference an object that doesn't exist in the Excel file. Details: %s\n"
 ""
-msgstr "Ignorada línea %s: el sistema refiere a un objeto que no existe en el archivo Excel. Detalles: %s "
+msgstr "Ignorada línea %s: el sistema refiere a un objeto que no existe en el archivo Excel. Detalles: %s\n"
+""
 
 #. modules: purchase, purchase_override
 #: code:addons/purchase/purchase.py:326
@@ -48067,7 +47532,7 @@ msgstr "Francés (CH) / Français (CH)"
 #. module: base
 #: view:ir.sequence:0
 msgid "Week of the year: %(woy)s"
-msgstr "Semana del año:% (sda)s"
+msgstr "Semana del año: %(woy)s"
 
 #. module: base
 #: view:partner.wizard.ean.check:0
@@ -48282,7 +47747,7 @@ msgstr "Asientos contables"
 #: code:addons/msf_homere_interface/wizard/hr_nat_staff_import.py:77
 #, python-format
 msgid "Employee code already used by: %s %s"
-msgstr "Código de empleado ya utilizado por: %s%s"
+msgstr "Código de empleado ya utilizado por: %s %s"
 
 #. modules: account_corrections, account
 #: selection:account.journal.column,field:0
@@ -48877,7 +48342,7 @@ msgstr "Nomenclaturas"
 #: code:addons/msf_outgoing/wizard/split_memory_move.py:101
 #, python-format
 msgid "Selected quantity (%0.1f %s) exceeds the available quantity (%0.1f %s)"
-msgstr "La cantidad seleccionada (% 0.1f %s) es superior a la cantidad disponible (%0.1f %s)"
+msgstr "La cantidad seleccionada (%0.1f %s) es superior a la cantidad disponible (%0.1f %s)"
 
 #. module: account_mcdb
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:63
@@ -50770,85 +50235,10 @@ msgstr "Usuario responsable de este diario."
 msgid "Contact Information"
 msgstr "Información de contacto"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:252
-#, python-format
-msgid " \n"
-"%s\n"
-"Importation completed in %s!\n"
-"# of imported lines : %s on %s lines\n"
-"# of ignored lines: %s\n"
-"# of lines to correct: %s\n"
-"%s\n"
-"\n"
-"%s\n"
-""
-msgstr " \n"
-"%s\n"
-"Importation completed in %s!\n"
-"# of imported lines : %s on %s lines\n"
-"# of ignored lines: %s\n"
-"# of lines to correct: %s\n"
-"%s\n"
-"\n"
-"%s\n"
-""
-
 #. module: resource
 #: field:resource.calendar.attendance,calendar_id:0
 msgid "Resource's Calendar"
 msgstr "Calendario de Recursos"
-
-#. module: msf_printed_documents
-#: help:ir.actions.report.xml,target_filename:0
-msgid "\n"
-"          This field will be parsed by the system to compute the good filename.\n"
-"\n"
-"          Possible elements:\n"
-"\n"
-"          ${field_name}     => Get the value of the field 'field_name' of the document.\n"
-"                               You can use a dot field_name (e.g. : partner_id.name) to\n"
-"                               get the value of the field of a many2one\n"
-"          ${eval(function)} => Return the value of the function. The function is a \n"
-"                               method of the object like function(self, cr, uid, ids)\n"
-"\n"
-"          %(year)s          => Current year (e.g: 2013, 2014, ...)\n"
-"          %(month)s         => Current month number (e.g: 01, 02, ..., 12)\n"
-"          %(day)s           => Current day of month number (e.g: 25)\n"
-"          %(y)s             => Current year without century (e.g: 02,03, ...,99)\n"
-"          %(doy)s           => Current day of the year (e.g: 001, 002, ..., 366)\n"
-"          %(woy)s           => Current week number of the year\n"
-"          %(weekday)s       => Current weekday as decimal number where 0 is Sunday\n"
-"          %(h24)s           => Current hour (24-hour clock)\n"
-"          %(h12)s           => Current hour (12-hour clock)\n"
-"          %(min)s           => Current minute\n"
-"          %(sec)s           => Current second\n"
-"          %(instance)s      => Instance code\n"
-"          %(hqcode)s        => HQ instance code"
-msgstr "\n"
-"          This field will be parsed by the system to compute the good filename.\n"
-"\n"
-"          Possible elements:\n"
-"\n"
-"          ${field_name}     => Get the value of the field 'field_name' of the document.\n"
-"                               You can use a dot field_name (e.g. : partner_id.name) to\n"
-"                               get the value of the field of a many2one\n"
-"          ${eval(function)} => Return the value of the function. The function is a \n"
-"                               method of the object like function(self, cr, uid, ids)\n"
-"\n"
-"          %(year)s          => Current year (e.g: 2013, 2014, ...)\n"
-"          %(month)s         => Current month number (e.g: 01, 02, ..., 12)\n"
-"          %(day)s           => Current day of month number (e.g: 25)\n"
-"          %(y)s             => Current year without century (e.g: 02,03, ...,99)\n"
-"          %(doy)s           => Current day of the year (e.g: 001, 002, ..., 366)\n"
-"          %(woy)s           => Current week number of the year\n"
-"          %(weekday)s       => Current weekday as decimal number where 0 is Sunday\n"
-"          %(h24)s           => Current hour (24-hour clock)\n"
-"          %(h12)s           => Current hour (12-hour clock)\n"
-"          %(min)s           => Current minute\n"
-"          %(sec)s           => Current second\n"
-"          %(instance)s      => Instance code\n"
-"          %(hqcode)s        => HQ instance code"
 
 #. module: stock
 #: model:ir.actions.act_window,help:stock.action_out_picking_move
@@ -51111,14 +50501,6 @@ msgstr "utilizado en el área de conciliación de extractos, pero no debería us
 msgid "Trigger Object"
 msgstr "Objeto desencadenante"
 
-#. module: sync_remote_warehouse
-#: code:addons/sync_remote_warehouse/entity.py:535
-#, python-format
-msgid "Error while reading uploaded zip file: %s' % str(e)))\n"
-"            logger.switch('status', 'failed"
-msgstr "Error while reading uploaded zip file: %s' % str(e)))\n"
-"            logger.switch('status', 'failed"
-
 #. modules: account_hq_entries, msf_homere_interface
 #: code:addons/account_hq_entries/wizard/hq_entries_import.py:77
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:90
@@ -51215,14 +50597,6 @@ msgstr "¡No se puede eliminar el idioma que está activo! Por favor, desactive 
 #: view:payment.order.create:0
 msgid "_Add to payment order"
 msgstr "_Añadir a orden de pago"
-
-#. module: supplier_catalogue
-#: code:addons/supplier_catalogue/supplier_catalogue.py:434
-#: code:addons/supplier_catalogue/supplier_catalogue.py:441
-#: code:addons/supplier_catalogue/supplier_catalogue.py:447
-#, python-format
-msgid "The UoM '%s' was not found."
-msgstr "The UoM '%s' was not found."
 
 #. module: report_webkit
 #: selection:ir.header_webkit,format:0
@@ -51389,14 +50763,6 @@ msgstr "Fecha de solicitud"
 msgid "Africa/Freetown"
 msgstr "Africa / Freetown"
 
-#. module: base
-#: code:addons/orm.py:2400
-#, python-format
-msgid "Invalid group_by specification: \"%s\".\n"
-"A group_by specification must be a list of valid fields."
-msgstr "Invalid group_by specification: \"%s\".\n"
-"A group_by specification must be a list of valid fields."
-
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:1279
 #, python-format
@@ -51470,16 +50836,6 @@ msgstr "Africa / Kinshasa"
 #: field:stock.card.wizard,to_date:0
 msgid "To date"
 msgstr "To date"
-
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_register_import.py:261
-#, python-format
-msgid "'), _(\"the import's currency is %s whereas the register's currency is %s\") % (cur[0].name, wiz.register_id.currency.name))\n"
-"                # Search registers that correspond to this instance, journal's code and currency and check that our register is in the list\n"
-"                register_ids = self.pool.get('account.bank.statement"
-msgstr "'), _(\"the import's currency is %s whereas the register's currency is %s\") % (cur[0].name, wiz.register_id.currency.name))\n"
-"                # Search registers that correspond to this instance, journal's code and currency and check that our register is in the list\n"
-"                register_ids = self.pool.get('account.bank.statement"
 
 #. module: product_attributes
 #: field:product.international.status,no_external:0
@@ -51889,12 +51245,6 @@ msgid "PURCHASE ORDER ("
 msgstr "PURCHASE ORDER ("
 
 #. module: base
-#: code:addons/orm.py:919
-#, python-format
-msgid "Key/value '%s' not found in selection field '%s'"
-msgstr "Key/value '%s' not found in selection field '%s'"
-
-#. module: base
 #: selection:ir.translation,lang:0
 msgid "Spanish (VE) / Español (VE)"
 msgstr "Español (VE) / Español (VE)"
@@ -52209,7 +51559,7 @@ msgstr "You must assign a batch number"
 #: code:addons/purchase/purchase.py:815
 #, python-format
 msgid "The selected supplier only sells this product by %s"
-msgstr "El proveedor seleccionado solo vende este producto por%s"
+msgstr "El proveedor seleccionado solo vende este producto por %s"
 
 #. module: account
 #: field:account.tax,include_base_amount:0
@@ -52263,14 +51613,6 @@ msgstr "Atlantic / Stanley"
 #: view:res.groups:0
 msgid "Only inactive"
 msgstr "Only inactive"
-
-#. module: base_setup
-#: code:addons/base_setup/__init__.py:50
-#, python-format
-msgid "    - %s :\n"
-"		Login : %s \n"
-"		Password : %s"
-msgstr "    - %s :   Login : %s    Password : %s"
 
 #. module: product_attributes
 #: selection:product.product,criticism:0
@@ -52542,7 +51884,7 @@ msgstr "Anual"
 #. module: base
 #: view:ir.sequence:0
 msgid "Day of the year: %(doy)s"
-msgstr "Día del año: %(día)s"
+msgstr "Día del año: %(doy)s"
 
 #. module: transport_mgmt
 #: field:purchase.order,shipment_transport_ids:0
@@ -52610,7 +51952,7 @@ msgstr "Conciliar con ajuste"
 #. module: base
 #: view:ir.sequence:0
 msgid "Day of the week (0:Monday): %(weekday)s"
-msgstr "Día de la semana (0:Lunes): %(días de la semana)s"
+msgstr "Día de la semana (0:Lunes): %(weekday)s"
 
 #. module: product_attributes
 #: selection:product.product,abc_class:0
@@ -52694,7 +52036,8 @@ msgstr "Información adicional"
 #, python-format
 msgid "Line %s of the imported file: Batch Number [%s] not found.\n"
 ""
-msgstr "Línea %s del archivo importado: No se encontró el número de lote [%s]. "
+msgstr "Línea %s del archivo importado: No se encontró el número de lote [%s].\n"
+""
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/analytic_distribution.py:87
@@ -53096,7 +52439,13 @@ msgid "Importation completed !\n"
 "                                                Reported errors :\n"
 "                                                %s\n"
 "                                             "
-msgstr "¡Importación completada!                                                 nº de líneas importadas : %s                                                 nº de líneas a corregir: %s                                                 nº de líneas ignoradas : %s                                                                                                  Errores notificados :                                                 %s                                              "
+msgstr "¡Importación completada!\n"
+"                                                nº de líneas importadas : %s\n"
+"                                                nº de líneas a corregir: %s\n"
+"                                                nº de líneas ignoradas : %s\n"
+"                                                Errores notificados :\n"
+"                                                %s\n"
+"                                             "
 
 #. module: product
 #: help:product.pricelist,active:0
@@ -53223,18 +52572,6 @@ msgstr "integer_big"
 #: selection:base.setup.company,ship_country_id:0
 msgid "Mauritius"
 msgstr "Mauricio"
-
-#. module: sync_remote_warehouse
-#: code:addons/sync_remote_warehouse/entity.py:593
-#, python-format
-msgid "Update(s) imported: %d' % len(data_to_import_data)))\n"
-"                try:\n"
-"                    number_of_updates_ran = self.execute_updates(cr, uid, context=context)\n"
-"                    self._usb_change_sync_step(cr, uid, 'pull_performed"
-msgstr "Update(s) imported: %d' % len(data_to_import_data)))\n"
-"                try:\n"
-"                    number_of_updates_ran = self.execute_updates(cr, uid, context=context)\n"
-"                    self._usb_change_sync_step(cr, uid, 'pull_performed"
 
 #. modules: return_claim, kit
 #: field:kit.creation.to.consume,fake_state:0
@@ -54848,14 +54185,6 @@ msgstr "¡No se puede cambiar el tipo de una cuenta 'Cerrada' a ningún otro tip
 msgid "Allows you to create optionnal locations."
 msgstr "Le permite crea ubicaciones opcionales."
 
-#. module: sync_remote_warehouse
-#: code:addons/sync_remote_warehouse/entity.py:370
-#, python-format
-msgid "Error while creating zip file: %s' % str(e)))\n"
-"            logger.switch('data_push', 'failed"
-msgstr "Error while creating zip file: %s' % str(e)))\n"
-"            logger.switch('data_push', 'failed"
-
 #. module: hr
 #: field:hr.employee,passport_id:0
 msgid "Passport No"
@@ -56071,7 +55400,7 @@ msgstr "Eritrea"
 #: code:addons/msf_outgoing/msf_outgoing.py:2249
 #, python-format
 msgid "The ppl has been added to the existing Draft Shipment %s."
-msgstr "El LPE se ha añadido al borrador de envío existente % s."
+msgstr "El LPE se ha añadido al borrador de envío existente %s."
 
 #. module: account_hq_entries
 #: field:hq.entries,user_validated:0
@@ -56626,16 +55955,6 @@ msgstr "Ya existe una ubicación con el mismo nombre y parámetros y está activ
 msgid "Europe/Moscow"
 msgstr "Europa / Moscú"
 
-#. module: base
-#: code:addons/osv.py:169
-#, python-format
-msgid "\n"
-"\n"
-"[object with reference: %s - %s]"
-msgstr "\n"
-"\n"
-"[object with reference: %s - %s]"
-
 #. module: sale_override
 #: code:addons/sale_override/sale.py:917
 #, python-format
@@ -56770,7 +56089,7 @@ msgstr "Asignar"
 #: code:addons/msf_outgoing/msf_outgoing.py:713
 #, python-format
 msgid "Packs from the shipped Shipment (%s) have been returned to %s location."
-msgstr "Los paquetes del envío enviado (% s) se ha vuelto a la ubicación % s."
+msgstr "Los paquetes del envío enviado (%s) se ha vuelto a la ubicación %s."
 
 #. module: report_webkit
 #: selection:ir.header_webkit,format:0
@@ -57663,7 +56982,7 @@ msgstr "Pull Performed"
 #: code:addons/msf_doc_import/composition_kit.py:268
 #, python-format
 msgid "# lines imported: %s. %s"
-msgstr "N º de líneas importadas: %s. % s"
+msgstr "N º de líneas importadas: %s. %s"
 
 #. module: base
 #: code:addons/base/res/res_user.py:132
@@ -57886,25 +57205,6 @@ msgstr "Error desconocido"
 msgid "Full view"
 msgstr "Vista completa"
 
-#. module: base
-#: code:addons/orm.py:4317
-#, python-format
-msgid "Record #%d of %s not found, cannot copy!"
-msgstr "Record #%d of %s not found, cannot copy!"
-
-#. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:45
-#, python-format
-msgid "The line '%s' has no analytic distribution!\" % accrual_line.description))\n"
-"                else:\n"
-"                    move_date = accrual_line.period_id.date_stop\n"
-"                    reversal_move_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')\n"
-"                    # check if periods are open\n"
-"                    reversal_period_ids = period_obj.find(cr, uid, reversal_move_date, context=context)\n"
-"                    if len(reversal_period_ids) == 0:\n"
-"                        raise osv.except_osv(_('Warning !'), _(\"No period (M+1) was found in the system!"
-msgstr "La línea '%s' no tiene distribución analítica \"% accrual_line.description)) si no: move_date = accrual_line.period_id.date_stop reversal_move_date = (datetime.datetime.strptime (move_date, '% Y-% m-% d') + relativedelta (día = 1)). strftime (\"% Y-% m-% d ') # Comprobar si los periodos están abiertos reversal_period_ids = period_obj.find (cr, uid, reversal_move_date, context = contexto) si len (reversal_period_ids) == 0: raise osv.except_osv (_ ('Warning!'), _ (\"No period (M+1) encontrado en el sistema!"
-
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.lv
 #: selection:base.setup.company,country_id:0
@@ -58081,7 +57381,7 @@ msgstr "Inicio de utilización"
 #: code:addons/sale/sale.py:1074
 #, python-format
 msgid "There is no income account defined for this product: \"%s\" (id:%d)"
-msgstr "No existe una cuenta de ingresos definida para este producto: \"%s\" (id%d)"
+msgstr "No existe una cuenta de ingresos definida para este producto: \"%s\" (id:%d)"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -58186,7 +57486,7 @@ msgstr "Asia / Irkutsk"
 #: code:addons/analytic_distribution/account_commitment.py:335
 #, python-format
 msgid "Analytic distribution is not valid for account \"%s %s\"."
-msgstr "La distribución analítica no es válida para la cuenta \"%s%s\"."
+msgstr "La distribución analítica no es válida para la cuenta \"%s %s\"."
 
 #. module: account
 #: view:validate.account.move.lines:0
@@ -59717,12 +59017,12 @@ msgstr "Marcar como inactivo"
 #: code:addons/stock/stock.py:2228
 #, python-format
 msgid "There is no stock input account defined for this product or its category: \"%s\" (id: %d)"
-msgstr "No existe una cuenta de entradas de stock definida para este producto o esta categoría: \"%s\" (id%d)"
+msgstr "No existe una cuenta de entradas de stock definida para este producto o esta categoría: \"%s\" (id: %d)"
 
 #. module: base
 #: view:res.lang:0
 msgid "%M - Minute [00,59]."
-msgstr "% M - Minuto [00,59]."
+msgstr "%M - Minuto [00,59]."
 
 #. module: account
 #: view:account.account.template:0
@@ -60592,7 +59892,7 @@ msgstr "Cree y gestione las empresas que van a ser gestionadas por OpenERP desde
 #: code:addons/delivery_mechanism/delivery_mechanism.py:408
 #, python-format
 msgid "The Stock Move %s from %s has been updated to %s %s."
-msgstr "El movimiento de stock %s de %s se ha actualizado a%s%s."
+msgstr "El movimiento de stock %s de %s se ha actualizado a %s %s."
 
 #. module: account
 #: field:account.automatic.reconcile,account_ids:0
@@ -60878,16 +60178,6 @@ msgstr "Si el usuario proporciona un correo electrónico, este recibirá un mens
 msgid "Gives the sequence order when displaying a list of bank statement lines."
 msgstr "Determina el orden de secuencias al visualizar un listado de líneas de extractos bancarios."
 
-#. module: supplier_catalogue
-#: code:addons/supplier_catalogue/supplier_catalogue.py:526
-#, python-format
-msgid "Lines ignored: %s \n"
-" ----------------------\n"
-""
-msgstr "Lines ignored: %s \n"
-" ----------------------\n"
-""
-
 #. module: delete_button
 #: model:ir.module.module,description:delete_button.module_meta_information
 msgid "\n"
@@ -61101,7 +60391,7 @@ msgstr "Proceso de entrega"
 #: code:addons/msf_doc_import/check_line.py:392
 #, python-format
 msgid "The Price Unit was not set, we have taken the default \"%s\" of the product."
-msgstr "La precio por unidad de medida no se ha establecido, se ha tomado el valor predeterminado \"% s\" del producto."
+msgstr "La precio por unidad de medida no se ha establecido, se ha tomado el valor predeterminado \"%s\" del producto."
 
 #. module: procurement_cycle
 #: constraint:stock.warehouse.order.cycle.line:0
@@ -61686,7 +60976,7 @@ msgstr "Información general"
 #. module: financing_contract
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:458
 msgid "Earmarked - %used"
-msgstr "Asignado -% utilizado"
+msgstr "Asignado -%utilizado"
 
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:332
@@ -61988,12 +61278,6 @@ msgstr "Cantidad recibida"
 msgid "Products Price Type"
 msgstr "Productos - Tipo de precios"
 
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:2451
-#, python-format
-msgid "You cannot convert %s delivery orders"
-msgstr "You cannot convert %s delivery orders"
-
 #. module: msf_config_locations
 #: model:ir.actions.act_window,name:msf_config_locations.action_configurable_location_setup
 #: view:stock.location.configuration.wizard:0
@@ -62203,13 +61487,6 @@ msgstr "Cantidad confirmada"
 #: constraint:country.export.mapping:0
 msgid "A mapping already exists for this instance"
 msgstr "A mapping already exists for this instance"
-
-#. module: base_setup
-#: code:addons/base_setup/__init__.py:49
-#, python-format
-msgid "    - %s :\n"
-"		Login : %s"
-msgstr "    - %s :   Login : %s"
 
 #. module: msf_budget
 #: field:msf.budget.line,parent_id:0
@@ -65291,12 +64568,6 @@ msgstr "Moneda para el pedido de terreno actual."
 msgid "RfQs Ref"
 msgstr "Ref. SdP"
 
-#. module: account_override
-#: code:addons/account_override/wizard/wizard_import_mapping.py:65
-#, python-format
-msgid "The account code %s is not in the database!"
-msgstr "The account code %s is not in the database!"
-
 #. module: msf_budget
 #: model:ir.model,name:msf_budget.model_wizard_budget_import
 #: view:wizard.budget.import:0
@@ -65447,15 +64718,6 @@ msgstr "Todos los presupuestos"
 #: help:ir.actions.act_window,res_model:0
 msgid "Model name of the object to open in the view window"
 msgstr "Nombre del modelo del objeto que se va a abrir en la pantalla vista"
-
-#. module: msf_printed_documents
-#: code:addons/msf_printed_documents/printed_report.py:123
-#: code:addons/msf_printed_documents/printed_report.py:214
-#, python-format
-msgid "%s : The function '%s' is not a valid function for the '%s' model.\n"
-""
-msgstr "%s : The function '%s' is not a valid function for the '%s' model.\n"
-""
 
 #. modules: purchase, product, product_nomenclature, sale_override, hr, sale, stock_schedule, procurement_auto, sourcing, base, order_types, procurement_cycle, mission_stock, tender_flow, return_claim, analytic_distribution
 #: field:account.analytic.account,category:0
@@ -65776,17 +65038,6 @@ msgstr "Útil para el método de vistas sin cambios. Debe definirse en Falso una
 #, python-format
 msgid "You can not do this modification on a confirmed entry ! Please note that you can just change some non important fields !"
 msgstr "¡No se puede hacer esta modificación en un asiento confirmada! Tenga en cuenta que solo puede cambiar algunos campos de poca importancia!"
-
-#. module: register_accounting
-#: model:ir.model,name:register_accounting.model_wizard_closing_cashbox
-msgid "wizard.closing.cashbox"
-msgstr "wizard.closing.cashbox"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:338
-#, python-format
-msgid "Line %s. No cost center specified!"
-msgstr "Line %s. No cost center specified!"
 
 #. module: mission_stock
 #: field:stock.mission.report.line,cu_qty:0
@@ -66190,24 +65441,6 @@ msgstr "Tipo"
 #: view:sale.order.followup:0
 msgid "Choose the view type"
 msgstr "Elija el tipo de vista"
-
-#. module: sync_remote_warehouse
-#: code:addons/sync_remote_warehouse/entity.py:639
-#, python-format
-msgid "Message(s) to import: %d' % len(data_to_import_data)))\n"
-"            model_pool = self.pool.get(self.usb_pull_message_received_model_name)\n"
-"            \n"
-"            try:\n"
-"                model_pool.import_data(cr, uid, data_to_import_fields, data_to_import_data, context=context)\n"
-"            except Exception as e:\n"
-"                import_error =  '%s %s: %s' % (_('Error while importing: "
-msgstr "Message(s) to import: %d' % len(data_to_import_data)))\n"
-"            model_pool = self.pool.get(self.usb_pull_message_received_model_name)\n"
-"            \n"
-"            try:\n"
-"                model_pool.import_data(cr, uid, data_to_import_fields, data_to_import_data, context=context)\n"
-"            except Exception as e:\n"
-"                import_error =  '%s %s: %s' % (_('Error while importing: "
 
 #. module: sale
 #: report:msf.report_reception_in:0
@@ -66736,7 +65969,7 @@ msgstr "Declaración de impuestos"
 #: code:addons/stock/stock.py:2231
 #, python-format
 msgid "There is no stock output account defined for this product or its category: \"%s\" (id: %d)"
-msgstr "No existe una cuenta de salidas de stock definida para este producto o esta categoría: \"%s\" (id%d)"
+msgstr "No existe una cuenta de salidas de stock definida para este producto o esta categoría: \"%s\" (id: %d)"
 
 #. modules: account, msf_instance, register_accounting, account_override, account_journal, sync_so
 #: sql_constraint:account.journal:0
@@ -66910,14 +66143,6 @@ msgstr "Costa de Marfil (Côte d'Ivoire)"
 msgid "Monthly Purchase by Category"
 msgstr "Compras mensuales por categoría"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_int_line.py:341
-#, python-format
-msgid " Import in progress... \n"
-" Please wait that the import is finished before editing %s."
-msgstr " Import in progress... \n"
-" Please wait that the import is finished before editing %s."
-
 #. module: stock_schedule
 #: view:stock.frequence:0
 msgid "month(s)"
@@ -66962,7 +66187,7 @@ msgstr "Por favor, indique una fecha de factura antes de aprobar la factura:"
 #. module: base
 #: view:ir.sequence:0
 msgid "Seconde: %(sec)s"
-msgstr "Segundo:% (seg)s"
+msgstr "Segundo: %(sec)s"
 
 #. module: return_claim
 #: field:stock.partial.picking,register_a_claim_partial_picking:0
@@ -68499,7 +67724,7 @@ msgstr "Cantidad recibida"
 #: code:addons/specific_rules/stock.py:463
 #, python-format
 msgid "You cannot have two lines with the same product. (Product : [%s] %s)"
-msgstr "No puede tener dos líneas con el mismo producto. (Producto: [% s]% s)"
+msgstr "No puede tener dos líneas con el mismo producto. (Producto: [%s] %s)"
 
 #. module: stock_move_tracking
 #: model:ir.module.module,shortdesc:stock_move_tracking.module_meta_information
@@ -69303,14 +68528,6 @@ msgstr "…......................................."
 #: field:product.product,new_code:0
 msgid "New code"
 msgstr "Nuevo código"
-
-#. module: base
-#: code:addons/base/res/res_user.py:541
-#, python-format
-msgid "--\n"
-"%(name)s %(email)s\n"
-""
-msgstr "-- %(name)s %(email)s "
 
 #. module: base
 #: model:res.country,name:base.ua
@@ -70935,7 +70152,7 @@ msgstr "Last corrected entry"
 #: code:addons/msf_outgoing/wizard/split_memory_move.py:105
 #, python-format
 msgid "Selected quantity is equal to available quantity (%0.1f %s)."
-msgstr "La cantidad seleccionada es igual a la cantidad disponible (% 0.1f%s)."
+msgstr "La cantidad seleccionada es igual a la cantidad disponible (%0.1f %s)."
 
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:317
@@ -71272,20 +70489,6 @@ msgstr "Impuesto de sustitución"
 #: field:account.destination.link,destination_id:0
 msgid "Analytical Destination Account"
 msgstr "Cuenta de destino analítico"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/initial_stock_inventory.py:204
-#, python-format
-msgid "The batch %s was not found in the database.' % batch_name))\n"
-"                    else:\n"
-"                        batch = batch_ids[0]\n"
-"                except Exception:\n"
-"                    error_list.append(_('The Batch has to be a string."
-msgstr "The batch %s was not found in the database.' % batch_name))\n"
-"                    else:\n"
-"                        batch = batch_ids[0]\n"
-"                except Exception:\n"
-"                    error_list.append(_('The Batch has to be a string."
 
 #. module: account
 #: model:ir.actions.act_window,help:account.action_account_period_form
@@ -72362,7 +71565,7 @@ msgstr "Plazo por defecto para un proveedor"
 #: code:addons/stock/stock.py:2234
 #, python-format
 msgid "There is no journal defined on the product category: \"%s\" (id: %d)"
-msgstr "No existe un diario definido en la categoría de producto: \"% s\" (id:% d)"
+msgstr "No existe un diario definido en la categoría de producto: \"%s\" (id: %d)"
 
 #. module: sale
 #: help:sale.installer,sale_layout:0
@@ -72582,18 +71785,6 @@ msgstr "Línea %s del archivo importado: la fecha de vencimiento no corresponde 
 #: view:sale.order.line:0
 msgid "Total"
 msgstr "Total"
-
-#. module: sync_remote_warehouse
-#: code:addons/sync_remote_warehouse/entity.py:651
-#, python-format
-msgid "Message(s) imported: %d' % len(data_to_import_data)))\n"
-"                try:\n"
-"                    number_of_messages_ran = self.execute_message(cr, uid, context=context)\n"
-"                    self._usb_change_sync_step(cr, uid, 'pull_performed"
-msgstr "Message(s) imported: %d' % len(data_to_import_data)))\n"
-"                try:\n"
-"                    number_of_messages_ran = self.execute_message(cr, uid, context=context)\n"
-"                    self._usb_change_sync_step(cr, uid, 'pull_performed"
 
 #. module: order_types
 #: model:ir.module.module,description:order_types.module_meta_information
@@ -73342,7 +72533,7 @@ msgid " \n"
 "\n"
 "%s\n"
 ""
-msgstr "  ¡Importación completa en %s! Nº de líneas importadas: %s en %s línea nº de líneas ignoradas: %s nº de líneas por corregir: %s%s%s "
+msgstr "  ¡Importación completa en %s! Nº de líneas importadas: %s en %s línea nº de líneas ignoradas: %s nº de líneas por corregir: %s %s %s"
 
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.mx
@@ -73531,7 +72722,7 @@ msgstr "Gestión de relaciones con el cliente"
 #: code:addons/msf_doc_import/tender.py:72
 #, python-format
 msgid "%s been inactivated. If you want to generate RfQ from this document you have to remove/correct the line containing those inactive products (see red %s of the document)"
-msgstr "% s ha sido inactivado. Si desea generar una solicitud de presupuestos a partir de este documento tiene que quitar o corregir la línea que contiene los productos inactivos (vea %s en rojo del documento)"
+msgstr "%s ha sido inactivado. Si desea generar una solicitud de presupuestos a partir de este documento tiene que quitar o corregir la línea que contiene los productos inactivos (vea %s en rojo del documento)"
 
 #. module: base
 #: field:ir.attachment,create_date:0
@@ -74758,7 +73949,8 @@ msgstr "Calcular código (si tipo=código)"
 #, python-format
 msgid "No period defined for this date: %s !\n"
 "Please create a fiscal year."
-msgstr "¡No existe un periodo definido para esta fecha! Por favor, cree un año fiscal."
+msgstr "¡No existe un periodo definido para esta fecha! %s\n"
+"Por favor, cree un año fiscal."
 
 #. modules: msf_outgoing, specific_rules
 #: field:stock.move.memory.picking,expiry_date_check:0
@@ -74887,7 +74079,7 @@ msgid " Importation completed in %s second(s)!\n"
 "# of ignored lines: %s\n"
 "%s\n"
 ""
-msgstr " ¡Importación terminada en %s segundo (s)! Nº de líneas importadas: %s # de líneas por corregir: %s # de líneas ignoradas: %s%s "
+msgstr " ¡Importación terminada en %s segundo (s)! Nº de líneas importadas: %s # de líneas por corregir: %s # de líneas ignoradas: %s %s"
 
 #. module: msf_profile
 #: model:ir.model,name:msf_profile.model_user_access_results_groups_line
@@ -76016,7 +75208,7 @@ msgstr "Product Code"
 #: code:addons/stock/wizard/stock_splitinto.py:49
 #, python-format
 msgid "The current move line is already assigned to a pack, please remove it first if you really want to change it '             #                        'for this product: \"%s\" (id: %d)"
-msgstr "La línea de movimiento actual ya está asignada a un paquete, por favor, elimínela si realmente desea cambiarla '#' para este producto: \"% s\" (id:% d)"
+msgstr "La línea de movimiento actual ya está asignada a un paquete, por favor, elimínela si realmente desea cambiarla '#' para este producto: \"%s\" (id:%d)"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -76084,7 +75276,7 @@ msgstr "No conciliado"
 #: code:addons/sync_client/sync_client.py:715
 #, python-format
 msgid "Message(s) processed: %d/%d"
-msgstr "Mensaje(s) procesado(s): %d%d"
+msgstr "Mensaje(s) procesado(s): %d/%d"
 
 #. module: base_report_designer
 #: help:base_report_designer.installer,plugin_file:0
@@ -76668,7 +75860,7 @@ msgstr "Formatos de archivos compatibles: *.csv (valores separados por comas) "
 #: code:addons/res_currency_functional/wizard/activate_currencies.py:44
 #, python-format
 msgid "No rate is set for currency %s !"
-msgstr "¡No hay un tipo de cambio establecido para la moneda%s!"
+msgstr "¡No hay un tipo de cambio establecido para la moneda %s!"
 
 #. module: mission_stock
 #: view:mission.stock.wizard:0
@@ -76938,14 +76130,6 @@ msgid "\n"
 "items and the chart of accounts.\n"
 "    "
 msgstr " Este módulo da al usuario administrador acceso a todas las funciones de contabilidad, como los asientos contables y el plan contable.     "
-
-#. module: sync_remote_warehouse
-#: code:addons/sync_remote_warehouse/entity.py:658
-#, python-format
-msgid "Error while processing message(s): %s' % run_error))\n"
-"                    logger.switch('msg_pull','failed"
-msgstr "Error while processing message(s): %s' % run_error))\n"
-"                    logger.switch('msg_pull','failed"
 
 #. module: analytic_distribution
 #: field:analytic.distribution,free_2_lines:0
@@ -77429,7 +76613,7 @@ msgstr "Añadir un widget de usuario"
 #: code:addons/msf_outgoing/msf_outgoing.py:760
 #, python-format
 msgid "The corresponding Draft Shipment (%s) has been updated."
-msgstr "El borrador de envío correspondiente (% s) se ha actualizado."
+msgstr "El borrador de envío correspondiente (%s) se ha actualizado."
 
 #. module: base
 #: help:ir.actions.server,srcmodel_id:0
@@ -77552,12 +76736,6 @@ msgstr "Ministerio de Salud"
 #, python-format
 msgid "Unknown Error"
 msgstr "Error desconocido"
-
-#. module: product_attributes
-#: code:addons/product_attributes/product_attributes.py:543
-#, python-format
-msgid "be %s ESC' % (sale_obj and _('shipped to"
-msgstr "be %s ESC' % (sale_obj and _('shipped to"
 
 #. module: process
 #: field:process.transition,source_node_id:0
@@ -78534,7 +77712,7 @@ msgstr "Asia / Tel_Aviv"
 #. module: base
 #: view:res.lang:0
 msgid "%a - Abbreviated weekday name."
-msgstr "%A - nombre abreviado de días de la semana."
+msgstr "%a - nombre abreviado de días de la semana."
 
 #. modules: purchase, useability_dashboard_and_menu, stock
 #: model:ir.ui.menu,name:purchase.menu_action_picking_tree4
