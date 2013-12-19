@@ -314,12 +314,15 @@ class purchase_order(osv.osv):
             
         return True
 
-    #TODO: implement messages system
+    #UTP-872: extracted this method for a particularly check with sync
+    def _hook_check_po_no_line(self, po, context):
+        if not po.order_line:
+            raise osv.except_osv(_('Error !'), _('You can not confirm purchase order without Purchase Order Lines.'))
+
     def wkf_confirm_order(self, cr, uid, ids, context=None):
         todo = []
         for po in self.browse(cr, uid, ids, context=context):
-            if not po.order_line:
-                raise osv.except_osv(_('Error !'),_('You can not confirm purchase order without Purchase Order Lines.'))
+            self._hook_check_po_no_line(po, context)
             for line in po.order_line:
                 if line.state=='draft':
                     todo.append(line.id)
