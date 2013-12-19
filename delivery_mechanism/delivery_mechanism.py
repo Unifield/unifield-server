@@ -444,6 +444,7 @@ class stock_picking(osv.osv):
         internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal'), ('cross_docking_location_ok', '=', False)])
         ctx_avg = context.copy()
         ctx_avg['location'] = internal_loc_ids
+        so_to_check = set()
         for pick in self.browse(cr, uid, ids, context=context):
             # corresponding backorder object - not necessarily created
             backorder_id = None
@@ -469,6 +470,8 @@ class stock_picking(osv.osv):
             # increase picking version - all case where update_out is True + when the qty is bigger without split nor product change
             update_pick_version = False
             for move in move_obj.browse(cr, uid, move_ids, context=context):
+                if move.sale_line_id and move.sale_line_id.order_id:
+                    so_to_check.add(move.sale_line_id.order_id.id)
                 # keep data for back order creation
                 data_back = self.create_data_back(cr, uid, move, context=context)
                 # qty selected
@@ -510,6 +513,8 @@ class stock_picking(osv.osv):
                               'change_reason': partial['change_reason'],
                               'direct_incoming': partial.get('direct_incoming'),
                               }
+                    if 'state' in partial: # UTP-872: Added also the state into the move line if the state comes from the sync
+                        values.update({'state': partial['state']})
                     if 'product_price' in partial:
                         values.update({'price_unit': partial['product_price']})
                     elif 'product_uom' in partial and partial['product_uom'] != move.product_uom.id:
@@ -780,6 +785,11 @@ class stock_picking(osv.osv):
 #                    move.unlink(context=dict(context, call_unlink=True))
 #            move_obj.action_assign(cr, uid, second_assign_moves)
 #            move_obj.action_assign(cr, uid, to_assign_moves)
+
+        # If a line has been canceled on PICK/OUT
+        for so in self.pool.get('sale.order').browse(cr, uid, list(so_to_check), context=context):
+            if so.state == 'shipping_except':
+                wf_service.trg_validate(uid, 'sale.order', so.id, 'ship_corrected', cr)
 
         return {'type': 'ir.actions.act_window_close'}
     

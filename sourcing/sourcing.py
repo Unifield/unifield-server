@@ -156,6 +156,8 @@ class sourcing_line(osv.osv):
             result[obj.id]['display_confirm_button'] = (obj.state == 'draft' and obj.sale_order_id.state == 'validated')
             # UTP-392: readonly for procurement method if it is a Loan type
             result[obj.id]['loan_type'] = (obj.sale_order_id.order_type == 'loan')
+            # Sourcing in progress
+            result[obj.id]['sale_order_in_progress'] = obj.sale_order_id.sourcing_trace_ok
             # sale_order_state
             result[obj.id]['sale_order_state'] = False
             if obj.sale_order_id:
@@ -177,6 +179,18 @@ class sourcing_line(osv.osv):
         # list of sourcing lines having sale_order_id within ids
         result = self.pool.get('sourcing.line').search(cr, uid, [('sale_order_id', 'in', ids)], context=context)
         return result
+
+    def _get_sale_order_line_ids(self, cr, uid, ids, context=None):
+        '''
+        self represents sale.order
+        ids represents the ids of the sale.order.line objects for which procurement_request has changed
+
+        return the list of ids of sourcing.line object which need to get their procurement_request field updated
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # list of sourcing lines having sale_order_line_id within ids
+        return self.pool.get('sourcing.line').search(cr, uid, [('sale_order_line_id', 'in', ids)], context=context)
     
     def _get_sale_order_line_ids(self, cr, uid, ids, context=None):
         '''
@@ -292,12 +306,14 @@ class sourcing_line(osv.osv):
         'company_id': fields.many2one('res.company','Company',select=1),
         'procurement_request': fields.function(_get_sourcing_vals, method=True, type='boolean', string='Procurement Request', multi='get_vals_sourcing',
                                                store={'sale.order': (_get_sale_order_ids, ['procurement_request'], 10),
+                                                      'sale.order.line': (_get_sale_order_line_ids, ['procurement_request'], 10),
                                                       'sourcing.line': (_get_souring_lines_ids, ['sale_order_id'], 10)}),
         'display_confirm_button': fields.function(_get_sourcing_vals, method=True, type='boolean', string='Display Button', multi='get_vals_sourcing',),
         'need_sourcing': fields.function(_get_fake, method=True, type='boolean', string='Only for filtering', fnct_search=_search_need_sourcing),
 
         # UTP-392: if the FO is loan type, then the procurement method is only Make to Stock allowed        
         'loan_type': fields.function(_get_sourcing_vals, method=True, type='boolean', multi='get_vals_sourcing',),
+        'sale_order_in_progress': fields.function(_get_sourcing_vals, method=True, type='boolean', multi='get_vals_sourcing'),
     }
     _order = 'sale_order_id desc, line_number'
     _defaults = {
@@ -608,6 +624,7 @@ class sourcing_line(osv.osv):
         set the corresponding line's state to 'confirmed'
         if all lines are 'confirmed', the sale order is confirmed
         '''
+        context = context or {}
         wf_service = netsvc.LocalService("workflow")
         result = []
         for sl in self.browse(cr, uid, ids, context):
@@ -650,12 +667,15 @@ class sourcing_line(osv.osv):
                 self.pool.get('sale.order').write(cr, uid, [sl.sale_order_id.id], 
                                                     {'sourcing_trace_ok': True,
                                                      'sourcing_trace': 'Sourcing in progress'}, context=context)
-                thread = threading.Thread(target=self.confirmOrder, args=(cr.dbname, uid, sl, context))
-                thread.start()
+                if context.get('update_mode') in ['init', 'update']:
+                    self.confirmOrder(cr, uid, sl, context=context, new_cursor=False)
+                else:
+                    thread = threading.Thread(target=self.confirmOrder, args=(cr, uid, sl, context))
+                    thread.start()
                 
         return result
 
-    def confirmOrder(self, dbname, uid, sourcingLine, context=None):
+    def confirmOrder(self, cr, uid, sourcingLine, context=None, new_cursor=True):
         '''
         Confirm the Order in a Thread
         '''
@@ -664,7 +684,8 @@ class sourcing_line(osv.osv):
 
         wf_service = netsvc.LocalService("workflow")
 
-        cr = pooler.get_db(dbname).cursor()
+        if new_cursor:
+            cr = pooler.get_db(cr.dbname).cursor()
 
         try:
             if sourcingLine.sale_order_id.procurement_request:
@@ -685,8 +706,9 @@ class sourcing_line(osv.osv):
                                               {'sourcing_trace_ok': True,
                                                'sourcing_trace': misc.ustr(e)}, context=context)
 
-        cr.commit()
-        cr.close()
+        if new_cursor:
+            cr.commit()
+            cr.close()
 
         return True
 
@@ -695,10 +717,11 @@ class sourcing_line(osv.osv):
         '''
         set the sale order line state to 'draft'
         '''
+        line_obj = self.pool.get('sale.order.line')
         wf_service = netsvc.LocalService("workflow")
         result = []
         for sl in self.browse(cr, uid, ids, context):
-            result.append((sl.id, sl.sale_order_line_id.write(cr, uid, sl.sale_order_line_id.id, {'state':'draft'}, context)))
+            result.append((sl.id, line_obj.write(cr, uid, sl.sale_order_line_id.id, {'state':'draft'}, context)))
                 
         return result
         
@@ -1023,7 +1046,7 @@ class sale_order_line(osv.osv):
                   'product_id': vals.get('product_id', False),
                   'priority': orderPriority,
                   'categ': orderCategory,
-#                  'sale_order_state': orderState,
+                  'sale_order_state': orderState,
                   'state': self.browse(cr, uid, result, context=context).state
                   }
 
@@ -1152,8 +1175,12 @@ class sale_order_line(osv.osv):
         
         remove manually all linked sourcing_line
         '''
-        if not context:
+        if context is None:
             context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         context.update({'fromSaleOrderLine': True})
         idsToDelete = []
         for orderLine in self.browse(cr, uid, ids, context):
@@ -1254,7 +1281,7 @@ class procurement_order(osv.osv):
         for order in self.browse(cr, uid, ids):
             line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', order.id)])
             for line in self.pool.get('sale.order.line').browse(cr, uid, line_ids):
-                if line.order_id.procurement_request:
+                if line.order_id.procurement_request and line.order_id.location_requestor_id.usage != 'customer':
                     return True
         
         return res
