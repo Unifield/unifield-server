@@ -119,6 +119,7 @@ class distribution_line(osv.osv):
         "currency_id": fields.many2one('res.currency', 'Currency', required=True),
         "date": fields.date(string="Date"),
         "source_date": fields.date(string="Source Date", help="This date is for source_date for analytic lines"),
+        'partner_type': fields.text(string='Partner Type of FO/PO', required=False, readonly=True),
     }
 
     _defaults ={
@@ -339,6 +340,9 @@ class analytic_distribution(osv.osv):
                         'cost_center_id': line.analytic_id and line.analytic_id.id or False,
                         'destination_id': line.destination_id and line.destination_id.id or False,
                     }
+                    if distrib and distrib.partner_type:
+                        vals.update({'partner_type': distrib.partner_type})
+                    
                     # Search default destination if no one given
                     if account_id and not vals.get('destination_id'):
                         account = self.pool.get('account.account').browse(cr, uid, account_id)

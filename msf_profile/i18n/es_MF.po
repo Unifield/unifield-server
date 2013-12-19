@@ -14145,7 +14145,7 @@ msgstr "Este valor se calcula como la fecha mínima prevista para la compra de t
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:411
 #, python-format
-msgid "Some documents linked to this partner needs to be closed or canceled before deactivating the partner: %s"
+msgid "Some documents linked to this partner need to be closed or cancelled before deactivating the partner: %s"
 msgstr "Deben cerrarse o cancelarse algunos documentos relacionados con este tercero antes de desactivar el tercero: %s"
 
 #. modules: base_setup, unifield_setup
@@ -16148,7 +16148,7 @@ msgstr "Gastos locales"
 
 #. module: sale
 #: report:msf.freight_manifest:0
-msgid "Parcels missing :"
+msgid "Parcels Missing :"
 msgstr "Paquetes que faltan:"
 
 #. module: account_voucher
@@ -29816,7 +29816,7 @@ msgstr "África / Johannesburg"
 
 #. module: sale
 #: report:msf.freight_manifest:0
-msgid "Freight clame report made ? Yes / No"
+msgid "Freight Claim Report Made ? Yes / No"
 msgstr "¿Informe de reclamación de carga realizado? Sí / No"
 
 #. module: register_accounting
@@ -30163,11 +30163,6 @@ msgstr "Inicio de periodo"
 #, python-format
 msgid "You cannot have two lines for the product %s with different average cost."
 msgstr "No puede tener dos líneas para el producto %s con coste medio diferente."
-
-#. module: msf_outgoing
-#: report:packing.list:0
-msgid "Tot Wt [kg]:"
-msgstr "Tot Wt [kg]:"
 
 #. module: account
 #: code:addons/account/invoice.py:810
@@ -40261,11 +40256,6 @@ msgstr "Cambiar/elegir frecuencia"
 msgid "America/Nassau"
 msgstr "America / Nassau"
 
-#. module: msf_outgoing
-#: report:packing.list:0
-msgid "Pack Wt [kg]:"
-msgstr "Pack Wt [kg]:"
-
 #. modules: tender_flow, analytic_distribution_supply, product_nomenclature, financing_contract, account_hq_entries, export_import_lang, account_override, procurement_cycle, account_journal, register_accounting, mission_stock, return_claim, account_msf, account_corrections, account_mcdb, res_currency_tables, supplier_catalogue, stock_schedule, procurement_request, spreadsheet_xml, unifield_setup, purchase_compare_rfq, analytic_distribution_invoice, purchase_followup, stock_override, msf_doc_import, analytic_distribution, msf_order_date, msf_cross_docking, reason_types_moves, purchase_allocation_report, msf_homere_interface, msf_instance, account_reconciliation, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, sale_override, base, account_period_closing_level, account_subscription, res_currency_functional, sync_client, msf_budget, account_invoice_split, account, msf_outgoing, stock_move_tracking, msf_partner, product_attributes, order_nomenclature, documents_done, sale, msf_config_locations, sales_followup, sourcing, msf_custom_settings, product_list, object_query, purchase_msf, stock, stock_batch_recall, msf_profile
 #: code:addons/account/account.py:948
 #: code:addons/account/account.py:950
@@ -41368,7 +41358,6 @@ msgstr "Orden de compra en estado borrador"
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
 #: report:invoice:0
-#: report:packing.list:0
 #: report:pro.forma.invoice:0
 msgid "Number of Parcels"
 msgstr "Número de bultos"
@@ -44613,10 +44602,14 @@ msgstr "Codificación estándar "
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
 #: report:invoice:0
-#: report:packing.list:0
 #: report:pre.packing.list:0
 msgid "#Packs:"
 msgstr "nº paquetes:"
+
+#. module: msf_outgoing
+#: report:packing.list:0
+msgid "Packs"
+msgstr "paquetes"
 
 #. module: service_purchasing
 #: code:addons/service_purchasing/service_purchasing.py:77
@@ -46756,9 +46749,13 @@ msgstr "De paquete"
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
 #: report:invoice:0
-#: report:packing.list:0
 msgid "PPL ref:"
 msgstr "Ref LPE:"
+
+#. module: msf_outgoing
+#: report:packing.list:0
+msgid "PPL ref"
+msgstr "Ref LPE"
 
 #. modules: register_accounting, account_mcdb, analytic_distribution
 #: report:account.bank.statement.line:0
@@ -48098,11 +48095,6 @@ msgstr "Borradores de asientos"
 #: selection:account.journal.fake,type:0
 msgid "Migration"
 msgstr "Migración"
-
-#. module: msf_outgoing
-#: report:packing.list:0
-msgid "Tot Val:"
-msgstr "Tot Val:"
 
 #. module: stock
 #: help:stock.location,scrap_location:0
@@ -55388,11 +55380,6 @@ msgstr "Identificador del documento"
 msgid "3"
 msgstr "3"
 
-#. module: msf_outgoing
-#: report:packing.list:0
-msgid "Pack Val:"
-msgstr "Pack Val:"
-
 #. modules: account_msf, account, purchase, consumption_calculation, account_voucher, sale, base, board, stock
 #: field:account.entries.report,month:0
 #: view:account.invoice.report:0
@@ -57322,12 +57309,6 @@ msgstr "You have to define a valid UOM, i.e. not \"To be define\"."
 #: field:purchase.order.followup.from.menu,cust_order_id:0
 msgid "Supplier reference"
 msgstr "Referencia Proveedor"
-
-#. module: msf_outgoing
-#: report:certificate.free.gift:0
-#: report:packing.list:0
-msgid "FO ref:"
-msgstr "FO ref:"
 
 #. modules: account_override, account
 #: model:ir.actions.act_window,name:account.action_invoice_tree4
@@ -60091,10 +60072,14 @@ msgstr "Gestión contable y financiera"
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
 #: report:invoice:0
-#: report:packing.list:0
 #: report:pre.packing.list:0
 msgid "To p:"
 msgstr "Para env:"
+
+#. module: msf_outgoing
+#: report:packing.list:0
+msgid "To p"
+msgstr "Para env"
 
 #. module: sourcing
 #: view:multiple.sourcing.wizard:0
@@ -67431,10 +67416,14 @@ msgstr "Stock de ubicación "
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
 #: report:invoice:0
-#: report:packing.list:0
 #: report:pre.packing.list:0
 msgid "From p:"
 msgstr "De p:"
+
+#. module: msf_outgoing
+#: report:packing.list:0
+msgid "From p"
+msgstr "De p"
 
 #. module: product_expiry
 #: help:product.product,life_time:0
@@ -67723,6 +67712,7 @@ msgstr "Forzar periodo"
 
 #. module: msf_outgoing
 #: field:shipment,num_of_packs:0
+#: report:packing.list:0
 msgid "Number of Packs"
 msgstr "Número de paquetes"
 

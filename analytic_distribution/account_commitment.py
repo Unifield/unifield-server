@@ -28,6 +28,7 @@ from time import strftime
 import decimal_precision as dp
 from account_tools import get_period_from_date
 from tools.misc import flatten
+from time import strftime, strptime
 
 class account_commitment(osv.osv):
     _name = 'account.commitment'
@@ -125,8 +126,10 @@ class account_commitment(osv.osv):
         if not journal:
             raise osv.except_osv(_('Error'), _('No Engagement journal found!'))
         journal_name = journal[0].code
-        if instance and sequence_number and journal_name:
-            vals.update({'name': "%s-%s-%s" % (instance.move_prefix, journal_name, sequence_number)})
+        # UF-2139: add fiscal year last 2 numbers in sequence
+        fy_numbers = vals.get('date', False) and strftime('%Y', strptime(vals.get('date'), '%Y-%m-%d'))[2:4] or False
+        if instance and sequence_number and journal_name and fy_numbers:
+            vals.update({'name': "%s-%s-%s%s" % (instance.move_prefix, journal_name, fy_numbers, sequence_number)})
         else:
             raise osv.except_osv(_('Error'), _('Error creating commitment sequence!'))
         return super(account_commitment, self).create(cr, uid, vals, context=context)

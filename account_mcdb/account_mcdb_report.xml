@@ -69,6 +69,19 @@
             menu="False"
          />
 
+    <!-- Free 1 / Free 2 Analytic Journal Items Report -->
+        <report
+            id="report_account_analytic_line_free_xls"
+            string="Analytic Journal Items"
+            model="account.analytic.line"
+            name="account.analytic.line.free_xls"
+            file="account_mcdb/report/report_account_analytic_line_free_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+
     <!-- Account Bank Statement Line Report (register lines) -->
         <report
             id="report_account_bank_statement_line"

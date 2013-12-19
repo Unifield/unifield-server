@@ -125,7 +125,7 @@ class account_journal(osv.osv):
             'code': code,
             'active': True,
             'prefix': '',
-            'padding': 6,
+            'padding': 4,
             'number_increment': 1
         }
         return seq_pool.create(cr, uid, seq)
@@ -213,11 +213,6 @@ class account_move(osv.osv):
         # Change the name for (instance_id.move_prefix) + (journal_id.code) + sequence number
         instance = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id
         journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'])
-        sequence_number = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id)
-        if instance and journal and sequence_number and ('name' not in vals or vals['name'] == '/'):
-            if not instance.move_prefix:
-                raise osv.except_osv(_('Warning'), _('No move prefix found for this instance! Please configure it on Company view.'))
-            vals['name'] = "%s-%s-%s" % (instance.move_prefix, journal.code, sequence_number)
         # Add default date and document date if none
         if not vals.get('date', False):
             vals.update({'date': self.pool.get('account.period').get_date_in_period(cr, uid, strftime('%Y-%m-%d'), vals.get('period_id'))})
@@ -230,6 +225,17 @@ class account_move(osv.osv):
                 context['document_date'] = vals.get('document_date')
             if 'date' in vals:
                 context['date'] = vals.get('date')
+        # Create sequence for move lines
+        period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, vals['date'])
+        if not period_ids:
+            raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (vals['date'] or ''))
+        period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
+        # Context is very important to fetch the RIGHT sequence linked to the fiscalyear!
+        sequence_number = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': period.fiscalyear_id.id})
+        if instance and journal and sequence_number and ('name' not in vals or vals['name'] == '/'):
+            if not instance.move_prefix:
+                raise osv.except_osv(_('Warning'), _('No move prefix found for this instance! Please configure it on Company view.'))
+            vals['name'] = "%s-%s-%s" % (instance.move_prefix, journal.code, sequence_number)
         res = super(account_move, self).create(cr, uid, vals, context=context)
         self._check_document_date(cr, uid, res, context)
         self._check_date_in_period(cr, uid, res, context)
