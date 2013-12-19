@@ -158,6 +158,9 @@ class wizard_import_po_simulation_screen(osv.osv):
         # File information
         'file_to_import': fields.binary(string='File to import'),
         'filename': fields.char(size=64, string='Filename'),
+        'filetype': fields.selection([('excel', 'Excel file'),
+                                      ('xml', 'XML file')], string='Type of file',
+                                      required=True),
         'error_file': fields.binary(string='File with errors'),
         'error_filename': fields.char(size=64, string='Lines with errors'),
         'nb_file_lines': fields.integer(string='Total of file lines',
@@ -316,6 +319,18 @@ class wizard_import_po_simulation_screen(osv.osv):
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            if wiz.filetype == 'excel':
+                xml_file = base64.decodestring(wiz.file_to_import)
+                excel_file = SpreadsheetXML(xmlstring=xml_file)
+                if not excel_file.getWorksheets():
+                    raise osv.except_osv(_('Error'), _('The given file is not a valid Excel 2003 Spreadsheet file !'))
+            else:
+                xml_file = base64.decodestring(wiz.file_to_import)
+                root = ET.fromstring(xml_file)
+                if root.tag != 'data':
+                    raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
 
         self.write(cr, uid, ids, {'state': 'simu_progress'}, context=context)
         cr.commit()
@@ -495,8 +510,10 @@ class wizard_import_po_simulation_screen(osv.osv):
 
             header_values = {}
 
-#            values = self.get_values_from_excel(cr, uid, wiz.file_to_import, context=context)
-            values = self.get_values_from_xml(cr, uid, wiz.file_to_import, context=context)
+            if wiz.filetype == 'excel':
+                values = self.get_values_from_excel(cr, uid, wiz.file_to_import, context=context)
+            else:
+                values = self.get_values_from_xml(cr, uid, wiz.file_to_import, context=context)
 
             '''
             We check for each line if the number of columns is consistent
