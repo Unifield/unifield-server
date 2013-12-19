@@ -34,6 +34,7 @@
         'kit_view.xml',
         'kit_creation_view.xml',
         'kit_sequence.xml',
+        'kit_report.xml',
         'wizard/substitute_view.xml',
         'wizard/stock_partial_move_view.xml',
         'wizard/confirm_view.xml',
