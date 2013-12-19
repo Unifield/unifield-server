@@ -33,7 +33,7 @@
      <Interior ss:Color="#ffff66" ss:Pattern="Solid"/>
    </Style>
    <Style ss:ID="number">
-     <NumberFormat ss:Format="Standard"/>
+     <NumberFormat ss:Format="#,##0.00"/>
    </Style>
   <Style ss:ID="header_part">
     <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="0"/>
@@ -132,8 +132,8 @@
     <Cell>
       <Data ss:Type="String">${o.type and getSel(o, 'type') or ''|x}</Data>
     </Cell>
-    <Cell>
-      <Data ss:Type="Number" ss:Style="number">${o.balance or 0.0|x}</Data>
+    <Cell ss:StyleID="number">
+      <Data ss:Type="Number">${o.balance or 0.0|x}</Data>
     </Cell>
   </Row>
 % endfor
@@ -141,8 +141,8 @@
     <Cell ss:Index="3">
       <Data ss:Type="String">${_('Total')}</Data>
     </Cell>
-    <Cell>
-      <Data ss:Type="Number" ss:Style="number">${total or 0.0|x}</Data>
+    <Cell ss:StyleID="number">
+      <Data ss:Type="Number">${total or 0.0|x}</Data>
     </Cell>
   </Row>
 </Table>
