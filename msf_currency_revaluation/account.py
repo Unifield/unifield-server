@@ -23,17 +23,29 @@ from osv import osv, fields
 from tools.translate import _
 
 
-class AccountAccountLine(osv.osv):
+class account_move_line(osv.osv):
 
     _inherit = 'account.move.line'
-    # By convention added columns stats with gl_.
-    _columns = {'gl_foreign_balance': fields.float('Aggregated Amount curency'),
-                'gl_balance': fields.float('Aggregated Amount'),
-                'gl_revaluated_balance': fields.float('Revaluated Amount'),
-                'gl_currency_rate': fields.float('Currency rate')}
-    
+    _columns = {
+        # [account_unrealized_currency_gain_loss module]
+        #  By convention added columns stats with gl_.
+        'gl_foreign_balance': fields.float('Aggregated Amount curency'),
+        'gl_balance': fields.float('Aggregated Amount'),
+        'gl_revaluated_balance': fields.float('Revaluated Amount'),
+        'gl_currency_rate': fields.float('Currency rate'),
+        # [/account_unrealized_currency_gain_loss module]
+        'is_revaluated_ok': fields.boolean(
+            _("Revaluation line"), readonly=True),
+    }
 
-class AccountAccount(osv.osv):
+    _defaults = {
+        'is_revaluated_ok': False,
+    }
+
+account_move_line()
+
+
+class account_account(osv.osv):
 
     _inherit = 'account.account'
 
@@ -98,6 +110,6 @@ class AccountAccount(osv.osv):
 
         return accounts
 
-AccountAccount()
+account_account()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

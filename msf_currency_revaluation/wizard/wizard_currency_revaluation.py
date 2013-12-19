@@ -316,6 +316,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                          'amount_currency': 0.0,
                          'document_date': form.posting_date,
                          'date': form.posting_date,
+                         'is_revaluated_ok': True,
                          }
             base_line.update(line_data)
             # we can assume that keys should be equals columns name + gl_
@@ -571,6 +572,11 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     created_ids.extend(rev_line_ids)
 
         if created_ids:
+            # Set all booking amount to 0 for revaluation lines
+            cr.execute('UPDATE account_move_line '
+                       'SET debit_currency = 0, credit_currency = 0'
+                       'WHERE id IN %s', (tuple(created_ids),))
+            # Return the view
             return {'domain': "[('id','in', %s)]" % (created_ids,),
                     'name': _("Created revaluation lines"),
                     'view_type': 'form',
