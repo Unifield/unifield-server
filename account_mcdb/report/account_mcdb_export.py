@@ -107,7 +107,7 @@ class account_line_csv_export(osv.osv_memory):
                 csv_line.append(ml.functional_currency_id and ml.functional_currency_id.name and ml.functional_currency_id.name.encode('utf-8') or '')
             else:
                 #output amount (debit/credit) regarding booking currency
-                amount = currency_obj.compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
+                amount = currency_obj.compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=False, context=context)
                 if amount < 0.0:
                     csv_line.append(0.0)
                     csv_line.append(abs(amount) or 0.0)

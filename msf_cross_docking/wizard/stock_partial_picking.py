@@ -44,6 +44,7 @@ class stock_partial_picking(osv.osv_memory):
             ('from_cross_docking', 'From Cross Docking'),
             ('from_stock', 'From stock'),
             ('default', 'Default'), ], string="Source Type", readonly=False),
+        'direct_incoming': fields.boolean(string='Direct to Stock ?'),
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -86,6 +87,8 @@ class stock_partial_picking(osv.osv_memory):
             
             if 'source_type' in fields:
                 res.update({'source_type': 'default'})
+
+        res.update({'direct_incoming': True})
 
         return res
 
@@ -136,10 +139,12 @@ class stock_partial_picking(osv.osv_memory):
             picking_type = data[0]['type']
             # for both type, we add a field before the cancel button
             new_field_txt = False
+            new_field_txt2 = False
             # define the new field according to picking type
             if picking_type == 'in':
                 # replace line '<group col="2" colspan="2">' for 'incoming_shipment' only to select the 'stock location' destination
                 new_field_txt = '<field name="dest_type" invisible="0" on_change="onchange_dest_type(dest_type,context)" required="0"/>'
+                new_field_txt2 = '<field name="direct_incoming" attrs="{\'invisible\': [(\'dest_type\', \'not in\', [\'default\', \'to_stock\'])]}" />'
             elif picking_type == 'out':
                 # replace line '<group col="2" colspan="2">' for 'delivery orders' only to select the 'stock location' source
                 new_field_txt = '<field name="source_type" invisible="1" required="0"/>'
@@ -159,6 +164,16 @@ class stock_partial_picking(osv.osv_memory):
                         group_field = field
                         field.set('col', '4')
                         field.set('colspan', '4')
+                        if new_field_txt2:
+                            field.set('col', '8')
+                            list_button_xpath = ['//button[@special="cancel" or @name="do_incoming_shipment"]']
+                            for bxpath in list_button_xpath:
+                                buttons = root.xpath(bxpath)
+                                if not buttons:
+                                    raise osv.except_osv(_('Warning !'), _('Element %s not found.')%bxpath)
+                                for button in buttons:
+                                    button.set('colspan', '2')
+
                 # find the cancel button
                 list_xpath = ['//button[@special="cancel"]']
                 fields = False
@@ -169,6 +184,9 @@ class stock_partial_picking(osv.osv_memory):
                 # cancel button index
                 cancel_index = list(group_field).index(fields[0])
                 # generate xml tree
+                if new_field_txt2:
+                    new_field2 = etree.fromstring(new_field_txt2)
+                    group_field.insert(cancel_index, new_field2)
                 new_field = etree.fromstring(new_field_txt)
                 # insert new field at the place of cancel button
                 group_field.insert(cancel_index, new_field)
