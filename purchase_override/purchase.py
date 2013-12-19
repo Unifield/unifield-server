@@ -670,14 +670,11 @@ class purchase_order(osv.osv):
                 if not distrib:
                     return True
                 
-                # UTP-953: For intersection, the cc_intermission can also be used for all partner, so the block below is removed
-#                for cc_line in distrib.cost_center_lines:
-#                    if is_intermission and cc_line.analytic_id.id != intermission_cc:
-#                        # UTP-952: remove the default intermission cc
-#                        #cc_line.write({'analytic_id': intermission_cc})
-#                        pass
-#                    elif not is_intermission and cc_line.analytic_id.id == intermission_cc:
-#                        raise osv.except_osv(_('Warning'), _("The PO partner type is not intermission, so you can not use the Cost Center Intermission in line: %s!") % (pol.name or '',))
+                for cc_line in distrib.cost_center_lines:
+                    if is_intermission and cc_line.analytic_id.id != intermission_cc:
+                        cc_line.write({'analytic_id': intermission_cc})
+                    elif not is_intermission and cc_line.analytic_id.id == intermission_cc:
+                        raise osv.except_osv(_('Warning'), _("The PO partner type is not intermission, so you can not use the Cost Center Intermission in line: %s!") % (pol.name or '',))
 
                 # Change distribution to be valid if needed by using those from header
                 if distrib and pol.analytic_distribution_state != 'valid':
@@ -2028,7 +2025,7 @@ class purchase_order_line(osv.osv):
                 res_merged = merged_line_obj._update(cr, uid, merged_id, line.id, -line.product_qty, line.price_unit, context=c)
 
         return vals
-    
+
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
         Check if there is restriction on lines
@@ -2257,16 +2254,35 @@ class purchase_order_line(osv.osv):
                         
         return res
 
-    def on_change_origin(self, cr, uid, ids, origin, procurement_id=False, context=None):
+    def on_change_select_fo(self, cr, uid, ids, fo_id, context=None):
+        '''
+        Fill the origin field if a FO is selected
+        '''
+        so_obj = self.pool.get('sale.order')
+        if fo_id:
+            res = {'value': {'origin': so_obj.browse(cr, uid, fo_id, context=context).name,
+                             'select_fo': False}}
+            return res
+
+        return {}
+
+    def on_change_origin(self, cr, uid, ids, origin, procurement_id=False, partner_type='external', context=None):
         '''
         Check if the origin is a known FO/IR
         '''
         res = {}
         if not procurement_id and origin:
-            sale_id = self.pool.get('sale.order').search(cr, uid, [('name', '=', origin), ('state', 'in', ('sourced', 'progress', 'manual'))], context=context)
+            domain = [('name', '=', origin), ('state', 'in', ('sourced', 'progres', 'manual'))]
+            o_type = 'a Non-ESC'
+            if partner_type == 'esc':
+                o_type = 'an ESC'
+                domain.append(('split_type_sale_order', '=', 'esc_split_sale_order'))
+            else:
+                domain.append(('split_type_sale_order', '=', 'local_purchase_split_sale_order'))
+            sale_id = self.pool.get('sale.order').search(cr, uid, domain, context=context)
             if not sale_id:
                 res['warning'] = {'title': _('Warning'),
-                                  'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR. No FO/IR line will be created for this PO line') % origin}
+                                  'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with %s supplier. No FO/IR line will be created for this PO line') % (origin, o_type)}
 
         return res
     
@@ -2309,6 +2325,7 @@ class purchase_order_line(osv.osv):
 
         # This field is used to identify the FO PO line between 2 instances of the sync
         'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
+        'select_fo': fields.many2one('sale.order', string='FO'),
     }
 
     _defaults = {
