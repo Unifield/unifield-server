@@ -1008,6 +1008,7 @@ class sale_order(osv.osv):
             
             # created procurements
             proc_ids = []
+            proc_to_check = []
             # flag to prevent the display of the sale order log message
             # if the method is called after po update, we do not display log message
             display_log = True
@@ -1045,8 +1046,14 @@ class sale_order(osv.osv):
                     proc_ids.append(proc_id)
                     line_obj.write(cr, uid, [line.id], {'procurement_id': proc_id}, context=context)
                     # set the flag for log message
-                    if line.so_back_update_dest_po_id_sale_order_line:
+                    if line.so_back_update_dest_po_id_sale_order_line or line.created_by_po:
                         display_log = False
+
+                    if line.created_by_po:
+                        proc_to_check.append(proc_id)
+
+                    if line.created_by_po_line:
+                        self.pool.get('purchase.order.line').write(cr, uid, [line.created_by_po_line.id], {'procurement_id': proc_id}, context=context)
                 
                 # if the line is draft (it should be the case), we set its state to 'sourced'
                     if line.state == 'draft':
@@ -1054,6 +1061,10 @@ class sale_order(osv.osv):
                     
             for proc_id in proc_ids:
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+
+            for proc_id in proc_to_check:
+                wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+                self.pool.get('procurement.order').write(cr, uid, [proc_id], {'state': 'running'}, context=context)
                 
             # the Fo is sourced we set the state
             self.write(cr, uid, [order.id], {'state': 'sourced'}, context=context)
@@ -1193,6 +1204,8 @@ class sale_order_line(osv.osv):
                 'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
                 'original_line_id': fields.many2one('sale.order.line', string='Original line', help='ID of the original line before the split'),
                 'manually_corrected': fields.boolean(string='FO line is manually corrected by user'),
+                'created_by_po': fields.many2one('purchase.order', string='Created by PO'),
+                'created_by_po_line': fields.many2one('purchase.order.line', string='Created by PO line'),
                 }
 
     _sql_constraints = [

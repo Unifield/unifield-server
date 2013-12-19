@@ -672,14 +672,11 @@ class purchase_order(osv.osv):
                 if not distrib:
                     return True
                 
-                # UTP-953: For intersection, the cc_intermission can also be used for all partner, so the block below is removed
-#                for cc_line in distrib.cost_center_lines:
-#                    if is_intermission and cc_line.analytic_id.id != intermission_cc:
-#                        # UTP-952: remove the default intermission cc
-#                        #cc_line.write({'analytic_id': intermission_cc})
-#                        pass
-#                    elif not is_intermission and cc_line.analytic_id.id == intermission_cc:
-#                        raise osv.except_osv(_('Warning'), _("The PO partner type is not intermission, so you can not use the Cost Center Intermission in line: %s!") % (pol.name or '',))
+                for cc_line in distrib.cost_center_lines:
+                    if is_intermission and cc_line.analytic_id.id != intermission_cc:
+                        cc_line.write({'analytic_id': intermission_cc})
+                    elif not is_intermission and cc_line.analytic_id.id == intermission_cc:
+                        raise osv.except_osv(_('Warning'), _("The PO partner type is not intermission, so you can not use the Cost Center Intermission in line: %s!") % (pol.name or '',))
 
                 # Change distribution to be valid if needed by using those from header
                 if distrib and pol.analytic_distribution_state != 'valid':
@@ -920,6 +917,53 @@ stock moves which are already processed : '''
                     line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
         # MOVE code for COMMITMENT into wkf_approve_order
         return True
+
+    def create_extra_lines_on_fo(self, cr, uid, ids, context=None):
+        '''
+        Creates FO/IR lines according to PO extra lines
+        '''
+        sol_obj = self.pool.get('sale.order.line')
+        so_obj = self.pool.get('sale.order')
+        proc_obj = self.pool.get('procurement.order')
+        ad_obj = self.pool.get('analytic.distribution')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        lines = []
+        sol_ids = set()
+        for order in self.browse(cr, uid, ids, context=context):
+            lines.extend([l for l in order.order_line if l.link_so_id and not l.procurement_id])
+
+        for l in lines:
+            # Copy the AD
+            new_distrib = False
+            if l.analytic_distribution_id:
+                new_distrib = ad_obj.copy(cr, uid, l.analytic_distribution_id.id, {}, context=context)
+            elif not l.analytic_distribution_id and l.order_id and l.order_id.analytic_distribution_id:
+                new_distrib = ad_obj.copy(cr, uid, l.order_id.analytic_distribution_id.id, {}, context=context)
+            # Creates the FO lines
+            tmp_sale_context = context.get('sale_id')
+            context['sale_id'] = l.link_so_id.id
+            sol_id = sol_obj.create(cr, uid, {'order_id': l.link_so_id.id,
+                                              'product_id': l.product_id.id,
+                                              'product_uom': l.product_uom.id,
+                                              'product_uom_qty': l.product_qty,
+                                              'price_unit': l.price_unit,
+                                              'type': 'make_to_order',
+                                              'analytic_distribution_id': new_distrib,
+                                              'created_by_po': l.order_id.id,
+                                              'created_by_po_line': l.id,
+                                              'name': '[%s] %s' % (l.product_id.default_code, l.product_id.name),}, context=context)
+            context['sale_id'] = tmp_sale_context
+            sol_ids.add(l.link_so_id.id)
+
+        so_obj.action_ship_proc_create(cr, uid, list(sol_ids), context=context)
+
+        return True
     
     def wkf_confirm_wait_order(self, cr, uid, ids, context=None):
         """
@@ -942,6 +986,9 @@ stock moves which are already processed : '''
         # objects
         sol_obj = self.pool.get('sale.order.line')
         so_obj =  self.pool.get('sale.order')
+
+        # Create extra lines on the linked FO/IR
+        self.create_extra_lines_on_fo(cr, uid, ids, context=context)
         
         # code from wkf_approve_order
         self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
@@ -1980,7 +2027,7 @@ class purchase_order_line(osv.osv):
                 res_merged = merged_line_obj._update(cr, uid, merged_id, line.id, -line.product_qty, line.price_unit, context=c)
 
         return vals
-    
+
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
         Check if there is restriction on lines
@@ -2024,6 +2071,9 @@ class purchase_order_line(osv.osv):
         order = self.pool.get('purchase.order').browse(cr, uid, order_id, context=context)
         other_lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom)], context=context)
         stages = self._get_stages_price(cr, uid, product_id, product_uom, order, context=context)
+
+        if vals.get('origin') and not vals.get('procurement_id'):
+            vals.update(self.update_origin_link(cr, uid, vals.get('origin'), context=context))
 
         if (other_lines and stages and order.state != 'confirmed'):
             context.update({'change_price_ok': False})
@@ -2109,6 +2159,9 @@ class purchase_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok:
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
+
+            if vals.get('origin', line.origin) and not vals.get('procurement_id', line.procurement_id):
+                vals.update(self.update_origin_link(cr, uid, vals.get('origin', line.origin), context=context))
         
         if not context.get('update_merge'):
             for line in ids:
@@ -2120,6 +2173,21 @@ class purchase_order_line(osv.osv):
         res = super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
 
         return res
+
+    def update_origin_link(self, cr, uid, origin, context=None):
+        '''
+        Return the FO/IR that matches with the origin value
+        '''
+        so_obj = self.pool.get('sale.order')
+
+        tmp_proc_context = context.get('procurement_request')
+        context['procurement_request'] = True
+        so_ids = so_obj.search(cr, uid, [('name', '=', origin), ('state', 'in', ('sourced', 'progress', 'manual'))], context=context)
+        context['procurement_request'] = tmp_proc_context
+        if so_ids:
+            return {'link_so_id': so_ids[0]}
+
+        return {}
 
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -2187,6 +2255,38 @@ class purchase_order_line(osv.osv):
                 res[line.id] = False
                         
         return res
+
+    def on_change_select_fo(self, cr, uid, ids, fo_id, context=None):
+        '''
+        Fill the origin field if a FO is selected
+        '''
+        so_obj = self.pool.get('sale.order')
+        if fo_id:
+            res = {'value': {'origin': so_obj.browse(cr, uid, fo_id, context=context).name,
+                             'select_fo': False}}
+            return res
+
+        return {}
+
+    def on_change_origin(self, cr, uid, ids, origin, procurement_id=False, partner_type='external', context=None):
+        '''
+        Check if the origin is a known FO/IR
+        '''
+        res = {}
+        if not procurement_id and origin:
+            domain = [('name', '=', origin), ('state', 'in', ('sourced', 'progres', 'manual'))]
+            o_type = 'a Non-ESC'
+            if partner_type == 'esc':
+                o_type = 'an ESC'
+                domain.append(('split_type_sale_order', '=', 'esc_split_sale_order'))
+            else:
+                domain.append(('split_type_sale_order', '=', 'local_purchase_split_sale_order'))
+            sale_id = self.pool.get('sale.order').search(cr, uid, domain, context=context)
+            if not sale_id:
+                res['warning'] = {'title': _('Warning'),
+                                  'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with %s supplier. No FO/IR line will be created for this PO line') % (origin, o_type)}
+
+        return res
     
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
@@ -2215,6 +2315,7 @@ class purchase_order_line(osv.osv):
         'parent_line_id': fields.many2one('purchase.order.line', string='Parent line', ondelete='set null'),
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=64, string='Origin'),
+        'link_so_id': fields.many2one('sale.order', string='Linked FO/IR', readonly=True),
         'change_price_ok': fields.function(_get_price_change_ok, type='boolean', method=True, string='Price changing'),
         'change_price_manually': fields.boolean(string='Update price manually'),
         # openerp bug: eval invisible in p.o use the po line state and not the po state !
@@ -2228,6 +2329,7 @@ class purchase_order_line(osv.osv):
         'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
         'external_ref': fields.char(size=256, string='Ext. Ref.'),
         'project_ref': fields.char(size=256, string='Project Ref.'),
+        'select_fo': fields.many2one('sale.order', string='FO'),
     }
 
     _defaults = {

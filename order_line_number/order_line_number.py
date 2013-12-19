@@ -71,7 +71,11 @@ class sale_order(osv.osv):
         create from sale_order
         create the sequence for the numbering of the lines
         '''
-        vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
+        if context is None:
+            context = {}
+
+        if not context.get('keepClientOrder') or not context.get('keepDateAndDistrib') or not vals.get('sequence_id'):
+            vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
         
         return super(sale_order, self).create(cr, uid, vals, context)
     
@@ -127,7 +131,7 @@ class sale_order_line(osv.osv):
         # objects
         so_obj = self.pool.get('sale.order')
         seq_pool = self.pool.get('ir.sequence')
-        
+
         # gather the line number from the sale order sequence if not specified in vals
         # either line_number is not specified or set to False from copy, we need a new value
         if vals.get('order_id', False):
@@ -136,7 +140,7 @@ class sale_order_line(osv.osv):
                 sequence_id = so_obj.read(cr, uid, [vals['order_id']], ['sequence_id'], context=context)[0]['sequence_id'][0]
                 line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
                 vals.update({'line_number': line})
-        
+
         # create the new sale order line
         result = super(sale_order_line, self).create(cr, uid, vals, context=context)
         return result
