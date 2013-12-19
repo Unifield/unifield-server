@@ -293,6 +293,11 @@ class purchase_order_sync(osv.osv):
                 
         return True
 
+    # UTP-872: If the PO is a split one, then still allow it to be confirmed without po_line 
+    def _hook_check_po_no_line(self, po, context):
+        if not po.split_po and not po.order_line:
+            raise osv.except_osv(_('Error !'), _('You can not confirm purchase order without Purchase Order Lines.'))
+
     def validated_fo_update_original_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}
@@ -368,18 +373,12 @@ class purchase_order_sync(osv.osv):
         #    dict_of_purchase.order.line_changes
         lines = {}
         if 'purchase.order.line' in context['changes']:
-            lines_changed = context['changes']['purchase.order.line']
-            # UF-2244: remove the lines that have been deleted --
-            lines_to_delete = []
-            for line in lines_changed:
-                if "merged_id" in lines_changed[line]:
-                    lines_to_delete.append(line)
-            for line in lines_to_delete:
-                del context['changes']['purchase.order.line'][line]
-            # UF-2244: -- the above block can be improved! Please do Thanks.
-            
-            for rec_line in self.pool.get('purchase.order.line').browse(cr, uid,lines_changed.keys(),context=context):
-                lines.setdefault(rec_line.order_id.id, {})[rec_line.id] = lines_changed[rec_line.id]
+            for rec_line in self.pool.get('purchase.order.line').browse(
+                    cr, uid,
+                    context['changes']['purchase.order.line'].keys(),
+                    context=context):
+                if self.pool.get('purchase.order.line').exists(cr, uid, rec_line.id, context): # check the line exists
+                    lines.setdefault(rec_line.order_id.id, {})[rec_line.id] = context['changes']['purchase.order.line'][rec_line.id]
         # monitor changes on purchase.order
         for id, changes in changes.items():
             logger = get_sale_purchase_logger(cr, uid, self, id, \

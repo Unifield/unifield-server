@@ -119,30 +119,30 @@ class so_po_common(osv.osv_memory):
 
         in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', '=', 'assigned')], 0, None, None, context)
         if not in_ids:
-            raise Exception, "The IN of the PO not found!"
+            return False
         return in_ids[0]
 
-    def get_in_id_by_state(self, cr, uid, po_id, po_ref, state, context):
+    def get_in_id_by_state(self, cr, uid, po_id, po_ref, states, context):
         # Get the Id of the original PO to update these info back 
         if not po_id:
             return False
 
-        in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', '=', state)], 0, None, None, context)
+        in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', 'in', states)], 0, None, None, context)
         return in_ids[0] if in_ids else False 
 
     # Update the next line number for the FO, PO that have been created by the synchro
     def update_next_line_number_fo_po(self, cr, uid, order_id, fo_po_obj, order_line_object, context):
         sequence_id = fo_po_obj.read(cr, uid, [order_id], ['sequence_id'], context=context)[0]['sequence_id'][0]
+        seq_tools = self.pool.get('sequence.tools')
         
         # Make sure that even if the FO/PO has no line, then the default value is 1
         cr.execute("select max(line_number) from " + order_line_object + " where order_id = " + str(order_id))
         for x in cr.fetchall():
-            seq_tools = self.pool.get('sequence.tools')
+            # For the FO without any line
             val = 1
             if x and x[0]:
                 val = int(x[0]) + 1
             seq_tools.reset_next_number(cr, uid, sequence_id, val, context=context)
-        
         return True
 
     def get_original_so_id(self, cr, uid, so_ref, context):

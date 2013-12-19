@@ -71,6 +71,11 @@ class stock_picking(osv.osv):
 
         expired_date = data['expired_date']
 
+        # UTP-872: Add also the state into the move line, but if it is done, then change it to assigned (available)
+        state = data['state'] 
+        if state == 'done':
+            state = 'assigned'
+
         # build a dic which can be used directly to update the stock move
         result = {'line_number': data['line_number'],
                   'product_id': product_id,
@@ -78,6 +83,7 @@ class stock_picking(osv.osv):
                   'product_uos': uom_id,
                   'date': data['date'],
                   'date_expected': data['date_expected'],
+                  'state': state, 
 
                   'prodlot_id': batch_id,
                   'expired_date': expired_date,
@@ -143,7 +149,7 @@ class stock_picking(osv.osv):
             shipment_ref = source + "." +  pick_dict.get('name', False) # the case of OUT
         
         # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
-        in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, 'assigned', context)
+        in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned'], context)
         if in_id:
             partial_datas = {}
             partial_datas[in_id] = {}
@@ -201,7 +207,7 @@ class stock_picking(osv.osv):
             return message
         else:
             # still try to check whether this IN has already been manually processed
-            in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, 'done', context)
+            in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['done', 'shipped'], context)
             if not in_id:
                 message = "The IN linked to " + po_name + " is not found in the system!"
                 self._logger.info(message)
@@ -255,6 +261,9 @@ class stock_picking(osv.osv):
 
 
     def cancel_out_pick_cancel_in(self, cr, uid, source, out_info, context=None):
+        '''
+        ' Cancel the OUT/PICK at the supplier side cancels the corresponding IN at the project side
+        '''
         if not context:
             context = {}
         self._logger.info("+++ Cancel the relevant IN at %s due to the cancel of OUT at supplier %s"%(cr.dbname, source))
@@ -274,8 +283,59 @@ class stock_picking(osv.osv):
                 # Cancel the IN object
                 wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_cancel', cr)
                 return True
+            else:
+                # UTP-872: If there is no IN corresponding to the give OUT/SHIP/PICK, then check if the PO has any line
+                # if it has no line, then no need to raise error, because PO without line does not generate any IN
+                po = po_obj.browse(cr, uid, [po_id], context=context)[0]
+                if len(po.order_line) == 0:
+                    message = "The message is ignored as there is no corresponding IN (because the PO " + po.name + " has no line)"
+                    self._logger.info(message)
+                    return message
 
-        raise Exception("There is a problem when cancel of the IN at project")
+        raise Exception("There is a problem (no PO or IN found) when cancel the IN at project")
+
+    def cancel_stock_move_of_pick_cancel_in(self, cr, uid, source, out_info, context=None):
+        '''
+        ' UTP-872: Cancel only a few move lines of a closed PICK ticket in Coordo will also need to cancel the relevant lines at the IN
+        '''
+        if not context:
+            context = {}
+        self._logger.info("+++ Cancel the relevant IN at %s due to the cancel of some specific move of the Pick ticket at supplier %s"%(cr.dbname, source))
+
+        wf_service = netsvc.LocalService("workflow")
+        so_po_common = self.pool.get('so.po.common')
+        po_obj = self.pool.get('purchase.order')
+        pick_dict = out_info.to_dict()
+
+        # Look for the PO name, which has the reference to the FO on Coordo as source.out_info.origin
+        so_ref = source + "." + pick_dict['origin']
+        po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
+        if po_id:
+            # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
+            in_id = so_po_common.get_in_id_from_po_id(cr, uid, po_id, context)
+            if in_id:
+                # Cancel the IN object to have all lines cancelled, but the IN object remained as closed, so the update of state is done right after
+                wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_cancel', cr)
+                self.write(cr, uid, in_id, {'state': 'done'}, context) # UTP-872: reset state of the IN to become closed
+                return True
+            else:
+                po = po_obj.browse(cr, uid, [po_id], context=context)[0]
+                if len(po.order_line) == 0:
+                    message = "The message is ignored as there is no corresponding IN (because the PO " + po.name + " has no line)"
+                    self._logger.info(message)
+                    return message
+                
+                # UTP-872: If there is no IN corresponding to the give OUT/SHIP/PICK, then check if the PO has any line
+                # if it has no line, then no need to raise error, because PO without line does not generate any IN
+                # still try to check whether this IN has already been manually processed
+                in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po.name, ['done'], context)
+                if in_id:
+                    message = "The IN linked to " + po.name + " has been closed already, this message is thus ignored!"
+                    self._logger.info(message)
+                    return message
+
+        raise Exception("There is a problem (no PO or IN found) when cancel the IN at project")
+
 
     def closed_in_validates_delivery_out_ship(self, cr, uid, source, out_info, context=None):
         if not context:
@@ -588,9 +648,8 @@ class stock_picking(osv.osv):
                     cr, uid,
                     context['changes']['stock.move'].keys(),
                     context=context):
-                if self.pool.get('stock.move').exists(cr, uid, rec_line.id, context):
-                    lines.setdefault(rec_line.picking_id.id, {})[rec_line.id] = \
-                         context['changes']['stock.move'][rec_line.id]
+                if self.pool.get('stock.move').exists(cr, uid, rec_line.id, context): # check the line exists
+                    lines.setdefault(rec_line.picking_id.id, {})[rec_line.id] = context['changes']['stock.move'][rec_line.id]
         # monitor changes on purchase.order
         for id, changes in changes.items():
             logger = get_sale_purchase_logger(cr, uid, self, id, \
