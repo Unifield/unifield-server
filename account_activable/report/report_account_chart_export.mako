@@ -109,8 +109,8 @@
     <Cell>
       <Data ss:Type="String">${o.name or ''|x}</Data>
     </Cell>
-    <Cell>
-      <Data ss:Type="Number" ss:Style="number">${o.balance or '0.0'|x}</Data>
+    <Cell ss:StyleID="number">
+      <Data ss:Type="Number">${o.balance or '0.0'|x}</Data>
     </Cell>
   </Row>
 % endfor
