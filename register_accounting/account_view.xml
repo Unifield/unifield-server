@@ -917,7 +917,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="1"/>
             <field name="arch" type="xml">
-                <tree string="Journal Items" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1">
+                <tree string="Journal Items" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1" hide_delete_button="1" >
                     <field name="is_corrigible" invisible="1"/>
                     <field name="have_an_historic" invisible="1"/>
                     <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard" 

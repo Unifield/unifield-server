@@ -33,8 +33,9 @@ class order(report_sxw.rml_parse):
             'getOrigin': self._get_origin,
         })
 
-    def _get_origin(self, origin, number=5):
+    def _get_origin(self, origin='', number=5):
         res = []
+        origin = origin or ''
         split_orig = origin.split(';')
         i = 0
         tmp_orig = ''

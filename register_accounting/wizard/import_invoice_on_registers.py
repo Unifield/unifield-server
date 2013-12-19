@@ -58,14 +58,23 @@ class wizard_import_invoice_lines(osv.osv_memory):
         'cheque_number': fields.char(string="Cheque Number", size=120, readonly=False, required=False),
     }
     def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check given amount:
+          - should not be negative
+          - should be superior to amount to pay (but absolute value)
+        """
         if isinstance(ids, (long, int)):
             ids = [ids]
-        if 'amount' in vals:
-            for l in self.read(cr, uid, ids, ['amount_to_pay']):
-                if vals['amount'] > l['amount_to_pay']:
-                    raise osv.except_osv(_('Warning'), _("Amount %.2f can't be greater than 'Amount to pay': %.2f")%(vals['amount'], l['amount_to_pay']))
-
-        return super(wizard_import_invoice_lines, self).write(cr, uid, ids, vals, context)
+        if context is None:
+            context = {}
+        res = super(wizard_import_invoice_lines, self).write(cr,uid, ids, vals, context=context)
+        # Amount check
+        for l in self.read(cr, uid, ids, ['amount', 'amount_to_pay']):
+            if l['amount'] < 0:
+                raise osv.except_osv(_('Warning'), _('Negative amount are forbidden!'))
+            if l['amount'] > abs(l['amount_to_pay']):
+                raise osv.except_osv(_('Warning'), _("Amount %.2f can't be greater than 'Amount to pay': %.2f")%(vals['amount'], abs(l['amount_to_pay'])))
+        return res
 
 wizard_import_invoice_lines()
 
@@ -203,7 +212,7 @@ class wizard_import_invoice(osv.osv_memory):
 
             # Create register line
             partial = False
-            if line.amount and line.amount_to_pay and line.amount < line.amount_to_pay:
+            if line.amount and line.amount_to_pay and line.amount < abs(line.amount_to_pay):
                 partial = ' - ' + _('partial pymt')
             register_vals = {
                 'name': '%s Imported Invoice(s)%s' % (line.number_invoices, partial or ''),

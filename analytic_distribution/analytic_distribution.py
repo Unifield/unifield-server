@@ -421,5 +421,42 @@ class analytic_distribution(osv.osv):
                     res.append(al_id)
         return res
 
+    def analytic_state_from_info(self, cr, uid, account_id, destination_id, cost_center_id, analytic_id, context=None):
+        """
+        Give analytic state from the given information.
+        Return result and some info if needed.
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = 'valid'
+        info = ''
+        ana_obj = self.pool.get('account.analytic.account')
+        account = self.pool.get('account.account').browse(cr, uid, account_id, context=context)
+        fp = ana_obj.browse(cr, uid, analytic_id, context=context)
+        try:
+            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            fp_id = 0
+        is_private_fund = False
+        if analytic_id == fp_id:
+            is_private_fund = True
+        # DISTRIBUTION VERIFICATION
+        # Check account user_type
+        if account.user_type_code != 'expense':
+            return res, _('Not an expense account')
+        # Check that destination is compatible with account
+        if destination_id not in [x.id for x in account.destination_ids]:
+            return 'invalid', _('Destination not compatible with account')
+        if not is_private_fund:
+            # Check that cost center is compatible with FP (except if FP is MSF Private Fund)
+            if cost_center_id not in [x.id for x in fp.cost_center_ids]:
+                return 'invalid', _('Cost Center not compatible with FP')
+            # Check that tuple account/destination is compatible with FP (except if FP is MSF Private Fund):
+            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp.tuple_destination_account_ids]:
+                return 'invalid', _('account/destination tuple not compatible with given FP analytic account')
+        return res, info
+
 analytic_distribution()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
