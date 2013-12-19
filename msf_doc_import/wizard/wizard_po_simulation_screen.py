@@ -256,6 +256,27 @@ class wizard_import_po_simulation_screen(osv.osv):
     '''
     Action buttons
     '''
+    def print_simulation_report(self, cr, uid, ids, context=None):
+        '''
+        Print the PDF report of the simulation
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        datas = {}
+        datas['ids'] = ids
+        report_name = 'po.simulation.screen'
+
+        return {
+           'type': 'ir.actions.report.xml',
+           'report_name': report_name,
+           'datas': datas,
+           'context': context,
+           }
+
     def return_to_po(self, cr, uid, ids, context=None):
         '''
         Go back to PO

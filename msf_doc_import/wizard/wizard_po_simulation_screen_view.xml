@@ -27,6 +27,7 @@
                         <button name="launch_simulate" string="Simulate" icon="gtk-execute" type="object" states="draft" />
                         <button name="launch_import" string="Import" icon="gtk-execute" type="object" states="simu_done" />
                         <button name="go_to_simulation" string="Update" icon="gtk-execute" type="object" states="simu_progress,import_progress" />
+                        <button name="print_simulation_report" string="Print report" icon="gtk-print" type="object" states="simu_done,import_progress,done" />
                     </group>
                     <notebook colspan="4">
                         <page string="Purchase Order">

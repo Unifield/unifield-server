@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        
+        <report
+            id="po_simulation_screen"
+            model="wizard.import.po.simulation.screen"
+            name="po.simulation.screen"
+            rml="msf_doc_import/report/po_simulation_screen_report.rml"
+            header="False"
+            menu="False"
+            auto="False"
+            string="PO Simulation screen" />
+
+    </data>
+</openerp>
