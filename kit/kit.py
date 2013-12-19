@@ -858,6 +858,7 @@ class composition_item(osv.osv):
     kit composition items representing kit parts
     '''
     _name = 'composition.item'
+    _order = 'item_module'
     
     def _common_update(self, cr, uid, vals, context=None):
         '''

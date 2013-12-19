@@ -235,7 +235,7 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <para style="terp_header">Picking Ticket - [[ stock_picking['obj'].name ]]</para>
+    <para style="terp_header">Picking Ticket - [[ stock_picking['obj'].name ]]     [[ stock_picking['obj'].state == 'draft' and (stock_picking['obj'].state.upper()) or '']]</para>
     <blockTable colWidths="132.0,134.0,135.0,135.0" style="Table2">
       <tr>
         <td>

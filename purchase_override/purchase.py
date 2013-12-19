@@ -670,11 +670,14 @@ class purchase_order(osv.osv):
                 if not distrib:
                     return True
                 
-                for cc_line in distrib.cost_center_lines:
-                    if is_intermission and cc_line.analytic_id.id != intermission_cc:
-                        cc_line.write({'analytic_id': intermission_cc})
-                    elif not is_intermission and cc_line.analytic_id.id == intermission_cc:
-                        raise osv.except_osv(_('Warning'), _("The PO partner type is not intermission, so you can not use the Cost Center Intermission in line: %s!") % (pol.name or '',))
+                # UTP-953: For intersection, the cc_intermission can also be used for all partner, so the block below is removed
+#                for cc_line in distrib.cost_center_lines:
+#                    if is_intermission and cc_line.analytic_id.id != intermission_cc:
+#                        # UTP-952: remove the default intermission cc
+#                        #cc_line.write({'analytic_id': intermission_cc})
+#                        pass
+#                    elif not is_intermission and cc_line.analytic_id.id == intermission_cc:
+#                        raise osv.except_osv(_('Warning'), _("The PO partner type is not intermission, so you can not use the Cost Center Intermission in line: %s!") % (pol.name or '',))
 
                 # Change distribution to be valid if needed by using those from header
                 if distrib and pol.analytic_distribution_state != 'valid':
