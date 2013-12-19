@@ -49,16 +49,27 @@ CURRENCY_NAME_ID = {}
 
 SIMU_LINES = {}
 
-MANDATORY_LINES_COLUMNS = [(0, _('Line number')),
-                           (2, _('Product Code')),
-                           (4, _('Product Qty')),
-                           (5, _('Product UoM')),
-                           (6, _('Price Unit')),
-                           (7, _('Currency')),
-                           (8, _('Origin')),
-                           (10, _('Delivery Confirmed Date')),
-                           (16, _('Project Ref.'))
-                            ]
+LINES_COLUMNS = [(0, _('Line number'), 'mandatory'),
+                 (1, _('External ref'), 'optionnal'),
+                 (2, _('Product Code'), 'mandatory'),
+                 (3, _('Product Description'), 'optionnal'),
+                 (4, _('Product Qty'), 'mandatory'),
+                 (5, _('Product UoM'), 'mandatory'),
+                 (6, _('Price Unit'), 'mandatory'),
+                 (7, _('Currency'), 'mandatory'),
+                 (8, _('Origin'), 'mandatory'),
+                 (10, _('Delivery Confirmed Date'), 'mandatory'),
+                 (16, _('Project Ref.'), 'mandatory'),
+                 (17, _('Message ESC 1'), 'optionnal'),
+                 (18, _('Message ESC 2'), 'optionnal'),
+                 ]
+
+HEADER_COLUMNS = [(1, _('Order Reference'), 'mandatory'),
+                  (5, _('Supplier Reference'), 'optionnal'),
+                  (9, _('Ready To Ship Date'), 'optionnal'),
+                  (16, _('Shipment Date'), 'optionnal'),
+                  (20, _('Message ESC'), 'optionnal')
+                  ]
 
 
 class wizard_import_po_simulation_screen(osv.osv):
@@ -643,8 +654,8 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % shipment_date
                 # Check mandatory fields
                 not_ok = False
                 file_line_error = []
-                for manda_field in MANDATORY_LINES_COLUMNS:
-                    if not values.get(x, [])[manda_field[0]]:
+                for manda_field in LINES_COLUMNS:
+                    if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
                         not_ok = True
                         err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
                         err = _('Line %s of the Excel file: %s') % (x, err1)
@@ -1030,6 +1041,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'imp_dcd': fields.date(string='Delivery Confirmed Date', readonly=True),
         'imp_esc1': fields.char(size=256, string='Message ESC1', readonly=True),
         'imp_esc2': fields.char(size=256, string='Message ESC2', readonly=True),
+        'imp_external_ref': fields.char(size=256, string='External Ref.', readonly=True),
+        'imp_project_ref': fields.char(size=256, string='Project Ref.', readonly=True),
+        'imp_origin': fields.char(size=256, string='Origin Ref.', readonly=True),
         'change_ok': fields.function(_get_line_info, method=True, multi='line',
                                      type='boolean', string='Change', store=False),
         'error_msg': fields.text(string='Error message', readonly=True),
@@ -1066,6 +1080,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             write_vals = {}
+
+            # External Ref.
+            write_vals['imp_external_ref'] = values[1]
+
             # Product
             if (values[2] and values[2] == line.in_product_id.default_code) or\
                (values[3] and values[3] == line.in_product_id.name):
@@ -1134,6 +1152,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 err_msg = _('The currency on the Excel file is not the same as the currency of the PO line - You must have the same currency on both side - Currency of the initial line kept.')
                 errors.append(err_msg)
 
+            # Origin
+            write_vals['imp_origin'] = values[8]
+
             # Delivery Requested Date
             drd_value = values[9]
             if drd_value and type(drd_value) == type(DateTime.now()):
@@ -1160,6 +1181,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             elif dcd_value:
                 err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\' - Delivery Confirmed Date of the initial line kept.')
 
+            # Project Ref.
+            write_vals['imp_project_ref'] = values[16]
+
             # Message ESC1
             write_vals['imp_esc1'] = values[17]
             # Message ESC2
@@ -1185,14 +1209,14 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
-            if line.po_line_id and line.type_change != 'del' and not line.change_ok:
+            if line.po_line_id and line.type_change != 'del' and not line.change_ok and not line.imp_external_ref and not line.imp_project_ref and not line.imp_origin:
                 continue
 
             if line.type_change == 'del':
                 # Delete the PO line
                 if line.po_line_id:
                     line_obj.unlink(cr, uid, line.po_line_id.id, context=context)
-            elif line.type_change ==  'split' and line.parent_line_id:
+            elif line.type_change == 'split' and line.parent_line_id:
                 # Call the split line wizard
                 po_line_id = False
                 orig_qty = 0.00
@@ -1210,30 +1234,52 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     
                     line_vals = {'product_uom': line.imp_uom.id,
                                  'product_id': line.imp_product_id.id,
-                                 'price_unit': line.imp_price}
+                                 'price_unit': line.imp_price,
+                                }
                     if line.imp_dcd:
                         line_vals['confirmed_delivery_date'] = line.imp_dcd
+                    if line.imp_project_ref:
+                        line_vals['project_ref'] = line.imp_project_ref
+                    if line.imp_origin:
+                        line_vals['origin'] = line.imp_origin
+                    if line.imp_external_ref:
+                        line_vals['external_ref'] = line.imp_external_ref
                     line_obj.write(cr, uid, [new_po_line_id], line_vals, context=context)
 
             elif line.type_change == 'new':
                 line_vals = {'order_id': line.simu_id.order_id.id,
-                                          'product_id': line.imp_product_id.id,
-                                          'product_uom': line.imp_uom.id,
-                                          'price_unit': line.imp_price,
-                                          'product_qty': line.imp_qty,
-                                          'line_number': line.in_line_number,
-                                          'date_planned': line.imp_drd}
+                             'product_id': line.imp_product_id.id,
+                             'product_uom': line.imp_uom.id,
+                             'price_unit': line.imp_price,
+                             'product_qty': line.imp_qty,
+                             'line_number': line.in_line_number,
+                             'date_planned': line.imp_drd,
+                            }
                 if line.imp_dcd:
                     line_vals['confirmed_delivery_date'] = line.imp_dcd
+                if line.imp_project_ref:
+                    line_vals['project_ref'] = line.imp_project_ref
+                if line.imp_origin:
+                    line_vals['origin'] = line.imp_origin
+                if line.imp_external_ref:
+                    line_vals['external_ref'] = line.imp_external_ref
                 line_obj.create(cr, uid, line_vals, context=context)
             elif line.po_line_id:
                 line_vals = {'product_id': line.imp_product_id.id,
                              'product_uom': line.imp_uom.id,
                              'price_unit': line.imp_price,
                              'product_qty': line.imp_qty,
-                             'date_planned': line.imp_drd}
+                             'date_planned': line.imp_drd,
+                            }
                 if line.imp_dcd:
                     line_vals['confirmed_delivery_date'] = line.imp_dcd
+                if line.imp_project_ref:
+                    line_vals['project_ref'] = line.imp_project_ref
+                if line.imp_origin:
+                    line_vals['origin'] = line.imp_origin
+                if line.imp_external_ref:
+                    line_vals['external_ref'] = line.imp_external_ref
+
                 line_obj.write(cr, uid, [line.po_line_id.id], line_vals, context=context)
 
         if ids:
