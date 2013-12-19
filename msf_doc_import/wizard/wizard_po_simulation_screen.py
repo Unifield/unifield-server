@@ -310,7 +310,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                 'view_mode': 'form',
                 'view_type': 'form',
                 'res_id': ids[0],
-                'target': 'crush',
+                'target': 'same',
                 'context': context}
 
     def launch_simulate(self, cr, uid, ids, context=None):
