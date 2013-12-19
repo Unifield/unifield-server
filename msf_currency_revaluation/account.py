@@ -53,7 +53,7 @@ class AccountAccount(osv.osv):
     def _revaluation_query(self, cr, uid, ids, revaluation_date, context=None):
         lines_where_clause = self.pool.get('account.move.line').\
             _query_get(cr, uid, context=context)
-        query = ("SELECT l.account_id as id, l.partner_id, l.currency_id, " +
+        query = ("SELECT l.account_id as id, l.currency_id, " +
                    ', '.join(self._sql_mapping.values()) +
                    " FROM account_move_line l "
                    " WHERE l.account_id IN %(account_ids)s AND "
@@ -61,7 +61,7 @@ class AccountAccount(osv.osv):
                    " l.currency_id IS NOT NULL AND "
                    " l.reconcile_id IS NULL AND "
                         + lines_where_clause +
-                   " GROUP BY l.account_id, l.currency_id, l.partner_id")
+                   " GROUP BY l.account_id, l.currency_id")
         params = {'revaluation_date': revaluation_date,
                   'account_ids': tuple(ids)}
         return query, params
@@ -88,15 +88,13 @@ class AccountAccount(osv.osv):
             # generate a tree
             # - account_id
             # -- currency_id
-            # --- partner_id
             # ----- balances
-            account_id, currency_id, partner_id = \
-                line['id'], line['currency_id'], line['partner_id']
+            account_id, currency_id = \
+                line['id'], line['currency_id']
 
             accounts.setdefault(account_id, {})
             accounts[account_id].setdefault(currency_id, {})
-            accounts[account_id][currency_id].setdefault(partner_id, {})
-            accounts[account_id][currency_id][partner_id] = line
+            accounts[account_id][currency_id] = line
 
         return accounts
 
