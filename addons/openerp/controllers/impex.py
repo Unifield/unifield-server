@@ -159,8 +159,11 @@ class ImpEx(SecuredController):
         if params.model == 'product.product':
             default = [x for x in default if x[0] not in product_remove_fields]
         default = simplejson.dumps(default)
+        group_by_no_leaf = ctx and  ctx.get('group_by_no_leaf', False)
+        if params.search_data and ctx and not ctx.get('group_by') and params.search_data.get('group_by_ctx'):
+            ctx['group_by'] = params.search_data['group_by_ctx']
         return dict(existing_exports=existing_exports, model=params.model, ids=params.ids, ctx=ctx,
-                    search_domain=params.search_domain, source=params.source,
+                    search_domain=params.search_domain, source=params.source, group_by_no_leaf=group_by_no_leaf,
                     tree=tree, import_compat=import_compat, default=default, export_format=export_format, all_records=all_records, export_id=export_id)
 
     @expose()
@@ -382,6 +385,17 @@ class ImpEx(SecuredController):
         cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="%s_%s.xls"'%(view_name, time.strftime('%Y%m%d'))
         return {'fields': fields, 'result': result, 'title': 'Export %s %s'%(view_name, time.strftime(format.get_datetime_format())), 're': re}
 
+    def get_grp_data(self, result, flds):
+        data = []
+        for r in result:
+            tmp_data = []
+            for f in flds:
+                value = r.get(f,'')
+                if isinstance(value, tuple):
+                    value = value and value[1] or ''
+                tmp_data.append(value)
+            data.append(tmp_data)
+        return data
 
     @expose(content_type="application/octet-stream")
     def export_data(self, fname, fields, import_compat=False, export_format='csv', all_records=False, **kw):
@@ -416,6 +430,32 @@ class ImpEx(SecuredController):
         ctx['import_comp'] = bool(int(import_compat))
 
         view_name = ctx.get('_terp_view_name', '')
+
+        if ctx.get('group_by_no_leaf'):
+            rpc_obj = rpc.RPCProxy(params.model)
+            domain = params.search_domain or []
+            to_group = ctx.get('group_by', [])
+            group_by = []
+            for gr in to_group:
+                gr = gr.replace('group_', '')
+                group_by.append(gr)
+                if gr not in flds:
+                    flds.append(gr)
+                    params.fields2.append(gr)
+
+            fields_to_read = []
+            for f in flds:
+                if '/' not in f:
+                    fields_to_read.append(f)
+
+            flds = fields_to_read[:]
+            params.fields2 = fields_to_read[:]
+
+            result = self.get_grp_data(rpc_obj.read_group(domain, flds, group_by, 0, 0, ctx), flds)
+
+            if export_format == "excel":
+                return self.export_html(params.fields2, result, view_name)
+            return export_csv(params.fields2, result)
 
         if not params.ids or all_records:
             domain = params.search_domain or []
