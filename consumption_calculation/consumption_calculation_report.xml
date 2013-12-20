@@ -9,6 +9,15 @@
 	            header="False"
 	            rml="addons/consumption_calculation/report/expiry_report.rml"
 	            string="Expiry Report" />
+                
+		<report auto="False" 
+	            id="report_expiry_report_xls" 
+	            model="expiry.quantity.report" 
+	            name="expiry.report_xls"
+	            header="False"
+                report_type="webkit"
+	            file="addons/consumption_calculation/report/expiry_report.mako"
+	            string="Expiry Report Excel" />
 	            
 	</data>
 	

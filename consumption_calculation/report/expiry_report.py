@@ -22,6 +22,7 @@
 import time
 
 from report import report_sxw
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class expiry_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -76,7 +77,19 @@ class expiry_report(report_sxw.rml_parse):
             return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, datetime=dtime)
         
         return ''
-
 report_sxw.report_sxw('report.expiry.report', 'expiry.quantity.report', 'addons/consumption_calculation/report/expiry_report.rml', parser=expiry_report, header=False)
+
+
+class expiry_report_xls_parser(SpreadsheetReport):
+    """UTP-770"""
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        super(expiry_report_xls_parser, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        print data
+        a = super(expiry_report_xls_parser, self).create(cr, uid, ids, data, context)
+        print a
+        return (a[0], 'xls')
+expiry_report_xls_parser('report.expiry.report_xls', 'expiry.quantity.report', 'addons/consumption_calculation/report/expiry_report.mako', parser=expiry_report, header=False)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
