@@ -21,6 +21,13 @@
   <ProtectWindows>False</ProtectWindows>
  </ExcelWorkbook>
 <Styles>
+    <Style ss:ID="ssCell">
+        <Alignment ss:Vertical="Top" ss:WrapText="1"/>
+    </Style>
+    <Style ss:ID="ssCellRightBold">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+        <Font ss:Bold="1" />
+    </Style>
     <Style ss:ID="header">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
         <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
@@ -31,8 +38,27 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+    <Style ss:ID="headerRight">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
+        <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
+        <Borders>
+          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+    </Style>
     <Style ss:ID="line">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+        <Borders>
+          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+    </Style>
+    <Style ss:ID="lineRight">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
         <Borders>
           <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
           <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -53,6 +79,10 @@
 </Styles>
 <ss:Worksheet ss:Name="Expiry report">
 <Table x:FullColumns="1" x:FullRows="1">
+<%
+cols_count = 10
+now = time.strftime('%Y-%m-%d') 
+%>
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="250" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
@@ -68,29 +98,104 @@
 <Cell ss:StyleID="header"><Data ss:Type="String">CODE</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">DESCRIPTION</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">Location</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Stock</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">Stock</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">UoM</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">Batch</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">Expirity Date</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Exp. Qty</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Unit Cost</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Exp. Value</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">Exp. Qty</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">Unit Cost</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">Exp. Value</Data></Cell>
 </Row>
-## lines
 % for l in objects[0].line_ids:
+% if l.expiry_date < now:
 <Row>
 <Cell ss:StyleID="line"><Data ss:Type="String">${(l.product_id.default_code or '')|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.product_name|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.location_id and l.location_id.name|x}</Data></Cell>
-<Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(l.real_stock or 0.0)}</Data></Cell>
+<Cell ss:StyleID="lineRight"><Data ss:Type="String">${formatLang(l.real_stock or 0.0)}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.uom_id and l.uom_id.name|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.batch_number|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.expiry_date|x}</Data></Cell>
-<Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(l.expired_qty or 0.00)}</Data></Cell>
-<Cell ss:StyleID="line"><Data ss:Type="String">${l.product_id and l.product_id.standard_price or '0.00'}</Data></Cell>
-<Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(l.product_id and l.product_id.standard_price*l.expired_qty or 0.0)}</Data></Cell>
+<Cell ss:StyleID="lineRight"><Data ss:Type="String">${formatLang(l.expired_qty or 0.00)}</Data></Cell>
+<Cell ss:StyleID="lineRight"><Data ss:Type="String">${l.product_id and l.product_id.standard_price or '0.00'}</Data></Cell>
+<Cell ss:StyleID="lineRight"><Data ss:Type="String">${formatLang(l.product_id and l.product_id.standard_price*l.expired_qty or 0.0)}</Data></Cell>
 </Row>
+% endif
 % endfor
+<Row>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">TOTAL</Data></Cell>
+<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">${formatLang(getTotal(objects[0], 'expired'))}</Data></Cell>
+</Row>
+## products/batches to expire
+<Row>
+% for c in range(cols_count):
+<Cell ss:StyleID="ssCell"></Cell>
+% endfor
+</Row>
+<Row>
+<Cell ss:StyleID="header"><Data ss:Type="String">CODE</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">DESCRIPTION</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">Location</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">Stock</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">UoM</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">Batch</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">Expirity Date</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">Exp. Qty</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">Unit Cost</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">Exp. Value</Data></Cell>
+</Row>
+% for l in objects[0].line_ids:
+% if l.expiry_date >= now:
+<Row>
+<Cell ss:StyleID="line"><Data ss:Type="String">${(l.product_id.default_code or '')|x}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${l.product_name|x}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${l.location_id and l.location_id.name|x}</Data></Cell>
+<Cell ss:StyleID="lineRight"><Data ss:Type="String">${formatLang(l.real_stock or 0.0)}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${l.uom_id and l.uom_id.name|x}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${l.batch_number|x}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${l.expiry_date|x}</Data></Cell>
+<Cell ss:StyleID="lineRight"><Data ss:Type="String">${formatLang(l.expired_qty or 0.00)}</Data></Cell>
+<Cell ss:StyleID="lineRight"><Data ss:Type="String">${l.product_id and l.product_id.standard_price or '0.00'}</Data></Cell>
+<Cell ss:StyleID="lineRight"><Data ss:Type="String">${formatLang(l.product_id and l.product_id.standard_price*l.expired_qty or 0.0)}</Data></Cell>
+</Row>
+% endif
+% endfor
+<Row>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">TOTAL</Data></Cell>
+<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">${formatLang(getTotal(objects[0], 'expiry'))}</Data></Cell>
+</Row>
+## ALL TOTAL
+% for c in range(cols_count):
+<Cell ss:StyleID="ssCell"></Cell>
+% endfor
+<Row>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">ALL TOTAL</Data></Cell>
+<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">${formatLang(getTotal(objects[0], 'all'))}</Data></Cell>
+</Row>
 </Table>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>
