@@ -827,7 +827,10 @@ MochiKit.Base.update(ListView.prototype, {
         this.reload();
     },
 
-    reload: function(edit_inline, concurrency_info, default_get_ctx, clear, ids_to_show) {
+    reload_from_wizard: function() {
+        return this.reload(undefined, undefined, undefined, undefined, undefined, true);
+    },
+    reload: function(edit_inline, concurrency_info, default_get_ctx, clear, ids_to_show, from_close_wizard) {
         if (openobject.http.AJAX_COUNT > 0) {
             return callLater(1, bind(this.reload, this), edit_inline, concurrency_info);
         }
@@ -849,8 +852,13 @@ MochiKit.Base.update(ListView.prototype, {
             jQuery.extend(args, {
                 _terp_search_domain: openobject.dom.get('_terp_search_domain').value,
                 _terp_search_data: openobject.dom.get('_terp_search_data').value,
-                _terp_filter_domain: openobject.dom.get('_terp_filter_domain').value
+                _terp_filter_domain: openobject.dom.get('_terp_filter_domain').value,
             });
+            if (from_close_wizard) {
+                jQuery.extend(args, {
+                    _terp_reload_previously_selected: '['+self.get_previously_selected().join(',')+']',
+                });
+            }
         }
 
         if(this.sort_key) {
@@ -889,7 +897,9 @@ MochiKit.Base.update(ListView.prototype, {
                     _terp_ids.value = self.ids = '[' + obj.ids.join(',') + ']';
                     _terp_count.value = obj.count;
                 }
-
+                if ('previously_selected' in obj && obj.previously_selected != null) {
+                    self.update_previously_selected(obj.previously_selected);
+                }
                 self.current_record = edit_inline;
                 if(obj.logs) {
                     jQuery('div#server_logs').append(obj.logs)
@@ -965,7 +975,12 @@ MochiKit.Base.update(ListView.prototype, {
                     $editors.each(function () {
                         var $this = jQuery(this);
                         if ($this.val() && $this.attr('callback')) {
-                            MochiKit.Signal.signal(this, 'onchange');
+                            if (($this.attr('kind') == 'many2one' && $this.attr('id').slice($this.attr('id').length - 5) == '_text')
+				|| ($this.attr('kind') == 'many2many' && $this.attr('id').slice($this.attr('id').length - 4) == '_set')) {
+                                // skip many2x 'text' element, onchange will be triggered from real many2x field
+                                return;
+                            }
+                            $this.trigger('change');
                         }
                     });
                 }
@@ -1017,11 +1032,13 @@ MochiKit.Base.update(ListView.prototype, {
             }
         }
         ids = '[' + ids.join(',') + ']';
+        var search_data_field = openobject.dom.get('_terp_search_data')
         jQuery.frame_dialog({src:openobject.http.getURL('/openerp/impex/exp', {
             _terp_model: this.model,
             _terp_source: this.name,
             _terp_context: openobject.dom.get('_terp_context').value,
             _terp_search_domain: openobject.dom.get('_terp_search_domain').value,
+            _terp_search_data: search_data_field && search_data_field.value || '',
             _terp_ids: ids,
             _terp_view_ids : this.view_ids,
             _terp_listheaders: listeleme,

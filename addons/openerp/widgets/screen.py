@@ -73,7 +73,7 @@ class Screen(TinyInputWidget):
         if self.view_ids and self.view_type in self.view_mode:
             idx = self.view_mode.index(self.view_type)
             self.view_id = self.view_ids[idx]
- 
+
         self.search_domain = params.search_domain or []
         self.domain        = params.domain or []
         self.context       = params.context or {}
@@ -88,6 +88,13 @@ class Screen(TinyInputWidget):
                 self.count = len(self.ids)
             else:
                 self.count = rpc.RPCProxy(self.model).search_count(self.domain, self.context)
+        self.set_previously_selected = None
+
+        #forced_domain = params.forced_domain or []
+        if params.get('_terp_reload_previously_selected'):
+            self.set_previously_selected = rpc.RPCProxy(self.model).search(self.domain+[('id', 'in', params['_terp_reload_previously_selected'])], 0, 0, 0, self.context)
+            #self.set_previously_selected = rpc.RPCProxy(self.model).search(forced_domain+[('id', 'in', params['_terp_reload_previously_selected'])], 0, 0, 0, self.context)
+
         self.prefix             = prefix
         self.views_preloaded    = views_preloaded or (params.views or {})
 

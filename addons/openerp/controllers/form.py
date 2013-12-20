@@ -192,14 +192,13 @@ class Form(SecuredController):
 
     @expose(template="/openerp/controllers/templates/form.mako")
     def create(self, params, tg_errors=None):
-
         params.view_type = params.view_type or params.view_mode[0]
 
         if params.view_type == 'tree':
             params.editable = True
 
         target = getattr(cherrypy.request, '_terp_view_target', None)
-        if target == 'new':
+        if target in ('new', 'same'):
             # for target='new' keep orignal value as '_terp_view_target' hidden field,
             # that's necessary to keep wizard without toolbar button (new, save, pager, etc...)
             hidden_fields = params.hidden_fields or []
@@ -236,7 +235,7 @@ class Form(SecuredController):
         for kind, view in get_registered_views():
             buttons.views.append(dict(kind=kind, name=view.name, desc=view.desc))
 
-        buttons.toolbar = (target != 'new' and not form.is_dashboard) or mode == 'diagram'
+        buttons.toolbar = (target not in ('new', 'same') and not form.is_dashboard) or mode == 'diagram'
 
         pager = None
         if buttons.pager:
@@ -271,7 +270,7 @@ class Form(SecuredController):
             tips = tips
         
         is_dashboard = form.screen.is_dashboard or False
-        return dict(form=form, pager=pager, buttons=buttons, path=self.path, can_shortcut=can_shortcut, shortcut_ids=shortcut_ids, display_name=display_name, title=title, tips=tips, obj_process=obj_process, is_dashboard=is_dashboard)
+        return dict(form=form, pager=pager, buttons=buttons, path=self.path, can_shortcut=can_shortcut, shortcut_ids=shortcut_ids, display_name=display_name, title=title, tips=tips, obj_process=obj_process, is_dashboard=is_dashboard, sidebar_closed=params._terp_sidebar_closed)
 
     @expose('json', methods=('POST',))
     def close_or_disable_tips(self):
@@ -280,7 +279,7 @@ class Form(SecuredController):
     def _read_form(self, context, count, domain, filter_domain, id, ids, kw,
                    limit, model, offset, search_data, search_domain, source,
                    view_ids, view_mode, view_type, notebook_tab, o2m_edit=False,
-                   editable=False):
+                   editable=False, sidebar_closed=False):
         """ Extract parameters for form reading/creation common to both
         self.edit and self.view
         """
@@ -299,7 +298,8 @@ class Form(SecuredController):
                                        '_terp_search_domain': search_domain,
                                        '_terp_search_data': search_data,
                                        '_terp_filter_domain': filter_domain,
-                                       '_terp_notebook_tab': notebook_tab})
+                                       '_terp_notebook_tab': notebook_tab,
+                                       '_terp_sidebar_closed': sidebar_closed})
         params.o2m_edit = o2m_edit
         params.editable = editable
         params.action_id = kw.get('action_id')
@@ -324,13 +324,13 @@ class Form(SecuredController):
     def edit(self, model, id=False, ids=None, view_ids=None,
              view_mode=['form', 'tree'], view_type='form', source=None, domain=[], context={},
              offset=0, limit=50, count=0, search_domain=None,
-             search_data=None, filter_domain=None, o2m_edit=False, **kw):
+             search_data=None, filter_domain=None, o2m_edit=False, sidebar_closed=False, **kw):
 
         notebook_tab = kw.get('notebook_tab') or 0
         params = self._read_form(context, count, domain, filter_domain, id,
                                  ids, kw, limit, model, offset, search_data,
                                  search_domain, source, view_ids, view_mode,
-                                 view_type, notebook_tab, o2m_edit=o2m_edit, editable=True)
+                                 view_type, notebook_tab, o2m_edit=o2m_edit, editable=True, sidebar_closed=sidebar_closed)
 
         if not params.ids:
             params.count = 0
@@ -347,13 +347,13 @@ class Form(SecuredController):
     def view(self, model, id, ids=None, view_ids=None,
              view_mode=['form', 'tree'], view_type='form', source=None, domain=[], context={},
              offset=0, limit=50, count=0, search_domain=None,
-             search_data=None, filter_domain=None, **kw):
+             search_data=None, filter_domain=None, sidebar_closed=False, **kw):
 
         notebook_tab = kw.get('notebook_tab') or 0
         params = self._read_form(context, count, domain, filter_domain, id,
                                  ids, kw, limit, model, offset, search_data,
                                  search_domain, source, view_ids, view_mode,
-                                 view_type, notebook_tab)
+                                 view_type, notebook_tab, sidebar_closed=sidebar_closed)
 
         if not params.ids:
             params.count = 1
@@ -372,7 +372,6 @@ class Form(SecuredController):
 
         if not params.id and params.ids:
             params.id = params.ids[0]
-
         if params.id and params.editable:
             raise redirect(self.path + "/view", model=params.model,
                                                id=params.id,
@@ -386,7 +385,8 @@ class Form(SecuredController):
                                                count=params.count,
                                                search_domain=ustr(params.search_domain),
                                                search_data = ustr(params.search_data),
-                                               filter_domain= ustr(params.filter_domain))
+                                               filter_domain= ustr(params.filter_domain),
+                                               sidebar_closed=params._terp_sidebar_closed)
 
         params.view_type = 'tree'
         return self.create(params)
@@ -499,11 +499,12 @@ class Form(SecuredController):
                 'search_domain': ustr(params.search_domain),
                 'search_data': ustr(params.search_data),
                 'filter_domain': ustr(params.filter_domain),
-                'notebook_tab': params.notebook_tab}
-        if params.view_target and params.view_target == 'new':
+                'notebook_tab': params.notebook_tab,
+                'sidebar_closed': params.sidebar_closed}
+        if params.view_target and params.view_target in ('new', 'same'):
             # within a wizard popup dialog - keep the orignal target mode
             # (here target='new' will hide toolbar buttons (new, save, pager, etc..)
-            args['target'] = 'new'
+            args['target'] = params.view_target
         if params.o2m_edit:
             # hack to avoid creating new record line when editing o2m inline:
             # by default one2many.mako is going to fetch a new line (.create)
@@ -628,7 +629,8 @@ class Form(SecuredController):
                 'limit': params.limit,
                 'count': params.count,
                 'search_domain': ustr(params.search_domain),
-                'filter_domain': ustr(params.filter_domain)}
+                'filter_domain': ustr(params.filter_domain),
+                'sidebar_closes': params.sidebar_closed}
 
         if new_id:
             raise redirect(self.path + '/edit', **args)
@@ -671,7 +673,8 @@ class Form(SecuredController):
                 'limit': params.limit,
                 'count': params.count,
                 'search_domain': ustr(params.search_domain),
-                'filter_domain': ustr(params.filter_domain)}
+                'filter_domain': ustr(params.filter_domain),
+                'sidebar_closed': params.sidebar_closed}
 
         if not params.id:
             raise redirect(self.path + '/edit', **args)
@@ -1179,14 +1182,15 @@ class Form(SecuredController):
 
         defaults += [
             {'text': _('Set to default value'), 'action': "set_to_default('%s', '%s')" % (field, model)},
-            {'text': _('Set as default'), 'action': "set_as_default('%s', '%s')"  % (field, model)}
+            {'text': _('Set as default'), 'action': "set_as_default('%s', '%s')"  % (field, model)},
+            {'text': _('Reset default'), 'action': "reset_default('%s', '%s')"  % (field, model)},
         ]
 
         if kind=='many2one':
 
             act = (value or None) and "javascript: void(0)"
 
-            actions = [{'text': _('Action'), 'relation': relation, 'field': field, 'action': act and "do_action(this, true)"},
+            actions += [{'text': _('Action'), 'relation': relation, 'field': field, 'action': act and "do_action(this, true)"},
                        {'text': _('Report'), 'action': act and "do_report('%s', '%s')" %(field, relation)}]
             
             res = rpc.RPCProxy('ir.values').get('action', 'client_action_relate', [(relation, False)], False, rpc.session.context)

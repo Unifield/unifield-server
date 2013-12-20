@@ -43,9 +43,12 @@
             var form = document.forms['view_form'];
             form.action = '/openerp/impex/save_exp';
             var options = openobject.dom.get('fields').options;
+            var fields2 = [];
             forEach(options, function(o){
                 o.selected = true;
+                fields2 = fields2.concat('"' + o.text + '"');
             });
+            openobject.dom.get('_terp_fields2').value = '[' + fields2.join(',') + ']';
             form.submit();
         }
 
@@ -115,7 +118,7 @@
 
             if (options.length == 0){
                 error_display(_('Please select fields to export...'));
-                return;
+                return 0;
             }
 
             var fields2 = [];
@@ -128,15 +131,17 @@
         }
 
         function do_export(form){
-            do_pre_submit();
+            pre = do_pre_submit();
             if (jQuery('#export_format').val() == 'excel') {
                 file_name = "data.xls";
             } else {
                 file_name = "data.csv";
             }
-            jQuery(idSelector(form)).attr('action', openobject.http.getURL(
-                '/openerp/impex/export_data/'+file_name)
-            ).submit();
+            if (pre != 0) {
+                jQuery(idSelector(form)).attr('action', openobject.http.getURL(
+                    '/openerp/impex/export_data/'+file_name)
+                ).submit();
+            }
 
         }
 
@@ -186,8 +191,8 @@
             <td class="side_spacing">
                 <table>
                     <tr>
-                        <td class="label"><label for="import_compat">${_("Export Type:")}</label></td>
-                        <td>
+                        <td class="label" style="${group_by_no_leaf and 'display:none' or ''}"><label for="import_compat">${_("Export Type:")}</label></td>
+                        <td style="${group_by_no_leaf and 'display:none' or ''}">
                             <select id="import_compat" name="import_compat" onchange="do_import_cmp();">
                                 <option value="1">${_("Import Compatible Export")}</option>
                                 <option value="0"
@@ -221,7 +226,7 @@
         </tr> 
         <tr>
             <td class="side_spacing">
-                <table class="fields-selector-export" cellspacing="5" border="0">
+                <table class="fields-selector-export" cellspacing="5" border="0" style="${group_by_no_leaf and 'display:none' or ''}">
                     <tr>
                         <th class="fields-selector-left">${_("Available fields")}</th>
                         <th class="fields-selector-center">&nbsp;</th>
@@ -243,7 +248,7 @@
                                         <option value="default">${_('Default view fields')}</option>
                                     % endif
                                     % for export in existing_exports:
-                                        <option value="${export['id']}">${export['name']}</option>
+                                        <option value="${export['id']}" ${'selected=selected' if export_id == export['id'] else ''}>${export['name']}</option>
                                     % endfor
                                 </select>
                                 <a class="button-a" href="#" onclick="delete_listname(); return false;"
