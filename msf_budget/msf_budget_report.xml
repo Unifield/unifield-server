@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
+        <!-- see msf_budget/wizard/wizard_budget_criteria_export.py for real filename -->
         <report id="budget_criteria_2"
         string="Budget vs. Actuals"
         model="msf.budget"
         name="budget.criteria.2"
+        target_filename="Budget vs. Actual_${code}_%(year)s%(month)s%(day)s"
         file="msf_budget/report/budget_criteria_xls.mako"
         report_type="webkit"
         header="False"
@@ -15,6 +17,7 @@
         string="Monthly Budget (XLS)"
         model="msf.budget"
         name="xls.budget.monthly"
+        target_filename="Monthly_Budget_${code}_${decision_moment_id}_${version}"
         file="msf_budget/report/budget_monthly_xls.mako"
         report_type="webkit"
         header="False"
@@ -25,6 +28,7 @@
         string="Monthly Budget (PDF)"
         model="msf.budget"
         name="msf.pdf.budget.monthly"
+        target_filename="Monthly_Budget_${code}_${decision_moment_id}_${version}"
         rml="msf_budget/report/monthly_budget.rml"
         auto="False"
         menu="True"/>
@@ -33,6 +37,7 @@
         string="Budget Summary"
         model="msf.budget"
         name="msf.pdf.budget.summary"
+        target_filename="Budget_Summary_${code}_%(year)s%(month)s%(day)s"
         rml="msf_budget/report/budget_summary.rml"
         auto="False"
         menu="True"/>
@@ -41,6 +46,7 @@
         string="Local Expenses"
         model="account.analytic.line"
         name="local.expenses"
+        target_filename="Local Expenses_%(instance_code)s_%(year)s%(month)s%(day)s"
         file="msf_budget/report/report_local_expenses_xls.mako"
         report_type="webkit"
         header="False"
@@ -51,6 +57,7 @@
         string="Order impact vs. Budget"
         model="purchase.order"
         name="msf.pdf.engagement"
+        target_filename="Order Impact vs. Budget_${name}_%(year)s%(month)s%(day)s"
         rml="msf_budget/report/engagement.rml"
         auto="False"
         menu="True"/>
@@ -59,6 +66,7 @@
         string="Actuals by CC"
         model="msf.budget"
         name="msf.budget.actual"
+        target_filename="Actuals by CC_${code}_ %(year)s%(month)s%(day)s"
         report_type="txt"
         auto="False"
         menu="False"/>

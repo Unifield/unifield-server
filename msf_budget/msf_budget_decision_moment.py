@@ -21,9 +21,11 @@
 
 from osv import fields, osv
 
+
 class msf_budget_decision_moment(osv.osv):
     _name = "msf.budget.decision.moment"
-    
+    _order = '"order"'
+
     def _check_order(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -35,7 +37,7 @@ class msf_budget_decision_moment(osv.osv):
                 if len(bad_ids) and len(bad_ids) > 1:
                     return False
         return True
-    
+
     def _check_name(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -47,10 +49,10 @@ class msf_budget_decision_moment(osv.osv):
                 if len(bad_ids) and len(bad_ids) > 1:
                     return False
         return True
-    
+
     _columns = {
-        'name': fields.char('Decision Moment', size=32),
-        'order': fields.integer('Order'),
+        'name': fields.char('Decision Moment', size=32, required=True),
+        'order': fields.integer('Order', required=True),
     }
 
     _constraints = [
@@ -58,5 +60,43 @@ class msf_budget_decision_moment(osv.osv):
         (_check_name, 'Name must be unique!', ['name'])
     ]
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form',
+                        context=None, toolbar=False, submenu=False):
+        """
+        Override the tree view to hide some buttons according to the instance
+        to which the user belongs.
+        """
+        if context is None:
+            context = {}
+        res = super(msf_budget_decision_moment, self).fields_view_get(
+            cr, uid, view_id, view_type, context, toolbar, submenu)
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        if user.company_id and user.company_id.instance_id:
+            instance_level = user.company_id.instance_id.current_instance_level
+            # Full access for HQ instances
+            if instance_level != 'section':
+                if 'hide_new_button="PROP_INSTANCE_HIDE_BUTTON"' in res['arch']:
+                    res['arch'] = res['arch'].replace(
+                        'hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"',
+                        'hide_duplicate_button="1"')
+                    res['arch'] = res['arch'].replace(
+                        'hide_delete_button="PROP_INSTANCE_HIDE_BUTTON"',
+                        'hide_delete_button="1"')
+                    res['arch'] = res['arch'].replace(
+                        'hide_new_button="PROP_INSTANCE_HIDE_BUTTON"',
+                        'hide_new_button="1" noteditable="1" notselectable="0"')
+            # Restricted access for other instances
+            else:
+                if res['type'] == 'form' \
+                        and 'hide_new_button="PROP_INSTANCE_HIDE_BUTTON"' in res['arch']:
+                    res['arch'] = res['arch'].replace(
+                        'hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"', '')
+                    res['arch'] = res['arch'].replace(
+                        'hide_delete_button="PROP_INSTANCE_HIDE_BUTTON"', '')
+                    res['arch'] = res['arch'].replace(
+                        'hide_new_button="PROP_INSTANCE_HIDE_BUTTON"', '')
+        return res
+
 msf_budget_decision_moment()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

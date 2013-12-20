@@ -586,7 +586,7 @@ class claim_event(osv.osv):
         '''
         obj = self.pool.get('return.claim').browse(cr, uid, vals['return_claim_id_claim_event'], context=context)
         sequence = obj.sequence_id_return_claim
-        line = sequence.get_id(test='id', context=context)
+        line = sequence.get_id(code_or_id='id', context=context)
         vals.update({'name': 'EV/%s'%line, 'order_claim_event': int(line)})
         return super(claim_event, self).create(cr, uid, vals, context=context)
     

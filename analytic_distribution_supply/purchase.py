@@ -349,10 +349,13 @@ class purchase_order_line(osv.osv):
                     res[line.id] = 'invalid'
                     continue
                 res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, po_distrib_id, account_id)
-                if res[line.id] == 'valid' and not is_intermission:
-                    cr.execute('SELECT id FROM cost_center_distribution_line WHERE distribution_id=%s AND analytic_id=%s', (po_distrib_id or distrib_id, intermission_cc))
-                    if cr.rowcount > 0:
-                        res[line.id] = 'invalid'
+                
+                # UTP-953: For intersection, the cc_intermission can also be used for all partner types, so the block below is removed
+#                if res[line.id] == 'valid' and not is_intermission:
+#                    cr.execute('SELECT id FROM cost_center_distribution_line WHERE distribution_id=%s AND analytic_id=%s', (po_distrib_id or distrib_id, intermission_cc))
+#                    if cr.rowcount > 0:
+#                        res[line.id] = 'invalid'
+
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):

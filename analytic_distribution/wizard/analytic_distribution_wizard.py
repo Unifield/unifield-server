@@ -81,12 +81,13 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, [context.get('parent_id')], context=context)
         if wiz and wiz[0]:
             purchase = wiz[0].purchase_id or wiz[0].purchase_line_id.order_id
-            if purchase and wiz[0].partner_type == 'intermission':
-                try:
-                    res['analytic_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                            'analytic_account_project_intermission')[1]
-                except ValueError:
-                    pass
+            # UTP-952: Remove the default intermission CC
+#            if purchase and wiz[0].partner_type == 'intermission':
+#                try:
+#                    res['analytic_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+#                            'analytic_account_project_intermission')[1]
+#                except ValueError:
+#                    pass
             if 'destination_id' in fields and wiz[0].account_id:
                 res['destination_id'] = wiz[0].account_id.default_destination_id and wiz[0].account_id.default_destination_id.id or False
 
@@ -181,7 +182,10 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 # Change OC field
                 fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fields:
-                    field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s]),  ('intermission_restricted', '=', [parent.purchase_id, parent.purchase_line_id, parent.partner_type])]" % oc_id)
+                    # UTP-952: Replaced the line below by another field.set by removing the intermission_restricted param
+                    # field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s]),  ('intermission_restricted', '=', [parent.purchase_id, parent.purchase_line_id, parent.partner_type])]" % oc_id)
+                    field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s])]" % oc_id)
+                    
                 # Change Destination field
                 dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
                 for field in dest_fields:
@@ -583,6 +587,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'document_date': fields.date('Document date', readonly=True),
         'partner_type': fields.char('Partner Type', readonly=1, size=128),
         'register_line_state': fields.function(_get_register_line_state, method=True, string='Register line state', type='selection', selection=[('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')], readonly=True, store=False),
+        'partner_type': fields.text(string='Partner Type of FO/PO', required=False, readonly=True), #UF-2138: added the ref to partner type of FO/PO
     }
 
     _defaults = {
@@ -893,6 +898,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'cost_center_id': line.get('cost_center_id') or False,
                     'destination_id': line.get('destination_id') or False,
                 }
+                if wizard.partner_type: #UF-2138: added the ref to partner type of FO/PO
+                    vals.update({'partner_type': wizard.partner_type})
+                    
                 new_line = line_obj.create(cr, uid, vals, context=context)
                 processed_line_ids.append(new_line)
             wiz_lines[i] = None
@@ -959,7 +967,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             distrib_id = wiz.distribution_id and wiz.distribution_id.id or False
             if not distrib_id:
                 # create a new analytic distribution
-                distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
+                analytic_vals = {}
+                if wiz.partner_type:#UF-2138: added the ref to partner type of FO/PO
+                    analytic_vals = {'partner_type': wiz.partner_type}
+                distrib_id = self.pool.get('analytic.distribution').create(cr, uid, analytic_vals, context=context)
                 # link it to the wizard
                 self.write(cr, uid, [wiz.id], {'distribution_id': distrib_id,}, context=context)
                 # link it to the element we come from (purchase order, invoice, purchase order line, invoice line, etc.)

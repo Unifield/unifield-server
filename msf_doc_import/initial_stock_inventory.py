@@ -201,7 +201,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         batch = False
                         to_correct_ok = True
                         import_to_correct = True
-                        error_list.append(_('The batch %s was not found in the database.' % batch_name))
+                        error_list.append(_('The batch %s was not found in the database.') % batch_name)
                     else:
                         batch = batch_ids[0]
                 except Exception:
@@ -221,7 +221,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         batch = False
                         to_correct_ok = True
                         import_to_correct = True
-                        error_list.append(_('No batch found for the expiry date %s.' % expiry))
+                        error_list.append(_('No batch found for the expiry date %s.') % (expiry,))
                     else:
                         batch = batch_ids[0]
                 elif expiry and batch:
@@ -250,7 +250,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 product = product_obj.browse(cr, uid, product_id)
                 product_uom = product.uom_id.id
                 hidden_batch_management_mandatory = product.batch_management
-                hidden_perishable_mandatory = product.perishable
+                hidden_perishable_mandatory = product.perishable and not product.batch_management
                 if hidden_batch_management_mandatory and not batch:
                     comment += _('Batch is missing.\n')
                 if hidden_perishable_mandatory and not expiry:

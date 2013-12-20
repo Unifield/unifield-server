@@ -80,7 +80,7 @@ class purchase_order(osv.osv):
 
     _columns = {
         'down_payment_ids': fields.one2many('account.move.line', 'down_payment_id', string="Down Payments", readonly=True),
-        'down_payment_filter': fields.function(_get_fake, fnct_search=_search_po_for_down_payment, type="many2one", method=True, string="PO for Down Payment"),
+        'down_payment_filter': fields.function(_get_fake, fnct_search=_search_po_for_down_payment, type="many2one", relation='purchase.order', method=True, string="PO for Down Payment"),
     }
 
     def copy(self, cr, uid, id, default=None, context=None):

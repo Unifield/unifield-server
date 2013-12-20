@@ -15,6 +15,7 @@
                         display_invoice)"/>
                     <newline />
                     <field name='date'/>
+		    <field name='reference' />
                     <newline/>
                     <group colspan="4">
                         <field name='invoice_id' nolabel="1" domain="[('type', '=', 'in_invoice'), ('state', '=', 'open'), 
@@ -29,7 +30,7 @@
                         <button string="Clean invoices" name="clean_invoices" type="object" icon="gtk-clear" attrs="{'invisible':[('display_invoice', '!=', True)]}" />
                     </group>
                     <newline />
-                    <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" nolabel="1" colspan="4" on_change="changeline(advance_line_ids, returned_amount, date)"/>
+                    <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" nolabel="1" colspan="4" on_change="changeline(advance_line_ids, returned_amount, date, reference)"/>
                     <newline />
                     <field name="total_amount"/>
                     <newline />

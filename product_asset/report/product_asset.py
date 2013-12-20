@@ -28,7 +28,29 @@ class order(report_sxw.rml_parse):
         super(order, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'get_product_name': self._get_product_name,
+            'get_type': self._get_type,
+            'get_value': self._get_value,
         })
+        
+    def _get_product_name(self, asset):
+        pname = ''
+        if asset and asset.product_id:
+            pname = self.pool.get('product.product').name_get(self.cr,
+                                                              self.uid,
+                                           [asset.product_id.id])[0][1]
+        return pname
+        
+    def _get_type(self, asset):
+        ptype = ''
+        if asset and asset.asset_type_id:
+            ptype = asset.asset_type_id.name
+            if ptype:
+                ptype = '(' + ptype + ')'
+        return ptype
+        
+    def _get_value(self, asset):
+        return str(asset.invo_value) + ' ' + asset.invo_currency.name
 
 report_sxw.report_sxw('report.product.asset', 'product.asset', 'addons/product_asset/report/product_asset.rml', parser=order, header="external")
 
