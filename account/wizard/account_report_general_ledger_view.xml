@@ -21,7 +21,7 @@
                 <field name="export_format"/>
                 <field name="landscape" attrs="{'invisible': [('export_format', '=', 'xls')]}"/>
                 <newline/>   
-                <field name="output_currency"/>
+                <field name="output_currency" invisible="1" />
                 <field name="amount_currency" invisible="1" />
                 <newline/>
                 <field name="instance_ids">
