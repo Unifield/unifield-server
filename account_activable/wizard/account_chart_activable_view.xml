@@ -22,8 +22,10 @@
                         <newline/>
                         <separator string="Currency" colspan="4"/>
                         <field name="currency_id"/>
+                        <!-- Desactivate output currency functionnality until further notice
                         <newline/>
                         <field name="output_currency_id"/>
+                        -->
                     </xpath>
                     <xpath expr="/form/group[2]/button[@string='Open Charts']" position="attributes">
                         <attribute name="string">Show Balances</attribute>

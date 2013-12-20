@@ -85,6 +85,7 @@
       <Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
     </Cell>
   </Row>
+<!-- Desactivate output currency functionnality until further notice
   <Row ss:Height="12.6425">
     <Cell ss:StyleID="header_part">
       <Data ss:Type="String">Currency</Data>
@@ -93,6 +94,7 @@
       <Data ss:Type="String">${( data.get('currency', False) and data.get('currency') or _('No one specified'))|x}</Data>
     </Cell>
   </Row>
+-->
 % for t in [(_('Fiscalyear'), 'fy'), (_('From'), 'from_date'), (_('To'), 'to_date'), (_('Instances'), 'instances'), (_('Show inactive accounts?'), 'show_inactive'), (_('Filtering on currency'), 'currency_filtering')]:
   <Row ss:Height="12.6425">
     <Cell ss:StyleID="header_part">

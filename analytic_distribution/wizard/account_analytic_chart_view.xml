@@ -19,8 +19,10 @@
                         <newline/>
                         <separator string="Currency" colspan="4"/>
                         <field name="currency_id"/>
+                        <!-- Desactivate output currency functionnality until further notice
                         <newline/>
                         <field name="output_currency_id"/>
+                        -->
                     </xpath>
                     <xpath expr="/form//button[@name='analytic_account_chart_open_window']" position="attributes">
                         <attribute name="icon">terp-gtk-go-back-rtl</attribute>
