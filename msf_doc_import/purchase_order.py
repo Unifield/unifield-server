@@ -470,8 +470,8 @@ class wizard_export_po_validated(osv.osv_memory):
 
     _columns = {
         'order_id': fields.many2one('purchase.order', string='Purchase Order', required=True),
-        'file_type': fields.selection([('xml', 'XML file'),
-                                       ('excel', 'Excel file')], string='File type', required=True),
+        'file_type': fields.selection([('excel', 'Excel file'),
+                                       ('xml', 'XML file')], string='File type', required=True),
     }
 
     def export_file(self, cr, uid, ids, context=None):
