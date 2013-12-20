@@ -63,8 +63,6 @@ class expiry_report(report_sxw.rml_parse):
     def _get_instance_addr(self):
         instance = self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id
         return '%s / %s / %s' % (instance.instance, instance.mission or '', instance.code)
-        
-        #return '%s / %s / %s' % ('en', 'attente', 'de merge')
     
     def _get_currency(self):
         return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.currency_id.name
@@ -86,9 +84,7 @@ class expiry_report_xls_parser(SpreadsheetReport):
         super(expiry_report_xls_parser, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
-        print data
         a = super(expiry_report_xls_parser, self).create(cr, uid, ids, data, context)
-        print a
         return (a[0], 'xls')
 expiry_report_xls_parser('report.expiry.report_xls', 'expiry.quantity.report', 'addons/consumption_calculation/report/expiry_report.mako', parser=expiry_report, header=False)
 

@@ -77,25 +77,26 @@
 <Cell ss:StyleID="header"><Data ss:Type="String">Exp. Value</Data></Cell>
 </Row>
 ## lines
-##% for line in o.line_ids:
-##<Row>
-##<Cell ss:StyleID="line"><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
-##<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-##<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-##<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-##<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-##<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-##<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-##<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-##<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-##<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-##</Row>
+% for l in objects[0].line_ids:
+<Row>
+<Cell ss:StyleID="line"><Data ss:Type="String">${(l.product_id.default_code or '')|x}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${l.product_name|x}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${l.location_id and l.location_id.name|x}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(l.real_stock or 0.0)}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${l.uom_id and l.uom_id.name|x}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${l.batch_number|x}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${l.expiry_date|x}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(l.expired_qty or 0.00)}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${l.product_id and l.product_id.standard_price or '0.00'}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(l.product_id and l.product_id.standard_price*l.expired_qty or 0.0)}</Data></Cell>
+</Row>
+% endfor
 </Table>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
-##    <Header x:Data="&amp;l&amp;&quot;Arial,Bold&quot;&amp;12${getAddress()}"/>
-##    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14EXPIRY REPORT"/>
+    <Header x:Data="&amp;l&amp;&quot;Arial,Bold&quot;&amp;12${getAddress()}"/>
+    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14EXPIRY REPORT"/>
     <Footer x:Data="Page &amp;P of &amp;N"/>
    </PageSetup>
    <Print>
