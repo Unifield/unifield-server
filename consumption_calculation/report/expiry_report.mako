@@ -95,6 +95,9 @@ now = time.strftime('%Y-%m-%d')
 <Column ss:AutoFitWidth="1" ss:Width="40" />
 ## products/batches already expired
 <Row>
+<Cell ss:StyleID="header" ss:MergeAcross="9"><Data ss:Type="String">Products/batches already expired</Data></Cell>
+</Row>
+<Row>
 <Cell ss:StyleID="header"><Data ss:Type="String">CODE</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">DESCRIPTION</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">Location</Data></Cell>
@@ -139,6 +142,9 @@ now = time.strftime('%Y-%m-%d')
 % for c in range(cols_count):
 <Cell ss:StyleID="ssCell"></Cell>
 % endfor
+</Row>
+<Row>
+<Cell ss:StyleID="header" ss:MergeAcross="9"><Data ss:Type="String">Products/batches to expire</Data></Cell>
 </Row>
 <Row>
 <Cell ss:StyleID="header"><Data ss:Type="String">CODE</Data></Cell>
