@@ -217,27 +217,27 @@ now = time.strftime('%Y-%m-%d')
 <Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">${formatLang(getTotal(objects[0], 'expiry'))}</Data></Cell>
 </Row>
 ## ALL TOTAL
+<Row>
 % for c in range(cols_count):
 <Cell ss:StyleID="ssCell"></Cell>
 % endfor
-<Row>
-<Cell ss:StyleID="ssCell"></Cell>
-<Cell ss:StyleID="ssCell"></Cell>
-<Cell ss:StyleID="ssCell"></Cell>
-<Cell ss:StyleID="ssCell"></Cell>
-<Cell ss:StyleID="ssCell"></Cell>
-<Cell ss:StyleID="ssCell"></Cell>
-<Cell ss:StyleID="ssCell"></Cell>
-<Cell ss:StyleID="ssCell"></Cell>
-<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">ALL TOTAL</Data></Cell>
-<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">${formatLang(getTotal(objects[0], 'all'))}</Data></Cell>
 </Row>
+## <Cell ss:StyleID="ssCell"></Cell>
+## <Cell ss:StyleID="ssCell"></Cell>
+## <Cell ss:StyleID="ssCell"></Cell>
+## <Cell ss:StyleID="ssCell"></Cell>
+## <Cell ss:StyleID="ssCell"></Cell>
+## <Cell ss:StyleID="ssCell"></Cell>
+## <Cell ss:StyleID="ssCell"></Cell>
+## <Cell ss:StyleID="ssCell"></Cell>
+## <Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">ALL TOTAL</Data></Cell>
+## <Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">${formatLang(getTotal(objects[0], 'all'))}</Data></Cell>
+## </Row>
 </Table>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
-    <Header x:Data="&amp;l&amp;&quot;Arial,Bold&quot;&amp;12${getAddress()}"/>
-    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14EXPIRY REPORT"/>
+    <Header x:Data="&amp;L&amp;&quot;Arial,Bold&quot;&amp;12$${getAddress()}&amp;C&amp;&quot;Arial,Bold&quot;&amp;14EXPIRY REPORT"/>
     <Footer x:Data="Page &amp;P of &amp;N"/>
    </PageSetup>
    <Print>
