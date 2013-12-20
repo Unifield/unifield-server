@@ -22,6 +22,8 @@
 from osv import osv, fields
 from tools.translate import _
 
+import time
+
 class account_bs_report(osv.osv_memory):
     """
     This wizard will provide the account balance sheet report by periods, between any two dates.
@@ -69,6 +71,8 @@ class account_bs_report(osv.osv_memory):
         if not data['form']['reserve_account_id']:
             raise osv.except_osv(_('Warning'),_('Please define the Reserve and Profit/Loss account for current user company !'))
         data = self.pre_print_report(cr, uid, ids, data, context=context)
+        instance = self.pool.get('ir.sequence')._get_instance(cr, uid)
+        data['target_filename'] = _('Balance Sheet_%s_%s') % (instance, time.strftime('%Y%m%d'))
         if data['form']['display_type']:
             return {
                 'type': 'ir.actions.report.xml',

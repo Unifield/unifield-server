@@ -88,13 +88,29 @@ class account_invoice(osv.osv):
         return [('none', _('Free Reference'))]
 
     def _amount_residual(self, cr, uid, ids, name, args, context=None):
+        """
+        Residual amount is 0 when invoice counterpart line is totally recconciled.
+        If not, residual amount is the total invoice minus all payments. Payments are line that comes from the reconciliation linked to the counterpart line.
+        """
         result = {}
         for invoice in self.browse(cr, uid, ids, context=context):
-            result[invoice.id] = 0.0
-            if invoice.move_id:
-                for m in invoice.move_id.line_id:
-                    if m.account_id.type in ('receivable','payable'):
-                        result[invoice.id] += m.amount_residual_currency
+            # UNIFIELD REFACTORING: UF-1536 have change this method
+            # Not needed to do process if invoice is draft or paid
+            if invoice.state in ['draft', 'paid']:
+                result[invoice.id] = 0.0
+                continue
+            result[invoice.id] = invoice.amount_total
+            # Browse payments to add/delete their amount regarding the invoice type
+            for payment in invoice.payment_ids:
+                if invoice.type in ['in_invoice', 'out_refund']:
+                    result[invoice.id] -= payment.amount_currency
+                else:
+                    result[invoice.id] += payment.amount_currency
+            # Avoid some problems about negative residual amounts or superior amounts: You have to always have a residual amount between 0 and invoice total amount
+            if result[invoice.id] < 0:
+                result[invoice.id] = 0.0
+            if result[invoice.id] > invoice.amount_total:
+                result[invoice.id] = invoice.amount_total
         return result
 
     # Give Journal Items related to the payment reconciled to this invoice
@@ -265,7 +281,7 @@ class account_invoice(osv.osv):
         'move_lines':fields.function(_get_lines, method=True, type='many2many', relation='account.move.line', string='Entry Lines'),
         'residual': fields.function(_amount_residual, method=True, digits_compute=dp.get_precision('Account'), string='Residual',
             store={
-                'account.invoice': (lambda self, cr, uid, ids, c={}: ids, ['invoice_line','move_id'], 50),
+                'account.invoice': (lambda self, cr, uid, ids, c={}: ids, ['invoice_line','move_id', 'state'], 50),
                 'account.invoice.tax': (_get_invoice_tax, None, 50),
                 'account.invoice.line': (_get_invoice_line, ['price_unit','invoice_line_tax_id','quantity','discount','invoice_id'], 50),
                 'account.move.line': (_get_invoice_from_line, None, 50),
@@ -880,6 +896,7 @@ class account_invoice(osv.osv):
                     if i == len(totlines):
                         amount_currency += res_amount_currency
 
+                    # UNIFIELD REFACTORING: is_counterpart field added (UF-1536)
                     iml.append({
                         'type': 'dest',
                         'name': name,
@@ -891,8 +908,10 @@ class account_invoice(osv.osv):
                         'currency_id': diff_currency_p \
                                 and inv.currency_id.id or False,
                         'ref': ref,
+                        'is_counterpart': True,
                     })
             else:
+                # UNIFIELD REFACTORING: is_counterpart field added (UF-1536)
                 iml.append({
                     'type': 'dest',
                     'name': name,
@@ -903,7 +922,8 @@ class account_invoice(osv.osv):
                             and total_currency or False,
                     'currency_id': diff_currency_p \
                             and inv.currency_id.id or False,
-                    'ref': ref
+                    'ref': ref,
+                    'is_counterpart': True,
             })
 
             date = inv.date_invoice or time.strftime('%Y-%m-%d')
@@ -968,6 +988,8 @@ class account_invoice(osv.osv):
             'product_id': x.get('product_id', False),
             'product_uom_id': x.get('uos_id', False),
             'analytic_account_id': x.get('account_analytic_id', False),
+            # UNIFIELD REFACTORISATION: (UF-1536) add new attribute to search which line is the counterpart
+            'is_counterpart': x.get('is_counterpart', False),
         }
 
     def action_number(self, cr, uid, ids, context=None):
