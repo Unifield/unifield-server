@@ -24,6 +24,10 @@
     <Style ss:ID="ssCell">
         <Alignment ss:Vertical="Top" ss:WrapText="1"/>
     </Style>
+    <Style ss:ID="ssCellBold">
+        <Alignment ss:Vertical="Top" ss:WrapText="1"/>
+        <Font ss:Bold="1" />
+    </Style>
     <Style ss:ID="ssCellRightBold">
         <Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
         <Font ss:Bold="1" />
@@ -81,18 +85,44 @@
 <Table x:FullColumns="1" x:FullRows="1">
 <%
 cols_count = 10
-now = time.strftime('%Y-%m-%d') 
+now = time.strftime('%Y-%m-%d')
 %>
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="250" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="40" />
+<Column ss:AutoFitWidth="1" ss:Width="100" />
+<Column ss:AutoFitWidth="1" ss:Width="200" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="40" />
-<Column ss:AutoFitWidth="1" ss:Width="40" />
-<Column ss:AutoFitWidth="1" ss:Width="40" />
+<Column ss:AutoFitWidth="1" ss:Width="100" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="70" />
+<Column ss:AutoFitWidth="1" ss:Width="70" />
+<Column ss:AutoFitWidth="1" ss:Width="70" />
+## header
+<Row>
+<Cell ss:StyleID="ssCellBold"><Data ss:Type="String">Report date :</Data></Cell>
+<Cell ss:StyleID="ssCell" ss:MergeAcross="8"><Data ss:Type="String">${toDate()|x}</Data></Cell>
+</Row>
+<Row>
+<Cell ss:StyleID="ssCellBold"><Data ss:Type="String">Location :</Data></Cell>
+<Cell ss:StyleID="ssCell" ss:MergeAcross="8"><Data ss:Type="String">${(objects[0].location_id and objects[0].location_id.name or '')|x}</Data></Cell>
+</Row>
+<Row>
+<Cell ss:StyleID="ssCellBold"><Data ss:Type="String">Period of&#10;calculation :</Data></Cell>
+<Cell ss:StyleID="ssCell" ss:MergeAcross="8"><Data ss:Type="String">${objects[0].week_nb} week${objects[0].week_nb > 1 and 's' or ''}</Data></Cell>
+</Row>
+<Row>
+<Cell ss:StyleID="ssCellBold"><Data ss:Type="String">Limit date :</Data></Cell>
+<Cell ss:StyleID="ssCell" ss:MergeAcross="8"><Data ss:Type="String">${toDate(objects[0].date_to)|x}</Data></Cell>
+</Row>
+<Row>
+<Cell ss:StyleID="ssCellBold"><Data ss:Type="String">Currency :</Data></Cell>
+<Cell ss:StyleID="ssCell" ss:MergeAcross="8"><Data ss:Type="String">${getCurrency()|x}</Data></Cell>
+</Row>
+<Row>
+% for c in range(cols_count):
+<Cell ss:StyleID="ssCell"></Cell>
+% endfor
+</Row>
 ## products/batches already expired
 <Row>
 <Cell ss:StyleID="header" ss:MergeAcross="9"><Data ss:Type="String">Products/batches already expired</Data></Cell>
