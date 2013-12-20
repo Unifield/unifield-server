@@ -587,6 +587,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'partner_type': fields.char('Partner Type', readonly=1, size=128),
         'register_line_state': fields.function(_get_register_line_state, method=True, string='Register line state', type='selection', selection=[('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')], readonly=True, store=False),
         'cash_return_id': fields.many2one('wizard.cash.return', string="Advance Return"),
+        'cash_return_line_id': fields.many2one('wizard.advance.line', string="Advance Return Line"),
     }
 
     _defaults = {
@@ -728,7 +729,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             # Verify that Funding Pool Lines are done if we come from an invoice, invoice line, direct invoice, direct invoice line, register line, 
             #+ move line, commitment, commitment line, model
-            for obj in ['invoice_id', 'invoice_line_id', 'direct_invoice_id', 'direct_invoice_line_id', 'register_line_id', 'move_id', 'move_line_id', 'commitment_id', 'commitment_line_id', 'accrual_line_id', 'model_line_id', 'cash_return_id']:
+            for obj in ['invoice_id', 'invoice_line_id', 'direct_invoice_id', 'direct_invoice_line_id', 'register_line_id', 'move_id', 'move_line_id', 'commitment_id', 'commitment_line_id', 'accrual_line_id', 'model_line_id', 'cash_return_id', 'cash_return_line_id']:
                 if getattr(wiz, obj, False) and not wiz.fp_line_ids:
                     raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             # Verify that allocation is 100% on each type of distribution, but only if there some lines
@@ -972,9 +973,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                     ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'), 
                     ('direct_invoice_line_id', 'wizard.account.invoice.line'), ('commitment_id', 'account.commitment'), 
                     ('commitment_line_id', 'account.commitment.line'), ('model_id', 'account.model'), ('model_line_id', 'account.model.line'),
-                    ('accrual_line_id', 'msf.accrual.line'), ('sale_order_id', 'sale.order'), ('sale_order_line_id', 'sale.order.line'), ('move_id', 'account.move')]:
+                    ('accrual_line_id', 'msf.accrual.line'), ('sale_order_id', 'sale.order'), ('sale_order_line_id', 'sale.order.line'), ('move_id', 'account.move'),
+                    ('cash_return_id', 'wizard.cash.return'), ('cash_return_line_id', 'wizard.advance.line')]:
                     if getattr(wiz, el[0], False):
                         obj_id = getattr(wiz, el[0], False).id
+                        print "EL", el, obj_id, "DISTRIB_ID", distrib_id
                         self.pool.get(el[1]).write(cr, uid, [obj_id], {'analytic_distribution_id': distrib_id}, context=context)
             # Finally do registration for each type
             for line_type in ['cost.center', 'funding.pool', 'free.1', 'free.2']:

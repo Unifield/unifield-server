@@ -172,7 +172,8 @@ class wizard_advance_line(osv.osv_memory):
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
-            'register_line_id': absl.id,
+            'cash_return_line_id': absl.id,
+            #'register_line_id': absl.id,
             'currency_id': currency or False,
             'state': 'dispatch',
             'account_id': absl.account_id and absl.account_id.id or False,
@@ -630,7 +631,10 @@ class wizard_cash_return(osv.osv_memory):
                 debit = abs(advance.amount)
                 credit = 0.0
                 account_id = advance.account_id.id
-                distrib_id = advance.analytic_distribution_id and advance.analytic_distribution_id.id or False
+                print "ADVANCE.ANALYTIC_DISTRIBUTION_ID", advance.analytic_distribution_id
+                print "ADVANCE.WIZARD.ANALYTIC_DISTRIBUTION_ID", advance.wizard_id.analytic_distribution_id
+                distrib_id = (advance.analytic_distribution_id and advance.analytic_distribution_id.id) or \
+                    (advance.wizard_id.analytic_distribution_id and advance.wizard_id.analytic_distribution_id.id) or False
 
                 adv_id = self.create_move_line(cr, uid, ids, wizard.date, adv_date, adv_name, journal, register, partner_id, False, account_id, \
                     debit, credit, move_id, distrib_id, context=context)
