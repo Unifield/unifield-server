@@ -99,10 +99,11 @@ class account_analytic_chart(osv.osv_memory):
         if not context:
             context = {}
         account_ids = []
+        wiz_fields = {}
         for wiz in self.browse(cr, uid, ids):
             args = [('filter_active', '=', True)]
             if wiz.show_inactive == True:
-                args += [('filter_active', 'in', (True, False))]
+                args += [('filter_active', 'in', [True, False])]
             if wiz.currency_id:
                 context.update({'currency_id': wiz.currency_id.id,})
             if wiz.instance_ids:
@@ -110,13 +111,21 @@ class account_analytic_chart(osv.osv_memory):
             if wiz.output_currency_id:
                 context.update({'output_currency_id': wiz.output_currency_id.id})
             account_ids = self.pool.get('account.analytic.account').search(cr, uid, args, context=context)
+            wiz_fields = {
+                'fy': wiz.fiscalyear and wiz.fiscalyear.name or '',
+                'from_date': wiz.from_date or '',
+                'to_date': wiz.to_date or '',
+                'instances': wiz.instance_ids and ','.join([x.name for x in wiz.instance_ids]) or '',
+                'show_inactive': wiz.show_inactive and 'X' or '',
+                'currency_filtering': wiz.currency_id and wiz.currency_id.name or '',
+            }
         # UF-1718: Add currency name used from the wizard. If none, set it to "All" (no currency filtering)
         currency_name = _("No one specified")
         if context.get('output_currency_id', False):
             currency_name = self.pool.get('res.currency').browse(cr, uid, context.get('output_currency_id')).name or currency_name
         else:
             currency_name = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.name or currency_name
-        datas = {'ids': account_ids, 'context': context, 'currency': currency_name} # context permit balance to be processed regarding context's elements
+        datas = {'ids': account_ids, 'context': context, 'currency': currency_name, 'wiz_fields': wiz_fields} # context permit balance to be processed regarding context's elements
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.analytic.chart.export',

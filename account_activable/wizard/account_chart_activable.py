@@ -79,10 +79,12 @@ class account_chart_activable(osv.osv_memory):
         if not context:
             context = {}
         account_ids = []
+        wiz_fields = {}
+        target_move = ''
         for wiz in self.browse(cr, uid, ids):
             args = [('active', '=', True)]
             if wiz.show_inactive == True:
-                args += [('active', 'in', (True, False))]
+                args += [('active', 'in', [True, False])]
             if wiz.currency_id:
                 context.update({'currency_id': wiz.currency_id.id,})
             if wiz.instance_ids:
@@ -92,13 +94,32 @@ class account_chart_activable(osv.osv_memory):
             if wiz.output_currency_id:
                 context.update({'output_currency_id': wiz.output_currency_id.id})
             account_ids = self.pool.get('account.account').search(cr, uid, args, context=context)
+            # fetch target move value
+            o = wiz
+            field = 'target_move'
+            sel = self.pool.get(o._name).fields_get(cr, uid, [field])
+            target_move = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+            name = '%s,%s' % (o._name, field)
+            tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', target_move)])
+            if tr_ids:
+                target_move = self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
+            # Prepare a dict to keep all wizard fields values
+            wiz_fields = {
+                'fy': wiz.fiscalyear and wiz.fiscalyear.name or '',
+                'target': target_move or '',
+                'period_from': wiz.period_from and wiz.period_from.name or '',
+                'period_to': wiz.period_to and wiz.period_to.name or '',
+                'instances': wiz.instance_ids and ','.join([x.name for x in wiz.instance_ids]) or '',
+                'show_inactive': wiz.show_inactive and 'X' or '',
+                'currency_filtering': wiz.currency_id and wiz.currency_id.name or '',
+            }
         # UF-1718: Add currency name used from the wizard. If none, set it to "All" (no currency filtering)
         currency_name = _("No one specified")
         if context.get('output_currency_id', False):
             currency_name = self.pool.get('res.currency').browse(cr, uid, context.get('output_currency_id')).name or currency_name
         else:
             currency_name = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.name or currency_name
-        datas = {'ids': account_ids, 'context': context, 'currency': currency_name,} # context permit balance to be processed regarding context's elements
+        datas = {'ids': account_ids, 'context': context, 'currency': currency_name, 'wiz_fields': wiz_fields,} # context permit balance to be processed regarding context's elements
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.chart.export',
