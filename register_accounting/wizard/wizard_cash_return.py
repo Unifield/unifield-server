@@ -182,6 +182,7 @@ class wizard_advance_line(osv.osv_memory):
             vals.update({'distribution_id': distrib_id,})
         
         # set some values to the context to indicate the caller of the distr. wizard    
+        context['cash_return_id'] = False
         context.update({'from_cash_return_analytic_dist': True,
                         'from': 'wizard.cash.return', 
                         'wiz_id': absl.wizard_id.id or False, 
@@ -631,8 +632,6 @@ class wizard_cash_return(osv.osv_memory):
                 debit = abs(advance.amount)
                 credit = 0.0
                 account_id = advance.account_id.id
-                print "ADVANCE.ANALYTIC_DISTRIBUTION_ID", advance.analytic_distribution_id
-                print "ADVANCE.WIZARD.ANALYTIC_DISTRIBUTION_ID", advance.wizard_id.analytic_distribution_id
                 distrib_id = (advance.analytic_distribution_id and advance.analytic_distribution_id.id) or \
                     (advance.wizard_id.analytic_distribution_id and advance.wizard_id.analytic_distribution_id.id) or False
 
@@ -785,6 +784,7 @@ class wizard_cash_return(osv.osv_memory):
         wiz_obj = self.pool.get('analytic.distribution.wizard')
         wiz_id = wiz_obj.create(cr, uid, vals, context=context)
         # Update some context values
+        context['cash_return_line_id'] = False
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
