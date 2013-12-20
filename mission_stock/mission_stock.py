@@ -170,6 +170,13 @@ class stock_mission_report(osv.osv):
         if context.get('update_full_report'):
             report_ids = full_report_ids
             
+        product_ids = self.pool.get('product.product').search(cr, uid, [], context=context)
+        product_values = {}
+        for product in self.pool.get('product.product').read(cr, uid, product_ids, ['product_amc', 'reviewed_consumption'], context=context):
+            product_values.setdefault(product['id'], {})
+            product_values[product['id']].setdefault('product_amc', product['product_amc'])
+            product_values[product['id']].setdefault('reviewed_consumption', product['reviewed_consumption'])
+
 
         # Check in each report if new products are in the database and not in the report
         for report in self.browse(cr, uid, report_ids, context=context):
@@ -198,9 +205,7 @@ class stock_mission_report(osv.osv):
                 # Update all lines
                 self.update_lines(cr, uid, [report.id])
 
-            self._get_export_csv(cr, uid, report.id, context=context)
-
-            #self._get_export_csv(cr, uid, report.id, context=context)
+            self._get_export_csv(cr, uid, report.id, product_values, context=context)
 
         # After update of all normal reports, update the full view report
         if not context.get('update_full_report'):
@@ -324,7 +329,7 @@ class stock_mission_report(osv.osv):
                 
         return True
 
-    def _get_export_csv(self, cr, uid, ids, context=None):
+    def _get_export_csv(self, cr, uid, ids, product_values, context=None):
         '''
         Get the XML files of the stock mission report.
         This method generates 4 files (according to option set) :
@@ -337,23 +342,7 @@ class stock_mission_report(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        def set_data(line, headers, h_nb):
-            res = []
-            for h in headers:
-                if h[h_nb] == 1:
-                    obj = line
-                    value = False
-                    for v in h[2].split('.'):
-                        value = obj.__getitem__(v)
-                        obj = value
-                        if not value:
-                            value = False
-                            break
-                    if not value and h[1] == 'number':
-                        value = 0.00
-                    res.append(value)
-
-            return res
+        line_obj = self.pool.get('stock.mission.report.line')
 
         # ns_nv => No split, no valuation
         # ns_v => No split, valuation
@@ -362,9 +351,9 @@ class stock_mission_report(osv.osv):
         # headers (_(Field name), Field type, Technical field name, ns_nv, ns_v, s_nv, s_v
         headers = [(_('Reference'), 'string', 'default_code', 1, 1, 1, 1),
                    (_('Name'), 'string', 'name', 1, 1, 1, 1),
-                   (_('UoM'), 'string', 'product_id.uom_id.name', 1, 1, 1, 1),
+                   (_('UoM'), 'string', 'uom_id', 1, 1, 1, 1),
                    (_('Cost price'), 'number', 'cost_price', 0, 1, 0, 1),
-                   (_('Func. Cur.'), 'string', 'currency_id.name', 0, 1, 0, 1),
+                   (_('Func. Cur.'), 'string', 'currency_id', 0, 1, 0, 1),
                    (_('Instance stock'), 'number', 'internal_qty', 1, 1, 1, 1),
                    (_('Instance stock val.'), 'number', 'internal_val', 0, 1, 0, 1),
                    (_('Warehouse stock'), 'number', 'wh_qty', 1, 1, 0, 0),
@@ -373,45 +362,337 @@ class stock_mission_report(osv.osv):
                    (_('Cross-Docking Qty.'), 'number', 'cross_qty', 1, 1, 1, 1),
                    (_('Secondary Stock Qty.'), 'number', 'secondary_qty', 1, 1, 1, 1),
                    (_('Internal Cons. Unit Qty.'), 'number', 'cu_qty', 1, 1, 1, 1),
-                   (_('AMC'), 'number', 'product_id.product_amc', 1, 1, 1, 1),
-                   (_('FMC'), 'number', 'product_id.reviewed_consumption', 1, 1, 1, 1),
+                   (_('AMC'), 'number', 'product_amc', 1, 1, 1, 1),
+                   (_('FMC'), 'number', 'reviewed_consumption', 1, 1, 1, 1),
                    (_('In Pipe Qty.'), 'number', 'in_pipe_qty', 1, 1, 1, 1),]
+        fields = ['product_amc', 'reviewed_consumption']
 
-        for report in self.browse(cr, uid, ids, context=context):
+        def set_data(request, report_id, line, data_name,):
+            data = ''
+            cr.execute(request, (report_id, line['id']))
+            try:
+                product_amc = line['product_id'][0] in product_values and product_values[line['product_id'][0]]['product_amc'] or 0.00
+                reviewed_consumption = line['product_id'][0] in product_values and product_values[line['product_id'][0]]['reviewed_consumption'] or 0.00
+                for r in cr.dictfetchall():
+                    data += r[data_name] % (product_amc, reviewed_consumption)
+            except Exception, e:
+                import pdb
+                pdb.set_trace()
+
+            data += '\n'
+            return data
+
+#        for report in self.browse(cr, uid, ids, context=context):
+        for report_id in ids:
             # No split, no valuation
             ns_nv_headers = [(x[0], x[1]) for x in headers if x[3] == 1]
-            ns_nv_data = []
+            ns_nv_data = ''
             # No split, valuation
             ns_v_headers = [(x[0], x[1]) for x in headers if x[4] == 1]
-            ns_v_data = []
+            ns_v_data = ''
             # Split, no valuation
             s_nv_headers = [(x[0], x[1]) for x in headers if x[5] == 1]
-            s_nv_data = []
+            s_nv_data = ''
             # Split, valuation
             s_v_headers = [(x[0], x[1]) for x in headers if x[6] == 1]
-            s_v_data = []
+            s_v_data = ''
 
-            for line in report.report_line:
-                # No split, no valuation
-                ns_nv_data.append(set_data(line, headers, 3))
-                # No split, valuation
-                ns_v_data.append(set_data(line, headers, 4))
-                # Split, no valuation
-                s_nv_data.append(set_data(line, headers, 5))
-                # Split, valuation
-                s_v_data.append(set_data(line, headers, 6))
+            lines_ids = line_obj.search(cr, uid, [('mission_report_id', '=', report_id)], context=context)
+            start = 0
+            for line in line_obj.read(cr, uid, lines_ids, ['product_id'], context=context):
+                # No split, No valuation
+                ns_nv_req = '''SELECT 
+				xmlelement(name Row,
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('String' as "ss:Type"), 
+				replace(l.default_code, '%%', '%%%%'))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('String' as "ss:Type"), 
+				replace(pt.name, '%%', '%%%%'))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('String' as "ss:Type"), 
+				replace(pu.name, '%%', '%%%%'))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.internal_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.wh_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.cross_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.secondary_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.cu_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				'%%s')),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				'%%s')),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.in_pipe_qty, '0.0'))))
+				) AS ns_nv_data
+			FROM stock_mission_report_line l
+				 LEFT JOIN product_product pp ON l.product_id = pp.id
+				 LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+				 LEFT JOIN product_uom pu ON pt.uom_id = pu.id
+				 LEFT JOIN res_currency rc ON pp.currency_id = rc.id
+		    WHERE l.mission_report_id = %s AND l.id = %s'''
+			    
+                ns_nv_data += set_data(ns_nv_req, report_id, line, 'ns_nv_data')
 
-            ns_nv_tmpl = SpreadsheetCreator('Template of Mission stock - No split - No valuation', ns_nv_headers, ns_nv_data)
-            ns_v_tmpl = SpreadsheetCreator('Template of Mission stock - No split - Valuation', ns_v_headers, ns_v_data)
-            s_nv_tmpl = SpreadsheetCreator('Template of Mission stock - Split - No valuation', s_nv_headers, s_nv_data)
-            s_v_tmpl = SpreadsheetCreator('Template of Mission stock - Split - Valuation', s_v_headers, s_v_data)
+                # Split, No valuation
+                s_nv_req = '''SELECT 
+				xmlelement(name Row,
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('String' as "ss:Type"), 
+				replace(l.default_code, '%%', '%%%%'))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('String' as "ss:Type"), 
+				replace(pt.name, '%%', '%%%%'))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('String' as "ss:Type"), 
+				replace(pu.name, '%%', '%%%%'))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.internal_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.stock_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.central_qty, '0.0')))),
+				
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.cross_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.secondary_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.cu_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				'%%s')),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				'%%s')),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.in_pipe_qty, '0.0'))))
+				) AS s_nv_data
+			FROM stock_mission_report_line l
+				 LEFT JOIN product_product pp ON l.product_id = pp.id
+				 LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+				 LEFT JOIN product_uom pu ON pt.uom_id = pu.id
+				 LEFT JOIN res_currency rc ON pp.currency_id = rc.id
+		    WHERE l.mission_report_id = %s AND l.id = %s'''
+			    
+                s_nv_data += set_data(s_nv_req, report_id, line, 's_nv_data')
 
-            ns_nv_file = base64.encodestring(ns_nv_tmpl.get_xml(default_filters=['decode.utf8']))
-            ns_v_file = base64.encodestring(ns_v_tmpl.get_xml(default_filters=['decode.utf8']))
-            s_nv_file = base64.encodestring(s_nv_tmpl.get_xml(default_filters=['decode.utf8']))
-            s_v_file = base64.encodestring(s_v_tmpl.get_xml(default_filters=['decode.utf8']))
-            
-            self.write(cr, uid, [report.id], {'ns_nv_file': ns_nv_file,
+                # No split, Valuation
+                ns_v_req = '''SELECT 
+				xmlelement(name Row,
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('String' as "ss:Type"), 
+				replace(l.default_code, '%%', '%%%%'))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('String' as "ss:Type"), 
+				replace(pt.name, '%%', '%%%%'))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('String' as "ss:Type"), 
+				replace(pu.name, '%%', '%%%%'))),
+				
+                xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(pt.standard_price, '0.0')))),
+				
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('String' as "ss:Type"), 
+				rc.name)),
+				
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.internal_qty, '0.0')))),
+				
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char((l.internal_qty * pt.standard_price), '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.wh_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.cross_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.secondary_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.cu_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				'%%s')),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				'%%s')),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.in_pipe_qty, '0.0'))))
+				) AS ns_v_data
+			FROM stock_mission_report_line l
+				 LEFT JOIN product_product pp ON l.product_id = pp.id
+				 LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+				 LEFT JOIN product_uom pu ON pt.uom_id = pu.id
+				 LEFT JOIN res_currency rc ON pp.currency_id = rc.id
+		    WHERE l.mission_report_id = %s AND l.id = %s'''
+			    
+                ns_v_data += set_data(ns_v_req, report_id, line, 'ns_v_data')
+
+                # Split, Valuation
+                s_v_req = '''SELECT 
+				xmlelement(name Row,
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('String' as "ss:Type"), 
+				replace(l.default_code, '%%', '%%%%'))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('String' as "ss:Type"), 
+				replace(pt.name, '%%', '%%%%'))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('String' as "ss:Type"), 
+				replace(pu.name, '%%', '%%%%'))),
+				
+                xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char((l.internal_qty * pt.standard_price), '0.0')))),
+				
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('String' as "ss:Type"), 
+				rc.name)),
+				
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.internal_qty, '0.0')))),
+				
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char((l.internal_qty * pt.standard_price), '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.stock_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.central_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.cross_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.secondary_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.cu_qty, '0.0')))),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				'%%s')),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				'%%s')),
+			   
+				xmlelement(name Cell, xmlattributes('ssBorder' as "ss:StyleID"), 
+				xmlelement(name Data, xmlattributes('Number' as "ss:Type"), 
+				trim(to_char(l.in_pipe_qty, '0.0'))))
+				) AS s_v_data
+			FROM stock_mission_report_line l
+				 LEFT JOIN product_product pp ON l.product_id = pp.id
+				 LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+				 LEFT JOIN product_uom pu ON pt.uom_id = pu.id
+				 LEFT JOIN res_currency rc ON pp.currency_id = rc.id
+		    WHERE l.mission_report_id = %s AND l.id = %s'''
+			    
+                s_v_data += set_data(s_v_req, report_id, line, 's_v_data')
+
+            # No split - No valuation
+            ns_nv_tmpl = SpreadsheetCreator('Template of Mission stock - No split - No valuation', ns_nv_headers, [])
+            ns_nv_split = ns_nv_tmpl.get_xml(default_filters=['decode.utf8']).split('</Row>')
+            ns_nv_file = base64.encodestring(ns_nv_split[0] + '</Row>' + ns_nv_data + ns_nv_split[1])
+            del ns_nv_tmpl
+            del ns_nv_data
+
+
+            # No split, valuation
+            ns_v_tmpl = SpreadsheetCreator('Template of Mission stock - No split - No valuation', ns_v_headers, [])
+            ns_v_split = ns_v_tmpl.get_xml(default_filters=['decode.utf8']).split('</Row>')
+            ns_v_file = base64.encodestring(ns_v_split[0] + '</Row>' + ns_v_data + ns_v_split[1])
+            del ns_v_tmpl
+            del ns_v_data
+
+
+            # Split, no valuation
+            s_nv_tmpl = SpreadsheetCreator('Template of Mission stock - No split - No valuation', s_nv_headers, [])
+            s_nv_split = s_nv_tmpl.get_xml(default_filters=['decode.utf8']).split('</Row>')
+            s_nv_file = base64.encodestring(s_nv_split[0] + '</Row>' + s_nv_data + s_nv_split[1])
+            del s_nv_tmpl
+            del s_nv_data
+
+
+            # Split, valuation
+            s_v_tmpl = SpreadsheetCreator('Template of Mission stock - No split - No valuation', s_v_headers, [])
+            s_v_split = s_v_tmpl.get_xml(default_filters=['decode.utf8']).split('</Row>')
+            s_v_file = base64.encodestring(s_v_split[0] + '</Row>' + s_v_data + s_v_split[1])
+            del s_v_tmpl
+            del s_v_data
+
+
+            self.write(cr, uid, [report_id], {'ns_nv_file': ns_nv_file,
                                               'ns_v_file': ns_v_file,
                                               's_nv_file': s_nv_file,
                                               's_v_file': s_v_file,
