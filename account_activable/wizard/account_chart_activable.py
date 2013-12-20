@@ -22,6 +22,7 @@
 import datetime
 from osv import fields, osv
 from tools.translate import _
+from time import strftime
 
 class account_chart_activable(osv.osv_memory):
     _inherit = "account.chart"
@@ -119,7 +120,16 @@ class account_chart_activable(osv.osv_memory):
             currency_name = self.pool.get('res.currency').browse(cr, uid, context.get('output_currency_id')).name or currency_name
         else:
             currency_name = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.name or currency_name
-        datas = {'ids': account_ids, 'context': context, 'currency': currency_name, 'wiz_fields': wiz_fields,} # context permit balance to be processed regarding context's elements
+        # Prepare datas for the report
+        instance_code = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.code
+        datas = {
+            'ids': account_ids,
+            'context': context,
+            'currency': currency_name,
+            'wiz_fields': wiz_fields,
+            'target_filename': "Balance by account_%s_%s" % (instance_code, strftime('%Y%m%d')),
+        } # context permit balance to be processed regarding context's elements
+# filename
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.chart.export',
