@@ -20,3 +20,4 @@
 ##############################################################################
 
 import po_simulation_screen_report
+import po_simulation_screen_report_xls

@@ -271,7 +271,7 @@ class wizard_import_po_simulation_screen(osv.osv):
 
         datas = {}
         datas['ids'] = ids
-        report_name = 'po.simulation.screen'
+        report_name = 'po.simulation.screen.xls'
 
         return {
            'type': 'ir.actions.report.xml',
