@@ -20,10 +20,13 @@
     				<separator colspan="4" string="Period of calculation" />
     				<field name="week_nb" />
     				<separator colspan="4" string="Actions" />
-    				<group colspan="4" col="5">
+    				<group colspan="4" col="4">
 	    				<button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel" />
-	    				<button type="object" name="print_report_wizard" string="Print report" icon="gtk-print" colspan="2" />
 	    				<button name="process_lines" string="Process" type="object" colspan="2" icon="gtk-execute" />
+    				</group>
+                    <group colspan="4" col="4">
+	    				<button type="object" name="print_report_wizard" string="Print report PDF" icon="gtk-print" colspan="2" />
+                        <button type="object" name="print_report_wizard_xls" string="Print report Excel" icon="gtk-print" colspan="2" />
     				</group>
     			</form>
     		</field>
@@ -54,8 +57,9 @@
     						<field name="expired_qty" string="Exp. Qty" />
     					</tree>
     				</field>
-    				<label colspan="3" />
-    				<button type="object" name="print_report" string="Print report" icon="gtk-print" />
+    				<label colspan="2" />
+    				<button type="object" name="print_report" string="Print report PDF" icon="gtk-print" />
+                    <button type="object" name="print_report_xls" string="Print report Excel" icon="gtk-print" />
     			</form>
     		</field>
     	</record>
