@@ -23,3 +23,4 @@ SELECTION_AVAILABLE = [('available', 'Available'), ('not_available', 'Not Availa
 import kit
 import wizard
 import kit_creation
+import report

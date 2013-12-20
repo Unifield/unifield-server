@@ -253,7 +253,8 @@ class procurement_order(osv.osv):
         sol_ids = sol_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         if len(sol_ids) and setup.allocation_setup != 'unallocated':
             browse_so = sol_obj.browse(cr, uid, sol_ids, context=context)[0].order_id
-            if not browse_so.procurement_request:
+            req_loc = browse_so.location_requestor_id
+            if not (browse_so.procurement_request and req_loc and req_loc.usage != 'customer'):
                 values.update({'cross_docking_ok': True, 'location_id': stock_loc_obj.get_cross_docking_location(cr, uid)})
             values.update({'priority': browse_so.priority, 'categ': browse_so.categ})
         return values
@@ -291,10 +292,15 @@ class stock_picking(osv.osv):
 
     _columns = {
         'cross_docking_ok': fields.boolean('Cross docking'),
+        'direct_incoming': fields.boolean('Direct to stock'),
         'allocation_setup': fields.function(_get_allocation_setup, type='selection',
                                             selection=[('allocated', 'Allocated'),
                                                        ('unallocated', 'Unallocated'),
                                                        ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
+    }
+
+    _defaults = {
+        'direct_incoming': False,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -471,6 +477,11 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                     # treat moves towards STOCK if NOT SERVICE
                     values.update({'location_dest_id': stock_location_input})
                 values.update({'cd_from_bo': False})
+
+            # Set the 'Direct to stock' boolean field
+            if var.dest_type != 'to_cross_docking':
+                values['direct_incoming'] = var.direct_incoming
+
         return values
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
@@ -540,10 +551,15 @@ class stock_move(osv.osv):
 
     _columns = {
         'move_cross_docking_ok': fields.boolean('Cross docking'),
+        'direct_incoming': fields.boolean('Direct incoming'),
         'allocation_setup': fields.function(_get_allocation_setup, type='selection',
                                             selection=[('allocated', 'Allocated'),
                                                        ('unallocated', 'Unallocated'),
                                                        ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
+    }
+
+    _defaults = {
+        'direct_incoming': False,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -590,11 +606,11 @@ class stock_move(osv.osv):
             ret = self.write(cr, uid, todo, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
             
             # we cancel availability
-            self.cancel_assign(cr, uid, todo, context=context)
+            todo = self.cancel_assign(cr, uid, todo, context=context)
             # we rechech availability
             self.action_assign(cr, uid, todo)
             #FEFO
-            self.fefo_update(cr, uid, ids, context)
+            self.fefo_update(cr, uid, todo, context)
             # below we cancel availability to recheck it
 #            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
 #            picking_todo.append(stock_picking_id)
@@ -639,7 +655,7 @@ class stock_move(osv.osv):
 
         if todo:
             # we cancel availability
-            self.cancel_assign(cr, uid, todo, context=context)
+            todo = self.cancel_assign(cr, uid, todo, context=context)
             # we rechech availability
             self.action_assign(cr, uid, todo)
             

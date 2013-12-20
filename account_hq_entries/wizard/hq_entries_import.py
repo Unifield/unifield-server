@@ -122,13 +122,13 @@ class hq_entries_import_wizard(osv.osv_memory):
         # Retrieve Cost Center and Funding Pool
         cc_id = False
         if cost_center:
-            cc_id = anacc_obj.search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center)])
+            cc_id = anacc_obj.search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center), ('category', '=', 'OC')])
             if not cc_id:
                 raise osv.except_osv(_('Error'), _('Cost Center "%s" doesn\'t exist!') % (cost_center,))
             cc_id = cc_id[0]
         # Retrieve Funding Pool
         if funding_pool:
-            fp_id = anacc_obj.search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool)])
+            fp_id = anacc_obj.search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool), ('category', '=', 'FUNDING')])
             if not fp_id:
                 raise osv.except_osv(_('Error'), _('Funding Pool "%s" doesn\'t exist!') % (funding_pool,))
             fp_id = fp_id[0]
@@ -137,7 +137,20 @@ class hq_entries_import_wizard(osv.osv_memory):
                 fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
             except ValueError:
                 fp_id = 0
-        vals.update({'destination_id_first_value': destination_id, 'destination_id': destination_id, 'cost_center_id': cc_id, 'analytic_id': fp_id, 'cost_center_id_first_value': cc_id, 'analytic_id_first_value': fp_id,})
+        # Retrive Free 1 / Free 2
+        free1_id = False
+        free2_id = False
+        if free1:
+            free1_id = anacc_obj.search(cr, uid, ['|', ('code', '=', free1), ('name', '=', free1), ('category', '=', 'FREE1')])
+            if not free1_id:
+                raise osv.except_osv(_('Error'), _('Free 1 "%s" doesn\'t exist!') % (free1,))
+            free1_id = free1_id[0]
+        if free2:
+            free2_id = anacc_obj.search(cr, uid, ['|', ('code', '=', free2), ('name', '=', free2), ('category', '=', 'FREE2')])
+            if not free2_id:
+                raise osv.except_osv(_('Error'), _('Free 2 "%s" doesn\'t exist!') % (free2,))
+            free2_id = free2_id[0]
+        vals.update({'destination_id_first_value': destination_id, 'destination_id': destination_id, 'cost_center_id': cc_id, 'analytic_id': fp_id, 'cost_center_id_first_value': cc_id, 'analytic_id_first_value': fp_id, 'free_1_id': free1_id, 'free_2_id': free2_id,})
         # Fetch description
         if description:
             vals.update({'name': description})
@@ -170,11 +183,11 @@ class hq_entries_import_wizard(osv.osv_memory):
                 })
             if employee.free1_id:
                 vals.update({
-                    'free1_id': employee.free1_id.id,
+                    'free_1_id': employee.free1_id.id,
                 })
             if employee.free2_id:
                 vals.update({
-                    'free2_id': employee.free2_id.id,
+                    'free_2_id': employee.free2_id.id,
                 })
         # Fetch currency
         if booking_currency:

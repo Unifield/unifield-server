@@ -135,7 +135,10 @@ class account_invoice(osv.osv):
         vals.update({'sequence_id': res_seq,})
         # UTP-317 # Check that no inactive partner have been used to create this invoice
         if 'partner_id' in vals:
-            partner = self.pool.get('res.partner').browse(cr, uid, [vals.get('partner_id')])
+            partner_id = vals.get('partner_id')
+            if isinstance(partner_id, (str)):
+                partner_id = int(partner_id)
+            partner = self.pool.get('res.partner').browse(cr, uid, [partner_id])
             active = True
             if partner and partner[0] and not partner[0].active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
@@ -278,7 +281,7 @@ class account_invoice_line(osv.osv):
             invoice = self.pool.get('account.invoice').browse(cr, uid, vals['invoice_id'])
             if invoice and invoice.sequence_id:
                 sequence = invoice.sequence_id
-                line = sequence.get_id(test='id', context=context)
+                line = sequence.get_id(code_or_id='id', context=context)
                 vals.update({'line_number': line})
         return super(account_invoice_line, self).create(cr, uid, vals, context)
 
@@ -295,7 +298,7 @@ class account_invoice_line(osv.osv):
             for il in self.browse(cr, uid, ids):
                 if not il.line_number and il.invoice_id.sequence_id:
                     sequence = il.invoice_id.sequence_id
-                    il_number = sequence.get_id(test='id', context=context)
+                    il_number = sequence.get_id(code_or_id='id', context=context)
                     vals.update({'line_number': il_number})
         return super(account_invoice_line, self).write(cr, uid, ids, vals, context)
 

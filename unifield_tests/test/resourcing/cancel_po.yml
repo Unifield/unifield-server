@@ -1,0 +1,113 @@
+-
+  In order to test the cancelation of a PO that sources a FO, we will create
+  a FO with 2 lines, sourced these lines with two differents PO and cancel
+  one of them
+-
+  We create the FO
+-
+  !record {model: sale.order, id: cancel_po_fo1}:
+    partner_order_id: test_partner1_address
+    partner_invoice_id: test_partner1_address
+    partner_shipping_id: test_partner1_address
+    partner_id: test_partner1
+    pricelist_id: purchase.list0
+    order_type: regular
+    analytic_distribution_id: global_distrib_1
+    yml_module_name: sale
+-
+  First FO line
+-
+  !record {model: sale.order.line, id: cancel_po_fo1_l1}:
+    order_id: cancel_po_fo1
+    product_uom: product.product_uom_unit
+    product_id: test_product1
+    price_unit: 1.50
+    product_uom_qty: 10
+    type: make_to_order
+    name: Product 1
+-
+  Second FO line
+-
+  !record {model: sale.order.line, id: cancel_po_fo1_l2}:
+    order_id: cancel_po_fo1
+    product_uom: product.product_uom_unit
+    product_id: test_product2
+    price_unit: 1.50
+    product_uom_qty: 10
+    type: make_to_order
+    name: Product 2
+-
+  We confirm the FO
+-
+  !workflow {model: sale.order, action: order_validated, ref: cancel_po_fo1}
+-
+  We change the supplier on the OST lines
+-
+  !python {model: sourcing.line}: |
+    # First FO line
+    ost_ids = self.search(cr, uid, [('sale_order_line_id', '=', ref('cancel_po_fo1_l1'))], context=context)
+    assert ost_ids, "No OST lines corresponding to FO line"
+    self.write(cr, uid, ost_ids, {'type': 'make_to_order',
+                                  'po_cft': 'po',
+                                  'supplier': ref('test_partner2')}, context=context)
+    self.confirmLine(cr, uid, ost_ids, context=context)
+
+    # Second FO line
+    ost_ids = self.search(cr, uid, [('sale_order_line_id', '=', ref('cancel_po_fo1_l2'))], context=context)
+    assert ost_ids, "No OST lines corresponding to FO line"
+    ost_line = self.browse(cr, uid, ost_ids[0], context=context)
+    self.write(cr, uid, ost_ids, {'type': 'make_to_order',
+                                  'po_cft': 'po',
+                                  'supplier': ref('test_partner3')}, context=context)
+    self.confirmLine(cr, uid, ost_ids, context=dict(context, update_mode='init'))
+-
+  We run Auto POs Creation wizard
+-
+  !python {model: procurement.order}: |
+    self.run_scheduler(cr, uid , context={'update_mode':'init'})
+-
+  We check if two POs have been created
+-
+  !python {model: purchase.order}: |
+    # Imports
+    import logging
+    import netsvc
+
+    # Objects
+    logger = logging.getLogger('tests')
+    wf_service = netsvc.LocalService('workflow')
+    fo_obj = self.pool.get('sale.order')
+    fol_obj = self.pool.get('sale.order.line')
+    pol_obj = self.pool.get('purchase.order.line')
+    wiz_obj = self.pool.get('purchase.order.cancel.wizard')
+
+    # Objects instances
+    cancel_po_fo1 = fo_obj.browse(cr, uid, ref('cancel_po_fo1'), context=context)
+
+    po_ids = self.search(cr, uid, [('origin', '=', cancel_po_fo1.name)], context=context)
+    assert len(po_ids) == 2, "Number of POs is not correct - Expected : 2 :: Result : %s" % len(po_ids)
+
+    logger.log(logging.TEST, "We cancel the first PO")
+    res = self.purchase_cancel(cr, uid, po_ids, context=context)
+    assert res.get('type', False) == 'ir.actions.act_window', "#1 - The cancelation of the PO doesn't return a wizard"
+    assert res.get('res_model', False) == 'purchase.order.cancel.wizard', "#1 - The cancelation of the PO doesn't return the good wizard"
+    wiz_id = res.get('res_id', False)
+    assert wiz_id, "#1 - The cancelation of the PO doesn't create a wizard"
+    wiz_obj.cancel_and_resource(cr, uid, wiz_id, context=context)
+    logger.log(logging.TEST, "Check if the FO line sourced by this PO has been resourced")
+    new_fo_ids = fo_obj.search(cr, uid, [('parent_order_name', '=', cancel_po_fo1.name)], context=context)
+    assert new_fo_ids, "No FO created to re-source the FO line sourced by the canceled PO"
+    new_fol_ids = fol_obj.search(cr, uid, [('order_id', 'in', new_fo_ids)], context=context)
+    assert len(new_fol_ids) == 1, "No FO lines created to re-source the FO line sourced by the canceled PO"
+
+    logger.log(logging.TEST, "We cancel the second PO")
+    res = self.purchase_cancel(cr, uid, po_ids, context=context)
+    assert res.get('type', False) == 'ir.actions.act_window', "#2 - The cancelation of the PO doesn't return a wizard"
+    assert res.get('res_model', False) == 'purchase.order.cancel.wizard', "#2 - The cancelation of the PO doesn't return the good wizard"
+    wiz_id = res.get('res_id', False)
+    assert wiz_id, "#2 - The cancelation of the PO doesn't create a wizard"
+    wiz_obj.cancel_and_resource(cr, uid, wiz_id, context=context)
+    logger.log(logging.TEST, "Check if the FO line sourced by this PO has been resourced with the same FO as the first canceled PO")
+    new_fo_ids = fo_obj.search(cr, uid, [('parent_order_name', '=', cancel_po_fo1.name)], context=context)
+    new_fol_ids = fol_obj.search(cr, uid, [('order_id', 'in', new_fo_ids)], context=context)
+    assert len(new_fol_ids) == 2, "No new FO lines created to re-source the FO line sourced by the second canceled PO"

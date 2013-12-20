@@ -9160,10 +9160,14 @@ msgstr "Date d'Eligibilité - Du"
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
 #: report:invoice:0
-#: report:packing.list:0
 #: report:pre.packing.list:0
 msgid "To p:"
 msgstr "À p:"
+
+#. module: msf_outgoing
+#: report:packing.list:0
+msgid "To p"
+msgstr "À p"
 
 #. module: product
 #: help:product.packaging,rows:0
@@ -11475,7 +11479,6 @@ msgstr "America/Cancun"
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
 #: report:invoice:0
-#: report:packing.list:0
 #: report:pro.forma.invoice:0
 msgid "Number of Parcels"
 msgstr "Nombre de Parcelles"
@@ -13533,6 +13536,7 @@ msgstr "America/Mazatlan"
 
 #. module: msf_outgoing
 #: field:shipment,num_of_packs:0
+#: report:packing.list:0
 msgid "Number of Packs"
 msgstr "Nombre de Colis"
 
@@ -24502,7 +24506,7 @@ msgstr "Pas de ligne"
 
 #. module: sale
 #: report:msf.freight_manifest:0
-msgid "Parcels missing :"
+msgid "Parcels Missing :"
 msgstr "Parcelles manquantes :"
 
 #. module: account_hq_entries
@@ -41624,9 +41628,13 @@ msgstr "Page"
 
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
-#: report:packing.list:0
 msgid "FO ref:"
 msgstr "CdT Réf:"
+
+#. module: msf_outgoing
+#: report:packing.list:0
+msgid "FO ref"
+msgstr "CdT Réf"
 
 #. module: msf_cross_docking
 #: selection:stock.partial.picking,dest_type:0
@@ -43254,7 +43262,7 @@ msgstr "XMLRPC sécurisé"
 
 #. module: msf_outgoing
 #: report:packing.list:0
-msgid "Pack Wt [kg]:"
+msgid "Pack Wt [kg]"
 msgstr "Colis - Poids (kg)"
 
 #. module: stock
@@ -43346,7 +43354,7 @@ msgstr "Raccourci"
 #. module: msf_outgoing
 #: report:packing.list:0
 msgid "Tot Val:"
-msgstr "Val Tot:"
+msgstr "Val Tot"
 
 #. modules: purchase, account, sale, account_voucher, stock_schedule, board, stock
 #: selection:account.entries.report,month:0
@@ -48878,7 +48886,7 @@ msgstr "%s a été désactivé. Si vous voulez valider ce document vous devez su
 
 #. module: account_invoice_split
 #: view:wizard.split.invoice:0
-msgid "Select the lines to be splitted; the wizard will create a new invoice and adjust the original one."
+msgid "Select the lines to be split; the wizard will create a new invoice and adjust the original one."
 msgstr "Sélectionner les lignes à fractionner, l'assistant créera une nouvelle facture et ajustera l'originale"
 
 #. module: msf_order_date
@@ -54317,7 +54325,7 @@ msgstr "Pacific/Kwajalein"
 
 #. module: msf_outgoing
 #: report:packing.list:0
-msgid "Tot Wt [kg]:"
+msgid "Tot Wt [kg]"
 msgstr "Poids Tot. (kg)"
 
 #. modules: mission_stock, import_data, consumption_calculation, purchase_override, msf_doc_import
@@ -61852,10 +61860,14 @@ msgstr "Plus d'une ligne écriture comptable trouvée pour cette facture."
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
 #: report:invoice:0
-#: report:packing.list:0
 #: report:pre.packing.list:0
 msgid "#Packs:"
-msgstr "#Colis: "
+msgstr "#Colis:"
+
+#. module: msf_outgoing
+#: report:packing.list:0
+msgid "Packs"
+msgstr "Colis"
 
 #. module: account_corrections
 #: view:wizard.journal.items.corrections:0
@@ -62978,7 +62990,7 @@ msgstr "Mai"
 
 #. module: msf_outgoing
 #: report:packing.list:0
-msgid "Pack Val:"
+msgid "Pack Val"
 msgstr "Colis - Val"
 
 #. modules: msf_doc_import, register_accounting
@@ -66627,10 +66639,14 @@ msgstr "Date Préférée"
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
 #: report:invoice:0
-#: report:packing.list:0
 #: report:pre.packing.list:0
 msgid "From p:"
 msgstr "De p.:"
+
+#. module: msf_outgoing
+#: report:packing.list:0
+msgid "From p"
+msgstr "De p."
 
 #. module: product
 #: view:product.pricelist:0
@@ -70683,7 +70699,7 @@ msgstr "Montants Réels"
 
 #. module: sale
 #: report:msf.freight_manifest:0
-msgid "Freight clame report made ? Yes / No"
+msgid "Freight Claim Report Made ? Yes / No"
 msgstr "Rapport de réclamation de Frêt fait ? Oui / Non"
 
 #. modules: tender_flow, financing_contract, account_voucher, account_hq_entries, account_corrections, base_report_designer, register_accounting, procurement_cycle, msf_accrual, account_msf, sync_client, purchase_followup, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, purchase, purchase_compare_rfq, board, msf_doc_import, analytic_distribution, threshold_value, account_payment, msf_homere_interface, account_reconciliation, consumption_calculation, purchase_override, specific_rules, kit, sale_override, base, account_period_closing_level, product_list, res_currency_functional, procurement_report, msf_budget, account_invoice_split, account, stock_move_tracking, procurement_auto, documents_done, sale, msf_config_locations, sales_followup, procurement, sourcing, msf_custom_settings, msf_audittrail, stock, msf_profile, account_override, msf_instance
@@ -71716,9 +71732,13 @@ msgstr "Définit le montant de la quantité à compter."
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
 #: report:invoice:0
-#: report:packing.list:0
 msgid "PPL ref:"
 msgstr "PCL - réf:"
+
+#. module: msf_outgoing
+#: report:packing.list:0
+msgid "PPL ref"
+msgstr "PCL - réf"
 
 #. module: reason_types_moves
 #: model:stock.reason.type,name:reason_types_moves.reason_type_scrap

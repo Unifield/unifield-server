@@ -15,6 +15,7 @@
                         display_invoice)"/>
                     <newline />
                     <field name='date'/>
+		    <field name='reference' />
                     <newline/>
                     <group colspan="4">
                         <field name='invoice_id' nolabel="1" domain="[('type', '=', 'in_invoice'), ('state', '=', 'open'), 
@@ -29,7 +30,7 @@
                         <button string="Clean invoices" name="clean_invoices" type="object" icon="gtk-clear" attrs="{'invisible':[('display_invoice', '!=', True)]}" />
                     </group>
                     <newline />
-                    <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" nolabel="1" colspan="4" on_change="changeline(advance_line_ids, returned_amount, date)"/>
+                    <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" nolabel="1" colspan="4" on_change="changeline(advance_line_ids, returned_amount, date, reference)"/>
                     <newline />
                     <field name="total_amount"/>
                     <newline />
@@ -50,7 +51,7 @@
             <field name='type'>tree</field>
             <field name='arch' type='xml'>
                 <tree string="Invoice Lines">
-                    <field name="date" />
+                    <field name="document_date" />
                     <field name="reference" />
                     <field name="communication" />
                     <field name="account_id" />
@@ -66,7 +67,7 @@
             <field name='type'>form</field>
             <field name='arch' type='xml'>
                 <form string="Invoice Lines">
-                    <field name="date" />
+                    <field name="document_date" />
                     <field name="reference" />
                     <field name="communication" />
                     <field name="account_id" />
@@ -82,7 +83,7 @@
             <field name='type'>tree</field>
             <field name='arch' type='xml'>
                 <tree editable="bottom" string="Advance Lines" colors="red:display_analytic_button and not analytic_distribution_id">
-                    <field name="date" />
+                    <field name="document_date" />
                     <field name="description" />
                     <field name="account_id" domain="[('type', '&lt;&gt;', 'view')]"/>
                     <field name="partner_id" domain="[('supplier', '=', 'True')]"/>
@@ -103,7 +104,7 @@
             <field name='type'>form</field>
             <field name='arch' type='xml'>
                 <form string="Advance Lines">
-                    <field name="date" />
+                    <field name="document_date" />
                     <field name="description" />
                     <field name="account_id" />
                     <field name="partner_id" />

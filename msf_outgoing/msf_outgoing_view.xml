@@ -221,7 +221,7 @@
 								default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date}" 
 							    on_change="onchange_move()"  
 							    >
-								<tree string="Stock Moves" noteditable="fake_state=='assigned'" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')"
+								<tree string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel')" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')"
 								colors="red: inactive_product==True">
                                     <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"/>
 									<field name="composition_list_id" />
@@ -248,7 +248,9 @@
 									<field name="dg_check" />
 									<field name="np_check" />
 									<field name="inactive_product" invisible="1" />
-                    				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                                    <field name="pt_created" invisible="1" />
+                                    <button name="call_cancel_wizard" type="object" string="Cancel" states="draft,assigned,confirmed" icon="gtk-del"  attrs="{'invisible': [('pt_created', '=', True)]}" />
 								</tree>
 								<form string="Stock Moves">
 									<group colspan="2" col="4">
@@ -332,12 +334,15 @@
 							<group col="14" colspan="4">
                                 <field name="state" readonly="1"/>
                                 <field name="line_state" readonly="1" attrs="{'invisible': [('state', '!=', 'draft')]}" nolabel="1" />
-								<field name="flow_type" />
-                                <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"/>
+                                <field name="flow_type" />
+                                <group colspan="1" col="1">
+                                    <button name="call_cancel_wizard" type="object" states="draft" string="_Cancel Picking" icon="gtk-cancel"/>
+                                    <button name="button_cancel" states="assigned,confirmed" string="_Cancel Picking" icon="gtk-cancel"/>
+                                </group>
                                 <field name="has_draft_moves" invisible="1" />
                                 <button name="action_confirm_moves" states="draft" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': [('has_draft_moves', '=', False)]}"/>
 								<button name="action_assign" states="draft,confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
-								<button name="convert_to_standard" states="draft" string="Convert to Simple Out" type="object" icon="gtk-convert" />
+								<button name="convert_to_standard" states="draft,assigned" string="Convert to Simple Out" type="object" icon="gtk-convert" />
 								<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" help="Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available" />
 								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
 								<button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"/>

@@ -154,6 +154,43 @@ class hr_payroll(osv.osv):
                 res[line.id] = line.employee_id.identification_id
         return res
 
+    def _get_trigger_state_ana(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        fp = [0]
+        cc = [0]
+        dest = [0]
+        for ana_account in self.read(cr, uid, ids, ['category']):
+            if ana_account['category'] == 'OC':
+                cc.append(ana_account['id'])
+            elif ana_account['category'] == 'DEST':
+                dest.append(ana_account['id'])
+            elif ana_account['category'] == 'FUNDING':
+                fp.append(ana_account['id'])
+        if len(fp) > 1 or len(cc) > 1 or len(dest) > 1:
+            return self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft'), '|', '|', ('funding_pool_id', 'in', fp), ('cost_center_id','in', cc), ('destination_id','in', dest)])
+
+        return []
+    
+    def _get_trigger_state_account(self, cr, uid, ids, context=None):
+        pay_obj = self.pool.get('hr.payroll.msf')
+        return pay_obj.search(cr, uid, [('state', '=', 'draft'), ('account_id', 'in', ids)])
+    
+    def _get_trigger_state_dest_link(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        to_update = []
+        pay_obj = self.pool.get('hr.payroll.msf')
+        for dest_link in self.read(cr, uid, ids, ['account_id', 'destination_id', 'funding_pool_ids']):
+            to_update += pay_obj.search(cr, uid, [
+                    ('state', '=', 'draft'),
+                    ('account_id', '=', dest_link['account_id'][0]),
+                    ('destination_id', '=', dest_link['destination_id'][0]),
+                    ('funding_pool_id', 'in', dest_link['funding_pool_ids'])
+            ])
+        return to_update
+
     _columns = {
         'date': fields.date(string='Date', required=True, readonly=True),
         'document_date': fields.date(string='Document Date', required=True, readonly=True),
@@ -174,7 +211,14 @@ class hr_payroll(osv.osv):
         'free2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state",
+            store={
+                'hr.payroll.msf': (lambda self, cr, uid, ids, c=None: ids, ['account_id', 'cost_center_id', 'funding_pool_id', 'destination_id'], 10),
+                'account.account': (_get_trigger_state_account, ['user_type_code', 'destination_ids'], 20),
+                'account.analytic.account': (_get_trigger_state_ana, ['date', 'date_start', 'cost_center_ids', 'tuple_destination_account_ids'], 20),
+                'account.destination.link': (_get_trigger_state_dest_link, ['account_id', 'destination_id'], 30),
+            }
+        ),
         'partner_type': fields.function(_get_third_parties, type='reference', method=True, string="Third Parties", readonly=True,
             selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')]),
         'field': fields.char(string='Field', readonly=True, size=255, help="Field this line come from in Homère."),

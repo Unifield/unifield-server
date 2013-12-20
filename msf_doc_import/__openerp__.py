@@ -57,6 +57,7 @@
 # test for the import in English
         'test/import_ir.yml',
         'test/import_po.yml',
+        'test/import_migration.yml',
         'test/import_so.yml',
         'test/import_composition_kit.yml',
         'test/import_tender.yml',

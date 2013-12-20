@@ -33,6 +33,7 @@
     "init_xml": [
     ],
     'update_xml': [
+        'printed_report_view.xml',
         'printed_report.xml',
     ],
     'demo_xml': [

@@ -1,0 +1,83 @@
+-
+  This test file contains all generic data about products (UoMs, catalogues...), 
+  that are required for other tests.
+-
+  Test product category 1
+-
+  !record {model: product.category, id: test_product_categ1}:
+    name: Test Product Category 1
+-
+  Test product 1
+-
+  !record {model: product.product, id: test_product1}:
+    categ_id: test_product_categ1
+    cost_method: standard
+    mes_type: fixed
+    name: Product 1
+    procure_method: make_to_stock
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    international_status: product_attributes.int_1
+-
+  Test product 2
+-
+  !record {model: product.product, id: test_product2}:
+    categ_id: test_product_categ1
+    cost_method: standard
+    mes_type: fixed
+    name: Product 2
+    procure_method: make_to_order
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    international_status: product_attributes.int_1
+-
+  Test product 3
+-
+  !record {model: product.product, id: test_product3}:
+    categ_id: test_product_categ1
+    cost_method: standard
+    mes_type: fixed
+    name: Product 3
+    procure_method: make_to_order
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    international_status: product_attributes.int_1
+-
+  Test product 4
+-
+  !record {model: product.product, id: test_product4}:
+    categ_id: test_product_categ1
+    cost_method: standard
+    mes_type: fixed
+    name: Product 4
+    procure_method: make_to_order
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    international_status: product_attributes.int_1
+-
+  Test product 5
+-
+  !record {model: product.product, id: test_product5}:
+    categ_id: test_product_categ1
+    cost_method: standard
+    mes_type: fixed
+    name: Product 5
+    procure_method: make_to_order
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    international_status: product_attributes.int_1
