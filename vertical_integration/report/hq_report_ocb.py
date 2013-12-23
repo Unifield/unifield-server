@@ -33,6 +33,48 @@ class hq_report_ocb(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
+    def get_selection(self, cr, model, field):
+        """
+        Return a list of all selection from a field in a given model.
+        """
+        pool = pooler.get_pool(cr.dbname)
+        data = pool.get(model).fields_get(cr, 1, [field])
+        return dict(data[field]['selection'])
+
+    def postprocess_partner(self, cr, data):
+        """
+        Post-process partner list to change partner type by its real value
+        """
+        # Prepare some values
+        pool = pooler.get_pool(cr.dbname)
+        new_data = []
+        # Fetch partner_type selection
+        partner_type = self.get_selection(cr, 'res.partner', 'partner_type')
+        # Browse each line to replace partner type by it's human readable value (selection)
+        # partner_type is the 3rd column
+        for line in data:
+            tmp_line = list(line)
+            tmp_line[2] = partner_type[tmp_line[2]]
+            new_data.append(tmp_line)
+        return new_data
+
+    def postprocess_journal(self, cr, data):
+        """
+        Post-process journal list to change journal type by its real value
+        """
+        # Prepare some values
+        pool = pooler.get_pool(cr.dbname)
+        new_data = []
+        # Fetch journal_type selection
+        journal_type = self.get_selection(cr, 'account.journal', 'type')
+        # Browse each line to replace journal type by it's human readable value (selection)
+        # journal_type is the 4th column
+        for line in data:
+            tmp_line = list(line)
+            tmp_line[3] = journal_type[tmp_line[3]]
+            new_data.append(tmp_line)
+        return new_data
+
     def create(self, cr, uid, ids, data, context=None):
         """
         Create a kind of report and return its content.
@@ -51,34 +93,76 @@ class hq_report_ocb(report_sxw.report_sxw):
             context = {}
         # Prepare some values
         pool = pooler.get_pool(cr.dbname)
-
-        # FIXME: do process here
-
-        # WRITE RESULT INTO SOME FILES AND ARCHIVE ALL
-        # open buffer
+        # open buffer for result zipfile
         zip_buffer = StringIO.StringIO()
-        # create 2 files into
-        first_fileobj = NamedTemporaryFile('w+b', delete=False)
-        second_fileobj = NamedTemporaryFile('w+b', delete=False)
-        # open a CSV writer for 1st file. Write into then close it.
-        writer = csv.writer(first_fileobj, quoting=csv.QUOTE_ALL)
-        writer.writerow("Something")
-        first_fileobj.close()
-        # open a CSV writer for the 2nd file. Write into then close it.
-        writer = csv.writer(second_fileobj, quoting=csv.QUOTE_ALL)
-        writer.writerow("Else")
-        second_fileobj.close()
+
+        # SQLREQUESTS DICTIONNARY
+        # - key: name of the SQL request
+        # - value: the SQL request to use
+        sqlrequests = {
+            'partner': """
+                SELECT name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active
+                FROM res_partner;
+                """,
+            'employee': """
+                SELECT r.name, e.identification_id, r.active, e.employee_type
+                FROM hr_employee AS e, resource_resource AS r
+                WHERE e.resource_id = r.id;
+                """,
+            'journal': """
+                SELECT i.name, j.code, j.name, j.type
+                FROM account_journal AS j, msf_instance AS i
+                WHERE j.instance_id = i.id;
+                """,
+        }
+
+        # PROCESS REQUESTS LIST: list of tuples containing info to process some SQL requests
+        # Tuple:
+        # - first the name of the result filename in the future ZIP file
+        # - then name of the key in SQLREQUESTS DICTIONNARY to have the right SQL request
+        # - [optional] data to use to complete SQL requests
+        # - [optional] function name to postprocess data
+        processrequests = [
+            ('partners.csv', 'partner', False, 'postprocess_partner'),
+            ('employee.csv', 'employee'),
+            ('journals.csv', 'journal', False, 'postprocess_journal'),
+        ]
+
+        # List is composed of a tuple containing:
+        # - filename
+        # - key of sqlrequests dict to fetch its SQL request
+        files = []
+        for fileparams in processrequests:
+            # temporary file
+            filename = fileparams[0]
+            tmp_file = NamedTemporaryFile('w+b', delete=False)
+
+            # FIXME: create a query params!
+            # fetch data with given sql query
+            sql = sqlrequests[fileparams[1]]
+            cr.execute(sql)
+            fileres = cr.fetchall()
+            # Check if postprocess method exists. If yes, use it
+            if len(fileparams) > 3:
+                fnct = getattr(self, fileparams[3], False)
+                if fnct:
+                    fileres = fnct(cr, fileres)
+            # Write result in a CSV writer then close it.
+            writer = csv.writer(tmp_file, quoting=csv.QUOTE_ALL)
+            writer.writerows(fileres)
+            tmp_file.close()
+            files.append((tmp_file.name, filename))
+
+        # WRITE RESULT INTO AN ARCHIVE
         # Create a ZIP file
         out_zipfile = zipfile.ZipFile(zip_buffer, "w")
-        # include first file into with "FILENAME.csv"
-        out_zipfile.write(first_fileobj.name, "FILENAME1.csv", zipfile.ZIP_DEFLATED)
-        out_zipfile.write(second_fileobj.name, "FILENAME2.csv", zipfile.ZIP_DEFLATED)
+        for tmp_filename, filename in files:
+            out_zipfile.write(tmp_filename, filename, zipfile.ZIP_DEFLATED)
+            # unlink file
+            os.unlink(tmp_filename)
         # close zip
         out_zipfile.close()
         out = zip_buffer.getvalue()
-        # unlink 1st and 2nd file
-        os.unlink(first_fileobj.name)
-        os.unlink(second_fileobj.name)
         # Return result
         return (out, 'zip')
 
