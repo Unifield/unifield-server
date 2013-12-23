@@ -41,37 +41,34 @@ class hq_report_ocb(report_sxw.report_sxw):
         data = pool.get(model).fields_get(cr, 1, [field])
         return dict(data[field]['selection'])
 
-    def postprocess_partner(self, cr, data):
+    def postprocess_selection_columns(self, cr, data, changes):
         """
-        Post-process partner list to change partner type by its real value
+        This method takes each line from data and change some columns regarding "changes" variable.
+        'changes' should be a list containing some tuples. A tuple is composed of:
+         - a model (example: res.partner)
+         - the selection field in which retrieve all real values (example: partner_type)
+         - the column number in the data lines from which you want to change the value
         """
+        # Checks
+        if not changes:
+            return data
         # Prepare some values
         pool = pooler.get_pool(cr.dbname)
         new_data = []
-        # Fetch partner_type selection
-        partner_type = self.get_selection(cr, 'res.partner', 'partner_type')
+        # Fetch selections
+        changes_values = {}
+        for change in changes:
+            model = change[0]
+            field = change[1]
+            changes_values[change] = self.get_selection(cr, model, field)
         # Browse each line to replace partner type by it's human readable value (selection)
         # partner_type is the 3rd column
         for line in data:
             tmp_line = list(line)
-            tmp_line[2] = partner_type[tmp_line[2]]
-            new_data.append(tmp_line)
-        return new_data
-
-    def postprocess_journal(self, cr, data):
-        """
-        Post-process journal list to change journal type by its real value
-        """
-        # Prepare some values
-        pool = pooler.get_pool(cr.dbname)
-        new_data = []
-        # Fetch journal_type selection
-        journal_type = self.get_selection(cr, 'account.journal', 'type')
-        # Browse each line to replace journal type by it's human readable value (selection)
-        # journal_type is the 4th column
-        for line in data:
-            tmp_line = list(line)
-            tmp_line[3] = journal_type[tmp_line[3]]
+            for change in changes:
+                column = change[2]
+                # use line value to search into changes_values[change] (the list of selection) the right value
+                tmp_line[column] = changes_values[change][tmp_line[column]]
             new_data.append(tmp_line)
         return new_data
 
@@ -123,9 +120,9 @@ class hq_report_ocb(report_sxw.report_sxw):
         # - [optional] data to use to complete SQL requests
         # - [optional] function name to postprocess data
         processrequests = [
-            ('partners.csv', 'partner', False, 'postprocess_partner'),
+            ('partners.csv', 'partner', False, 'postprocess_selection_columns', [('res.partner', 'partner_type', 2)]),
             ('employee.csv', 'employee'),
-            ('journals.csv', 'journal', False, 'postprocess_journal'),
+            ('journals.csv', 'journal', False, 'postprocess_selection_columns', [('account.journal', 'type', 3)]),
         ]
 
         # List is composed of a tuple containing:
@@ -145,7 +142,10 @@ class hq_report_ocb(report_sxw.report_sxw):
             # Check if postprocess method exists. If yes, use it
             if len(fileparams) > 3:
                 fnct = getattr(self, fileparams[3], False)
-                if fnct:
+                # If a 4th params appears, add it to the method call, otherwise do a simple call
+                if fnct and len(fileparams) > 4:
+                    fileres = fnct(cr, fileres, fileparams[4])
+                elif fnct:
                     fileres = fnct(cr, fileres)
             # Write result in a CSV writer then close it.
             writer = csv.writer(tmp_file, quoting=csv.QUOTE_ALL)
