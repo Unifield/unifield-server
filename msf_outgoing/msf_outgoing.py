@@ -2392,6 +2392,14 @@ class stock_picking(osv.osv):
 
                     new_move_id = move_obj.copy(cr, uid, move.id, vals, context=context)
 
+                    # Compute the chained location as an initial confirmation of move
+                    if move.state == 'assigned':
+                        new_move = move_obj.browse(cr, uid, new_move_id, context=context)
+                        tmp_ac = context.get('action_confirm', False)
+                        context['action_confirm'] = True
+                        move_obj.create_chained_picking(cr, uid, [new_move], context=context)
+                        context['action_confirm'] = tmp_ac
+
                     # Update all linked objects to avoid close of related documents
                     if move.id not in keep_move or not keep_move[move.id]:
                         move_obj.update_linked_documents(cr, uid, move.id, new_move_id, context=context)
@@ -2412,7 +2420,7 @@ class stock_picking(osv.osv):
             self.draft_force_assign(cr, uid, [new_pick_id or obj.id])
 
             for s in moves_states:
-                self.pool.get('stock.move').write(cr, uid, s, {'state': moves_states[s]}, context=context)
+                move_obj.write(cr, uid, [s], {'state': moves_states[s]}, context=context)
 
             # check availability
             self.action_assign(cr, uid, [new_pick_id or obj.id], context=context)
@@ -2420,7 +2428,7 @@ class stock_picking(osv.osv):
             if 'assigned' in moves_states.values():
                 # Add an empty write to display the 'Process' button on OUT
                 self.write(cr, uid, [new_pick_id or obj.id], {'state': 'assigned'}, context=context)
-        
+
             # TODO which behavior
             data_obj = self.pool.get('ir.model.data')
             view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
