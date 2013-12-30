@@ -133,43 +133,65 @@ class hq_report_ocb(report_sxw.report_sxw):
                 """,
         }
 
-        # PROCESS REQUESTS LIST: list of tuples containing info to process some SQL requests
-        # Tuple:
-        # - first the name of the result filename in the future ZIP file
-        # - then name of the key in SQLREQUESTS DICTIONNARY to have the right SQL request
-        # - [optional] data to use to complete SQL requests
-        # - [optional] function name to postprocess data
+        # PROCESS REQUESTS LIST: list of dict containing info to process some SQL requests
+        # Dict:
+        # - filename: the name of the result filename in the future ZIP file
+        # - key: the name of the key in SQLREQUESTS DICTIONNARY to have the right SQL request
+        # - [optional] query_params: data to use to complete SQL requests
+        # - [optional] function: name of the function to postprocess data (example: to change selection field into a human readable text)
+        # - [optional] fnct_params: params that would used on the given function
         processrequests = [
-            ('partners.csv', 'partner', False, 'postprocess_selection_columns', [('res.partner', 'partner_type', 2)]),
-            ('employee.csv', 'employee'),
-            ('journals.csv', 'journal', False, 'postprocess_selection_columns', [('account.journal', 'type', 3)]),
-            ('cost_center.csv', 'costcenter', (last_day_of_period, last_day_of_period, tuple(instance_ids),), 'postprocess_selection_columns', [('account.analytic.account', 'type', 2)]),
+            {
+                'filename': 'partners.csv',
+                'key': 'partner',
+                'function': 'postprocess_selection_columns',
+                'fnct_params': [('res.partner', 'partner_type', 2)],
+                },
+            {
+                'filename': 'employees.csv',
+                'key': 'employee',
+                },
+            {
+                'filename': 'journals.csv',
+                'key': 'journal',
+                'function': 'postprocess_selection_columns',
+                'fnct_params': [('account.journal', 'type', 3)],
+                },
+            {
+                'filename': 'cost_centers.csv',
+                'key': 'costcenter',
+                'query_params': (last_day_of_period, last_day_of_period, tuple(instance_ids)),
+                'function': 'postprocess_selection_columns',
+                'fnct_params': [('account.analytic.account', 'type', 2)],
+                },
         ]
-
-        # TODO: change "if len(fileparams)" by some if fileparams['field']. So change processrequests by a list of dict!
 
         # List is composed of a tuple containing:
         # - filename
         # - key of sqlrequests dict to fetch its SQL request
         files = []
         for fileparams in processrequests:
+            if not fileparams.get('filename', False):
+                raise osv.except_osv(_('Error'), _('Filename param is missing!'))
+            if not fileparams.get('key', False):
+                raise osv.except_osv(_('Error'), _('Key param is missing!'))
             # temporary file
-            filename = fileparams[0]
+            filename = fileparams['filename']
             tmp_file = NamedTemporaryFile('w+b', delete=False)
 
             # fetch data with given sql query
-            sql = sqlrequests[fileparams[1]]
-            if len(fileparams) > 2 and fileparams[2] != False:
-                cr.execute(sql, fileparams[2])
+            sql = sqlrequests[fileparams['key']]
+            if fileparams.get('query_params', False):
+                cr.execute(sql, fileparams['query_params'])
             else:
                cr.execute(sql)
             fileres = cr.fetchall()
-            # Check if postprocess method exists. If yes, use it
-            if len(fileparams) > 3:
-                fnct = getattr(self, fileparams[3], False)
-                # If a 4th params appears, add it to the method call, otherwise do a simple call
-                if fnct and len(fileparams) > 4:
-                    fileres = fnct(cr, fileres, fileparams[4])
+            # Check if a function is given. If yes, use it
+            if fileparams.get('function', False):
+                fnct = getattr(self, fileparams['function'], False)
+                # If the function has some params, use them.
+                if fnct and fileparams.get('fnct_params', False):
+                    fileres = fnct(cr, fileres, fileparams['fnct_params'])
                 elif fnct:
                     fileres = fnct(cr, fileres)
             # Write result in a CSV writer then close it.
