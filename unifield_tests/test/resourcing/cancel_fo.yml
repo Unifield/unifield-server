@@ -1,0 +1,89 @@
+-
+  In order to test the re-sourcing of a cancel FO, we will create two FOs with
+  two lines on each of them.
+  One of these FOs will be canceled in Draft state, and the other will be
+  canceled in Validated state
+-
+  We create the first FO
+-
+  !record {model: sale.order, id: cancel_fo_fo1}:
+    partner_order_id: test_partner1_address
+    partner_invoice_id: test_partner1_address
+    partner_shipping_id: test_partner1_address
+    partner_id: test_partner1
+    pricelist_id: purchase.list0
+    order_type: regular
+-
+  First FO line on first FO
+-
+  !record {model: sale.order.line, id: cancel_fo_fo1_l1}:
+    order_id: cancel_fo_fo1
+    product_uom: product.product_uom_unit
+    product_id: test_product1
+    price_unit: 1.50
+    product_uom_qty: 10
+    name: Product 1
+-
+  Second FO line of first FO
+-
+  !record {model: sale.order.line, id: cancel_fo_fo1_l2}:
+    order_id: cancel_fo_fo1
+    product_uom: product.product_uom_unit
+    product_id: test_product2
+    price_unit: 1.50
+    product_uom_qty: 10
+    name: Product 2
+-
+  Cancel the first FO
+-
+  !python {model: sale.order}: |
+    import logging
+    logger = logging.getLogger('tests')
+
+    # Objects
+    line_obj = self.pool.get('sale.order.line')
+
+    # Cancel the first FO
+    cancel_fo_fo1 = self.browse(cr, uid, ref('cancel_fo_fo1'), context=context)
+    self.action_cancel(cr, uid, [ref('cancel_fo_fo1')], context=context)
+    
+    logger.log(logging.TEST, "Check if the FO is in Cancel state")
+    assert cancel_fo_fo1.state == 'cancel', "The first FO is not in Cancel state - Expected : cancel :: Result : %s" % cancel_fo_fo1.state
+
+    logger.log(logging.TEST, "Check if the FO lines are in Cancel state")
+    for line in cancel_fo_fo1.order_line:
+        assert line.state == 'cancel', "The line of the first FO is not in Cancel state - Expected : cancel :: Result : %s" % line.state
+-
+  We create the second FO
+-
+  !record {model: sale.order, id: cancel_fo_fo2}:
+    partner_order_id: test_partner1_address
+    partner_invoice_id: test_partner1_address
+    partner_shipping_id: test_partner1_address
+    partner_id: test_partner1
+    pricelist_id: purchase.list0
+    order_type: regular
+-
+  First FO line on second FO
+-
+  !record {model: sale.order.line, id: cancel_fo_fo2_l1}:
+    order_id: cancel_fo_fo2
+    product_uom: product.product_uom_unit
+    product_id: test_product1
+    price_unit: 1.50
+    product_uom_qty: 10
+    name: Product 1
+-
+  Second FO line of second FO
+-
+  !record {model: sale.order.line, id: cancel_fo_fo2_l2}:
+    order_id: cancel_fo_fo2
+    product_uom: product.product_uom_unit
+    product_id: test_product2
+    price_unit: 1.50
+    product_uom_qty: 10
+    name: Product 2
+-
+  We confirm this second FO
+-
+  !workflow {model: sale.order, action: order_validated, ref: cancel_fo_fo2}

@@ -73,14 +73,15 @@ class res_currency(osv.osv):
             context={}
         if context.get('currency_table_id', False):
             # A currency table is set, retrieve the correct currency ids
+            # UTP-894: use currency table rate or default rate if currency not in currency table
             new_from_currency_id = self._get_table_currency(cr, uid, from_currency_id, context['currency_table_id'], context=context)
+            if new_from_currency_id:
+                from_currency_id = new_from_currency_id
             new_to_currency_id = self._get_table_currency(cr, uid, to_currency_id, context['currency_table_id'], context=context)
-            # only use new currencies if both are defined in the table
-            if new_from_currency_id and new_to_currency_id:
-                return super(res_currency, self).compute(cr, uid, new_from_currency_id, new_to_currency_id, from_amount, round, context=context)
-        # Fallback case if no currency table or one currency not defined in the table
+            if new_to_currency_id:
+                to_currency_id = new_to_currency_id
         return super(res_currency, self).compute(cr, uid, from_currency_id, to_currency_id, from_amount, round, context=context)
-    
+        
     def create_associated_pricelist(self, cr, uid, currency_id, context=None):
         '''
         Create purchase and sale pricelists according to the currency

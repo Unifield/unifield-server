@@ -26,6 +26,8 @@ from osv import fields
 from tools.translate import _
 from lxml import etree
 
+import time
+
 class output_currency_for_export(osv.osv_memory):
     _name = 'output.currency.for.export'
     _description = 'Output currency choice wizard'
@@ -143,6 +145,9 @@ class output_currency_for_export(osv.osv_memory):
             report_name += '_csv'
         elif choice == 'xls':
             report_name += '_xls'
+
+
+        datas['target_filename'] = '%s_%s' % (context.get('target_filename_prefix', 'Export_search_result'), time.strftime('%Y%m%d'))
 
         return {
             'type': 'ir.actions.report.xml',

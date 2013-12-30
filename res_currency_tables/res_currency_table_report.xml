@@ -16,6 +16,7 @@
         string="FX rates by currency"
         model="res.currency.table"
         name="msf.currency.table"
+        target_filename="FX rates by currency_%(instance_code)s_%(year)s%(month)s%(day)s"
         file="res_currency_tables/report/currency_table_xls.mako"
         report_type="webkit"
         header="False"

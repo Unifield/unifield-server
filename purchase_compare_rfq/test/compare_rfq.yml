@@ -10,21 +10,21 @@
     I check the creation of the wizard
 -
   !python {model: wizard.compare.rfq}: |
-    assert len(self.search(cr, uid, [])) == 1, "Wrong number of created wizard"
+    assert len(self.search(cr, uid, [])) == 1, "Wrong number of created wizard (expected: 1 :: result: %s)" % len(self.search(cr, uid, []))
 -
     I check if the wizard has three lines (one by product)
 -
   !python {model: wizard.compare.rfq.line}: |
-    assert len(self.search(cr, uid, [])) == 3, "Wrong number of created wizard lines"
-    assert len(self.search(cr, uid, [('product_id', '=', ref('product1'))])) == 1, "Wrong number of lines for P1"
-    assert len(self.search(cr, uid, [('product_id', '=', ref('product2'))])) == 1, "Wrong number of lines for P2"
-    assert len(self.search(cr, uid, [('product_id', '=', ref('product3'))])) == 1, "Wrong number of lines for P3"
+    assert len(self.search(cr, uid, [])) == 3, "Wrong number of created wizard lines (expected: 3 :: result: %s)" % len(self.search(cr, uid, []))
+    assert len(self.search(cr, uid, [('product_id', '=', ref('product1'))])) == 1, "Wrong number of lines for P1 (expected: 1 :: result: %s)" % len(self.search(cr, uid, [('product_id', '=', ref('product1'))]))
+    assert len(self.search(cr, uid, [('product_id', '=', ref('product2'))])) == 1, "Wrong number of lines for P2 (expected: 1 :: result: %s)" % len(self.search(cr, uid, [('product_id', '=', ref('product2'))]))
+    assert len(self.search(cr, uid, [('product_id', '=', ref('product3'))])) == 1, "Wrong number of lines for P3 (expected: 1 :: result: %s)" % len(self.search(cr, uid, [('product_id', '=', ref('product3'))]))
 -
     I compare supplier's quotations for P1 
 -
   !python {model: wizard.compare.rfq.line}: |
     line_ids = self.search(cr, uid, [('product_id', '=', ref('product1'))])
-    assert len(line_ids) > 0, "No line found for P1"
+    assert len(line_ids) > 0, "No line found for P1 (expected: > 0 :: result: %s" % len(line_ids)
     if line_ids:
       choose_line_obj = self.pool.get('wizard.choose.supplier.line')
       choose_obj = self.pool.get('wizard.choose.supplier')
@@ -34,9 +34,9 @@
 -
   !python {model: wizard.choose.supplier}: |
     wiz_ids = self.search(cr, uid, [('product_id', '=', ref('product1'))])
-    assert len(wiz_ids) == 1, "Wrong number of wizard choose supplier for P1 (Result : %s)" %len(wiz_ids)
+    assert len(wiz_ids) == 1, "Wrong number of wizard choose supplier for P1 (Expected : 1 :: Result : %s)" %len(wiz_ids)
     wiz = self.browse(cr, uid, wiz_ids[0])
-    assert len(wiz.line_ids) == 3, "Wrong number of choose supplier lines for P1 (Result : %s)" %len(wiz.line_ids)
+    assert len(wiz.line_ids) == 3, "Wrong number of choose supplier lines for P1 (Expected : 3 :: Result : %s)" %len(wiz.line_ids)
 -
     I choose S1 for P1
 -

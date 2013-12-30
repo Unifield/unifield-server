@@ -218,6 +218,7 @@
             <field name="priority" eval="10"/>
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="//field[@name='balance']" position="replace" /><!-- UTP-31: del balance: moving from extended filter to filter -->
                     <xpath expr="//filter[@string='Unbalanced']" position="replace">
                         <filter icon="terp-document-new" string="Invalid" domain="[('state','=','draft')]" help="Invalid Journal Items"/>
                       </xpath>
@@ -245,6 +246,13 @@
                         <field name="journal_id" context="{'journal_id':self, 'visible_id': self, 'normal_view':False}"/>
                         <field name="journal_type"/>
                     </xpath>
+                    <xpath expr="//field[@name='period_id']" position="replace">
+                        <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
+                        <newline />
+                        <!-- UTP-31: balance: moving from extended filter to filter (after period_id) -->
+                        <field name="balance" string="Debit/Credit Functional" select='1'/>
+                        <field name="balance_currency" string="Debit/Credit Booking" select='1'/>
+                    </xpath>
                 </data>
             </field>
         </record>
@@ -263,8 +271,6 @@
 
     <!-- Delete Confirm Draft Invoices wizard from supplier invoices -->
     <delete id="account.action_account_invoice_confirm" model="ir.actions.act_window"/>
-    
-    
 
     <!-- Account View -->
         <record id="inherit_view_account_form" model="ir.ui.view">
@@ -279,8 +285,6 @@
             </field>
         </record>
 
-
-
     <!-- UF-1715 -->
     <report id="account_partner_balance_tree_xls"
         auto="False" 
@@ -291,6 +295,10 @@
         file="account_override/report/account_partner_balance_tree_xls.mako"
         report_type="webkit" 
         string="Partner Balance"/>
+
+    <record id="account.action_account_moves_all_a" model="ir.actions.act_window">
+        <field name="context">{'search_default_posted': 1, 'target_filename_prefix': 'Journal Items'}</field>
+    </record>
 
     </data>
 </openerp>

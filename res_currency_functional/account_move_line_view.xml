@@ -135,6 +135,20 @@
         <field name="view_id" ref="view_move_line_tree_editable"/>
         <field name="act_window_id" ref="account.action_account_moves_all_a"/>
     </record>
+        
+    <!-- Account Move Line Tree View -->
+    <record id="view_move_line_tree_editable_instance_inherit2" model="ir.ui.view">
+        <field name="name">account.move.line.tree.editable.instance.inherit2</field>
+        <field name="model">account.move.line</field>
+        <field name="type">tree</field>
+        <field name="inherit_id" ref="view_move_line_tree_editable" />
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <!-- UTP-846 hide delete button of Journal Items -->
+                <attribute name="hide_delete_button">1</attribute>
+            </xpath>
+        </field>
+    </record>
 
     </data>
 </openerp>

@@ -340,8 +340,6 @@ balance = currency_conv(balance, False)
    <ProtectObjects>False</ProtectObjects>
    <ProtectScenarios>False</ProtectScenarios>
 </WorksheetOptions>
-<AutoFilter x:Range="R1C1:R1C18" xmlns="urn:schemas-microsoft-com:office:excel">
-</AutoFilter>
 </Worksheet>
 % endfor
 ## endfor Worksheet

@@ -33,6 +33,13 @@
             <field name="act_from" ref="act_loan_done" />
             <field name="act_to" ref="purchase.act_done" />
         </record>
+
+        <!-- Redefine the signal to go from Receipt Exception to Closed states -->
+        <record id="purchase.trans_except_picking_picking_done" model="workflow.transition">
+            <field name="act_from" ref="purchase.act_except_picking" />
+            <field name="act_to" ref="purchase.act_picking_done" />
+            <field name="signal" eval="False" />
+        </record>
         
         <!-- Redefine the condition to take into account the DPO process (invoice create at confirmation, but
              the workflow isn't blocked by the invoicing process) -->
