@@ -323,6 +323,8 @@ balance = currency_conv(balance, False)
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
+    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14Partner Balance"/>
+    <Footer x:Data="Page &amp;P of &amp;N"/>
    </PageSetup>
    <Print>
     <ValidPrinterInfo/>
