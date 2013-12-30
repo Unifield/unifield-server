@@ -34,7 +34,8 @@
     </Style>
     <Style ss:ID="header">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-        <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
+        <Font ss:Bold="1" />
+        <Interior ss:Color="#dddddd" ss:Pattern="Solid"/>
         <Borders>
           <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
           <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -44,7 +45,8 @@
     </Style>
     <Style ss:ID="headerRight">
         <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
-        <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
+        <Font ss:Bold="1" />
+        <Interior ss:Color="#dddddd" ss:Pattern="Solid"/>
         <Borders>
           <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
           <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -53,7 +55,7 @@
         </Borders>
     </Style>
     <Style ss:ID="line">
-        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+        <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
         <Borders>
           <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
           <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -71,7 +73,7 @@
         </Borders>
     </Style>
     <Style ss:ID="short_date">
-     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+     <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
      <Borders>
       <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
       <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -87,16 +89,16 @@
 cols_count = 10
 now = time.strftime('%Y-%m-%d')
 %>
-<Column ss:AutoFitWidth="1" ss:Width="100" />
-<Column ss:AutoFitWidth="1" ss:Width="200" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="50" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="40" />
-<Column ss:AutoFitWidth="1" ss:Width="100" />
+<Column ss:AutoFitWidth="1" ss:Width="30" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="70" />
-<Column ss:AutoFitWidth="1" ss:Width="70" />
-<Column ss:AutoFitWidth="1" ss:Width="70" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
 ## header
 <Row>
 <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">Report date :</Data></Cell>
@@ -222,17 +224,18 @@ now = time.strftime('%Y-%m-%d')
 <Cell ss:StyleID="ssCell"></Cell>
 % endfor
 </Row>
-## <Cell ss:StyleID="ssCell"></Cell>
-## <Cell ss:StyleID="ssCell"></Cell>
-## <Cell ss:StyleID="ssCell"></Cell>
-## <Cell ss:StyleID="ssCell"></Cell>
-## <Cell ss:StyleID="ssCell"></Cell>
-## <Cell ss:StyleID="ssCell"></Cell>
-## <Cell ss:StyleID="ssCell"></Cell>
-## <Cell ss:StyleID="ssCell"></Cell>
-## <Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">ALL TOTAL</Data></Cell>
-## <Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">${formatLang(getTotal(objects[0], 'all'))}</Data></Cell>
-## </Row>
+<Row>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCell"></Cell>
+<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">ALL TOTAL</Data></Cell>
+<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">${formatLang(getTotal(objects[0], 'all'))}</Data></Cell>
+</Row>
 </Table>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>
