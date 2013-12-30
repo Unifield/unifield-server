@@ -90,6 +90,16 @@ class hq_report_ocb(report_sxw.report_sxw):
             context = {}
         # Prepare some values
         pool = pooler.get_pool(cr.dbname)
+        # Fetch data from wizard
+        if not data.get('form', False):
+            raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
+        form = data.get('form')
+        fy_id = form.get('fiscalyear_id', False)
+        period_id = form.get('period_id', False)
+        instance_ids = form.get('instance_ids', False)
+        if not fy_id or not period_id or not instance_ids:
+            raise osv.except_osv(_('Warning'), _('Some info are missing. Either fiscalyear or period or instance.'))
+        last_day_of_period = pool.get('account.period').browse(cr, uid, period_id).date_stop
         # open buffer for result zipfile
         zip_buffer = StringIO.StringIO()
 
@@ -111,6 +121,16 @@ class hq_report_ocb(report_sxw.report_sxw):
                 FROM account_journal AS j, msf_instance AS i
                 WHERE j.instance_id = i.id;
                 """,
+            'costcenter': """
+                SELECT name, code, type, date_start, date, CASE WHEN date_start < %s AND (date IS NULL OR date > %s) THEN 'Active' ELSE 'Inactive' END AS Status
+                FROM account_analytic_account
+                WHERE category = 'OC'
+                AND id in (
+                    SELECT cost_center_id
+                    FROM account_target_costcenter
+                    WHERE instance_id in %s
+                );
+                """,
         }
 
         # PROCESS REQUESTS LIST: list of tuples containing info to process some SQL requests
@@ -123,7 +143,10 @@ class hq_report_ocb(report_sxw.report_sxw):
             ('partners.csv', 'partner', False, 'postprocess_selection_columns', [('res.partner', 'partner_type', 2)]),
             ('employee.csv', 'employee'),
             ('journals.csv', 'journal', False, 'postprocess_selection_columns', [('account.journal', 'type', 3)]),
+            ('cost_center.csv', 'costcenter', (last_day_of_period, last_day_of_period, tuple(instance_ids),), 'postprocess_selection_columns', [('account.analytic.account', 'type', 2)]),
         ]
+
+        # TODO: change "if len(fileparams)" by some if fileparams['field']. So change processrequests by a list of dict!
 
         # List is composed of a tuple containing:
         # - filename
@@ -134,10 +157,12 @@ class hq_report_ocb(report_sxw.report_sxw):
             filename = fileparams[0]
             tmp_file = NamedTemporaryFile('w+b', delete=False)
 
-            # FIXME: create a query params!
             # fetch data with given sql query
             sql = sqlrequests[fileparams[1]]
-            cr.execute(sql)
+            if len(fileparams) > 2 and fileparams[2] != False:
+                cr.execute(sql, fileparams[2])
+            else:
+               cr.execute(sql)
             fileres = cr.fetchall()
             # Check if postprocess method exists. If yes, use it
             if len(fileparams) > 3:
