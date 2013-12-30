@@ -43,6 +43,17 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+    <Style ss:ID="headerLeft">
+        <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
+        <Font ss:Bold="1" />
+        <Interior ss:Color="#dddddd" ss:Pattern="Solid"/>
+        <Borders>
+          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+    </Style>
     <Style ss:ID="headerRight">
         <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
         <Font ss:Bold="1" />
@@ -127,7 +138,7 @@ now = time.strftime('%Y-%m-%d')
 </Row>
 ## products/batches already expired
 <Row>
-<Cell ss:StyleID="header" ss:MergeAcross="9"><Data ss:Type="String">Products/batches already expired</Data></Cell>
+<Cell ss:StyleID="headerLeft" ss:MergeAcross="9"><Data ss:Type="String">Products/batches already expired</Data></Cell>
 </Row>
 <Row>
 <Cell ss:StyleID="header"><Data ss:Type="String">CODE</Data></Cell>
@@ -176,7 +187,7 @@ now = time.strftime('%Y-%m-%d')
 % endfor
 </Row>
 <Row>
-<Cell ss:StyleID="header" ss:MergeAcross="9"><Data ss:Type="String">Products/batches to expire</Data></Cell>
+<Cell ss:StyleID="headerLeft" ss:MergeAcross="9"><Data ss:Type="String">Products/batches to expire</Data></Cell>
 </Row>
 <Row>
 <Cell ss:StyleID="header"><Data ss:Type="String">CODE</Data></Cell>
