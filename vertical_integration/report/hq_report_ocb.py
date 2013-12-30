@@ -189,6 +189,12 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND st.period_id = p.id
                 ORDER BY st.name, p.number;
                 """,
+            'contract': """
+                SELECT c.name, c.code, d.code, c.grant_amount, rc.name, c.state
+                FROM financing_contract_contract AS c, financing_contract_donor AS d, res_currency AS rc
+                WHERE c.donor_id = d.id
+                AND c.reporting_currency = rc.id;
+                """,
         }
 
         # PROCESS REQUESTS LIST: list of dict containing info to process some SQL requests
@@ -233,7 +239,13 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'filename': 'liquidities.csv',
                 'key': 'register',
                 'function': 'postprocess_register',
-            },
+                },
+            {
+                'filename': 'contacts.csv',
+                'key': 'contract',
+                'function': 'postprocess_selection_columns',
+                'fnct_params': [('financing.contract.contract', 'state', 5)],
+                },
         ]
 
         # List is composed of a tuple containing:
