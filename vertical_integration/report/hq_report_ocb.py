@@ -41,7 +41,26 @@ class hq_report_ocb(report_sxw.report_sxw):
         data = pool.get(model).fields_get(cr, 1, [field])
         return dict(data[field]['selection'])
 
-    def postprocess_add_period(self, cr, data, period_name):
+    def postprocess_register(self, cr, uid, data):
+        """
+        Replace statement id by its field 'msf_calculated_balance'. If register is closed, then display balance_end_real content.
+        Also launch postprocess_selection_columns on these data to change state column value.
+        """
+        # Prepare some values
+        pool = pooler.get_pool(cr.dbname)
+        new_data = []
+        for line in data:
+            tmp_line = list(line)
+            st_id = line[4]
+            state = line[6]
+            if state != 'closed':
+                tmp_line[4] = pool.get('account.bank.statement').read(cr, uid, [st_id], ['msf_calculated_balance'])[0].get('msf_calculated_balance', 0.0)
+            else:
+                tmp_line[4] = line[5]
+            new_data.append(tmp_line)
+        return self.postprocess_selection_columns(cr, uid, new_data, [('account.bank.statement', 'state', 6)])
+
+    def postprocess_add_period(self, cr, uid, data, period_name):
         """
         This method takes each line from data and add period at end of line.
         """
@@ -57,7 +76,7 @@ class hq_report_ocb(report_sxw.report_sxw):
             new_data.append(tmp_line)
         return new_data
 
-    def postprocess_selection_columns(self, cr, data, changes):
+    def postprocess_selection_columns(self, cr, uid, data, changes):
         """
         This method takes each line from data and change some columns regarding "changes" variable.
         'changes' should be a list containing some tuples. A tuple is composed of:
@@ -163,6 +182,13 @@ class hq_report_ocb(report_sxw.report_sxw):
                 )
                 ORDER BY c.name;
                 """,
+            'register': """
+                SELECT i.name as instance, st.name, p.name as period, st.balance_start, st.id, CASE WHEN st.balance_end_real IS NOT NULL THEN st.balance_end_real ELSE 0.0 END as balance_end_real, st.state, st.journal_id
+                FROM account_bank_statement AS st, msf_instance AS i, account_period AS p
+                WHERE st.instance_id = i.id
+                AND st.period_id = p.id
+                ORDER BY st.name, p.number;
+                """,
         }
 
         # PROCESS REQUESTS LIST: list of dict containing info to process some SQL requests
@@ -203,6 +229,11 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'function': 'postprocess_add_period',
                 'fnct_params': period_name,
                 },
+            {
+                'filename': 'liquidities.csv',
+                'key': 'register',
+                'function': 'postprocess_register',
+            },
         ]
 
         # List is composed of a tuple containing:
@@ -230,9 +261,9 @@ class hq_report_ocb(report_sxw.report_sxw):
                 fnct = getattr(self, fileparams['function'], False)
                 # If the function has some params, use them.
                 if fnct and fileparams.get('fnct_params', False):
-                    fileres = fnct(cr, fileres, fileparams['fnct_params'])
+                    fileres = fnct(cr, uid, fileres, fileparams['fnct_params'])
                 elif fnct:
-                    fileres = fnct(cr, fileres)
+                    fileres = fnct(cr, uid, fileres)
             # Change to UTF-8 all elements
             newlines = []
             for line in fileres:
