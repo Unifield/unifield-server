@@ -73,9 +73,9 @@
                     <field name="currency_id"/>
                     <field name="debit" sum="Total Func. Debit"/>
                     <field name="credit" sum="Total Func. Credit"/>
-                    <field name="output_amount_debit" />
-                    <field name="output_amount_credit" />
-                    <field name="output_currency" />
+                    <field name="output_amount_debit" invisible="1" />
+                    <field name="output_amount_credit" invisible="1" />
+                    <field name="output_currency" invisible="1" />
                     <field name="functional_currency_id"/>
                     <field name="reconcile_txt"/>
                     <field name="state"/>
@@ -96,7 +96,8 @@
             <xpath expr="//field[@name='target_move']" position="after">
                 <field name="result_selection"/>
                 <field name="display_partner"/>
-                <field name="output_currency"/>
+                <field name="output_currency" invisible="1" />
+                <newline />
                 <field name="instance_ids">
                     <tree noteditable="1" editable="top" string="Proprietary Instances">
                             <field name="code" />
