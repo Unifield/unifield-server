@@ -177,7 +177,6 @@ else:
         prop_instances = 'All Instances'
 %>
 <Table x:FullColumns="1" x:FullRows="1">
-## header (criteria)
 <Column ss:AutoFitWidth="1" ss:Width="100" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
@@ -186,42 +185,99 @@ else:
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
+## header (vertical version)
+<%
+header_col_merge_count = col_count - 1
+header_vertical = False
+%>
+% if header_vertical:
 <Row>
-<Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}&#10;Fiscal Year</Data></Cell>
-<Cell ss:StyleID="ssHeader"><Data ss:Type="String">Journals</Data></Cell>
-<Cell ss:StyleID="ssHeader"><Data ss:Type="String">Display Account</Data></Cell>
-<Cell ss:StyleID="ssHeader"><Data ss:Type="String">Filter By ${(get_filter(data) or '')|x}</Data></Cell>
-<Cell ss:StyleID="ssHeader"><Data ss:Type="String">Entries Sorted By</Data></Cell>
-<Cell ss:StyleID="ssHeader"><Data ss:Type="String">Target Moves</Data></Cell>
-<Cell ss:StyleID="ssHeader"><Data ss:Type="String">Output Currency</Data></Cell>
-<Cell ss:StyleID="ssHeader"><Data ss:Type="String">Proprietary Instances</Data></Cell>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}&#10;Fiscal Year</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
+        <Data ss:Type="String">${(get_account(data) or '')|x}&#10;&#10;${(get_fiscalyear(data) or '')|x}</Data>
+    </Cell>
 </Row>
 <Row>
-<Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${(get_account(data) or '')|x}&#10;&#10;${(get_fiscalyear(data) or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${(journals or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${(display_account or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${(get_filter_info(data) or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${(get_sortby(data) or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${get_output_currency_code()|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${(prop_instances or '')|x}</Data>
-</Cell>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Journals</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
+        <Data ss:Type="String">${(journals or '')|x}</Data>
+    </Cell>
 </Row>
+<Row>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Display Account</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
+        <Data ss:Type="String">${(display_account or '')|x}</Data>
+    </Cell>
+</Row>
+<Row>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Filter By ${(get_filter(data) or '')|x}</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
+        <Data ss:Type="String">${(get_filter_info(data) or '')|x}</Data>
+    </Cell>
+</Row>
+<Row>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Entries Sorted By</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
+        <Data ss:Type="String">${(get_sortby(data) or '')|x}</Data>
+    </Cell>
+</Row>
+<Row>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Target Moves</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
+        <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
+    </Cell>
+</Row>
+<Row>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Output Currency</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
+        <Data ss:Type="String">${get_output_currency_code()|x}</Data>
+    </Cell>
+</Row>
+<Row>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Proprietary Instances</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
+        <Data ss:Type="String">${(prop_instances or '')|x}</Data>
+    </Cell>
+</Row>
+% else:
+## header (horizontal version)
+<Row>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}&#10;Fiscal Year</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Journals</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Display Account</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Filter By ${(get_filter(data) or '')|x}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Entries Sorted By</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Target Moves</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Output Currency</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Proprietary Instances</Data></Cell> </Row>
+<Row>
+ <Cell ss:StyleID="ssHeaderCell">
+     <Data ss:Type="String">${(get_account(data) or '')|x}&#10;&#10;${(get_fiscalyear(data) or '')|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
+     <Data ss:Type="String">${(journals or '')|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
+     <Data ss:Type="String">${(display_account or '')|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
+     <Data ss:Type="String">${(get_filter_info(data) or '')|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
+     <Data ss:Type="String">${(get_sortby(data) or '')|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
+     <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
+     <Data ss:Type="String">${get_output_currency_code()|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
+     <Data ss:Type="String">${(prop_instances or '')|x}</Data>
+ </Cell>
+ </Row>
+% endif
+## separation line after header
 <Row>
 % for n in range(col_count):
 <Cell ss:StyleID="ssCell">
