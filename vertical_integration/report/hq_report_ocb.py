@@ -41,6 +41,22 @@ class hq_report_ocb(report_sxw.report_sxw):
         data = pool.get(model).fields_get(cr, 1, [field])
         return dict(data[field]['selection'])
 
+    def postprocess_add_period(self, cr, data, period_name):
+        """
+        This method takes each line from data and add period at end of line.
+        """
+        # Checks
+        if not period_name:
+            return data
+        # Prepare some values
+        new_data = []
+        # Browse lines and add period_name at the end
+        for line in data:
+            tmp_line = list(line)
+            tmp_line.append(period_name)
+            new_data.append(tmp_line)
+        return new_data
+
     def postprocess_selection_columns(self, cr, data, changes):
         """
         This method takes each line from data and change some columns regarding "changes" variable.
@@ -99,7 +115,10 @@ class hq_report_ocb(report_sxw.report_sxw):
         instance_ids = form.get('instance_ids', False)
         if not fy_id or not period_id or not instance_ids:
             raise osv.except_osv(_('Warning'), _('Some info are missing. Either fiscalyear or period or instance.'))
-        last_day_of_period = pool.get('account.period').browse(cr, uid, period_id).date_stop
+        period = pool.get('account.period').browse(cr, uid, period_id)
+        last_day_of_period = period.date_stop
+        first_day_of_period = period.date_start
+        period_name = period.name
         # open buffer for result zipfile
         zip_buffer = StringIO.StringIO()
 
@@ -130,6 +149,19 @@ class hq_report_ocb(report_sxw.report_sxw):
                     FROM account_target_costcenter
                     WHERE instance_id in %s
                 );
+                """,
+            'fxrate': """
+                SELECT c.currency_name, c.name, r.rate
+                FROM res_currency AS c
+                LEFT JOIN res_currency_rate r ON r.currency_id = c.id AND r.id IN (
+                    SELECT dd.id
+                    FROM res_currency_rate dd
+                    WHERE dd.currency_id = c.id
+                    AND dd.name <= %s
+                    AND dd.name >= %s
+                    ORDER BY dd.name ASC LIMIT 1
+                )
+                ORDER BY c.name;
                 """,
         }
 
@@ -164,6 +196,13 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('account.analytic.account', 'type', 2)],
                 },
+            {
+                'filename': 'fxrates.csv',
+                'key': 'fxrate',
+                'query_params': (last_day_of_period, first_day_of_period),
+                'function': 'postprocess_add_period',
+                'fnct_params': period_name,
+                },
         ]
 
         # List is composed of a tuple containing:
@@ -184,7 +223,7 @@ class hq_report_ocb(report_sxw.report_sxw):
             if fileparams.get('query_params', False):
                 cr.execute(sql, fileparams['query_params'])
             else:
-               cr.execute(sql)
+                cr.execute(sql)
             fileres = cr.fetchall()
             # Check if a function is given. If yes, use it
             if fileparams.get('function', False):
@@ -194,9 +233,19 @@ class hq_report_ocb(report_sxw.report_sxw):
                     fileres = fnct(cr, fileres, fileparams['fnct_params'])
                 elif fnct:
                     fileres = fnct(cr, fileres)
+            # Change to UTF-8 all elements
+            newlines = []
+            for line in fileres:
+                newline = []
+                for element in line:
+                    if type(element) == unicode:
+                        newline.append(element.encode('utf-8'))
+                    else:
+                        newline.append(element)
+                newlines.append(newline)
             # Write result in a CSV writer then close it.
             writer = csv.writer(tmp_file, quoting=csv.QUOTE_ALL)
-            writer.writerows(fileres)
+            writer.writerows(newlines)
             tmp_file.close()
             files.append((tmp_file.name, filename))
 
