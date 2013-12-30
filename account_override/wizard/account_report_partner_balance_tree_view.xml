@@ -110,9 +110,9 @@
             <xpath expr="//group[1]" position="replace">
              <group col="4" colspan="4">
                 <button icon="gtk-cancel" special="cancel" string="Cancel" colspan="2"/>
-                <button icon="terp-gtk-go-back-rtl" name="show" string="Show Balances" type="object" colspan="2" default_focus="1" />
-                <label string="" colspan="2" />
-                <button icon="gtk-print" name="export" string="Print Excel" type="object" colspan="2" />
+                <button icon="terp-gtk-go-back-rtl" name="show" string="Balance View" type="object" colspan="2" default_focus="1" />
+                <button icon="gtk-print" name="print_pdf" string="Print PDF" type="object" colspan="2" />
+                <button icon="gtk-print" name="print_xls" string="Print Excel" type="object" colspan="2" />
             </group>
             </xpath>
             
@@ -147,12 +147,16 @@
              <field name="context">{'record_id':active_id}</field>
              <field name="target">new</field>
        </record>
+       
+       <!-- delete standard menu and replace it -->
+       <delete model="ir.ui.menu" id="account.menu_account_partner_balance_report" />
 
-        <menuitem icon="STOCK_PRINT"
-            name="Partner Balance View"
+       <menuitem icon="STOCK_PRINT"
+            name="Partner Balance"
             action="action_account_partner_balance_tree"
             id="menu_account_partner_balance_tree"
-            parent="account.next_id_22"/>
+            parent="account.next_id_22"
+            sequence="11" /> <!-- just after partner ledger menu -->
 
      </data>
  </openerp>

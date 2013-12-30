@@ -342,7 +342,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         data['ids'] = context.get('active_ids', [])
         data['model'] = context.get('active_model', 'ir.ui.menu')
         data['build_ts'] = datetime.datetime.now().strftime(self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context))
-        data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from', 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_account'])[0]
+        data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from', 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_partner', 'output_currency', 'instance_ids'])[0]
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)
             if default_journals:
@@ -353,7 +353,6 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         data['form']['used_context'] = used_context
         
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['display_partner', 'output_currency', 'instance_ids'], context=context)[0])
         
         result_selection = data['form'].get('result_selection', '')
         if (result_selection == 'customer'):
@@ -382,8 +381,18 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             ],
             'context': context,
         }
-   
-    def export(self, cr, uid, ids, context=None):
+        
+    def print_pdf(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        data, account_type = self._get_data(cr, uid, ids, context=context)
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'account.partner.balance',
+            'datas': data,
+        }
+       
+    def print_xls(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         data, account_type = self._get_data(cr, uid, ids, context=context)

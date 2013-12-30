@@ -169,7 +169,10 @@ else:
        journals = 'All Journals'
     else:
        journals = ', '.join([lt or '' for lt in get_journal(data)])
-    display_account = (data['form']['display_account']=='bal_all' and 'All') or (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0'
+    if data['form'].get('display_partner', '') == 'non-zero_balance':
+        display_account = 'With balance is not equal to 0'
+    else:
+        display_account = 'All'
     prop_instances_list = get_prop_instances(data)
     if prop_instances_list:
         prop_instances = ', '.join([lt or '' for lt in get_prop_instances(data)])
