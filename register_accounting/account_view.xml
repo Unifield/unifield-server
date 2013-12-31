@@ -242,7 +242,7 @@
                                         <field name="reconciled"/>
                                         <!-- UTP-482 operational advance linked confirmed PO -->
                                         <field name="cash_register_op_advance_po_id"
-                                        />
+                                            domain="[('state', 'in', ['approved'])]" />
                                         <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                             context="context"/>
                                         <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
