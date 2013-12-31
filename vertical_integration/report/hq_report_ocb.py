@@ -44,6 +44,37 @@ class hq_report_ocb(report_sxw.report_sxw):
         data = pool.get(model).fields_get(cr, 1, [field])
         return dict(data[field]['selection'])
 
+    def postprocess_add_functional(self, cr, uid, data, changes):
+        """
+        Change each line of 'data' to add some amount in another currency.
+        'changes' is a dict containing:
+         - currency: the column number containing the currency_id
+         - columns: the columns to change into another amount
+         - date: the date to use to do amount processing
+        """
+        # Checks
+        if not changes or not changes.get('currency', False) or not changes.get('columns', False) or not changes.get('date', False):
+            return data
+        # Prepare some values
+        pool = pooler.get_pool(cr.dbname)
+        new_data = []
+        company_currency = pool.get('res.users').browse(cr, uid, uid).company_id.currency_id
+        date = changes.get('date')
+        columns = changes.get('columns')
+        context = {'date': date}
+        currency = changes.get('currency')
+        for line in data:
+            tmp_line = list(line[:-1])
+            # Add new columns
+            for col in columns:
+                new_amount = pool.get('res.currency').compute(cr, uid, line[currency], company_currency.id, line[col], round=False, context=context)
+                tmp_line.append(new_amount)
+            # Add company currency
+            tmp_line.append(company_currency.name)
+            # write changes
+            new_data.append(tmp_line)
+        return new_data
+
     def postprocess_register(self, cr, uid, data):
         """
         Replace statement id by its field 'msf_calculated_balance'. If register is closed, then display balance_end_real content.
@@ -211,7 +242,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND e.currency_id = cc.id;
                 """,
             'bs_entries_consolidated': """
-                SELECT j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS entry_sequence, 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", '' AS "document_date", '' AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END as debit, CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as credit, c.name AS "booking_currency"
+                SELECT j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS entry_sequence, 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END as debit, CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as credit, c.name AS "booking_currency", c.id
                 FROM (
                     SELECT aml.account_id, aml.journal_id, aml.currency_id, SUM(aml.amount_currency) AS total, aml.period_id
                     FROM account_move_line AS aml, account_account AS aa
@@ -305,6 +336,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'filename': 'Export_Data.csv',
                 'key': 'bs_entries_consolidated',
                 'query_params': ([period.id]),
+                'function': 'postprocess_add_functional',
+                'fnct_params': {'currency': 13, 'date': last_day_of_period, 'columns': [10, 11]},
                 },
             {
                 'filename': 'Export_Data.csv',
