@@ -298,16 +298,16 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'fnct_params': [('financing.contract.contract', 'state', 5)],
                 },
             {
-                'filename': 'Raw_Data.csv',
+                'filename': 'Export_Data.csv',
                 'key': 'rawdata',
                 },
             {
-                'filename': 'BS_Entries_consolidated.csv',
+                'filename': 'Export_Data.csv',
                 'key': 'bs_entries_consolidated',
                 'query_params': ([period.id]),
                 },
             {
-                'filename': 'BS_Entries.csv',
+                'filename': 'Export_Data.csv',
                 'key': 'bs_entries',
                 'query_params': ([period.id]),
                 },
