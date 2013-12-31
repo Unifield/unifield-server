@@ -1,8 +1,9 @@
-# -*- coding: utf-8 -*-
+# -*- coding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2013 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,6 +20,8 @@
 #
 ##############################################################################
 
+from osv import osv
+from tools.translate import _
 import csv
 import StringIO
 import pooler
@@ -207,6 +210,39 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND al.company_id = e.id
                 AND e.currency_id = cc.id;
                 """,
+            'bs_entries_consolidated': """
+                SELECT j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS entry_sequence, 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", '' AS "document_date", '' AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END as debit, CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as credit, c.name AS "booking_currency"
+                FROM (
+                    SELECT aml.account_id, aml.journal_id, aml.currency_id, SUM(aml.amount_currency) AS total, aml.period_id
+                    FROM account_move_line AS aml, account_account AS aa
+                    WHERE aml.period_id = %s
+                    AND aml.account_id = aa.id
+                    AND aa.type = 'liquidity'
+                    AND aa.ocb_export_subtotal = 't'
+                    GROUP BY aml.period_id, aml.account_id, aml.journal_id, aml.currency_id
+                    ORDER BY aml.account_id
+                ) AS req, account_account AS a, account_journal AS j, res_currency AS c, account_period AS p, account_fiscalyear AS f
+                WHERE req.account_id = a.id
+                AND req.journal_id = j.id
+                AND req.currency_id = c.id
+                AND req.period_id = p.id
+                AND p.fiscalyear_id = f.id
+                AND a.type = 'liquidity'
+                AND a.ocb_export_subtotal = 't'
+                ORDER BY a.code;
+                """,
+            'bs_entries': """
+                SELECT m.name AS "entry_sequence", aml.name AS "desc", aml.ref, aml.document_date, aml.date, a.code AS "account", aml.partner_txt, '' AS "dest", '' AS "cost_center", '' AS "funding_pool", aml.debit_currency, aml.credit_currency, c.name AS "booking_currency", aml.debit, aml.credit, cc.name AS "functional_currency"
+                FROM account_move_line AS aml, account_account AS a, res_currency AS c, account_move AS m, res_company AS e, res_currency AS cc
+                WHERE aml.period_id = %s
+                AND a.type = 'liquidity'
+                AND a.ocb_export_subtotal = 'f'
+                AND aml.account_id = a.id
+                AND aml.currency_id = c.id
+                AND aml.move_id = m.id
+                AND aml.company_id = e.id
+                AND e.currency_id = cc.id;
+                """,
         }
 
         # PROCESS REQUESTS LIST: list of dict containing info to process some SQL requests
@@ -259,8 +295,18 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'fnct_params': [('financing.contract.contract', 'state', 5)],
                 },
             {
-                'filename': 'Export_Data.csv',
+                'filename': 'Raw_Data.csv',
                 'key': 'rawdata',
+                },
+            {
+                'filename': 'BS_Entries_consolidated.csv',
+                'key': 'bs_entries_consolidated',
+                'query_params': ([period.id]),
+                },
+            {
+                'filename': 'BS_Entries.csv',
+                'key': 'bs_entries',
+                'query_params': ([period.id]),
                 },
         ]
 

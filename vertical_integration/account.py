@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
+#    Copyright (C) 2013 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,27 +21,20 @@
 #
 ##############################################################################
 
-{
-    "name" : "Vertical Integration",
-    "version" : "1.0",
-    "author" : "MSF, TeMPO Consulting",
-    "description" : """
-    Add HQ exports of finance data for all sections
-    """,
-    "website": "http://unifield.msf.org",
-    "depends" : ["base", "account", "msf_instance"],
-    "category" : "Generic Modules/Accounting",
-    "init_xml" : [],
-    "demo_xml" : [],
-    "update_xml" : [
-        'account_view.xml',
-        'security/ir.model.access.csv',
-        'account_export_mapping_view.xml',
-        'country_export_mapping_view.xml',
-        'account_report.xml',
-        'vertical_integration_wizard.xml',
-    ],
-    'test': [],
-    'installable': True,
-    'active': False,
-}
+from osv import osv
+from osv import fields
+
+class account_account(osv.osv):
+    _name = "account.account"
+    _inherit = "account.account"
+
+    _columns = {
+        'ocb_export_subtotal': fields.boolean('Export subtotal', help='If ticked, do subtotal for this account in OCB exports'),
+    }
+
+    _defaults = {
+        'ocb_export_subtotal': lambda *a: False,
+    }
+
+account_account()
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
