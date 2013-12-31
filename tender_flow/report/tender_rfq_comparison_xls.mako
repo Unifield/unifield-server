@@ -31,54 +31,6 @@
    <NumberFormat/>
    <Protection/>
   </Style>
-  <Style ss:ID="m19170284">
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
-   </Borders>
-   <Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
-   <NumberFormat/>
-   <Protection/>
-  </Style>
-  <Style ss:ID="m19170294">
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
-   </Borders>
-   <Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
-   <NumberFormat/>
-   <Protection/>
-  </Style>
-  <Style ss:ID="m19170304">
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
-   </Borders>
-   <Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
-   <NumberFormat/>
-   <Protection/>
-  </Style>
-  <Style ss:ID="m19170314">
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
-   </Borders>
-   <Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
-   <NumberFormat/>
-   <Protection/>
-  </Style>
   <Style ss:ID="s62">
    <Alignment ss:Vertical="Top"/>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="22" ss:Color="#000000"
@@ -86,22 +38,6 @@
   </Style>
   <Style ss:ID="s63">
    <Alignment ss:Vertical="Bottom"/>
-  </Style>
-  <Style ss:ID="s64">
-   <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-   </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
-   <Interior/>
-   <NumberFormat/>
-   <Protection/>
-  </Style>
-  <Style ss:ID="s65">
-   <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
   </Style>
   <Style ss:ID="s67">
    <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
@@ -446,24 +382,94 @@
    </Borders>
    <Interior ss:Color="#FFCC99" ss:Pattern="Solid"/>
   </Style>
+<Style ss:ID="sTitle">
+<Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+</Style>
+<Style ss:ID="sData">
+<Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+</Style>
 <Style ss:ID="sShortDate">
 <NumberFormat ss:Format="Short Date"/>
-<Alignment ss:Vertical="Center" ss:WrapText="1"/>
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
+<Alignment ss:Vertical="Bottom" ss:Horizontal="Left" ss:WrapText="1"/>
+</Style>
+<Style ss:ID="mSupHeader">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+    <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+    </Borders>
+    <Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
+    <NumberFormat/>
+    <Protection/>
+</Style>
+<Style ss:ID="mSupName">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+    <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
+    <NumberFormat/>
+    <Protection/>
+</Style>
+<Style ss:ID="mSupUnit">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+    <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
+    <NumberFormat/>
+    <Protection/>
+</Style>
+<Style ss:ID="mSupComment">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+    <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
+    <NumberFormat/>
+    <Protection/>
+</Style>
+<Style ss:ID="mLastLine">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+    <Borders>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+    </Borders>
+    <Protection/>
+</Style>
+<Style ss:ID="mRightBorder">
+    <Borders>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Protection/>
+</Style>
+<Style ss:ID="mNote">
+    <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Protection/>
+</Style>
+<Style ss:ID="mLastNote">
+    <Borders>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Protection/>
 </Style>
 
  </Styles>
  % for o in objects:
  <Worksheet ss:Name="${sheet_name(o.name)|x}">
-  <Names>
-  <!-- TODO -->
-   <NamedRange ss:Name="Print_Area" ss:RefersTo="='Comparison - RfQ'!R1C1:R35C15"/>
-  </Names>
   <Table x:FullColumns="1"
    x:FullRows="1" ss:DefaultRowHeight="15">
    <Column ss:Index="2" ss:AutoFitWidth="0" ss:Width="75"/>
@@ -479,160 +485,118 @@
    <Column ss:Width="57.75" ss:Span="1"/>
    <Column ss:Index="15" ss:Width="87.75"/>
    <Row ss:AutoFitHeight="0" ss:Height="52.5">
-    <Cell ss:Index="4" ss:StyleID="s62"><Data ss:Type="String">Comparison - Requests for Quotation</Data><NamedCell
-      ss:Name="Print_Area"/></Cell>
+    <Cell ss:Index="4" ss:StyleID="s62"><Data ss:Type="String">Comparison - Requests for Quotation</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="8.25">
-    <Cell ss:Index="4" ss:StyleID="s62"><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:Index="4" ss:StyleID="s62"></Cell>
    </Row>
+
    <Row ss:AutoFitHeight="0" ss:Height="18.75">
-    <Cell><Data ss:Type="String">Creator:</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell><Data ss:Type="String">${o.creator and o.creator.name or ''|x}</Data></Cell>
-    <Cell ss:Index="4" ss:StyleID="s63"><Data ss:Type="String">Creation Date:</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">Creator:</Data></Cell>
+    <Cell ss:StyleID="sData"><Data ss:Type="String">${o.creator and o.creator.name or ''|x}</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">Creation Date:</Data></Cell>
     <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${o.creation_date|n}T00:00:00.000</Data></Cell>
    </Row>
    <Row ss:StyleID="s63">
-    <Cell><Data ss:Type="String">Tender Reference:</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell><Data ss:Type="String">${o.name|x}</Data></Cell>
-    <Cell ss:Index="4"><Data ss:Type="String">Field Order:</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell><Data ss:Type="String">${o.sale_order_id and o.sale_order_id.name or ''|x}</Data></Cell>
-    <Cell ss:Index="7"><Data ss:Type="String">Requested Date:</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">Tender Reference:</Data></Cell>
+    <Cell ss:StyleID="sData"><Data ss:Type="String">${o.name|x}</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">Field Order:</Data></Cell>
+    <Cell ss:StyleID="sData"><Data ss:Type="String">${o.sale_order_id and o.sale_order_id.name or ''|x}</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">Requested Date:</Data></Cell>
     <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${o.requested_date|n}T00:00:00.000</Data></Cell>
    </Row>
    <Row ss:StyleID="s63">
-    <Cell><Data ss:Type="String">Location:</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell><Data ss:Type="String">${o.location_id and o.location_id.name or ''|x}</Data></Cell>
-    <Cell ss:Index="4"><Data ss:Type="String">Tender Category:</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell><Data ss:Type="String">${getSel(o, 'categ')|x}</Data></Cell>
-    <Cell ss:Index="7"><Data ss:Type="String">Warehouse:</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell><Data ss:Type="String">${o.warehouse_id and o.warehouse_id.name or ''|x}</Data></Cell>
+    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">Location:</Data></Cell>
+    <Cell ss:StyleID="sData"><Data ss:Type="String">${o.location_id and o.location_id.name or ''|x}</Data></Cell>
+    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">Tender Category:</Data></Cell>
+    <Cell ss:StyleID="sData"><Data ss:Type="String">${getSel(o, 'categ')|x}</Data></Cell>
+    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">Warehouse:</Data></Cell>
+    <Cell ss:StyleID="sData"><Data ss:Type="String">${o.warehouse_id and o.warehouse_id.name or ''|x}</Data></Cell>
    </Row>
    <Row ss:StyleID="s63">
-    <Cell><Data ss:Type="String">Details:</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell><Data ss:Type="String">${o.details or ''|x}</Data></Cell>
-    <Cell ss:Index="4"><Data ss:Type="String">Currency:</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell><Data ss:Type="String">${get_same_and_default_currency(o)[1].name or ''|x}</Data></Cell>
-
-    <Cell ss:Index="7"><Data ss:Type="String">Tender Priority:</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell><Data ss:Type="String">${getSel(o, 'priority')|x}</Data></Cell>
+    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">Details:</Data></Cell>
+    <Cell ss:StyleID="sData"><Data ss:Type="String">${o.details or ''|x}</Data></Cell>
+    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">Currency:</Data></Cell>
+    <Cell ss:StyleID="sData"><Data ss:Type="String">${get_same_and_default_currency(o)[1].name or ''|x}</Data></Cell>
+    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">Tender Priority:</Data></Cell>
+    <Cell ss:StyleID="sData"><Data ss:Type="String">${getSel(o, 'priority')|x}</Data></Cell>
    </Row>
 
    <Row ss:AutoFitHeight="0" ss:Height="8.25"/>
    <Row ss:AutoFitHeight="0">
+     <Cell />
+     <Cell />
+     <Cell />
+     <Cell />
+     <Cell />
     % for numsup in xrange(0, len(o.supplier_ids)):
-    <Cell ss:Index="6" ss:MergeAcross="2" ss:StyleID="m19170294"><Data ss:Type="String">Supplier ${numsup+1}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:MergeAcross="2" ss:StyleID="mSupHeader"><Data ss:Type="String">Supplier ${numsup+1}</Data></Cell>
     % endfor
-    <Cell ss:MergeDown="1" ss:StyleID="m19170284"><Data ss:Type="String">Selected Supplier</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:MergeDown="1" ss:StyleID="mSupHeader"><Data ss:Type="String">Selected Supplier</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:StyleID="s63">
-    <Cell ss:StyleID="s98"><Data ss:Type="String">Line nr.</Data><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s98"><Data ss:Type="String">Product Code</Data><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s98"><Data ss:Type="String">Product Description</Data><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s98"><Data ss:Type="String">Quantity</Data><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s98"><Data ss:Type="String">UoM</Data><NamedCell
-      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s98"><Data ss:Type="String">Line nr.</Data></Cell>
+    <Cell ss:StyleID="s98"><Data ss:Type="String">Product Code</Data></Cell>
+    <Cell ss:StyleID="s98"><Data ss:Type="String">Product Description</Data></Cell>
+    <Cell ss:StyleID="s98"><Data ss:Type="String">Quantity</Data></Cell>
+    <Cell ss:StyleID="s98"><Data ss:Type="String">UoM</Data></Cell>
     % for numsup in xrange(0, len(o.supplier_ids)):
-    <Cell ss:StyleID="s98"><Data ss:Type="String">Name</Data><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s95"><Data ss:Type="String">Unit Price</Data><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s98"><Data ss:Type="String">Comment</Data><NamedCell
-      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="mSupName"><Data ss:Type="String">Name</Data></Cell>
+    <Cell ss:StyleID="mSupUnit"><Data ss:Type="String">Unit Price</Data></Cell>
+    <Cell ss:StyleID="mSupComment"><Data ss:Type="String">Comment</Data></Cell>
     % endfor
    </Row>
    <% list_lines = gen_line_link(o) %>
    % for num, line in enumerate(o.tender_line_ids):
    <Row ss:Height="30">
-    <Cell ss:StyleID="s67"><Data ss:Type="Number">${num+1}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s67"><Data ss:Type="String">${line.product_id.code|x}</Data><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s67"><Data ss:Type="String">${line.product_id.name|x}</Data><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">${line.qty}</Data><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="String">${line.product_uom.name|x}</Data><NamedCell
-      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number">${num+1}</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${line.product_id.code|x}</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${line.product_id.name|x}</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number">${line.qty}</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${line.product_uom.name|x}</Data></Cell>
 
-        % for supplier in o.supplier_ids:
-    <Cell ss:StyleID="s87"><Data ss:Type="String">${supplier.name|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s88"><Data ss:Type="Number">${list_lines[line.product_id.id][supplier.id].get('price_unit', '')}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s89"><Data ss:Type="String">${list_lines[line.product_id.id][supplier.id].get('notes','') or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+      % for supplier in o.supplier_ids:
+    <Cell ss:StyleID="s87"><Data ss:Type="String">${supplier.name|x}</Data></Cell>
+    <Cell ss:StyleID="s88"><Data ss:Type="Number">${list_lines[line.product_id.id][supplier.id].get('price_unit', '')}</Data></Cell>
+    <Cell ss:StyleID="s89"><Data ss:Type="String">${list_lines[line.product_id.id][supplier.id].get('notes','') or ''|x}</Data></Cell>
       % endfor
 
-    <Cell ss:StyleID="s91"><Data ss:Type="String">${line.supplier_id and line.supplier_id.name or ''|x}</Data><NamedCell
-      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s91"><Data ss:Type="String">${line.supplier_id and line.supplier_id.name or ''|x}</Data></Cell>
    </Row>
    % endfor
-   <Row>
-   </Row>
-   <Row>
-   </Row>
-   <Row>
-   </Row>
-   <Row>
-   </Row>
-   <Row>
-   </Row>
-   <Row>
-   </Row>
-   <Row>
-   </Row>
-   <Row ss:AutoFitHeight="0" ss:Height="8.25">
-    <Cell ss:MergeAcross="1" ss:MergeDown="1" ss:StyleID="s134"><Data
-      ss:Type="String">Justification / Notes</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s68"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s68"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s68"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s68"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s68"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s68"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s69"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s69"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s69"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s69"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s69"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s69"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s70"><NamedCell ss:Name="Print_Area"/></Cell>
+   <Row ss:Height="3.5">
+    <Cell />
+    <Cell />
+    <Cell />
+    <Cell />
+    <Cell />
+    % for numsup in xrange(0, len(o.supplier_ids)):
+    <Cell ss:StyleID="mLastLine" />
+    <Cell ss:StyleID="mLastLine" />
+    <Cell ss:StyleID="mLastLine" />
+    % endfor
+    <Cell ss:StyleID="mLastLine" />
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="8.25">
+    <Cell ss:MergeAcross="1" ss:MergeDown="1" ss:StyleID="s134"><Data ss:Type="String">Justification / Notes</Data></Cell>
+    <Cell ss:StyleID="s68"></Cell>
+    <Cell ss:StyleID="s68"></Cell>
+    <Cell ss:StyleID="s68"></Cell>
+    % for numsup in xrange(0, len(o.supplier_ids)*3):
+    <Cell ss:StyleID="s68"></Cell>
+    % endfor
+    <Cell ss:StyleID="s70"></Cell>
    </Row>
+   <Row ss:AutoFitHeight="0" ss:Height="8.25">
+    <Cell ss:Index="${len(o.supplier_ids)*3+6}" ss:StyleID="mRightBorder" />
+   </Row>
+   % for note in o.notes and o.notes.split("\n") or [' ']:
    <Row ss:AutoFitHeight="0" ss:Height="12">
-    <Cell ss:StyleID="s79"><Data ss:Type="String">${o.notes|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s73"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s73"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s73"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s73"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s73"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s73"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s74"><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="mNote" ss:MergeAcross="${len(o.supplier_ids)*3+5}"><Data ss:Type="String">${note|x}</Data></Cell>
    </Row>
+   % endfor
    <Row ss:AutoFitHeight="0" ss:Height="8.25">
-    <Cell ss:StyleID="s71"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s73"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s73"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s73"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s73"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s73"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s73"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s74"><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="mLastNote" ss:MergeAcross="${len(o.supplier_ids)*3+5}"/>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="8.25">
    </Row>
@@ -640,16 +604,8 @@
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="8.25">
    </Row>
-   <Row ss:AutoFitHeight="0" ss:Height="8.25">
-    <Cell ss:Index="2" ss:StyleID="s65"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s65"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s65"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s65"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s65"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s65"><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s65"><NamedCell ss:Name="Print_Area"/></Cell>
-   </Row>
-   <Row ss:Index="37">
+   <Row ss:AutoFitHeight="0" ss:Height="8.25" />
+   <Row>
     <Cell ss:Index="2" ss:StyleID="s102"><Data ss:Type="String">Prepared by:</Data></Cell>
     <Cell ss:Index="4" ss:StyleID="s102"><Data ss:Type="String">Approved by:</Data></Cell>
     <Cell ss:StyleID="s102"/>
