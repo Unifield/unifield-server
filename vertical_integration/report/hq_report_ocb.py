@@ -252,6 +252,9 @@ class hq_report_ocb(report_sxw.report_sxw):
         # - [optional] query_params: data to use to complete SQL requests
         # - [optional] function: name of the function to postprocess data (example: to change selection field into a human readable text)
         # - [optional] fnct_params: params that would used on the given function
+        # TIP & TRICKS:
+        # + More than 1 request in 1 file: just use same filename for each request you want to be in the same file.
+        # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
         processrequests = [
             {
                 'filename': 'partners.csv',
@@ -313,7 +316,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         # List is composed of a tuple containing:
         # - filename
         # - key of sqlrequests dict to fetch its SQL request
-        files = []
+        files = {}
         for fileparams in processrequests:
             if not fileparams.get('filename', False):
                 raise osv.except_osv(_('Error'), _('Filename param is missing!'))
@@ -321,7 +324,10 @@ class hq_report_ocb(report_sxw.report_sxw):
                 raise osv.except_osv(_('Error'), _('Key param is missing!'))
             # temporary file
             filename = fileparams['filename']
-            tmp_file = NamedTemporaryFile('w+b', delete=False)
+            if filename not in files:
+                tmp_file = NamedTemporaryFile('w+b', delete=False)
+            else:
+                tmp_file = files[filename]
 
             # fetch data with given sql query
             sql = sqlrequests[fileparams['key']]
@@ -351,16 +357,21 @@ class hq_report_ocb(report_sxw.report_sxw):
             # Write result in a CSV writer then close it.
             writer = csv.writer(tmp_file, quoting=csv.QUOTE_ALL)
             writer.writerows(newlines)
-            tmp_file.close()
-            files.append((tmp_file.name, filename))
+            # Only add a link to the temporary file if not in "files" dict
+            if filename not in files:
+                files[filename] = tmp_file
 
         # WRITE RESULT INTO AN ARCHIVE
         # Create a ZIP file
         out_zipfile = zipfile.ZipFile(zip_buffer, "w")
-        for tmp_filename, filename in files:
-            out_zipfile.write(tmp_filename, filename, zipfile.ZIP_DEFLATED)
-            # unlink file
-            os.unlink(tmp_filename)
+        for filename in files:
+            tmpfile = files[filename]
+            # close temporary file
+            tmpfile.close()
+            # write content into zipfile
+            out_zipfile.write(tmpfile.name, filename, zipfile.ZIP_DEFLATED)
+            # unlink temporary file
+            os.unlink(tmpfile.name)
         # close zip
         out_zipfile.close()
         out = zip_buffer.getvalue()
