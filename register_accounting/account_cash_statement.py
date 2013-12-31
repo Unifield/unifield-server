@@ -331,10 +331,38 @@ class account_cash_statement(osv.osv):
 
 account_cash_statement()
 
-class account_cashbox_line(osv.osv):
 
+class account_cashbox_line(osv.osv):
     _inherit = "account.cashbox.line"
     _order = "pieces"
     
 account_cashbox_line()
+
+
+class account_bank_statement_line(osv.osv):
+    _inherit = 'account.bank.statement.line'
+    
+    _columns = {
+        # UTP-482 linked confirmed PO for an operational advance in cache register  
+        'cash_register_op_advance_po_id': fields.many2one('purchase.order', 'Operational advance purchase order', required=False),
+    }
+    
+    def check_is_cash_register_op_advance_po_available(self, cr, uid, ids, context=None):
+        """cash_register_op_advance_po_id m2o allowed
+        for an Operational advance type for specific treatment account"""
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        o = self.browse(cr, uid, ids[0], context=context)
+        if not o.cash_register_op_advance_po_id:
+            return True
+        if o.account_id and o.account_id.type_for_register == 'advance':
+            return True
+        return False
+        
+    _constraints = [
+        (check_is_cash_register_op_advance_po_available, 'You can only link to a purchase order for an Operation advance', ['account_id', 'cash_register_op_advance_po_id']),
+    ]
+
+account_bank_statement_line()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
