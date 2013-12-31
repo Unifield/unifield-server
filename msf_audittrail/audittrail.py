@@ -520,6 +520,20 @@ class audittrail_log_line(osv.osv):
 #            res['arch'] = etree.tostring(xml_view)
         return res
 
+    def _get_report_name(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self_info = self.browse(cr, uid, ids[0], context)
+        name = self_info.object_id.name or ''
+        if self_info.res_id and self_info.object_id.model:
+            obj = self.pool.get(self_info.object_id.model)
+            if obj:
+                name_get = obj.name_get(cr, uid, [self_info.res_id])
+                if name_get and name_get[0]:
+                    name = name_get[0][1].replace('/','_')
+        return "LL_%s_%s" % (name, time.strftime('%Y%m%d'))
+
 audittrail_log_line()
 
 

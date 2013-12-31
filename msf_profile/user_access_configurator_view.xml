@@ -370,6 +370,7 @@
                 <search string="Groups">
                     <filter name="show_active" string="Only inactive" icon="gtk-cancel" domain="[('visible_res_groups', '=', False)]" context="{'show_invisible': True}" />
                     <field name="name" />
+                    <field name="is_an_admin_profile" />
                 </search>
             </field>
         </record>
