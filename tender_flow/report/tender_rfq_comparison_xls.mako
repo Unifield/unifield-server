@@ -57,11 +57,6 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
   </Style>
-  <Style ss:ID="s69">
-   <Borders>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-   </Borders>
-  </Style>
   <Style ss:ID="s70">
    <Borders>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -620,17 +615,17 @@
     <Cell ss:StyleID="s112"><Data ss:Type="String">Name</Data></Cell>
     <Cell ss:StyleID="s104"/>
     <Cell ss:StyleID="s70"/>
-    <Cell ss:StyleID="s69"/>
-    <Cell ss:StyleID="s69"/>
-    <Cell ss:StyleID="s69"/>
+    <Cell ss:StyleID="s68"/>
+    <Cell ss:StyleID="s68"/>
+    <Cell ss:StyleID="s68"/>
     <Cell ss:StyleID="s104"/>
-    <Cell ss:StyleID="s69"/>
-    <Cell ss:StyleID="s69"/>
+    <Cell ss:StyleID="s68"/>
+    <Cell ss:StyleID="s68"/>
     <Cell ss:StyleID="s70"/>
-    <Cell ss:StyleID="s69"/>
-    <Cell ss:StyleID="s69"/>
-    <Cell ss:StyleID="s69"/>
-    <Cell ss:StyleID="s69"/>
+    <Cell ss:StyleID="s68"/>
+    <Cell ss:StyleID="s68"/>
+    <Cell ss:StyleID="s68"/>
+    <Cell ss:StyleID="s68"/>
     <Cell ss:StyleID="s70"/>
    </Row>
    <Row>
