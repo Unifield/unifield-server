@@ -200,6 +200,7 @@ class wizard_cash_return(osv.osv_memory):
         return res
         
     def create(self, cr, uid, values, context=None):
+        id = super(wizard_cash_return, self).create(cr, uid, values, context=context)
         if context and 'statement_line_id' in context:
             """"UTP-482 if statment line of Operational Advance,
             is linked to a PO, automatically adding PO invoices
@@ -213,13 +214,11 @@ class wizard_cash_return(osv.osv_memory):
                         po_r = po_obj.read(cr, uid,
                                             [st_line.cash_register_op_advance_po_id.id],
                                             ['invoice_ids'], context)
-                        #~ if po_r:
-                            #~ print 'wizard po invoices', po_r[0]['invoice_ids']
-                            #~ for invoice_id in po_r[0]['invoice_ids']:
-                                #~ context['po_op_advance_auto_add_invoice_id'] = invoice_id
-                                #~ self.action_add_invoice(cr, uid, ids, context=context)
-            
-        return super(wizard_cash_return, self).create(cr, uid, values, context=context)
+                        if po_r:
+                            for invoice_id in po_r[0]['invoice_ids']:
+                                context['po_op_advance_auto_add_invoice_id'] = invoice_id
+                                self.action_add_invoice(cr, uid, [id], context=context)
+        return id
 
     def onchange_returned_amount(self, cr, uid, ids, amount=0.0, invoices=None, advances=None, display_invoice=None, context=None):
         """
@@ -381,10 +380,20 @@ class wizard_cash_return(osv.osv_memory):
         """
         Add some invoice elements in the invoice_line_ids field
         """
-        #~ context['po_op_advance_auto_add_invoice_id'] = invoice_id
-        
         wizard = self.browse(cr, uid, ids[0], context=context)
-        invoice = wizard.invoice_id
+        if context and 'po_op_advance_auto_add_invoice_id' in context:
+            """"UTP-482 if statment line of Operational Advance,
+            is linked to a PO, automatically adding PO invoices
+            (force user to use invoices for this cash return)"""
+            auto_add = True
+            invoice_obj = self.pool.get('account.invoice')
+            invoice = invoice_obj.browse(cr, uid, context['po_op_advance_auto_add_invoice_id'], context)
+            if not invoice:
+                return
+        else:
+            # default behaviour
+            auto_add = False
+            invoice = wizard.invoice_id
         to_write = {}
         new_lines = []
         total = 0.0
@@ -436,15 +445,17 @@ class wizard_cash_return(osv.osv_memory):
                 to_write['invoice_id'] = False
                 # write changes in the wizard
                 self.write(cr, uid, ids, to_write, context=context)
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'wizard.cash.return',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_id': ids[0],
-            'context': context,
-            'target': 'new',
-        }
+        
+        if not auto_add:
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'wizard.cash.return',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'context': context,
+                'target': 'new',
+            }
 
     def clean_invoices(self, cr, uid, ids, context=None):
         """
