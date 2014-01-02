@@ -2497,13 +2497,10 @@ class purchase_order_line(osv.osv):
 
         # This field is used to identify the FO PO line between 2 instances of the sync
         'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
-<<<<<<< TREE
         'external_ref': fields.char(size=256, string='Ext. Ref.'),
         'project_ref': fields.char(size=256, string='Project Ref.'),
         'select_fo': fields.many2one('sale.order', string='FO'),
-=======
         'has_to_be_resourced': fields.boolean(string='Has to be re-sourced'),
->>>>>>> MERGE-SOURCE
     }
 
     _defaults = {
