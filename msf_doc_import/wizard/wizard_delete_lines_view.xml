@@ -14,7 +14,7 @@
                     <field name="linked_field_name" invisible="True" />
                     <field name="qty_field" invisible="True" />
                     <separator colspan="4" string="Lines to remove" />
-                    <field name="line_ids" colspan="4" nolabel="1" context="{'from_delete_wizard': True}" />
+                    <field name="line_ids" colspan="4" nolabel="1" context="{'from_delete_wizard': True}" mode="tree" />
                     <separator colspan="4" string="Actions" />
                     <group colspan="4" col="4" >
                         <button special="cancel" icon="gtk-cancel" string="Close window" />
@@ -102,7 +102,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="99" />
             <field name="arch" type="xml">
-                <tree string="Stock moves to remove">
+                <tree string="Stock moves to remove" noteditable="True" >
                     <field name="product_id" />
                     <field name="product_qty" />
                     <field name="product_uom" />
@@ -143,7 +143,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="99" />
             <field name="arch" type="xml">
-                <tree string="Automatic supply lines to remove">
+                <tree string="Automatic supply lines to remove" noteditable="True" >
                     <field name="product_id" />
                     <field name="product_qty" />
                     <field name="product_uom_id" />
@@ -157,7 +157,7 @@
             <field name="type">search</field>
             <field name="priority" eval="99" />
             <field name="arch" type="xml">
-                <tree string="Automatic supply lines to remove">
+                <tree string="Automatic supply lines to remove" noteditable="True">
                     <field name="product_id" />
                     <field name="product_qty" />
                 </tree>
@@ -171,7 +171,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="99" />
             <field name="arch" type="xml">
-                <tree string="Threshold value lines to remove">
+                <tree string="Threshold value lines to remove" noteditable="True">
                     <field name="product_id" />
                     <field name="product_uom_id" />
                     <field name="fixed_threshold_value" invisible="context.get('compute_method') != 'fixed'" />
@@ -201,7 +201,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="99" />
             <field name="arch" type="xml">
-                <tree string="Stock inventory lines to remove">
+                <tree string="Stock inventory lines to remove" noteditable="True">
                     <field name="product_id" />
                     <field name="location_id" />
                     <field name="prod_lot_id" />
@@ -237,7 +237,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="99" />
             <field name="arch" type="xml">
-                <tree string="Initial stock inventory lines to remove">
+                <tree string="Initial stock inventory lines to remove" noteditable="True">
                     <field name="product_id" />
                     <field name="average_cost" />
                     <field name="currency_id" />
@@ -276,7 +276,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="99" />
             <field name="arch" type="xml">
-                <tree string="Real average consumption line to delete">
+                <tree string="Real average consumption line to delete" noteditable="True">
                     <field name="product_id" />
                     <field name="consumed_qty" />
                     <field name="uom_id" />
@@ -309,7 +309,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="99" />
             <field name="arch" type="xml">
-                <tree string="Monthly review consumption line to delete">
+                <tree string="Monthly review consumption line to delete" noteditable="True">
                     <field name="name" />
                     <field name="amc" />
                     <field name="fmc" />

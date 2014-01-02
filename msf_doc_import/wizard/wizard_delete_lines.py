@@ -23,6 +23,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
+from lxml import etree
+
 
 # DOCUMENT DATA dict : {'document.model': ('document.line.model',
 #                                          'field linked to document.model on document.line.model',
@@ -301,13 +303,30 @@ def delete_fields_view_get(self, cr, uid, view_id, view_type, context=None):
 
     return res
 
+def noteditable_fields_view_get(res, view_type, context=None):
+    '''
+    Make the list of lines not editable
+    '''
+    if context is None:
+        context = {}
+
+    if context.get('from_delete_wizard') and view_type == 'tree':
+        root = etree.fromstring(res['arch'])
+        fields = root.xpath('/tree')
+        for field in fields:
+            root.set('noteditable', 'True')
+        res['arch'] = etree.tostring(root)
+
+    return res
+
 
 class product_list_line(osv.osv):
     _inherit = 'product.list.line'
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        return super(product_list_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(product_list_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return noteditable_fields_view_get(res, view_type, context)
 
 
 class claim_product_line(osv.osv):
@@ -315,7 +334,8 @@ class claim_product_line(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        return super(claim_product_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(claim_product_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return noteditable_fields_view_get(res, view_type, context)
 
 
 class purchase_order_line(osv.osv):
@@ -323,7 +343,8 @@ class purchase_order_line(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        return super(purchase_order_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(purchase_order_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return noteditable_fields_view_get(res, view_type, context)
 
 
 class composition_item(osv.osv):
@@ -331,7 +352,8 @@ class composition_item(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        return super(composition_item, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(composition_item, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return noteditable_fields_view_get(res, view_type, context)
 
 
 class tender_line(osv.osv):
@@ -339,7 +361,8 @@ class tender_line(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        return super(tender_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(tender_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return noteditable_fields_view_get(res, view_type, context)
 
 
 class sale_order_line(osv.osv):
@@ -347,7 +370,8 @@ class sale_order_line(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        return super(sale_order_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(sale_order_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return noteditable_fields_view_get(res, view_type, context)
 
 
 class supplier_catalogue_line(osv.osv):
@@ -355,7 +379,8 @@ class supplier_catalogue_line(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        return super(supplier_catalogue_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(supplier_catalogue_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return noteditable_fields_view_get(res, view_type, context)
 
 
 class stock_move(osv.osv):
@@ -363,7 +388,8 @@ class stock_move(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        return super(stock_move, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(stock_move, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return noteditable_fields_view_get(res, view_type, context)
 
 
 class stock_warehouse_automatic_supply_line(osv.osv):
@@ -371,7 +397,8 @@ class stock_warehouse_automatic_supply_line(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        return super(stock_warehouse_automatic_supply_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(stock_warehouse_automatic_supply_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return noteditable_fields_view_get(res, view_type, context)
 
 
 class stock_warehouse_order_cycle_line(osv.osv):
@@ -379,7 +406,8 @@ class stock_warehouse_order_cycle_line(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        return super(stock_warehouse_order_cycle_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(stock_warehouse_order_cycle_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return noteditable_fields_view_get(res, view_type, context)
 
 
 class threshold_value_line(osv.osv):
@@ -387,7 +415,8 @@ class threshold_value_line(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        return super(threshold_value_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(threshold_value_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return noteditable_fields_view_get(res, view_type, context)
 
 
 class stock_inventory_line(osv.osv):
@@ -395,7 +424,8 @@ class stock_inventory_line(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        return super(stock_inventory_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(stock_inventory_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return noteditable_fields_view_get(res, view_type, context)
 
 
 class initial_stock_inventory_line(osv.osv):
@@ -403,7 +433,8 @@ class initial_stock_inventory_line(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        return super(initial_stock_inventory_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(initial_stock_inventory_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return noteditable_fields_view_get(res, view_type, context)
 
 
 class real_average_consumption_line(osv.osv):
@@ -411,7 +442,8 @@ class real_average_consumption_line(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        return super(real_average_consumption_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(real_average_consumption_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return noteditable_fields_view_get(res, view_type, context)
 
 
 class monthly_review_consumption_line(osv.osv):
@@ -419,7 +451,8 @@ class monthly_review_consumption_line(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        return super(monthly_review_consumption_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(monthly_review_consumption_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return noteditable_fields_view_get(res, view_type, context)
 
 
 product_list_line()
@@ -480,6 +513,11 @@ class wizard_delete_lines(osv.osv_memory):
             res['to_remove_type'] = DOCUMENT_DATA.get(context.get('active_model'))[0]
             res['linked_field_name'] = DOCUMENT_DATA.get(context.get('active_model'))[1]
             res['qty_field'] = DOCUMENT_DATA.get(context.get('active_model'))[3]
+
+        if 'active_id' in context and 'active_model' in context and context.get('active_model') in DOCUMENT_DATA:
+            line_field = DOCUMENT_DATA.get(context.get('active_model'))[2]
+            lines = self.pool.get(res['initial_doc_type']).read(cr, uid, res['initial_doc_id'], [line_field], context=context)
+            res['line_ids'] = lines[line_field]
 
         return res
 
@@ -562,6 +600,5 @@ class wizard_delete_lines(osv.osv_memory):
                                  'domain': "%s" % domain})
 
         return res
-    
-wizard_delete_lines()
 
+wizard_delete_lines()
