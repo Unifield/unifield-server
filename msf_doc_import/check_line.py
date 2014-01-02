@@ -179,7 +179,7 @@ def compute_kit_value(cr, uid, **kwargs):
                 if kit_ids:
                     kit_id = kit_ids[0]
                 else:
-                    error_list.append(_('The Kit "%s" does not exist for this product.' % kit_name))
+                    error_list.append(_('The Kit "%s" does not exist for this product.') % (kit_name,))
         else:
             msg = _('The Kit Name has to be a string')
         if not kit_name:
@@ -313,6 +313,9 @@ def quantity_value(**kwargs):
                 product_qty = row.cells[cell_nb].data
             else:
                 error_list.append(_('The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default.'))
+            if product_qty <= 0.00:
+                error_list.append(_('The Product Quantity is required to be greater than 0, it is set to 1 by default'))
+                product_qty = 1.00
     # if the cell is empty
     except IndexError:
         warning_list.append(_('The Product Quantity was not set. It is set to 1 by default.'))

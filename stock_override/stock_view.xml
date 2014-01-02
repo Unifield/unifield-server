@@ -346,6 +346,7 @@
                                     <field name="date" string="Actual Move Date"/>
                                     <field name="state"/>
                                     <field name="fake_state" invisible="1"/>
+                                    <field name="from_wkf" invisible="1" />
                                     <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" />
                                     <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                     <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
@@ -358,7 +359,10 @@
                                     <field name="expired_lot" invisible="1" />
                                     <field name="inactive_product" invisible="1" />
                                     <field name="to_correct_ok" invisible="1" />
-                    				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                                    <button name="call_cancel_wizard" icon="gtk-del" string="Cancel &amp; Resource" type="object" 
+                                            confirm="Do you really want to delete selected record ?"
+                                           attrs="{'invisible': ['|', ('from_wkf', '=', False), ('fake_state', 'in', ('cancel', 'done'))]}" />
                                 </tree>
 
                                 <form string="Stock Moves">
@@ -570,7 +574,8 @@
                                     <field name="ssl_check" invisible="True"/>
                                     <field name="dg_check"/>
                                     <field name="np_check"/>
-                    				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                                    <button name="call_cancel_wizard" type="object" string="Cancel" attrs="{'invisible': [('fake_state', 'in', ('cancel', 'done'))]}" icon="gtk-del" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
@@ -816,7 +821,7 @@
                                 context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
                                 on_change="onchange_move()"
                                 >
-                                <tree colors="grey:scrapped==True; red: inactive_product == True" string="Stock Moves" noteditable="fake_state=='assigned'" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
+                                <tree colors="grey:scrapped==True; red: inactive_product == True or product_tbd == True" string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel')" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
                                     <field name="line_number"/>
                                     <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"/>
                                     <field name="composition_list_id"/>
@@ -849,16 +854,18 @@
                                     <field name="inactive_product" invisible="1" />
                     				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                     <button name="%(stock.action_partial_move_server)d" string="Process" type="action" states="confirmed,assigned" icon="gtk-go-forward" invisible="1"/>
+                                    <button name="call_cancel_wizard" type="object" string="Cancel" states="draft,assigned,confirmed" icon="gtk-del" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
                                         <separator colspan="4" string="Move Information"/>
                                         <field name="name" invisible="1" colspan="4"/>
                                         <field name="from_wkf_line" invisible="1" />
+                                        <field name="product_tbd" invisible="1" />
                                         <field name="product_id"
                                             context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True, 'available_for_restriction': 'picking', 'search_default_not_restricted': 1}" 
                                             on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,parent.type, purchase_line_id, True)"
-                                            attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
+                                            attrs="{'readonly': ['|', '&amp;', ('from_wkf_line', '=', True), ('product_tbd', '=', False), ('state', '=', 'assigned')]}"
                                             colspan="4"
                                              />
                                         <field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"
@@ -936,9 +943,11 @@
                                 <field name="state_hidden"/>
                                 <button name="set_delivered" icon="gtk-apply" type="object" string="Confirm Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True)]}"/>
                                 <field name="cross_docking_ok" invisible="1"/>
-                                <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>
+                                <!--<button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>-->
+                                <button name="call_cancel_wizard" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel" type="object" />
                                 <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                 <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
+                                <button name="convert_to_pick" states="draft,confirmed,assigned" string="Convert to Picking Ticket" type="object" icon="gtk-convert" />
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward" help="Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available"/>
                                 <field name="certificate_donation" invisible="1"/>
@@ -1082,6 +1091,44 @@
             <field name="inherit_id" ref="stock.view_product_standard_price_form" />
             <field name="arch" type="xml">
                 <xpath expr="//button[@string='Update']" position="replace" />
+            </field>
+        </record>
+
+        <record id="stock_picking_cancel_wizard" model="ir.ui.view">
+            <field name="name">stock.picking.cancel.wizard</field>
+            <field name="model">stock.picking.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Cancel Picking">
+                    <group colspan="4" col="1">                                 
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">If you click on 'Cancel &amp; Resource' button, all lines of this delivery OUT attached to a Field order or an Internal Request will be re-sourced. All lines or quantities already processed wouldn't be re-sourced.</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" />
+                    <button name="just_cancel" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="stock_move_cancel_wizard_form_view" model="ir.ui.view">
+            <field name="name">stock.move.cancel.wizard.form.view</field>
+            <field name="model">stock.move.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Cancel move">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px">Would you re-source the need sourced by this stock move ?</h4>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" colspan="4" />
+                    <button name="just_cancel" string="No" type="object" icon="gtk-execute" colspan="2" />
+                    <button name="cancel_and_resource" string="Yes" type="object" icon="gtk-execute" colspan="2" />
+                </form>
             </field>
         </record>
 

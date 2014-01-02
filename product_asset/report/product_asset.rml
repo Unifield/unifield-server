@@ -165,10 +165,10 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <para style="terp_header">Asset Form N° [[ reportAsset.name ]] <font face="Helvetica" size="10.0">(</font><font face="Helvetica" size="10.0">[[ reportAsset.asset_type_id.name ]]</font><font face="Helvetica" size="10.0">)</font></para>
+    <para style="terp_header">Asset Form N° [[ reportAsset.name ]] <font face="Helvetica" size="10.0"></font><font face="Helvetica" size="10.0">[[ get_type(reportAsset) ]]</font><font face="Helvetica" size="10.0"></font></para>
     <para style="P7">
       <font face="Helvetica">Product</font>
-      <font face="Helvetica">: [[ reportAsset.product_id.name ]]</font>
+      <font face="Helvetica">: [[ get_product_name(reportAsset) ]]</font>
     </para>
     <blockTable colWidths="132.0,134.0,135.0,135.0" style="Table2">
       <tr>
@@ -238,7 +238,7 @@
           <para style="P10">Value</para>
         </td>
         <td>
-          <para style="terp_default_8">[[ str(reportAsset.invo_value) + ' ' + reportAsset.invo_currency ]]</para>
+          <para style="terp_default_8">[[ get_value(reportAsset) ]]</para>
         </td>
       </tr>
       <tr>

@@ -127,14 +127,15 @@
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="account_commitment_tree"/>
             <field name="search_view_id" ref="account_commitment_search"/>
-            <field name="context">{'search_default_exceptdone': 1}</field>
+            <field name="context">{'search_default_exceptdone': 1, 'target_filename_prefix': 'Commitment Vouchers'}</field>
         </record>
 
         <record model="ir.actions.act_window" id="action_engagement_line_tree">
             <field name="res_model">account.analytic.line</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="context">{'search_default_engagements': 1, 'display_fp': True}</field>
+            <field name="domain">[('account_id.category', '=', 'FUNDING')]</field>
+            <field name="context">{'search_default_engagements': 1, 'display_fp': True, 'target_filename_prefix': 'Commitment Lines'}</field>
         </record>
 
         <record id="action_commitment_voucher_engagement_lines_search" model="ir.actions.server">

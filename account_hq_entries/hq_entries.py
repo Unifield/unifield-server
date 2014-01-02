@@ -23,274 +23,9 @@
 
 from osv import osv
 from osv import fields
-from time import strftime
 from tools.translate import _
 from lxml import etree
 import netsvc
-
-class hq_entries_validation_wizard(osv.osv_memory):
-    _name = 'hq.entries.validation.wizard'
-
-    def create_move(self, cr, uid, ids, period_id=False, currency_id=False, date=None):
-        """
-        Create a move with given hq entries lines
-        Return created lines (except counterpart lines)
-        """
-        # Some verifications
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if not period_id:
-            raise osv.except_osv(_('Error'), _('Period is missing!'))
-        if not currency_id:
-            raise osv.except_osv(_('Error'), _('Currency is missing!'))
-        if not date:
-            date = strftime('%Y-%m-%d')
-        # Prepare some values
-        res = {}
-        counterpart_account_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.counterpart_hq_entries_default_account and \
-            self.pool.get('res.users').browse(cr, uid, uid).company_id.counterpart_hq_entries_default_account.id or False
-        if not counterpart_account_id:
-            raise osv.except_osv(_('Warning'), _('Default counterpart for HQ Entries is not set. Please configure it to Company Settings.'))
-
-        private_fund_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-        if ids:
-            # prepare some values
-            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'hq'),
-                                                                            ('is_current_instance', '=', True)])
-            if not journal_ids:
-                raise osv.except_osv(_('Warning'), _('No HQ journal found!'))
-            journal_id = journal_ids[0]
-            # create move
-            move_id = self.pool.get('account.move').create(cr, uid, {
-                'date': date,
-                'document_date': date,
-                'journal_id': journal_id,
-                'period_id': period_id,
-            })
-            total_debit = 0
-            total_credit = 0
-            
-            # Check if document_date is the same as all lines
-            for line in self.pool.get('hq.entries').read(cr, uid, ids, ['date', 'free_1_id', 'free_2_id', 'name', 'amount', 'account_id_first_value', 
-                'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id', 'destination_id', 'document_date', 
-                'destination_id_first_value', 'ref']):
-                account_id = line.get('account_id_first_value', False) and line.get('account_id_first_value')[0] or False
-                if not account_id:
-                    raise osv.except_osv(_('Error'), _('An account is missing!'))
-                account = self.pool.get('account.account').browse(cr, uid, account_id)
-                # create new distribution (only for expense accounts)
-                distrib_id = False
-                cc_id = line.get('cost_center_id_first_value', False) and line.get('cost_center_id_first_value')[0] or (line.get('cost_center_id') and line.get('cost_center_id')[0]) or False
-                fp_id = line.get('analytic_id', False) and line.get('analytic_id')[0] or False
-                if line['cost_center_id'] != line['cost_center_id_first_value'] or line['account_id_first_value'] != line['account_id']:
-                    fp_id = private_fund_id
-                f1_id = line.get('free1_id', False) and line.get('free1_id')[0] or False
-                f2_id = line.get('free2_id', False) and line.get('free2_id')[0] or False
-                destination_id = (line.get('destination_id_first_value') and line.get('destination_id_first_value')[0]) or (account.default_destination_id and account.default_destination_id.id) or False
-                distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
-                if distrib_id:
-                    common_vals = {
-                        'distribution_id': distrib_id,
-                        'currency_id': currency_id,
-                        'percentage': 100.0,
-                        'date': line.get('date', False) or current_date,
-                        'source_date': line.get('date', False) or current_date,
-                        'destination_id': destination_id,
-                    }
-                    common_vals.update({'analytic_id': cc_id,})
-                    self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
-                    common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id})
-                    self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
-                    del common_vals['cost_center_id']
-                    del common_vals['destination_id']
-                    if f1_id:
-                        common_vals.update({'analytic_id': f1_id,})
-                        self.pool.get('free.1.distribution.line').create(cr, uid, common_vals)
-                    if f2_id:
-                        common_vals.update({'analytic_id': f2_id})
-                        self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
-                vals = {
-                    'account_id': account_id,
-                    'period_id': period_id,
-                    'journal_id': journal_id,
-                    'date': line.get('date'),
-                    'date_maturity': line.get('date'),
-                    'document_date': line.get('document_date'),
-                    'move_id': move_id,
-                    'analytic_distribution_id': distrib_id,
-                    'name': line.get('name', ''),
-                    'currency_id': currency_id,
-                    'partner_txt': line.get('partner_txt', ''),
-                    'reference': line.get('ref', '')
-                }
-                # Fetch debit/credit
-                debit = 0.0
-                credit = 0.0
-                amount = line.get('amount', 0.0)
-                if amount < 0.0:
-                    credit = abs(amount)
-                else:
-                    debit = abs(amount)
-                vals.update({'debit_currency': debit, 'credit_currency': credit,})
-                move_line_id = self.pool.get('account.move.line').create(cr, uid, vals, context={}, check=False)
-                res[line['id']] = move_line_id
-                # Increment totals
-                total_debit += debit
-                total_credit += credit
-            # counterpart line
-            counterpart_vals = {}
-            account_ids = self.pool.get('account.account').search(cr, uid, [('id', '=', counterpart_account_id)])
-            if account_ids:
-                counterpart_vals.update({'account_id': account_ids[0],})
-            # vals
-            counterpart_vals.update({
-                'period_id': period_id,
-                'journal_id': journal_id,
-                'move_id': move_id,
-                'date': date,
-                'date_maturity': date,
-                'document_date': date,
-                'name': 'HQ Entry Counterpart',
-                'currency_id': currency_id,
-            })
-            counterpart_debit = 0.0
-            counterpart_credit = 0.0
-            if (total_debit - total_credit) < 0:
-                counterpart_debit = abs(total_debit - total_credit)
-            else:
-                counterpart_credit = abs(total_debit - total_credit)
-            counterpart_vals.update({'debit_currency': counterpart_debit, 'credit_currency': counterpart_credit,})
-            self.pool.get('account.move.line').create(cr, uid, counterpart_vals, context={}, check=False)
-            # Post move
-            self.pool.get('account.move').post(cr, uid, [move_id])
-        return res
-
-    def validate(self, cr, uid, ids, context=None):
-        """
-        Validate all given lines (in context)
-        """
-        # Some verifications
-        if not context or not context.get('active_ids', False):
-            return False
-        active_ids = context.get('active_ids')
-        if isinstance(active_ids, (int, long)):
-            active_ids = [active_ids]
-        # Fetch some data
-        ana_line_obj = self.pool.get('account.analytic.line')
-        distrib_fp_line_obj = self.pool.get('funding.pool.distribution.line')
-        distrib_cc_line_obj = self.pool.get('cost.center.distribution.line')
-        # Search an analytic correction journal
-        acor_journal_id = False
-        acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'),
-                                                                                      ('is_current_instance', '=', True)])
-        if acor_journal_ids:
-            acor_journal_id = acor_journal_ids[0]
-        # Tag active_ids as user validated
-        to_write = {}
-        account_change = []
-        cc_change = []
-        cc_account_change = []
-        current_date = strftime('%Y-%m-%d')
-        for line in self.pool.get('hq.entries').browse(cr, uid, active_ids, context=context):
-            #UF-1956: interupt validation if currency is inactive
-            if line.currency_id.active is False:
-                raise osv.except_osv(_('Warning'), _('Currency %s is not active!') % (line.currency_id and line.currency_id.name or '',))
-            if line.analytic_state != 'valid':
-                raise osv.except_osv(_('Warning'), _('Invalid analytic distribution!'))
-            if not line.user_validated:
-                to_write.setdefault(line.currency_id.id, {}).setdefault(line.period_id.id, {}).setdefault(line.date, []).append(line.id)
-
-                if line.account_id.id != line.account_id_first_value.id:
-                    if line.cost_center_id.id != line.cost_center_id_first_value.id or line.destination_id.id != line.destination_id_first_value.id:
-                        cc_account_change.append(line)
-                    else:
-                        account_change.append(line)
-                elif line.cost_center_id.id != line.cost_center_id_first_value.id or line.destination_id.id != line.destination_id_first_value.id:
-                    if line.cost_center_id_first_value and line.cost_center_id_first_value.id:
-                        cc_change.append(line)
-        all_lines = {}
-        for currency in to_write:
-            for period in to_write[currency]:
-                for date in to_write[currency][period]:
-                    lines = to_write[currency][period][date]
-                    write = self.create_move(cr, uid, lines, period, currency, date)
-                    all_lines.update(write)
-                    if write:
-                        self.pool.get('hq.entries').write(cr, uid, write.keys(), {'user_validated': True}, context=context)
-
-        for line in account_change:
-            corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
-                    'funding_pool_lines': [(0, 0, {
-                            'percentage': 100,
-                            'analytic_id': line.analytic_id.id,
-                            'cost_center_id': line.cost_center_id.id,
-                            'currency_id': line.currency_id.id,
-                            'source_date': line.date,
-                            'destination_id': line.destination_id.id,
-                        })]
-                    })
-            self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id, corrected_distrib_id)
-
-        for line in cc_change:
-            # actual distrib_id
-            distrib_id = self.pool.get('account.move.line').read(cr, uid, all_lines[line.id], ['analytic_distribution_id'])['analytic_distribution_id'][0]
-            # update the distribution
-            distrib_fp_lines = distrib_fp_line_obj.search(cr, uid, [('cost_center_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
-            distrib_fp_line_obj.write(cr, uid, distrib_fp_lines, {'cost_center_id': line.cost_center_id.id, 'source_date': line.date, 'destination_id': line.destination_id.id})
-            distrib_cc_lines = distrib_cc_line_obj.search(cr, uid, [('analytic_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
-            distrib_cc_line_obj.write(cr, uid, distrib_cc_lines, {'analytic_id': line.cost_center_id.id, 'source_date': line.date, 'destination_id': line.destination_id.id})
-
-            # reverse ana lines
-            fp_old_lines = ana_line_obj.search(cr, uid, [
-                ('cost_center_id', '=', line.cost_center_id_first_value.id),
-                ('destination_id', '=', line.destination_id_first_value.id),
-                ('move_id', '=', all_lines[line.id])
-                ])
-            # UTP-943: Add original date as reverse date
-            res_reverse = ana_line_obj.reverse(cr, uid, fp_old_lines, posting_date=line.date)
-            # Give them analytic correction journal (UF-1385 in comments)
-            if not acor_journal_id:
-                raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
-            ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
-            # create new lines
-            if not fp_old_lines: # UTP-546 - this have been added because of sync that break analytic lines generation
-                continue
-            cor_ids = ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 
-                'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id, 'journal_id': acor_journal_id, 'last_correction_id': fp_old_lines[0]})
-            # update new ana line
-            ana_line_obj.write(cr, uid, cor_ids, {'last_corrected_id': fp_old_lines[0]})
-            # update old ana lines
-            ana_line_obj.write(cr, uid, fp_old_lines, {'is_reallocated': True})
-
-        for line in cc_account_change:
-            # call correct_account with a new arg: new_distrib
-            corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
-                    'cost_center_lines': [(0, 0, {
-                            'percentage': 100, 
-                            'analytic_id': line.cost_center_id.id,
-                            'currency_id': line.currency_id.id,
-                            'source_date': line.date,
-                            'destination_id': line.destination_id.id,
-                        })],
-                    'funding_pool_lines': [(0, 0, {
-                            'percentage': 100,
-                            'analytic_id': line.analytic_id.id,
-                            'cost_center_id': line.cost_center_id.id,
-                            'currency_id': line.currency_id.id,
-                            'source_date': line.date,
-                            'destination_id': line.destination_id.id,
-                        })]
-                })
-            self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id, corrected_distrib_id)
-
-        # Write lines and validate them
-        # Return HQ Entries Tree View in current view
-        action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_hq_entries', 'action_hq_entries_tree')
-        res = self.pool.get('ir.actions.act_window').read(cr, uid, action_id[1], [], context=context)
-        res['target'] = 'crush'
-        return res
-
-hq_entries_validation_wizard()
 
 class hq_entries(osv.osv):
     _name = 'hq.entries'
@@ -378,7 +113,7 @@ class hq_entries(osv.osv):
                 account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
                 if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%)') % (line.id or '', line.destination_id.code or '', account.code or ''))
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%s)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue
             else: # CASE 4/
                 # C Check, except B
@@ -395,8 +130,42 @@ class hq_entries(osv.osv):
                 account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
                 if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%)') % (line.id or '', line.destination_id.code or '', account.code or ''))
+                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%s)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue
+        return res
+
+    def _get_cc_changed(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Return True if the CC value is different from the original one or if this line is a split from an original entry that have a different cost center value
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = {}
+        for e in self.browse(cr, uid, ids):
+            res[e.id] = False
+            if e.cost_center_id.id != e.cost_center_id_first_value.id:
+                res[e.id] = True
+            elif e.original_id and e.original_id.cost_center_id.id != e.cost_center_id.id:
+                res[e.id] = True
+        return res
+
+    def _get_account_changed(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Return True if the account is different from the original one or if this line is a split from an original entry that have a different account value
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = {}
+        for e in self.browse(cr, uid, ids):
+            res[e.id] = False
+            if e.account_id.id != e.account_id_first_value.id:
+                res[e.id] = True
+            elif e.original_id and e.original_id.account_id.id != e.account_id.id:
+                res[e.id] = True
         return res
 
     _columns = {
@@ -410,8 +179,8 @@ class hq_entries(osv.osv):
         'date': fields.date("Posting Date", readonly=True),
         'partner_txt': fields.char("Third Party", size=255, readonly=True),
         'period_id': fields.many2one("account.period", "Period", readonly=True),
-        'name': fields.char('Description', size=255, readonly=True),
-        'ref': fields.char('Reference', size=255, readonly=True),
+        'name': fields.char('Description', size=255, required=True),
+        'ref': fields.char('Reference', size=255),
         'document_date': fields.date("Document Date", readonly=True),
         'currency_id': fields.many2one('res.currency', "Book. Currency", required=True, readonly=True),
         'amount': fields.float('Amount', readonly=True),
@@ -421,19 +190,207 @@ class hq_entries(osv.osv):
         'destination_id_first_value': fields.many2one('account.analytic.account', "Destination @import", required=True, readonly=True),
         'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
+        'is_original': fields.boolean("Is Original HQ Entry?", help="This line was split into other one.", readonly=True),
+        'is_split': fields.boolean("Is split?", help="This line comes from a split.", readonly=True),
+        'original_id': fields.many2one("hq.entries", "Original HQ Entry", help="The Original HQ Entry from which this line comes from."),
+        'split_ids': fields.one2many('hq.entries', 'original_id', "Split lines", help="All lines linked to this original HQ Entry."),
+        'cc_changed': fields.function(_get_cc_changed, method=True, type='boolean', string='Have Cost Center changed?', help="When you change the cost center from the initial value (from a HQ Entry or a Split line), so the Cost Center changed is True."),
+        'account_changed': fields.function(_get_account_changed, method=True, type='boolean', string='Have account changed?', help="When your entry have a different account from the initial one or from the original one."),
     }
 
     _defaults = {
         'user_validated': lambda *a: False,
         'amount': lambda *a: 0.0,
+        'is_original': lambda *a: False,
+        'is_split': lambda *a: False,
     }
 
-    
+    def split_forbidden(self, cr, uid, ids, context=None):
+        """
+        Split is forbidden for these lines:
+         - original one
+         - split one
+         - validated lines
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = False
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.is_original:
+                res = True
+                break
+            if line.is_split:
+                res = True
+                break
+            if line.user_validated == True:
+                res = True
+                break
+        return res
+
+    def get_linked_lines(self, cr, uid, ids, context=None):
+        """
+        Give all lines (split/original) linked to the given ones
+        """
+        res = set()
+        if context is None:
+            context = {}
+
+        def add_split(original_browse):
+            for split in original_browse.split_ids:
+                res.add(split.id)
+
+        for line in self.browse(cr, uid, ids, context=context):
+            res.add(line.id)
+            if line.is_original:
+                add_split(line)
+            if line.is_split:
+                # add original one
+                res.add(line.original_id.id)
+                # then other split lines
+                add_split(line.original_id)
+        return list(res)
+
+    def unsplit_allowed_lines(self, cr, uid, ids, context=None):
+        """
+        You can unsplit a line if these one have the following criteria:
+         - line is a draft one
+         - line is original OR a split one
+        This method return so the lines that can be unsplit
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = set()
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.user_validated == False and (line.is_original or line.is_split):
+                # First add original and split linked lines
+                for el in self.get_linked_lines(cr, uid, [line.id]):
+                    res.add(el)
+                # Then add the line
+                res.add(line.id)
+        return list(res)
+
+    def get_split_wizard(self, cr, uid, ids, context=None):
+        """
+        Launch HQ Entry Split Wizard
+        """
+        # Some checks
+        if not context or not context.get('active_ids', False):
+            raise osv.except_osv(_('Error'), _('No line found!'))
+        # Prepare some values
+        vals = {}
+        ids = context.get('active_ids')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if len(ids) > 1:
+            raise osv.except_osv(_('Warning'), _('You can only split HQ Entries one by one!'))
+        original_id = ids[0]
+        original = self.browse(cr, uid, original_id, context=context)
+        # some lines are forbidden to be split:
+        if self.split_forbidden(cr, uid, ids, context=context):
+            raise osv.except_osv(_('Error'), _('This line cannot be split.'))
+        # Check if Original HQ Entry is valid (distribution state)
+        if original.analytic_state != 'valid':
+            raise osv.except_osv(_('Error'), _('You cannot split a HQ Entry which analytic distribution state is not valid!'))
+        original_amount = original.amount
+        vals.update({'original_id': original_id, 'original_amount': original_amount,})
+        wiz_id = self.pool.get('hq.entries.split').create(cr, uid, vals, context=context)
+        # Return view with register_line id
+        context.update({
+            'active_id': wiz_id,
+            'active_ids': [wiz_id],
+        })
+        return {
+            'name': _("HQ Entry Split"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'hq.entries.split',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'view_mode': 'form',
+            'view_type': 'form',
+            'context': context,
+        }
+
+    def get_unsplit_wizard(self, cr, uid, ids, context=None):
+        """
+        Open Unsplit wizard
+        """
+        # Some checks
+        if not context or not context.get('active_ids', False):
+            raise osv.except_osv(_('Error'), _('No selected line(s)!'))
+        # Prepare some values
+        vals = {}
+        if context is None:
+            context = {}
+        ids = context.get('active_ids')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Update vals
+        vals.update({'line_ids': [(6, 0, ids)], 'process_ids': [(6, 0, self.unsplit_allowed_lines(cr, uid, ids, context=context))]})
+        wiz_id = self.pool.get('hq.entries.unsplit').create(cr, uid, vals, context=context)
+        # Return view with register_line id
+        context.update({
+            'active_id': wiz_id,
+            'active_ids': [wiz_id],
+        })
+        return {
+            'name': _("HQ Entry Unsplit"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'hq.entries.unsplit',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'view_mode': 'form',
+            'view_type': 'form',
+            'context': context,
+        }
+
+    def get_validation_wizard(self, cr, uid, ids, context=None):
+        """
+        Open Validation wizard
+        """
+        # Some checks
+        if not context or not context.get('active_ids', False):
+            raise osv.except_osv(_('Error'), _('No selected line(s)!'))
+        # Prepare some values
+        vals = {}
+        if context is None:
+            context = {}
+        ids = context.get('active_ids')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Search lines that should be processed
+        # - exclude validated lines (user_validated = False)
+        # - search for original lines (get_linked_lines)
+        # - search for split linked lines (get_linked_lines)
+        process_ids = self.search(cr, uid, [('id', 'in', self.get_linked_lines(cr, uid, ids, context=context)), ('user_validated', '=', False)])
+        txt = _('Are you sure you want to post %d HQ entries ?') % (len(process_ids) or 0,)
+        # Update vals
+        vals.update({'line_ids': [(6, 0, ids)], 'process_ids': [(6, 0, process_ids)], 'txt': txt,})
+        wiz_id = self.pool.get('hq.entries.validation').create(cr, uid, vals, context=context)
+        # Return view with register_line id
+        context.update({
+            'active_id': wiz_id,
+            'active_ids': [wiz_id],
+        })
+        return {
+            'name': _("HQ Entries Validation"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'hq.entries.validation',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'view_mode': 'form',
+            'view_type': 'form',
+            'context': context,
+        }
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
         Change funding pool domain in order to include MSF Private fund
         """
-        if not context:
+        if context is None:
             context = {}
         view = super(hq_entries, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         arch = etree.fromstring(view['arch'])
@@ -483,7 +440,7 @@ class hq_entries(osv.osv):
         """
         Change Expat salary account is not allowed
         """
-        if not context:
+        if context is None:
             context={}
         if 'account_id' in vals:
             account = self.pool.get('account.account').browse(cr, uid, [vals.get('account_id')])[0]
@@ -494,13 +451,20 @@ class hq_entries(osv.osv):
 
     def unlink(self, cr, uid, ids, context=None):
         """
-        Do not permit user to delete HQ Entries lines
+        Do not permit user to delete:
+         - validated HQ entries
+         - split entries
+         - original entries
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not context.get('from', False) or context.get('from') != 'code' and ids:
             if self.search(cr, uid, [('id', 'in', ids), ('user_validated', '=', True)]):
                 raise osv.except_osv(_('Error'), _('You cannot delete validated HQ Entries lines!'))
+            if self.search(cr, uid, [('id', 'in', ids), ('is_split', '=', True)]):
+                raise osv.except_osv(_('Error'), _('You cannot delete split entries!'))
+            if self.search(cr, uid, [('id', 'in', ids), ('is_original', '=', True)]):
+                raise osv.except_osv(_('Error'), _('You cannot delete original entries!'))
         return super(hq_entries, self).unlink(cr, uid, ids, context)
 
 hq_entries()

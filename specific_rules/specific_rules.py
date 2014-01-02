@@ -887,7 +887,7 @@ class stock_production_lot(osv.osv):
         
         for lot in self.browse(cr, uid, ids, context=context):
            # create revision object for each lot
-           version_number = lot.sequence_id.get_id(test='id', context=context)
+           version_number = lot.sequence_id.get_id(code_or_id='id', context=context)
            values = {'name': 'Auto Revision Logging',
                      'description': 'The batch number has been modified, this revision log has been created automatically.',
                      'date': time.strftime('%Y-%m-%d'),

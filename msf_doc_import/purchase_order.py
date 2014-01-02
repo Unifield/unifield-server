@@ -129,7 +129,7 @@ class purchase_order(osv.osv):
                 'res_id': export_id,
                 'view_type': 'form',
                 'view_mode': 'form',
-                'target': 'crush',
+                'target': 'same',
                 'context': context,
                 }
 
@@ -213,7 +213,7 @@ class purchase_order(osv.osv):
                 'res_id': export_id,
                 'view_type': 'form',
                 'view_mode': 'form',
-                'target': 'crush',
+                'target': 'same',
                 'context': context,
                 }
 

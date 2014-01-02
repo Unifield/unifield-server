@@ -19,7 +19,6 @@
                             <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="journal_id" domain="[('type', '=', 'bank'),('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)" select="1"/>
                             <newline/>
-                            <field name="date" select="1" on_change="onchange_date(date)"/>
                             <field name="period_id" readonly="1" domain="[('state', '=', 'draft')]"/>
                             <field name="currency" readonly="1"/>
                             <newline/>
@@ -66,6 +65,7 @@
                                         <field domain="[('journal_id','=',parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id" 
                                             on_change="onchange_account(account_id, parent.virtual_id)" 
                                             attrs="{'readonly': ['|','|', ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}" />
+                                        <field name="type_for_register" invisible="1"/>
                                         <field name="partner_type" 
                                             attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
@@ -141,6 +141,11 @@
                         </notebook>
                         <separator string="Comments"/>
                         <field name="notes" nolabel="1"/>
+                        <separator string="Dates"/>
+                        <group col="6" colspan="4">
+                           <field name="date" string="Opening Date" select="1" on_change="onchange_date(date)"/>
+                           <field name="closing_date" select="1" readonly="1"/>
+                        </group>
                         <separator string="State" />
                         <group col="8" colspan="4">
                             <field name="state" readonly="1"/>
@@ -684,6 +689,7 @@
                                     <field name="ref"/>
                                     <field domain="[('journal_id','=',parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id" 
                                         on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"/>
+                                    <field name="type_for_register" invisible="1"/>
                                     <field name="partner_type"
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
@@ -876,6 +882,8 @@
                         <field name="partner_id" select="1" string="3RD Party Partner"/>
                         <field name="employee_id" select="1" string="3RD Party Employee"/>
                         <field name="transfer_journal_id" select="1" string="3RD Party Journal"/>
+                        <field name="is_reconciled" select="1"/>
+                        <field name="reconcile_total_partial_id" select="1"/>
                         <newline/>
                     </xpath>
                 </data>
@@ -909,7 +917,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="1"/>
             <field name="arch" type="xml">
-                <tree string="Journal Items" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1">
+                <tree string="Journal Items" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1" hide_delete_button="1" >
                     <field name="is_corrigible" invisible="1"/>
                     <field name="have_an_historic" invisible="1"/>
                     <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard" 

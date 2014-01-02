@@ -99,21 +99,24 @@ class analytic_account(osv.osv):
         if not args:
             return []
         newargs = []
-        for arg in args:
-            if arg[1] != '=':
-                raise osv.except_osv(_('Error'), _('Operator not supported on field intermission_restricted!'))
-            if not isinstance(arg[2], (list, tuple)):
-                raise osv.except_osv(_('Error'), _('Operand not supported on field intermission_restricted!'))
-            if arg[2] and (arg[2][0] or arg[2][1]):
-                try:
-                    intermission = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                            'analytic_account_project_intermission')[1]
-                except ValueError:
-                    pass
-                if arg[2][2] == 'intermission':
-                    newargs.append(('id', '=', intermission))
-                else:
-                    newargs.append(('id', '!=', intermission))
+        
+        # UTP-952: THE FOLLOWING BLOCK GOT COMMENTED OUT, for the mentioned ticket, but please do not delete them, because they may take it back        
+        
+#        for arg in args:
+#            if arg[1] != '=':
+#                raise osv.except_osv(_('Error'), _('Operator not supported on field intermission_restricted!'))
+#            if not isinstance(arg[2], (list, tuple)):
+#                raise osv.except_osv(_('Error'), _('Operand not supported on field intermission_restricted!'))
+#            if arg[2] and (arg[2][0] or arg[2][1]):
+#                try:
+#                    intermission = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+#                            'analytic_account_project_intermission')[1]
+#                except ValueError:
+#                    pass
+#                if arg[2][2] == 'intermission':
+#                    newargs.append(('id', '=', intermission))
+#                else:
+#                    newargs.append(('id', '!=', intermission))
         return newargs
     
     _columns = {
@@ -410,6 +413,14 @@ class analytic_account(osv.osv):
                 if contract.state in ['soft_closed', 'hard_closed']:
                     res.append(aa.id)
         return res
+
+    def button_cc_clear(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'cost_center_ids':[(6, 0, [])]}, context=context)
+        return True
+
+    def button_dest_clear(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'tuple_destination_account_ids':[(6, 0, [])]}, context=context)
+        return True
 
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

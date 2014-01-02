@@ -359,9 +359,10 @@ class stock_move(osv.osv):
     _inherit = 'stock.move'
     
     def hook__create_chained_picking(self, cr, uid, pick_values, picking, context=None):
-        if not context:
+        if context is None:
             context = {}
             
+        pick_values = super(stock_move, self).hook__create_chained_picking(cr, uid, pick_values, picking)
         context.update({'from_chaining': True})
         if not 'reason_type_id' in pick_values:
             reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]

@@ -20,6 +20,8 @@
 ##############################################################################
 from osv import osv, fields
 import datetime
+from tools.translate import _
+
 
 class wizard_local_expenses(osv.osv_memory):
     _name = "wizard.local.expenses"
@@ -72,6 +74,8 @@ class wizard_local_expenses(osv.osv_memory):
         if wizard.booking_currency_id:
             data['form'].update({'booking_currency_id': wizard.booking_currency_id.id})
 
+        instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
+        data['target_filename'] = '%s_%s_%s' % (_('Local Expenses'), instance and instance.code or '', datetime.datetime.now().strftime('%Y%m%d'))
         return {'type': 'ir.actions.report.xml', 'report_name': 'local.expenses', 'datas': data}
 
 wizard_local_expenses()

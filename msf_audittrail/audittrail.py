@@ -520,6 +520,20 @@ class audittrail_log_line(osv.osv):
 #            res['arch'] = etree.tostring(xml_view)
         return res
 
+    def _get_report_name(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self_info = self.browse(cr, uid, ids[0], context)
+        name = self_info.object_id.name or ''
+        if self_info.res_id and self_info.object_id.model:
+            obj = self.pool.get(self_info.object_id.model)
+            if obj:
+                name_get = obj.name_get(cr, uid, [self_info.res_id])
+                if name_get and name_get[0]:
+                    name = name_get[0][1].replace('/','_')
+        return "LL_%s_%s" % (name, time.strftime('%Y%m%d'))
+
 audittrail_log_line()
 
 
@@ -686,7 +700,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
             log_sequence = self.pool.get('audittrail.log.sequence').search(cr, uid, [('model', '=', fct_object.model), ('res_id', '=', seq_res_id)])
             if log_sequence:
                 log_seq = self.pool.get('audittrail.log.sequence').browse(cr, uid, log_sequence[0]).sequence
-                log = log_seq.get_id(test='id')
+                log = log_seq.get_id(code_or_id='id')
             else:
                 # Create a new sequence
                 seq_pool = self.pool.get('ir.sequence')
@@ -704,7 +718,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
                 }
                 seq_id = seq_pool.create(cr, uid, seq)
                 self.pool.get('audittrail.log.sequence').create(cr, uid, {'model': fct_object.model, 'res_id': seq_res_id, 'sequence': seq_id})
-                log = self.pool.get('ir.sequence').browse(cr, uid, seq_id).get_id(test='id')
+                log = self.pool.get('ir.sequence').browse(cr, uid, seq_id).get_id(code_or_id='id')
 
 
         if field_id:

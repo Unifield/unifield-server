@@ -332,6 +332,46 @@ class purchase_order(osv.osv):
                 
         return True
 
+    def purchase_cancel(self, cr, uid, ids, context=None):
+        '''
+        Call the wizard to ask if you want to re-source the line
+        '''
+        line_obj = self.pool.get('purchase.order.line')
+        wiz_obj = self.pool.get('purchase.order.cancel.wizard')
+        wf_service = netsvc.LocalService("workflow")
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for po in self.browse(cr, uid, ids, context=context):
+            for l in po.order_line:
+                if line_obj.get_sol_ids_from_pol_ids(cr, uid, [l.id], context=context):
+                    wiz_id = wiz_obj.create(cr, uid, {'order_id': po.id}, context=context)
+                    return {'type': 'ir.actions.act_window',
+                            'res_model': 'purchase.order.cancel.wizard',
+                            'res_id': wiz_id,
+                            'view_type': 'form',
+                            'view_mode': 'form',
+                            'target': 'new',
+                            'context': context}
+
+            wf_service.trg_validate(uid, 'purchase.order', po.id, 'purchase_cancel', cr)
+
+        return True
+
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        No unlink for PO linked to a FO
+        '''
+        if self.get_so_ids_from_po_ids(cr, uid, ids, context=context):
+            raise osv.except_osv(_('Error'), _('You cannot remove a Purchase order that is linked to a Field Order or an Internal Request. Please cancel it instead.'))
+
+        return super(purchase_order, self).unlink(cr, uid, ids, context=context)
+
+
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
         Check restriction on products
@@ -670,11 +710,14 @@ class purchase_order(osv.osv):
                 if not distrib:
                     return True
                 
-                for cc_line in distrib.cost_center_lines:
-                    if is_intermission and cc_line.analytic_id.id != intermission_cc:
-                        cc_line.write({'analytic_id': intermission_cc})
-                    elif not is_intermission and cc_line.analytic_id.id == intermission_cc:
-                        raise osv.except_osv(_('Warning'), _("The PO partner type is not intermission, so you can not use the Cost Center Intermission in line: %s!") % (pol.name or '',))
+                # UTP-953: For intersection, the cc_intermission can also be used for all partner, so the block below is removed
+#                for cc_line in distrib.cost_center_lines:
+#                    if is_intermission and cc_line.analytic_id.id != intermission_cc:
+#                        # UTP-952: remove the default intermission cc
+#                        #cc_line.write({'analytic_id': intermission_cc})
+#                        pass
+#                    elif not is_intermission and cc_line.analytic_id.id == intermission_cc:
+#                        raise osv.except_osv(_('Warning'), _("The PO partner type is not intermission, so you can not use the Cost Center Intermission in line: %s!") % (pol.name or '',))
 
                 # Change distribution to be valid if needed by using those from header
                 if distrib and pol.analytic_distribution_state != 'valid':
@@ -863,6 +906,12 @@ stock moves which are already processed : '''
             for data in datas:
                 if data['order_id'] and data['order_id'][0] not in so_ids:
                     so_ids.append(data['order_id'][0])
+
+        for po in self.browse(cr, uid, ids, context=context):
+            for line in po.order_line:
+                if line.procurement_id and line.procurement_id.sale_id and line.procurement_id.sale_id.id not in so_ids:
+                    so_ids.append(line.procurement_id.sale_id.id)
+
         return so_ids
     
     def get_sol_ids_from_po_ids(self, cr, uid, ids, context=None):
@@ -992,6 +1041,7 @@ stock moves which are already processed : '''
         pol_obj = self.pool.get('purchase.order.line')
         so_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
+        move_obj = self.pool.get('stock.move')
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
@@ -1026,8 +1076,8 @@ stock moves which are already processed : '''
                                                                               db_date_format, context=context)
                     # we update the corresponding sale order line
                     sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
-                    # do not update Internal Requests
-                    if sol.order_id.procurement_request:
+                    # do not update Internal Requests with internal requestor location
+                    if sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage != 'customer':
                         continue
                     # {sol: pol}
                     # compute the price_unit value - we need to specify the date
@@ -1062,6 +1112,21 @@ stock moves which are already processed : '''
                                   }
                     # write the line
                     sol_obj.write(cr, uid, sol_ids, fields_dic, context=ctx)
+
+                    if sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage == 'customer' and line.procurement_id.move_id and not line.procurement_id.move_id.processed_stock_move:
+                        out_move_id = line.procurement_id.move_id
+                        if out_move_id.state == 'assigned':
+                            move_obj.cancel_assign(cr, uid, [out_move_id.id])
+                        elif out_move_id.state in ('cancel', 'done'):
+                            continue
+                        else:
+                            move_dic = {'product_id': line.product_id and line.product_id.id or False,
+                                        'name': line.name,
+                                        'product_uom': line.product_uom and line.product_uom.id or False,
+                                        'product_uos': line.product_uom and line.product_uom.id or False,
+                                        'product_qty': line.product_qty,
+                                        'product_uos_qty': line.product_qty,}
+                            move_obj.write(cr, uid, [out_move_id.id], move_dic, context=context)
 
             if store_to_call:
                 sol_obj._call_store_function(cr, uid, store_to_call, keys=None, bypass=False, context=context)
@@ -1556,13 +1621,17 @@ stock moves which are already processed : '''
         
         wf_service = netsvc.LocalService("workflow")
 
+        line_ids = []
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:
+                line_ids.append(line.id)
                 if line.procurement_id and line.procurement_id.move_id:
                     self.pool.get('stock.move').write(cr, uid, line.procurement_id.move_id.id, {'state': 'cancel'}, context=context)
                     if line.procurement_id.move_id.picking_id:
                         wf_service.trg_write(uid, 'stock.picking', line.procurement_id.move_id.picking_id.id, cr)
         
+        self.pool.get('purchase.order.line').cancel_sol(cr, uid, line_ids, context=context)
+
         return self.write(cr, uid, ids, {'state':'cancel'}, context=context)
 
     def wkf_confirm_cancel(self, cr, uid, ids, context=None):
@@ -2116,6 +2185,111 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def ask_unlink(self, cr, uid, ids, context=None):
+        '''
+        Call the unlink method for lines and if the PO becomes empty
+        ask the user if he wants to cancel the PO
+        '''
+        # Objects
+        proc_obj = self.pool.get('procurement.order')
+        wiz_obj = self.pool.get('purchase.order.line.unlink.wizard')
+
+        # Variables initialization
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line_id in ids:
+            sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line_id], context=context)
+            if sol_ids:
+                wiz_id = wiz_obj.create(cr, uid, {'line_id': line_id}, context=context)
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'purchase.order.line.unlink.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'res_id': wiz_id,
+                        'target': 'new',
+                        'context': context}
+
+        return self.unlink(cr, uid, ids, context=context)
+
+    def cancel_sol(self, cr, uid, ids, context=None):
+        '''
+        Re-source the FO line
+        '''
+        context = context or {}
+        sol_obj = self.pool.get('sale.order.line')
+        uom_obj = self.pool.get('product.uom')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        sol_to_update = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
+            for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
+                diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line.product_qty, sol.product_uom.id)
+                sol_to_update.setdefault(sol.id, 0.00)
+                sol_to_update[sol.id] += diff_qty
+                if line.has_to_be_resourced:
+                    sol_obj.add_resource_line(cr, uid, sol, False, diff_qty, context=context)
+
+        for sol in sol_to_update:
+            sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+
+        return True
+
+    def fake_unlink(self, cr, uid, ids, context=None):
+        '''
+        Cancel the line and re-source them
+        '''
+        proc_obj = self.pool.get('procurement.order')
+
+        if context is None:
+            context = {}
+        
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        proc_ids = []
+        purchase_ids = []
+        line_to_cancel = []
+
+        for line in self.browse(cr, uid, ids, context=context):
+            # Set the procurement orders to delete
+            # Set the list of linked purchase orders
+            if line.procurement_id:
+                proc_ids.append(line.procurement_id.id)
+            if line.order_id.id not in purchase_ids:
+                purchase_ids.append(line.order_id.id)
+
+            self.cancel_sol(cr, uid, [line.id], context=context)
+            # we want to skip resequencing because unlink is performed on merged purchase order lines
+            tmp_Resequencing = context.get('skipResequencing', False)
+            context['skipResequencing'] = True
+            self._update_merged_line(cr, uid, line.id, False, context=context)
+            context['skipResequencing'] = tmp_Resequencing
+
+#            if line.order_id.state == 'draft':
+            line_to_cancel.append(line.id)
+
+        # Cancel the listed procurement orders
+        for proc_id in proc_ids:
+            if not self.search(cr, uid, [('procurement_id', '=', proc_id)], context=context):
+                proc_obj.action_cancel(cr, uid, [proc_id])
+    
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        self.unlink(cr, uid, line_to_cancel, context=context)
+
+        # Check if we must ask the user to cancel the PO (no lines in PO)
+        #for order in self.pool.get('purchase.order').read(cr, uid, purchase_ids, ['order_line'], context=context):
+        #    if len(order['order_line']) == 0:
+        #        return self.pool.get('purchase.order.cancel.wizard').ask_unlink(cr, uid, order['id'], context=context)
+
+        return ids
+
     def unlink(self, cr, uid, ids, context=None):
         '''
         Update the merged line
@@ -2124,11 +2298,10 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+          
         # if the line is linked to a sale order line through procurement process,
         # the deletion is impossible
-        if self.get_sol_ids_from_pol_ids(cr, uid, ids, context=context):
-            raise osv.except_osv(_('Error'), _('You cannot delete a line which is linked to a Fo line.'))
+        # raise osv.except_osv(_('Error'), _('You cannot delete a line which is linked to a Fo line.'))
 
         for line_id in ids:
             # we want to skip resequencing because unlink is performed on merged purchase order lines
@@ -2224,6 +2397,7 @@ class purchase_order_line(osv.osv):
 
         # This field is used to identify the FO PO line between 2 instances of the sync
         'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
+        'has_to_be_resourced': fields.boolean(string='Has to be re-sourced'),
     }
 
     _defaults = {
@@ -2608,6 +2782,147 @@ class account_invoice(osv.osv):
 account_invoice()
 
 
+class purchase_order_line_unlink_wizard(osv.osv_memory):
+    _name = 'purchase.order.line.unlink.wizard'
+
+    _columns = {
+        'line_id': fields.many2one('purchase.order.line', 'Line to delete'),
+    }
+
+    def just_cancel(self, cr, uid, ids, context=None):
+        '''
+        Cancel the line
+        '''
+        # Objects
+        line_obj = self.pool.get('purchase.order.line')
+        order_wiz_obj = self.pool.get('purchase.order.cancel.wizard')
+        data_obj = self.pool.get('ir.model.data')
+        po_obj = self.pool.get('purchase.order')
+
+        # Variables
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        line_ids =[]
+        po_ids = set()
+        for wiz in self.browse(cr, uid, ids, context=context):
+            po_ids.add(wiz.line_id.order_id.id)
+            line_ids.append(wiz.line_id.id)
+
+        if context.get('has_to_be_resourced'):
+            line_obj.write(cr, uid, line_ids, {'has_to_be_resourced': True}, context=context)
+
+        line_obj.fake_unlink(cr, uid, line_ids, context=context)
+
+        for po in po_obj.browse(cr, uid, list(po_ids), context=context):
+            if all(x.state in ('cancel', 'done') for x in po.order_line):
+                wiz_id = order_wiz_obj.create(cr, uid, {'order_id': po.id}, context=context)
+                view_id = data_obj.get_object_reference(cr, uid, 'purchase_override', 'ask_po_cancel_wizard_form_view')[1]
+                context['view_id'] = False
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'purchase.order.cancel.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'view_id': [view_id],
+                        'res_id': wiz_id,
+                        'target': 'new',
+                        'context': context}
+
+        return {'type': 'ir.actions.act_window_close'}
+
+
+    def cancel_and_resource(self, cr, uid, ids, context=None):
+        '''
+        Flag the line to be re-sourced and run cancel method
+        '''
+        # Objects
+        if context is None:
+            context = {}
+
+        context['has_to_be_resourced'] = True
+
+        return self.just_cancel(cr, uid, ids, context=context)
+
+purchase_order_line_unlink_wizard()
+
+
+class purchase_order_cancel_wizard(osv.osv_memory):
+    _name = 'purchase.order.cancel.wizard'
+
+    _columns = {'order_id': fields.many2one('purchase.order', 'Order to delete'),
+                'unlink_po': fields.boolean(string='Unlink PO'),}
+
+    def fields_view_get(self, cr, uid, view_id=False, view_type='form', context=None, toolbar=False, submenu=False):
+        return super(purchase_order_cancel_wizard, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+
+    def ask_unlink(self, cr, uid, order_id, context=None):
+        '''
+        Return the wizard
+        '''
+        data_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+
+        view_id = data_obj.get_object_reference(cr, uid, 'purchase_override', 'ask_po_cancel_wizard_form_view')[1]
+        wiz_id = self.create(cr, uid, {'order_id': order_id}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order.cancel.wizard',
+                'res_id': wiz_id,
+                'view_id': [view_id],
+                'view_type': 'form',
+                'view_mode': 'form', 
+                'target': 'new',
+                'context': context}
+
+    def close_window(self, cr, uid, ids, context=None):
+        '''
+        Close the pop-up and reload the PO
+        '''
+        return {'type': 'ir.actions.act_window_close'}
+    
+    def cancel_po(self, cr, uid, ids, context=None):
+        '''
+        Cancel the PO and display his form
+        '''
+        line_obj = self.pool.get('purchase.order.line')
+        wf_service = netsvc.LocalService("workflow")
+        
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        line_ids = []
+        order_ids = []
+        for wiz in self.browse(cr, uid, ids, context=context):
+            order_ids.append(wiz.order_id.id)
+            if context.get('has_to_be_resourced'):
+                line_ids.extend([l.id for l in wiz.order_id.order_line])
+
+        # Mark lines as 'To be resourced'
+        line_obj.write(cr, uid, line_ids, {'has_to_be_resourced': True}, context=context)
+
+        for order_id in order_ids:
+            wf_service.trg_validate(uid, 'purchase.order', order_id, 'purchase_cancel', cr)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel_and_resource(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        context['has_to_be_resourced'] = True
+
+        return self.cancel_po(cr, uid, ids, context=context)
+
+purchase_order_cancel_wizard()
+
 class res_partner(osv.osv):
     _inherit = 'res.partner'
 
@@ -2626,7 +2941,7 @@ class res_partner(osv.osv):
         result = {}
         for a in adr_pref:
             result[a] = res.get(a, default_address)
-        
+
         return result
 
 res_partner()

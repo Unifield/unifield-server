@@ -219,7 +219,9 @@ class stock_picking(osv.osv):
         '''
         Check if the stock picking contains a line with an inactive products
         '''
+        product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
         inactive_lines = self.pool.get('stock.move').search(cr, uid, [('product_id.active', '=', False),
+                                                                      ('product_id', '!=', product_tbd),
                                                                       ('picking_id', 'in', ids),
                                                                       ('picking_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
         
@@ -258,7 +260,8 @@ class stock_picking(osv.osv):
             for move in pick.move_lines:
                 if move.state == 'done' and move.product_qty != 0:
                     raise osv.except_osv(_('Error'), _('You cannot cancel picking because stock move is in done state !'))
-        return True    
+        return True
+
     
     def create(self, cr, uid, vals, context=None):
         '''
@@ -381,6 +384,59 @@ class stock_picking(osv.osv):
         self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, all_doc=all_doc, context=context)
 
         return True
+
+    def call_cancel_wizard(self, cr, uid, ids, context=None):
+        '''
+        Call the wizard of cancelation (ask user if he wants to resource goods)
+        '''
+        for pick_data in self.read(cr, uid, ids, ['sale_id', 'purchase_id', 'subtype', 'state'], context=context):
+            #if draft and shipment is in progress, we cannot cancel
+            if pick_data['subtype'] == 'picking' and pick_data['state'] in ('draft',):
+                if self.has_picking_ticket_in_progress(cr, uid, [pick_data['id']], context=context)[pick_data['id']]:
+                    raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and      try to cancel again.'))
+            # if not draft or qty does not match, the shipping is already in progress
+            if pick_data['subtype'] == 'picking' and pick_data['state'] in ('done',):
+                raise osv.except_osv(_('Warning !'), _('The shipment process is completed and cannot be canceled!'))
+
+            if pick_data['sale_id'] or pick_data['purchase_id']:
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'stock.picking.cancel.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'target': 'new',
+                        'context': dict(context, active_id=pick_data['id'])}
+
+        wf_service = netsvc.LocalService("workflow")
+        for id in ids:
+            wf_service.trg_validate(uid, 'stock.picking', id, 'button_cancel', cr)
+
+        return True
+
+    def action_cancel(self, cr, uid, ids, context=None):
+        '''
+        Re-source the FO/IR lines if needed
+        '''
+        # Variables
+        wf_service = netsvc.LocalService("workflow")
+
+        res = super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
+
+        # Re-source the sale.order.line
+        fo_ids = set()
+        for pick in self.browse(cr, uid, ids, context=context):
+            # Don't delete lines if an Available PT is canceled
+            if pick.type == 'out' and pick.subtype == 'picking' and pick.backorder_id and True:
+                continue
+
+            for move in pick.move_lines:
+                if move.sale_line_id and move.product_qty > 0.00:
+                    fo_ids.add(move.sale_line_id.order_id.id)
+        
+        # Run the signal 'ship_corrected' to the FO
+        for fo in fo_ids:
+            wf_service.trg_validate(uid, 'sale.order', fo, 'ship_corrected', cr)
+
+        return res
     
     def _do_partial_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -909,13 +965,14 @@ class stock_move(osv.osv):
         Fill the error message if the product of the line is inactive
         '''
         res = {}
+        product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
         if isinstance(ids,(int, long)):
             ids = [ids]
         
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'inactive_product': False,
                             'inactive_error': ''}
-            if line.picking_id and line.picking_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
+            if line.picking_id and line.picking_id.state not in ('cancel', 'done') and line.product_id and line.product_id.id != product_tbd and not line.product_id.active:
                 res[line.id] = {'inactive_product': True,
                                 'inactive_error': _('The product in line is inactive !')}
                 
@@ -930,10 +987,14 @@ class stock_move(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
         for move in self.browse(cr, uid, ids, context=context):
-            res[move.id] = False
+            res[move.id] = {'expired_lot': False, 'product_tbd': False}
             if move.prodlot_id and move.prodlot_id.is_expired:
-                res[move.id] = True
+                res[move.id]['expired_lot'] = True
+
+            if move.product_id.id == product_tbd:
+                res[move.id]['product_tbd'] = True
 
         return res
 
@@ -955,7 +1016,10 @@ class stock_move(osv.osv):
         'to_correct_ok': fields.boolean(string='Line to correct'),
         'text_error': fields.text(string='Error', readonly=True),
         'inventory_ids': fields.many2many('stock.inventory', 'stock_inventory_move_rel', 'move_id', 'inventory_id', 'Created Moves'),
-        'expired_lot': fields.function(_is_expired_lot, method=True, type='boolean', string='Lot expired', store=False),
+        'expired_lot': fields.function(_is_expired_lot, method=True, type='boolean', string='Lot expired', store=False, multi='attribute'),
+        'product_tbd': fields.function(_is_expired_lot, method=True, type='boolean', string='TbD', store=False, multi='attribute'),
+        'has_to_be_resourced': fields.boolean(string='Has to be resourced'),
+        'from_wkf': fields.related('picking_id', 'from_wkf', type='boolean', string='From wkf'),
     }
 
     _defaults = {
@@ -963,7 +1027,45 @@ class stock_move(osv.osv):
         'processed_stock_move': False, # to know if the stock move has already been partially or completely processed
         'inactive_product': False,
         'inactive_error': lambda *a: '',
+        'has_to_be_resourced': False,
     }
+
+    def call_cancel_wizard(self, cr, uid, ids, context=None):
+        '''
+        Call the wizard to ask user if he wants to re-source the need
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        backmove_ids = self.search(cr, uid, [('backmove_id', 'in', ids), ('state', 'not in', ('done', 'cancel'))], context=context)
+
+        for move in self.browse(cr, uid, ids, context=context):
+            if backmove_ids or move.product_qty == 0.00:
+                raise osv.except_osv(_('Error'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
+            if (move.sale_line_id and move.sale_line_id.order_id) or (move.purchase_line_id and move.purchase_line_id.order_id):
+                wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, {'move_id': ids[0]}, context=context)
+
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'stock.move.cancel.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'target': 'new',
+                        'res_id': wiz_id,
+                        'context': context}
+
+        return self.unlink(cr, uid, ids, context=context)
+
+    def force_assign(self, cr, uid, ids, context=None):
+        product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
+
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.product_id.id == product_tbd and move.from_wkf_line:
+                ids.pop(ids.index(move.id))
+
+        return super(stock_move, self).force_assign(cr, uid, ids, context=context)
 
     def _uom_constraint(self, cr, uid, ids, context=None):
         for obj in self.browse(cr, uid, ids, context=context):
@@ -1619,9 +1721,9 @@ class stock_location(osv.osv):
         'stock_virtual': fields.function(_product_value, method=True, type='float', string='Virtual Stock', multi="stock"),
         'stock_real_value': fields.function(_product_value, method=True, type='float', string='Real Stock Value', multi="stock", digits_compute=dp.get_precision('Account')),
         'stock_virtual_value': fields.function(_product_value, method=True, type='float', string='Virtual Stock Value', multi="stock", digits_compute=dp.get_precision('Account')),
-        'check_prod_loc': fields.function(_fake_get, method=True, type='many2one', string='zz', fnct_search=_prod_loc_search),
-        'check_cd': fields.function(_fake_get, method=True, type='many2one', string='zz', fnct_search=_cd_search),
-        'check_usage': fields.function(_fake_get, method=True, type='many2one', string='zz', fnct_search=_check_usage),
+        'check_prod_loc': fields.function(_fake_get, method=True, type='many2one', relation='stock.location', string='zz', fnct_search=_prod_loc_search),
+        'check_cd': fields.function(_fake_get, method=True, type='many2one', relation='stock.location', string='zz', fnct_search=_cd_search),
+        'check_usage': fields.function(_fake_get, method=True, type='many2one', relation='stock.location', string='zz', fnct_search=_check_usage),
         'virtual_location': fields.boolean(string='Virtual location'),
 
     }
@@ -1684,6 +1786,96 @@ class stock_location_chained_options(osv.osv):
     }
 
 stock_location_chained_options()
+
+
+class stock_move_cancel_wizard(osv.osv_memory):
+    _name = 'stock.move.cancel.wizard'
+
+    _columns = {
+        'move_id': fields.many2one('stock.move', string='Move', required=True),
+    }
+
+    _defaults = {
+        'move_id': lambda self, cr, uid, c: c.get('active_id'),
+    }
+
+    def just_cancel(self, cr, uid, ids, context=None):
+        '''
+        Just call the cancel of stock.move (re-sourcing flag not set)
+        '''
+        # Objects
+        move_obj = self.pool.get('stock.move')
+        pick_obj = self.pool.get('stock.picking')
+
+        wf_service = netsvc.LocalService("workflow")
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            move_obj.action_cancel(cr, uid, [wiz.move_id.id], context=context)
+            if wiz.move_id.picking_id:
+                lines = wiz.move_id.picking_id.move_lines
+                if all(l.state == 'cancel' for l in lines):
+                    wf_service.trg_validate(uid, 'stock.picking', wiz.move_id.picking_id.id, 'button_cancel', cr)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    
+    def cancel_and_resource(self, cr, uid, ids, context=None):
+        '''
+        Call the cancel and resource method of the stock move
+        '''
+        # Objects
+        move_obj = self.pool.get('stock.move')
+
+        move_ids = [x.move_id.id for x in self.browse(cr, uid, ids, context=context)]
+        move_obj.write(cr, uid, move_ids, {'has_to_be_resourced': True}, context=context)
+
+        return self.just_cancel(cr, uid, ids, context=context)
+
+stock_move_cancel_wizard()
+
+
+class stock_picking_cancel_wizard(osv.osv_memory):
+    _name = 'stock.picking.cancel.wizard'
+
+    _columns = {
+        'picking_id': fields.many2one('stock.picking', string='Picking', required=True),
+    }
+
+    _defaults = {
+        'picking_id': lambda self, cr, uid, c: c.get('active_id'),
+    }
+
+    def just_cancel(self, cr, uid, ids, context=None):
+        '''
+        Just call the cancel of the stock.picking
+        '''
+        wf_service = netsvc.LocalService("workflow")
+        for wiz in self.browse(cr, uid, ids, context=context):
+            wf_service.trg_validate(uid, 'stock.picking', wiz.picking_id.id, 'button_cancel', cr)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel_and_resource(self, cr, uid, ids, context=None):
+        '''
+        Call the cancel and resource method of the picking
+        '''
+        # objects declarations
+        pick_obj = self.pool.get('stock.picking')
+        
+        # variables declarations
+        pick_ids = []
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            pick_ids.append(wiz.picking_id.id)
+        
+        # Set the boolean 'has_to_be_resourced' to True for each picking
+        vals = {'has_to_be_resourced': True}
+        pick_obj.write(cr, uid, pick_ids, vals, context=context)
+
+        return self.just_cancel(cr, uid, ids, context=context)
+
+
+stock_picking_cancel_wizard()
 
 
 class ir_values(osv.osv):

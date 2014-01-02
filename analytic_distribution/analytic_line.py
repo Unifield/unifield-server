@@ -92,6 +92,12 @@ class analytic_line(osv.osv):
                 res[l.id] = l.commitment_line_id.commit_id.name
             elif l.imported_commitment:
                 res[l.id] = l.imported_entry_sequence
+            elif not l.move_id:
+                # UF-2217
+                # on create the value is inserted by a sql query, so we can retreive it after the insertion
+                # the field has store=True so we don't create a loop
+                # on write the value is not updated by the query, the method always returns the value set at creation
+                res[l.id] = l.entry_sequence
         return res
 
     def _get_period_id(self, cr, uid, ids, field_name, args, context=None):
@@ -152,27 +158,43 @@ class analytic_line(osv.osv):
 
     def _get_from_commitment_line(self, cr, uid, ids, field_name, args, context=None):
         """
-        Check if commitment_line_id is filled in. If yes, True. Otherwise False.
+        Check if line comes from a 'engagement' journal type. If yes, True. Otherwise False.
         """
-        if not context:
+        if context is None:
             context = {}
         res = {}
         for al in self.browse(cr, uid, ids, context=context):
             res[al.id] = False
-            if al.commitment_line_id:
+            if al.journal_id.type == 'engagement':
                 res[al.id] = True
         return res
 
     def _get_is_unposted(self, cr, uid, ids, field_name, args, context=None):
         """
         Check journal entry state. If unposted: True, otherwise False.
+        A line that comes from a commitment cannot be posted. So it's always to False.
         """
-        if not context:
+        if context is None:
             context = {}
         res = {}
         for al in self.browse(cr, uid, ids, context=context):
             res[al.id] = False
-            if al.move_state != 'posted':
+            if al.move_state != 'posted' and al.journal_id.type != 'engagement':
+                res[al.id] = True
+        return res
+
+    def _get_is_free(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Check if the line comes from a Free 1 or Free 2 analytic account category.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for al in self.browse(cr, uid, ids, context=context):
+            res[al.id] = False
+            if al.account_id and al.account_id.category and al.account_id.category in ['FREE1', 'FREE2']:
                 res[al.id] = True
         return res
 
@@ -193,6 +215,7 @@ class analytic_line(osv.osv):
         'is_unposted': fields.function(_get_is_unposted, method=True, type='boolean', string="Unposted?"),
         'imported_commitment': fields.boolean(string="From imported commitment?"),
         'imported_entry_sequence': fields.text("Imported Entry Sequence"),
+        'free_account': fields.function(_get_is_free, method=True, type='boolean', string='Free account?', help="Is that line comes from a Free 1 or Free 2 account?"),
     }
 
     _defaults = {
@@ -237,12 +260,12 @@ class analytic_line(osv.osv):
             if date < account.date_start or (account.date != False and date >= account.date):
                 if 'from' not in context or context.get('from') != 'mass_reallocation':
                     raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (account.name or '',))
-            if 'cost_center_id' in vals:
+            if vals.get('cost_center_id', False):
                 cc = account_obj.browse(cr, uid, vals['cost_center_id'], context=context)
                 if date < cc.date_start or (cc.date != False and date >= cc.date):
                     if 'from' not in context or context.get('from') != 'mass_reallocation':
                         raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (cc.name or '',))
-            if 'destination_id' in vals:
+            if vals.get('destination_id', False):
                 dest = account_obj.browse(cr, uid, vals['destination_id'], context=context)
                 if date < dest.date_start or (dest.date != False and date >= dest.date):
                     if 'from' not in context or context.get('from') != 'mass_reallocation':
