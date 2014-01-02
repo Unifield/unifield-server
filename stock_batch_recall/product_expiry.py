@@ -50,7 +50,7 @@ class stock_production_lot(osv.osv):
         if not default:
             default = {}
         default.update({
-            'partner_name': None,
+            'partner_name': False,
         })
         return super(stock_production_lot, self).copy(cr, uid, id, default, context=context)
     
@@ -62,7 +62,7 @@ class stock_production_lot(osv.osv):
         if not default:
             default = {}
         default.update({
-            'partner_name': None,
+            'partner_name': False,
         })
         return super(stock_production_lot, self).copy_data(cr, uid, id, default, context=context)
 

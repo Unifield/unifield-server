@@ -179,7 +179,7 @@ def compute_kit_value(cr, uid, **kwargs):
                 if kit_ids:
                     kit_id = kit_ids[0]
                 else:
-                    error_list.append(_('The Kit "%s" does not exist for this product.' % kit_name))
+                    error_list.append(_('The Kit "%s" does not exist for this product.') % (kit_name,))
         else:
             msg = _('The Kit Name has to be a string')
         if not kit_name:

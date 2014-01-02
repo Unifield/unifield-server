@@ -271,8 +271,6 @@
 
     <!-- Delete Confirm Draft Invoices wizard from supplier invoices -->
     <delete id="account.action_account_invoice_confirm" model="ir.actions.act_window"/>
-    
-    
 
     <!-- Account View -->
         <record id="inherit_view_account_form" model="ir.ui.view">
@@ -285,6 +283,10 @@
                     <field name="shrink_entries_for_hq"/>
                 </xpath>
             </field>
+        </record>
+
+        <record id="account.action_account_moves_all_a" model="ir.actions.act_window">
+            <field name="context">{'search_default_posted': 1, 'target_filename_prefix': 'Journal Items'}</field>
         </record>
 
     </data>

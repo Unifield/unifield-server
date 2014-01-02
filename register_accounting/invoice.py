@@ -401,7 +401,7 @@ class account_invoice_line(osv.osv):
         return res
 
     _columns = {
-        'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='string'),
+        'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
     }
 
     def create(self, cr, uid, vals, context=None):

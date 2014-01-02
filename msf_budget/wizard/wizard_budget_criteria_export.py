@@ -19,7 +19,7 @@
 #
 ##############################################################################
 from osv import osv, fields
-import datetime
+import time
 
 class wizard_budget_criteria_export(osv.osv_memory):
     _name = "wizard.budget.criteria.export"
@@ -32,7 +32,7 @@ class wizard_budget_criteria_export(osv.osv_memory):
                                        ('year','Total figure')], 'Breakdown', select=1, required=True),
         'granularity': fields.selection([('all','By expense and destination'),
                                          ('expense','By expense'),
-                                         ('parent','By parent expense')], 'Granularity', select=1, required=True),
+                                         ('view','By parent expense')], 'Granularity', select=1, required=True),
     }
     
     _defaults = {
@@ -54,6 +54,8 @@ class wizard_budget_criteria_export(osv.osv_memory):
             data['form'].update({'commitment': wizard.commitment})
             data['form'].update({'breakdown': wizard.breakdown})
             data['form'].update({'granularity': wizard.granularity})
+            budget_code = self.pool.get('msf.budget').read(cr, uid, context['active_id'], ['code'])
+            data['target_filename'] = 'Budget vs. Actual_%s_%s' % (budget_code['code'] or '', time.strftime('%Y%m%d'))
             if wizard.currency_table_id:
                 data['form'].update({'currency_table_id': wizard.currency_table_id.id})
             if wizard.period_id:

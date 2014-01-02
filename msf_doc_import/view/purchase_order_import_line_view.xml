@@ -18,7 +18,7 @@
                     <!-- <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" /> -->
                 </xpath>
                 <xpath expr="/form/notebook/page/field[@name='order_line']/tree" position="attributes" >
-                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True</attribute>
+                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True; #C8C8C8: fake_state == 'cancel'</attribute>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Notes']/field[@name='notes']" position="before">
                     <field name="import_in_progress" readonly="1" invisible="0" />

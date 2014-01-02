@@ -19,7 +19,7 @@
 #
 ##############################################################################
 from osv import osv, fields
-import datetime
+import time
 
 class wizard_financing_currency_export(osv.osv_memory):
     _name = "wizard.financing.currency.export"
@@ -67,6 +67,9 @@ class wizard_financing_currency_export(osv.osv_memory):
         if wizard.out_currency:
             data['out_currency'] = wizard.out_currency.id
 
+        instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
+
+        data['target_filename'] = 'Interactive Report_%s_%s' % (instance and instance.code or '', time.strftime('%Y%m%d'))
         return {'type': 'ir.actions.report.xml', 'report_name': 'financing.interactive.2', 'datas': data}
     
 wizard_financing_currency_export()
