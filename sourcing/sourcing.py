@@ -370,6 +370,10 @@ class sourcing_line(osv.osv):
                 check_fnct = self.pool.get('product.product')._get_restriction_error
                 self._check_product_constraints(cr, uid, line.type, line.po_cft, line.product_id.id, line.supplier.id, check_fnct, context=context)
 
+            if line.sale_order_id and line.sale_order_id.procurement_request and line.type == 'make_to_stock':
+                if line.sale_order_id.location_requestor_id.id == line.location_id.id:
+                    raise osv.except_osv(_('Warning'), _("You cannot choose a source location which is the destination location of the Internal Request"))
+
         return True
 
     
@@ -493,7 +497,8 @@ class sourcing_line(osv.osv):
         res = super(sourcing_line, self).write(cr, uid, ids, values, context=context)
         self._check_line_conditions(cr, uid, ids, context)
         return res
-    def onChangeLocation(self, cr, uid, ids, location_id, product_id, rts):
+
+    def onChangeLocation(self, cr, uid, ids, location_id, product_id, rts, sale_order_id):
         '''
         Compute the stock values according to parameters
         '''
@@ -503,6 +508,16 @@ class sourcing_line(osv.osv):
 
         if not location_id or not product_id:
             return res
+
+        if sale_order_id:
+            so = self.pool.get('sale.order').browse(cr, uid, sale_order_id)
+            if so.procurement_request and so.location_requestor_id.id == location_id:
+                return {'value': {'location_id': False,
+                                  'real_stock': 0.00,
+                                  'virtual_stock': 0.00,
+                                  'available_stock': 0.00},
+                        'warning': {'title': _('Warning'),
+                                    'message': _('You cannot choose a source location which is the destination location of the Internal request')}}
         
         rts = rts < time.strftime('%Y-%m-%d') and time.strftime('%Y-%m-%d') or rts
         ctx = {'location': location_id, 'to_date': '%s 23:59:59' % rts}
