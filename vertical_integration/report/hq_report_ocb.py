@@ -22,27 +22,16 @@
 
 from osv import osv
 from tools.translate import _
-import csv
-import StringIO
 import pooler
-import zipfile
-from tempfile import NamedTemporaryFile
-import os
+
+from account_tools import finance_export
 
 from report import report_sxw
 
-class hq_report_ocb(report_sxw.report_sxw):
-
-    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-        report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
-
-    def get_selection(self, cr, model, field):
-        """
-        Return a list of all selection from a field in a given model.
-        """
-        pool = pooler.get_pool(cr.dbname)
-        data = pool.get(model).fields_get(cr, 1, [field])
-        return dict(data[field]['selection'])
+class finance_archive(finance_export.finance_archive):
+    """
+    Extend existing class with new methods for this particular export.
+    """
 
     def postprocess_add_functional(self, cr, uid, data, changes):
         """
@@ -110,36 +99,10 @@ class hq_report_ocb(report_sxw.report_sxw):
             new_data.append(tmp_line)
         return new_data
 
-    def postprocess_selection_columns(self, cr, uid, data, changes):
-        """
-        This method takes each line from data and change some columns regarding "changes" variable.
-        'changes' should be a list containing some tuples. A tuple is composed of:
-         - a model (example: res.partner)
-         - the selection field in which retrieve all real values (example: partner_type)
-         - the column number in the data lines from which you want to change the value
-        """
-        # Checks
-        if not changes:
-            return data
-        # Prepare some values
-        pool = pooler.get_pool(cr.dbname)
-        new_data = []
-        # Fetch selections
-        changes_values = {}
-        for change in changes:
-            model = change[0]
-            field = change[1]
-            changes_values[change] = self.get_selection(cr, model, field)
-        # Browse each line to replace partner type by it's human readable value (selection)
-        # partner_type is the 3rd column
-        for line in data:
-            tmp_line = list(line)
-            for change in changes:
-                column = change[2]
-                # use line value to search into changes_values[change] (the list of selection) the right value
-                tmp_line[column] = changes_values[change][tmp_line[column]]
-            new_data.append(tmp_line)
-        return new_data
+class hq_report_ocb(report_sxw.report_sxw):
+
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
         """
@@ -172,8 +135,8 @@ class hq_report_ocb(report_sxw.report_sxw):
         last_day_of_period = period.date_stop
         first_day_of_period = period.date_start
         period_name = period.name
-        # open buffer for result zipfile
-        zip_buffer = StringIO.StringIO()
+
+        # Prepare SQL requests and PROCESS requests for finance_archive object
 
         # SQLREQUESTS DICTIONNARY
         # - key: name of the SQL request
@@ -345,71 +308,10 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'query_params': ([period.id]),
                 },
         ]
-
-        # List is composed of a tuple containing:
-        # - filename
-        # - key of sqlrequests dict to fetch its SQL request
-        files = {}
-        for fileparams in processrequests:
-            if not fileparams.get('filename', False):
-                raise osv.except_osv(_('Error'), _('Filename param is missing!'))
-            if not fileparams.get('key', False):
-                raise osv.except_osv(_('Error'), _('Key param is missing!'))
-            # temporary file
-            filename = fileparams['filename']
-            if filename not in files:
-                tmp_file = NamedTemporaryFile('w+b', delete=False)
-            else:
-                tmp_file = files[filename]
-
-            # fetch data with given sql query
-            sql = sqlrequests[fileparams['key']]
-            if fileparams.get('query_params', False):
-                cr.execute(sql, fileparams['query_params'])
-            else:
-                cr.execute(sql)
-            fileres = cr.fetchall()
-            # Check if a function is given. If yes, use it
-            if fileparams.get('function', False):
-                fnct = getattr(self, fileparams['function'], False)
-                # If the function has some params, use them.
-                if fnct and fileparams.get('fnct_params', False):
-                    fileres = fnct(cr, uid, fileres, fileparams['fnct_params'])
-                elif fnct:
-                    fileres = fnct(cr, uid, fileres)
-            # Change to UTF-8 all elements
-            newlines = []
-            for line in fileres:
-                newline = []
-                for element in line:
-                    if type(element) == unicode:
-                        newline.append(element.encode('utf-8'))
-                    else:
-                        newline.append(element)
-                newlines.append(newline)
-            # Write result in a CSV writer then close it.
-            writer = csv.writer(tmp_file, quoting=csv.QUOTE_ALL)
-            writer.writerows(newlines)
-            # Only add a link to the temporary file if not in "files" dict
-            if filename not in files:
-                files[filename] = tmp_file
-
-        # WRITE RESULT INTO AN ARCHIVE
-        # Create a ZIP file
-        out_zipfile = zipfile.ZipFile(zip_buffer, "w")
-        for filename in files:
-            tmpfile = files[filename]
-            # close temporary file
-            tmpfile.close()
-            # write content into zipfile
-            out_zipfile.write(tmpfile.name, filename, zipfile.ZIP_DEFLATED)
-            # unlink temporary file
-            os.unlink(tmpfile.name)
-        # close zip
-        out_zipfile.close()
-        out = zip_buffer.getvalue()
-        # Return result
-        return (out, 'zip')
+        # Launch finance archive object
+        fe = finance_archive(sqlrequests, processrequests)
+        # Use archive method to create the archive
+        return fe.archive(cr, uid)
 
 hq_report_ocb('report.hq.ocb', 'account.move.line', False, parser=False)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
