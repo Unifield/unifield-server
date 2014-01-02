@@ -3415,6 +3415,9 @@ class stock_move(osv.osv):
                 continue
 
             pick_type = move.picking_id.type
+            pick_subtype = move.picking_id.subtype
+            pick_state = move.picking_id.state
+            subtype_ok = pick_type == 'out' and (pick_subtype == 'standard' or (pick_subtype == 'picking' and pick_state == 'draft'))
 
             if pick_type == 'in' and move.purchase_line_id:
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
@@ -3423,7 +3426,7 @@ class stock_move(osv.osv):
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
                         sol_obj.add_resource_line(cr, uid, sol.id, False, diff_qty, context=context)
                     sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, context=context)
-            elif pick_type in ('internal', 'out') and move.sale_line_id:
+            elif pick_type in ('internal', 'out') and move.sale_line_id and subtype_ok:
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
                     sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
