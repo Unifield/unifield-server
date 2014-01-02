@@ -104,7 +104,7 @@
     ana_ids = ana_obj.search(cr, uid, [('cost_center_id', '=', ref('cc3')), ('account_id', '=', ref('analytic_account_msf_private_funds')), ('general_account_id', '=', ref('account_account_expense0'))])
     assert len(ana_ids) == 1, "Should only have one line. Current: %s" % len(ana_ids)
     line = ana_obj.browse(cr, uid, ana_ids)[0]
-    expected_date = '%s-%s-17' % (datetime.now().year +10, datetime.now().month)
+    expected_date = '%s-%02d-17' % (datetime.now().year +10, datetime.now().month)
     period_number = int(time.strftime('%m'))
     assert line.date == expected_date, "Wrong date for resulted analytic line. Expected: %s. Current: %s" % (expected_date, line.date)
     assert line.period_id.number == period_number, "Wrong period. Expected: %s. Current: %s" % (period_number, line.period_id.number)
