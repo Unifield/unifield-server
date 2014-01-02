@@ -92,6 +92,8 @@
 					    on_change="onChangePoCft(po_cft, sale_order_id, supplier)" 
                         attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
                     <field name="location_id" 
+                        widget="selection"
+                        on_change="onChangeLocation(location_id, product_id, rts)"
                         domain="[('usage', '=', 'internal'), ('quarantine_location', '=', False), ('scrap_location', '=', False), ('destruction_location', '=', False), ('output_ok', '=', False), ('input_ok', '=', False)]"
                         attrs="{'readonly': ['|', ('type', '!=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_stock')]}" />
 					<field name="real_stock" />

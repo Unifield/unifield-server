@@ -96,7 +96,7 @@ class sourcing_line(osv.osv):
                 product_context = context
                 product_context.update({'states': ('assigned',), 'what': ('out',)})
                 if sl.type == 'make_to_stock' and sl.location_id:
-                    product_context.update({'location_id': sl.location_id.id})
+                    product_context.update({'location': sl.location_id.id})
                 productId = productObj.get_product_available(cr, uid, [sl.product_id.id], context=product_context)
                 res = real_stock + productId.get(sl.product_id.id, 0.00)
             else:
@@ -493,6 +493,29 @@ class sourcing_line(osv.osv):
         res = super(sourcing_line, self).write(cr, uid, ids, values, context=context)
         self._check_line_conditions(cr, uid, ids, context)
         return res
+    def onChangeLocation(self, cr, uid, ids, location_id, product_id, rts):
+        '''
+        Compute the stock values according to parameters
+        '''
+        prod_obj = self.pool.get('product.product')
+
+        res = {'value': {}}
+
+        if not location_id or not product_id:
+            return res
+        
+        rts = rts < time.strftime('%Y-%m-%d') and time.strftime('%Y-%m-%d') or rts
+        ctx = {'location': location_id, 'to_date': '%s 23:59:59' % rts}
+        product = prod_obj.browse(cr, uid, product_id, context=ctx)
+        res['value']['real_stock'] = product.qty_available
+        res['value']['virtual_stock'] = product.virtual_available
+
+        ctx2 = {'states': ('assigned',), 'what': ('out',), 'location': location_id}
+        product2 = prod_obj.get_product_available(cr, uid, [product_id], context=ctx2)
+        res['value']['available_stock'] = res['value']['real_stock'] + product2.get(product_id, 0.00)
+
+        return res
+        
     
     def onChangePoCft(self, cr, uid, id, po_cft, order_id=False, partner_id=False, context=None):
         '''
