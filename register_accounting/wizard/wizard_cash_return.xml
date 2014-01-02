@@ -11,8 +11,8 @@
                     <separator string="Necessary Information" colspan="4"/>
                     <field name="initial_amount"/>
                     <newline />
-                    <field name='returned_amount' on_change="onchange_returned_amount(returned_amount, invoice_line_ids, advance_line_ids, 
-                        display_invoice)"/>
+                    <field name='returned_amount'
+                        on_change="onchange_returned_amount(returned_amount, invoice_line_ids, advance_line_ids, display_invoice, initial_amount, advance_linked_po_auto_invoice)"/>
                     <newline />
                     <field name='date'/>
                     <field name='reference' />

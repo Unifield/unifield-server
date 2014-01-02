@@ -227,8 +227,9 @@ class wizard_cash_return(osv.osv_memory):
                                 msg = "Operational advance has been linked to a purchase order." \
                                       "\nPurchase order invoices have been added automatically." \
                                       "\n(You can redo a selection by clicking on 'Clean invoices' then adding manually)" \
-                                      "\nAutomatically added invoices are:\n"
+                                      "\nAutomatically added invoices are: "
                                 msg += ", ".join(invoice_numbers)
+                                msg += "\n(If you input manually a cash return in 'Advance return amount' equal to initial amount (100% cash return), invoices are not taken into account)"
                                 values = {
                                     'advance_linked_po_auto_invoice': True,
                                     'comment': msg,
@@ -236,11 +237,21 @@ class wizard_cash_return(osv.osv_memory):
                                 self.write(cr, uid, [id], values, context=context)
         return id
 
-    def onchange_returned_amount(self, cr, uid, ids, amount=0.0, invoices=None, advances=None, display_invoice=None, context=None):
+    def onchange_returned_amount(self, cr, uid, ids, amount=0.0, invoices=None, advances=None, display_invoice=None, initial_amount=0.0, advance_linked_po_auto_invoice=False, context=None):
         """
         When the returned amount change, it update the "Justified amount" (total_amount)
         """
-        res = {}
+        values = {}
+        if advance_linked_po_auto_invoice and amount and initial_amount \
+            and amount >= initial_amount:
+            """UTP-482 operational advance linked to a PO
+            exception: if amount > initial_amount
+            then add invoice(s) is not mandatory
+            => total_amount does not count invoices amount
+            '1 exception: if advance is settled through 100% cash return,
+            no need to link the advance return with an invoice'"""
+            values.update({'total_amount': amount})
+            return {'value': values}
         if amount:
             total_amount = amount + 0.0
             if display_invoice:
@@ -251,8 +262,8 @@ class wizard_cash_return(osv.osv_memory):
                 if advances:
                     for advance in advances:
                         total_amount += advance[2].get('amount', 0.0)
-            res.update({'total_amount': total_amount})
-        return {'value': res}
+            values.update({'total_amount': total_amount})
+        return {'value': values}
 
     def create_move_line(self, cr, uid, ids, date=None, document_date=None, description='/', journal=False, register=False, partner_id=False, employee_id=False, account_id=None, \
         debit=0.0, credit=0.0, reference=None, move_id=None, analytic_distribution_id=None, partner_mandatory=False, context=None):
@@ -516,13 +527,21 @@ class wizard_cash_return(osv.osv_memory):
         total = 0.0
         total += wizard.returned_amount
         # Do computation for invoice lines only if display_invoice is True
-        if wizard.display_invoice:
-            for move_line in wizard.invoice_line_ids:
-                total += move_line.amount
-        # else do computation for advance lines only
-        else:
-            for st_line in wizard.advance_line_ids:
-                total+= st_line.amount
+        advance_settled_100_cash_return = self._is_advance_settled_100_cash_return(wizard)
+        if not advance_settled_100_cash_return:
+            """UTP-482 operational advance linked to a PO
+            exception: if amount > initial_amount
+            then add invoice(s) is not mandatory
+            => total_amount does not count invoices amount
+            '1 exception: if advance is settled through 100% cash return,
+            no need to link the advance return with an invoice'"""
+            if wizard.display_invoice:
+                for move_line in wizard.invoice_line_ids:
+                    total += move_line.amount
+            # else do computation for advance lines only
+            else:
+                for st_line in wizard.advance_line_ids:
+                    total+= st_line.amount
         res.update({'total_amount': total})
         self.write(cr, uid, ids, res, context=context)
         return {
@@ -543,8 +562,19 @@ class wizard_cash_return(osv.osv_memory):
             context = {}
         wizard = self.browse(cr, uid, ids[0], context=context)
         
+        advance_settled_100_cash_return = self._is_advance_settled_100_cash_return(wizard)
+        if not advance_settled_100_cash_return:
+            """UTP-482 operational advance linked to a PO
+            exception: if amount > initial_amount
+            then add invoice(s) is not mandatory
+            '1 exception: if advance is settled through 100% cash return,
+            no need to link the advance return with an invoice'
+            => desactivate auto invoice lines"""
+            self.write(cr, uid, ids, {'invoice_line_ids': [(5,)]}, context=context)
+            wizard = self.browse(cr, uid, ids[0], context=context)
+        
         # UTP-482: operational advance linked PO: check if at least 1 PO invoice selected
-        if wizard.advance_linked_po_auto_invoice:
+        if not advance_settled_100_cash_return and wizard.advance_linked_po_auto_invoice:
             po_obj = self.pool.get('purchase.order')
             po_r = po_obj.read(cr, uid,
                                 [wizard.advance_st_line_id.cash_register_op_advance_po_id.id],
@@ -743,6 +773,14 @@ class wizard_cash_return(osv.osv_memory):
 
         # Close Wizard
         return { 'type': 'ir.actions.act_window_close', }
+        
+    def _is_advance_settled_100_cash_return(self, wizard):
+        if wizard and wizard.advance_linked_po_auto_invoice \
+            and wizard.initial_amount and wizard.returned_amount \
+            and wizard.returned_amount >= wizard.initial_amount:
+            # advance settled 100% with cash return in returned_amount
+            return True
+        return False
     
 wizard_cash_return()
 
