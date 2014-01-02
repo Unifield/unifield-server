@@ -213,28 +213,23 @@ class wizard_cash_return(osv.osv_memory):
             if st_line:
                 if st_line.type_for_register == 'advance' \
                     and st_line.cash_register_op_advance_po_id:
-                        po_obj = self.pool.get('purchase.order')
-                        po = po_obj.browse(cr, uid,
-                                            st_line.cash_register_op_advance_po_id.id,
-                                            context)
-                        if po:
-                            invoice_numbers = []
-                            for invoice in po.invoice_ids:
-                                invoice_numbers.append(invoice.number)
-                                context['po_op_advance_auto_add_invoice_id'] = invoice.id
-                                self.action_add_invoice(cr, uid, [id], context=context)
-                            if invoice_numbers:
-                                msg = "Operational advance has been linked to a purchase order." \
-                                      "\nPurchase order invoices have been added automatically." \
-                                      "\n(You can redo a selection by clicking on 'Clean invoices' then adding manually)" \
-                                      "\nAutomatically added invoices are: "
-                                msg += ", ".join(invoice_numbers)
-                                msg += "\n(If you input manually a cash return in 'Advance return amount' equal to initial amount (100% cash return), invoices are not taken into account)"
-                                values = {
-                                    'advance_linked_po_auto_invoice': True,
-                                    'comment': msg,
-                                }
-                                self.write(cr, uid, [id], values, context=context)
+                    invoice_numbers = []
+                    for invoice in st_line.cash_register_op_advance_po_id.invoice_ids:
+                        invoice_numbers.append(invoice.number)
+                        context['po_op_advance_auto_add_invoice_id'] = invoice.id
+                        self.action_add_invoice(cr, uid, [id], context=context)
+                    if invoice_numbers:
+                        msg = "Operational advance has been linked to a purchase order." \
+                              "\nPurchase order invoices have been added automatically." \
+                              "\n(You can redo a selection by clicking on 'Clean invoices' then adding manually)" \
+                              "\nAutomatically added invoices are: "
+                        msg += ", ".join(invoice_numbers)
+                        msg += "\n(If you input manually a cash return in 'Advance return amount' equal to initial amount (100% cash return), invoices are not taken into account)"
+                        values = {
+                            'advance_linked_po_auto_invoice': True,
+                            'comment': msg,
+                        }
+                        self.write(cr, uid, [id], values, context=context)
         return id
 
     def onchange_returned_amount(self, cr, uid, ids, amount=0.0, invoices=None, advances=None, display_invoice=None, initial_amount=0.0, advance_linked_po_auto_invoice=False, context=None):
@@ -415,6 +410,7 @@ class wizard_cash_return(osv.osv_memory):
             auto_add = True
             invoice_obj = self.pool.get('account.invoice')
             invoice = invoice_obj.browse(cr, uid, context['po_op_advance_auto_add_invoice_id'], context)
+            del context['po_op_advance_auto_add_invoice_id']
             if not invoice:
                 return
         else:
@@ -578,14 +574,12 @@ class wizard_cash_return(osv.osv_memory):
             wizard = self.browse(cr, uid, ids[0], context=context)
         
         # UTP-482: operational advance linked PO: check if at least 1 PO invoice selected
-        if not advance_settled_100_cash_return and wizard.advance_linked_po_auto_invoice:
-            po_obj = self.pool.get('purchase.order')
-            po_r = po_obj.read(cr, uid,
-                                [wizard.advance_st_line_id.cash_register_op_advance_po_id.id],
-                                ['invoice_ids'], context)
+        if not advance_settled_100_cash_return \
+            and wizard.advance_linked_po_auto_invoice \
+            and wizard.advance_st_line_id.cash_register_op_advance_po_id:
             one_po_invoice = False
             for invoice in wizard.invoice_line_ids:
-                if invoice.id in po_r[0]['invoice_ids']:
+                if invoice.id in wizard.advance_st_line_id.cash_register_op_advance_po_id.invoice_ids:
                     one_po_invoice = True
                     break
             if not one_po_invoice:
