@@ -24,7 +24,7 @@
 from osv import osv
 from tools.translate import _
 import csv
-import StringIO
+from cStringIO import StringIO
 import pooler
 import zipfile
 from tempfile import NamedTemporaryFile
@@ -97,7 +97,7 @@ class finance_archive():
         Create an archive with sqlrequests params and processrequests params.
         """
         # open buffer for result zipfile
-        zip_buffer = StringIO.StringIO()
+        zip_buffer = StringIO()
 
         # List is composed of a tuple containing:
         # - filename
