@@ -578,8 +578,11 @@ class wizard_cash_return(osv.osv_memory):
             and wizard.advance_linked_po_auto_invoice \
             and wizard.advance_st_line_id.cash_register_op_advance_po_id:
             one_po_invoice = False
+            linked_po_invoices_ids = []
+            for invoice in wizard.advance_st_line_id.cash_register_op_advance_po_id.invoice_ids:
+                linked_po_invoices_ids.append(invoice.id)
             for invoice in wizard.invoice_line_ids:
-                if invoice.id in wizard.advance_st_line_id.cash_register_op_advance_po_id.invoice_ids:
+                if invoice.invoice_id.id in linked_po_invoices_ids:
                     one_po_invoice = True
                     break
             if not one_po_invoice:
