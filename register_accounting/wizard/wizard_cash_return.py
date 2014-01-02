@@ -172,12 +172,15 @@ class wizard_cash_return(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', string='Currency'),
         'date': fields.date(string='Date for cash return', required=True),
         'reference': fields.char(string='Advance Return Reference', size=64),
+        'advance_linked_po_auto_invoice': fields.boolean(string="Operational advance linked po invoices"),
+        'comment': fields.text(string='Note'),
     }
 
     _defaults = {
         'initial_amount': lambda self, cr, uid, c=None: c.get('amount', False),
         'display_invoice': False, # this permits to show only advance lines tree. Then add an invoice make the invoice tree to be displayed
         'date': lambda *a: time.strftime('%Y-%m-%d'),
+        'advance_linked_po_auto_invoice': False,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -211,13 +214,26 @@ class wizard_cash_return(osv.osv_memory):
                 if st_line.type_for_register == 'advance' \
                     and st_line.cash_register_op_advance_po_id:
                         po_obj = self.pool.get('purchase.order')
-                        po_r = po_obj.read(cr, uid,
-                                            [st_line.cash_register_op_advance_po_id.id],
-                                            ['invoice_ids'], context)
-                        if po_r:
-                            for invoice_id in po_r[0]['invoice_ids']:
-                                context['po_op_advance_auto_add_invoice_id'] = invoice_id
+                        po = po_obj.browse(cr, uid,
+                                            st_line.cash_register_op_advance_po_id.id,
+                                            context)
+                        if po:
+                            invoice_numbers = []
+                            for invoice in po.invoice_ids:
+                                invoice_numbers.append(invoice.number)
+                                context['po_op_advance_auto_add_invoice_id'] = invoice.id
                                 self.action_add_invoice(cr, uid, [id], context=context)
+                            if invoice_numbers:
+                                msg = "Operational advance has been linked to a purchase order." \
+                                      "\nPurchase order invoices have been added automatically." \
+                                      "\n(You can redo a selection by clicking on 'Clean invoices' then adding manually)" \
+                                      "\nAutomatically added invoices are:\n"
+                                msg += ", ".join(invoice_numbers)
+                                values = {
+                                    'advance_linked_po_auto_invoice': True,
+                                    'comment': msg,
+                                }
+                                self.write(cr, uid, [id], values, context=context)
         return id
 
     def onchange_returned_amount(self, cr, uid, ids, amount=0.0, invoices=None, advances=None, display_invoice=None, context=None):

@@ -15,7 +15,10 @@
                         display_invoice)"/>
                     <newline />
                     <field name='date'/>
-		    <field name='reference' />
+                    <field name='reference' />
+                    <newline/>
+                    <field name="advance_linked_po_auto_invoice" invisible="1" />
+                    <field name="comment" attrs="{'invisible':[('advance_linked_po_auto_invoice', '=', False)]}" />
                     <newline/>
                     <group colspan="4">
                         <field name='invoice_id' nolabel="1" domain="[('type', '=', 'in_invoice'), ('state', '=', 'open'), 
