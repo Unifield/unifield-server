@@ -563,14 +563,18 @@ class wizard_cash_return(osv.osv_memory):
         wizard = self.browse(cr, uid, ids[0], context=context)
         
         advance_settled_100_cash_return = self._is_advance_settled_100_cash_return(wizard)
-        if not advance_settled_100_cash_return:
+        if advance_settled_100_cash_return:
             """UTP-482 operational advance linked to a PO
             exception: if amount > initial_amount
             then add invoice(s) is not mandatory
             '1 exception: if advance is settled through 100% cash return,
             no need to link the advance return with an invoice'
             => desactivate auto invoice lines"""
-            self.write(cr, uid, ids, {'invoice_line_ids': [(5,)]}, context=context)
+            values = {
+                'total_amount': wizard.returned_amount,
+                'invoice_line_ids': [(5,)],
+            }
+            self.write(cr, uid, ids, values, context=context)
             wizard = self.browse(cr, uid, ids[0], context=context)
         
         # UTP-482: operational advance linked PO: check if at least 1 PO invoice selected
@@ -581,7 +585,7 @@ class wizard_cash_return(osv.osv_memory):
                                 ['invoice_ids'], context)
             one_po_invoice = False
             for invoice in wizard.invoice_line_ids:
-                if invoice.invoice_id.id in po_r[0]['invoice_ids']:
+                if invoice.id in po_r[0]['invoice_ids']:
                     one_po_invoice = True
                     break
             if not one_po_invoice:
