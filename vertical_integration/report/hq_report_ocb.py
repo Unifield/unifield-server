@@ -61,7 +61,7 @@ class finance_archive(finance_export.finance_archive):
             # Add company currency
             tmp_line.append(company_currency.name)
             # write changes
-            new_data.append(tmp_line)
+            new_data.append(self.line_to_utf8(tmp_line))
         return new_data
 
     def postprocess_register(self, cr, uid, data):
@@ -80,7 +80,7 @@ class finance_archive(finance_export.finance_archive):
                 tmp_line[4] = pool.get('account.bank.statement').read(cr, uid, [st_id], ['msf_calculated_balance'])[0].get('msf_calculated_balance', 0.0)
             else:
                 tmp_line[4] = line[5]
-            new_data.append(tmp_line)
+            new_data.append(self.line_to_utf8(tmp_line))
         return self.postprocess_selection_columns(cr, uid, new_data, [('account.bank.statement', 'state', 6)])
 
     def postprocess_add_period(self, cr, uid, data, period_name):
@@ -96,7 +96,7 @@ class finance_archive(finance_export.finance_archive):
         for line in data:
             tmp_line = list(line)
             tmp_line.append(period_name)
-            new_data.append(tmp_line)
+            new_data.append(self.line_to_utf8(tmp_line))
         return new_data
 
 class hq_report_ocb(report_sxw.report_sxw):

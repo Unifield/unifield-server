@@ -53,6 +53,20 @@ class finance_archive():
         self.sqlrequests = sql
         self.processrequests = process
 
+    def line_to_utf8(self, line):
+        """
+        Change all elements of this line to UTF-8
+        """
+        newline = []
+        if not line:
+            return []
+        for element in line:
+            if type(element) == unicode:
+                newline.append(element.encode('utf-8'))
+            else:
+                newline.append(element)
+        return newline
+
     def get_selection(self, cr, model, field):
         """
         Return a list of all selection from a field in a given model.
@@ -89,7 +103,7 @@ class finance_archive():
                 column = change[2]
                 # use line value to search into changes_values[change] (the list of selection) the right value
                 tmp_line[column] = changes_values[change][tmp_line[column]]
-            new_data.append(tmp_line)
+            new_data.append(self.line_to_utf8(tmp_line))
         return new_data
 
     def archive(self, cr, uid):
@@ -122,7 +136,9 @@ class finance_archive():
             else:
                 cr.execute(sql)
             fileres = cr.fetchall()
-            # Check if a function is given. If yes, use it
+            newlines = []
+            # Check if a function is given. If yes, use it.
+            # If not, transform lines into UTF-8. Note that postprocess method should transform lines into UTF-8 ones.
             if fileparams.get('function', False):
                 fnct = getattr(self, fileparams['function'], False)
                 # If the function has some params, use them.
@@ -130,19 +146,17 @@ class finance_archive():
                     fileres = fnct(cr, uid, fileres, fileparams['fnct_params'])
                 elif fnct:
                     fileres = fnct(cr, uid, fileres)
-            # Change to UTF-8 all elements
-            newlines = []
-            for line in fileres:
-                newline = []
-                for element in line:
-                    if type(element) == unicode:
-                        newline.append(element.encode('utf-8'))
-                    else:
-                        newline.append(element)
-                newlines.append(newline)
+            else:
+                # Change to UTF-8 all unicode elements
+                for line in fileres:
+                    newlines.append(self.line_to_utf8(line))
             # Write result in a CSV writer then close it.
             writer = csv.writer(tmp_file, quoting=csv.QUOTE_ALL)
-            writer.writerows(newlines)
+            # Use different list regarding UTF-8 process or not
+            if newlines:
+                writer.writerows(newlines)
+            else:
+                writer.writerows(fileres)
             # Only add a link to the temporary file if not in "files" dict
             if filename not in files:
                 files[filename] = tmp_file
