@@ -39,6 +39,7 @@ class finance_archive():
 
     PROCESS REQUESTS LIST: list of dict containing info to process some SQL requests
     Dict:
+     - [optional] headers: list of headers that should appears in the CSV file
      - filename: the name of the result filename in the future ZIP file
      - key: the name of the key in SQLREQUESTS DICTIONNARY to have the right SQL request
      - [optional] query_params: data to use to complete SQL requests
@@ -47,6 +48,7 @@ class finance_archive():
     TIP & TRICKS:
      + More than 1 request in 1 file: just use same filename for each request you want to be in the same file.
      + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
+     + Do not repeat headers if you use the same filename for more than 1 request. This avoid having multiple lines as headers.
     """
 
     def __init__(self, sql, process):
@@ -135,28 +137,30 @@ class finance_archive():
                 cr.execute(sql, fileparams['query_params'])
             else:
                 cr.execute(sql)
-            fileres = cr.fetchall()
-            newlines = []
+            sqlres = cr.fetchall()
+            without_headers = []
             # Check if a function is given. If yes, use it.
             # If not, transform lines into UTF-8. Note that postprocess method should transform lines into UTF-8 ones.
             if fileparams.get('function', False):
                 fnct = getattr(self, fileparams['function'], False)
                 # If the function has some params, use them.
                 if fnct and fileparams.get('fnct_params', False):
-                    fileres = fnct(cr, uid, fileres, fileparams['fnct_params'])
+                    without_headers = fnct(cr, uid, sqlres, fileparams['fnct_params'])
                 elif fnct:
-                    fileres = fnct(cr, uid, fileres)
+                    without_headers = fnct(cr, uid, sqlres)
             else:
                 # Change to UTF-8 all unicode elements
-                for line in fileres:
-                    newlines.append(self.line_to_utf8(line))
+                for line in sqlres:
+                    without_headers.append(self.line_to_utf8(line))
+            result = without_headers
+            if fileparams.get('headers', False):
+                headers = [fileparams['headers']]
+                for line in result:
+                    headers.append(line)
+                result = headers
             # Write result in a CSV writer then close it.
             writer = csv.writer(tmp_file, quoting=csv.QUOTE_ALL)
-            # Use different list regarding UTF-8 process or not
-            if newlines:
-                writer.writerows(newlines)
-            else:
-                writer.writerows(fileres)
+            writer.writerows(result)
             # Only add a link to the temporary file if not in "files" dict
             if filename not in files:
                 files[filename] = tmp_file

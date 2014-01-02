@@ -241,6 +241,7 @@ class hq_report_ocb(report_sxw.report_sxw):
 
         # PROCESS REQUESTS LIST: list of dict containing info to process some SQL requests
         # Dict:
+        # - [optional] headers: list of headers that should appears in the CSV file
         # - filename: the name of the result filename in the future ZIP file
         # - key: the name of the key in SQLREQUESTS DICTIONNARY to have the right SQL request
         # - [optional] query_params: data to use to complete SQL requests
@@ -251,22 +252,26 @@ class hq_report_ocb(report_sxw.report_sxw):
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
         processrequests = [
             {
+                'headers': ['Name', 'Reference', 'Partner type', 'Active/inactive'],
                 'filename': 'partners.csv',
                 'key': 'partner',
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('res.partner', 'partner_type', 2)],
                 },
             {
+                'headers': ['Name', 'Identification No', 'Active', 'Employee type'],
                 'filename': 'employees.csv',
                 'key': 'employee',
                 },
             {
+                'headers': ['Instance', 'Code', 'Name', 'Journal type'],
                 'filename': 'journals.csv',
                 'key': 'journal',
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('account.journal', 'type', 3)],
                 },
             {
+                'headers': ['Name', 'Code', 'Type', 'Status'],
                 'filename': 'cost_centers.csv',
                 'key': 'costcenter',
                 'query_params': (last_day_of_period, last_day_of_period, tuple(instance_ids)),
@@ -274,6 +279,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'fnct_params': [('account.analytic.account', 'type', 2)],
                 },
             {
+                'headers': ['CCY code', 'CCY name', 'Rate', 'Month'],
                 'filename': 'fxrates.csv',
                 'key': 'fxrate',
                 'query_params': (last_day_of_period, first_day_of_period),
@@ -281,17 +287,20 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'fnct_params': period_name,
                 },
             {
+                'headers': ['Instance', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance', 'State', 'Journal code'],
                 'filename': 'liquidities.csv',
                 'key': 'register',
                 'function': 'postprocess_register',
                 },
             {
+                'headers': ['Name', 'Code', 'Donor code', 'Grant amount', 'Reporting CCY', 'State'],
                 'filename': 'contacts.csv',
                 'key': 'contract',
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('financing.contract.contract', 'state', 5)],
                 },
             {
+                'headers': ['Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit', 'Functional CCY'],
                 'filename': 'Export_Data.csv',
                 'key': 'rawdata',
                 },
