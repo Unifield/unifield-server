@@ -157,7 +157,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 WHERE j.instance_id = i.id;
                 """,
             'costcenter': """
-                SELECT name, code, type, date_start, date, CASE WHEN date_start < %s AND (date IS NULL OR date > %s) THEN 'Active' ELSE 'Inactive' END AS Status
+                SELECT name, code, type, CASE WHEN date_start < %s AND (date IS NULL OR date > %s) THEN 'Active' ELSE 'Inactive' END AS Status
                 FROM account_analytic_account
                 WHERE category = 'OC'
                 AND id in (
