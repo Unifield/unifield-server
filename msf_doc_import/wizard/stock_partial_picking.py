@@ -68,13 +68,24 @@ class stock_partial_picking(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        pick_obj = self.pool.get('stock.picking')
         simu_obj = self.pool.get('wizard.import.in.simulation.screen')
+        line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
 
         picking_id = context.get('active_ids', []) and len(context.get('active_ids', [])) and context.get('active_ids', [])[0] or False
         if not picking_id:
             raise osv.except_osv(_('Error'), _('No picking defined'))
 
         simu_id = simu_obj.create(cr, uid, {'picking_id': picking_id,}, context=context)
+        for move in pick_obj.browse(cr, uid, picking_id, context=context).move_lines:
+            line_obj.create(cr, uid, {'move_id': move.id,
+                                      'simu_id': simu_id,
+                                      'move_product_id': move.product_id and move.product_id.id or False,
+                                      'move_product_qty': move.product_qty or 0.00,
+                                      'move_uom_id': move.product_uom and move.product_uom.id or False,
+                                      'move_price_unit': move.price_unit or move.product_id.standard_price,
+                                      'move_currency_id': move.price_currency_id and move.price_currency_id.id or False,
+                                      'line_number': move.line_number,}, context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.in.simulation.screen',

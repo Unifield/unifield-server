@@ -31,6 +31,7 @@
                         </page>
 
                         <page string="Details">
+                            <field name="line_ids" mode="tree" colspan="4" nolabel="1" />
                         </page>
 
                         <page string="Information">
@@ -39,6 +40,41 @@
                     </notebook>
 
                 </form>
+            </field>
+        </record>
+
+        <record id="wizard_import_in_line_simulation_screen_tree_view" model="ir.ui.view">
+            <field name="name">wizard.import.in.line.simulation.screen.tree.view</field>
+            <field name="model">wizard.import.in.line.simulation.screen</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Stock Moves">
+                    <field name="move_id" invisible="1" />
+                    <field name="move_product_id" />
+                    <field name="move_product_qty" />
+                    <field name="move_uom_id" />
+                    <field name="move_price_unit" />
+                    <field name="move_currency_id" />
+                    <field name="line_number" />
+                    <field name="change_type" />
+                    <field name="imp_product_id" />
+                    <field name="imp_asset_id" />
+                    <field name="imp_product_qty" />
+                    <field name="imp_uom_id" />
+                    <field name="imp_price_unit" />
+                    <field name="imp_cost" />
+                    <field name="discrepancy" />
+                    <field name="imp_currency_id" />
+                    <field name="imp_batch_id" />
+                    <field name="imp_exp_date" />
+                    <field name="lot_check" />
+                    <field name="exp_check" />
+                    <field name="kc_check" />
+                    <field name="dg_check" />
+                    <field name="np_check" />
+                    <field name="message_esc1" />
+                    <field name="message_esc2" />
+                </tree>
             </field>
         </record>
 
