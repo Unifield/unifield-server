@@ -557,7 +557,7 @@ class supplier_catalogue(osv.osv):
                     continue
                 line_num += 1
                 
-                # [utp-746] update prices of an already product in catalog
+               # [utp-746] update prices of an already product in catalog
                 criteria = [
                     ('catalogue_id', '=', obj.id),
                     ('product_id', '=', default_code),
@@ -566,14 +566,25 @@ class supplier_catalogue(osv.osv):
                 if catalog_line_id:
                     if isinstance(catalog_line_id, (int, long)):
                         catalog_line_id = [catalog_line_id]
-                    to_write = {
-                        'min_qty': p_min_qty,
-                        'line_uom_id': uom_id,
-                        'unit_price': p_unit_price,
-                        'rounding': p_rounding,
-                        'min_order_qty': p_min_order_qty,
-                    }
-                    vals['line_ids'].append((1, catalog_line_id[0], to_write))
+                    # update product in catalog only if any modification
+                    # and only modified fields (for sync)
+                    cl_obj = obj_catalog_line.browse(cr, uid, catalog_line_id[0], context=context)
+                    if cl_obj:
+                        to_write = {}
+                        if cl_obj.min_qty != p_min_qty:
+                            to_write['min_qty'] = p_min_qty
+                        if cl_obj.line_uom_id.id != uom_id:
+                            to_write['line_uom_id'] = uom_id
+                        if cl_obj.unit_price != p_unit_price:
+                            to_write['unit_price'] = p_unit_price
+                        if cl_obj.rounding != p_rounding:
+                            to_write['rounding'] = p_rounding
+                        if cl_obj.min_order_qty != p_min_order_qty:
+                            to_write['min_order_qty'] = p_min_order_qty
+                        if cl_obj.comment != p_comment:
+                            to_write['comment'] = p_comment
+                        if to_write:
+                            vals['line_ids'].append((1, catalog_line_id[0], to_write))
                 else:
                     to_write = {
                         'to_correct_ok': to_correct_ok, 
