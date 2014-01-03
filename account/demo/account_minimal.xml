@@ -421,6 +421,11 @@
             <field name="analytic_journal_id" ref="sit"/>
             <field name="user_id" ref="base.user_root"/>
         </record>
+        <!-- if register_accounting installed, close the associated and unneeded registers -->
+        <function model="account.bank.statement" name="write">
+            <function model="account.bank.statement" name="search" eval="[[('journal_id', 'in', [ref('cash_journal'), ref('check_journal'), ref('bank_journal')])]]" />
+            <value eval="{'state': 'confirm'}" />
+        </function>
 
         <!--
         Product income and expense accounts, default parameters
