@@ -391,7 +391,7 @@ class supplier_catalogue(osv.osv):
                 if type(f) == t_dt:
                     new_f = f.strftime('%Y-%m-%dT%H:%M:%S.000')
                     line[line.index(f)] = (new_f, 'DateTime')
-                elif isinstance(f, str) and columns_header[line.index(f)][1] != 'string':
+                elif isinstance(f, str) and 0 <= line.index(f) < len(columns_header) and columns_header[line.index(f)][1] != 'string':
                     try:
                         line[line.index(f)] = (float(f), 'Number')
                     except:
