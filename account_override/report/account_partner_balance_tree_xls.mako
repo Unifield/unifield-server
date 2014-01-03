@@ -188,62 +188,10 @@ else:
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
-## header (vertical version)
+## header
 <%
 header_col_merge_count = col_count - 1
-header_vertical = False
 %>
-% if header_vertical:
-<Row>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}&#10;Fiscal Year</Data></Cell>
-    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
-        <Data ss:Type="String">${(get_account(data) or '')|x}&#10;&#10;${(get_fiscalyear(data) or '')|x}</Data>
-    </Cell>
-</Row>
-<Row>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Journals</Data></Cell>
-    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
-        <Data ss:Type="String">${(journals or '')|x}</Data>
-    </Cell>
-</Row>
-<Row>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Display Account</Data></Cell>
-    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
-        <Data ss:Type="String">${(display_account or '')|x}</Data>
-    </Cell>
-</Row>
-<Row>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Filter By ${(get_filter(data) or '')|x}</Data></Cell>
-    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
-        <Data ss:Type="String">${(get_filter_info(data) or '')|x}</Data>
-    </Cell>
-</Row>
-<Row>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Entries Sorted By</Data></Cell>
-    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
-        <Data ss:Type="String">${(get_sortby(data) or '')|x}</Data>
-    </Cell>
-</Row>
-<Row>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Target Moves</Data></Cell>
-    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
-        <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
-    </Cell>
-</Row>
-<Row>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Output Currency</Data></Cell>
-    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
-        <Data ss:Type="String">${get_output_currency_code()|x}</Data>
-    </Cell>
-</Row>
-<Row>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Proprietary Instances</Data></Cell>
-    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="${header_col_merge_count}">
-        <Data ss:Type="String">${(prop_instances or '')|x}</Data>
-    </Cell>
-</Row>
-% else:
-## header (horizontal version)
 <Row>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}&#10;Fiscal Year</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Journals</Data></Cell>
@@ -279,7 +227,6 @@ header_vertical = False
      <Data ss:Type="String">${(prop_instances or '')|x}</Data>
  </Cell>
  </Row>
-% endif
 ## separation line after header
 <Row>
 % for n in range(col_count):
@@ -290,8 +237,23 @@ header_vertical = False
 </Row>
 ## partner header
 <Row>
-<Cell ss:StyleID="ssHeader" ss:MergeAcross="4">
-    <Data ss:Type="String">Partner/Journal (code/move/posting date/period/account)</Data>
+##<Cell ss:StyleID="ssHeader" ss:MergeAcross="4">
+##    <Data ss:Type="String">Partner/Journal (code/move/posting date/period/account)</Data>
+##</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">Partner Journal</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">Code</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">Move</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">Posting date</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">Account</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
     <Data ss:Type="String">Debit</Data>
@@ -306,8 +268,23 @@ header_vertical = False
 ## partner row
 % for p_obj in p_entries:
 <Row>
-<Cell ss:StyleID="ssPartner" ss:MergeAcross="4">
+## <Cell ss:StyleID="ssPartner" ss:MergeAcross="4">
+##    <Data ss:Type="String">${(p_obj.name or '')|x}</Data>
+## </Cell>
+<Cell ss:StyleID="ssPartner">
     <Data ss:Type="String">${(p_obj.name or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
     <Data ss:Type="String">${formatLang(p_obj.debit or 0.)}</Data>

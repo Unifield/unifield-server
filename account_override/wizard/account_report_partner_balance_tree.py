@@ -105,14 +105,18 @@ class account_partner_balance_tree(osv.osv):
         if data['form'].get('target_move', 'all') == 'posted':
             move_state = "('posted')"
     
-        query = "SELECT l.id" \
-        " FROM account_move_line l" \
+        query = "SELECT l.id FROM account_move_line l" \
         " JOIN account_account ac ON (l.account_id = ac.id)" \
-        " JOIN account_move am ON (am.id = l.move_id)" \
-        " WHERE l.partner_id = " + str(partner_id) + "" \
-        " AND ac.type = '" + account_type + "'" \
-        " AND am.state IN " + move_state + "" \
-        " AND " + where + ""
+        " JOIN account_move am ON (am.id = l.move_id) WHERE "
+        if partner_id:
+            query += "l.partner_id = " + str(partner_id) + "" \
+            " AND ac.type = '" + account_type + "'" \
+            " AND am.state IN " + move_state + ""
+        else:
+            query += "ac.type = '" + account_type + "'" \
+            " AND am.state IN " + move_state + ""
+        if where:
+            query += " AND " + where + ""   
         cr.execute(query)
         res = cr.fetchall()
         if res:
