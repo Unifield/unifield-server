@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<openerp>
+    <data>
+    
+		<!-- ################## UPDATE RECEIVED ################## -->
+    	<!--  form -->
+        <record model="ir.ui.view" id="remote_warehouse_update_received_form_view">
+            <field name="name">sync_remote_warehouse.update_received_form</field>
+      		<field name="type">form</field>
+            <field name="model">sync_remote_warehouse.update_received</field>
+            <field name="arch" type="xml">
+                <form string="Update Received">
+		          <group col="4" colspan="2">
+		            <separator string="Synchronization" colspan="4"/>
+		            <field name="source" colspan="4"/>
+		            <field name="sequence_number"/>
+            		<field name="create_date" string="Update Create Date / Time" />
+		            <field name="execution_date"/>
+		            <field name="run"/>
+		          </group>
+		          <group col="2" colspan="2">
+		            <separator string="Record" colspan="2"/>
+		            <field name="model"/>
+		            <field name="sdref"/>
+		            <group col="4" colspan="2">
+		              <field name="is_deleted"/>
+		              <field name="version"
+		                     attrs="{'invisible':[('is_deleted','=',True)]}"/>
+		            </group>
+		            <field name="owner"/>
+		          </group>
+		          <group colspan="4" col="3">
+		            <group colspan="1" col="1">
+		              <separator string="Fields"/>
+		              <field name="fields" nolabel="1"
+		                     attrs="{'readonly':[('editable','=',False)]}"/>
+		            </group>
+		            <group colspan="1" col="1">
+		              <separator string="Values"/>
+		              <field name="values" nolabel="1"
+		                     attrs="{'readonly':[('editable','=',False)]}"/>
+		            </group>
+		            <group colspan="1" col="1">
+		              <separator string="Fallback Values"/>
+		              <field name="fallback_values" nolabel="1"
+		                     attrs="{'readonly':[('editable','=',False)]}"/>
+		            </group>
+		          </group>
+		          <separator string="Execution Messages" colspan="4"/>
+		          <field name="log" nolabel="1" colspan="4"
+		                 attrs="{'readonly':[('editable','=',False)]}"/>
+		          <label string="" colspan="3"/>
+		          <group colspan="1" col="3">
+		            <field name="editable"
+		                   attrs="{'invisible':[('run','=',True)]}"/>
+		            <button string="Run manually" name="run" type="object"
+		                    attrs="{'invisible':[('run','=',True)]}"/>
+		          </group>
+		        </form>
+            </field>
+        </record>
+        
+        <!-- tree -->
+        <record model="ir.ui.view" id="remote_warehouse_update_received_tree_view">
+            <field name="name">sync_remote_warehouse.update_received_tree</field>
+            <field name="model">sync_remote_warehouse.update_received</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+            	<tree colors="red:run == False" string="Instance Tree">
+		          <field name="sequence_number"/>
+		          <field name="source"/>
+		          <field name="model"/>
+		          <field name="sdref"/>
+		          <field name="is_deleted"/>
+		          <field name="create_date"/>
+		          <field name="execution_date"/>
+		          <field name="fancy_version"/>
+		          <field name="run"/>
+		        </tree>
+           	</field>
+        </record>
+        
+        <!-- search -->
+         <record model="ir.ui.view" id="sync_client_update_received_search_view_rw">
+            <field name="name">sync_remote_warehouse.update_received_search</field>
+            <field name="model">sync_remote_warehouse.update_received</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+	            <search string="Search update Received">
+		          <field name="source"/>
+		          <field name="model"/>
+		          <field name="sequence_number"/>
+		          <newline/>
+		          <field name="create_date"/>
+		          <field name="execution_date"/>
+		          <newline/>
+		          <filter string="Not Run" icon="terp-check"
+		                  domain="[('run','=',False)]" name="current"/>
+		          <newline/>
+		          <group expand="0" string="Group By..." colspan="4">
+		            <filter string="Source" icon="terp-partner"
+		                    domain="[]" context="{'group_by':'source'}"/>
+		            <filter string="Model" icon="terp-personal"
+		                    domain="[]" context="{'group_by':'model'}"/>
+		            <filter string="Sequence" icon="terp-accessories-archiver"
+		                    domain="[]" context="{'group_by':'sequence_number'}"/>
+		          </group>
+		        </search>
+            </field>
+        </record>
+        
+        <!-- menus -->
+        <record model="ir.actions.act_window" id="remote_warehouse_update_received_action">
+	      <field name="name">USB Updates Received</field>
+	      <field name="res_model">sync_remote_warehouse.update_received</field>
+	      <field name="view_type">form</field>
+	      <field name="view_mode">tree,form</field>
+	      <field name="context">{}</field>
+	    </record>
+	
+	    <menuitem id="remote_warehouse_update_received_menu" name="USB Updates Received"
+	              parent="sync_client.update_menu" action="remote_warehouse_update_received_action"/>
+        
+        <!-- ################## UPDATE SENT ################## -->
+    	<!--  form -->
+        <record model="ir.ui.view" id="remote_warehouse_update_to_send_form_view">
+            <field name="name">sync_remote_warehouse.update_to_send_form</field>
+            <field name="model">sync_remote_warehouse.update_to_send</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            	<form string="Instance Form">
+		          <group colspan="2" col="2">
+		            <separator string="Record" colspan="2"/>
+		            <field name="model"/>
+		            <field name="sdref"/>
+		            <group colspan="2" col="4">
+		              <field name="is_deleted"/>
+		              <field name="version"
+		                     attrs="{'invisible':[('is_deleted','=',True)]}"/>
+		            </group>
+		          </group>
+		          <group colspan="2" col="2">
+		            <separator string="Synchronization" colspan="6"/>
+		            <field name="rule_id"/>
+		            <field name="owner"/>
+		            <group colspan="2" col="6">
+		              <field name="sent"/>
+		              <group colspan="4" col="2">
+		                <field name="sent_date"/>
+		              </group>
+		            </group>
+		          </group>
+		          <group colspan="2" col="1">
+		            <separator string="Fields"/>
+		            <field name="fields" nolabel="1"/>
+		          </group>
+		          <group colspan="2" col="1">
+		            <separator string="Values"/>
+		            <field name="values" nolabel="1"/>
+		          </group>
+		        </form>
+            </field>
+        </record>
+        
+        <!-- tree -->
+        <record model="ir.ui.view" id="remote_warehouse_sync_client_update_to_send_tree_view">
+            <field name="name">sync_remote_warehouse.update_to_send_tree</field>
+            <field name="model">sync_remote_warehouse.update_to_send</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+	            <tree colors="red:sent == False">
+		          <field name="model"/>
+		          <field name="sdref"/>
+		          <field name="is_deleted"/>
+		          <field name="fancy_version"/>
+		          <field name="rule_id"/>
+		          <field name="sent"/>
+		          <field name="sent_date"/>
+		        </tree>
+            </field>
+        </record>
+        
+        <!-- search -->
+         <record model="ir.ui.view" id="remote_warehouse_update_sent_search_view">
+            <field name="name">sync_remote_warehouse.update_to_send_search</field>
+            <field name="model">sync_remote_warehouse.update_to_send</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+            	<search string="Search update Sent">
+		          <field name="sent_date"/>
+		          <field name="model"/>
+		          <field name="rule_id"/>
+		          <newline/>
+		          <filter string="Not Run" icon="terp-check"
+		                  domain="[('sent','=',False)]" name="current"/>
+		          <newline/>
+		          <group expand="0" string="Group By..." colspan="4">
+		            <filter string="Model" icon="terp-partner"
+		                    domain="[]" context="{'group_by':'model'}"/>
+		            <filter string="Rule" icon="terp-personal"
+		                    domain="[]" context="{'group_by':'rule_id'}"/>
+		            <filter string="Date" icon="terp-partner"
+		                    domain="[]" context="{'group_by':'sync_date'}"/>
+		            <filter string="Record" icon="terp-partner"
+		                    domain="[]" context="{'group_by':'sdref'}"/>
+		          </group>
+		        </search>
+            </field>
+        </record>
+        
+        <!-- menus -->
+        <record model="ir.actions.act_window" id="remote_warehouse_update_to_send_action">
+	      <field name="name">USB Updates Sent</field>
+	      <field name="res_model">sync_remote_warehouse.update_to_send</field>
+	      <field name="view_type">form</field>
+	      <field name="view_mode">tree,form</field>
+	      <field name="context">{}</field>
+	    </record>
+	
+	    <menuitem id="remote_warehouse_update_sent_menu" name="USB Updates Sent"
+	              parent="sync_client.update_menu" action="remote_warehouse_update_to_send_action"/>
+        
+    </data> 
+</openerp>

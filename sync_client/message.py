@@ -50,35 +50,57 @@ class dict_to_obj(object):
 class local_message_rule(osv.osv):
 
     _name = 'sync.client.message_rule'
-
+    
     _columns = {
         'name' : fields.char('Rule name', size=64, readonly=True),
         'server_id' : fields.integer('Server ID'),
-        'model' : fields.many2one('ir.model','Model', readonly=True),
+        'model' : fields.char('Model Name',size=128),
         'domain' : fields.text('Domain', required=False, readonly=True),
+        'filter_method' : fields.char('Filter Method', size=64, help='The method to use to find target records instead of a domain.', readonly=True),
         'sequence_number' : fields.integer('Sequence', readonly=True),
         'remote_call': fields.text('Method to call', required=True),
         'arguments': fields.text('Arguments of the method', required=True),
         'destination_name': fields.char('Fields to extract destination', size=256, required=True),
+        'active' : fields.boolean('Active', select=True),
+        'type' : fields.char('Group Type', size=256),
     }
 
     _logger = logging.getLogger('sync.client')
 
     def save(self, cr, uid, data_list, context=None):
-        self._delete_old_rules(cr, uid, context)
-        for data in data_list:
-            model_name = data.get('model')
-            model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name)], context=context)
-            if not model_id:
-                sync_log(self, "Model %s does not exist" % model_name, data=data)
-                continue #we do not save this rule
-            data['model'] = model_id[0]
+        # Get the whole ids of existing and active rules
+        remaining_ids = set(self.search(cr, uid, [], context=context))
 
-            self.create(cr, uid, data, context=context)
+        for vals in (dict(data) for data in data_list):
+            assert 'server_id' in vals, "The following rule doesn't seem to have the required field server_id: %s" % vals
 
-    def _delete_old_rules(self, cr, uid, context=None):
-        ids_to_unlink = self.search(cr, uid, [], context=context)
-        self.unlink(cr, uid, ids_to_unlink, context=context)
+            # Check model exists or is null
+            if not vals.get('model'):
+                vals['active'] = False
+            elif not self.pool.get('ir.model').search(cr, uid, [('model', '=', vals['model'])], limit=1, context=context):
+                self._logger.error("The following rule doesn't apply to your database and has been disabled. Reason: model %s does not exists!\n%s" % (vals['model'], vals))
+                continue #do not save the rule if there is no valid model
+            elif 'active' not in vals:
+                vals['active'] = True
+
+            ids = self.search(cr, uid, [('server_id','=',vals['server_id']),'|',('active','=',True),('active','=',False)], context=context)
+            if ids:
+                remaining_ids.discard(ids[0])
+                self.write(cr, uid, ids, vals, context=context)
+            else:
+                self.create(cr, uid, vals, context=context)
+
+        # The rest is just disabled
+        self.write(cr, uid, list(remaining_ids), {'active':False}, context=context)
+
+    def unlink(self, cr, uid, ids, context=None):
+        return self.write(cr, uid, ids, {'active':False}, context=context)
+
+    def get_rule_by_sequence(self, cr, uid, sequence_number, context=None):
+        rules = self.search(cr, uid, [('sequence_number', '=', sequence_number)], context=context)
+        if rules:
+            return self.browse(cr, uid, rules, context=context)[0]
+        return False
 
     _order = 'sequence_number asc'
 local_message_rule()
@@ -108,17 +130,23 @@ class message_to_send(osv.osv):
         Creation from rule
     """
     def create_from_rule(self, cr, uid, rule, context=None):
-        domain = rule.domain and eval(rule.domain) or []
         context = dict(context or {})
         context['active_test'] = False
-        obj_ids = self.pool.get(rule.model.model).search_ext(cr, uid, domain, context=context)
-        dest = self.pool.get(rule.model.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
+
+        # either use rule filter_method or domain to find records for message
+        if rule.filter_method:
+            obj_ids = getattr(self.pool.get(rule.model), rule.filter_method)(cr, uid, rule, context=context)
+        else:
+            domain = rule.domain and eval(rule.domain) or []
+            obj_ids = self.pool.get(rule.model).search_ext(cr, uid, domain, context=context)
+
+        dest = self.pool.get(rule.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
         args = {}
         for obj_id in obj_ids:
-            arg = self.pool.get(rule.model.model).get_message_arguments(cr, uid, obj_id, rule, context=context)
+            arg = self.pool.get(rule.model).get_message_arguments(cr, uid, obj_id, rule, context=context)
             args[obj_id] = arg
         call = rule.remote_call
-        identifiers = self._generate_message_uuid(cr, uid, rule.model.model, obj_ids, rule.server_id, context=context)
+        identifiers = self._generate_message_uuid(cr, uid, rule.model, obj_ids, rule.server_id, context=context)
         for id in obj_ids:
             for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
                 self.create_message(cr, uid, identifiers[id], call, args[id], dest[id], context)
@@ -127,7 +155,6 @@ class message_to_send(osv.osv):
     def _generate_message_uuid(self, cr, uid, model, ids, server_rule_id, context=None):
         return dict( (id, "%s_%s" % (name, server_rule_id)) \
                      for id, name in self.pool.get(model).get_sd_ref(cr, uid, ids, context=context).items() )
-
 
     def create_message(self, cr, uid, identifier, remote_call, arguments, destination_name, context=None):
         data = {
@@ -145,7 +172,17 @@ class message_to_send(osv.osv):
         #else:
             #sync_log(self, "Message %s already exist" % identifier)
 
-
+    # SP-135: Manually generate a message if there is a modification on the relevant object
+    def modify_manual_message(self, cr, uid, existing_message_id, identifier, remote_call, arguments, destination_name, context=None):
+        data = {
+                'identifier' : identifier,
+                'remote_call': remote_call,
+                'arguments': arguments,
+                'generate_message': True,   # set this message as generated by the system, it will not cause the resume synch event
+                'destination_name': destination_name,
+                'sent' : False,
+        }
+        self.write(cr, uid, existing_message_id, data, context=context)
 
     """
         Sending Part
@@ -201,6 +238,14 @@ class message_received(osv.osv):
             ids = self.search(cr, uid, [('identifier', '=', data['id'])], context=context)
             if ids:
                 sync_log(self, 'Message %s already in the database' % data['id'])
+                # SP-135/UF-1617: Write the message if there is modification, and set the "run" to false to be executed next time
+                self.write(cr, uid, ids, {
+                    'identifier' : data['id'],
+                    'remote_call' : data['call'],
+                    'arguments' : data['args'],
+                    'sequence' : data['sequence'],
+                    'run' : False, # SP-135: set the message to become not run, so it will be rerun if there is a modif from server
+                    'source' : data['source'] }, context=context)
                 continue
             self.create(cr, uid, {
                 'identifier' : data['id'],
@@ -227,14 +272,19 @@ class message_received(osv.osv):
                 res.append(arg)
         return res
 
-    def execute(self, cr, uid, ids=False, context=None):
-        if not ids:
+    def execute(self, cr, uid, ids=None, context=None):
+        # scope the context of message executions and loggers
+        context = dict((context or {}),
+            sync_message_execution=True,
+            sale_purchase_logger={})
+
+        # get all ids if not specified
+        if ids is None:
             ids = self.search(cr, uid, [('run', '=', False)],
                 order='id asc', context=context)
         if not ids: return 0
+
         execution_date = fields.datetime.now()
-        self.write(cr, uid, ids, {'execution_date' : execution_date}, context=context)
-        sync_context = dict(context or {}, sync_message_execution=True)
         for message in self.browse(cr, uid, ids, context=context):
             if message.run: #UTP-682: double check to make sure if the message has been executed, then skip it
                 continue
@@ -244,15 +294,23 @@ class message_received(osv.osv):
             arg = self.get_arg(message.arguments)
             try:
                 fn = getattr(self.pool.get(model), method)
-                res = fn(cr, uid, message.source, *arg, context=sync_context)
+                res = fn(cr, uid, message.source, *arg, context=context)
             except BaseException, e:
+                self._logger.exception("Message execution %d failed!" % message.id)
                 cr.execute("ROLLBACK TO SAVEPOINT exec_message")
-                log = "Something go wrong with the call %s \n" % message.remote_call
-                log += sync_log(self, e, 'error')
-                self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
+                self.write(cr, uid, message.id, {
+                    'execution_date' : execution_date,
+                    'run' : False,
+                    'log' : e.__class__.__name__+": "+tools.ustr(e),
+                }, context=context)
             else:
                 cr.execute("RELEASE SAVEPOINT exec_message")
-                self.write(cr, uid, message.id, {'run' : True, 'log' : tools.ustr(res)}, context=context)
+                self.write(cr, uid, message.id, {
+                    'execution_date' : execution_date,
+                    'run' : True,
+                    'log' : tools.ustr(res),
+                }, context=context)
+
         return len(ids)
 
     _order = 'create_date desc, id desc'

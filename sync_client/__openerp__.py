@@ -24,9 +24,9 @@
     'name': 'Synchronization Utility',
     'version': '0.1',
     'category': 'Tools',
-    'description': """
-        
-    """,
+    'description': """\
+Synchronization Engine - Client Module
+""",
     'author': 'OpenERP SA',
     'website': 'http://openerp.com',
     'depends': ['sync_common', 'account'],
@@ -35,6 +35,7 @@
         'sync_client_view.xml',
         'update_view.xml',
         'message_view.xml',
+        'log_sale_purchase_view.xml',
         'wizard/sync_wiz_view.xml',
         'wizard/monitoring_view.xml',
         'monitor_view.xml',

@@ -3,7 +3,7 @@ TRUE,PUR,Purchase,purchase
 TRUE,PURR,Purchase Refund,purchase
 TRUE,SAL,Sale,sale
 TRUE,SALR,Sale Refund,sale
-TRUE,OD,Correction,general
+TRUE,OD,Correction,correction
 TRUE,AHQ,Analytic HQ,hq
 TRUE,AHQ-Exp,HQ - Field expenses,hq
 TRUE,HR,HR,hr
@@ -11,7 +11,8 @@ TRUE,BNK,Bank,general
 TRUE,CAS,Cash,cash
 TRUE,CHK,Cheque,general
 TRUE,ENG,Engagement Journal,engagement
-TRUE,AMT,Miscellaneous Transactions Journal,general
+TRUE,ENGI,Engagement - intl orders,engagement
+TRUE,AMT,Miscellaneous Transactions Journal,correction
 TRUE,AC,Accruals,general
 TRUE,AIKD,Analytic In-kind Donation,inkind
 TRUE,AINT,Analytic Intermission,intermission

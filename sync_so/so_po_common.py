@@ -26,6 +26,18 @@ class so_po_common(osv.osv_memory):
     _name = "so.po.common"
     _description = "Common methods for SO - PO"
     
+    # UTP-952: get the partner type, for the case of intermission and section
+    def get_partner_type(self, cr, uid, partner_name, context=None):
+        if not context:
+            context = {}
+        context.update({'active_test': False})
+        partner_obj = self.pool.get('res.partner')
+        ids = partner_obj.search(cr, uid, [('name', '=', partner_name)], context=context)
+        if not ids:
+            raise Exception("The partner %s is not found in the system. The operation is thus interrupted." % partner_name)
+        
+        return partner_obj.read(cr, uid, ids, ['partner_type'], context=context)[0]['partner_type']
+
     def get_partner_id(self, cr, uid, partner_name, context=None):
         if not context:
             context = {}
@@ -100,25 +112,37 @@ class so_po_common(osv.osv_memory):
             raise Exception, "The PO is not found for the given FO Ref: " + so_ref
         return po_ids[0]
 
-    def get_in_id(self, cr, uid, po_ref, context):
+    def get_in_id_from_po_id(self, cr, uid, po_id, context):
         # Get the Id of the original PO to update these info back 
-        if not po_ref:
+        if not po_id:
             return False
 
-        in_ids = self.pool.get('stock.picking').search(cr, uid, [('origin', '=', po_ref)], context)
+        in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', '=', 'assigned')], 0, None, None, context)
         if not in_ids:
-            raise Exception, "The IN of the PO not found! " + po_ref
+            return False
         return in_ids[0]
+
+    def get_in_id_by_state(self, cr, uid, po_id, po_ref, states, context):
+        # Get the Id of the original PO to update these info back 
+        if not po_id:
+            return False
+
+        in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', 'in', states)], 0, None, None, context)
+        return in_ids[0] if in_ids else False 
 
     # Update the next line number for the FO, PO that have been created by the synchro
     def update_next_line_number_fo_po(self, cr, uid, order_id, fo_po_obj, order_line_object, context):
         sequence_id = fo_po_obj.read(cr, uid, [order_id], ['sequence_id'], context=context)[0]['sequence_id'][0]
+        seq_tools = self.pool.get('sequence.tools')
         
+        # Make sure that even if the FO/PO has no line, then the default value is 1
         cr.execute("select max(line_number) from " + order_line_object + " where order_id = " + str(order_id))
         for x in cr.fetchall():
-            seq_tools = self.pool.get('sequence.tools')
-            seq_tools.reset_next_number(cr, uid, sequence_id, int(x[0]) + 1, context=context)
-        
+            # For the FO without any line
+            val = 1
+            if x and x[0]:
+                val = int(x[0]) + 1
+            seq_tools.reset_next_number(cr, uid, sequence_id, val, context=context)
         return True
 
     def get_original_so_id(self, cr, uid, so_ref, context):
@@ -165,7 +189,6 @@ class so_po_common(osv.osv_memory):
         if 'ready_to_ship_date' in header_info:
             header_result['ready_to_ship_date'] = header_info.get('ready_to_ship_date')
             
-            
         if 'analytic_distribution_id' in header_info: 
             header_result['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, header_info, context)
         
@@ -211,9 +234,12 @@ class so_po_common(osv.osv_memory):
             header_result['details'] = header_info.get('details')
         if 'delivery_requested_date' in header_info:
             header_result['delivery_requested_date'] = header_info.get('delivery_requested_date')
+        if 'is_a_counterpart' in header_info:
+            header_result['is_a_counterpart'] = header_info.get('is_a_counterpart')
 
-        analytic_id = header_info.get('analytic_distribution_id', False)
-        if analytic_id:
+        # UTP-952: only retrieve the AD from the source if the partner type is not intermission or section        
+        partner_type = self.get_partner_type(cr, uid, source, context)
+        if partner_type not in ['section', 'intermission'] and header_info.get('analytic_distribution_id', False):
             header_result['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, header_info, context)
         
         partner_id = self.get_partner_id(cr, uid, source, context)
@@ -229,7 +255,7 @@ class so_po_common(osv.osv_memory):
         
         return header_result
     
-    def get_lines(self, cr, uid, line_values, po_id, so_id, for_update, so_called, context):
+    def get_lines(self, cr, uid, source, line_values, po_id, so_id, for_update, so_called, context):
         line_result = []
         update_lines = []
         
@@ -273,6 +299,8 @@ class so_po_common(osv.osv_memory):
 
             if line_dict.get('price_unit'):
                 values['price_unit'] = line.price_unit
+            else:
+                values['price_unit'] = 0 # This case is for the line that has price unit False (actually 0 but OpenERP converted to False)
                 
             if line_dict.get('product_id'):
                 rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(line.product_id.id), context=context)
@@ -313,7 +341,9 @@ class so_po_common(osv.osv_memory):
                 if rec_id:
                     values['nomen_manda_3'] = rec_id
                 
-            if line_dict.get('analytic_distribution_id'):
+            # UTP-952: set empty AD for lines if the partner is intermission or section
+            partner_type = self.get_partner_type(cr, uid, source, context)
+            if partner_type not in ['section', 'intermission'] and line_dict.get('analytic_distribution_id'):
                 values['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, line_dict, context)
                     
             line_ids = False

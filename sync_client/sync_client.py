@@ -103,7 +103,6 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 raise already_syncing_error
 
             # Lock is acquired, so don't put any code outside the try...catch!!
-            self.sync_cursor = cr
             res = False
             context = kwargs['context'] = dict(kwargs.get('context', {}))
             try:
@@ -122,6 +121,10 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                     # get a whole new logger from sync.monitor object
                     context['logger'] = logger = \
                         self.pool.get('sync.monitor').get_logger(cr, uid, defaults_logger, context=context)
+                    context['log_sale_purchase'] = True
+
+                    # create a specific cursor for the call
+                    self.sync_cursor = pooler.get_db(cr.dbname).cursor()
 
                     if need_connection:
                         # Check if connection is up
@@ -145,8 +148,8 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 # ah... we can now call the function!
                 logger.switch(step, 'in-progress')
                 logger.write()
-                res = fn(self, cr, uid, *args, **kwargs)
-                cr.commit()
+                res = fn(self, self.sync_cursor, uid, *args, **kwargs)
+                self.sync_cursor.commit()
 
                 # is the synchronization finished?
                 if need_connection and make_log:
@@ -169,16 +172,14 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
             except BaseException, e:
                 # Handle aborting of synchronization
                 if isinstance(e, OperationalError) and e.message == 'Unable to use the cursor after having closed it':
-                    logger.switch(step, 'aborted')
                     if make_log:
                         error = "Synchronization aborted"
                         logger.append(error, 'status')
-                        # force re-open of the cursor before raising
-                        cr.__getattr__ = lambda self, name: getattr(self, name)
-                        cr.__init__(cr._pool, cr.dbname)
-                        del cr.__getattr__
+                        self._logger.warning(error)
                         raise osv.except_osv(_('Error!'), error)
                     else:
+                        logger.switch(step, 'aborted')
+                        self.sync_cursor = None
                         raise
                 logger.switch(step, 'failed')
                 error = "%s: %s" % (e.__class__.__name__, getattr(e, 'message', tools.ustr(e)))
@@ -195,9 +196,14 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 if isinstance(res, (str, unicode)) and res:
                     logger.append(res, step)
             finally:
-                logger.write()
                 # gotcha!
                 sync_lock.release()
+                if make_log:
+                    logger.close()
+                    if self.sync_cursor is not None:
+                        self.sync_cursor.close()
+                else:
+                    logger.write()
             return res
 
         return wrapper
@@ -360,7 +366,7 @@ class Entity(osv.osv):
         
         def prepare_update(session):
             updates_count = 0
-            for rule_id in self.pool.get('sync.client.rule').search(cr, uid, [], context=context):
+            for rule_id in self.pool.get('sync.client.rule').search(cr, uid, [('type', '!=', 'USB')], context=context):
                 updates_count += sum(updates.create_update(
                     cr, uid, rule_id, session, context=context))
             return updates_count

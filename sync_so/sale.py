@@ -19,17 +19,11 @@
 #
 ##############################################################################
 
-from osv import osv
-from osv import fields
-from osv import orm
-from tools.translate import _
-from datetime import datetime
-import tools
-import time
-import pprint
-import so_po_common
-pp = pprint.PrettyPrinter(indent=4)
+import logging
 
+from osv import osv, fields
+import so_po_common
+from sync_client import get_sale_purchase_logger
 
 class sale_order_line_sync(osv.osv):
     _inherit = "sale.order.line"
@@ -43,6 +37,7 @@ sale_order_line_sync()
 
 class sale_order_sync(osv.osv):
     _inherit = "sale.order"
+    _logger = logging.getLogger('------sync.sale.order')
     
     _columns = {
                 'received': fields.boolean('Received by Client', readonly=True),
@@ -61,7 +56,7 @@ class sale_order_sync(osv.osv):
         return super(sale_order_sync, self).copy(cr, uid, id, default, context=context)
 
     def create_so(self, cr, uid, source, po_info, context=None):
-        print "Create an FO from a PO (normal flow)"
+        self._logger.info("+++ Create an FO at %s from a PO (normal flow) at %s"%(cr.dbname, source))
         if not context:
             context = {}
             
@@ -71,7 +66,7 @@ class sale_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, po_info, False, False, False, True, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, source, po_info, False, False, False, True, context)
         # [utp-360] we set the confirmed_delivery_date to False directly in creation and not in modification
         order_line = []
         for line in header_result['order_line']:
@@ -115,7 +110,7 @@ class sale_order_sync(osv.osv):
         return True
 
     def validated_po_update_validated_so(self, cr, uid, source, po_info, context=None):
-        print "Update the validated FO when the relevant PO got validated"
+        self._logger.info("+++ Update the validated FO at %s when the relevant PO got validated at %s"%(cr.dbname, source))
         if not context:
             context = {}
         context['no_check_line'] = True
@@ -127,7 +122,7 @@ class sale_order_sync(osv.osv):
         so_po_common.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
         so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
         
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, po_info, False, so_id, True, False, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, source, po_info, False, so_id, True, False, context)
         
         default = {}
         default.update(header_result)
@@ -136,7 +131,7 @@ class sale_order_sync(osv.osv):
         return True
 
     def update_sub_so_ref(self, cr, uid, source, po_info, context=None):
-        print "Update the PO references to the FO, including its sub-FOs"
+        self._logger.info("+++ Update the PO references from %s to the FO, including its sub-FOs at %s"%(source, cr.dbname))
         if not context:
             context = {}
             
@@ -163,5 +158,45 @@ class sale_order_sync(osv.osv):
             
         return True
 
-sale_order_sync()
+    def on_create(self, cr, uid, id, values, context=None):
+        if context is None \
+           or not context.get('sync_message_execution') \
+           or context.get('no_store_function'):
+            return
+        logger = get_sale_purchase_logger(cr, uid, self, id, context=context)
+        logger.action_type = 'creation'
+        logger.is_product_added |= (len(values.get('order_line', [])) > 0)
 
+    def on_change(self, cr, uid, changes, context=None):
+        if context is None \
+           or not context.get('sync_message_execution') \
+           or context.get('no_store_function'):
+            return
+        # create a useful mapping purchase.order ->
+        #    dict_of_purchase.order.line_changes
+        lines = {}
+        if 'sale.order.line' in context['changes']:
+            for rec_line in self.pool.get('sale.order.line').browse(
+                    cr, uid,
+                    context['changes']['sale.order.line'].keys(),
+                    context=context):
+                if self.pool.get('sale.order.line').exists(cr, uid, rec_line.id, context): # check the line exists
+                    lines.setdefault(rec_line.order_id.id, {})[rec_line.id] = context['changes']['sale.order.line'][rec_line.id]
+        # monitor changes on purchase.order
+        for id, changes in changes.items():
+            logger = get_sale_purchase_logger(cr, uid, self, id, \
+                context=context)
+            if 'order_line' in changes:
+                old_lines, new_lines = map(set, changes['order_line'])
+                logger.is_product_added |= (len(new_lines - old_lines) > 0)
+                logger.is_product_removed |= (len(old_lines - new_lines) > 0)
+            logger.is_date_modified |= ('date_order' in changes)
+            logger.is_status_modified |= ('state' in changes)
+            # handle line's changes
+            for line_id, line_changes in lines.get(id, {}).items():
+                logger.is_quantity_modified |= \
+                    ('product_uom_qty' in line_changes)
+                logger.is_product_price_modified |= \
+                    ('price_unit' in line_changes)
+
+sale_order_sync()

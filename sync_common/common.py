@@ -29,10 +29,8 @@ MODELS_TO_IGNORE = [
                     'ir.module.module',
                     'ir.ui.view',
                     'ir.module.repository',
-                    'ir.model',
                     'ir.model.data',
                     'ir.model.fields',
-                    'ir.model.access',
                     'ir.ui.view_sc',
                     'ir.config_parameter',
 
@@ -65,18 +63,20 @@ MODELS_TO_IGNORE = [
                     'sync.server.update',
                     'sync.server.message',
                     'sync_server.version',
+                    'audittrail.log.sequence',
+                    'audittrail.log.line',
 
                     'res.widget',
                   ]
 
 MODELS_TO_IGNORE_DOMAIN = [
-        'ir.%',
         'sync_client.%',
         'sync_server.%',
         'res.widget%',
         'base%',
         'board%',
-        'workflow%',
+        'audittrail%',
+        #'workflow%',
     ]
 
 def __compile_models_to_ignore():
@@ -107,6 +107,7 @@ def xmlid_to_sdref(xmlid):
 
 
 
+# TODO deprecated, should disappear
 def sync_log(obj, message=None, level='debug', ids=None, data=None, traceback=False):
     if not hasattr(obj, '_logger'):
         raise Exception("No _logger specified for object %s!" % obj._name)

@@ -43,6 +43,7 @@ class MonitorLogger(object):
         self.final_status = 'ok'
         self.messages = []
         self.row_id = self.monitor.create(self.cr, self.uid, self.info, context=self.context)
+        self.link_to = set()
 
     def write(self):
         if not hasattr(self, 'cr'):
@@ -75,9 +76,22 @@ class MonitorLogger(object):
 
     def close(self):
         self.switch('status', self.final_status)
+        for model, column, res_id in self.link_to:
+            self.monitor.pool.get(model).write(self.cr, self.uid, res_id, {
+                column : self.row_id,
+            }, context=self.context)
         self.write()
         self.cr.close()
         del self.cr
+
+    def link(self, model, column, res_id):
+        self.link_to.add((model, column, res_id))
+
+    def unlink(self, model, column, res_id):
+        try:
+            self.link_to.remove((model, column, res_id))
+        except KeyError:
+            pass
 
     def __del__(self):
         self.close()
@@ -114,6 +128,13 @@ class sync_monitor(osv.osv):
 
     def get_logger(self, cr, uid, defaults={}, context=None):
         return MonitorLogger(cr, uid, defaults=defaults, context=context)
+
+    def name_get(self, cr, user, ids, context=None):
+        return [
+            (rec.id, "(%d) %s" % (rec.sequence_number, rec.start))
+            for rec in self.browse(cr, user, ids, context=context) ]
+
+    _rec_name = 'start'
 
     _columns = {
         'sequence_number' : fields.integer("Sequence",  readonly=True, required=True),
