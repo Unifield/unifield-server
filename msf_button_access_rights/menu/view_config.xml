@@ -12,11 +12,11 @@
 		    <field name="view_mode">form</field>
 		    <field name="target">new</field>
 		</record>
-		
-		<record id="msf_button_access_rights.view_config_wizard_todo" model="ir.actions.todo">
-		    <field name="action_id" ref="msf_button_access_rights_view_config_wizard_act_window"/>
-            <field name="sequence" eval="5" />
-		</record>
+
+        <menuitem id="msf_button_access_rights.view_config_wizard_menu" 
+            parent="base.menu_config"
+            action="msf_button_access_rights_view_config_wizard_act_window"
+            sequence="90"/>
 		
 	</data>
 </openerp>

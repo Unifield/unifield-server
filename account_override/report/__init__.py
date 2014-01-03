@@ -1,2 +1,2 @@
 import report_open_invoices
-import report_hq_export
+import account_report_name

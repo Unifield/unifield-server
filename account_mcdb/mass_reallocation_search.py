@@ -44,9 +44,9 @@ class mass_reallocation_search(osv.osv_memory):
         # Take all elements to create a domain
         search = []
         if account.date_start:
-            search.append(('date', '>=', account.date_start))
+            search.append(('document_date', '>=', account.date_start))
         if account.date:
-            search.append(('date', '<=', account.date))
+            search.append(('document_date', '<=', account.date))
         # Search default MSF Private Fund analytic account
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]

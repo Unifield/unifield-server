@@ -29,6 +29,7 @@ import ir
 import pooler
 import time
 import tools
+import logging
 from tools.safe_eval import safe_eval as eval
 import logging
 
@@ -113,6 +114,63 @@ class account_period(osv.osv):
     _trace = True
 
 account_period()
+
+
+class ir_module(osv.osv):
+    _inherit = 'ir.module.module'
+
+    def update_translations(self, cr, uid, ids, filter_lang=None, context=None):
+        '''
+        Override the lang install to apply the translation on Track changes ir.actions
+        '''
+        res = super(ir_module, self).update_translations(cr, uid, ids, filter_lang=None, context=context)
+
+        msf_profile_id = self.search(cr, uid, [('name', '=', 'msf_profile')], context=context)
+        
+        if not msf_profile_id or msf_profile_id[0] not in ids:
+            return res
+
+        tr_obj = self.pool.get('ir.translation')
+        act_obj = self.pool.get('ir.actions.act_window')
+        language_obj = self.browse(cr, uid, ids)[0]
+        src = 'Track changes'
+        if not filter_lang:
+            pool = pooler.get_pool(cr.dbname)
+            lang_obj = pool.get('res.lang')
+            lang_ids = lang_obj.search(cr, uid, [('translatable', '=', True)])
+            filter_lang = [lang.code for lang in lang_obj.browse(cr, uid, lang_ids)]
+        elif not isinstance(filter_lang, (list, tuple)):
+            filter_lang = [filter_lang]
+
+        for lang in filter_lang:
+            trans_ids = tr_obj.search(cr, uid, [('lang', '=', lang),
+                                                ('xml_id', '=', 'action_audittrail_view_log'),
+                                                ('module', '=', 'msf_audittrail')], context=context)
+            if trans_ids:
+                logger = logging.getLogger('i18n')
+                logger.info('module msf_profile: loading translation for \'Track changes\' ir.actions.act_window for language %s', lang)
+                trans = tr_obj.browse(cr, uid, trans_ids[0], context=context).value
+                # Search all actions to rename
+                act_ids = act_obj.search(cr, uid, [('name', '=', src)], context=context)
+                for act in act_ids:
+                    exist = tr_obj.search(cr, uid, [('lang', '=', lang), 
+                                                    ('type', '=', 'model'), 
+                                                    ('src', '=', src), 
+                                                    ('name', '=', 'ir.actions.act_window,name'), 
+                                                    ('value', '=', trans), 
+                                                    ('res_id', '=', act)], context=context)
+                    if not exist:
+                        tr_obj.create(cr, uid, {'lang': lang,
+                                                'src': src,
+                                                'name': 'ir.actions.act_window,name',
+                                                'type': 'model',
+                                                'value': trans,
+                                                'res_id': act}, context=context)
+
+        return res
+
+ir_module()
+
 
 class audittrail_log_sequence(osv.osv):
     _name = 'audittrail.log.sequence'
@@ -212,13 +270,14 @@ class audittrail_rule(osv.osv):
                 self.write(cr, uid, [thisrule.id], {"state": "draft"})
             search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_audittrail', 'view_audittrail_log_line_search')
             val = {
-                 "name": 'Track changes',
+                 "name": _('Track changes'),
                  "res_model": 'audittrail.log.line',
                  "src_model": thisrule.object_id.model,
                  "search_view_id": search_view_id and search_view_id[1] or False,
                  "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
 
             }
+
             action_id = obj_action.create(cr, uid, val)
             self.write(cr, uid, [thisrule.id], {"state": "subscribed", "action_id": action_id})
             keyword = 'client_action_relate'
@@ -351,6 +410,77 @@ class audittrail_log_line(osv.osv):
         
         return res
 
+    def _get_field_name(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        Return the name of the field in the user language
+        '''
+        tr_obj = self.pool.get('ir.translation')
+
+        res = {}
+        lang = self.pool.get('res.users').browse(cr, uid, uid, context=context).context_lang
+
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = False
+
+            # Translation of field name
+            if line.field_id:
+                field_name = '%s,%s' % (line.object_id.model, line.field_id.name)
+                tr_ids = tr_obj.search(cr, uid, [('name', '=', field_name),
+                                                 ('lang', '=', lang),
+                                                 ('type', '=', 'field'),
+                                                 ('src', '=', line.field_id.field_description)], context=context)
+                if tr_ids:
+                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], context=context).value
+
+            # Translation of one2many object if any
+            if not res[line.id] and line.fct_object_id:
+                field_name = '%s,%s' % (line.fct_object_id.model, line.field_id.name)
+                tr_ids = tr_obj.search(cr, uid, [('name', '=', field_name),
+                                                 ('lang', '=', lang),
+                                                 ('type', '=', 'field'),
+                                                 ('src', '=', line.field_id.field_description)], context=context)
+                if tr_ids:
+                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], context=context).value
+
+            # Translation of main object
+            if not res[line.id] and (line.object_id or line.fct_object_id):
+                tr_ids = tr_obj.search(cr, uid, [('name', '=', 'ir.model,name'),
+                                                 ('lang', '=', lang),
+                                                 ('type', '=', 'model'),
+                                                 ('src', '=', line.name)], context=context)
+                if tr_ids:
+                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], context=context).value
+
+            # No translation
+            if not res[line.id]:
+                res[line.id] = line.field_description
+
+        return res
+
+    def _src_field_name(self, cr, uid, obj, name, args, context=None):
+        '''
+        Search field description with the user lang
+        '''
+        tr_obj = self.pool.get('ir.translation')
+
+        res = []
+        lang = self.pool.get('res.users').browse(cr, uid, uid, context=context).context_lang
+
+        for arg in args:
+            if arg[0] == 'trans_field_description':
+                tr_fields = tr_obj.search(cr, uid, [('lang', '=', lang), 
+                                                    ('type', 'in', ['field', 'model']),
+                                                    ('value', arg[1], arg[2])], context=context)
+
+                field_names = []
+                for f in tr_obj.browse(cr, uid, tr_fields, context=context):
+                    field_names.append(f.src)
+
+                res = [('field_description', 'in', field_names)]
+
+        return res
+
+
     _columns = {
           'name': fields.char(size=256, string='Description', required=True),
           'object_id': fields.many2one('ir.model', string='Object'),
@@ -367,6 +497,7 @@ class audittrail_log_line(osv.osv):
           'old_value': fields.text("Old Value"),
           'new_value': fields.text("New Value"),
           'field_description': fields.char('Field Description', size=64),
+          'trans_field_description': fields.function(_get_field_name, fnct_search=_src_field_name, method=True, type='char', size=64, string='Field Description', store=False),
           'sub_obj_name': fields.char(size=64, string='Order line'),
 #          'sub_obj_name': fields.function(fnct=_get_name_line, fnct_search=_search_name_line, method=True, type='char', string='Order line', store=False),
           # These 3 fields allows the computation of the name of the subobject (sub_obj_name)
@@ -388,6 +519,20 @@ class audittrail_log_line(osv.osv):
 #                element.set('string', element_name)
 #            res['arch'] = etree.tostring(xml_view)
         return res
+
+    def _get_report_name(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self_info = self.browse(cr, uid, ids[0], context)
+        name = self_info.object_id.name or ''
+        if self_info.res_id and self_info.object_id.model:
+            obj = self.pool.get(self_info.object_id.model)
+            if obj:
+                name_get = obj.name_get(cr, uid, [self_info.res_id])
+                if name_get and name_get[0]:
+                    name = name_get[0][1].replace('/','_')
+        return "LL_%s_%s" % (name, time.strftime('%Y%m%d'))
 
 audittrail_log_line()
 
@@ -555,7 +700,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
             log_sequence = self.pool.get('audittrail.log.sequence').search(cr, uid, [('model', '=', fct_object.model), ('res_id', '=', seq_res_id)])
             if log_sequence:
                 log_seq = self.pool.get('audittrail.log.sequence').browse(cr, uid, log_sequence[0]).sequence
-                log = log_seq.get_id(test='id')
+                log = log_seq.get_id(code_or_id='id')
             else:
                 # Create a new sequence
                 seq_pool = self.pool.get('ir.sequence')
@@ -573,7 +718,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
                 }
                 seq_id = seq_pool.create(cr, uid, seq)
                 self.pool.get('audittrail.log.sequence').create(cr, uid, {'model': fct_object.model, 'res_id': seq_res_id, 'sequence': seq_id})
-                log = self.pool.get('ir.sequence').browse(cr, uid, seq_id).get_id(test='id')
+                log = self.pool.get('ir.sequence').browse(cr, uid, seq_id).get_id(code_or_id='id')
 
 
         if field_id:

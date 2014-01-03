@@ -175,7 +175,7 @@ class wizard_import_cheque(osv.osv_memory):
         if not len(absl_lines):
             raise osv.except_osv(_('Warning'), _('No line created!'))
 
-        return { 'type': 'ir.actions.act_window_close', 'st_line_ids': absl_lines}
+        return { 'type': 'ir.actions.act_window_close', 'st_line_ids': absl_lines, 'o2m_refresh': 'line_ids'}
 
 wizard_import_cheque()
 

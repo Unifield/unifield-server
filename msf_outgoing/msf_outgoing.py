@@ -278,11 +278,18 @@ class shipment(osv.osv):
                 'invoice_id': fields.many2one('account.invoice', string='Related invoice'),
                 'additional_items_ids': fields.one2many('shipment.additionalitems', 'shipment_id', string='Additional Items'),
                 }
-    _defaults = {'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),}
-    
+   
+    def _get_sequence(self, cr, uid, context=None):
+        ir_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'msf_outgoing', 'seq_shipment')
+        return self.pool.get('ir.model.data').browse(cr, uid, ir_id).res_id
+       
+    _defaults = {
+        'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+        'sequence_id': _get_sequence,
+    } 
     
     _order = 'name desc'
-    
+     
     def create_shipment(self, cr, uid, ids, context=None):
         '''
         open the wizard to create (partial) shipment
@@ -328,7 +335,7 @@ class shipment(osv.osv):
             address_id = shipment_obj.read(cr, uid, [draft_shipment.id], ['address_id'], context=context)[0]['address_id'][0]
             partner_id = shipment_obj.read(cr, uid, [draft_shipment.id], ['partner_id'], context=context)[0]['partner_id'][0]
             sequence = draft_shipment.sequence_id
-            shipment_number = sequence.get_id(test='id', context=context)
+            shipment_number = sequence.get_id(code_or_id='id', context=context)
             # state is a function - not set
             shipment_name = draft_shipment.name + '-' + shipment_number
             # 
@@ -342,7 +349,7 @@ class shipment(osv.osv):
                 # creation of moves and update of initial in picking create method
                 context.update(draft_shipment_id=draft_shipment.id, draft_packing_id=draft_packing.id)
                 sequence = draft_packing.sequence_id
-                packing_number = sequence.get_id(test='id', context=context)
+                packing_number = sequence.get_id(code_or_id='id', context=context)
                 new_packing_id = pick_obj.copy(cr, uid, draft_packing.id,
                                                {'name': draft_packing.name + '-' + packing_number,
                                                 'backorder_id': draft_packing.id,
@@ -490,7 +497,8 @@ class shipment(osv.osv):
                     self.log(cr, uid, draft_shipment_id, _("Packs from the draft Shipment (%s) have been returned to stock.")%(draft_shipment_name,))
                     log_flag = True
                 res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-                self.pool.get('stock.picking').log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(draft_picking.name,), context={'view_id': res,})
+                context.update({'view_id': res, 'picking_type': 'picking.ticket'})
+                self.pool.get('stock.picking').log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(draft_picking.name,), context=context)
             
         # call complete_finished on the shipment object
         # if everything is alright (all draft packing are finished) the shipment is done also 
@@ -510,6 +518,7 @@ class shipment(osv.osv):
             'res_id': draft_picking_id ,
             'type': 'ir.actions.act_window',
             'target': 'crush',
+            'context': context
         }
     
     def return_packs_from_shipment(self, cr, uid, ids, context=None):
@@ -1249,7 +1258,7 @@ class stock_picking(osv.osv):
     _inherit = 'stock.picking'
     _name = 'stock.picking'
 
-    def fields_view_get(self, cr, uid, view_id, view_type, context=None, toolbar=False, submenu=False):
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         Set the appropriate search view according to the context
         '''
@@ -1266,6 +1275,11 @@ class stock_picking(osv.osv):
                     view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_search')[1]
                 elif context.get('pick_type') == 'pack':
                     view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_search')[1]
+            except ValueError:
+                pass
+        if not view_id and context.get('pick_type') == 'incoming' and view_type == 'tree':
+            try:
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_tree')[1]
             except ValueError:
                 pass
 
@@ -1353,7 +1367,7 @@ class stock_picking(osv.osv):
             context = {}
         obj = self.browse(cr, uid, id, context=context)
         if not context.get('allow_copy', False):
-            if obj.subtype == 'picking':
+            if obj.subtype == 'picking' and default.get('subtype', 'picking') == 'picking':
                 if not obj.backorder_id:
                     # draft, new ref
                     default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket'),
@@ -1365,10 +1379,12 @@ class stock_picking(osv.osv):
                     # if the corresponding draft picking ticket is done, we do not allow copy
                     if obj.backorder_id and obj.backorder_id.state == 'done':
                         raise osv.except_osv(_('Error !'), _('Corresponding Draft picking ticket is Closed. This picking ticket cannot be copied.'))
+                    if obj.backorder_id:
+                        raise osv.except_osv(_('Error !'), _('You cannot duplicate a Picking Ticket linked to a Draft Picking Ticket.'))
                     # picking ticket, use draft sequence, keep other fields
                     base = obj.name
                     base = base.split('-')[0] + '-'
-                    default.update(name=base + obj.backorder_id.sequence_id.get_id(test='id', context=context),
+                    default.update(name=base + obj.backorder_id.sequence_id.get_id(code_or_id='id', context=context),
                                    date=date.today().strftime('%Y-%m-%d'),
                                    )
                     
@@ -1378,7 +1394,7 @@ class stock_picking(osv.osv):
 #                if obj.previous_step_id and obj.previous_step_id.backorder_id:
 #                    base = obj.name
 #                    base = base.split('-')[0] + '-'
-#                    default.update(name=base + obj.previous_step_id.backorder_id.sequence_id.get_id(test='id', context=context))
+#                    default.update(name=base + obj.previous_step_id.backorder_id.sequence_id.get_id(code_or_id='id', context=context))
 #                else:
 #                    default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'ppl'))
                 
@@ -1407,7 +1423,8 @@ class stock_picking(osv.osv):
         # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
         if context.get('from_button'):
             default.update(purchase_id=False)
-        context['not_workflow'] = True
+        if not context.get('wkf_copy'):
+            context['not_workflow'] = True
         result = super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
         
         return result
@@ -1652,6 +1669,57 @@ class stock_picking(osv.osv):
                     continue
 
         return res
+
+    def _get_lines_state(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the state according to line states and picking state
+        If the Picking Ticket is not draft, don't compute the line state
+        Else, for all moves with quantity, check the state of the move
+        and set the line state with these values :
+        'mixed': 'Partially Available'
+        'assigned': 'Available'
+        'confirmed': 'Not available'
+        '''
+        res = {}
+
+        for pick in self.browse(cr, uid, ids, context=context):
+            if pick.type != 'out' or pick.subtype != 'picking' or pick.state != 'draft':
+                res[pick.id] = False
+                continue
+
+            res[pick.id] = 'confirmed'
+            available = False
+            confirmed = False
+            processed = True
+            empty = len(pick.move_lines)
+            for move in pick.move_lines:
+                if move.product_qty == 0.00:
+                    continue
+
+                processed = False
+
+                if move.state != 'assigned':
+                    confirmed = True
+                else:
+                    available = True
+
+                if confirmed and available:
+                    break
+
+            if available and confirmed:
+                res[pick.id] = 'mixed'
+            elif available:
+                res[pick.id] = 'assigned'
+            elif confirmed:
+                res[pick.id] = 'confirmed'
+            elif processed and empty:
+                res[pick.id] = 'processed'
+            elif empty == 0:
+                res[pick.id] = 'empty'
+            else:
+                res[pick.id] = False
+
+        return res
     
     _columns = {'flow_type': fields.selection([('full', 'Full'),('quick', 'Quick')], readonly=True, states={'draft': [('readonly', False),],}, string='Flow Type'),
                 'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')], string='Subtype'),
@@ -1678,13 +1746,21 @@ class stock_picking(osv.osv):
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals'),
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals'),
                 'overall_qty': fields.function(_get_overall_qty, method=True, fnct_search=_qty_search, type='float', string='Overall Qty',
-                                    store= {'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10),}
-                ),
+                                    store= {'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10),}),
+                'line_state': fields.function(_get_lines_state, method=True, type='selection', 
+                                    selection=[('confirmed', 'Not available'),
+                                               ('assigned', 'Available'),
+                                               ('empty', 'Empty'),
+                                               ('processed', 'Processed'),
+                                               ('mixed', 'Partially available')], string='Lines state', 
+                                    store={'stock.move': (_get_picking_ids, ['picking_id', 'state', 'product_qty'], 10),
+                                           'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 'pack_family_memory_ids': fields.one2many('pack.family.memory', 'draft_packing_id', string='Memory Families'),
                 'description_ppl': fields.char('Description', size=256 ),
                 'already_shipped': fields.boolean(string='The shipment is done'), #UF-1617: only for indicating the PPL that the relevant Ship has been closed
                 'has_draft_moves': fields.function(_get_draft_moves, method=True, type='boolean', string='Has draft moves ?', store=False),
+                'has_to_be_resourced': fields.boolean(string='Picking has to be resourced'),
                 }
     _defaults = {'flow_type': 'full',
                  'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
@@ -1693,9 +1769,15 @@ class stock_picking(osv.osv):
                  'warehouse_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)) and obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)[0] or False,
                  'converted_to_standard': False,
                  'already_shipped': False,
+                 'line_state': 'empty',
                  }
     #_order = 'origin desc, name asc'
     _order = 'name desc'
+
+    def create(self, cr, uid, vals, context=None):
+        if not 'move_lines' in vals:
+            vals['line_state'] = 'empty'
+        return super(stock_picking, self).create(cr, uid, vals, context=context)
 
     def onchange_move(self, cr, uid, ids, context=None):
         '''
@@ -1984,6 +2066,13 @@ class stock_picking(osv.osv):
         
         if context is None:
             context = {}
+
+        if context.get('sync_update_execution', False):
+            # UF-2066: in case the data comes from sync, some False value has been removed, but needed in some assert. 
+            # The following lines are to re-enter explicitly the values, even if they are already set to False
+            vals['backorder_id'] = vals.get('backorder_id', False)
+            vals['shipment_id'] = vals.get('shipment_id', False)
+
         # the action adds subtype in the context depending from which screen it is created
         if context.get('picking_screen', False) and not vals.get('name', False):
             pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
@@ -2131,22 +2220,26 @@ class stock_picking(osv.osv):
                 rts = rts.strftime(db_date_format)
                 
                 if not len(shipment_ids):
-                    # no shipment, create one - no need to specify the state, it's a function
-                    name = self.pool.get('ir.sequence').get(cr, uid, 'shipment')
-                    addr = self.pool.get('res.partner.address').browse(cr, uid, vals['address_id'], context=context)
-                    partner_id = addr.partner_id and addr.partner_id.id or False
-                    values = {'name': name,
-                              'address_id': vals['address_id'],
-                              'partner_id2': partner_id,
-                              'shipment_expected_date': rts,
-                              'shipment_actual_date': rts,
-                              'sequence_id': self.create_sequence(cr, uid, {'name':name,
-                                                                            'code':name,
-                                                                            'prefix':'',
-                                                                            'padding':2}, context=context)}
-                    
-                    shipment_id = shipment_obj.create(cr, uid, values, context=context)
-                    shipment_obj.log(cr, uid, shipment_id, _('The new Draft Shipment %s has been created.')%(name,))
+                    # only create new shipment if we don't already have one through sync
+                    if not vals['shipment_id'] and not context.get('offline_synchronization', False):
+                        # no shipment, create one - no need to specify the state, it's a function
+                        name = self.pool.get('ir.sequence').get(cr, uid, 'shipment')
+                        addr = self.pool.get('res.partner.address').browse(cr, uid, vals['address_id'], context=context)
+                        partner_id = addr.partner_id and addr.partner_id.id or False
+                        values = {'name': name,
+                                  'address_id': vals['address_id'],
+                                  'partner_id2': partner_id,
+                                  'shipment_expected_date': rts,
+                                  'shipment_actual_date': rts,
+                                  'sequence_id': self.create_sequence(cr, uid, {'name':name,
+                                                                                'code':name,
+                                                                                'prefix':'',
+                                                                                'padding':2}, context=context)}
+                        
+                        shipment_id = shipment_obj.create(cr, uid, values, context=context)
+                        shipment_obj.log(cr, uid, shipment_id, _('The new Draft Shipment %s has been created.')%(name,))
+                    else:
+                        shipment_id = vals['shipment_id']
                 else:
                     shipment_id = shipment_ids[0]
                     shipment = shipment_obj.browse(cr, uid, shipment_id, context=context)
@@ -2189,7 +2282,21 @@ class stock_picking(osv.osv):
         elif pick.type == 'out' and pick.subtype == 'ppl':
             kwargs['message'] = message.replace('Delivery Order', 'Pre-Packing List')
         return super(stock_picking, self)._hook_log_picking_modify_message(cr, uid, ids, context, *args, **kwargs)
-    
+
+    def _get_keep_move(self, cr, uid, ids, context=None):
+        '''
+        Returns for each stock move of the draft PT, if we should keep it
+        '''
+        pick_moves = {}
+        for pick in self.browse(cr, uid, ids, context=context):
+            for bo in pick.backorder_ids:
+                if not bo.is_completed()[bo.id]:
+                    pick_moves.setdefault(pick.id, {})
+                    for m in bo.move_lines:
+                        pick_moves[pick.id].setdefault(m.backmove_id.id, True)
+
+        return pick_moves
+
     def convert_to_standard(self, cr, uid, ids, context=None):
         '''
         check of back orders exists, if not, convert to standard: change subtype to standard, and trigger workflow
@@ -2199,23 +2306,45 @@ class stock_picking(osv.osv):
         if not context:
             context = {}
         # objects
+        move_obj = self.pool.get('stock.move')
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+        moves_states = {}
+        pick_to_check = set()
+
         for obj in self.browse(cr, uid, ids, context=context):
             # the convert function should only be called on draft picking ticket
-            assert obj.subtype == 'picking' and obj.state == 'draft', 'the convert function should only be called on draft picking ticket objects'
-            if self.has_picking_ticket_in_progress(cr, uid, [obj.id], context=context)[obj.id]:
-                    raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
+            assert obj.subtype == 'picking' and obj.state in ('draft', 'assigned'), 'the convert function should only be called on draft picking ticket objects'
+#            if self.has_picking_ticket_in_progress(cr, uid, [obj.id], context=context)[obj.id]:
+#                    raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
             
             # log a message concerning the conversion
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
             self.log(cr, uid, obj.id, _('The Preparation Picking (%s) has been converted to simple Out (%s).')%(obj.name, new_name))
+
+            keep_move = self._get_keep_move(cr, uid, [obj.id], context=context).get(obj.id, {})
+
             # change subtype and name
-            obj.write({'name': new_name,
-                       'subtype': 'standard',
-                       'converted_to_standard': True,
-                       }, context=context)
+            default_vals = {'name': new_name,
+                            'move_lines': [],
+                            'subtype': 'standard',
+                            'converted_to_standard': True,
+                            'backorder_id': False,
+                           }
+            new_pick_id = False
+            new_lines = []
+
+            if obj.state == 'draft' and keep_move:
+                context['wkf_copy'] = True
+                new_pick_id = self.copy(cr, uid, obj.id, default_vals, context=context)
+                pick_to_check.add(obj.id)
+            else:
+                self.write(cr, uid, obj.id, default_vals, context=context)
+
+            if obj.backorder_id:
+                pick_to_check.add(obj.backorder_id.id)
+
             # all destination location of the stock moves must be output location of warehouse - lot_output_id
             # if corresponding sale order, date and date_expected are updated to rts + shipment lt
             for move in obj.move_lines:
@@ -2226,7 +2355,13 @@ class stock_picking(osv.osv):
                 if move.product_qty == 0.0:
                     vals = {'state': 'done'}
                 else:
-                    vals = {'state': 'draft'}
+                    # Save the state of this stock move to set it before action_assign()
+                    moves_states[move.id] = move.state
+                    if move.state not in ('cancel', 'done'):
+                        vals = {'state': 'draft'}
+                    else:
+                        vals = {'state': move.state}
+                vals.update({'backmove_id': False})
                 # If the move comes from a DPO, don't change the destination location
                 if not move.dpo_id:
                     vals.update({'location_dest_id': obj.warehouse_id.lot_output_id.id})
@@ -2238,31 +2373,127 @@ class stock_picking(osv.osv):
                     rts = rts + relativedelta(days=shipment_lt or 0)
                     rts = rts.strftime(db_date_format)
                     vals.update({'date': rts, 'date_expected': rts, 'state': 'draft'})
-                move.write(vals, context=context)
-                if move.product_qty == 0.00:
-                    move.action_done(context=context)
 
+                if not new_pick_id:
+                    move.write(vals, context=context)
+                    if move.product_qty == 0.00:
+                        move.action_done(context=context)
+                    keep_backmove = move_obj.search(cr, uid, [('backmove_id', '=', move.backmove_id.id)], context=context)
+                    if move.backmove_id and move.backmove_id.product_qty == 0.00:
+                        keep_backmove = move_obj.search(cr, uid, [('backmove_id', '=', move.backmove_id.id), ('state', 'not in', ('done', 'cancel'))], context=context)
+                        if not keep_backmove:
+                            move_obj.write(cr, uid, [move.backmove_id.id], {'state': 'done'}, context=context)
+                            move_obj.update_linked_documents(cr, uid, move.backmove_id.id, move.id, context=context)
+                elif move.product_qty != 0.00:
+                    vals.update({'picking_id': new_pick_id,
+                                 'line_number': move.line_number,
+                                 'state': moves_states[move.id],
+                                 'product_qty': move.product_qty,})
+
+                    new_move_id = move_obj.copy(cr, uid, move.id, vals, context=context)
+
+                    # Update all linked objects to avoid close of related documents
+                    if move.id not in keep_move or not keep_move[move.id]:
+                        move_obj.update_linked_documents(cr, uid, move.id, new_move_id, context=context)
+
+                    # Set the stock move to done with 0.00 qty
+                    move_obj.write(cr, uid, [move.id], {'product_qty': 0.00,
+                                                        'state': move.id in keep_move and keep_move[move.id] and move.state or 'done'}, context=context)
+
+                    new_lines.append(new_move_id)
+
+            if pick_to_check:
+                for ptc_id in pick_to_check:
+                    ptc = self.browse(cr, uid, ptc_id, context=context)
+                    if all(m.product_qty == 0.00 and m.state in ('done', 'cancel') for m in ptc.move_lines):
+                        ptc.action_done(context=context)
 
             # trigger workflow (confirm picking)
-            self.draft_force_assign(cr, uid, [obj.id])
+            self.draft_force_assign(cr, uid, [new_pick_id or obj.id])
+
+            for s in moves_states:
+                self.pool.get('stock.move').write(cr, uid, s, {'state': moves_states[s]}, context=context)
+
             # check availability
-            self.action_assign(cr, uid, [obj.id], context=context)
+            self.action_assign(cr, uid, [new_pick_id or obj.id], context=context)
+
+            if 'assigned' in moves_states.values():
+                # Add an empty write to display the 'Process' button on OUT
+                self.write(cr, uid, [new_pick_id or obj.id], {'state': 'assigned'}, context=context)
         
             # TODO which behavior
             data_obj = self.pool.get('ir.model.data')
             view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
             view_id = view_id and view_id[1] or False
-            context.update({'picking_type': 'delivery_order'})
+            context.update({'picking_type': 'delivery_order', 'view_id': view_id})
             return {'name':_("Delivery Orders"),
                     'view_mode': 'form,tree',
                     'view_id': [view_id],
                     'view_type': 'form',
                     'res_model': 'stock.picking',
-                    'res_id': obj.id,
+                    'res_id': new_pick_id or obj.id,
                     'type': 'ir.actions.act_window',
                     'target': 'crush',
                     'context': context,
                     }
+
+    def convert_to_pick(self, cr, uid, ids, context=None):
+        '''
+        Change simple OUTs to draft Picking Tickets
+        '''
+        context = context or {}
+
+        # Objects
+        move_obj = self.pool.get('stock.move')
+        data_obj = self.pool.get('ir.model.data')
+
+        move_to_update = []
+        
+        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
+        view_id = view_id and view_id[1] or False
+
+        for out in self.browse(cr, uid, ids, context=context):
+            if out.state in ('cancel', 'done'):
+                raise osv.except_osv(_('Error'), _('You cannot convert %s delivery orders') % (out.state == 'cancel' and _('Canceled') or _('Done')))
+
+            # log a message concerning the conversion
+            new_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
+
+            # change subtype and name
+            default_vals = {'name': new_name,
+                            'subtype': 'picking',
+                            'converted_to_standard': False,
+                            'state': 'draft',
+                            'sequence_id': self.create_sequence(cr, uid, {'name':new_name,
+                                                                          'code':new_name,
+                                                                          'prefix':'',
+                                                                          'padding':2}, context=context)
+                           }
+
+            self.write(cr, uid, [out.id], default_vals, context=context)
+            wf_service = netsvc.LocalService("workflow")
+            wf_service.trg_validate(uid, 'stock.picking', out.id, 'convert_to_picking_ticket', cr)
+            # we force availability
+
+            self.log(cr, uid, out.id, _('The Delivery order (%s) has been converted to draft Picking Ticket (%s).')%(out.name, new_name), context={'view_id': view_id, 'picking_type': 'picking'})
+
+            for move in out.move_lines:
+                move_to_update.append(move.id)
+
+        pack_loc_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
+        move_obj.write(cr, uid, move_to_update, {'location_dest_id': pack_loc_id}, context=context)
+
+        context.update({'picking_type': 'picking'})
+        return {'name': _('Picking Tickets'),
+                'view_mode': 'form,tree',
+                'view_id': [view_id],
+                'view_type': 'form',
+                'res_model': 'stock.picking',
+                'res_id': out.id,
+                'type': 'ir.actions.act_window',
+                'target': 'crush',
+                'context': context}
+
     
     def create_picking(self, cr, uid, ids, context=None):
         '''
@@ -2307,7 +2538,8 @@ class stock_picking(osv.osv):
             # create the new picking object
             # a sequence for each draft picking ticket is used for the picking ticket
             sequence = pick.sequence_id
-            ticket_number = sequence.get_id(test='id', context=context)
+            ticket_number = sequence.get_id(code_or_id='id', context=context)
+            context['wkf_copy'] = True
             new_pick_id = self.copy(cr, uid, pick.id, {'name': (pick.name or 'NoName/000') + '-' + ticket_number,
                                                        'backorder_id': pick.id,
                                                        'move_lines': []}, context=dict(context, allow_copy=True,))
@@ -2337,6 +2569,7 @@ class stock_picking(osv.osv):
                               'prodlot_id': partial['prodlot_id'],
                               'asset_id': partial['asset_id'],
                               'composition_list_id': partial['composition_list_id'],
+                              'pt_created': True,
                               'backmove_id': move.id}
                     #add hook
                     values = self.do_create_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
@@ -2751,7 +2984,8 @@ class stock_picking(osv.osv):
             res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
             self.log(cr, uid, picking.id, _("Products from Pre-Packing List (%s) have been returned to stock.")%(picking.name,), context={'view_id': res,})
             res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-            self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.previous_step_id.backorder_id.name,), context={'view_id': res,})
+            context.update({'view_id': res, 'picking_type': 'picking_ticket'})
+            self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.previous_step_id.backorder_id.name,), context=context)
             # if all moves are done or canceled, the ppl is canceled
             cancel_ppl = True
             for move in picking.move_lines:
@@ -2783,7 +3017,7 @@ class stock_picking(osv.osv):
             'target': 'crush',
             'context': context,
         }
-    
+
     def action_cancel(self, cr, uid, ids, context=None):
         '''
         override cancel state action from the workflow
@@ -2829,15 +3063,17 @@ class stock_picking(osv.osv):
                 for move in picking.move_lines:
                     # find the corresponding move in draft
                     draft_move = move.backmove_id
-                    # increase the draft move with the move quantity
-                    initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
-                    initial_qty += move.product_qty
-                    move_obj.write(cr, uid, [draft_move.id], {'product_qty': initial_qty}, context=context)
-                    # log the increase action
-                    # TODO refactoring needed
-                    obj_data = self.pool.get('ir.model.data')
-                    res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-                    self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.backorder_id.name,), context={'view_id': res,})
+                    if draft_move:
+                        # increase the draft move with the move quantity
+                        initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
+                        initial_qty += move.product_qty
+                        move_obj.write(cr, uid, [draft_move.id], {'product_qty': initial_qty}, context=context)
+                        # log the increase action
+                        # TODO refactoring needed
+                        obj_data = self.pool.get('ir.model.data')
+                        res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
+                        context.update({'view_id': res, 'picking_type': 'picking_ticket'})
+                        self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.")%(picking.backorder_id.name,), context=context)
                     
             if picking.subtype == 'packing':
                 # for each packing we get the draft packing
@@ -3126,12 +3362,68 @@ class stock_move(osv.osv):
                 'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
                 'location_output_id': fields.many2one('stock.location', string='Output location'),
                 'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice line'),
+                'pt_created': fields.boolean(string='PT created'),
                 }
+
+    def copy(self, cr, uid, id, values=None, context=None):
+        if context is None:
+            context = {}
+
+        if values is None:
+            values = {}
+
+        if not 'pt_created' in values:
+            values['pt_created'] = False
+
+        return super(stock_move, self).copy(cr, uid, id, values, context=context)
 
     def action_cancel(self, cr, uid, ids, context=None):
         '''
             Confirm or check the procurement order associated to the stock move
         '''
+        pol_obj = self.pool.get('purchase.order.line')
+        sol_obj = self.pool.get('sale.order.line')
+        uom_obj = self.pool.get('product.uom')
+        
+        # purchase order line to re-source
+        pol_ids = []
+        pol_to_resource = []
+
+        for move in self.browse(cr, uid, ids, context=context):
+            """
+            A stock move can be re-sourced but there are some conditions
+
+            Re-sourcing checking :
+              1) The move should be attached to a picking
+              2) The move should have the flag 'has_to_be_resourced' set
+              3) The move shouldn't be already canceled
+              4) The move should be linked to a purchase order line or a field
+                 order line
+            """
+            if not move.picking_id:
+                continue
+
+            if not move.has_to_be_resourced and not move.picking_id.has_to_be_resourced:
+                continue
+
+            if move.state == 'cancel':
+                continue
+
+            pick_type = move.picking_id.type
+
+            if pick_type == 'in' and move.purchase_line_id:
+                sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
+                for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
+                    diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
+                    if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
+                        sol_obj.add_resource_line(cr, uid, sol.id, False, diff_qty, context=context)
+                    sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, context=context)
+            elif pick_type in ('internal', 'out') and move.sale_line_id:
+                diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
+                if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
+                    sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
+                sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, context=context)
+
         res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
         
         wf_service = netsvc.LocalService("workflow")
@@ -3141,10 +3433,41 @@ class stock_move(osv.osv):
         for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
             if proc.state == 'draft':
                 wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_confirm', cr)
-            else:
-                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
+#            else:
+#                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
         
         return res
+
+    def update_linked_documents(self, cr, uid, ids, new_id, context=None):
+        '''
+        Update the linked documents of a stock move to another one
+        '''
+        context = context or {}
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+
+        for move_id in ids:
+            proc_ids = self.pool.get('procurement.order').search(cr, uid, [('move_id', '=', move_id)], context=context)
+            if proc_ids:
+                self.pool.get('procurement.order').write(cr, uid, proc_ids, {'move_id': new_id}, context=context)
+                            
+            pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('move_dest_id', '=', move_id)], context=context)
+            if pol_ids:
+                self.pool.get('purchase.order.line').write(cr, uid, pol_ids, {'move_dest_id': new_id}, context=context)
+                            
+            move_dest_ids = self.search(cr, uid, [('move_dest_id', '=', move_id)], context=context)
+            if move_dest_ids:
+                self.write(cr, uid, move_dest_ids, {'move_dest_id': new_id}, context=context)
+                        
+            backmove_ids = self.search(cr, uid, [('backmove_id', '=', move_id)], context=context)
+            if backmove_ids:
+                self.write(cr, uid, backmove_ids, {'backmove_id': new_id}, context=context)
+                       
+            pack_backmove_ids = self.search(cr, uid, [('backmove_packing_id', '=', move_id)], context=context)
+            if pack_backmove_ids:
+                self.write(cr, uid, pack_backmove_ids, {'backmove_packing_id': new_id}, context=context)
+
+        return True
+
 
 stock_move()
 
@@ -3286,7 +3609,7 @@ class sale_order(osv.osv):
             proc = self.pool.get('procurement.order').browse(cr, uid, [proc_id], context=context)
             pick_id = proc and proc[0] and proc[0].move_id and proc[0].move_id.picking_id and proc[0].move_id.picking_id.id or False
             if pick_id:
-                wf_service.trg_validate(uid, 'stock.picking', [pick_id], 'button_confirm', cr)
+                wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
 
                 # We also do a first 'check availability': cancel then check
                 pick_obj.cancel_assign(cr, uid, [pick_id], context)
@@ -3339,6 +3662,8 @@ class sale_order(osv.osv):
             move_data['type'] = 'internal'
             move_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
             move_data['location_dest_id'] = self.read(cr, uid, ids, ['location_requestor_id'], context=context)[0]['location_requestor_id'][0]
+            if self.pool.get('stock.location').browse(cr, uid, move_data['location_dest_id'], context=context).usage in ('supplier', 'customer'):
+                move_data['type'] = 'out'
         else:
             # first go to packing location (PICK/PACK/SHIP) or output location (Simple OUT)
             # according to the configuration
@@ -3352,13 +3677,13 @@ class sale_order(osv.osv):
             if self.pool.get('product.product').browse(cr, uid, move_data['product_id']).type == 'service_recep':
                 move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
             
-            if 'sale_line_id' in move_data and move_data['sale_line_id']:
-                sale_line = self.pool.get('sale.order.line').browse(cr, uid, move_data['sale_line_id'], context=context)
-                if sale_line.type == 'make_to_order':
-                    move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
-                    move_data['move_cross_docking_ok'] = True
-                    # Update the stock.picking
-                    self.pool.get('stock.picking').write(cr, uid, move_data['picking_id'], {'cross_docking_ok': True}, context=context)
+        if 'sale_line_id' in move_data and move_data['sale_line_id']:
+            sale_line = self.pool.get('sale.order.line').browse(cr, uid, move_data['sale_line_id'], context=context)
+            if sale_line.type == 'make_to_order':
+                move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+                move_data['move_cross_docking_ok'] = True
+                # Update the stock.picking
+                self.pool.get('stock.picking').write(cr, uid, move_data['picking_id'], {'cross_docking_ok': True}, context=context)
 
         move_data['state'] = 'confirmed'
         return move_data
@@ -3388,13 +3713,19 @@ class sale_order(osv.osv):
         # For IR
         if self.read(cr, uid, ids, ['procurement_request'], context=context):
             procurement_request = self.read(cr, uid, ids, ['procurement_request'], context=context)[0]['procurement_request']
+            location_dest_id = self.read(cr, uid, ids, ['location_requestor_id'], context=context)[0]['location_requestor_id']
             if procurement_request:
-                picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
-                picking_data['type'] = 'internal'
-                picking_data['subtype'] = 'standard'
-                picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
-                pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
-            
+                if location_dest_id and self.pool.get('stock.location').browse(cr, uid, location_dest_id[0], context=context).usage in ('supplier', 'customer'):
+                    picking_data['type'] = 'out'
+                    picking_data['subtype'] = 'standard'
+                    picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+                    pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
+                else:
+                    picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
+                    picking_data['type'] = 'internal'
+                    picking_data['subtype'] = 'standard'
+                    picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
+                    pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
         picking_data['name'] = pick_name        
         picking_data['flow_type'] = 'full'
         picking_data['backorder_id'] = False

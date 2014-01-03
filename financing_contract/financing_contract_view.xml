@@ -11,7 +11,8 @@
                         <field name="code" colspan="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <field name="name" colspan="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <field name="donor_id" colspan="2" on_change="onchange_donor_id(donor_id, format_id, actual_line_ids)"
-                               attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                            attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <field name="instance_id" colspan="1" domain="[('level','=','coordo')]" attrs="{'readonly': [('state','in',('soft_closed','hard_closed'))]}" /> 
                         <field name="reporting_type" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <separator string="Dates"/>
                         <field name="eligibility_from_date" on_change="onchange_date(eligibility_from_date, eligibility_to_date)"
@@ -56,7 +57,7 @@
                                 </field>
                             </page>
                             <page string="Reporting lines">
-                                <field name="format_id" invisible="1"/>
+                                <field name="format_id" invisible="1" required="0"/>
                                 <field colspan="4" name="actual_line_ids" nolabel="1" context="{'reporting_type': reporting_type, 'contract_id': active_id}" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}">
                                     <tree string="Reporting lines" colors="blue:line_type in ('view')">
                                         <field name="code"/>
@@ -243,7 +244,7 @@
                         <separator string="Dates"/>
                         <notebook colspan="4">
                             <page string="Reporting lines">
-                                <field name="format_id" invisible="1"/>
+                                <field name="format_id" invisible="1" required="0"/>
                                 <field colspan="4" name="actual_line_ids" nolabel="1" context="{'donor_id': active_id}">
                                     <tree string="Reporting lines" colors="black:line_type in ('normal');blue:line_type in ('view')">
                                         <field name="code"/>
@@ -295,7 +296,9 @@
                     <search string="Search Fiscalyear">
                         <group>
                             <filter name="active" icon="terp-check" string="Active"
-                                    domain="[('active', '=', True)]"/>
+                                domain="[('active', '=', True)]"/>
+                            <filter name="inactive" icon="gtk-dialog-error" string="Inactive"
+                                domain="[('active', '=', False)]"/>
                             <separator orientation="vertical"/>
                             <field name="code"/>
                             <field name="name"/>
@@ -309,6 +312,7 @@
                 <field name="res_model">financing.contract.donor</field>
                 <field name="view_type">form</field>
                 <field name="view_mode">tree,form</field>
+                <field name="domain">[('active', 'in', ['t', 'f'])]</field>
             </record>
             <menuitem id="donor_reporting_menu" name="Grant Management" parent="account.menu_finance" sequence="12"/>
             <menuitem action="action_financing_contract_contract_form" id="menu_action_financing_contract_contract_form" parent="donor_reporting_menu"/>

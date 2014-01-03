@@ -54,7 +54,8 @@ class account_analytic_journal(osv.osv):
             context={}
         instance_ids = self.pool.get('msf.instance').search(cr, uid, [], context=context)
         for instance_id in instance_ids:
-            eng_ids = self.search(cr, uid, [('type', '=', 'engagement'), ('instance_id', '=', instance_id)])
+            # UTP-827: exception: another engagement journal, ENGI, may exist
+            eng_ids = self.search(cr, uid, [('type', '=', 'engagement'), ('instance_id', '=', instance_id), ('code', '!=', 'ENGI')])
             if len(eng_ids) and len(eng_ids) > 1:
                 return False
         return True
@@ -307,6 +308,20 @@ class account_move_line(osv.osv):
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
 
 account_move_line()
+
+class account_move_reconcile(osv.osv):
+    _name = 'account.move.reconcile'
+    _inherit = 'account.move.reconcile'
+
+    _columns = {
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+    }
+
+    _defaults = {
+        'instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id,
+    }
+
+account_move_reconcile()
 
 class account_bank_statement(osv.osv):
     _name = 'account.bank.statement'

@@ -31,7 +31,34 @@ class merged_order(report_sxw.rml_parse):
             'time': time,
             'to_time': self.str_to_time,
             'enumerate': enumerate,
+            'getOrigin': self._get_origin,
         })
+
+    def _get_origin(self, origin, number=5):
+        res = []
+        if origin:
+            split_orig = origin.split(';')
+        else:
+            split_orig = []
+        i = 0
+        tmp_orig = ''
+        while i < len(split_orig):
+            tmp_orig += split_orig[i]
+            i += 1
+
+            if i != len(split_orig):
+                tmp_orig += ';'
+
+            if i % number == 0:
+                res.append(tmp_orig)
+                tmp_orig = ''
+
+        if len(split_orig) < number:
+            res.append(tmp_orig)
+            tmp_orig = ''
+
+        return res
+
         
     def str_to_time(self, time):
         if isinstance(time, str):

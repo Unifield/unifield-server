@@ -75,6 +75,7 @@ class wizard_import_po_line(osv.osv_memory):
         currency_obj = self.pool.get('res.currency')
         purchase_obj = self.pool.get('purchase.order')
         purchase_line_obj = self.pool.get('purchase.order.line')
+        categ_log = False
         line_with_error = []
         vals = {'order_line': []}
         
@@ -109,10 +110,10 @@ class wizard_import_po_line(osv.osv_memory):
                     'functional_currency_id': po_browse.pricelist_id.currency_id.id,
                     'price_unit': 1,  # as the price unit cannot be null, it will be computed in the method "compute_price_unit" after.
                     'product_qty': 1,
-                    'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
-                    'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
-                    'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
-                    'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
+#                    'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
+#                    'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
+#                    'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
+#                    'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
                     'proc_type': 'make_to_order',
                     'default_code': False,
                     'confirmed_delivery_date': False,
@@ -169,7 +170,7 @@ class wizard_import_po_line(osv.osv_memory):
     
                     # Cell 5: Delivery Request Date
                     date_value = {}
-                    date_value = check_line.compute_date_value(cell_nb=header_index[_('Delivery requested date')], row=row, to_write=to_write, context=context)
+                    date_value = check_line.compute_date_value(cell_nb=header_index[_('Delivery Request Date')], row=row, to_write=to_write, context=context)
                     to_write.update({'date_planned': date_value['date_planned'], 'error_list': date_value['error_list']})
     
                     # Cell 6: Currency
@@ -207,7 +208,7 @@ class wizard_import_po_line(osv.osv_memory):
                         complete_lines += 1
 
                 except IndexError, e:
-                    error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
+                    message += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
                                    ) % (line_num, template_col_count, e)
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
@@ -238,6 +239,10 @@ class wizard_import_po_line(osv.osv_memory):
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     if not context.get('yml_test', False):
                         cr.commit()
+
+            categ_log = purchase_obj.onchange_categ(cr, uid, [po_id], po_browse.categ, po_browse.warehouse_id.id, po_browse.cross_docking_ok, po_browse.location_id.id, context=context).get('warning', {}).get('message', '').upper()
+            categ_log = categ_log.replace('THIS', 'THE')
+
         
         error_log += '\n'.join(error_list)
         if error_log:
@@ -245,6 +250,7 @@ class wizard_import_po_line(osv.osv_memory):
         end_time = time.time()
         total_time = str(round(end_time-start_time)) + _(' second(s)')
         final_message = _(''' 
+%s
 Importation completed in %s!
 # of imported lines : %s on %s lines
 # of ignored lines: %s
@@ -252,7 +258,7 @@ Importation completed in %s!
 %s
 
 %s
-''') % (total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
+''') % (categ_log, total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
 #        try:
         wizard_vals = {'message': final_message, 'state': 'done'}
         if line_with_error:
@@ -302,8 +308,7 @@ Importation completed in %s!
             thread.start()
         else:
             self._import(cr, uid, ids, context)
-        msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
-Otherwise, you can continue to use Unifield.""")
+        msg_to_return = _("""Please note that %s is temporary closed during the import to avoid conflict accesses (you can see the loading on the PO note tab check box). At the end of the load, POXX will be back in the right state. You can refresh the screen if you need to follow the upload progress""") % self.pool.get('purchase.order').browse(cr, uid, po_id).name
         return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
 
     def dummy(self, cr, uid, ids, context=None):

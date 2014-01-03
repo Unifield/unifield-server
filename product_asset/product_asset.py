@@ -75,7 +75,7 @@ class product_asset(osv.osv):
             default = {}
         default.update({
             'name': self.pool.get('ir.sequence').get(cr, uid, 'product.asset'),
-            'instance_id': False,
+            'partner_name': False,
         })
         # call to super
         return super(product_asset, self).copy(cr, uid, id, default, context=context)
@@ -88,7 +88,7 @@ class product_asset(osv.osv):
             default = {}
         default.update({
             'event_ids': [],
-            'instance_id': False,
+            'partner_name': False,
         })
         return super(product_asset, self).copy_data(cr, uid, id, default, context=context)
 
@@ -118,12 +118,20 @@ class product_asset(osv.osv):
             vals.update(self._getRelatedProductFields(cr, uid, productId))
         
         # UF-1617: set the current instance into the new object if it has not been sent from the sync   
-        if 'instance_id' not in vals or not vals['instance_id']:
+        if 'partner_name' not in vals or not vals['partner_name']:
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-            if company and company.instance_id:
-                vals['instance_id'] = company.instance_id.id
+            if company and company.partner_id:
+                vals['partner_name'] = company.partner_id.name
 
-        # save the data to db
+        # UF-2148: make the xmlid_name from the asset name for building xmlid if it is not given in the vals 
+        if 'xmlid_name' not in vals or not vals['xmlid_name']:
+            vals['xmlid_name'] = vals['name'] 
+            
+        exist = self.search(cr, uid, [('xmlid_name', '=', vals['xmlid_name']), ('partner_name', '=', vals['partner_name']), ('product_id', '=', vals['product_id'])], context=context)
+        if exist:
+            # but if the value exist for xml_name, then just add a suffix to differentiate them, no constraint unique required here
+            vals['xmlid_name'] = vals['xmlid_name'] + "_1"
+        
         return super(product_asset, self).create(cr, uid, vals, context)
         
     def onChangeProductId(self, cr, uid, ids, productId):
@@ -223,7 +231,8 @@ class product_asset(osv.osv):
                 'event_ids': fields.one2many('product.asset.event', 'asset_id', 'Events'),
                 # UF-1617: field only used for sync purpose
                 'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=False),
-                'instance_id': fields.many2one('msf.instance', 'Instance', readonly=True, required=True),
+                'partner_name': fields.char('Partner', size=128, required=True),
+                'xmlid_name': fields.char('XML Code, hidden field', size=128, required=True),
     }
     
     _defaults = {
@@ -231,7 +240,8 @@ class product_asset(osv.osv):
                  'arrival_date': lambda *a: time.strftime('%Y-%m-%d'),
                  'receipt_place': 'Country/Project/Activity',
     }
-    _sql_constraints = [('name_uniq', 'unique(name, instance_id)', 'Asset Code must be unique per instance!'),
+    # UF-2148: use this constraint with 3 attrs: name, prod and instance 
+    _sql_constraints = [('asset_name_uniq', 'unique(name, product_id, partner_name)', 'Asset Code must be unique per instance and per product!'),
                         ]
     _order = 'name desc'
     
@@ -407,6 +417,12 @@ class product_product(osv.osv):
         # fetch the product
         if 'type' in vals and vals['type'] != 'product':
             vals.update(subtype='single')
+            
+            
+        #UF-2170: remove the standard price value from the list if the value comes from the sync
+        if 'standard_price' in vals and context and context.get('sync_update_execution'):
+            del vals['standard_price']
+        
 #        if 'type' in vals and vals['type'] == 'consu':
 # Remove these two lines to display the warning message of the constraint
 #        if vals.get('type') == 'consu':

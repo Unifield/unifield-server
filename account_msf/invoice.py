@@ -68,6 +68,45 @@ class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
+    def _get_invoice_report_name(self, cr, uid, ids, context=None):
+        '''
+        Returns the name of the invoice according to its type
+        '''
+        if isinstance(ids, list):
+            ids = ids[0]
+
+        inv = self.browse(cr, uid, ids, context=context)
+        inv_name = inv.number or inv.name or 'No_description'
+        prefix = 'STV_'
+
+        if inv.type == 'out_refund': # Customer refund    
+            prefix = 'CR_'
+        elif inv.type == 'in_refund': # Supplier refund
+            prefix = 'SR_'
+        elif inv.type == 'out_invoice': 
+            # Stock transfer voucher
+            prefix = 'STV_'
+            # Debit note
+            if inv.is_debit_note and not inv.is_inkind_donation and not inv.is_intermission:
+                prefix = 'DN_'
+            # Intermission voucher OUT
+            elif not inv.is_debit_note and not inv.is_inkind_donation and inv.is_intermission:
+                prefix = 'IMO_'
+        elif inv.type == 'in_invoice':
+            # Supplier invoice
+            prefix = 'SI_'
+            # Intermission voucher IN
+            if not inv.is_debit_note and not inv.is_inkind_donation and inv.is_intermission:
+                prefix = 'IMI_'
+            # Direct invoice
+            elif inv.is_direct_invoice:
+                prefix = 'DI_'
+            # In-kind donation
+            elif not inv.is_debit_note and inv.is_inkind_donation:
+                prefix = 'DON_'
+
+        return '%s%s' % (prefix, inv_name)
+
     def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Fake method for 'ready_for_import_in_debit_note' field
@@ -250,7 +289,7 @@ class account_invoice(osv.osv):
             if inv.type != 'out_invoice' or inv.is_debit_note == False:
                 raise osv.except_osv(_('Error'), _('You can only do import invoice on a Debit Note!'))
             w_id = self.pool.get('debit.note.import.invoice').create(cr, uid, {'invoice_id': inv.id, 'currency_id': inv.currency_id.id, 
-                'partner_id': inv.partner_id.id})
+                'partner_id': inv.partner_id.id}, context=context)
             context.update({
                 'active_id': inv.id,
                 'active_ids': ids,

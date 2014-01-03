@@ -552,7 +552,7 @@ The columns should be in this values:
                             if v:
                                 filtered_vals.update({k: v})
                         po_obj.write(cr, uid, po_id, filtered_vals, context)
-                        notif_list.append(_("Line %s of the Excel file updated the PO %s." % (file_line_number+1, po_browse.name)))
+                        notif_list.append(_("Line %s of the Excel file updated the PO %s.") % (file_line_number+1, po_browse.name))
                     first_row = False
                 # get values from row
                 line_values = cell_data.get_line_values(cr, uid, ids, row)
@@ -725,9 +725,10 @@ The columns should be in this values:
                                                                            ('order_id', '=', po_id)], context=context)
                                     new_po_line = po_line_ids[-1]
                                     pol_obj.write(cr, uid, [new_po_line], {'product_qty': file_line.product_qty,
-                                                                            'product_uom': file_line.product_uom.id,
-                                                                            'product_id': file_line.product_id.id,
-                                                                            'confirmed_delivery_date': file_line.confirmed_delivery_date}, context)
+                                                                           'product_uom': file_line.product_uom.id,
+                                                                           'product_id': file_line.product_id.id,
+                                                                           'price_unit': file_line.price_unit,
+                                                                           'confirmed_delivery_date': file_line.confirmed_delivery_date}, context)
                                     complete_lines += 1
                                     processed_lines += 1
                                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
@@ -845,9 +846,8 @@ The columns should be in this values:
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         msg_to_return = _("""
-Important, please do not update the Purchase Order %s
-Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
-Otherwise, you can continue to use Unifield.""") % self.pool.get('purchase.order').read(cr, uid, po_id, ['name'])['name']
+        Please note that %s is temporary closed during the import to avoid conflict accesses (you can see the loading on the PO note tab check box). At the end of the load, POXX will be back in the right state. You can refresh the screen if you need to follow the upload progress
+""") % self.pool.get('purchase.order').read(cr, uid, po_id, ['name'])['name']
         return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
 
     def dummy(self, cr, uid, ids, context=None):

@@ -273,6 +273,8 @@ class purchase_order(osv.osv):
         'po_from_fo': fields.function(_is_po_from_fo, method=True, type='boolean', string='Is PO from FO ?',),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
+        'origin': fields.text('Source Document', 
+                        help="Reference of the document that generated this purchase order request."),
     }
     
     _defaults = {
@@ -307,6 +309,9 @@ class purchase_order(osv.osv):
         '''
         Avoid the saving of a PO with non service products on Service PO
         '''
+        # UTP-871 : Remove check of service
+        return True
+
         if isinstance(ids, (int, long)):
             ids = [ids]
         categ = {'transport': _('Transport'),
@@ -326,6 +331,46 @@ class purchase_order(osv.osv):
                     return False
                 
         return True
+
+    def purchase_cancel(self, cr, uid, ids, context=None):
+        '''
+        Call the wizard to ask if you want to re-source the line
+        '''
+        line_obj = self.pool.get('purchase.order.line')
+        wiz_obj = self.pool.get('purchase.order.cancel.wizard')
+        wf_service = netsvc.LocalService("workflow")
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for po in self.browse(cr, uid, ids, context=context):
+            for l in po.order_line:
+                if line_obj.get_sol_ids_from_pol_ids(cr, uid, [l.id], context=context):
+                    wiz_id = wiz_obj.create(cr, uid, {'order_id': po.id}, context=context)
+                    return {'type': 'ir.actions.act_window',
+                            'res_model': 'purchase.order.cancel.wizard',
+                            'res_id': wiz_id,
+                            'view_type': 'form',
+                            'view_mode': 'form',
+                            'target': 'new',
+                            'context': context}
+
+            wf_service.trg_validate(uid, 'purchase.order', po.id, 'purchase_cancel', cr)
+
+        return True
+
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        No unlink for PO linked to a FO
+        '''
+        if self.get_so_ids_from_po_ids(cr, uid, ids, context=context):
+            raise osv.except_osv(_('Error'), _('You cannot remove a Purchase order that is linked to a Field Order or an Internal Request. Please cancel it instead.'))
+
+        return super(purchase_order, self).unlink(cr, uid, ids, context=context)
+
 
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
@@ -435,17 +480,19 @@ class purchase_order(osv.osv):
 #            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
         else:
             v['invoice_method'] = 'picking'
+
+        company_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id
         
-        if order_type == 'direct' and dest_partner_id:
+        if order_type == 'direct' and dest_partner_id and dest_partner_id != company_id:
             cp_address_id = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])['delivery']
             v.update({'dest_address_id': cp_address_id})
 #            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
         elif order_type == 'direct':
-            v.update({'dest_address_id': False})
+            v.update({'dest_address_id': False, 'dest_partner_id': False})
 #            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
         else:
-            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id, ['delivery'])['delivery']
-            v.update({'dest_address_id': cp_address_id})
+            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, company_id, ['delivery'])['delivery']
+            v.update({'dest_address_id': cp_address_id, 'dest_partner_id': company_id})
 #            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
 
         if partner_id and partner_id != local_market:
@@ -555,14 +602,15 @@ class purchase_order(osv.osv):
         
         if not dest_partner_id:
             v.update({'dest_address_id': False})
-            d.update({'dest_address_id': [('partner_id', '=', company_id)]})
+#            d.update({'dest_address_id': [('partner_id', '=', company_id)]})
         else:
-            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
+#            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
         
             delivery_addr = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])
             v.update({'dest_address_id': delivery_addr['delivery']})
         
-        return {'value': v, 'domain': d}
+#        return {'value': v, 'domain': d}
+        return {'value': v}
     
     def change_currency(self, cr, uid, ids, context=None):
         '''
@@ -662,11 +710,14 @@ class purchase_order(osv.osv):
                 if not distrib:
                     return True
                 
-                for cc_line in distrib.cost_center_lines:
-                    if is_intermission and cc_line.analytic_id.id != intermission_cc:
-                        cc_line.write({'analytic_id': intermission_cc})
-                    elif not is_intermission and cc_line.analytic_id.id == intermission_cc:
-                        raise osv.except_osv(_('Warning'), _("The PO partner type is not intermission, so you can not use the Cost Center Intermission in line: %s!") % (pol.name or '',))
+                # UTP-953: For intersection, the cc_intermission can also be used for all partner, so the block below is removed
+#                for cc_line in distrib.cost_center_lines:
+#                    if is_intermission and cc_line.analytic_id.id != intermission_cc:
+#                        # UTP-952: remove the default intermission cc
+#                        #cc_line.write({'analytic_id': intermission_cc})
+#                        pass
+#                    elif not is_intermission and cc_line.analytic_id.id == intermission_cc:
+#                        raise osv.except_osv(_('Warning'), _("The PO partner type is not intermission, so you can not use the Cost Center Intermission in line: %s!") % (pol.name or '',))
 
                 # Change distribution to be valid if needed by using those from header
                 if distrib and pol.analytic_distribution_state != 'valid':
@@ -692,10 +743,11 @@ class purchase_order(osv.osv):
         Check analytic distribution.
         '''
         for order in self.browse(cr, uid, ids, context=context):
-            if order.categ in ['transport', 'service']:
-                ch_res = self.onchange_categ(cr, uid, [order.id], order.categ, order.warehouse_id.id, order.cross_docking_ok, order.location_id.id, context=context)
-                if ch_res.get('warning', {}).get('message', False):
-                    raise osv.except_osv(_('Error'), ch_res.get('warning', {}).get('message', ''))
+            # UTP-871 : Remove the service check on order validation
+#            if order.categ in ['transport', 'service']:
+#                ch_res = self.onchange_categ(cr, uid, [order.id], order.categ, order.warehouse_id.id, order.cross_docking_ok, order.location_id.id, context=context)
+#                if ch_res.get('warning', {}).get('message', False):
+#                    raise osv.except_osv(_('Error'), ch_res.get('warning', {}).get('message', ''))
             pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('in_search', '=', order.partner_id.partner_type)], context=context)
             if order.pricelist_id.id not in pricelist_ids:
                 raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
@@ -775,10 +827,11 @@ class purchase_order(osv.osv):
         move_obj = self.pool.get('stock.move')
             
         for order in self.browse(cr, uid, ids, context=context):
-            if order.categ in ['transport', 'service']:
-                ch_res = self.onchange_categ(cr, uid, [order.id], order.categ, order.warehouse_id.id, order.cross_docking_ok, order.location_id.id, context=context)
-                if ch_res.get('warning', {}).get('message', False):
-                    raise osv.except_osv(_('Error'), ch_res.get('warning', {}).get('message', ''))
+            # UTP-871 : Remove the service check on order validation
+#            if order.categ in ['transport', 'service']:
+#                ch_res = self.onchange_categ(cr, uid, [order.id], order.categ, order.warehouse_id.id, order.cross_docking_ok, order.location_id.id, context=context)
+#                if ch_res.get('warning', {}).get('message', False):
+#                    raise osv.except_osv(_('Error'), ch_res.get('warning', {}).get('message', ''))
             if not order.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             todo = []
@@ -853,6 +906,12 @@ stock moves which are already processed : '''
             for data in datas:
                 if data['order_id'] and data['order_id'][0] not in so_ids:
                     so_ids.append(data['order_id'][0])
+
+        for po in self.browse(cr, uid, ids, context=context):
+            for line in po.order_line:
+                if line.procurement_id and line.procurement_id.sale_id and line.procurement_id.sale_id.id not in so_ids:
+                    so_ids.append(line.procurement_id.sale_id.id)
+
         return so_ids
     
     def get_sol_ids_from_po_ids(self, cr, uid, ids, context=None):
@@ -982,6 +1041,7 @@ stock moves which are already processed : '''
         pol_obj = self.pool.get('purchase.order.line')
         so_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
+        move_obj = self.pool.get('stock.move')
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
@@ -1016,8 +1076,8 @@ stock moves which are already processed : '''
                                                                               db_date_format, context=context)
                     # we update the corresponding sale order line
                     sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
-                    # do not update Internal Requests
-                    if sol.order_id.procurement_request:
+                    # do not update Internal Requests with internal requestor location
+                    if sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage != 'customer':
                         continue
                     # {sol: pol}
                     # compute the price_unit value - we need to specify the date
@@ -1052,6 +1112,21 @@ stock moves which are already processed : '''
                                   }
                     # write the line
                     sol_obj.write(cr, uid, sol_ids, fields_dic, context=ctx)
+
+                    if sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage == 'customer' and line.procurement_id.move_id and not line.procurement_id.move_id.processed_stock_move:
+                        out_move_id = line.procurement_id.move_id
+                        if out_move_id.state == 'assigned':
+                            move_obj.cancel_assign(cr, uid, [out_move_id.id])
+                        elif out_move_id.state in ('cancel', 'done'):
+                            continue
+                        else:
+                            move_dic = {'product_id': line.product_id and line.product_id.id or False,
+                                        'name': line.name,
+                                        'product_uom': line.product_uom and line.product_uom.id or False,
+                                        'product_uos': line.product_uom and line.product_uom.id or False,
+                                        'product_qty': line.product_qty,
+                                        'product_uos_qty': line.product_qty,}
+                            move_obj.write(cr, uid, [out_move_id.id], move_dic, context=context)
 
             if store_to_call:
                 sol_obj._call_store_function(cr, uid, store_to_call, keys=None, bypass=False, context=context)
@@ -1186,12 +1261,16 @@ stock moves which are already processed : '''
         # which doesnt execute wkf_confirm_wait_order (null value in column "date_expected" violates not-null constraint for stock.move otherwise)
         # msf_order_date checks
         self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
+        
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
 
         for order in self.browse(cr, uid, ids):
             # Create commitments for each PO only if po is "from picking"
             # UTP-114: No Commitment Voucher on PO that are 'purchase_list'!
             if (order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type not in ['in_kind', 'purchase_list'] and order.partner_id.partner_type != 'intermission') or (order.invoice_method == 'manual' and order.order_type == 'direct' and order.partner_id.partner_type == 'esc'):
-                self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
+                # UTP-827: no commitment if they are imported for ESC partners
+                if not (order.partner_id.partner_type == 'esc' and setup.import_commitments):
+                    self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
             if order.order_type == 'regular':
                 line_error = []
@@ -1259,8 +1338,24 @@ stock moves which are already processed : '''
                 for pick_id in todo3:
                     wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
                     wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
-            
+
         return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
+
+    def need_counterpart(self, cr, uid, ids, context=None):
+        res = False
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.order_type == 'loan' and not po.loan_id and not po.is_a_counterpart and po.partner_id.partner_type not in ('internal', 'intermission'):
+                res = True
+
+        return res
+
+    def go_to_loan_done(self, cr, uid, ids, context=None):
+        res = False
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.order_type not in ('loan', 'direct') or po.loan_id or (po.order_type == 'loan' and po.partner_id.partner_type in ('internal', 'intermission')):
+                res = True
+
+        return res
     
     def action_sale_order_create(self, cr, uid, ids, context=None):
         '''
@@ -1526,13 +1621,17 @@ stock moves which are already processed : '''
         
         wf_service = netsvc.LocalService("workflow")
 
+        line_ids = []
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:
+                line_ids.append(line.id)
                 if line.procurement_id and line.procurement_id.move_id:
                     self.pool.get('stock.move').write(cr, uid, line.procurement_id.move_id.id, {'state': 'cancel'}, context=context)
                     if line.procurement_id.move_id.picking_id:
                         wf_service.trg_write(uid, 'stock.picking', line.procurement_id.move_id.picking_id.id, cr)
         
+        self.pool.get('purchase.order.line').cancel_sol(cr, uid, line_ids, context=context)
+
         return self.write(cr, uid, ids, {'state':'cancel'}, context=context)
 
     def wkf_confirm_cancel(self, cr, uid, ids, context=None):
@@ -1993,7 +2092,8 @@ class purchase_order_line(osv.osv):
         if (other_lines and stages and order.state != 'confirmed'):
             context.update({'change_price_ok': False})
 
-        vals = self._update_merged_line(cr, uid, False, vals, context=dict(context, skipResequencing=True))
+        if not context.get('offline_synchronization'):
+            vals = self._update_merged_line(cr, uid, False, vals, context=dict(context, skipResequencing=True))
 
         vals.update({'old_price_unit': vals.get('price_unit', False)})
 
@@ -2085,6 +2185,111 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def ask_unlink(self, cr, uid, ids, context=None):
+        '''
+        Call the unlink method for lines and if the PO becomes empty
+        ask the user if he wants to cancel the PO
+        '''
+        # Objects
+        proc_obj = self.pool.get('procurement.order')
+        wiz_obj = self.pool.get('purchase.order.line.unlink.wizard')
+
+        # Variables initialization
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line_id in ids:
+            sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line_id], context=context)
+            if sol_ids:
+                wiz_id = wiz_obj.create(cr, uid, {'line_id': line_id}, context=context)
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'purchase.order.line.unlink.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'res_id': wiz_id,
+                        'target': 'new',
+                        'context': context}
+
+        return self.unlink(cr, uid, ids, context=context)
+
+    def cancel_sol(self, cr, uid, ids, context=None):
+        '''
+        Re-source the FO line
+        '''
+        context = context or {}
+        sol_obj = self.pool.get('sale.order.line')
+        uom_obj = self.pool.get('product.uom')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        sol_to_update = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
+            for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
+                diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line.product_qty, sol.product_uom.id)
+                sol_to_update.setdefault(sol.id, 0.00)
+                sol_to_update[sol.id] += diff_qty
+                if line.has_to_be_resourced:
+                    sol_obj.add_resource_line(cr, uid, sol, False, diff_qty, context=context)
+
+        for sol in sol_to_update:
+            sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+
+        return True
+
+    def fake_unlink(self, cr, uid, ids, context=None):
+        '''
+        Cancel the line and re-source them
+        '''
+        proc_obj = self.pool.get('procurement.order')
+
+        if context is None:
+            context = {}
+        
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        proc_ids = []
+        purchase_ids = []
+        line_to_cancel = []
+
+        for line in self.browse(cr, uid, ids, context=context):
+            # Set the procurement orders to delete
+            # Set the list of linked purchase orders
+            if line.procurement_id:
+                proc_ids.append(line.procurement_id.id)
+            if line.order_id.id not in purchase_ids:
+                purchase_ids.append(line.order_id.id)
+
+            self.cancel_sol(cr, uid, [line.id], context=context)
+            # we want to skip resequencing because unlink is performed on merged purchase order lines
+            tmp_Resequencing = context.get('skipResequencing', False)
+            context['skipResequencing'] = True
+            self._update_merged_line(cr, uid, line.id, False, context=context)
+            context['skipResequencing'] = tmp_Resequencing
+
+#            if line.order_id.state == 'draft':
+            line_to_cancel.append(line.id)
+
+        # Cancel the listed procurement orders
+        for proc_id in proc_ids:
+            if not self.search(cr, uid, [('procurement_id', '=', proc_id)], context=context):
+                proc_obj.action_cancel(cr, uid, [proc_id])
+    
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        self.unlink(cr, uid, line_to_cancel, context=context)
+
+        # Check if we must ask the user to cancel the PO (no lines in PO)
+        #for order in self.pool.get('purchase.order').read(cr, uid, purchase_ids, ['order_line'], context=context):
+        #    if len(order['order_line']) == 0:
+        #        return self.pool.get('purchase.order.cancel.wizard').ask_unlink(cr, uid, order['id'], context=context)
+
+        return ids
+
     def unlink(self, cr, uid, ids, context=None):
         '''
         Update the merged line
@@ -2093,11 +2298,10 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+          
         # if the line is linked to a sale order line through procurement process,
         # the deletion is impossible
-        if self.get_sol_ids_from_pol_ids(cr, uid, ids, context=context):
-            raise osv.except_osv(_('Error'), _('You cannot delete a line which is linked to a Fo line.'))
+        # raise osv.except_osv(_('Error'), _('You cannot delete a line which is linked to a Fo line.'))
 
         for line_id in ids:
             # we want to skip resequencing because unlink is performed on merged purchase order lines
@@ -2190,6 +2394,7 @@ class purchase_order_line(osv.osv):
 
         # This field is used to identify the FO PO line between 2 instances of the sync
         'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
+        'has_to_be_resourced': fields.boolean(string='Has to be re-sourced'),
     }
 
     _defaults = {
@@ -2244,12 +2449,11 @@ class purchase_order_line(osv.osv):
             other_lines = self.search(cr, uid, domain)
             for l in self.browse(cr, uid, other_lines):
                 all_qty += l.product_qty 
-        
+
         res = super(purchase_order_line, self).product_id_change(cr, uid, ids, pricelist, product, all_qty, uom,
                                                                  partner_id, date_order, fiscal_position, 
                                                                  date_planned, name, price_unit, notes)
-        
-        # Remove the warning message if the product has no staged pricelist
+
 #        if res.get('warning'):
 #            supplier_info = self.pool.get('product.supplierinfo').search(cr, uid, [('product_id', '=', product)])
 #            product_pricelist = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('suppinfo_id', 'in', supplier_info)])
@@ -2335,6 +2539,17 @@ class purchase_order_line(osv.osv):
             res['value'].update({'price_unit': 0.00, 'old_price_unit': 0.00})
         elif not product and not comment and not nomen_manda_0:
             res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})
+
+
+        if context and context.get('categ') and product:
+            # Check consistency of product
+            consistency_message = self.pool.get('product.product').check_consistency(cr, uid, product, context.get('categ'), context=context)
+            if consistency_message:
+                res.setdefault('warning', {})
+                res['warning'].setdefault('title', 'Warning')
+                res['warning'].setdefault('message', '')
+
+                res['warning']['message'] = '%s \n %s' % (res.get('warning', {}).get('message', ''), consistency_message)
         
         return res
 
@@ -2428,8 +2643,9 @@ class purchase_order_group(osv.osv_memory):
     
     _columns = {
         'po_value_id': fields.many2one('purchase.order', string='Template PO', help='All values in this PO will be used as default values for the merged PO'),
+        'unmatched_categ': fields.boolean(string='Unmatched categories'),
     }
-    
+
     def default_get(self, cr, uid, fields, context=None):
         res = super(purchase_order_group, self).default_get(cr, uid, fields, context=context)
         if context.get('active_model','') == 'purchase.order' and len(context['active_ids']) < 2:
@@ -2437,6 +2653,13 @@ class purchase_order_group(osv.osv_memory):
             _('Please select multiple order to merge in the list view.'))
             
         res['po_value_id'] = context['active_ids'][-1]
+
+        categories = set()
+        for po in self.pool.get('purchase.order').read(cr, uid, context['active_ids'], ['categ'], context=context):
+            categories.add(po['categ'])
+
+        if len(categories) > 1:
+            res['unmatched_categ'] = True
         
         return res
     
@@ -2455,6 +2678,18 @@ purchase_order_group()
 class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
+
+    def _product_price(self, cr, uid, ids, field_name, args, context=None):
+        res = super(product_product, self)._product_price(cr, uid, ids, field_name, args, context=context)
+
+        for product in res:
+            if res[product] == 0.00:
+                try:
+                    res[product] = self.pool.get('product.product').read(cr, uid, [product], ['standard_price'], context=context)[0]['standard_price']
+                except:
+                    pass
+
+        return res
     
     def _get_purchase_type(self, cr, uid, ids, field_name, args, context=None):
         res = {}
@@ -2481,9 +2716,56 @@ class product_product(osv.osv):
         return res
 
     _columns = {
+
         'purchase_type': fields.function(_get_purchase_type, fnct_search=_src_purchase_type, type='boolean', string='Purchase type', method=True, store=False),
+        'price': fields.function(_product_price, method=True, type='float', string='Pricelist', digits_compute=dp.get_precision('Sale Price')),
     }
     
+    def check_consistency(self, cr, uid, product_id, category, context=None):
+        '''
+        Check the consistency of product according to category
+        '''
+        context = context or {}
+        display_message = False
+
+        # No check for Other
+        if category == 'other':
+            return False
+
+        product = self.read(cr, uid, product_id, ['nomen_manda_0', 'type', 'transport_ok'], context=context)
+        transport_product = product['transport_ok']
+        product_type = product['type']
+        main_type = product['nomen_manda_0'][0]
+
+        if category == 'medical':
+            try:
+                med_nomen = self.pool.get('product.nomenclature').search(cr, uid, [('level', '=', 0), ('name', '=', 'MED')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('MED nomenclature Main Type not found'))
+
+            if main_type != med_nomen:
+                display_message = True
+
+        if category == 'log':
+            try:
+                log_nomen = self.pool.get('product.nomenclature').search(cr, uid, [('level', '=', 0), ('name', '=', 'LOG')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('LOG nomenclature Main Type not found'))
+
+            if main_type != log_nomen:
+                display_message = True
+
+        if category == 'service' and product_type != 'service_recep':
+           display_message = True
+
+        if category == 'transport' and (product_type != 'service_recep' or not transport_product):
+            display_message = True
+
+        if display_message:
+            return 'Warning you are about to add a product which does not conform to this PO’s order category, do you wish to proceed ?'
+        else:
+            return False
+
 product_product()
 
 class account_invoice(osv.osv):
@@ -2495,5 +2777,228 @@ class account_invoice(osv.osv):
     }
     
 account_invoice()
+
+
+class purchase_order_line_unlink_wizard(osv.osv_memory):
+    _name = 'purchase.order.line.unlink.wizard'
+
+    _columns = {
+        'line_id': fields.many2one('purchase.order.line', 'Line to delete'),
+    }
+
+    def just_cancel(self, cr, uid, ids, context=None):
+        '''
+        Cancel the line
+        '''
+        # Objects
+        line_obj = self.pool.get('purchase.order.line')
+        order_wiz_obj = self.pool.get('purchase.order.cancel.wizard')
+        data_obj = self.pool.get('ir.model.data')
+        po_obj = self.pool.get('purchase.order')
+
+        # Variables
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        line_ids =[]
+        po_ids = set()
+        for wiz in self.browse(cr, uid, ids, context=context):
+            po_ids.add(wiz.line_id.order_id.id)
+            line_ids.append(wiz.line_id.id)
+
+        if context.get('has_to_be_resourced'):
+            line_obj.write(cr, uid, line_ids, {'has_to_be_resourced': True}, context=context)
+
+        line_obj.fake_unlink(cr, uid, line_ids, context=context)
+
+        for po in po_obj.browse(cr, uid, list(po_ids), context=context):
+            if all(x.state in ('cancel', 'done') for x in po.order_line):
+                wiz_id = order_wiz_obj.create(cr, uid, {'order_id': po.id}, context=context)
+                view_id = data_obj.get_object_reference(cr, uid, 'purchase_override', 'ask_po_cancel_wizard_form_view')[1]
+                context['view_id'] = False
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'purchase.order.cancel.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'view_id': [view_id],
+                        'res_id': wiz_id,
+                        'target': 'new',
+                        'context': context}
+
+        return {'type': 'ir.actions.act_window_close'}
+
+
+    def cancel_and_resource(self, cr, uid, ids, context=None):
+        '''
+        Flag the line to be re-sourced and run cancel method
+        '''
+        # Objects
+        if context is None:
+            context = {}
+
+        context['has_to_be_resourced'] = True
+
+        return self.just_cancel(cr, uid, ids, context=context)
+
+purchase_order_line_unlink_wizard()
+
+
+class purchase_order_cancel_wizard(osv.osv_memory):
+    _name = 'purchase.order.cancel.wizard'
+
+    _columns = {'order_id': fields.many2one('purchase.order', 'Order to delete'),
+                'unlink_po': fields.boolean(string='Unlink PO'),}
+
+    def fields_view_get(self, cr, uid, view_id=False, view_type='form', context=None, toolbar=False, submenu=False):
+        return super(purchase_order_cancel_wizard, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+
+    def ask_unlink(self, cr, uid, order_id, context=None):
+        '''
+        Return the wizard
+        '''
+        data_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+
+        view_id = data_obj.get_object_reference(cr, uid, 'purchase_override', 'ask_po_cancel_wizard_form_view')[1]
+        wiz_id = self.create(cr, uid, {'order_id': order_id}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order.cancel.wizard',
+                'res_id': wiz_id,
+                'view_id': [view_id],
+                'view_type': 'form',
+                'view_mode': 'form', 
+                'target': 'new',
+                'context': context}
+
+    def close_window(self, cr, uid, ids, context=None):
+        '''
+        Close the pop-up and reload the PO
+        '''
+        return {'type': 'ir.actions.act_window_close'}
+    
+    def cancel_po(self, cr, uid, ids, context=None):
+        '''
+        Cancel the PO and display his form
+        '''
+        line_obj = self.pool.get('purchase.order.line')
+        wf_service = netsvc.LocalService("workflow")
+        
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        line_ids = []
+        order_ids = []
+        for wiz in self.browse(cr, uid, ids, context=context):
+            order_ids.append(wiz.order_id.id)
+            if context.get('has_to_be_resourced'):
+                line_ids.extend([l.id for l in wiz.order_id.order_line])
+
+        # Mark lines as 'To be resourced'
+        line_obj.write(cr, uid, line_ids, {'has_to_be_resourced': True}, context=context)
+
+        for order_id in order_ids:
+            wf_service.trg_validate(uid, 'purchase.order', order_id, 'purchase_cancel', cr)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel_and_resource(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        context['has_to_be_resourced'] = True
+
+        return self.cancel_po(cr, uid, ids, context=context)
+
+purchase_order_cancel_wizard()
+
+class res_partner(osv.osv):
+    _inherit = 'res.partner'
+
+    def address_multiple_get(self, cr, uid, ids, adr_pref=['default']):
+        address_obj = self.pool.get('res.partner.address')
+        address_ids = address_obj.search(cr, uid, [('partner_id', '=', ids)])
+        address_rec = address_obj.read(cr, uid, address_ids, ['type'])
+        res= {}
+        for addr in address_rec:
+            res.setdefault(addr['type'], [])
+            res[addr['type']].append(addr['id'])
+        if res:
+            default_address = res.get('default', False)
+        else:
+            default_address = False
+        result = {}
+        for a in adr_pref:
+            result[a] = res.get(a, default_address)
+
+        return result
+
+res_partner()
+
+
+class res_partner_address(osv.osv):
+    _inherit = 'res.partner.address'
+
+    def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for id in ids:
+            res[id] = True
+
+        return res
+
+    def _src_address(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns all the destination addresses of a partner or all default
+        addresses if he hasn't destination addresses
+        '''
+        addr_obj = self.pool.get('res.partner.address')
+        partner_obj = self.pool.get('res.partner')
+        user_obj = self.pool.get('res.users')
+        res = []
+
+        for arg in args:
+            if arg[0] == 'dest_address':
+                addr_type = 'delivery'
+            elif arg[0] == 'inv_address':
+                addr_type = 'invoice'
+                
+            if arg[2]:
+                partner_id = arg[2]
+            else:
+                partner_id = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id
+                if arg[1] == 'in':
+                    partner_id = [partner_id]
+            
+            addr_ids = []
+            if isinstance(partner_id, list):
+                for partner in partner_id:
+                    if not partner:
+                        continue
+                    addr_ids.extend(partner_obj.address_multiple_get(cr, uid, partner, [addr_type])[addr_type])
+
+            else:
+                addr_ids = partner_obj.address_multiple_get(cr, uid, partner_id, [addr_type])[addr_type]
+
+            res.append(('id', 'in', list(id for id in addr_ids if id)))
+
+        return res
+    
+    _columns = {
+        'dest_address': fields.function(_get_dummy, fnct_search=_src_address, method=True,
+                                           type='boolean', string='Dest. Address', store=False),
+        'inv_address': fields.function(_get_dummy, fnct_search=_src_address, method=True,
+                                           type='boolean', string='Invoice Address', store=False),
+    }
+    
+
+res_partner_address()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

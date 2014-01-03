@@ -406,7 +406,7 @@ class product_attributes(osv.osv):
                                       store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
                                              'product.status': (_get_product_status, ['no_storage'], 10),
                                              'product.international.status': (_get_international_status, ['no_storage'], 10),}),
-        'available_for_restriction': fields.function(_get_dummy, fnct_search=_src_available_for_restriction, methode=True, type='boolean',
+        'available_for_restriction': fields.function(_get_dummy, fnct_search=_src_available_for_restriction, method=True, type='boolean',
                                                  store=False, string='Available for the partner', readonly=True),
     }
     
@@ -536,11 +536,11 @@ class product_attributes(osv.osv):
                 st_cond = product.state.no_external or product.state.no_esc or product.state.no_internal
             elif product.no_external and 'external' in constraints:
                 error = True
-                msg = _('be %s externally' % (sale_obj and _('shipped') or _('purchased')))
+                msg = _('be %s externally') % (sale_obj and _('shipped') or _('purchased'))
                 st_cond = product.state.no_external
             elif product.no_esc and 'esc' in constraints:
                 error = True
-                msg = _('be %s ESC' % (sale_obj and _('shipped to') or _('purchased at')))
+                msg = _('be %s ESC') % (sale_obj and _('shipped to') or _('purchased at'))
                 st_cond = product.state.no_esc
             elif product.no_internal and 'internal' in constraints:
                 error = True
@@ -580,9 +580,9 @@ class product_attributes(osv.osv):
             raise osv.except_osv(_('Error'), error_msg)
             return False
 
-    _constraints = [
-        (_check_uom_category, _('There are some stock moves with this product on the system. So you should keep the same UoM category than these stock moves.'), ['uom_id', 'uom_po_id']),
-    ]
+#    _constraints = [
+#        (_check_uom_category, _('There are some stock moves with this product on the system. So you should keep the same UoM category than these stock moves.'), ['uom_id', 'uom_po_id']),
+#    ]
     
     def _on_change_restriction_error(self, cr, uid, ids, *args, **kwargs):
         '''
@@ -644,7 +644,24 @@ class product_attributes(osv.osv):
                 vals.update({'duplicate_ok': True})
             else:
                 vals.update({'duplicate_ok': False})
-        return super(product_attributes, self).write(cr, uid, ids, vals, context=context)
+
+        product_uom_categ = []
+        if 'uom_id' in vals or 'uom_po_id' in vals:
+            for product in self.browse(cr, uid, ids, context=context):
+                category_id = product.uom_id.category_id.id
+                if category_id not in product_uom_categ:
+                    product_uom_categ.append(category_id)
+
+        res = super(product_attributes, self).write(cr, uid, ids, vals, context=context)
+
+        if product_uom_categ:
+            uom_categ = 'uom_id' in vals and vals['uom_id'] and self.pool.get('product.uom').browse(cr, uid, vals['uom_id'], context=context).category_id.id or False
+            uos_categ = 'uom_po_id' in vals and vals['uom_po_id'] and self.pool.get('product.uom').browse(cr, uid, vals['uom_po_id'], context=context).category_id.id or False
+        
+            if (uom_categ and uom_categ not in product_uom_categ) or (uos_categ and uos_categ not in product_uom_categ):
+                raise osv.except_osv(_('Error'), _('You cannot choose an UoM which is not in the same UoM category of default UoM'))
+
+        return res
     
     def reactivate_product(self, cr, uid, ids, context=None):
         '''
@@ -1122,5 +1139,36 @@ class pricelist_partnerinfo(osv.osv):
         return res
 
 pricelist_partnerinfo()
+
+
+class product_uom(osv.osv):
+    _inherit = 'product.uom'
+
+    def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for id in ids:
+            res[id] = True
+
+        return res
+
+
+    def _get_compatible_uom(self, cr, uid, obj, name, args, context=None):
+        res = []
+
+        for arg in args:
+            if arg[0] == 'compatible_product_id':
+                if not arg[2]:
+                    return []
+                elif isinstance(arg[2], (int, long)):
+                    product = self.pool.get('product.product').browse(cr, uid, arg[2], context=context)
+                    return [('category_id', '=', product.uom_id.category_id.id)]
+
+        return res
+
+    _columns = {
+        'compatible_product_id': fields.function(_get_dummy, fnct_search=_get_compatible_uom, method=True, type='boolean', string='Compatible UoM'),
+    }
+
+product_uom()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

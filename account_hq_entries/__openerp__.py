@@ -32,11 +32,15 @@
     "update_xml" : [
         'security/ir.model.access.csv',
         'res_company_view.xml',
-        'wizard/hq_entries_validation_view.xml',
+        'wizard/wizard_view.xml',
         'account_view.xml',
     ],
     "demo_xml" : [],
-    "test": [],
+    "test": [
+        'test/10_data.yml',
+        'test/20_import_and_validation.yml',
+        'test/30_split.yml',
+    ],
     "installable": True,
     "active": False
 }

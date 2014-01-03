@@ -17,12 +17,12 @@
         <record id="trans_router_loan" model="workflow.transition">
             <field name="act_from" ref="purchase.act_router" />
             <field name="act_to" ref="act_loan" />
-            <field name="condition">order_type=='loan' and not loan_id</field>
+            <field name="condition">need_counterpart()</field>
         </record>
         <record id="trans_router_loan_done" model="workflow.transition">
             <field name="act_from" ref="purchase.act_router" />
             <field name="act_to" ref="act_loan_done" />
-            <field name="condition">order_type not in ('loan', 'direct') or loan_id</field>
+            <field name="condition">go_to_loan_done()</field>
         </record>
         <record id="trans_loan_done" model="workflow.transition">
             <field name="act_from" ref="act_loan"/>
@@ -32,6 +32,13 @@
         <record id="trans_loand_done_end" model="workflow.transition">
             <field name="act_from" ref="act_loan_done" />
             <field name="act_to" ref="purchase.act_done" />
+        </record>
+
+        <!-- Redefine the signal to go from Receipt Exception to Closed states -->
+        <record id="purchase.trans_except_picking_picking_done" model="workflow.transition">
+            <field name="act_from" ref="purchase.act_except_picking" />
+            <field name="act_to" ref="purchase.act_picking_done" />
+            <field name="signal" eval="False" />
         </record>
         
         <!-- Redefine the condition to take into account the DPO process (invoice create at confirmation, but

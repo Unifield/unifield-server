@@ -144,7 +144,7 @@
 			<field name="model">stock.picking</field>
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
-				<tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Picking Tickets">
+				<tree colors="blue:state in ('draft') and min_date &gt;= current_date;grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Picking Tickets">
 					<field name="name"/>
 					<field name="partner_id2" />
 					<field name="backorder_id" />
@@ -154,7 +154,8 @@
 					<field name="overall_qty" invisible="True" />
 					<field name="date"/>
 					<field name="min_date" string="Expected Pick Date" />
-					<field name="state"/>
+                    <field name="state"/>
+                    <field name="line_state" />
 					<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add"/>
 					<button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"/>
 				</tree>
@@ -220,7 +221,7 @@
 								default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date}" 
 							    on_change="onchange_move()"  
 							    >
-								<tree string="Stock Moves" noteditable="fake_state=='assigned'" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')"
+								<tree string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel')" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')"
 								colors="red: inactive_product==True">
                                     <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"/>
 									<field name="composition_list_id" />
@@ -247,7 +248,9 @@
 									<field name="dg_check" />
 									<field name="np_check" />
 									<field name="inactive_product" invisible="1" />
-                    				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                                    <field name="pt_created" invisible="1" />
+                                    <button name="call_cancel_wizard" type="object" string="Cancel" states="draft,assigned,confirmed" icon="gtk-del"  attrs="{'invisible': [('pt_created', '=', True)]}" />
 								</tree>
 								<form string="Stock Moves">
 									<group colspan="2" col="4">
@@ -328,14 +331,18 @@
 									</group>
 								</form>
 							</field>
-							<group col="13" colspan="4">
-								<field name="state" readonly="1"/>
-								<field name="flow_type" />
-                                <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"/>
+							<group col="14" colspan="4">
+                                <field name="state" readonly="1"/>
+                                <field name="line_state" readonly="1" attrs="{'invisible': [('state', '!=', 'draft')]}" nolabel="1" />
+                                <field name="flow_type" />
+                                <group colspan="1" col="1">
+                                    <button name="call_cancel_wizard" type="object" states="draft" string="_Cancel Picking" icon="gtk-cancel"/>
+                                    <button name="button_cancel" states="assigned,confirmed" string="_Cancel Picking" icon="gtk-cancel"/>
+                                </group>
                                 <field name="has_draft_moves" invisible="1" />
                                 <button name="action_confirm_moves" states="draft" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': [('has_draft_moves', '=', False)]}"/>
 								<button name="action_assign" states="draft,confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
-								<button name="convert_to_standard" states="draft" string="Convert to Simple Out" type="object" icon="gtk-convert" />
+								<button name="convert_to_standard" states="draft,assigned" string="Convert to Simple Out" type="object" icon="gtk-convert" />
 								<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" help="Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available" />
 								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
 								<button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"/>
@@ -377,11 +384,17 @@
 						<field name="name"/>
 						<field name="partner_id2" />
 						<field name="origin"/>
-						<newline />
+                        <newline />
 						<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" />
 						<field name="date" />
 						<field name="min_date" />
-					</group>
+                    </group>
+                    <newline />
+                    <group string="State of lines" col="8" colspan="4">
+                        <filter icon="gtk-no" name="line_not_available" string="Not available" domain="[('line_state', '=', 'confirmed')]" />
+                        <filter icon="gtk-dialog-question" name="line_mixed" string="Partially available" domain="[('line_state', '=', 'mixed')]" />
+                        <filter icon="gtk-yes" name="line_available" string="Available" domain="[('line_state', '=', 'assigned')]" />
+                    </group>
 					<newline/>
 					<group expand="0" string="Group By..." colspan="4" col="8">
 						<filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
@@ -905,7 +918,7 @@
 			<field name="model">stock.picking</field>
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
-				<tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Packing">
+				<tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Packing">
 					<field name="name"/>
 					<field name="partner_id2"/>
 					<field name="origin"/>
@@ -1154,7 +1167,7 @@
 			<field name="model">shipment</field>
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
-				<tree string="Shipment" hide_new_button="1" hide_delete_button="1" colors="blue:state in ['draft'];grey:state in ['cancel'];red:state not in ['cancel', 'done'] and shipment_expected_date &lt; current_date;black:state in ['done'];green: state in ['delivered']">
+                <tree string="Shipment" hide_new_button="1" hide_delete_button="1" colors="blue:state in ['draft'] and (shipment_expected_date &gt; current_date or shipment_expected_date == current_date);grey:state in ['cancel'];red:state not in ['cancel', 'done'] and shipment_expected_date &lt; current_date;black:state in ['done'];green: state in ['delivered']">
 					<field name="name"/>
 					<field name="partner_id2"/>
 					<field name="address_id"/>

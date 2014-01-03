@@ -1,4 +1,11 @@
 -
+  I create an analytic Correction Journal
+-
+  !record {model: account.analytic.journal, id: analytic_journal_correction}:
+    name: Analytic Correction Journal
+    code: ACOR
+    type: correction
+-
   I create an Expense Account Type.
 -
   !record {model: account.account.type, id: account_account_type_expense0}:
@@ -20,6 +27,19 @@
     default_destination_id: analytic_distribution.analytic_account_destination_operation
     destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
 -
+  I create a 6102 Expense Account.
+-
+  !record {model: account.account, id: account_6102}:
+    code: '6102-expense-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Expense Account
+    type: other
+    user_type: account_account_type_expense0
+    activation_date: !eval datetime.today().strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_operation
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
+-
   I create a link between 6101 expense account and Operation destination
 -
   !record {model: account.destination.link, id: tuple_operation_6101}:
@@ -29,6 +49,18 @@
   I create a link between 6101 expense account and Support destination
 -
   !record {model: account.destination.link, id: tuple_support_6101}:
+    account_id: account_account_expense0
+    destination_id: analytic_distribution.analytic_account_destination_support
+-
+  I create a link between 6102 expense account and Operation destination
+-
+  !record {model: account.destination.link, id: tuple_operation_6102}:
+    account_id: account_account_expense0
+    destination_id: analytic_distribution.analytic_account_destination_operation
+-
+  I create a link between 6102 expense account and Support destination
+-
+  !record {model: account.destination.link, id: tuple_support_6102}:
     account_id: account_account_expense0
     destination_id: analytic_distribution.analytic_account_destination_support
 -
@@ -43,12 +75,12 @@
     parent_id: analytic_distribution.analytic_account_project
     date: !eval "'%s-01-01' %(datetime.now().year + 2)"
 -
-  I create an analytic account attached to OC (Operation Center) named Kenya
+  I create a CC analytic account attached to OC (Operation Center)
 -
-  !record {model: account.analytic.account, id: analytic_account_kenya}:
-    name: "Kenya"
+  !record {model: account.analytic.account, id: analytic_cc}:
+    name: "CC"
     currency_id: 1
-    code: KEN
+    code: CC
     type: normal
     category: OC
     parent_id: analytic_distribution.analytic_account_project
@@ -65,7 +97,7 @@
     parent_id: analytic_distribution.analytic_account_funding_pool
     date: !eval "'%s-01-01' %(datetime.now().year + 2)"
     cost_center_ids: [analytic_account_gabon]
-    tuple_destination_account_ids: [tuple_operation_6101]
+    tuple_destination_account_ids: [tuple_operation_6101, tuple_operation_6102]
 -
   I create an FP analytic account named Kenya AIDS attached to Kenya CC
 -
@@ -77,8 +109,8 @@
     category: FUNDING
     parent_id: analytic_distribution.analytic_account_funding_pool
     date: !eval "'%s-01-01' %(datetime.now().year + 2)"
-    cost_center_ids: [analytic_account_kenya]
-    tuple_destination_account_ids: [tuple_support_6101]
+    cost_center_ids: [analytic_cc]
+    tuple_destination_account_ids: [tuple_support_6101, tuple_support_6102]
 -
   I create a global analytical distribution
 -
@@ -103,7 +135,7 @@
     amount: 0.0
     percentage: 25.0
     currency_id: 1
-    analytic_id: analytic_account_kenya
+    analytic_id: analytic_cc
     distribution_id: global_distrib_1
     destination_id: analytic_distribution.analytic_account_destination_support
 -
@@ -127,7 +159,7 @@
     percentage: 25.0
     currency_id: 1
     analytic_id: analytic_account_fp_kenya_aids
-    cost_center_id: analytic_account_kenya
+    cost_center_id: analytic_cc
     destination_id: analytic_distribution.analytic_account_destination_support
     distribution_id: global_distrib_1
 -
@@ -192,7 +224,7 @@
   I create CC1 analytic account without any ending date (begin from 3 of this month)
 -
   !record {model: account.analytic.account, id: cc1}:
-    name: Cost Center 1
+    name: "Cost Center 1"
     code: CC1
     type: normal
     category: OC
@@ -217,6 +249,24 @@
     category: OC
     date_start: !eval "'%s-%s-15' % (datetime.now().year + 10, datetime.now().month)"
 -
+  I create CC4 analytic account without any ending date (begin from 3 of this month)
+-
+  !record {model: account.analytic.account, id: cc4}:
+    name: "Cost Center 4"
+    code: CC4
+    type: normal
+    category: OC
+    date_start: !eval "'%s-03-03' % (datetime.now().year)"
+-
+  I create CC5 analytic account without any ending date (begin from 15 of this month)
+-
+  !record {model: account.analytic.account, id: cc5}:
+    name: Cost Center 5
+    code: CC5
+    type: normal
+    category: OC
+    date_start: !eval "'%s-03-15' % (datetime.now().year)"
+-
   I create FP1 analytic account
 -
   !record {model: account.analytic.account, id: fp1}:
@@ -226,8 +276,8 @@
     category: FUNDING
     date_start: !eval "'%s-%s-03' % (datetime.now().year + 10, datetime.now().month)"
     date: !eval "'%s-%s-10' % (datetime.now().year + 10, datetime.now().month)"
-    cost_center_ids: [cc1, cc2, cc3]
-    tuple_destination_account_ids: [tuple_operation_6101]
+    cost_center_ids: [cc1, cc2, cc3, cc4, cc5]
+    tuple_destination_account_ids: [tuple_operation_6101, tuple_operation_6102]
 -
   I create an analytic distribution.
 -
@@ -278,6 +328,32 @@
     destination_id: analytic_account_destination_operation
     distribution_id: distrib_3
     cost_center_id: cc2
+    percentage: 100.0
+    currency_id: base.EUR
+-
+  I create distrib_4 analytic distribution.
+-
+  !record {model: analytic.distribution, id: distrib_4}:
+    name: Distribution for checking reverse and correction
+-
+  I add some lines to this distribution. First CC.
+-
+  !record {model: cost.center.distribution.line, id: cost_center_4}:
+    name: CC Line 1
+    analytic_id: cc4
+    destination_id: analytic_account_destination_operation
+    distribution_id: distrib_4
+    percentage: 100.0
+    currency_id: base.EUR
+-
+  Then I create a FP line linked to previous CC.
+-
+  !record {model: funding.pool.distribution.line, id: funding_pool_line_4}:
+    name: FP Line 1
+    analytic_id: analytic_account_msf_private_funds
+    destination_id: analytic_account_destination_operation
+    distribution_id: distrib_4
+    cost_center_id: cc4
     percentage: 100.0
     currency_id: base.EUR
 -
@@ -335,3 +411,11 @@
         min_qty: 0.00
         name: res_partner_supplier_wood_0
     international_status: product_attributes.int_1
+-
+  I overwrite periods to have the right number
+-
+  !python {model: account.period}: |
+    import datetime
+    period_ids = self.search(cr, uid, [], order='date_start, name')
+    for p in self.browse(cr, uid, period_ids):
+      self.write(cr, uid, [p.id], {'number': int(datetime.datetime.strptime(p.date_start, '%Y-%m-%d').strftime('%m'))})
