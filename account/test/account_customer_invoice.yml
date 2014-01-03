@@ -24,9 +24,14 @@
   !python {model: account.period}: |
     import datetime
     period_ids = self.search(cr, uid, [], order='date_start, name')
+    # close the register created by the minimal account
+    bks_obj = self.pool.get('account.bank.statement')
+    reg_ids = self.pool.get('account.bank.statement').search(cr, uid, [])
+    if reg_ids:
+        bks_obj.write(cr, uid, reg_ids, {'state': 'confirm'})
     for p in self.browse(cr, uid, period_ids):
       self.write(cr, uid, [p.id], {'number': int(datetime.datetime.strptime(p.date_start, '%Y-%m-%d').strftime('%m'))})
-      self.action_set_state(cr, uid, period_ids, {'state': 'draft'})
+    self.action_set_state(cr, uid, period_ids, {'state': 'draft'})
 -
   I check that Initially customer invoice is in the "Draft" state
 -
