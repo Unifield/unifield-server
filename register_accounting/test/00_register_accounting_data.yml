@@ -20,16 +20,6 @@
     name: JAN-HHHHH-OP
     special: 1
 -
-  I create the period 0001 for the operational advance
--
-  !record {model: account.period, id: period_0001}:
-    company_id: base.main_company
-    date_start: !eval time.strftime('%Y-%m-01')
-    date_stop: !eval (DateTime.now()+DateTime.RelativeDateTime(day=-1)).strftime('%Y-%m-%d')
-    fiscalyear_id: fiscalyear0
-    name: For operational advance
-    special: 1
--
   I create the current period for some test
 -
   !record {model: account.period, id: current_period}:
@@ -200,6 +190,18 @@
     fiscalyear_id: fiscalyear0
     name: !eval "'Dec-%s' %(datetime.now().year)"
     special: 1
+-
+  I overwrite periods with right number and open them
+-
+  !python {model: account.period}: |
+    import datetime
+    to_open = []
+    for i in ['000', '00'] + range(1, 13):
+        to_open.append(ref('period_%s'%i))
+    period_ids = self.search(cr, uid, [('id', 'in', to_open)], order='date_start, name')
+    for p in self.browse(cr, uid, period_ids):
+      self.write(cr, uid, [p.id], {'number': int(datetime.datetime.strptime(p.date_start, '%Y-%m-%d').strftime('%m'))})
+    self.action_set_state(cr, uid, period_ids, {'state': 'draft'})
 -
   I create a Receivable Account Type.
 -
@@ -769,12 +771,3 @@
         min_qty: 0.00
         name: res_partner_supplier_wood_0
     international_status: product_attributes.int_1
--
-  I overwrite periods with right number and open them
--
-  !python {model: account.period}: |
-    import datetime
-    period_ids = self.search(cr, uid, [], order='date_start, name')
-    for p in self.browse(cr, uid, period_ids):
-      self.write(cr, uid, [p.id], {'number': int(datetime.datetime.strptime(p.date_start, '%Y-%m-%d').strftime('%m'))})
-    self.action_set_state(cr, uid, period_ids, {'state': 'draft'})
