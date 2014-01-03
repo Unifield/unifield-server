@@ -171,9 +171,9 @@
 	            <field name="type">search</field>
 	            <field name="arch" type="xml">
 	                <search string="Search Account/Destination/Funding Pool/Cost Centre">
-                        <field name="account_destination_name"/>
-                        <field name="funding_pool_id"/>
-                        <field name="cost_center_id"/>
+                        <field name="account_destination_id" string="Account" />
+                        <field name="funding_pool_id" domain="[('category', '=', 'FUNDING')]" />
+                        <field name="cost_center_id" domain="[('category', '=', 'OC')]"/>
 	                </search>
 	            </field>
 	        </record>
