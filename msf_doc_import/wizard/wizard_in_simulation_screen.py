@@ -19,13 +19,60 @@
 #
 ##############################################################################
 
+# Module imports
+import threading
+import pooler
+import base64
+#import time
+import xml.etree.ElementTree as ET
+
+#from mx import DateTime
+
 # Server imports
 from osv import osv
 from osv import fields
 from tools.translate import _
 
-# Module imports
+# Addons imports
 from msf_order_date import TRANSPORT_TYPE
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+
+
+NB_OF_HEADER_LINES = 7
+NB_LINES_COLUMNS = 12
+
+
+PRODUCT_NAME_ID = {}
+PRODUCT_CODE_ID = {}
+UOM_NAME_ID = {}
+CURRENCY_NAME_ID = {}
+PRODLOT_NAME_ID = {}
+
+SIMU_LINES = {}
+
+
+LINES_COLUMNS = [(0, _('Line number'), 'mandatory'),
+                 (1, _('Product Code'), 'mandatory'),
+                 (2, _('Product Description'), 'optionnal'),
+                 (3, _('Product Qty'), 'mandatory'),
+                 (4, _('Product UoM'), 'mandatory'),
+                 (5, _('Price Unit'), 'mandatory'),
+                 (6, _('Currency'), 'mandatory'),
+                 (7, _('Batch'), 'optionnal'),
+                 (8, _('Expiry Date'), 'optionnal'),
+                 (9, _('Packing List'), 'optionnal'),
+                 (10, _('ESC message 1'), 'optionnal'),
+                 (11, _('ESC message 2'), 'optionnal'),
+                 ]
+
+HEADER_COLUMNS = [(1, _('Freight'), 'optionnal'),
+                  (2, _('Picking Reference'), 'mandatory'),
+                  (3, _('Origin'), 'optionnal'),
+                  (4, _('Supplier'), 'optionnal'),
+                  (5, _('Transport mode'), 'optionnal'),
+                  (6, _('Notes'), 'optionnal'),
+                  (7, _('Message ESC'), 'optionnal'),
+                  ]
 
 
 class wizard_import_in_simulation_screen(osv.osv):
@@ -55,6 +102,16 @@ class wizard_import_in_simulation_screen(osv.osv):
 
     _columns = {
         'picking_id': fields.many2one('stock.picking', string='Incoming shipment', required=True, readonly=True),
+        'message': fields.text(string='Import message',
+                               readonly=True),
+        'state': fields.selection([('draft', 'Draft'),
+                                   ('simu_progress', 'Simulation in progress'), 
+                                   ('simu_done', 'Simulation done'),            
+                                   ('import_progress', 'Import in progress'),   
+                                   ('error', 'Error'),                          
+                                   ('done', 'Done')],                           
+                                  string='State',                              
+                                  readonly=True),
         # File information
         'file_to_import': fields.binary(string='File to import'),               
         'filename': fields.char(size=64, string='Filename'),                    
@@ -87,10 +144,647 @@ class wizard_import_in_simulation_screen(osv.osv):
                                           readonly=True, type='selection', selection=TRANSPORT_TYPE, multi='related'),
         # Import fields
         'message_esc': fields.text(string='Message ESC', readonly=True),
+        'imp_origin': fields.char(size=128, string='Origin', readonly=True),
+        'imp_freight_number': fields.char(size=128, string='Freight number', readonly=True),
+        'imp_transport_mode': fields.selection(TRANSPORT_TYPE, string='Transpot type', readonly=True),
         # Lines
         'line_ids': fields.one2many('wizard.import.in.line.simulation.screen', 'simu_id', string='Stock moves'),
                                          
     }
+
+    _defaults = {
+        'state': 'draft',
+    }
+
+    def return_to_in(self, cr, uid, ids, context=None):
+        '''
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        picking_id = self.browse(cr, uid, ids[0], context=context).picking_id.id
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.picking',
+                'res_id': picking_id,
+                'view_type': 'form',
+                'view_mode': 'form,tree',
+                'target': 'crush'}
+
+    def go_to_simulation(self, cr, uid, ids, context=None):
+        '''
+        Reload the simulation screen
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': self._name,
+                'res_id': ids[0],
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'same'}
+
+    def print_simulation_report(self, cr, uid, ids, context=None):
+        '''
+        Print the Excel report of the simulation
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        datas = {}
+        datas['ids'] = ids
+        report_name = 'in.simulation.screen.xls'
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': report_name,
+            'datas': datas,
+            'context': context,
+        }
+
+    def launch_import(self, cr, uid, ids, context=None):
+        '''
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        raise osv.except_osv(_('Error'), _('Not implemented'))
+
+    def launch_simulate(self, cr, uid, ids, context=None):
+        '''
+        Launch the simulation routine in background
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            if wiz.filetype == 'excel':
+                xml_file = base64.decodestring(wiz.file_to_import)
+                excel_file = SpreadsheetXML(xmlstring=xml_file)
+                if not excel_file.getWorksheets():
+                    raise osv.except_osv(_('Error'), _('The given file is not a valid Excel 2003 Spreadsheet file !'))
+            else:
+                xml_file = base64.decodestring(wiz.file_to_import)
+                root = ET.fromstring(xml_file)
+                if root.tag != 'data':
+                    raise osv.except_osve(_('Error'), _('The given file is not a valid XML file !'))
+                
+            self.write(cr, uid, ids, {'state': 'simu_progress'}, context=context)
+            cr.commit()
+            new_thread = threading.Thread(target=self.simulate, args=(cr.dbname, uid, ids, context))
+            new_thread.start()
+            new_thread.join(10.0)
+
+            return self.go_to_simulation(cr, uid, ids, context=context)
+
+    def get_values_from_xml(self, cr, uid, file_to_import, context=None):
+        '''
+        Read the XML file and put data in values
+        '''
+        values = {}
+        # Read the XML file
+        xml_file = base64.decodestring(file_to_import)
+
+        root = ET.fromstring(xml_file)
+        if root.tag != 'data':
+            return values
+
+        records = []
+        rec_lines = []
+        rec = False
+
+        index = 0
+        for record in root:
+            if record.tag == 'record':
+                records.append(record)
+
+        if len(records) > 0:
+            rec = records[0]
+
+        def get_field_index(node, index):
+            if not index:
+                index = 0
+            if node.getchildren():
+                for subnode in node:
+                    index = get_field_index(subnode, index)
+                return index
+            else:
+                index += 1
+                values[index] = [node.attrib['name'], node.text or '']
+                return index
+
+        for field in rec:
+            if field.attrib['name'] != 'order_line':
+                index = get_field_index(field, index)
+            else:
+                index += 1
+                values[index] = ['line_number', 'product_code',
+                                 'product_name', 'product_qty',
+                                 'uom_id', 'currency_id',
+                                 'prodlot_id', 'expiry_date',
+                                 'packing_list', 'message_esc1',
+                                 'message_esc2']
+                for line in field:
+                    rec_lines.append(line)
+
+        for line in rec_lines:
+            index += 1
+            values[index] = []
+            for fl in line:
+                if not fl.getchilden():
+                    values[index].append(fl.text or '')
+                else:
+                    for sfl in fl:
+                        values[index].append(sfl.text or '')
+
+        return values
+
+    def get_values_from_excel(self, cr, uid, file_to_import, context=None):
+        '''
+        Read the Excel XML file and put data in values
+        '''
+        values = {}
+        # Read the XML Excel file
+        xml_file = base64.decodestring(file_to_import)
+        fileobj = SpreadsheetXML(xmlstring=xml_file)
+
+        # Read all lines
+        rows = fileobj.getRows()
+
+        # Get values per line
+        index = 0
+        for row in rows:
+            index += 1
+            values.setdefault(index, [])
+            for cell_nb in range(len(row)):
+                cell_data = row.cells and row.cells[cell_nb] and \
+                            row.cells[cell_nb].data
+                values[index].append(cell_data)
+
+        return values
+
+    # Simulation routing
+    def simulate(self, dbname, uid, ids, context=None):
+        '''
+        Import the file and fill data in the simulation screen
+        '''
+        cr = pooler.get_db(dbname).cursor()
+        #cr = dbname
+        wl_obj = self.pool.get('wizard.import.in.line.simulation.screen')
+        prod_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product_uom')
+        prodlot_obj = self.pool.get('stock.production.lot')
+
+        # Declare global variables (need this explicit declaration to clear
+        # them at the end of the process
+        global PRODUCT_NAME_ID
+        global PRODUCT_CODE_ID
+        global UOM_NAME_ID
+        global CURRENCY_NAME_ID
+        global PRODLOT_NAME_ID
+        global SIMU_LINES
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            nb_treated_lines = 0
+            # No file => Return to the simulation screen
+            if not wiz.file_to_import:
+                self.write(cr, uid, [wiz.id], {'message': _('No file to import'),
+                                               'state': 'draft'}, context=context)
+                continue
+            
+            for line in wiz.line_ids:
+                # Put data in cache
+                if line.move_product_id:
+                    PRODUCT_NAME_ID.setdefault(line.move_product_id.name, line.move_product_id.id)
+                    PRODUCT_CODE_ID.setdefault(line.move_product_id.default_code, line.move_product_id.id)
+                if line.move_uom_id:
+                    UOM_NAME_ID.setdefault(line.move_uom_id.name, line.move_uom_id.id)
+                if line.move_currency_id:
+                    CURRENCY_NAME_ID.setdefault(line.move_currency_id.name, line.move_currency_id.id)
+
+                '''
+                First of all, we build a cache for simulation screen lines
+                '''
+                l_num = line.line_number
+                l_prod = line.move_product_id and line.move_product_id.id or False
+                l_uom = line.move_uom_id and line.move_uom_id.id or False
+                # By simulation screen
+                SIMU_LINES.setdefault(wiz.id, {})
+                SIMU_LINES[wiz.id].setdefault('line_ids', [])
+                SIMU_LINES[wiz.id]['line_ids'].append(line.id)
+                # By line number
+                SIMU_LINES[wiz.id].setdefault(l_num, {})
+                SIMU_LINES[wiz.id][l_num].setdefault('line_ids', [])
+                SIMU_LINES[wiz.id][l_num]['line_ids'].append(line.id)
+                # By product                                                    
+                SIMU_LINES[wiz.id][l_num].setdefault(l_prod, {})
+                SIMU_LINES[wiz.id][l_num][l_prod].setdefault('line_ids', [])
+                SIMU_LINES[wiz.id][l_num][l_prod]['line_ids'].append(line.id)
+                # By UoM
+                SIMU_LINES[wiz.id][l_num][l_prod].setdefault(l_uom, {})
+                SIMU_LINES[wiz.id][l_num][l_prod][l_uom].setdefault('line_ids', [])
+                SIMU_LINES[wiz.id][l_num][l_prod][l_uom]['line_ids'].append(line.id)
+                # By Qty
+                SIMU_LINES[wiz.id][l_num][l_prod][l_uom].setdefault(line.move_product_qty, [])
+                SIMU_LINES[wiz.id][l_num][l_prod][l_uom][line.move_product_qty].append(line.id)
+
+            # Variables
+            lines_to_ignored = [] # Bad formatting lines
+            file_format_errors = []
+            values_header_errors = []
+            values_line_errors = []
+            message = ''
+
+            header_values = {}
+
+            if wiz.filetype == 'excel':
+                values = self.get_values_from_excel(cr, uid, wiz.file_to_import, context=context)
+            else:
+                values = self.get_values_from_xml(cr, uid, wiz.file_to_import, context=context)
+
+            print values
+
+            '''
+            We check for each line if the number of columns is consistent
+            with the expected number of columns :
+              * For PO header information : 2 columns
+              * For the line information : 12 columns
+            '''
+            # Check number of columns on lines
+
+            for x in xrange(1, NB_OF_HEADER_LINES+1):
+                if len(values.get(x, [])) != 2:
+                    lines_to_ignored.append(x)
+                    error_msg = _('Line %s of the imported file: The header \
+information must be on two columns: Column A for name of the field and column\
+ B for value.') % x
+                    file_format_errors.append(error_msg)
+
+            if len(values.get(NB_OF_HEADER_LINES+1, [])) != NB_LINES_COLUMNS:
+                error_msg = _('Line 8 of the Excel file: This line is \
+mandatory and must have %s columns. The values on this line must be the name \
+of the field for IN lines.') % NB_LINES_COLUMNS
+                file_format_errors.append(error_msg)
+
+            for x in xrange(NB_OF_HEADER_LINES+2, len(values)+1):
+                if len(values.get(x, [])) != NB_LINES_COLUMNS:
+                    lines_to_ignored.append(x)
+                    error_msg = _('Line %s of the imported file: The line \
+information must be on %s columns. The line %s has %s columns') % (x, NB_LINES_COLUMNS, x, len(values.get(x, [])))
+                    file_format_errors.append(error_msg)
+
+            nb_file_lines = len(values) - NB_OF_HEADER_LINES - 1
+            self.write(cr, uid, [wiz.id], {'nb_file_lines': nb_file_lines}, context=context)
+
+            if len(file_format_errors):
+                message = _('''## IMPORT STOPPED ##
+
+Nothing has been imported because of bad file format. See below:
+
+## File format errors ##\n\n''')
+                for err in file_format_errors:
+                    message += '%s\n' % err
+
+                self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
+                res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
+                cr.commit()
+                cr.close()
+                return res
+
+            '''
+            New, we know that the file has the good format, you can import
+            data for header.
+            '''
+            # Line 1: Freight
+            freight_ref = values.get(1, ['', ''])[1]
+            header_values['imp_freight_number'] = freight_ref
+
+            # Line 2: Picking Reference
+            picking_ref = values.get(2, ['', ''])[1]
+            if picking_ref != wiz.picking_id.name:
+                message = _('''## IMPORT STOPPED ##
+
+LINE 1 OF THE IMPORTED FILE: THE FREIGHT REFERENCE \
+IN THE FILE IS NOT THE SAME AS THE FREIGHT REFERENCE OF THE SIMULATION SCREEN.\
+
+YOU SHOULD IMPORT A FILE THAT HAS THE SAME FREIGHT REFERENCE THAT THE SIMULATION\
+SCREEN!''')
+                self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
+                res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
+                cr.commit()
+                cr.close()
+                return res
+
+            # Line 3: Origin
+            origin = values.get(3, ['', ''])[1]
+            header_values['imp_origin'] = origin
+
+            # Line 4: Supplier
+#            supplier = values.get(4, ['', ''])[1]
+#            supplier_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', supplier)], context=context)
+#            if supplier_ids:
+#                supplier = supplier_ids[0]
+#            else:
+#                err_msg = _('Line 4 of the file: The supplier \'%s\' was not \
+#found in the database.') % supplier
+#                values_header_errors.append(err_msg)
+
+
+            # Line 5: Transport mode
+            transport_mode = values.get(5, ['', ''])[1]
+            transport_select = self.fields_get(cr, uid, ['imp_transport_mode'], context=context)
+            for x in transport_select['imp_transport_mode']['selection']:
+                if x[1] == transport_mode:
+                    header_values['imp_transport_mode'] = x[0]
+                    break
+    
+            # Line 6: Notes
+
+            # Line 7: Message ESC header
+            esc_message = values.get(7, ['', ''])[1]
+            header_values['message_esc'] = esc_message
+
+            '''
+            The header values have been imported, start the importation of 
+            lines
+            '''
+            file_lines = {}
+            file_in_lines = {}
+            new_in_lines = []
+            not_ok_file_lines = {}
+            # Loop on lines
+            for x in xrange(NB_OF_HEADER_LINES+2, len(values)+1):
+                # Check mandatory fields
+                not_ok = False
+                file_line_error = []
+                for manda_field in LINES_COLUMNS:
+                    if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
+                        not_ok = True
+                        err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
+                        err = _('Line %s of the file: %s') % (x, err1)
+                        values_line_errors.append(err)
+                        file_line_error.append(err1)
+
+                if not values.get(x, [])[0]:
+                    continue
+
+                line_number = int(values.get(x, [])[0])
+
+                if not_ok:
+                    not_ok_file_lines[x] = ' - '.join(err for err in file_line_error)
+
+                # Get values
+                product_id = False
+                uom_id = False
+                qty = 0.00
+                prodlot_id = False
+                expiry_date = False
+
+                vals = values.get(x, [])
+                # Product
+                if vals[1]:
+                    product_id = PRODUCT_CODE_ID.get(vals[1], False)
+                if not product_id and vals[2]:
+                    product_id = PRODUCT_NAME_ID.get(vals[2], False)
+                if not product_id and vals[1]:
+                    prod_ids = prod_obj.search(cr, uid, [('default_code', '=', vals[1])], context=context)
+                    if prod_ids:
+                        product_id = prod_ids[0]
+                        PRODUCT_CODE_ID.setdefault(vals[1], product_id)
+                if not product_id and vals[2]:
+                    prod_ids = prod_obj.search(cr, uid, [('name', '=', vals[2])], context=context)
+                    if prod_ids:
+                        product_id = prod_ids[0]
+                        PRODUCT_NAME_ID.setdefault(vals[2], product_id)
+
+                # UoM
+                if vals[4]:
+                    uom_id = UOM_NAME_ID.get(vals[4], False)
+                    if not uom_id:
+                        uom_ids = uom_obj.search(cr, uid, [('name', '=', vals[4])], context=context)
+                        if uom_ids:
+                            uom_id = uom_ids[0]
+                            UOM_NAME_ID.setdefault(vals[4], uom_id)
+
+                # Qty
+                if vals[3]:
+                    qty = float(vals[3])
+
+                file_lines[x] = (line_number, product_id, uom_id, qty)
+
+            '''
+            Get the best matching line:
+                1/ Within lines with same line number, same product, same UoM and same qty
+                2/ Within lines with same line number, same product and same UoM
+                3/ Within lines with same line number and same product
+                4/ Within lines with same line number
+
+            If a matching line is found in one of these cases, keep the link between the
+            file line and the simulation screen line.
+            '''
+            to_del = []
+            for x, fl in file_lines.iteritems():
+                # Search lines with same product, same UoM and same qty
+                matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
+                tmp_wl_ids = matching_lines.get(fl[1], {}).get(fl[2], {}).get(fl[3], [])
+                no_match = True
+                for l in tmp_wl_ids:
+                    if l not in file_in_lines:
+                        file_in_lines[l] = [(x, 'match')]
+                        to_del.append(x)
+                        no_match = False
+                        break
+                    
+                if tmp_wl_ids and no_match:
+                    file_in_lines[l].append((x, 'split'))
+                    to_del.append(x)
+            # Clear the dict
+            for x in to_del:
+                del file_lines[x]
+            to_del = []
+
+
+            for x, fl in file_lines.iteritems():
+                # Search lines with same product, same UoM
+                matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
+                tmp_wl_ids = matching_lines.get(fl[1], {}).get(fl[2], {}).get('line_ids', [])
+                no_match = True
+                for l in tmp_wl_ids:
+                    if l not in file_in_lines:
+                        file_in_lines[l] = [(x, 'match')]
+                        to_del.append(x)
+                        no_match = False
+                        break
+                if tmp_wl_ids and no_match:
+                    file_in_lines[l].append((x, 'split'))
+                    to_del.append(x)
+            # Clear the dict
+            for x in to_del:
+                del file_lines[x]
+            to_del = []
+
+            for x, fl in file_lines.iteritems():
+                # Search lines with same product
+                matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
+                tmp_wl_ids = matching_lines.get(fl[1], {}).get('line_ids', [])
+                no_match = True
+                for l in tmp_wl_ids:
+                    if l not in file_in_lines:
+                        file_in_lines[l] = [(x, 'match')]
+                        to_del.append(x)
+                        no_match = False
+                        break
+                if tmp_wl_ids and no_match:
+                    file_in_lines[l].append((x, 'split'))
+                    to_del.append(x)
+            # Clear the dict
+            for x in to_del:
+                del file_lines[x]
+            to_del = []
+
+            for x, fl in file_lines.iteritems():
+                # Search lines with same line number
+                matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
+                tmp_wl_ids = matching_lines.get('line_ids', [])
+                no_match = True
+                for l in tmp_wl_ids:
+                    if l not in file_in_lines:
+                        file_in_lines[l] = [(x, 'match')]
+                        to_del.append(x)
+                        no_match = False
+                        break
+                if tmp_wl_ids and no_match:
+                    file_in_lines[l].append((x, 'split'))
+                    to_del.append(x)
+            # Clear the dict
+            for x in to_del:
+                del file_lines[x]
+            to_del = []
+            
+            # For file lines with no simu. screen lines with same line number,
+            # create a new simu. screen line
+            for x in file_lines.keys():
+                new_in_lines.append(x)
+
+            # Split the simu. screen line or/and update the values according
+            # to linked file line.
+            for in_line, file_lines in file_in_lines.iteritems():
+                if in_line in SIMU_LINES[wiz.id]['line_ids']:
+                    index_in_line = SIMU_LINES[wiz.id]['line_ids'].index(in_line)
+                    SIMU_LINES[wiz.id]['line_ids'].pop(index_in_line)
+                for file_line in file_lines:
+                    nb_treated_lines += 1
+                    percent_completed = nb_treated_lines / nb_file_lines * 100
+                    self.write(cr, uid, [wiz.id], {'nb_treated_lines': nb_treated_lines,
+                                                   'percent_completed': percent_completed}, context=context)
+                    vals = values.get(file_line[0], [])
+                    if file_line[1] == 'match':
+                        err_msg = wl_obj.import_line(cr, uid, in_line, vals, context=context)
+                        if file_line[0] in not_ok_file_lines:
+                            wl_obj.write(cr, uid, [in_line], {'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
+                    elif file_line[1] == 'split':
+                        new_wl_id = wl_obj.copy(cr, uid, in_line,
+                                                         {'type_change': 'split',
+                                                          'parent_line_id': in_line,
+                                                          'move_id': False}, context=context)
+                        err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
+                        if file_line[0] in not_ok_file_lines:
+                            wl_obj.write(cr, uid, [new_wl_id], {'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
+                    # Commit modifications
+                    cr.commit()
+
+                if err_msg:
+                    for err in err_msg:
+                        err = 'Line %s of the Excel file: %s' % (file_line[0], err)
+                        values_line_errors.append(err)
+
+
+            # Create new lines
+            for in_line in new_in_lines:
+                nb_treated_lines += 1
+                percent_completed = nb_treated_lines / nb_file_lines * 100
+                self.write(cr, uid, [wiz.id], {'nb_treated_lines': nb_treated_lines,
+                                               'percent_completed': percent_completed}, context=context)
+                if in_line in SIMU_LINES[wiz.id]['line_ids']:
+                    index_in_line = SIMU_LINES[wiz.id]['line_ids'].index(in_line)
+                    SIMU_LINES[wiz.id]['line_ids'].pop(index_in_line)
+                vals = values.get(in_line, [])
+                new_wl_id = wl_obj.create(cr, uid, {'type_change': 'new',
+                                                    'line_number': int(values.get(in_line, [])[0]),
+                                                    'simu_id': wiz.id}, context=context)
+                err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
+                if in_line in not_ok_file_lines:
+                    wl_obj.write(cr, uid, [new_wl_id], {'error_msg': not_ok_file_lines[in_line]}, context=context)
+
+                if err_msg:
+                    for err in err_msg:
+                        err = 'Line %s of the Excel file: %s' % (in_line, err)
+                        values_line_errors.append(err)
+                # Commit modifications
+                cr.commit()
+
+            # Lines to delete
+            for in_line in SIMU_LINES[wiz.id]['line_ids']:
+                wl_obj.write(cr, uid, in_line, {'type_change': 'del'}, context=context)
+
+            '''
+            We generate the message which will be displayed on the simulation
+            screen. This message is a merge between all errors.
+            '''
+            # Generate the message
+            if len(values_header_errors):
+                message += '\n## Error on header values ##\n\n'
+                for err in values_header_errors:
+                    message += '%s\n' % err
+            
+            if len(values_line_errors):
+                message += '\n## Error on line values ##\n\n'
+                for err in values_line_errors:
+                    message += '%s\n' % err
+
+            header_values['message'] = message
+            header_values['state'] = 'simu_done'
+            header_values['percent_completed'] = 100.0
+            self.write(cr, uid, [wiz.id], header_values, context=context)
+
+            res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
+            cr.commit()
+            cr.close()
+            return res
+
+        cr.commit()
+        cr.close()
+
+        # Clear the cache
+        del PRODUCT_NAME_ID
+        del PRODUCT_CODE_ID
+        del UOM_NAME_ID
+        del CURRENCY_NAME_ID
+        del SIMU_LINES
+
+        return {'type': 'ir.actions.act_window_close'}
 
 wizard_import_in_simulation_screen()
 
@@ -134,6 +828,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                                          ('split', 'Split'),
                                          ('error', 'Error'),
                                          ('new', 'New')], string='CHG', readonly=True),
+        'parent_line_id': fields.many2one('wizard.import.in.line.simulation.screen', string='Parent line', readonly=True),
         # Values after import
         'imp_product_id': fields.many2one('product.product', string='Product', readonly=True),
         'imp_asset_id': fields.many2one('product.asset', string='Asset', readonly=True),
