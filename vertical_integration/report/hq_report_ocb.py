@@ -79,12 +79,12 @@ class finance_archive(finance_export.finance_archive):
         new_data = []
         for line in data:
             tmp_line = list(line)
-            st_id = line[5]
-            state = line[7]
+            st_id = line[4]
+            state = line[6]
             if state != 'closed':
-                tmp_line[5] = pool.get('account.bank.statement').read(cr, uid, [st_id], ['msf_calculated_balance'])[0].get('msf_calculated_balance', 0.0)
+                tmp_line[4] = pool.get('account.bank.statement').read(cr, uid, [st_id], ['msf_calculated_balance'])[0].get('msf_calculated_balance', 0.0)
             else:
-                tmp_line[5] = line[6]
+                tmp_line[4] = line[5]
             new_data.append(self.line_to_utf8(tmp_line))
         return self.postprocess_selection_columns(cr, uid, new_data, [('account.bank.statement', 'state', 6)], column_deletion=column_deletion)
 
@@ -190,7 +190,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 ORDER BY c.name;
                 """,
             'register': """
-                SELECT st.id, i.name AS instance, st.name, p.name AS period, st.balance_start, st.id, CASE WHEN st.balance_end_real IS NOT NULL THEN st.balance_end_real ELSE 0.0 END AS balance_end_real, st.state, j.code AS "journal_code"
+                SELECT i.name AS instance, st.name, p.name AS period, st.balance_start, st.id, CASE WHEN st.balance_end_real IS NOT NULL THEN st.balance_end_real ELSE 0.0 END AS balance_end_real, st.state, j.code AS "journal_code"
                 FROM account_bank_statement AS st, msf_instance AS i, account_period AS p, account_journal AS j
                 WHERE st.instance_id = i.id
                 AND st.period_id = p.id
@@ -259,6 +259,8 @@ class hq_report_ocb(report_sxw.report_sxw):
         # - [optional] function: name of the function to postprocess data (example: to change selection field into a human readable text)
         # - [optional] fnct_params: params that would used on the given function
         # - [optional] delete_columns: list of columns to delete before writing files into result
+        # - [optional] id (need 'object'): number of the column that contains the ID of the element.
+        # - [optional] object (need 'id'): name of the object in the system. For an example: 'account.bank.statement'.
         # TIP & TRICKS:
         # + More than 1 request in 1 file: just use same filename for each request you want to be in the same file.
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
@@ -270,12 +272,16 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('res.partner', 'partner_type', 2)],
                 'delete_columns': [0],
+                'id': 0,
+                'object': 'res.partner',
                 },
             {
                 'headers': ['Name', 'Identification No', 'Active', 'Employee type'],
                 'filename': 'employees.csv',
                 'key': 'employee',
                 'delete_columns': [0],
+                'id': 0,
+                'object': 'hr.employee',
                 },
             {
                 'headers': ['Instance', 'Code', 'Name', 'Journal type'],
@@ -284,6 +290,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('account.journal', 'type', 3)],
                 'delete_columns': [0],
+                'id': 0,
+                'object': 'account.journal',
                 },
             {
                 'headers': ['Name', 'Code', 'Type', 'Status'],
@@ -293,6 +301,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('account.analytic.account', 'type', 2)],
                 'delete_columns': [0],
+                'id': 0,
+                'object': 'account.analytic.account',
                 },
             {
                 'headers': ['CCY code', 'CCY name', 'Rate', 'Month'],
@@ -302,13 +312,16 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'function': 'postprocess_add_period',
                 'fnct_params': period_name,
                 'delete_columns': [0],
+                'id': 0,
+                'object': 'res.currency',
                 },
             {
                 'headers': ['Instance', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance', 'State', 'Journal code'],
                 'filename': 'liquidities.csv',
                 'key': 'register',
                 'function': 'postprocess_register',
-                'delete_columns': [0],
+                'id': 4,
+                'object': 'account.bank.statement',
                 },
             {
                 'headers': ['Name', 'Code', 'Donor code', 'Grant amount', 'Reporting CCY', 'State'],
@@ -317,12 +330,16 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('financing.contract.contract', 'state', 5)],
                 'delete_columns': [0],
+                'id': 0,
+                'object': 'financing.contract.contract',
                 },
             {
                 'headers': ['Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit', 'Functional CCY'],
                 'filename': 'Export_Data.csv',
                 'key': 'rawdata',
                 'delete_columns': [0],
+                'id': 0,
+                'object': 'account.analytic.line',
                 },
             {
                 'filename': 'Export_Data.csv',
@@ -336,6 +353,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'key': 'bs_entries',
                 'query_params': ([period.id]),
                 'delete_columns': [0],
+                'id': 0,
+                'object': 'account.move.line',
                 },
         ]
         # Launch finance archive object

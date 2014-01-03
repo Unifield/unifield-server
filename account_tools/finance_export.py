@@ -30,7 +30,6 @@ import zipfile
 from tempfile import NamedTemporaryFile
 import os
 
-
 class finance_archive():
     """
     SQLREQUESTS DICTIONNARY
@@ -46,6 +45,8 @@ class finance_archive():
      - [optional] function: name of the function to postprocess data (example: to change selection field into a human readable text)
      - [optional] fnct_params: params that would used on the given function
      - [optional] delete_columns: list of columns to delete before writing files into result
+     - [optional] id (need 'object'): number of the column that contains the ID of the element. Column number begin from 0. Note that you should adapt your SQL request to add the ID of lines.
+     - [optional] object (need 'id'): name of the object in the system. For an example: 'account.bank.statement'.
     TIP & TRICKS:
      + More than 1 request in 1 file: just use same filename for each request you want to be in the same file.
      + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
@@ -157,6 +158,26 @@ class finance_archive():
             else:
                 cr.execute(sql)
             sqlres = cr.fetchall()
+            # Fetch ID column and mark lines as exported
+            if fileparams.get('id', None) != None:
+                if not fileparams.get('object', False):
+                    raise osv.except_osv(_('Error'), _('object param is missing to use ID one.'))
+                # prepare needed values
+                object_name = fileparams['object']
+                pool = pooler.get_pool(cr.dbname)
+                tablename = pool.get(object_name)._table
+                if not tablename:
+                    raise osv.except_osv(_('Error'), _("Table name not found for the given object: %s") % (fileparams['object'],))
+                key_column_number = fileparams['id']
+                # get ids from previous request
+                ids = [x and x[key_column_number] or 0 for x in sqlres]
+                # mark lines as exported
+                if ids:
+                    update_request = 'UPDATE ' + tablename + ' SET exported=\'t\' WHERE id in %s'
+                    try:
+                        cr.execute(update_request, (tuple(ids),))
+                    except Exception, e:
+                        raise osv.except_osv(_('Error'), _('An error occured: %s') % (e.message and e.message or '',))
             without_headers = []
             # Check if a function is given. If yes, use it.
             # If not, transform lines into UTF-8. Note that postprocess method should transform lines into UTF-8 ones.
