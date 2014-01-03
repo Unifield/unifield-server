@@ -33,7 +33,7 @@ class finance_archive(finance_export.finance_archive):
     Extend existing class with new methods for this particular export.
     """
 
-    def postprocess_add_functional(self, cr, uid, data, changes):
+    def postprocess_add_functional(self, cr, uid, data, changes, column_deletion=False):
         """
         Change each line of 'data' to add some amount in another currency.
         'changes' is a dict containing:
@@ -60,11 +60,16 @@ class finance_archive(finance_export.finance_archive):
                 tmp_line.append(new_amount)
             # Add company currency
             tmp_line.append(company_currency.name)
+            # Delete useless columns
+            if column_deletion:
+                tmp_line = self.delete_x_column(tmp_line, column_deletion)
+            # Convert to UTF-8
+            tmp_line = self.line_to_utf8(tmp_line)
             # write changes
             new_data.append(self.line_to_utf8(tmp_line))
         return new_data
 
-    def postprocess_register(self, cr, uid, data):
+    def postprocess_register(self, cr, uid, data, column_deletion=False):
         """
         Replace statement id by its field 'msf_calculated_balance'. If register is closed, then display balance_end_real content.
         Also launch postprocess_selection_columns on these data to change state column value.
@@ -74,16 +79,16 @@ class finance_archive(finance_export.finance_archive):
         new_data = []
         for line in data:
             tmp_line = list(line)
-            st_id = line[4]
-            state = line[6]
+            st_id = line[5]
+            state = line[7]
             if state != 'closed':
-                tmp_line[4] = pool.get('account.bank.statement').read(cr, uid, [st_id], ['msf_calculated_balance'])[0].get('msf_calculated_balance', 0.0)
+                tmp_line[5] = pool.get('account.bank.statement').read(cr, uid, [st_id], ['msf_calculated_balance'])[0].get('msf_calculated_balance', 0.0)
             else:
-                tmp_line[4] = line[5]
+                tmp_line[5] = line[6]
             new_data.append(self.line_to_utf8(tmp_line))
-        return self.postprocess_selection_columns(cr, uid, new_data, [('account.bank.statement', 'state', 6)])
+        return self.postprocess_selection_columns(cr, uid, new_data, [('account.bank.statement', 'state', 6)], column_deletion=column_deletion)
 
-    def postprocess_add_period(self, cr, uid, data, period_name):
+    def postprocess_add_period(self, cr, uid, data, period_name, column_deletion=False):
         """
         This method takes each line from data and add period at end of line.
         """
@@ -96,7 +101,12 @@ class finance_archive(finance_export.finance_archive):
         for line in data:
             tmp_line = list(line)
             tmp_line.append(period_name)
-            new_data.append(self.line_to_utf8(tmp_line))
+            # Convert to UTF-8
+            tmp_line = self.line_to_utf8(tmp_line)
+            # Delete useless columns
+            if column_deletion:
+                tmp_line = self.delete_x_column(tmp_line, column_deletion)
+            new_data.append(tmp_line)
         return new_data
 
 class hq_report_ocb(report_sxw.report_sxw):
@@ -143,21 +153,21 @@ class hq_report_ocb(report_sxw.report_sxw):
         # - value: the SQL request to use
         sqlrequests = {
             'partner': """
-                SELECT name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active
+                SELECT id, name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active
                 FROM res_partner;
                 """,
             'employee': """
-                SELECT r.name, e.identification_id, r.active, e.employee_type
+                SELECT e.id, r.name, e.identification_id, r.active, e.employee_type
                 FROM hr_employee AS e, resource_resource AS r
                 WHERE e.resource_id = r.id;
                 """,
             'journal': """
-                SELECT i.name, j.code, j.name, j.type
+                SELECT j.id, i.name, j.code, j.name, j.type
                 FROM account_journal AS j, msf_instance AS i
                 WHERE j.instance_id = i.id;
                 """,
             'costcenter': """
-                SELECT name, code, type, CASE WHEN date_start < %s AND (date IS NULL OR date > %s) THEN 'Active' ELSE 'Inactive' END AS Status
+                SELECT id, name, code, type, CASE WHEN date_start < %s AND (date IS NULL OR date > %s) THEN 'Active' ELSE 'Inactive' END AS Status
                 FROM account_analytic_account
                 WHERE category = 'OC'
                 AND id in (
@@ -167,7 +177,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 );
                 """,
             'fxrate': """
-                SELECT c.currency_name, c.name, r.rate
+                SELECT c.id, c.currency_name, c.name, r.rate
                 FROM res_currency AS c
                 LEFT JOIN res_currency_rate r ON r.currency_id = c.id AND r.id IN (
                     SELECT dd.id
@@ -180,20 +190,21 @@ class hq_report_ocb(report_sxw.report_sxw):
                 ORDER BY c.name;
                 """,
             'register': """
-                SELECT i.name as instance, st.name, p.name as period, st.balance_start, st.id, CASE WHEN st.balance_end_real IS NOT NULL THEN st.balance_end_real ELSE 0.0 END as balance_end_real, st.state, st.journal_id
-                FROM account_bank_statement AS st, msf_instance AS i, account_period AS p
+                SELECT st.id, i.name AS instance, st.name, p.name AS period, st.balance_start, st.id, CASE WHEN st.balance_end_real IS NOT NULL THEN st.balance_end_real ELSE 0.0 END AS balance_end_real, st.state, j.code AS "journal_code"
+                FROM account_bank_statement AS st, msf_instance AS i, account_period AS p, account_journal AS j
                 WHERE st.instance_id = i.id
                 AND st.period_id = p.id
+                AND st.journal_id = j.id
                 ORDER BY st.name, p.number;
                 """,
             'contract': """
-                SELECT c.name, c.code, d.code, c.grant_amount, rc.name, c.state
+                SELECT c.id, c.name, c.code, d.code, c.grant_amount, rc.name, c.state
                 FROM financing_contract_contract AS c, financing_contract_donor AS d, res_currency AS rc
                 WHERE c.donor_id = d.id
                 AND c.reporting_currency = rc.id;
                 """,
             'rawdata': """
-                SELECT al.entry_sequence, al.name, al.ref, al.document_date, al.date, a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, CASE WHEN al.amount_currency > 0 THEN al.amount_currency ELSE 0.0 END AS debit, CASE WHEN al.amount_currency < 0 THEN ABS(al.amount_currency) ELSE 0.0 END AS credit, c.name AS "booking_currency", CASE WHEN al.amount > 0 THEN al.amount ELSE 0.0 END AS debit, CASE WHEN al.amount < 0 THEN ABS(al.amount) ELSE 0.0 END AS credit, cc.name AS "functional_currency"
+                SELECT al.id, al.entry_sequence, al.name, al.ref, al.document_date, al.date, a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, CASE WHEN al.amount_currency > 0 THEN al.amount_currency ELSE 0.0 END AS debit, CASE WHEN al.amount_currency < 0 THEN ABS(al.amount_currency) ELSE 0.0 END AS credit, c.name AS "booking_currency", CASE WHEN al.amount > 0 THEN al.amount ELSE 0.0 END AS debit, CASE WHEN al.amount < 0 THEN ABS(al.amount) ELSE 0.0 END AS credit, cc.name AS "functional_currency"
                 FROM account_analytic_line AS al, account_account AS a, account_analytic_account AS aa, account_analytic_account AS aa2, account_analytic_account AS aa3, res_currency AS c, res_company AS e, res_currency AS cc
                 WHERE al.destination_id = aa.id
                 AND al.cost_center_id = aa2.id
@@ -226,7 +237,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 ORDER BY a.code;
                 """,
             'bs_entries': """
-                SELECT m.name AS "entry_sequence", aml.name AS "desc", aml.ref, aml.document_date, aml.date, a.code AS "account", aml.partner_txt, '' AS "dest", '' AS "cost_center", '' AS "funding_pool", aml.debit_currency, aml.credit_currency, c.name AS "booking_currency", aml.debit, aml.credit, cc.name AS "functional_currency"
+                SELECT aml.id, m.name AS "entry_sequence", aml.name AS "desc", aml.ref, aml.document_date, aml.date, a.code AS "account", aml.partner_txt, '' AS "dest", '' AS "cost_center", '' AS "funding_pool", aml.debit_currency, aml.credit_currency, c.name AS "booking_currency", aml.debit, aml.credit, cc.name AS "functional_currency"
                 FROM account_move_line AS aml, account_account AS a, res_currency AS c, account_move AS m, res_company AS e, res_currency AS cc
                 WHERE aml.period_id = %s
                 AND a.type = 'liquidity'
@@ -247,6 +258,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         # - [optional] query_params: data to use to complete SQL requests
         # - [optional] function: name of the function to postprocess data (example: to change selection field into a human readable text)
         # - [optional] fnct_params: params that would used on the given function
+        # - [optional] delete_columns: list of columns to delete before writing files into result
         # TIP & TRICKS:
         # + More than 1 request in 1 file: just use same filename for each request you want to be in the same file.
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
@@ -257,11 +269,13 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'key': 'partner',
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('res.partner', 'partner_type', 2)],
+                'delete_columns': [0],
                 },
             {
                 'headers': ['Name', 'Identification No', 'Active', 'Employee type'],
                 'filename': 'employees.csv',
                 'key': 'employee',
+                'delete_columns': [0],
                 },
             {
                 'headers': ['Instance', 'Code', 'Name', 'Journal type'],
@@ -269,6 +283,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'key': 'journal',
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('account.journal', 'type', 3)],
+                'delete_columns': [0],
                 },
             {
                 'headers': ['Name', 'Code', 'Type', 'Status'],
@@ -277,6 +292,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'query_params': (last_day_of_period, last_day_of_period, tuple(instance_ids)),
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('account.analytic.account', 'type', 2)],
+                'delete_columns': [0],
                 },
             {
                 'headers': ['CCY code', 'CCY name', 'Rate', 'Month'],
@@ -285,12 +301,14 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'query_params': (last_day_of_period, first_day_of_period),
                 'function': 'postprocess_add_period',
                 'fnct_params': period_name,
+                'delete_columns': [0],
                 },
             {
                 'headers': ['Instance', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance', 'State', 'Journal code'],
                 'filename': 'liquidities.csv',
                 'key': 'register',
                 'function': 'postprocess_register',
+                'delete_columns': [0],
                 },
             {
                 'headers': ['Name', 'Code', 'Donor code', 'Grant amount', 'Reporting CCY', 'State'],
@@ -298,11 +316,13 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'key': 'contract',
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('financing.contract.contract', 'state', 5)],
+                'delete_columns': [0],
                 },
             {
                 'headers': ['Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit', 'Functional CCY'],
                 'filename': 'Export_Data.csv',
                 'key': 'rawdata',
+                'delete_columns': [0],
                 },
             {
                 'filename': 'Export_Data.csv',
@@ -315,6 +335,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'filename': 'Export_Data.csv',
                 'key': 'bs_entries',
                 'query_params': ([period.id]),
+                'delete_columns': [0],
                 },
         ]
         # Launch finance archive object
