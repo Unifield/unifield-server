@@ -20,6 +20,16 @@ from osv import fields
 def get_valid_xml_name(*args):
     return u"_".join(map(lambda x: unicode(x), filter(None, args))).replace('.', '')
 
+
+class sale_order(osv.osv):
+   _inherit = 'sale.order'
+    
+   def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+       so = self.browse(cr, uid, res_id)
+       return get_valid_xml_name(uuid, table_name, so.name, res_id)
+   
+sale_order()
+
 class fiscal_year(osv.osv):
     
     _inherit = 'account.fiscalyear'

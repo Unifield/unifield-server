@@ -158,7 +158,11 @@ class so_po_common(osv.osv_memory):
         context.update({'active_test': False})
         so_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', so_split[1])], context=context)
         if not so_ids:
-            raise Exception, "The original sub-FO does not exist! " + so_split[1]
+            if context.get('restore_flag'): # UF-1830
+                return False # If it is a restore case, then just return False, and the system will search for the new replacement FO
+            else:
+                raise Exception, "The original sub-FO does not exist! " + so_split[1]        
+        
         return so_ids[0]
 
     def retrieve_po_header_data(self, cr, uid, source, header_result, header_info, context):
