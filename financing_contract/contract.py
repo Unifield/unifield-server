@@ -183,11 +183,13 @@ class financing_contract_contract(osv.osv):
         'instance_id': fields.many2one('msf.instance','Proprietary Instance', required=True), 
         # Define for _inherits
         'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade"),
+        'exported': fields.boolean('Exported', help='Is needed in OCB Vertical Integration module.'),
     }
     
     _defaults = {
         'state': 'draft',
         'reporting_currency': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
+        'exported': lambda *a: False,
     }
 
     def _check_unicity(self, cr, uid, ids, context=None):

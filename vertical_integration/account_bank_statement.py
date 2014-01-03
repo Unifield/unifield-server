@@ -3,7 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Copyright (C) 2013 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -21,17 +21,20 @@
 #
 ##############################################################################
 
-import account
-import account_journal
-import account_analytic_line
-import account_analytic_account
-import res_currency
-import hr_employee
-import res_partner
-import account_bank_statement
-import account_export_mapping
-import country_export_mapping
-import report
-import wizard
+from osv import osv
+from osv import fields
 
+class account_bank_statement(osv.osv):
+    _name = "account.bank.statement"
+    _inherit = "account.bank.statement"
+
+    _columns = {
+        'exported': fields.boolean('Exported'),
+    }
+
+    _defaults = {
+        'exported': lambda *a: False,
+    }
+
+account_bank_statement()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
