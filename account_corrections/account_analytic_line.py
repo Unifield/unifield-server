@@ -94,14 +94,16 @@ class account_analytic_line(osv.osv):
         for aml in self.browse(cr, uid, ids, context=context):
             # Get upstream move lines
             line = aml
+            new_upstream_line_ids = []
             while line:
                 # Add line to result
-                upstream_line_ids.append(line.id)
+                new_upstream_line_ids.append(line.id)
                 # Add reversal line to result
-                upstream_line_ids += self.search(cr, uid, [('reversal_origin', '=', line.id), ('is_reversal', '=', True)], context=context)
+                new_upstream_line_ids += self.search(cr, uid, [('reversal_origin', '=', line.id), ('is_reversal', '=', True)], context=context)
                 line = line.last_corrected_id
             # Get downstream move lines
-            sline_ids = [aml.id]
+            sline_ids = [aml.id] + new_upstream_line_ids # Add upstream_line_ids because if more than one correction for a given line. Cf. UTP760 with split lines
+            upstream_line_ids += new_upstream_line_ids
             while sline_ids:
                 sline_ids = self.search(cr, uid, [('last_corrected_id', 'in', sline_ids)], context=context)
                 if sline_ids:
@@ -109,7 +111,6 @@ class account_analytic_line(osv.osv):
                     downstream_line_ids += sline_ids
                     # Add reversal line to result
                     downstream_line_ids += self.search(cr, uid, [('reversal_origin', 'in', sline_ids), ('is_reversal', '=', True)], context=context)
-
         return  list(set(upstream_line_ids + downstream_line_ids))
 
     def button_open_analytic_corrections(self, cr, uid, ids, context=None):

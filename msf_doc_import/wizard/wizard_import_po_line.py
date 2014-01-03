@@ -170,7 +170,7 @@ class wizard_import_po_line(osv.osv_memory):
     
                     # Cell 5: Delivery Request Date
                     date_value = {}
-                    date_value = check_line.compute_date_value(cell_nb=header_index[_('Delivery requested date')], row=row, to_write=to_write, context=context)
+                    date_value = check_line.compute_date_value(cell_nb=header_index[_('Delivery Request Date')], row=row, to_write=to_write, context=context)
                     to_write.update({'date_planned': date_value['date_planned'], 'error_list': date_value['error_list']})
     
                     # Cell 6: Currency
@@ -308,8 +308,7 @@ Importation completed in %s!
             thread.start()
         else:
             self._import(cr, uid, ids, context)
-        msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
-Otherwise, you can continue to use Unifield.""")
+        msg_to_return = _("""Please note that %s is temporary closed during the import to avoid conflict accesses (you can see the loading on the PO note tab check box). At the end of the load, POXX will be back in the right state. You can refresh the screen if you need to follow the upload progress""") % self.pool.get('purchase.order').browse(cr, uid, po_id).name
         return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
 
     def dummy(self, cr, uid, ids, context=None):

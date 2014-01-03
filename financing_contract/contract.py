@@ -327,10 +327,12 @@ class financing_contract_contract(osv.osv):
         # create "real" lines
         for line in contract.actual_line_ids:
             if not line.parent_id:
-                allocated_budget += line.allocated_budget
-                project_budget += line.project_budget
-                allocated_real += line.allocated_real
-                project_real += line.project_real
+                # UTP-853: self.create_reporting_line rounds each line
+                # (int value) so we add a round for sums equivalence
+                allocated_budget += round(line.allocated_budget)
+                project_budget += round(line.project_budget)
+                allocated_real += round(line.allocated_real)
+                project_real += round(line.project_real)
                 reporting_line_id = self.create_reporting_line(cr, uid, contract, line, contract_line_id, context=context)
         
         # Refresh contract line with general infos

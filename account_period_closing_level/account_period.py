@@ -112,6 +112,9 @@ class account_period(osv.osv):
 #"Open overdue invoice" button and fix the problem.'))
                 
                 # Display a wizard to inform user all kind of verifications he have to verify in order to close period
+                # FIXME: return in the middle of a 'ids' loop
+                if len(ids) > 1:
+                    logging.getLogger('account_period_closing_level').warn("Check stopped in the middle of the loop, it's ok if we are in yml tests.")
                 return {
                     'name': "Period closing confirmation wizard",
                     'type': 'ir.actions.act_window',
