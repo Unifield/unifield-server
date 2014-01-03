@@ -30,10 +30,12 @@ class account_move_line(osv.osv):
 
     _columns = {
         'exported': fields.boolean('Exported'),
+        'exporting_sequence': fields.text("Export ' sequence", help="Temporary sequence when exporting data in OCB."),
     }
 
     _defaults = {
         'exported': lambda *a: False,
+        'exporting_sequence': lambda *a: False,
     }
 
 account_move_line()

@@ -66,7 +66,58 @@ class finance_archive(finance_export.finance_archive):
             # Convert to UTF-8
             tmp_line = self.line_to_utf8(tmp_line)
             # write changes
-            new_data.append(self.line_to_utf8(tmp_line))
+            new_data.append(tmp_line)
+        return new_data
+
+    def postprocess_consolidated_entries(self, cr, uid, data, date, column_deletion=False):
+        """
+        Use current SQL result (data) to fetch IDs and mark lines as used.
+        Then do another request.
+        Finally mark lines as exported.
+
+        Data is a list of tuples.
+        """
+        # Checks
+        if not date:
+            raise osv.except_osv(_('Warning'), _('Need a date for next SQL request.'))
+        # Prepare some values
+        new_data = []
+        pool = pooler.get_pool(cr.dbname)
+        ids = [x and x[0] for x in data]
+        # In case where no line to return, abort process and return empty data
+        if not ids:
+            return new_data
+        # Create new export sequence
+        seq = pool.get('ir.sequence').get(cr, uid, 'finance.ocb.export')
+        # Mark lines as used
+        sqlmark = """UPDATE account_move_line SET exporting_sequence = %s WHERE id in %s;"""
+        cr.execute(sqlmark, (seq, tuple(ids),))
+        # Do right request
+        sqltwo = """SELECT j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS entry_sequence, 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END as debit, CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as credit, c.name AS "booking_currency", c.id
+                FROM (
+                    SELECT aml.account_id, aml.journal_id, aml.currency_id, SUM(aml.amount_currency) AS total, aml.period_id
+                    FROM account_move_line AS aml, account_account AS aa
+                    WHERE exporting_sequence = %s
+                    GROUP BY aml.period_id, aml.account_id, aml.journal_id, aml.currency_id
+                    ORDER BY aml.account_id
+                )
+                AS req, account_account AS a, account_journal AS j, res_currency AS c, account_period AS p, account_fiscalyear AS f
+                WHERE req.account_id = a.id
+                AND req.journal_id = j.id
+                AND req.currency_id = c.id
+                AND req.period_id = p.id
+                AND p.fiscalyear_id = f.id
+                AND a.type = 'liquidity'
+                AND a.ocb_export_subtotal = 't'
+                ORDER BY a.code;"""
+        cr.execute(sqltwo, (seq,))
+        datatwo = cr.fetchall()
+        # post process datas
+        new_data = self.postprocess_add_functional(cr, uid, datatwo, {'currency': 13, 'date': date, 'columns': [10, 11]}, column_deletion=column_deletion)
+        # mark lines as exported
+        sqlmarktwo = """UPDATE account_move_line SET exported = 't', exporting_sequence = Null WHERE id in %s;"""
+        cr.execute(sqlmarktwo, (tuple(ids),))
+        # return result
         return new_data
 
     def postprocess_register(self, cr, uid, data, column_deletion=False):
@@ -216,25 +267,13 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND e.currency_id = cc.id;
                 """,
             'bs_entries_consolidated': """
-                SELECT j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS entry_sequence, 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END as debit, CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as credit, c.name AS "booking_currency", c.id
-                FROM (
-                    SELECT aml.account_id, aml.journal_id, aml.currency_id, SUM(aml.amount_currency) AS total, aml.period_id
-                    FROM account_move_line AS aml, account_account AS aa
-                    WHERE aml.period_id = %s
-                    AND aml.account_id = aa.id
-                    AND aa.type = 'liquidity'
-                    AND aa.ocb_export_subtotal = 't'
-                    GROUP BY aml.period_id, aml.account_id, aml.journal_id, aml.currency_id
-                    ORDER BY aml.account_id
-                ) AS req, account_account AS a, account_journal AS j, res_currency AS c, account_period AS p, account_fiscalyear AS f
-                WHERE req.account_id = a.id
-                AND req.journal_id = j.id
-                AND req.currency_id = c.id
-                AND req.period_id = p.id
-                AND p.fiscalyear_id = f.id
-                AND a.type = 'liquidity'
-                AND a.ocb_export_subtotal = 't'
-                ORDER BY a.code;
+                SELECT aml.id
+                FROM account_move_line AS aml, account_account AS aa
+                WHERE aml.period_id = %s
+                AND aml.account_id = aa.id
+                AND aa.type = 'liquidity'
+                AND aa.ocb_export_subtotal = 't'
+                AND aml.exported != 't';
                 """,
             'bs_entries': """
                 SELECT aml.id, m.name AS "entry_sequence", aml.name AS "desc", aml.ref, aml.document_date, aml.date, a.code AS "account", aml.partner_txt, '' AS "dest", '' AS "cost_center", '' AS "funding_pool", aml.debit_currency, aml.credit_currency, c.name AS "booking_currency", aml.debit, aml.credit, cc.name AS "functional_currency"
@@ -323,8 +362,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'filename': 'Export_Data.csv',
                 'key': 'bs_entries_consolidated',
                 'query_params': ([period.id]),
-                'function': 'postprocess_add_functional',
-                'fnct_params': {'currency': 13, 'date': last_day_of_period, 'columns': [10, 11]},
+                'function': 'postprocess_consolidated_entries',
+                'fnct_params': last_day_of_period,
                 },
             {
                 'filename': 'Export_Data.csv',
