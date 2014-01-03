@@ -22,13 +22,7 @@
 ##############################################################################
 
 import account
-import account_journal
-import account_analytic_line
-import account_analytic_account
-import res_currency
-import hr_employee
-import res_partner
-import account_bank_statement
+import account_move_line
 import account_export_mapping
 import country_export_mapping
 import report

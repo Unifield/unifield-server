@@ -153,21 +153,21 @@ class hq_report_ocb(report_sxw.report_sxw):
         # - value: the SQL request to use
         sqlrequests = {
             'partner': """
-                SELECT id, name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active
+                SELECT name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active
                 FROM res_partner;
                 """,
             'employee': """
-                SELECT e.id, r.name, e.identification_id, r.active, e.employee_type
+                SELECT r.name, e.identification_id, r.active, e.employee_type
                 FROM hr_employee AS e, resource_resource AS r
                 WHERE e.resource_id = r.id;
                 """,
             'journal': """
-                SELECT j.id, i.name, j.code, j.name, j.type
+                SELECT i.name, j.code, j.name, j.type
                 FROM account_journal AS j, msf_instance AS i
                 WHERE j.instance_id = i.id;
                 """,
             'costcenter': """
-                SELECT id, name, code, type, CASE WHEN date_start < %s AND (date IS NULL OR date > %s) THEN 'Active' ELSE 'Inactive' END AS Status
+                SELECT name, code, type, CASE WHEN date_start < %s AND (date IS NULL OR date > %s) THEN 'Active' ELSE 'Inactive' END AS Status
                 FROM account_analytic_account
                 WHERE category = 'OC'
                 AND id in (
@@ -177,7 +177,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 );
                 """,
             'fxrate': """
-                SELECT c.id, c.currency_name, c.name, r.rate
+                SELECT c.currency_name, c.name, r.rate
                 FROM res_currency AS c
                 LEFT JOIN res_currency_rate r ON r.currency_id = c.id AND r.id IN (
                     SELECT dd.id
@@ -198,13 +198,13 @@ class hq_report_ocb(report_sxw.report_sxw):
                 ORDER BY st.name, p.number;
                 """,
             'contract': """
-                SELECT c.id, c.name, c.code, d.code, c.grant_amount, rc.name, c.state
+                SELECT c.name, c.code, d.code, c.grant_amount, rc.name, c.state
                 FROM financing_contract_contract AS c, financing_contract_donor AS d, res_currency AS rc
                 WHERE c.donor_id = d.id
                 AND c.reporting_currency = rc.id;
                 """,
             'rawdata': """
-                SELECT al.id, al.entry_sequence, al.name, al.ref, al.document_date, al.date, a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, CASE WHEN al.amount_currency > 0 THEN al.amount_currency ELSE 0.0 END AS debit, CASE WHEN al.amount_currency < 0 THEN ABS(al.amount_currency) ELSE 0.0 END AS credit, c.name AS "booking_currency", CASE WHEN al.amount > 0 THEN al.amount ELSE 0.0 END AS debit, CASE WHEN al.amount < 0 THEN ABS(al.amount) ELSE 0.0 END AS credit, cc.name AS "functional_currency"
+                SELECT al.entry_sequence, al.name, al.ref, al.document_date, al.date, a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, CASE WHEN al.amount_currency > 0 THEN al.amount_currency ELSE 0.0 END AS debit, CASE WHEN al.amount_currency < 0 THEN ABS(al.amount_currency) ELSE 0.0 END AS credit, c.name AS "booking_currency", CASE WHEN al.amount > 0 THEN al.amount ELSE 0.0 END AS debit, CASE WHEN al.amount < 0 THEN ABS(al.amount) ELSE 0.0 END AS credit, cc.name AS "functional_currency"
                 FROM account_analytic_line AS al, account_account AS a, account_analytic_account AS aa, account_analytic_account AS aa2, account_analytic_account AS aa3, res_currency AS c, res_company AS e, res_currency AS cc
                 WHERE al.destination_id = aa.id
                 AND al.cost_center_id = aa2.id
@@ -246,7 +246,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND aml.currency_id = c.id
                 AND aml.move_id = m.id
                 AND aml.company_id = e.id
-                AND e.currency_id = cc.id;
+                AND e.currency_id = cc.id
+                AND aml.exported != 't';
                 """,
         }
 
@@ -271,17 +272,11 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'key': 'partner',
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('res.partner', 'partner_type', 2)],
-                'delete_columns': [0],
-                'id': 0,
-                'object': 'res.partner',
                 },
             {
                 'headers': ['Name', 'Identification No', 'Active', 'Employee type'],
                 'filename': 'employees.csv',
                 'key': 'employee',
-                'delete_columns': [0],
-                'id': 0,
-                'object': 'hr.employee',
                 },
             {
                 'headers': ['Instance', 'Code', 'Name', 'Journal type'],
@@ -289,9 +284,6 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'key': 'journal',
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('account.journal', 'type', 3)],
-                'delete_columns': [0],
-                'id': 0,
-                'object': 'account.journal',
                 },
             {
                 'headers': ['Name', 'Code', 'Type', 'Status'],
@@ -300,9 +292,6 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'query_params': (last_day_of_period, last_day_of_period, tuple(instance_ids)),
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('account.analytic.account', 'type', 2)],
-                'delete_columns': [0],
-                'id': 0,
-                'object': 'account.analytic.account',
                 },
             {
                 'headers': ['CCY code', 'CCY name', 'Rate', 'Month'],
@@ -311,35 +300,24 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'query_params': (last_day_of_period, first_day_of_period),
                 'function': 'postprocess_add_period',
                 'fnct_params': period_name,
-                'delete_columns': [0],
-                'id': 0,
-                'object': 'res.currency',
                 },
             {
                 'headers': ['Instance', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance', 'State', 'Journal code'],
                 'filename': 'liquidities.csv',
                 'key': 'register',
                 'function': 'postprocess_register',
-                'id': 4,
-                'object': 'account.bank.statement',
                 },
             {
                 'headers': ['Name', 'Code', 'Donor code', 'Grant amount', 'Reporting CCY', 'State'],
-                'filename': 'contacts.csv',
+                'filename': 'contracts.csv',
                 'key': 'contract',
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('financing.contract.contract', 'state', 5)],
-                'delete_columns': [0],
-                'id': 0,
-                'object': 'financing.contract.contract',
                 },
             {
                 'headers': ['Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit', 'Functional CCY'],
                 'filename': 'Export_Data.csv',
                 'key': 'rawdata',
-                'delete_columns': [0],
-                'id': 0,
-                'object': 'account.analytic.line',
                 },
             {
                 'filename': 'Export_Data.csv',
