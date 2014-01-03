@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="wizard_import_in_simulation_screen_form_view" model="ir.ui.view">
+            <field name="name">wizard.import.in.simulation.screen.form.view</field>
+            <field name="model">wizard.import.in.simulation.screen</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Incoming shipment simulation screen">
+                    <separator colspan="4" string="Incoming shipment information" />
+                    <group colspan="4" col="6">
+                        <field name="picking_id" />
+                        <field name="origin" />
+                        <field name="creation_date" />
+                        <field name="purchase_id" />
+                        <field name="backorder_id" />
+                    </group>
+
+                    <notebook colspan="4">
+
+                        <page string="Incoming shipment">
+                            <separator colspan="4" string="Header notes" />
+                            <field name="header_notes" colspan="4" nolabel="1" />
+                            <separator colspan="4" string="Message ESC" />
+                            <field name="message_esc" colspan="4" nolabel="1" />
+                            <separator colspan="4" string="Other incoming shipment information" />
+                            <field name="freight_number" colspan="2" />
+                            <newline />
+                            <field name="transport_mode" colspan="2" />
+                        </page>
+
+                        <page string="Details">
+                        </page>
+
+                        <page string="Information">
+                        </page>
+
+                    </notebook>
+
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>
