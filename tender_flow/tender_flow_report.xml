@@ -9,7 +9,7 @@
         file="tender_flow/report/tender_rfq_comparison_xls.mako"
         report_type="webkit"
         header="False"
-        auto="True"
+        auto="False"
         menu="True"
         />
   </data>

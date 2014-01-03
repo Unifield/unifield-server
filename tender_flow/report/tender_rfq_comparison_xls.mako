@@ -57,10 +57,24 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
   </Style>
+  <Style ss:ID="mBottomCell">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+   <Borders>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
   <Style ss:ID="s70">
    <Borders>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="mLastBottom">
+   <Borders>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
   </Style>
   <Style ss:ID="s71">
@@ -291,7 +305,6 @@
   <Style ss:ID="s102">
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
     ss:Bold="1"/>
-   <Interior ss:Color="#FFCC99" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s103">
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
@@ -302,6 +315,7 @@
    <Borders>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
   </Style>
   <Style ss:ID="s105">
@@ -357,7 +371,6 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Interior ss:Color="#FFCC99" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s113">
    <Alignment ss:Vertical="Center"/>
@@ -367,7 +380,6 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Interior ss:Color="#FFCC99" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s134">
    <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
@@ -375,7 +387,6 @@
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Interior ss:Color="#FFCC99" ss:Pattern="Solid"/>
   </Style>
 <Style ss:ID="sTitle">
 <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
@@ -388,7 +399,7 @@
 <Alignment ss:Vertical="Bottom" ss:Horizontal="Left" ss:WrapText="1"/>
 </Style>
 <Style ss:ID="mSupHeader">
-    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
     <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
@@ -480,40 +491,40 @@
    <Column ss:Width="57.75" ss:Span="1"/>
    <Column ss:Index="15" ss:Width="87.75"/>
    <Row ss:AutoFitHeight="0" ss:Height="52.5">
-    <Cell ss:Index="4" ss:StyleID="s62"><Data ss:Type="String">Comparison - Requests for Quotation</Data></Cell>
+    <Cell ss:Index="4" ss:StyleID="s62"><Data ss:Type="String">${_('Comparison - Requests for Quotation')}</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="8.25">
     <Cell ss:Index="4" ss:StyleID="s62"></Cell>
    </Row>
 
    <Row ss:AutoFitHeight="0" ss:Height="18.75">
-    <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">Creator:</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">${_('Creator')}:</Data></Cell>
     <Cell ss:StyleID="sData"><Data ss:Type="String">${o.creator and o.creator.name or ''|x}</Data></Cell>
-    <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">Creation Date:</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">${_('Creation Date')}:</Data></Cell>
     <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${o.creation_date|n}T00:00:00.000</Data></Cell>
    </Row>
    <Row ss:StyleID="s63">
-    <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">Tender Reference:</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">${_('Tender Reference')}:</Data></Cell>
     <Cell ss:StyleID="sData"><Data ss:Type="String">${o.name|x}</Data></Cell>
-    <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">Field Order:</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">${_('Field Order')}:</Data></Cell>
     <Cell ss:StyleID="sData"><Data ss:Type="String">${o.sale_order_id and o.sale_order_id.name or ''|x}</Data></Cell>
-    <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">Requested Date:</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">${_('Requested Date')}:</Data></Cell>
     <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${o.requested_date|n}T00:00:00.000</Data></Cell>
    </Row>
    <Row ss:StyleID="s63">
-    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">Location:</Data></Cell>
+    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">${_('Location')}:</Data></Cell>
     <Cell ss:StyleID="sData"><Data ss:Type="String">${o.location_id and o.location_id.name or ''|x}</Data></Cell>
-    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">Tender Category:</Data></Cell>
+    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">${_('Tender Category')}:</Data></Cell>
     <Cell ss:StyleID="sData"><Data ss:Type="String">${getSel(o, 'categ')|x}</Data></Cell>
-    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">Warehouse:</Data></Cell>
+    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">${_('Warehouse')}:</Data></Cell>
     <Cell ss:StyleID="sData"><Data ss:Type="String">${o.warehouse_id and o.warehouse_id.name or ''|x}</Data></Cell>
    </Row>
    <Row ss:StyleID="s63">
-    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">Details:</Data></Cell>
+    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">${_('Details')}:</Data></Cell>
     <Cell ss:StyleID="sData"><Data ss:Type="String">${o.details or ''|x}</Data></Cell>
-    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">Currency:</Data></Cell>
+    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">${_('Currency')}:</Data></Cell>
     <Cell ss:StyleID="sData"><Data ss:Type="String">${get_same_and_default_currency(o)[1].name or ''|x}</Data></Cell>
-    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">Tender Priority:</Data></Cell>
+    <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">${_('Tender Priority')}:</Data></Cell>
     <Cell ss:StyleID="sData"><Data ss:Type="String">${getSel(o, 'priority')|x}</Data></Cell>
    </Row>
 
@@ -525,20 +536,20 @@
      <Cell />
      <Cell />
     % for numsup in xrange(0, len(o.supplier_ids)):
-    <Cell ss:MergeAcross="2" ss:StyleID="mSupHeader"><Data ss:Type="String">Supplier ${numsup+1}</Data></Cell>
+    <Cell ss:MergeAcross="2" ss:StyleID="mSupHeader"><Data ss:Type="String">${_('Supplier')} ${numsup+1}</Data></Cell>
     % endfor
-    <Cell ss:MergeDown="1" ss:StyleID="mSupHeader"><Data ss:Type="String">Selected Supplier</Data></Cell>
+    <Cell ss:MergeDown="1" ss:StyleID="mSupHeader"><Data ss:Type="String">${_('Selected Supplier')}</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:StyleID="s63">
-    <Cell ss:StyleID="s98"><Data ss:Type="String">Line nr.</Data></Cell>
-    <Cell ss:StyleID="s98"><Data ss:Type="String">Product Code</Data></Cell>
-    <Cell ss:StyleID="s98"><Data ss:Type="String">Product Description</Data></Cell>
-    <Cell ss:StyleID="s98"><Data ss:Type="String">Quantity</Data></Cell>
-    <Cell ss:StyleID="s98"><Data ss:Type="String">UoM</Data></Cell>
+    <Cell ss:StyleID="s98"><Data ss:Type="String">${_('Line nr.')}</Data></Cell>
+    <Cell ss:StyleID="s98"><Data ss:Type="String">${_('Product Code')}</Data></Cell>
+    <Cell ss:StyleID="s98"><Data ss:Type="String">${_('Product Description')}</Data></Cell>
+    <Cell ss:StyleID="s98"><Data ss:Type="String">${_('Quantity')}</Data></Cell>
+    <Cell ss:StyleID="s98"><Data ss:Type="String">${_('UoM')}</Data></Cell>
     % for numsup in xrange(0, len(o.supplier_ids)):
-    <Cell ss:StyleID="mSupName"><Data ss:Type="String">Name</Data></Cell>
-    <Cell ss:StyleID="mSupUnit"><Data ss:Type="String">Unit Price</Data></Cell>
-    <Cell ss:StyleID="mSupComment"><Data ss:Type="String">Comment</Data></Cell>
+    <Cell ss:StyleID="mSupName"><Data ss:Type="String">${_('Name')}</Data></Cell>
+    <Cell ss:StyleID="mSupUnit"><Data ss:Type="String">${_('Unit Price')}</Data></Cell>
+    <Cell ss:StyleID="mSupComment"><Data ss:Type="String">${_('Comment')}</Data></Cell>
     % endfor
    </Row>
    <% list_lines = gen_line_link(o) %>
@@ -573,7 +584,7 @@
     <Cell ss:StyleID="mLastLine" />
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="8.25">
-    <Cell ss:MergeAcross="1" ss:MergeDown="1" ss:StyleID="s134"><Data ss:Type="String">Justification / Notes</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:MergeDown="1" ss:StyleID="s134"><Data ss:Type="String">${_('Justification / Notes')}</Data></Cell>
     <Cell ss:StyleID="s68"></Cell>
     <Cell ss:StyleID="s68"></Cell>
     <Cell ss:StyleID="s68"></Cell>
@@ -601,84 +612,27 @@
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="8.25" />
    <Row>
-    <Cell ss:Index="2" ss:StyleID="s102"><Data ss:Type="String">Prepared by:</Data></Cell>
-    <Cell ss:Index="4" ss:StyleID="s102"><Data ss:Type="String">Approved by:</Data></Cell>
-    <Cell ss:StyleID="s102"/>
+    <Cell />
+    <Cell ss:StyleID="s102" ss:MergeAcross="3"><Data ss:Type="String">${_('Prepared by')}:</Data></Cell>
+    % for numsup in xrange(0, len(o.supplier_ids)):
+    <Cell ss:StyleID="s102" ss:MergeAcross="1"><Data ss:Type="String">${_('Approved by')}:</Data></Cell>
     <Cell ss:StyleID="s103"/>
-    <Cell ss:StyleID="s102"><Data ss:Type="String">Approved by:</Data></Cell>
-    <Cell ss:StyleID="s103"/>
-    <Cell ss:StyleID="s103"/>
-    <Cell ss:StyleID="s103"/>
-    <Cell ss:StyleID="s102"><Data ss:Type="String">Approved by:</Data></Cell>
+    % endfor
    </Row>
+   % for collname in [_('Name'), _('Position'), _('Date'), _('Signature')]:
    <Row>
-    <Cell ss:StyleID="s112"><Data ss:Type="String">Name</Data></Cell>
+    <Cell ss:StyleID="s112"><Data ss:Type="String">${collname}</Data></Cell>
+    <Cell ss:StyleID="s104" />
+    <Cell ss:StyleID="mBottomCell"/>
+    <Cell ss:StyleID="mBottomCell" />
+    <Cell ss:StyleID="mLastBottom" />
+    % for numsup in xrange(0, len(o.supplier_ids)):
     <Cell ss:StyleID="s104"/>
-    <Cell ss:StyleID="s70"/>
-    <Cell ss:StyleID="s68"/>
-    <Cell ss:StyleID="s68"/>
-    <Cell ss:StyleID="s68"/>
-    <Cell ss:StyleID="s104"/>
-    <Cell ss:StyleID="s68"/>
-    <Cell ss:StyleID="s68"/>
-    <Cell ss:StyleID="s70"/>
-    <Cell ss:StyleID="s68"/>
-    <Cell ss:StyleID="s68"/>
-    <Cell ss:StyleID="s68"/>
-    <Cell ss:StyleID="s68"/>
-    <Cell ss:StyleID="s70"/>
+    <Cell ss:StyleID="mBottomCell"/>
+    <Cell ss:StyleID="mLastBottom"/>
+    % endfor
    </Row>
-   <Row>
-    <Cell ss:StyleID="s112"><Data ss:Type="String">Position</Data></Cell>
-    <Cell ss:StyleID="s108"/>
-    <Cell ss:StyleID="s110"/>
-    <Cell ss:StyleID="s109"/>
-    <Cell ss:StyleID="s109"/>
-    <Cell ss:StyleID="s109"/>
-    <Cell ss:StyleID="s108"/>
-    <Cell ss:StyleID="s109"/>
-    <Cell ss:StyleID="s109"/>
-    <Cell ss:StyleID="s110"/>
-    <Cell ss:StyleID="s109"/>
-    <Cell ss:StyleID="s109"/>
-    <Cell ss:StyleID="s109"/>
-    <Cell ss:StyleID="s109"/>
-    <Cell ss:StyleID="s110"/>
-   </Row>
-   <Row>
-    <Cell ss:StyleID="s112"><Data ss:Type="String">Date</Data></Cell>
-    <Cell ss:StyleID="s111"/>
-    <Cell ss:StyleID="s78"/>
-    <Cell ss:StyleID="s77"/>
-    <Cell ss:StyleID="s77"/>
-    <Cell ss:StyleID="s77"/>
-    <Cell ss:StyleID="s111"/>
-    <Cell ss:StyleID="s77"/>
-    <Cell ss:StyleID="s77"/>
-    <Cell ss:StyleID="s78"/>
-    <Cell ss:StyleID="s77"/>
-    <Cell ss:StyleID="s77"/>
-    <Cell ss:StyleID="s77"/>
-    <Cell ss:StyleID="s77"/>
-    <Cell ss:StyleID="s78"/>
-   </Row>
-   <Row ss:AutoFitHeight="0" ss:Height="30" ss:StyleID="s101">
-    <Cell ss:StyleID="s113"><Data ss:Type="String">Signature</Data></Cell>
-    <Cell ss:StyleID="s105"/>
-    <Cell ss:StyleID="s107"/>
-    <Cell ss:StyleID="s106"/>
-    <Cell ss:StyleID="s106"/>
-    <Cell ss:StyleID="s106"/>
-    <Cell ss:StyleID="s105"/>
-    <Cell ss:StyleID="s106"/>
-    <Cell ss:StyleID="s106"/>
-    <Cell ss:StyleID="s107"/>
-    <Cell ss:StyleID="s106"/>
-    <Cell ss:StyleID="s106"/>
-    <Cell ss:StyleID="s106"/>
-    <Cell ss:StyleID="s106"/>
-    <Cell ss:StyleID="s107"/>
-   </Row>
+   % endfor
   </Table>
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>
