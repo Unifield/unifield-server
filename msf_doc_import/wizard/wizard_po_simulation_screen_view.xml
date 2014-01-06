@@ -12,7 +12,7 @@
                     <field name="order_id" />
                     <field name="in_creation_date" />
                     <group colspan="4" name="file" string="Import data">
-                        <field name="filetype" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="filetype" attrs="{'readonly': [('state', '!=', 'draft')]}" required="1"/>
                         <newline />
                         <field name="file_to_import" filename="filename" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="filename" invisible="1" />
