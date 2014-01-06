@@ -383,7 +383,7 @@
 </Cell>
 
 <Cell ss:StyleID="s21a">
-<Data ss:Type="String">${( o.grant_amount or '' )|x}</Data>
+<Data ss:Type="String">${formatLang(o.grant_amount or 0.)}</Data>
 </Cell>
 
 </Row>

@@ -309,6 +309,20 @@ class account_move_line(osv.osv):
 
 account_move_line()
 
+class account_move_reconcile(osv.osv):
+    _name = 'account.move.reconcile'
+    _inherit = 'account.move.reconcile'
+
+    _columns = {
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+    }
+
+    _defaults = {
+        'instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id,
+    }
+
+account_move_reconcile()
+
 class account_bank_statement(osv.osv):
     _name = 'account.bank.statement'
     _inherit = 'account.bank.statement'

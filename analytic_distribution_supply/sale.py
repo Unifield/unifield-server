@@ -55,6 +55,7 @@ class sale_order(osv.osv):
         vals = {
             'total_amount': amount,
             'sale_order_id': so.id,
+            'partner_type': so.partner_type, #UF-2138: Add partner_type to the analytic distribution
             'currency_id': currency or False,
             'state': 'cc',
             'posting_date': strftime('%Y-%m-%d'),
@@ -121,6 +122,8 @@ class sale_order(osv.osv):
         # Analytic distribution verification
         ana_obj = self.pool.get('analytic.distribution')
         for so in self.browse(cr, uid, ids, context=context):
+            if so.procurement_request:
+                continue
             for line in so.order_line:
                 # Search intermission
                 intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
@@ -135,10 +138,13 @@ class sale_order(osv.osv):
                         'cost_center_lines': [(0, 0, {'destination_id': destination_id[0], 'analytic_id': intermission_cc[1] , 'percentage':'100', 'currency_id': so.currency_id.id})]})
                     self.pool.get('sale.order.line').write(cr, uid, [line.id], {'analytic_distribution_id': distrib_id})
                     line = self.pool.get('sale.order.line').browse(cr, uid, line.id)
-                elif distrib_id and so.partner_id.partner_type == 'intermission':
-                    # Change CC lines
-                    for cc_line in ana_obj.browse(cr, uid, distrib_id).cost_center_lines:
-                        self.pool.get('cost.center.distribution.line').write(cr, uid, cc_line.id, {'analytic_id': intermission_cc[1]})
+                # UTP-952: remove the default intermission cc
+                #elif distrib_id and so.partner_id.partner_type == 'intermission':
+                #    # Change CC lines
+                #    for cc_line in ana_obj.browse(cr, uid, distrib_id).cost_center_lines:
+                #        # self.pool.get('cost.center.distribution.line').write(cr, uid, cc_line.id, {'analytic_id': intermission_cc[1]})
+                #        pass
+                        
                 if not distrib_id and not so.from_yml_test and not so.order_type in ('loan', 'donation_st', 'donation_exp'):
                     raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',))
                 # check distribution state
@@ -359,6 +365,7 @@ class sale_order_line(osv.osv):
         vals = {
             'total_amount': amount,
             'sale_order_line_id': sol.id,
+            'partner_type': sol.order_id.partner_type, #UF-2138: Add partner_type to the analytic distribution
             'currency_id': currency or False,
             'state': 'cc',
             'account_id': account_id or False,

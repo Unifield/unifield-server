@@ -69,7 +69,26 @@ class sale_order(osv.osv):
             default.update({'split_type_sale_order': 'original_sale_order'})
         if 'original_so_id_sale_order' not in default:
             default.update({'original_so_id_sale_order': False})
+        if 'fo_to_resource' not in default:
+            default.update({'fo_to_resource': False})
+        if 'parent_order_name' not in default:
+            default.update({'parent_order_name': False})
         return super(sale_order, self).copy(cr, uid, id, default=default, context=context)
+
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        Check if the status of the unlinked FO is allowed for unlink.
+        Statuses allowed : draft / cancel
+        '''
+        for order in self.read(cr, uid, ids, ['state', 'procurement_request'], context=context):
+            if order['state'] not in ('draft', 'cancel'):
+                type = order['procurement_request'] and _('Internal Request') or _('Field order')
+                raise osv.except_osv(_('Error'), _('Only Draft and Canceled %s can be deleted.') % type)
+        return super(sale_order, self).unlink(cr, uid, ids, context=context)
+
+    def action_cancel(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'delivery_confirmed_date': time.strftime('%Y-%m-%d')}, context=context)
+        return super(sale_order, self).action_cancel(cr, uid, ids, context=context)
 
     #@@@override sale.sale_order._invoiced
     def _invoiced(self, cr, uid, ids, name, arg, context=None):
@@ -245,6 +264,8 @@ class sale_order(osv.osv):
         'manually_corrected': fields.function(_get_manually_corrected, method=True, type='boolean', string='Manually corrected'),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
         'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
+        'fo_to_resource': fields.boolean(string='FO created to resource FO in exception', readonly=True),
+        'parent_order_name': fields.char(size=64, string='Parent order name', help='In case of this FO is created to re-source a need, this field contains the name of the initial FO (before split).'),
     }
     
     _defaults = {
@@ -422,6 +443,36 @@ class sale_order(osv.osv):
 
         return res
 
+    def ask_resource_lines(self, cr, uid, ids, context=None):
+        '''
+        Launch the wizard to re-source lines
+        '''
+        # Objects
+        wiz_obj = self.pool.get('sale.order.cancelation.wizard')
+
+        # Variables
+        wf_service = netsvc.LocalService("workflow")
+
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for order in self.browse(cr, uid, ids, context=context):
+            if order.state == 'validated' and len(order.order_line) > 0:
+                wiz_id = wiz_obj.create(cr, uid, {'order_id': order.id}, context=context)
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'sale.order.cancelation.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'target': 'new',
+                        'res_id': wiz_id,
+                        'context': context}
+
+            wf_service.trg_validate(uid, 'sale.order', order.id, 'cancel', cr)
+
+        return True
     
     def change_currency(self, cr, uid, ids, context=None):
         '''
@@ -562,6 +613,46 @@ class sale_order(osv.osv):
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_confirm', cr)
         return True
 
+    def get_original_name(self, cr, uid, order, context=None):
+        '''
+        Returns the name of the first original FO
+        '''
+        if order.original_so_id_sale_order:
+            return self.get_original_name(cr, uid, order.original_so_id_sale_order, context=context)
+        elif order.parent_order_name:
+            return order.parent_order_name
+
+        return order.name
+
+    def create_resource_order(self, cr, uid, order, context=None):
+        '''
+        Create a new FO to re-source the needs.
+        '''
+        context = context or {}
+
+        # Get the name of the original FO
+        old_order_name = order.name
+#        order_name = '/'.join(x for x in order.name.split('/')[0:-1])
+
+        order_ids = self.search(cr, uid, [('active', 'in', ('t', 'f')), ('fo_to_resource', '=', True), ('parent_order_name', '=', old_order_name)], context=dict(context, procurement_request=True))
+        for old_order in self.read(cr, uid, order_ids, ['name', 'state'], context=context):
+            if old_order['state'] == 'draft':
+                return old_order['id']
+
+        tmp_kco = context.get('keepClientOrder')
+        context['keepClientOrder'] = True
+        order_id = self.copy(cr, uid, order.id, {'order_line': [], 
+                                                 'state': 'draft', 
+                                                 'parent_order_name': old_order_name, 
+                                                 'fo_to_resource': True}, context=context)
+        context['keepClientOrder'] = tmp_kco
+
+        order_name = self.read(cr, uid, order_id, ['name'], context=context)['name']
+
+        self.log(cr, uid, order_id, _('The Field order %s has been created to re-source the canceled needs') % order_name, context=dict(context, procurement_request=order.procurement_request))
+
+        return order_id
+
     def sale_except_correction(self, cr, uid, ids, context=None):
         '''
         Remove the link between a Field order and the canceled procurement orders
@@ -569,7 +660,12 @@ class sale_order(osv.osv):
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:
                 if line.procurement_id and line.procurement_id.state == 'cancel':
-                    self.pool.get('sale.order.line').write(cr, uid, [line.id], {'state': 'exception',
+                    if line.procurement_id.procure_method == 'make_to_stock' and line.procurement_id.move_id:
+                        # TODO: Make a diff with UoM
+                        diff = line.product_uom_qty - (line.product_uom_qty - line.procurement_id.move_id.product_qty)
+                        resource_id = self.pool.get('sale.order').create_resource_order(cr, uid, line.order_id.original_so_id_sale_order, context=context)
+                        self.pool.get('sale.order.line').add_resource_line(cr, uid, line, resource_id, diff, context=context)
+                    self.pool.get('sale.order.line').write(cr, uid, [line.id], {'state': 'cancel',
                                                                                 'manually_corrected': True,
                                                                                 'procurement_id': False}, context=context)
             if (order.order_policy == 'manual'):
@@ -773,9 +869,15 @@ class sale_order(osv.osv):
         
         - allow to modify the data for stock move creation
         '''
+        obj_data = self.pool.get('ir.model.data')
+
         result = super(sale_order, self)._hook_ship_create_stock_move(cr, uid, ids, context=context, *args, **kwargs)
         result['reason_type_id'] = self._get_reason_type(cr, uid, kwargs['order'], context)
         result['price_currency_id'] = self.browse(cr, uid, ids[0], context=context).pricelist_id.currency_id.id
+
+        line = kwargs['line']
+        if line.order_id.procurement_request and line.order_id.location_requestor_id.usage == 'customer' and not line.product_id and line.comment:
+            result['product_id'] = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
         
         return result
     
@@ -808,8 +910,11 @@ class sale_order(osv.osv):
         if line.order_id.manually_corrected:
             return False
         if line.order_id.procurement_request:
-            if line.type == 'make_to_order':
+            # Create OUT lines for MTO lines with an external CU as requestor location 
+            if line.type == 'make_to_order' and line.order_id.location_requestor_id.usage != 'customer':
                 result = False
+            elif line.type == 'make_to_order' and line.order_id.location_requestor_id.usage == 'customer':
+                result = True
         # result = result and not line.order_id.procurement_request => the proc request can have pick and move
         return result
     
@@ -957,7 +1062,8 @@ class sale_order(osv.osv):
         proc_data = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
         # update proc_data for link to destination purchase order and purchase order line (for line number) during back update of sale order
         proc_data.update({'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id,
-                          'so_back_update_dest_pol_id_procurement_order': line.so_back_update_dest_pol_id_sale_order_line.id})
+                          'so_back_update_dest_pol_id_procurement_order': line.so_back_update_dest_pol_id_sale_order_line.id,
+                          'sale_id': line.order_id.id,})
         return proc_data
     
     def action_ship_proc_create(self, cr, uid, ids, context=None):
@@ -985,6 +1091,9 @@ class sale_order(osv.osv):
             # deactivated
             if not order.delivery_confirmed_date and False:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+            # Put a default delivery confirmed date
+            if not order.delivery_confirmed_date:
+                self.write(cr, uid, [order.id], {'delivery_confirmed_date': time.strftime('%Y-%m-%d')}, context=context)
             # for all lines, if the confirmed date is not filled, we copy the header value
             for line in order.order_line:
                 if not line.confirmed_delivery_date:
@@ -1199,6 +1308,41 @@ class sale_order_line(osv.osv):
         ('product_qty_check', 'CHECK( product_uom_qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]
 
+    def ask_unlink(self, cr, uid, ids, context=None):
+        '''
+        Call the user to know if the line must be re-sourced
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.order_id and line.order_id.state != 'draft':
+                return self.pool.get('sale.order.line.unlink.wizard').ask_unlink(cr, uid, ids, context=context)
+
+        return self.ask_order_unlink(cr, uid, ids, context=context)
+
+    def ask_order_unlink(self, cr, uid, ids, context=None):
+        '''
+        Call the unlink method for lines and if the FO becomes empty,
+        ask the user if he wants to cancel the FO
+        '''
+        sale_ids = []
+        res = False
+        for line in self.read(cr, uid, ids, ['order_id'], context=context):
+            if line['order_id'][0] not in sale_ids:
+                sale_ids.append(line['order_id'][0])
+
+        self.unlink(cr, uid, ids, context=context)
+
+        for order in self.pool.get('sale.order').read(cr, uid, sale_ids, ['order_line'], context=context):
+            if len(order['order_line']) == 0:
+                res = self.pool.get('sale.order.unlink.wizard').ask_unlink(cr, uid, order['id'], context=context)
+
+        return res
+
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
         Check if there is restriction on lines
@@ -1206,7 +1350,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if not context:
+        if context is None:
             context = {}
 
         for line in self.browse(cr, uid, ids, context=context):
@@ -1215,6 +1359,100 @@ class sale_order_line(osv.osv):
                     return False
 
         return True
+
+    def update_or_cancel_line(self, cr, uid, line, qty_diff, context=None):
+        '''
+        Update the quantity of the IR/FO line with the qty_diff - Update also
+        the quantity in procurement attached to the IR/Fo line.
+
+        If the qty_diff is equal or larger than the line quantity, delete the
+        line and its procurement.
+        '''
+        # Documents
+        proc_obj = self.pool.get('procurement.order')
+        
+        wf_service = netsvc.LocalService("workflow")
+
+        if context is None:
+            context = {}
+
+        if isinstance(line, (int, long)):
+            line = self.browse(cr, uid, line, context=context)
+
+        order = line.order_id and line.order_id.id
+
+        if qty_diff >= line.product_uom_qty:
+            proc = line.procurement_id and line.procurement_id.id
+            # Delete the line and the procurement
+            self.write(cr, uid, [line.id], {'state': 'cancel'}, context=context)
+            self.unlink(cr, uid, [line.id], context=context)
+
+            if proc:
+                proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
+                proc_obj.action_cancel(cr, uid, [proc])
+        else:
+            minus_qty = line.product_uom_qty - qty_diff
+            proc = line.procurement_id and line.procurement_id.id
+            # Update the line and the procurement
+            self.write(cr, uid, [line.id], {'product_uom_qty': minus_qty,
+                                            'product_uos_qty': minus_qty}, context=context)
+            if proc:
+                proc_obj.write(cr, uid, [proc], {'product_qty': minus_qty}, context=context)
+
+        if order:
+            wf_service.trg_write(uid, 'sale.order', order, cr)
+
+        return True
+
+    def add_resource_line(self, cr, uid, line, order_id, qty_diff, context=None):
+        '''
+        Add a copy of the original line (line) into the new order (order_id)
+        created to resource needs.
+        Update the product qty with the qty_diff in case of split or backorder moves
+        before cancelation
+        '''
+        # Documents
+        order_obj = self.pool.get('sale.order')
+        ad_obj = self.pool.get('analytic.distribution')
+        data_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+
+        if isinstance(line, (int, long)):
+            line = self.browse(cr, uid, line, context=context)
+        
+#        if not order_id and not line.order_id.procurement_request and line.order_id.original_so_id_sale_order:
+#            order_id = order_obj.create_resource_order(cr, uid, line.order_id.original_so_id_sale_order, context=context)
+#        elif not order_id and (line.order_id.procurement_request or not line.order_id.original_so_id_sale_order):
+        order_id = order_obj.create_resource_order(cr, uid, line.order_id, context=context)
+
+        if not qty_diff:
+            qty_diff = line.product_uom_qty
+
+        values = {
+            'order_id': order_id,
+            'product_uom_qty': qty_diff,
+            'product_uos_qty': qty_diff,
+            'procurement_id': False
+        }
+        context['keepDateAndDistrib'] = True
+        if not line.analytic_distribution_id and line.order_id and line.order_id.analytic_distribution_id:
+            new_distrib = ad_obj.copy(cr, uid, line.order_id.analytic_distribution_id.id, {}, context=context)
+            values['analytic_distribution_id'] = new_distrib
+
+        line_id = self.copy(cr, uid, line.id, values, context=context)
+
+        order_name = self.pool.get('sale.order').read(cr, uid, [order_id], ['name'], context=context)[0]['name']
+
+        if line.order_id and line.order_id.procurement_request:
+            view_id = data_obj.get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1]
+        else:
+            view_id = data_obj.get_object_reference(cr, uid, 'sale', 'view_order_form')[1]
+        context.update({'view_id': view_id})
+        self.pool.get('sale.order').log(cr, uid, order_id, _('A line was added to the Field Order %s to re-source the canceled line.')%(order_name), context=context)
+
+        return line_id
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
@@ -1334,11 +1572,14 @@ class sale_order_line(osv.osv):
                 res['value'].update({'type': type})
             else:
                 res.update({'value':{'type': type}})
+            res['value'].update({'product_uom_qty': qty, 'product_uos_qty': qty})
         elif not product:
             if 'value' in res:
                 res['value'].update({'type': 'make_to_order'})
             else:
                 res.update({'value':{'type': 'make_to_order'}})
+            res['value'].update({'product_uom_qty': 0.00, 'product_uos_qty': 0.00})
+
         return res
 
     def default_get(self, cr, uid, fields, context=None):
@@ -1369,6 +1610,7 @@ class sale_order_line(osv.osv):
             self.pool.get('sale.order').write(cr, uid, [context.get('sale_id')], data, context=context)
 
         default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
+        default_data.update({'product_uom_qty': 0.00, 'product_uos_qty': 0.00})
         sale_id = context.get('sale_id', [])
         if not sale_id:
             return default_data
@@ -1452,6 +1694,16 @@ class sale_order_line(osv.osv):
 sale_order_line()
 
 
+class procurement_order(osv.osv):
+    _inherit = 'procurement.order'
+
+    _columns = {
+        'sale_id': fields.many2one('sale.order', string='Sale'),
+    }
+
+procurement_order()
+
+
 class sale_config_picking_policy(osv.osv_memory):
     """
     Set order_policy to picking
@@ -1464,4 +1716,172 @@ class sale_config_picking_policy(osv.osv_memory):
     }
 
 sale_config_picking_policy()
+
+class sale_order_line_unlink_wizard(osv.osv_memory):
+    _name = 'sale.order.line.unlink.wizard'
+
+    _columns = {
+            'order_line_id': fields.many2one('sale.order.line', 'Line to delete'),
+            }
+
+    def ask_unlink(self, cr, uid, order_line_id, context=None):
+        '''
+        Return the wizard
+        '''
+        context = context or {}
+
+        if isinstance(order_line_id, (int, long)):
+            order_line_id = [order_line_id]
+
+        wiz_id = self.create(cr, uid, {'order_line_id': order_line_id[0]}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': self._name,
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context}
+
+    def close_window(self, cr, uid, ids, context=None):
+        '''
+        Close the pop-up and reload the FO
+        '''
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel_fo_line(self, cr, uid, ids, context=None):
+        '''
+        Cancel the FO line and display the FO form
+        '''
+        context = context or {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = False
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            res = self.pool.get('sale.order.line').ask_order_unlink(cr, uid, [wiz.order_line_id.id], context=context)
+            break
+
+        return res or {'type': 'ir.actions.act_window_close'}
+
+    def resource_line(self, cr, uid, ids, context=None):
+        '''
+        Resource the FO line and display the FO form
+        '''
+        context = context or {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            self.pool.get('sale.order.line').add_resource_line(cr, uid, wiz.order_line_id.id, False, wiz.order_line_id.product_uom_qty, context=context)
+
+        return self.cancel_fo_line(cr, uid, ids, context=context)
+
+sale_order_line_unlink_wizard()
+
+class sale_order_unlink_wizard(osv.osv_memory):
+    _name = 'sale.order.unlink.wizard'
+
+    _columns = {
+        'order_id': fields.many2one('sale.order', 'Order to delete'),
+    }
+
+    def ask_unlink(self, cr, uid, order_id, context=None):
+        '''
+        Return the wizard
+        '''
+        context = context or {}
+
+        wiz_id = self.create(cr, uid, {'order_id': order_id}, context=context)
+        context['view_id'] = False
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': self._name,
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context}
+
+    def close_window(self, cr, uid, ids, context=None):
+        '''
+        Close the pop-up and reload the FO
+        '''
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel_fo(self, cr, uid, ids, context=None):
+        '''
+        Cancel the FO and display the FO form
+        '''
+        context = context or {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            self.pool.get('sale.order').action_cancel(cr, uid, [wiz.order_id.id], context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+sale_order_unlink_wizard()
+
+
+class sale_order_cancelation_wizard(osv.osv_memory):
+    _name = 'sale.order.cancelation.wizard'
+
+    _columns = {
+        'order_id': fields.many2one('sale.order', 'Order to delete', required=True),
+    }
+
+    def only_cancel(self, cr, uid, ids, context=None):
+        '''
+        Cancel the FO w/o re-sourcing lines
+        '''
+        # Objects
+        sale_obj = self.pool.get('sale.order')
+
+        # Variables initialization
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [id]
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            sale_obj.action_cancel(cr, uid, [wiz.order_id.id], context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def resource_lines(self, cr, uid, ids, context=None):
+        '''
+        Cancel the FO and re-source all lines
+        '''
+        # Objects
+        sale_obj = self.pool.get('sale.order')
+        line_obj = self.pool.get('sale.order.line')
+
+        # Variables initialization
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wf_service = netsvc.LocalService("workflow")
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            # Re-source lines
+            for line in wiz.order_id.order_line:
+                line_obj.add_resource_line(cr, uid, line.id, line.order_id.id, line.product_uom_qty, context=context)
+
+            # Cancel FO
+            wf_service.trg_validate(uid, 'sale.order', wiz.order_id.id, 'cancel', cr)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+sale_order_cancelation_wizard()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

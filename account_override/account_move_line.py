@@ -165,6 +165,67 @@ class account_move_line(osv.osv):
                 for p in line.reconcile_partial_id.line_partial_ids:
                     res.append(p.id)
         return res
+    
+    def _balance_currency(self, cr, uid, ids, name, arg, context=None):
+        # UTP-31
+        if context is None:
+            context = {}
+        c = context.copy()
+        c['initital_bal'] = True
+        sql = """SELECT l2.id, SUM(l1.debit_currency-l1.credit_currency)
+                    FROM account_move_line l1, account_move_line l2
+                    WHERE l2.account_id = l1.account_id
+                      AND l1.id <= l2.id
+                      AND l2.id IN %s AND """ + \
+                self._query_get(cr, uid, obj='l1', context=c) + \
+                " GROUP BY l2.id"
+
+        cr.execute(sql, [tuple(ids)])
+        result = dict(cr.fetchall())
+        for id in ids:
+            result.setdefault(id, 0.0)
+        return result
+        
+    def _balance_currency_search(self, cursor, user, obj, name, args, domain=None, context=None):
+        # UTP-31
+        if context is None:
+            context = {}
+        if not args:
+            return []
+        where = ' AND '.join(map(lambda x: '(abs(sum(debit_currency-credit_currency))'+x[1]+str(x[2])+')',args))
+        cursor.execute('SELECT id, SUM(debit_currency-credit_currency) FROM account_move_line \
+                     GROUP BY id, debit_currency, credit_currency having '+where)
+        res = cursor.fetchall()
+        if not res:
+            return [('id', '=', '0')]
+        return [('id', 'in', [x[0] for x in res])]
+
+    def _get_is_reconciled(self, cr, uid, ids, field_names, args, context=None):
+        """
+        If reconcile_partial_id or reconcile_id present, then line is reconciled.
+        """
+        if context is None:
+            context = {}
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = False
+            if line.reconcile_partial_id or line.reconcile_id:
+                res[line.id] = True
+        return res
+
+    def _search_is_reconciled(self, cr, uid, obj, name, args, context):
+        """
+        Give lines that have a partial or total reconciliation.
+        """
+        if not context:
+            context = {}
+        if not args:
+            return []
+        if args[0][2] and args[0][2] == True:
+            return ['|', ('reconcile_partial_id', '!=', False), ('reconcile_id', '!=', False)]
+        elif args[0] and args[0][2] in [False, 0]:
+            return [('reconcile_partial_id', '=', False), ('reconcile_id', '=', False)]
+        return []
 
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
@@ -199,6 +260,8 @@ class account_move_line(osv.osv):
                 'account.move.line': (_get_reconciled_move_lines, ['reconcile_id', 'reconcile_partial_id', 'debit', 'credit'], 10),
             }
         ),
+        'is_reconciled': fields.function(_get_is_reconciled, fnct_search=_search_is_reconciled, type='boolean', method=True, string="Is reconciled", help="Is that line partially/totally reconciled?"),
+        'balance_currency': fields.function(_balance_currency, fnct_search=_balance_currency_search, method=True, string='Balance Booking'),
     }
 
     _defaults = {
@@ -289,7 +352,7 @@ class account_move_line(osv.osv):
                 context.update({'date': m.date})
         res = super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
         # UTP-317: Check partner (if active or not)
-        if res:
+        if res and not context.get('sync_update_execution', False): #UF-2214: Not for the case of sync
             aml = self.browse(cr, uid, [res], context)
             if aml and aml[0] and aml[0].partner_id and not aml[0].partner_id.active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (aml[0].partner_id.name or '',))

@@ -107,7 +107,7 @@ class account_line_csv_export(osv.osv_memory):
                 csv_line.append(ml.functional_currency_id and ml.functional_currency_id.name and ml.functional_currency_id.name.encode('utf-8') or '')
             else:
                 #output amount (debit/credit) regarding booking currency
-                amount = currency_obj.compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
+                amount = currency_obj.compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=False, context=context)
                 if amount < 0.0:
                     csv_line.append(0.0)
                     csv_line.append(abs(amount) or 0.0)
@@ -304,62 +304,6 @@ class account_line_csv_export(osv.osv_memory):
             # Write line
             writer.writerow(csv_line)
         return True
-
-    def export_to_csv(self, cr, uid, ids, currency_id, model, context=None):
-        """
-        Return a CSV file containing all given line
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if not model:
-            raise osv.except_osv(_('Error'), _('No model found.'))
-        # Prepare some values
-        today = strftime('%Y-%m-%d_%H-%M-%S')
-        mtype = model.split('.')[1]
-        name = '_'.join(['mcdb', mtype, 'result', today])
-        ext = '.csv'
-        filename = str(name + ext)
-        
-        outfile = TemporaryFile('w+')
-        writer = csv.writer(outfile, quotechar='"', delimiter=',')
-        
-        # Take string regarding model
-        if model == 'account.move.line':
-            self._account_move_line_to_csv(cr, uid, ids, writer, currency_id, context=context) or ''
-        elif model == 'account.analytic.line':
-            self._account_analytic_line_to_csv(cr, uid, ids, writer, currency_id, context=context) or ''
-        elif model == 'account.bank.statement.line':
-            self._account_bank_statement_line_to_csv(cr, uid, ids, writer, currency_id, context=context) or ''
-        
-        outfile.seek(0)
-        file = encodestring(outfile.read())
-        outfile.close()
-        
-        export_id = self.create(cr, uid, 
-            {
-                'file': file,
-                'filename': filename,
-                'message': "The list has been exported. Please click on 'Save As' button to download the file.",
-        })
-        
-        # Search view
-        suffix = 'csv_export_form'
-        view = '_'.join([model.replace('.', '_'), suffix])
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view)
-        view_id = view_id and view_id[1] or False
-        
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.line.csv.export',
-            'res_id': export_id,
-            'view_mode': 'form',
-            'view_type': 'form',
-            'view_id': [view_id],
-            'target': 'new',
-        }
 
 account_line_csv_export()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

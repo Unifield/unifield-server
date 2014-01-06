@@ -93,6 +93,23 @@
     name: Analytic HQ Journal
     type: hq
 -
+  I create an analytic correction journal
+-
+  !record {model: account.analytic.journal, id: analytic_correction_journal}:
+    code: ACOR
+    name: Analytic Correction Journal
+    type: correction
+-
+  I create a correction journal for split
+-
+  !record {model: account.journal, id: account_journal_correction}:
+    code: COR
+    company_id: base.main_company
+    name: Correction Journal
+    type: correction
+    analytic_journal_id: analytic_correction_journal
+    allow_date: 0
+-
   I create a HQ Journal
 -
   !record {model: account.journal, id: journal_hq}:

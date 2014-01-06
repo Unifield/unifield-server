@@ -113,7 +113,7 @@ class procurement_request(osv.osv):
     
     _columns = {
         'location_requestor_id': fields.many2one('stock.location', string='Location Requestor', ondelete="cascade",
-        domain=[('usage', '=', 'internal'), ('location_category', '!=', 'transition')], help='You can only select an internal location'),
+        domain=[('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], help='You can only select an internal location'),
         'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', states={'draft': [('readonly', False)]}, readonly=True),
@@ -361,7 +361,7 @@ class procurement_request(osv.osv):
         self.action_ship_create(cr, uid, ids, context=context)
         
         return True
-    
+
     def procurement_done(self, cr, uid, ids, context=None):
         '''
         Creates all procurement orders according to lines
@@ -526,7 +526,7 @@ class procurement_request_line(osv.osv):
         value = {}
         domain = {}
         if not product_id:
-            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order', 'comment_ok': False, 'cost_price': False, 'price_subtotal': False}
+            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order', 'comment_ok': False, 'cost_price': False, 'price_subtotal': False, 'product_uom_qty': 0.00, 'product_uos_qty': 0.00}
             domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
         elif product_id:
             product = product_obj.browse(cr, uid, product_id)
@@ -535,7 +535,7 @@ class procurement_request_line(osv.osv):
             if test:
                 return res
             value = {'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 
-                     'type': product.procure_method, 'comment_ok': True, 'cost_price': product.standard_price}
+                     'type': product.procure_method, 'comment_ok': True, 'cost_price': product.standard_price,}
             if value['type'] != 'make_to_stock':
                 value.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
             uom_val = uom_obj.read(cr, uid, [product.uom_id.id], ['category_id'])
@@ -619,7 +619,7 @@ class purchase_order(osv.osv):
             proc_ids = proc_obj.search(cr, uid, [('move_id', '=', order_line.move_dest_id.id)], context=context)
             so_line_ids = sale_line_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
             po_line_ids = po_line_obj.search(cr, uid, [('move_dest_id', '=', order_line.move_dest_id.id)], context=context)
-            if all(not line.order_id or line.order_id.procurement_request for line in sale_line_obj.browse(cr, uid, so_line_ids, context=context)):
+            if all(not line.order_id or (line.order_id.procurement_request and line.order_id.location_requestor_id.usage != 'customer') for line in sale_line_obj.browse(cr, uid, so_line_ids, context=context)):
                 for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
                     if proc.move_id:
                         move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)

@@ -228,6 +228,9 @@
         <td>
           <para style="P13">Bank statement balance: [[ o.balance_end_real and formatLang(o.balance_end_real, digits=2, grouping=True) or '0.00' ]]</para>
         </td>
+         <td>
+          <para style="P13">Opening Date: [[ o.date or '' ]]</para>
+        </td>
       </tr>
       <tr>
         <td>
@@ -235,6 +238,9 @@
         </td>
         <td>
           <para style="P13">Gap: [[ o.balance_gap and formatLang(o.balance_gap, digits=2, grouping=True) or '0.00' ]]</para>
+        </td>
+        <td>
+          <para style="P13">Closing Date: [[ o.closing_date]]</para>
         </td>
       </tr>
     </blockTable>

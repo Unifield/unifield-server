@@ -95,6 +95,7 @@
     fiscalyear_id: account_fiscalyear_fiscalyear0
     name: !eval "'Mar %s' %(datetime.now().year+1)"
     special: 1
+    number: 3
     state: draft
 -
   I create an account move line with all of this.

@@ -26,7 +26,28 @@ class wizard_interactive_report(osv.osv_memory):
     _name = "wizard.interactive.report"
     _inherit = "wizard.csv.report"
     
+    def _get_amount_format(self, context=None):
+        """rounding wrapper
+        rounding no digit for interactive report, 2 digits for mako/xls report
+        returns (has_round(Boolean), format_str(string))
+        """
+        if context and 'mako' in context:
+            return False, "%0.2f"
+        return True, "%d"
+    
+    def _round(self, amount, context=None):
+        """rounding wrapper
+        rounding no digit for interactive report, 2 digits for mako/xls report
+        return amount
+        """
+        if context and 'mako' in context:
+            # according to stackoverflow rounding does not make sense when using format "%0.2f"
+            # http://stackoverflow.com/questions/455612/python-limiting-floats-to-two-decimal-points
+            return amount
+        return round(amount)  # rounding for 0 digits
+    
     def _create_reporting_line(self, cr, uid, reporting_currency_id, line, parent_hierarchy, data, line_amount_list = {}, out_currency_id=None, context=None):
+        has_round, format_str = self._get_amount_format(context)
         max_parent_hierarchy = parent_hierarchy
         
         #convert to output currency if it has been selected
@@ -42,16 +63,16 @@ class wizard_interactive_report(osv.osv_memory):
         if out_currency_id and out_currency_id != reporting_currency_id:
             currency_obj = self.pool.get('res.currency')
             line_allocated_budget = currency_obj.compute(cr, uid, reporting_currency_id, out_currency_id,
-                                                         line_amounts['allocated_budget'] or 0.0, round=True, context=context)
+                                                         line_amounts['allocated_budget'] or 0.0, round=has_round, context=context)
         
             line_allocated_real = currency_obj.compute(cr, uid, reporting_currency_id, out_currency_id,
-                                                       line_amounts['allocated_real'] or 0.0,round=True, context=context)
+                                                       line_amounts['allocated_real'] or 0.0,round=has_round, context=context)
         
             line_project_budget = currency_obj.compute(cr, uid, reporting_currency_id, out_currency_id,
-                                                       line_amounts['project_budget'] or 0.0, round=True, context=context)
+                                                       line_amounts['project_budget'] or 0.0, round=has_round, context=context)
         
             line_project_real = currency_obj.compute(cr, uid, reporting_currency_id, out_currency_id,
-                                                     line_amounts['project_real'] or 0.0, round=True, context=context)
+                                                     line_amounts['project_real'] or 0.0, round=has_round, context=context)
         else:
             line_allocated_budget = line_amounts['allocated_budget']
             line_allocated_real = line_amounts['allocated_real']
@@ -61,20 +82,21 @@ class wizard_interactive_report(osv.osv_memory):
         data.append([parent_hierarchy,
                      line.code,
                      line.name,
-                     locale.format("%d", line_allocated_budget, grouping=True),
-                     locale.format("%d", line_allocated_real, grouping=True),
-                     '0%' if line_allocated_real == 0 or line_allocated_budget == 0 else str(locale.format("%d", round(line_allocated_real/line_allocated_budget * 100), grouping=True)) + "%",
-                     locale.format("%d", line_project_budget, grouping=True),
-                     locale.format("%d", line_project_real, grouping=True),
-                     '0%' if line_project_real == 0 or line_project_budget == 0 else str(locale.format("%d", round(line_project_real/line_project_budget * 100), grouping=True)) + "%"])
+                     locale.format(format_str, line_allocated_budget, grouping=True),
+                     locale.format(format_str, line_allocated_real, grouping=True),
+                     '0%' if line_allocated_real == 0 or line_allocated_budget == 0 else str(locale.format(format_str, self._round(line_allocated_real/line_allocated_budget * 100, context=context), grouping=True)) + "%",
+                     locale.format(format_str, line_project_budget, grouping=True),
+                     locale.format(format_str, line_project_real, grouping=True),
+                     '0%' if line_project_real == 0 or line_project_budget == 0 else str(locale.format(format_str, self._round(line_project_real/line_project_budget * 100, context=context), grouping=True)) + "%"])
         
         for child_line in line.child_ids:
-            new_max_parent_hierarchy = self._create_reporting_line(cr, uid, reporting_currency_id, child_line, parent_hierarchy + 1, data, line_amount_list, out_currency_id, context)
+            new_max_parent_hierarchy = self._create_reporting_line(cr, uid, reporting_currency_id, child_line, parent_hierarchy + 1, data, line_amount_list, out_currency_id, context=context)
             if new_max_parent_hierarchy > max_parent_hierarchy:
                 max_parent_hierarchy = new_max_parent_hierarchy
         return max_parent_hierarchy
     
     def _get_interactive_data(self, cr, uid, contract_id, context=None):
+        has_round, format_str = self._get_amount_format(context)
         res = {}
         contract_obj = self.pool.get('financing.contract.contract')
         # Context updated with wizard's value
@@ -89,10 +111,10 @@ class wizard_interactive_report(osv.osv_memory):
         footer_data = self._get_contract_footer(cr, uid, contract, context=context)
         
         # Values to be set
-        total_allocated_budget = 0
-        total_project_budget = 0
-        total_allocated_real = 0
-        total_project_real = 0
+        total_allocated_budget = 0.
+        total_project_budget = 0.
+        total_allocated_real = 0.
+        total_project_real = 0.
         
         # check the output currency if it has been selected        
         out_currency_amount = contract.grant_amount
@@ -128,27 +150,27 @@ class wizard_interactive_report(osv.osv_memory):
                 if out_currency_id and out_currency_id != contract.reporting_currency.id:
                     currency_obj = self.pool.get('res.currency')
                     line_allocated_budget = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
-                                                                 line_amounts['allocated_budget'] or 0.0, round=True, context=context)
+                                                                 line_amounts['allocated_budget'] or 0.0, round=has_round, context=context)
         
                     line_allocated_real = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
-                                                               line_amounts['allocated_real'] or 0.0,round=True, context=context)
+                                                               line_amounts['allocated_real'] or 0.0,round=has_round, context=context)
         
                     line_project_budget = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
-                                                               line_amounts['project_budget'] or 0.0, round=True, context=context)
+                                                               line_amounts['project_budget'] or 0.0, round=has_round, context=context)
         
                     line_project_real = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
-                                                             line_amounts['project_real'] or 0.0, round=True, context=context)
+                                                             line_amounts['project_real'] or 0.0, round=has_round, context=context)
                 else:
                     line_allocated_budget = line_amounts['allocated_budget']
                     line_allocated_real = line_amounts['allocated_real']
                     line_project_budget = line_amounts['project_budget']
                     line_project_real = line_amounts['project_real']
     
-                total_allocated_budget += round(line_allocated_budget)
-                total_project_budget += round(line_project_budget)
-                total_allocated_real += round(line_allocated_real)
-                total_project_real += round(line_project_real)
-                current_max_parent_hierarchy = self._create_reporting_line(cr, uid, contract.reporting_currency.id, line, 1, temp_analytic_data, line_amount_list, out_currency_id, context)
+                total_allocated_budget += self._round(line_allocated_budget, context=context)
+                total_project_budget += self._round(line_project_budget, context=context)
+                total_allocated_real += self._round(line_allocated_real, context=context)
+                total_project_real += self._round(line_project_real, context=context)
+                current_max_parent_hierarchy = self._create_reporting_line(cr, uid, contract.reporting_currency.id, line, 1, temp_analytic_data, line_amount_list, out_currency_id, context=context)
                 if current_max_parent_hierarchy > max_parent_hierarchy:
                     max_parent_hierarchy = current_max_parent_hierarchy
         # create header + contract line
@@ -164,12 +186,12 @@ class wizard_interactive_report(osv.osv_memory):
                                [0,
                                '',
                                'TOTAL',
-                               locale.format("%d", total_allocated_budget, grouping=True),
-                               locale.format("%d", total_allocated_real, grouping=True),
-                               '0%' if total_allocated_real == 0  or total_allocated_budget == 0 else str(locale.format("%d", round(total_allocated_real/total_allocated_budget * 100), grouping=True)) + "%",
-                               locale.format("%d", total_project_budget, grouping=True),
-                               locale.format("%d", total_project_real, grouping=True),
-                               '0%' if total_project_real == 0  or total_project_budget == 0 else str(locale.format("%d", round(total_project_real/total_project_budget * 100), grouping=True)) + "%"]]
+                               locale.format(format_str, total_allocated_budget, grouping=True),
+                               locale.format(format_str, total_allocated_real, grouping=True),
+                               '0%' if total_allocated_real == 0  or total_allocated_budget == 0 else str(locale.format(format_str, self._round(total_allocated_real/total_allocated_budget * 100, context=context), grouping=True)) + "%",
+                               locale.format(format_str, total_project_budget, grouping=True),
+                               locale.format(format_str, total_project_real, grouping=True),
+                               '0%' if total_project_real == 0  or total_project_budget == 0 else str(locale.format(format_str, self._round(total_project_real/total_project_budget * 100, context=context), grouping=True)) + "%"]]
 
 
         # Now, do the hierarchy

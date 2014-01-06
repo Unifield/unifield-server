@@ -42,7 +42,7 @@ class wizard_accrual_validation(osv.osv_memory):
                 elif not accrual_line.period_id:
                     raise osv.except_osv(_('Warning !'), _("The line '%s' has no period set!") % accrual_line.description)
                 elif not accrual_line.analytic_distribution_id:
-                    raise osv.except_osv(_('Warning !'), _("The line '%s' has no analytic distribution!" % accrual_line.description))
+                    raise osv.except_osv(_('Warning !'), _("The line '%s' has no analytic distribution!") % accrual_line.description)
                 else:
                     move_date = accrual_line.period_id.date_stop
                     reversal_move_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')

@@ -141,6 +141,7 @@
     fiscalyear_id: account_fiscalyear_fiscalyear0
     name: !eval "'Mar %s' %(datetime.now().year+1)"
     special: 1
+    number: 3
     state: draft
 -
   ... and a distribution.
@@ -182,15 +183,6 @@
       percentage: 20
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
--
-  I overwrite periods to have the right number and open them
--
-  !python {model: account.period}: |
-    import datetime
-    period_ids = self.search(cr, uid, [], order='date_start, name')
-    for p in self.browse(cr, uid, period_ids):
-      self.write(cr, uid, [p.id], {'number': int(datetime.datetime.strptime(p.date_start, '%Y-%m-%d').strftime('%m'))})
-    self.action_set_state(cr, uid, period_ids, {'state': 'open'})
 -
   I create an account move line with all of this.
 -
@@ -235,6 +227,7 @@
     name: "Contract"
     code: "TEST"
     donor_id: donor1
+    instance_id: !ref {search: "[]", model: msf.instance}
     grant_amount: 100000.0
     eligibility_from_date: !eval "'%s-01-01' %(datetime.now().year+1)"
     eligibility_to_date: !eval "'%s-12-31' %(datetime.now().year+1)"

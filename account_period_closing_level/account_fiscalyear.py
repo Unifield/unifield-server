@@ -63,6 +63,23 @@ class account_fiscalyear(osv.osv):
                 })
         return True
 
-account_fiscalyear()
+    def create(self, cr, uid, vals, context=None):
+        """
+        When creating new fiscalyear, we should add a new sequence for each journal. This is to have the right sequence number on journal items lines, etc.
+        """
+        # Check some elements
+        if context is None:
+            context = {}
+        # First default behaviour
+        res = super(account_fiscalyear, self).create(cr, uid, vals, context=context)
+        # Prepare some values
+        current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
+        name = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.name
+        # Then sequence creation on all journals
+        journal_ids = self.pool.get('account.journal').search(cr, uid, [('instance_id', '=', current_instance_id)])
+        for journal in self.pool.get('account.journal').browse(cr, uid, journal_ids, context=context):
+            self.pool.get('account.journal').create_fiscalyear_sequence(cr, uid, res, name, journal.code.lower(), vals['date_start'], journal.sequence_id and journal.sequence_id.id or False, context=context)
+        return res
 
+account_fiscalyear()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
