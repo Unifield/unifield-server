@@ -61,10 +61,13 @@
                                                 <input type="radio" class="radio" name="_terp_you" value="True" checked="checked"/>
                                             </td>
                                             <td>${_("Only for you")}</td>
+                                            ## utp-457: we display the for all option only for the admin profile
+                                            % if admin_profile:
                                             <td class="item">
                                                 <input type="radio" class="radio" name="_terp_you" value="False"/>
                                             </td>
                                             <td>${_("For all")}</td>
+                                            % endif
                                         </tr>
                                     </table>
                                 </fieldset>

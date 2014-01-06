@@ -35,6 +35,7 @@ from selection import Selection
 from tree import Tree
 from wizard import Wizard
 import urllib
+import re
 
 def execute_window(view_ids, model, res_id=False, domain=None, view_type='form', context=None,
                    mode='form,tree', name=None, target=None, limit=None, search_view=None,
@@ -183,9 +184,18 @@ def execute_report(name, **data):
             proxy = rpc.RPCProxy('ir.actions.report.xml')
             res = proxy.search([('report_name','=', name)])
             if res:
-                report_name = proxy.read(res[0], ['name'])['name']
+                read_ctx = datas.copy()
+                read_ctx.setdefault('context', {}).update(ctx)
+                report_name = proxy.read(res[0], ['filename'], read_ctx)['filename']
 
         report_name = report_name.replace('Print ', '')
+
+        if not ids or not datas.get('id') or not datas.get('model'):
+            if datas.get('target_filename'):
+                report_name = datas['target_filename']
+            elif datas.get('context', {}).get('_terp_view_name'):
+                report_name = datas['context']['_terp_view_name']
+
         cherrypy.response.headers['Content-Disposition'] = 'filename="' + report_name + '.' + report_type + '"'
 
         return _print_data(val)
