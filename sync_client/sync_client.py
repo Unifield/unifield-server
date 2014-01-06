@@ -605,7 +605,7 @@ class Entity(osv.osv):
         rule_obj = self.pool.get("sync.client.message_rule")
 
         messages_count = 0
-        for rule in rule_obj.browse(cr, uid, rule_obj.search(cr, uid, [], context=context), context=context):
+        for rule in rule_obj.browse(cr, uid, rule_obj.search(cr, uid, [('type', '!=', 'USB')], context=context), context=context):
             messages_count += messages.create_from_rule(cr, uid, rule, context=context)
             
         return messages_count
