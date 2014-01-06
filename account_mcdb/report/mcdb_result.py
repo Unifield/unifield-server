@@ -40,17 +40,6 @@ def getIds(self, cr, uid, ids, limit=5000, context=None):
         ids = table_obj.search(cr, uid, context.get('search_domain'), limit=limit)
     return ids
 
-def context_out(cr, uid, context):
-    pool =  pooler.get_pool(cr.dbname)
-    if context is None:
-        return {}
-    if not context.get('output_currency_id'):
-        return context
-    cmp_curr_id = pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
-    if context['output_currency_id'] == cmp_curr_id:
-        del context['output_currency_id']
-    return context
-
 def getObjects(self, cr, uid, ids, context):
     ids = getIds(self, cr, uid, ids, context)
     return super(self.__class__, self).getObjects(cr, uid, ids, context)
@@ -62,7 +51,6 @@ def getIterObjects(self, cr, uid, ids, context):
     steps = 1000
     pool =  pooler.get_pool(cr.dbname)
     table_obj = pool.get(self.table)
-    context = context_out(cr, uid, context)
     field_process = None
     if hasattr(self, '_fields_process'):
         field_process = self._fields_process
@@ -76,7 +64,8 @@ def getIterObjects(self, cr, uid, ids, context):
     raise StopIteration
 
 def create_csv(self, cr, uid, ids, data, context=None):
-    context = context_out(cr, uid, context)
+    if context is None:
+        context = {}
     ids = getIds(self, cr, uid, ids, limit=65000, context=context)
     pool = pooler.get_pool(cr.dbname)
     obj = pool.get('account.line.csv.export')
