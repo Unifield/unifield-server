@@ -537,6 +537,11 @@
                             <field name="shipment_ref" />
                         </group>
                     </group>
+                   <field name="is_esc" invisible="1" />
+                   <group colspan="4" string="ESC export" attrs="{'invisible': [('is_esc', '=', False)]}">
+                       <field name="filetype" />
+                       <button name="export_template_file" colspan="2" string="Export file for ESC" type="object" icon="gtk-print" />
+                   </group>
                     <notebook colspan="4">
                         <page string="General Information">
                             <field name="from_wkf" invisible="1"/>
@@ -808,7 +813,7 @@
                                 attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
                                 />
                        </group>
-                    </group>
+                   </group>
                     <notebook colspan="4">
                         <page string="Products">
                             <field name="from_wkf" invisible="1"/>

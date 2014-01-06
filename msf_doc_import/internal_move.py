@@ -38,6 +38,32 @@ class stock_picking(osv.osv):
     """
     _inherit = 'stock.picking'
 
+    _columns = {
+        'filetype': fields.selection([('excel', 'Excel file'),
+                                      ('xml', 'XML file')], string='Type of file',),
+    }
+
+    def export_template_file(self, cr, uid, ids, context=None):
+        '''
+        Export the template file in Excel or Pure XML format
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        pick = self.browse(cr, uid, ids[0], context=context)
+        if not pick.filetype:
+            raise osv.except_osv(_('Error'), _('You must select a file type before print the template'))
+
+        report_name = pick.filetype == 'excel' and 'report.incoming.shipment.xls' or 'report.incoming.shipment.xml'
+
+        datas = {'ids': ids}
+
+        return {'type': 'ir.actions.report.xml',
+                'report_name': report_name,
+                'datas': datas,
+                'context': context,
+        }
+
     def wizard_import_int_line(self, cr, uid, ids, context=None):
         '''
         Launches the wizard to import lines from a file
