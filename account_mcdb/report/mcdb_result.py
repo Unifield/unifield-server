@@ -28,6 +28,8 @@ from report_webkit.webkit_report import WebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 import zipfile
 import tempfile
+import os
+
 limit_tozip = 15000
 
 def getIds(self, cr, uid, ids, limit=5000, context=None):
