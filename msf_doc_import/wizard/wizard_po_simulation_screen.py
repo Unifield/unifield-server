@@ -442,6 +442,9 @@ class wizard_import_po_simulation_screen(osv.osv):
         cr = pooler.get_db(dbname).cursor()
         #cr = dbname
         wl_obj = self.pool.get('wizard.import.po.simulation.screen.line')
+        prod_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
+
 
         # Declare global variables (need this explicit declaration to clear
         # them at the end of the treatment)
@@ -719,9 +722,24 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % shipment_date
                     product_id = PRODUCT_CODE_ID.get(vals[2], False)
                 if not product_id and vals[3]:
                     product_id = PRODUCT_NAME_ID.get(vals[3], False)
+                if not product_id and vals[2]:
+                    prod_ids = prod_obj.search(cr, uid, [('default_code', '=', vals[2])], context=context)
+                    if prod_ids:
+                        product_id = prod_ids[0]
+                        PRODUCT_CODE_ID.setdefault(vals[2], product_id)
+                if not product_id and vals[3]:
+                    prod_ids = prod_obj.search(cr, uid, [('name', '=', vals[3])], context=context)
+                    if prod_ids:
+                        product_id = prod_ids[0]
+                        PRODUCT_NAME_ID.setdefault(vals[3], product_id)
                 # UoM
                 if vals[5]:
                     uom_id = UOM_NAME_ID.get(vals[5], False)
+                    if not uom_id:
+                        uom_ids = uom_obj.search(cr, uid, [('name', '=', vals[5])], context=context)
+                        if uom_ids:
+                            uom_id = uom_ids[0]
+                            UOM_NAME_ID.setdefault(vals[5], uom_id)
                 # Qty
                 if vals[4]:
                     qty = float(vals[4])
