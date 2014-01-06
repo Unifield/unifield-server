@@ -32,14 +32,35 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 def getIds(self, cr, uid, ids, context):
     if not context:
         context = {}
-    if context.get('from_domain') and 'search_domain' in context:
+    if context.get('from_domain') and 'search_domain' in context and not context.get('export_selected'):
         table_obj = pooler.get_pool(cr.dbname).get(self.table)
-        ids = table_obj.search(cr, uid, context.get('search_domain'), limit=5000)
+        ids = table_obj.search(cr, uid, context.get('search_domain'), limit=65000)
     return ids
 
 def getObjects(self, cr, uid, ids, context):
     ids = getIds(self, cr, uid, ids, context)
-    return super(self.__class__, self).getObjects(cr, uid, ids, context)
+    len_ids = len(ids)
+    l = 0
+    steps = 1000
+    pool =  pooler.get_pool(cr.dbname)
+    table_obj = pool.get(self.table)
+    if context is None:
+        context = {}
+    if context.get('output_currency_id'):
+        cmp_curr_id = pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+        if context['output_currency_id'] == cmp_curr_id:
+            del context['output_currency_id']
+    field_process = None
+    if hasattr(self, '_fields_process'):
+        field_process = self._fields_process
+    while l < len_ids:
+        old_l = l
+        l = l + steps
+        new_ids = ids[old_l:l]
+        if new_ids:
+            for o in table_obj.browse(cr, uid, new_ids, list_class=report_sxw.browse_record_list, context=context, fields_process=field_process):
+                 yield o
+    yield []
 
 def create_csv(self, cr, uid, ids, data, context=None):
     if not context:
@@ -87,17 +108,42 @@ class account_move_line_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         super(account_move_line_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
+    def getObjects(self, cr, uid, ids, context):
+        return getObjects(self, cr, uid, ids, context)
+
     def create(self, cr, uid, ids, data, context=None):
         ids = getIds(self, cr, uid, ids, context)
-        a = super(account_move_line_report_xls, self).create(cr, uid, ids, data, context)
-        return (a[0], 'xls')
+        if context is None:
+            context = {}
+        if len(ids) > 15000:
+            context['zipit'] = True
+        #context['splitbrowse'] = True
+        return super(account_move_line_report_xls, self).create(cr, uid, ids, data, context=context)
 
 class parser_account_move_line(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(parser_account_move_line, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'reconcile_name': self.reconcile_name,
+            #'getSub': self.getSub,
         })
+
+#    def getSub(self):
+#        len_ids = len(self.localcontext.get('ids'))
+#        obj = self.pool.get('account.move.line')
+#        ctx = {}
+#        l = 0
+#        steps = 1000
+#        output_cur = self.localcontext.get('data',{}).get('context', {}).get('output_currency_id')
+#        if output_cur and output_cur != self.localcontext.get('company').currency_id.id:
+#            ctx['output_currency_id'] = output_cur
+#        else:
+#            output_cur = False
+#        while l < len_ids:
+#            old_l = l
+#            l = l+steps
+#            yield obj.browse(self.cr, self.uid, self.localcontext.get('ids')[old_l:l], context={'output_currency_id': output_cur})
+#        yield []
 
     def reconcile_name(self, r_id=None, context=None):
         if not r_id:
