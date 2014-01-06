@@ -424,8 +424,6 @@ class wizard_import_in_simulation_screen(osv.osv):
             else:
                 values = self.get_values_from_xml(cr, uid, wiz.file_to_import, context=context)
 
-            print values
-
             '''
             We check for each line if the number of columns is consistent
             with the expected number of columns :
@@ -854,5 +852,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         'np_check': fields.function(_get_values, method=True, type='boolean',
                                      string='NP', readonly=True, store=False, multi='computed'),
     }
+
+    def import_line(self, cr, uid, ids, vals, context=None):
+        return ''
 
 wizard_import_in_line_simulation_screen()

@@ -156,5 +156,30 @@
            menu="True"
            />
 
+       <!-- EXCEL INCOMING SHIPMENT -->
+       <report
+           id="report_incoming_shipment_xls"
+           string="Incoming Shipment Excel Export"
+           model="stock.picking"
+           name="incoming.shipment.xls"
+           file="msf_supply_doc_export/report/report_incoming_shipment_xls.mako"
+           report_type="webkit"
+           header="False"
+           auto="False"
+           menu="False"
+           />
+
+       <report
+           id="report_incoming_shipment_xml"
+           string="Incoming Shipment Pure XML Export"
+           model="stock.picking"
+           name="incoming.shipment.xml"
+           file="msf_supply_doc_export/report/report_incoming_shipment_xml.mako"
+           report_type="webkit"
+           header="False"
+           auto="False"
+           menu="False"
+           />
+
     </data>
 </openerp>

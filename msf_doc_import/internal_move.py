@@ -54,7 +54,7 @@ class stock_picking(osv.osv):
         if not pick.filetype:
             raise osv.except_osv(_('Error'), _('You must select a file type before print the template'))
 
-        report_name = pick.filetype == 'excel' and 'report.incoming.shipment.xls' or 'report.incoming.shipment.xml'
+        report_name = pick.filetype == 'excel' and 'incoming.shipment.xls' or 'incoming.shipment.xml'
 
         datas = {'ids': ids}
 
