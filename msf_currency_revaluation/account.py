@@ -52,6 +52,9 @@ class account_account(osv.osv):
     _columns = {
         'currency_revaluation': fields.boolean(
             string=_("Included in revaluation?")),
+        'user_type_code': fields.related(
+            'user_type', 'code',
+            type='char', string=u"Type (code)"),
     }
 
     _defaults = {'currency_revaluation': False}
@@ -79,35 +82,67 @@ class account_account(osv.osv):
         return query, params
 
     def compute_revaluations(
-            self, cr, uid, ids, period_ids,
+            self, cr, uid, ids, period_ids, fiscalyear_id,
             revaluation_date, context=None):
         if context is None:
             context = {}
         accounts = {}
 
-        #compute for each account the balance/debit/credit from the move lines
+        # Compute for each account the balance/debit/credit from the move lines
         ctx_query = context.copy()
         ctx_query['periods'] = period_ids
+        ctx_query['fiscalyear'] = fiscalyear_id
         query, params = self._revaluation_query(
             cr, uid, ids,
             revaluation_date,
             context=ctx_query)
-
+        print "QUERY", query
+        print "PARAMS", params
         cr.execute(query, params)
-
         lines = cr.dictfetchall()
         for line in lines:
             # generate a tree
             # - account_id
             # -- currency_id
             # ----- balances
-            account_id, currency_id = \
-                line['id'], line['currency_id']
-
+            account_id, currency_id = line['id'], line['currency_id']
             accounts.setdefault(account_id, {})
             accounts[account_id].setdefault(currency_id, {})
             accounts[account_id][currency_id] = line
+        print(u"BALANCES")
+        from pprint import pprint
+        pprint(lines)
 
+        # Compute for each account the initial balance/debit/credit from the
+        # move lines and add it to the previous result
+        ctx_query = context.copy()
+        ctx_query['periods'] = period_ids
+        ctx_query['fiscalyear'] = fiscalyear_id
+        ctx_query['initial_bal'] = True
+        query, params = self._revaluation_query(
+            cr, uid, ids,
+            revaluation_date,
+            context=ctx_query)
+        print "INITIAL BAL QUERY", query
+        print "INITIAL BAL PARAMS", params
+        cr.execute(query, params)
+        lines = cr.dictfetchall()
+        print(u"INITIAL BALANCES")
+        from pprint import pprint
+        pprint(lines)
+        for line in lines:
+            # generate a tree
+            # - account_id
+            # -- currency_id
+            # ----- balances
+            account_id, currency_id = line['id'], line['currency_id']
+            accounts.setdefault(account_id, {})
+            accounts[account_id].setdefault(currency_id, {'balance': 0, 'foreign_balance': 0})
+            accounts[account_id][currency_id]['balance'] += line['balance']
+            accounts[account_id][currency_id]['foreign_balance'] += line['foreign_balance']
+
+        print("ACCOUNTS")
+        pprint(accounts)
         return accounts
 
 account_account()

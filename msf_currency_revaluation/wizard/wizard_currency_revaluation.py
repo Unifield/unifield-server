@@ -32,8 +32,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
     _columns = {'revaluation_date': fields.date(
                     _('Revaluation Date')),
                 'revaluation_method': fields.selection(
-                    [('liquidity', _("Liquidity")),
-                     ('other_bs', _("Other B/S")),
+                    [('liquidity', _("Liquidity (Month-end)")),
+                     ('other_bs', _("Liquidity & Other B/S (Year-end)")),
                      ],
                     string=_("Revaluation method"), required=True),
                 'revaluation_year_ok': fields.boolean(
@@ -49,8 +49,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', '!=', 'created')]"),
                 'currency_table_id': fields.many2one(
                     'res.currency.table', string=_("Currency table"),
-                    domain=[('state', '=', 'valid')],
-                    required=True),
+                    domain=[('state', '=', 'valid')]),
                 'journal_id': fields.many2one(
                     'account.journal', string=_("Entry journal"),
                     #domain="[('type','=','general')]",
@@ -106,6 +105,20 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             context=context)
         return fiscalyear_ids and fiscalyear_ids[0] or False
 
+    def _get_default_period_id(self, cr, uid, context=None):
+        """Get default period to process."""
+        if context is None:
+            context = {}
+        period_obj = self.pool.get('account.period')
+        period_date = datetime.date.today()
+        if period_date.month > 1:
+            period_date = period_date - relativedelta(months=1)
+        # NOTE: the method 'get_period_from_date()' supplied by the
+        #       'account_tools' module is used here
+        period_ids = period_obj.get_period_from_date(
+            cr, uid, period_date.strftime('%Y-%m-%d'))
+        return period_ids and period_ids[0] or False
+
     def _get_default_journal_id(self, cr, uid, context):
         """Get default revaluation journal."""
         journal_obj = self.pool.get('account.journal')
@@ -148,6 +161,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         'revaluation_method': lambda *args: 'liquidity',
         'revaluation_date': _get_default_revaluation_date,
         'fiscalyear_id': _get_default_fiscalyear_id,
+        'period_id': _get_default_period_id,
         'result_period_id': _get_default_result_period_id,
         'posting_date': _get_default_posting_date,
         'journal_id': _get_default_journal_id,
@@ -188,6 +202,24 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         value['period_id'] = period_id
         value['revaluation_date'] = False
         if method == 'liquidity':
+            if not period_id and fiscalyear_id:
+                # If the current fiscal year is the actual one, we get the
+                # previous month as the right period (except for january)
+                if fiscalyear_id == self._get_default_fiscalyear_id(cr, uid):
+                    period_date = datetime.date.today()
+                    if period_date.month > 1:
+                        period_date = period_date - relativedelta(months=1)
+                # If the selected fiscal year is not the actual one, we get its
+                # last period
+                else:
+                    period_date = datetime.datetime.strptime(
+                        fiscalyear.date_stop, '%Y-%m-%d')
+                # NOTE: the method 'get_period_from_date()' supplied by the
+                #       'account_tools' module is used here
+                period_ids = period_obj.get_period_from_date(
+                    cr, uid, period_date.strftime('%Y-%m-%d'))
+                period_id = period_ids and period_ids[0] or False
+                value['period_id'] = period_id
             if period_id:
                 period = period_obj.browse(cr, uid, period_id)
                 value['revaluation_date'] = period.date_stop
@@ -336,21 +368,26 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         distrib_obj = self.pool.get('analytic.distribution')
         cc_distrib_obj = self.pool.get('cost.center.distribution.line')
         fp_distrib_obj = self.pool.get('funding.pool.distribution.line')
+        account_ana_obj = self.pool.get('account.analytic.account')
         model_data_obj = self.pool.get('ir.model.data')
 
         #company = user_obj.browse(cr, uid, uid).company_id
         account = account_obj.browse(cr, uid, account_id, context=context)
         revaluation_account_id = model_data_obj.get_object_reference(
             cr, uid, 'msf_chart_of_account', '6940')[1]
+        revaluation_account = account_obj.browse(
+            cr, uid, revaluation_account_id, context=context)
 
         # Prepare the analytic distribution for the account revaluation entry
         # if the account has a 'expense' or 'income' type
         distribution_id = False
-        if account.user_type.code in ['expense', 'income']:
+        if revaluation_account.user_type.code in ['expense', 'income']:
             destination_id = model_data_obj.get_object_reference(
                 cr, uid, 'analytic_distribution', 'analytic_account_destination_support')[1]
-            cost_center_id = model_data_obj.get_object_reference(
-                cr, uid, 'analytic_distribution', 'analytic_account_project_intermission')[1]
+            #cost_center_id = model_data_obj.get_object_reference(
+            #    cr, uid, 'analytic_distribution', 'analytic_account_project_intermission')[1]
+            cost_center_id = account_ana_obj.search(
+                cr, uid, [('for_fx_gain_loss', '=', True)], context=context)[0]
             funding_pool_id = model_data_obj.get_object_reference(
                 cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
             distribution_id = distrib_obj.create(cr, uid, {}, context=context)
@@ -386,15 +423,15 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     'debit': amount,
                     'debit_currency': False,
                     'move_id': move_id,
-                    'account_id': revaluation_account_id,
+                    'account_id': account_id,
                 }
                 created_ids.append(create_move_line(move_id, line_data, sums))
-                # Create a move line to Credit revaluation gain account
+                # Create a move line to Credit revaluation account
                 line_data = {
                     'credit': amount,
                     'credit_currency': False,
-                    'account_id': account_id,
                     'move_id': move_id,
+                    'account_id': revaluation_account_id,
                     'analytic_distribution_id': distribution_id,
                 }
                 created_ids.append(create_move_line(move_id, line_data, sums))
@@ -408,7 +445,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 line_data = {
                     'debit': amount,
                     'move_id': move_id,
-                    'account_id': account_id,
+                    'account_id': revaluation_account_id,
                     'analytic_distribution_id': distribution_id,
                 }
 
@@ -417,7 +454,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 line_data = {
                     'credit': amount,
                     'move_id': move_id,
-                    'account_id': revaluation_account_id,
+                    'account_id': account_id,
                 }
                 created_ids.append(create_move_line(move_id, line_data, sums))
         # Hard post the move
@@ -447,18 +484,20 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         form = self.browse(cr, uid, ids[0], context=context)
 
         # Set the currency table in the context for later computations
-        context['currency_table_id'] = form.currency_table_id.id
+        if form.revaluation_method == 'other_bs':
+            context['currency_table_id'] = form.currency_table_id.id
 
         # Get all currency names to map them with main currencies later
         currency_codes_from_table = {}
-        for currency in form.currency_table_id.currency_ids:
-            # Check the revaluation date and dates in the currency table
-            #if currency.date != form.revaluation_date:
-            #    raise osv.except_osv(
-            #        _("Error"),
-            #        _("The revaluation date seems to differ with the data of "
-            #          "the currency table."))
-            currency_codes_from_table[currency.name] = currency.id
+        if form.revaluation_method == 'other_bs':
+            for currency in form.currency_table_id.currency_ids:
+                # Check the revaluation date and dates in the currency table
+                #if currency.date != form.revaluation_date:
+                #    raise osv.except_osv(
+                #        _("Error"),
+                #        _("The revaluation date seems to differ with the data of "
+                #          "the currency table."))
+                currency_codes_from_table[currency.name] = currency.id
 
         # Get posting date (as the field is readonly, its value is not sent
         # to the server by the web client
@@ -471,13 +510,17 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         if form.revaluation_method == 'liquidity':
             account_ids = account_obj.search(
                 cr, uid,
-                [('currency_revaluation', '=', True), ('type', '=', 'liquidity')],
+                [('currency_revaluation', '=', True),
+                 ('type', '=', 'liquidity'),
+                 ('user_type_code', '=', 'cash')],
                  #('user_type.close_method', '!=', 'none'),
                 context=context)
         elif form.revaluation_method == 'other_bs':
             account_ids = account_obj.search(
                 cr, uid,
-                [('currency_revaluation', '=', True), ('type', '!=', 'liquidity')],
+                [('currency_revaluation', '=', True),
+                 ('user_type_code', 'in', ['receivables', 'payables', 'asset', 'stock'])],
+                 #('type', '!=', 'liquidity')],
                 context=context)
         if not account_ids:
             raise osv.except_osv(
@@ -528,17 +571,20 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # Get balance sums
         account_sums = account_obj.compute_revaluations(
-            cr, uid, account_ids, period_ids, form.revaluation_date, context=context)
+            cr, uid, account_ids, period_ids, form.fiscalyear_id.id,
+            form.revaluation_date, context=context)
         for account_id, account_tree in account_sums.iteritems():
             for currency_id, sums in account_tree.iteritems():
-                # Check if the account move currency is declared in the
-                # currency table
-                currency = currency_obj.browse(cr, uid, currency_id, context=context)
-                if currency.id != company.currency_id.id and currency.name not in currency_codes_from_table:
-                    raise osv.except_osv(
-                        _("Error"),
-                        _("The currency %s is not declared in the currency table.") % currency.name)
-                new_currency_id = currency_codes_from_table[currency.name]
+                new_currency_id = currency_id
+                # If the method is 'other_bs', check if the account move
+                # currency is declared in the currency table and get it
+                if form.revaluation_method == 'other_bs':
+                    currency = currency_obj.browse(cr, uid, currency_id, context=context)
+                    if currency.id != company.currency_id.id and currency.name not in currency_codes_from_table:
+                        raise osv.except_osv(
+                            _("Error"),
+                            _("The currency %s is not declared in the currency table.") % currency.name)
+                    new_currency_id = currency_codes_from_table[currency.name]
                 if not sums['balance']:
                     continue
                 # Update sums with compute amount currency balance
@@ -548,8 +594,12 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # Create entries only after all computation have been done
         for account_id, account_tree in account_sums.iteritems():
             for currency_id, sums in account_tree.iteritems():
-                currency = currency_obj.browse(cr, uid, currency_id, context=context)
-                new_currency_id = currency_codes_from_table[currency.name]
+                new_currency_id = currency_id
+                # If the method is 'other_bs', get the account move currency in
+                # the currency table
+                if form.revaluation_method == 'other_bs':
+                    currency = currency_obj.browse(cr, uid, currency_id, context=context)
+                    new_currency_id = currency_codes_from_table[currency.name]
                 adj_balance = sums.get('unrealized_gain_loss', 0.0)
                 if not adj_balance:
                     continue

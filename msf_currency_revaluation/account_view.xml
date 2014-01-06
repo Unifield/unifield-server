@@ -11,7 +11,7 @@
                 <xpath expr="//notebook" position="inside">
                     <page string="Currency Revaluation">
                         <field name="currency_revaluation"
-                            attrs="{'readonly': [('type', 'not in', ['receivable', 'payable', 'liquidity'])]}"/>
+                            attrs="{'readonly': [('user_type_code', 'not in', ['receivables', 'payables', 'cash', 'asset', 'stock'])]}"/>
                     </page>
                 </xpath>
             </field>
