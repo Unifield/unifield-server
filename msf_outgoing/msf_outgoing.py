@@ -1857,8 +1857,12 @@ class stock_picking(osv.osv):
                     values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id]['qty_to_pick_sm'] += move.product_qty
                     # total quantity from SALE_ORDER_LINES, which can be different from the one from stock moves
                     # if stock moves have been created manually in the picking, no present in the so, equal to 0 if not linked to an so
-                    values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id].setdefault('qty_to_pick_so', 0)
-                    values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id]['qty_to_pick_so'] += move.sale_line_id and move.sale_line_id.product_uom_qty or 0.0 
+                    
+                    # UF-2227: Qty of FO line is only taken once, and use it, do not accumulate for the case the line got split!
+                    if 'qty_to_pick_so' not in values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id]:
+                        values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id].setdefault('qty_to_pick_so', 0)
+                        values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id]['qty_to_pick_so'] += move.sale_line_id and move.sale_line_id.product_uom_qty or 0.0 
+
                     # store the object for info retrieval
                     values[sale_line_id]['products'][move.product_id.id]['obj'] = move.product_id
                     
