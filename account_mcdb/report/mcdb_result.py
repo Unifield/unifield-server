@@ -94,7 +94,7 @@ def create_csv(self, cr, uid, ids, data, context=None):
     if len(ids) > limit_tozip:
         null, tmpzipname = tempfile.mkstemp()
         zf = zipfile.ZipFile(tmpzipname, 'w')
-        zf.writestr('export_result.csv', out, zipfile.ZIP_DEFLATED)
+        zf.writestr('export_result.csv', out)
         zf.close()
         out = file(tmpzipname, 'rb').read()
         os.unlink(tmpzipname)
