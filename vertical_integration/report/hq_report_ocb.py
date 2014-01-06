@@ -246,6 +246,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 WHERE st.instance_id = i.id
                 AND st.period_id = p.id
                 AND st.journal_id = j.id
+                AND p.id = %s
                 ORDER BY st.name, p.number;
                 """,
             'contract': """
@@ -345,6 +346,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'headers': ['Instance', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance', 'State', 'Journal code'],
                 'filename': 'liquidities.csv',
                 'key': 'register',
+                'query_params': tuple([period.id]),
                 'function': 'postprocess_register',
                 },
             {
