@@ -1295,14 +1295,14 @@ class purchase_order(osv.osv):
             if rfq.rfq_ok and rfq.tender_id:
                 for line in rfq.order_line:
                     if not line.tender_line_id:
-                        tl_ids = tl_obj.search(cr, uid, [('product_id', '=', line.product_id.id)], context=context)
+                        tl_ids = tl_obj.search(cr, uid, [('product_id', '=', line.product_id.id), ('tender_id', '=', rfq.tender_id.id), ('line_state', '=', 'draft')], context=context)
                         if tl_ids:
                             tl_id = tl_ids[0]
                         else:
                             tl_vals = {'product_id': line.product_id.id,
                                        'product_uom': line.product_uom.id,
                                        'qty': line.product_qty,
-                                       'tender_id': line.order_id.tender_id.id,
+                                       'tender_id': rfq.tender_id.id,
                                        'created_by_rfq': True}
                             tl_id = tl_obj.create(cr, uid, tl_vals, context=context)
                         line_obj.write(cr, uid, [line.id], {'tender_line_id': tl_id}, context=context)
