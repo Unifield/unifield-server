@@ -45,6 +45,8 @@ def getObjects(self, cr, uid, ids, context):
     return super(self.__class__, self).getObjects(cr, uid, ids, context)
 
 def getIterObjects(self, cr, uid, ids, context):
+    if context is None:
+        context = {}
     ids = getIds(self, cr, uid, ids, limit=65000, context=context)
     len_ids = len(ids)
     l = 0
@@ -54,6 +56,13 @@ def getIterObjects(self, cr, uid, ids, context):
     field_process = None
     if hasattr(self, '_fields_process'):
         field_process = self._fields_process
+    # we need to sort analytic line by account code
+    if context.get('sort_by_account_code') and len_ids > 1:
+        cr.execute('select an.id from account_analytic_line an left join account_analytic_account a on an.account_id = a.id where an.id in %s order by a.code', (tuple(ids), ))
+        ids = []
+        for i in cr.fetchall():
+            ids.append(i[0])
+
     while l < len_ids:
         old_l = l
         l = l + steps
@@ -206,6 +215,9 @@ class account_analytic_line_free_report_xls(SpreadsheetReport):
         super(account_analytic_line_free_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
     def getObjects(self, cr, uid, ids, context):
+        if context is None:
+            context = {}
+        context['sort_by_account_code'] = 1
         return getIterObjects(self, cr, uid, ids, context)
 
     def create(self, cr, uid, ids, data, context=None):
