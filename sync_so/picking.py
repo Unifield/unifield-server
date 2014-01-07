@@ -167,6 +167,13 @@ class stock_picking(osv.osv):
                         self._logger.info(message)
                         continue
 
+                    # If the line is canceled, then just ignore it!
+                    state = data.get('state', 'cancel')
+                    if state == 'cancel':
+                        message = "Line number "  + str(ln) + " with state cancel is ignored!"
+                        self._logger.info(message)
+                        continue
+
                     if ln not in line_numbers.keys():
                         move_ids = move_obj.search(cr, uid, [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))], context=context)
                         if move_ids and move_ids[0]:

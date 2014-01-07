@@ -90,8 +90,12 @@ class purchase_order_sync(osv.osv):
             raise Exception, text
             
         # UTP-163: Get the 'source document' of the original PO, and add it into the split PO, if existed
-        origin = self.browse(cr, uid, po_id, context=context)['origin']
-        header_result['origin'] = origin
+        ori_po = self.browse(cr, uid, po_id, context=context)
+        header_result['origin'] = ori_po.origin
+        
+        # UF-2267: Copy the link to original PO from the split PO to the new PO-2/3 
+        if ori_po.parent_order_name and ori_po.parent_order_name.id:
+            header_result['parent_order_name'] = ori_po.parent_order_name.id
 
         # UTP-952: If the partner is section or intermission, then take the AD from the original PO, not from the source instance
         partner_type = so_po_common.get_partner_type(cr, uid, source, context)
