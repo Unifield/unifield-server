@@ -60,7 +60,7 @@ class purchase_order_sync(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
-        default.update({'active': True, 'split_po' : False, 'po_updated_by_sync': False})
+        default.update({'active': True, 'split_po' : False, 'push_fo' : False, 'po_updated_by_sync': False})
         return super(purchase_order_sync, self).copy(cr, uid, id, default, context=context)
         
     def create_split_po(self, cr, uid, source, so_info, context=None):
