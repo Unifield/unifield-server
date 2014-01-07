@@ -73,7 +73,8 @@ class purchase_order_sync(osv.osv):
         partner_ref = source + "." + so_info.name
         
         if not ref or partner_ref != ref: # only issue a write if the client_order_reference is not yet set!
-            res_id = self.write(cr, uid, po_id, {'partner_ref': partner_ref} , context=context)
+            # Sorry: This trick is to avoid creating new useless message to the synchronisation engine!
+            cr.execute('update purchase_order set partner_ref=%s where id=%s', (partner_ref, po_id))
         
         message = "The partner reference of the PO " + po_value.name + " got updated successfully"
         self._logger.info(message)
