@@ -54,7 +54,10 @@ class account_account(osv.osv):
             string=_("Included in revaluation?")),
         'user_type_code': fields.related(
             'user_type', 'code',
-            type='char', string=u"Type (code)"),
+            type='char', string=_(u"Type (code)")),
+        'instance_level': fields.related(
+            'company_id', 'instance_id', 'level',
+            type='char', string=_(u"Instance level")),
     }
 
     _defaults = {'currency_revaluation': False}
@@ -96,8 +99,6 @@ class account_account(osv.osv):
             cr, uid, ids,
             revaluation_date,
             context=ctx_query)
-        print "QUERY", query
-        print "PARAMS", params
         cr.execute(query, params)
         lines = cr.dictfetchall()
         for line in lines:
@@ -109,9 +110,6 @@ class account_account(osv.osv):
             accounts.setdefault(account_id, {})
             accounts[account_id].setdefault(currency_id, {})
             accounts[account_id][currency_id] = line
-        print(u"BALANCES")
-        from pprint import pprint
-        pprint(lines)
 
         # Compute for each account the initial balance/debit/credit from the
         # move lines and add it to the previous result
@@ -123,13 +121,8 @@ class account_account(osv.osv):
             cr, uid, ids,
             revaluation_date,
             context=ctx_query)
-        print "INITIAL BAL QUERY", query
-        print "INITIAL BAL PARAMS", params
         cr.execute(query, params)
         lines = cr.dictfetchall()
-        print(u"INITIAL BALANCES")
-        from pprint import pprint
-        pprint(lines)
         for line in lines:
             # generate a tree
             # - account_id
@@ -137,12 +130,14 @@ class account_account(osv.osv):
             # ----- balances
             account_id, currency_id = line['id'], line['currency_id']
             accounts.setdefault(account_id, {})
-            accounts[account_id].setdefault(currency_id, {'balance': 0, 'foreign_balance': 0})
+            accounts[account_id].setdefault(
+                currency_id,
+                {'balance': 0, 'foreign_balance': 0, 'credit': 0, 'debit': 0})
             accounts[account_id][currency_id]['balance'] += line['balance']
             accounts[account_id][currency_id]['foreign_balance'] += line['foreign_balance']
+            accounts[account_id][currency_id]['credit'] += line['credit']
+            accounts[account_id][currency_id]['debit'] += line['debit']
 
-        print("ACCOUNTS")
-        pprint(accounts)
         return accounts
 
 account_account()

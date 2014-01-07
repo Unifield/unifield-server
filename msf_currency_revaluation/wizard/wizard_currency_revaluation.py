@@ -577,7 +577,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             for currency_id, sums in account_tree.iteritems():
                 new_currency_id = currency_id
                 # If the method is 'other_bs', check if the account move
-                # currency is declared in the currency table and get it
+                # currency is declared in the currency table and get it there
                 if form.revaluation_method == 'other_bs':
                     currency = currency_obj.browse(cr, uid, currency_id, context=context)
                     if currency.id != company.currency_id.id and currency.name not in currency_codes_from_table:
@@ -694,7 +694,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         rev_move = move_obj.browse(cr, uid, move_id, context=context)
         # Compute the posting date:
         # Get the stop date of the next period, or the first period of the next
-        # fiscal year if the selected period is 'Period 13' 
+        # fiscal year if the selected period is 'Period 13'
         posting_date = form.result_period_id.date_stop
         period_id = form.result_period_id.id
         if form.result_period_id.number == 13:
