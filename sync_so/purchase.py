@@ -57,6 +57,29 @@ class purchase_order_sync(osv.osv):
         'po_updated_by_sync': False,
     }
 
+
+    # UF-2267: Added a new method to update the reference of the FO back to the PO
+    def update_fo_ref(self, cr, uid, source, so_info, context=None):
+        self._logger.info("+++ Update the FO reference from %s to the PO %s"%(source, cr.dbname))
+        if not context:
+            context = {}
+            
+        context['no_check_line'] = True
+        so_po_common = self.pool.get('so.po.common')
+        po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
+        po_value = self.browse(cr, uid, po_id)
+        
+        ref = po_value.partner_ref
+        partner_ref = source + "." + so_info.name
+        
+        if not ref or partner_ref != ref: # only issue a write if the client_order_reference is not yet set!
+            res_id = self.write(cr, uid, po_id, {'partner_ref': partner_ref} , context=context)
+        
+        message = "The partner reference of the PO " + po_value.name + " got updated successfully"
+        self._logger.info(message)
+        return message
+
+
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
