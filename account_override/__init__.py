@@ -71,9 +71,8 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Customer refund
     #+ Debit notes
     'invoice_lines': [
-        ('type', '!=', 'view'),
+        ('type', 'not in', ['view', 'liquidity']), # Do not allow liquidity accounts
         ('is_not_hq_correctible', '!=', True),
-        '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
         '|', ('type', '!=', 'other'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
         '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Disallow extra-accounting expenses accounts
     ],
