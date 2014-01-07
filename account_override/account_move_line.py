@@ -262,6 +262,7 @@ class account_move_line(osv.osv):
         ),
         'is_reconciled': fields.function(_get_is_reconciled, fnct_search=_search_is_reconciled, type='boolean', method=True, string="Is reconciled", help="Is that line partially/totally reconciled?"),
         'balance_currency': fields.function(_balance_currency, fnct_search=_balance_currency_search, method=True, string='Balance Booking'),
+        'corrected_upstream': fields.boolean('Corrected from CC/HQ', readonly=True, help='This line have been corrected from Coordo or HQ level to a cost center that have the same level or superior.'),
     }
 
     _defaults = {
@@ -270,6 +271,7 @@ class account_move_line(osv.osv):
         'document_date': lambda self, cr, uid, c: c.get('document_date', False) or strftime('%Y-%m-%d'),
         'date': lambda self, cr, uid, c: c.get('date', False) or strftime('%Y-%m-%d'),
         'exported': lambda *a: False,
+        'corrected_upstream': lambda *a: False,
     }
 
     _order = 'move_id DESC'
