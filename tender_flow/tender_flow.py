@@ -1023,6 +1023,7 @@ class procurement_order(osv.osv):
             result[id] = False
             
         for proc in self.browse(cr, uid, ids, context=context):
+            result[proc.id] = {}
             for line in proc.sale_order_line_ids:
                 result[proc.id]['is_tender'] = line.po_cft == 'cft'
                 result[proc.id]['is_rfq'] = line.po_cft == 'rfq'
@@ -1063,10 +1064,15 @@ class procurement_order(osv.osv):
         '''
         rfq_obj = self.pool.get('purchase.order')
         rfq_line_obj = self.pool.get('purchase.order.line')
+        partner_obj = self.pool.get('res.partner')
+
+        if not context:
+            context = {}
+
         # find the corresponding sale order id for rfq
         for proc in self.browse(cr, uid, ids, context=context):
             if proc.rfq_id:
-                return rfq_id
+                return proc.rfq_id
             sale_order = False
             sale_order_line = False
             for sol in proc.sale_order_line_ids:
@@ -1079,11 +1085,26 @@ class procurement_order(osv.osv):
                 rfq_id = rfq_ids[0]
             # create if not found
             if not rfq_id:
+                supplier = proc.supplier
+                company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+                pricelist_id = supplier.property_product_pricelist_purchase.id
+                address_id = partner_obj.address_get(cr, uid, [supplier.id], ['default'])['default']
+                if not address_id:
+                    raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!')%(supplier.name,))
+
+                context['rfq_ok'] = True
                 rfq_id = rfq_obj.create(cr, uid, {'sale_order_id': sale_order.id,
                                                   'categ': sale_order.categ,
                                                   'priority': sale_order.priority,
+                                                  'fiscal_position': supplier.property_account_position and supplier.property_account_position.id or False,
+                                                  'rfq_delivery_address': partner_obj.address_get(cr, uid, company.partner_id.id, ['delivery'])['delivery'],
                                                   'warehouse_id': sale_order.shop_id.warehouse_id.id,
+                                                  'location_id': proc.location_id.id,
+                                                  'partner_id': supplier.id,
+                                                  'partner_address_id': address_id,
+                                                  'pricelist_id': pricelist_id,
                                                   'rfq_ok': True,
+                                                  'from_procurement': True,
                                                   'order_type': sale_order.order_type,
                                                   'origin': sale_order.name,}, context=context)
 
@@ -1091,12 +1112,14 @@ class procurement_order(osv.osv):
             rfq_line_id = rfq_line_obj.create(cr, uid, {'product_id': proc.product_id.id,
                                                         'comment': sale_order_line.comment,
                                                         'name': sale_order_line.name,
+                                                        'price_unit': 0.00,
                                                         'product_qty': proc.product_qty,
                                                         'origin': sale_order.name,
                                                         'order_id': rfq_id,
                                                         'sale_order_line_id': sale_order_line.id,
                                                         'location_id': proc.location_id.id,
                                                         'product_uom': proc.product_uom.id,
+                                                        'procurement_id': proc.id,
                                                         #'date_planned': proc.date_planned, # function at line level
                                                         }, context=context)
             
@@ -1118,7 +1141,7 @@ class procurement_order(osv.osv):
         # find the corresponding sale order id for tender
         for proc in self.browse(cr, uid, ids, context=context):
             if proc.tender_id:
-                return tender_id
+                return proc.tender_id
             sale_order = False
             sale_order_line = False
             for sol in proc.sale_order_line_ids:
@@ -1240,6 +1263,7 @@ class purchase_order(osv.osv):
     _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
                 'rfq_delivery_address': fields.many2one('res.partner.address', string='Delivery address'),
                 'origin_tender_id': fields.many2one('tender', string='Tender', readonly=True),
+                'from_procurement': fields.boolean(string='RfQ created by a procurement order'),
                 'rfq_ok': fields.boolean(string='Is RfQ ?'),
                 'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Closed'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
                 'valid_till': fields.date(string='Valid Till', states={'rfq_updated': [('required', True), ('readonly', True)], 'rfq_sent':[('required',False), ('readonly', False),]}, readonly=True,),
@@ -1336,8 +1360,6 @@ class purchase_order(osv.osv):
         res = True
         return res
 
-    
-        
         
     def rfq_sent(self, cr, uid, ids, context=None):
         self.hook_rfq_sent_check_lines(cr, uid, ids, context=context)
@@ -1432,6 +1454,18 @@ class purchase_order(osv.osv):
                 result['arch'] = etree.tostring(form)
         
         return result
+
+    def wkf_act_rfq_done(self, cr, uid, ids, context=None):
+        '''
+        Set the state to done and update the price unit in the procurement order
+        '''
+        for rfq in self.browse(cr, uid, ids, context=context):
+            if rfq.from_procurement:
+                for line in rfq.order_line:
+                    if line.procurement_id:
+                        self.pool.get('procurement.order').write(cr, uid, [line.procurement_id.id], {'price_unit': line.price_unit}, context=context)
+
+        return self.write(cr, uid, ids, {'state': 'done'}, context=context)
 
 purchase_order()
 
