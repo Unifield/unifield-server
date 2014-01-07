@@ -520,6 +520,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 res[wiz.id] = True
             elif wiz.commitment_line_id and wiz.commitment_line_id.commit_id and wiz.commitment_line_id.commit_id.analytic_distribution_id:
                 res[wiz.id] = True
+            elif wiz.cash_return_line_id and wiz.cash_return_line_id.wizard_id and wiz.cash_return_line_id.wizard_id.analytic_distribution_id:
+                res[wiz.id] = True
             if wiz.model_line_id and wiz.model_line_id.model_id and wiz.model_line_id.model_id.analytic_distribution_id:
                 res[wiz.id] = True
         return res
@@ -1155,6 +1157,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             elif wiz.direct_invoice_line_id:
                 il = wiz.direct_invoice_line_id
                 distrib = il.invoice_id and il.invoice_id.analytic_distribution_id and il.invoice_id.analytic_distribution_id or False
+            elif wiz.cash_return_line_id:
+                crl = wiz.cash_return_line_id
+                distrib = crl.wizard_id.analytic_distribution_id or False
 
             if distrib:
                 # Check if distribution if valid with wizard account
