@@ -74,9 +74,43 @@ class account_invoice(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         self._check_analytic_distribution_state(cr, uid, ids, context)
+        
+        # TODO need to include checks if anything was changed. For now assume everything was
+        # Call 
+        self._direct_invoice_updated(cr, uid, ids, context)
+        
         if context.get('from_register', False):
             return {'type': 'ir.actions.act_window_close'}
         return True
+    
+    def _direct_invoice_updated(self, cr, uid, ids, context=None):
+        """
+        User has updated the direct invoice. The (parent) statement line needs to be updated, and then 
+        the move lines deleted and re-created. Tickets utp917
+        """
+        
+        # get object handles
+        account_invoice_line = self.pool.get('account.invoice.line')
+        account_bank_statement_line = self.pool.get('account.bank.statement.line')
+        account_move = self.pool.get('account.move')
+        account_bank_statement_line = self.pool.get('account.bank.statement.line')  #absl
+
+        direct_invoice = self.browse(cr, uid, ids, context=context)[0]
+        
+        # get statement line id
+        absl = direct_invoice.register_line_ids[0]
+        #absl_id = direct_invoice.register_line_ids[0].id
+        
+        # Delete moves
+        account_bank_statement_line.unlink_moves(cr, uid, [absl.id])
+        
+        # Re-create moves and temp post them.
+        account_bank_statement_line.write(cr, uid, [absl.id], {'state': 'draft'})
+        #move_id = account_bank_statement_line.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
+        account_bank_statement_line.button_temp_posting(cr, uid, [absl.id], context=context)
+        
+        return True
+        
 
     def _hook_fields_for_refund(self, cr, uid, *args):
         """
@@ -173,6 +207,7 @@ class account_invoice(osv.osv):
         """
         Add verification on all lines for analytic_distribution_id to be present and valid !
         """
+        print 'sfc: ids:', ids, 'context: ', context, 'args: ', args
         # Some verifications
         if not context:
             context = {}

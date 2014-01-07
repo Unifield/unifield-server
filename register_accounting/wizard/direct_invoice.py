@@ -30,6 +30,8 @@ import time
 from ..register_tools import open_register_view
 from ..register_tools import _get_date_in_period
 
+    
+
 class wizard_account_invoice(osv.osv):
     _name = 'wizard.account.invoice'
     _inherit = 'account.invoice'

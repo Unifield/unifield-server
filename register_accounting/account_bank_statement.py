@@ -34,6 +34,8 @@ import decimal_precision as dp
 import netsvc
 from lxml import etree
 
+from decorators import *
+
 def _get_fake(cr, table, ids, *a, **kw):
     ret = {}
     for id in ids:
@@ -1022,6 +1024,54 @@ class account_bank_statement_line(osv.osv):
             'domain': domain,
             'target': 'current',
         }
+        
+        
+    def unlink_moves(self, cr, uid, ids, *args, **argv):
+        """
+        If invoice is a Direct Invoice and is in draft state, then delete moves and associated records, 
+        from the account_bank_statement_line. These are then recreated for the updated invoice line.
+        """
+        account_move = self.pool.get('account.move')                    # am
+        account_move_line = self.pool.get('account.move.line')          # aml
+        analytic_distribution = self.pool.get('analytic.distribution')  # ad
+        account_analytic_line = self.pool.get('account.analytic.line')  # aal
+        account_bank_statement_line_move_rel = self.pool.get('account.bank.statement.line.rel') #abslmr
+        account_bank_statement_line = self.pool.get('account.bank.statement.line')  #absl
+        account_invoice = self.pool.get('account.invoice') #ai
+           
+        for absl in self.browse(cr, uid, ids):
+            if absl.state == 'draft' and absl.direct_invoice == True:
+                # Find all moves lines linked to this register line
+                # first, via the statement
+                move_ids = [x.id for x in absl.move_ids]
+                # then via the direct invoice
+                ai = self.pool.get('account.invoice').browse(cr, uid, [absl.invoice_id.id])[0]
+                move_id = ai.move_id.id
+                account_invoice.write(cr, uid, [ai.id],{'move_id': ''})
+                if move_id:
+                    move_ids.append(move_id)
+
+                # TODO: move_id on account.analytic.line is actually account_move_line.id, not account_move.id
+                move_line_ids = account_move_line.search(cr, uid, [('move_id','in',move_ids)])
+                
+                # Find and delete all analytic lines for this move
+                ad_ids = []
+                aal_ids = []
+                for aml in account_move_line.browse(cr, uid, move_line_ids):
+                    if aml.analytic_distribution_id:
+                        ad_ids.append(aml.analytic_distribution_id.id)
+                for ad in analytic_distribution.browse(cr, uid, ad_ids):
+                    if ad.analytic_lines:
+                        aal_ids.append(ad.analytic_lines[0].id)
+                
+                account_analytic_line.unlink(cr, uid, aal_ids)
+                analytic_distribution.unlink(cr, uid, ad_ids)
+                    
+                # Delete the move lines
+                account_move.unlink(cr, uid, move_ids)
+                # TODO: Need to fix absl.first_move_line_id
+        return True
+      
 
     def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
         """
@@ -1660,7 +1710,8 @@ class account_bank_statement_line(osv.osv):
         if not distrib_id:
             values = self._update_employee_analytic_distribution(cr, uid, values=values)
         # Then create a new bank statement line
-        return super(account_bank_statement_line, self).create(cr, uid, values, context=context)
+        absl = super(account_bank_statement_line, self).create(cr, uid, values, context=context)
+        return absl
 
     def write(self, cr, uid, ids, values, context=None):
         """
@@ -1832,17 +1883,29 @@ class account_bank_statement_line(osv.osv):
             if postype == 'temp' and absl.direct_invoice:  #utp-917
                 self.write(cr, uid, [absl.id], {'direct_state':'draft'})
                 # create the accounting entries
-                netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', absl.invoice_id.id, 'invoice_open', cr)
+                #netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', absl.invoice_id.id, 'invoice_open', cr)
+                #netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', absl.invoice_id.id, 'invoice_open', cr)
+                
+                account_invoice = self.pool.get('account.invoice')
+                account_invoice.action_open_invoice(cr, uid, [absl.invoice_id.id])
+        
+                # set the invoice form open back to draft
+                #account_invoice = self.pool.get('account.invoice')
+                account_invoice.write(cr, uid, [absl.invoice_id.id], {'state':'draft'}, context=context)
         
                 # unpost them
                 account_move = self.pool.get('account.move')
-                account_move.write(cr, uid, [absl.invoice_id.move_id.id],{'state':'draft'}, context=None)
+                account_move_line = self.pool.get('account.move.line')
+                account_move.write(cr, uid, [absl.invoice_id.move_id.id],{'state':'draft'}, context=context)
+                
+                account_move_line_ids = account_move_line.search(cr, uid, [('move_id', '=', absl.invoice_id.move_id.id)])
+                
+                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'})
                 
                 # unreconcile them
                 account_move_obj = account_move.browse(cr, uid, [absl.invoice_id.move_id.id])
-                account_move_line = self.pool.get('account.move.line')
+                
                 # link to account_move_reconcile on account_move_line
-                account_move_line_ids = account_move_line.search(cr, uid, [('move_id', '=', absl.invoice_id.move_id.id)])
                 account_move_line_objs = account_move_line.browse(cr, uid, account_move_line_ids)
                 account_move_reconcile = self.pool.get('account.move.reconcile')
                 for line in account_move_line_objs:
@@ -1852,7 +1915,8 @@ class account_bank_statement_line(osv.osv):
                 # update the invoice 'name' (ref)  TODO - does this need to be set to "/" ?
                 inv_number = self.pool.get('account.invoice').read(cr, uid, absl.invoice_id.id, ['number'])['number']
                 # self.write(cr, uid, [absl.id], {'name': "/"})
-            
+                account_move_line_ids = account_move_line.search(cr, uid, [('move_id', '=', absl.invoice_id.move_id.id)])
+                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'})
 
             if postype == "hard":
                 # Update analytic lines
@@ -1902,7 +1966,11 @@ class account_bank_statement_line(osv.osv):
                     acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
                     # do a move that enable a complete supplier follow-up
                     self.do_direct_expense(cr, uid, [absl.id], context=context)
+                    
+  
         return True
+    
+   
 
     def button_hard_posting(self, cr, uid, ids, context=None):
         """
@@ -2041,6 +2109,7 @@ class account_bank_statement_line(osv.osv):
             'context': {'journal_type': journal_type}
         }
 
+    @trace
     def button_open_invoice(self, cr, uid, ids, context=None):
         """
         Open the attached invoice
