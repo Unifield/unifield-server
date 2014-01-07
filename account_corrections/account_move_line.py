@@ -42,6 +42,7 @@ class account_move_line(osv.osv):
          - The account is not the default credit/debit account of the attached statement (register)
          - All items attached to the entry have no reconcile_id on reconciliable account
          - The line doesn't come from a write-off
+         - The line is "corrected_upstream" that implies the line have been already corrected from a coordo or a hq to a level that is superior or equal to these instance.
         """
         if context is None:
             context = {}
@@ -93,6 +94,9 @@ class account_move_line(osv.osv):
                 res[ml.id] = False
             # False if the account is used in a cash/bank/cheque journal
             if ml.account_id.id in account_ids:
+                res[ml.id] = False
+            # False if "corrected_upstream" is True
+            if ml.corrected_upstream:
                 res[ml.id] = False
         return res
 
