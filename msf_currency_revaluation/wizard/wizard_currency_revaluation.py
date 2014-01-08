@@ -280,7 +280,16 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 #    cr, uid, next_period_date.strftime('%Y-%m-%d'))
                 #value['result_period_id'] = \
                 #    next_period_ids and next_period_ids[0] or False
-                
+        elif method == 'other_bs':
+            value['revaluation_date'] = fiscalyear.date_stop
+            value['posting_date'] = fiscalyear.date_stop
+            period_ids = period_obj.search(
+                cr, uid,
+                [('state', '!=', 'created'),
+                 ('fiscalyear_id', '=', fiscalyear.id),
+                 ('number', '=', 13)])
+            if period_ids:
+                value['result_period_id'] = period_ids[0]
         res = {'value': value, 'warning': warning}
         return res
 
