@@ -76,6 +76,17 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
+<NumberFormat ss:Format="#,##0.00"/>
+</Style>
+<Style ss:ID="ssHeaderRight">
+<Font ss:Bold="1" />
+<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
 </Style>
 <Style ss:ID="ssHeaderCell">
 <Alignment ss:Vertical="Top" ss:Horizontal="Center" ss:WrapText="1"/>
@@ -107,6 +118,17 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Borders>
 </Style>
 <Style ss:ID="ssPartnerNumber">
+<Font ss:Bold="1" />
+<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<NumberFormat ss:Format="#,##0.00"/>
+</Style>
+<Style ss:ID="ssPartnerRight">
 <Font ss:Bold="1" />
 <Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
 <Borders>
@@ -149,6 +171,19 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 <NumberFormat ss:Format="#,##0.00"/>
+</Style>
+<Style ss:ID="ssAccountLineAccountCode">
+<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+<Font ss:Size="8"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<Interior/>
+<NumberFormat ss:Format="0" />
+<Protection/>
 </Style>
 </Styles>
 <%
@@ -193,11 +228,11 @@ else:
         prop_instances = 'All Instances'
 %>
 <Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="100" />
+<Column ss:AutoFitWidth="1" ss:Width="140" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="100" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
@@ -265,16 +300,16 @@ header_col_merge_count = col_count - 1
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">Posting date</Data>
 </Cell>
-<Cell ss:StyleID="ssHeader">
+<Cell ss:StyleID="ssHeaderRight">
     <Data ss:Type="String">Account</Data>
 </Cell>
-<Cell ss:StyleID="ssHeaderNumber">
+<Cell ss:StyleID="ssHeaderRight">
     <Data ss:Type="String">Debit</Data>
 </Cell>
-<Cell ss:StyleID="ssHeaderNumber">
+<Cell ss:StyleID="ssHeaderRight">
     <Data ss:Type="String">Credit</Data>
 </Cell>
-<Cell ss:StyleID="ssHeaderNumber">
+<Cell ss:StyleID="ssHeaderRight">
     <Data ss:Type="String">Balance</Data>
 </Cell>
 </Row>
@@ -300,13 +335,13 @@ header_col_merge_count = col_count - 1
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="String">${formatLang(p_obj.debit or 0.)}</Data>
+    <Data ss:Type="Number">${p_obj.debit or 0.}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="String">${formatLang(p_obj.credit or 0.)}</Data>
+    <Data ss:Type="Number">${p_obj.credit or 0.}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="String">${formatLang(p_obj.balance or 0.)}</Data>
+    <Data ss:Type="Number">${p_obj.balance or 0.}</Data>
 </Cell>
 </Row>
 ## account move line row
@@ -329,17 +364,17 @@ balance = debit - credit
 <Cell ss:StyleID="ssAccountLineWrap">
     <Data ss:Type="String">${((aml.period_id and aml.period_id.name) or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLineWrap">
-    <Data ss:Type="String">${((aml.account_id and aml.account_id.code) or '')|x}</Data>
+<Cell ss:StyleID="ssAccountLineAccountCode">
+    <Data ss:Type="Number">${((aml.account_id and aml.account_id.code) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="String">${formatLang(debit)}</Data>
+    <Data ss:Type="Number">${debit}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="String">${formatLang(credit)}</Data>
+    <Data ss:Type="Number">${credit}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="String">${formatLang(balance)}</Data>
+    <Data ss:Type="Number">${balance}</Data>
 </Cell>
 </Row>
 % endfor
@@ -359,13 +394,13 @@ balance = currency_conv(balance, False)
     <Data ss:Type="String">TOTAL</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="String">${formatLang(debit)}</Data>
+    <Data ss:Type="Number">${debit}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="String">${formatLang(credit)}</Data>
+    <Data ss:Type="Number">${credit}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="String">${formatLang(balance)}</Data>
+    <Data ss:Type="Number">${balance}</Data>
 </Cell>
 </Row>
 </Table>
