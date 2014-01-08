@@ -28,6 +28,29 @@ from account_tools import finance_export
 
 from report import report_sxw
 
+class finance_archive(finance_export.finance_archive):
+    def postprocess_reconciliable(self, cr, uid, data, column_deletion=False):
+        """
+        Replace 14th column by its reconcile name.
+        Note: as we begin to 0, the python column is 13.
+        """
+        # Checks
+        if not data:
+            return []
+        # Prepare some values
+        pool = pooler.get_pool(cr.dbname)
+        new_data = []
+        reconcile_obj = pool.get('account.move.reconcile')
+        for line in data:
+            tmp_line = list(line)
+            reconcile_id = line[13]
+            if reconcile_id:
+                reconcile = reconcile_obj.read(cr, uid, reconcile_id, ['name'])
+                if reconcile and reconcile.get('name', False):
+                    tmp_line[13] = reconcile.get('name')
+            new_data.append(tmp_line)
+        return new_data
+
 class hq_report_ocb_matching(report_sxw.report_sxw):
 
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -55,16 +78,14 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
         # Prepare SQL requests and PROCESS requests for finance_archive object (CF. account_tools/finance_export.py)
         sqlrequests = {
             'reconciliable': """
-                SELECT m.name AS "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code, aml.partner_txt, debit_currency, credit_currency, c.name AS "Booking Currency", aml.debit, aml.credit, cc.name AS "functional_currency", r.name AS "reconcile_reference"
-                FROM account_move_line AS aml, account_move AS m, account_account AS a, res_currency AS c, res_company AS e, res_currency AS cc, account_move_reconcile AS r
+                SELECT m.name AS "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code, aml.partner_txt, debit_currency, credit_currency, c.name AS "Booking Currency", aml.debit, aml.credit, cc.name AS "functional_currency", aml.reconcile_id
+                FROM account_move_line AS aml, account_move AS m, account_account AS a, res_currency AS c, res_company AS e, res_currency AS cc
                 WHERE aml.move_id = m.id
                 AND aml.account_id = a.id
                 AND aml.currency_id = c.id
-                AND aml.reconcile_id IS NOT NULL
                 AND aml.company_id = e.id
                 AND e.currency_id = cc.id
-                AND aml.instance_id in %s
-                AND aml.reconcile_id = r.id;
+                AND aml.instance_id in %s;
                 """,
         }
 
@@ -74,10 +95,11 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
                 'filename': 'Reconciled_Entries.csv',
                 'key': 'reconciliable',
                 'query_params': (tuple(instance_ids),),
+                'function': 'postprocess_reconciliable',
                 },
         ]
         # Launch finance archive object
-        fe = finance_export.finance_archive(sqlrequests, processrequests)
+        fe = finance_archive(sqlrequests, processrequests)
         # Use archive method to create the archive
         return fe.archive(cr, uid)
 
