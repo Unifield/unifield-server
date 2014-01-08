@@ -590,7 +590,16 @@ elif ana_line.last_corrected_id:
 endif
 %>
       <Row>
-        <Cell ss:Index="10" ss:StyleID="${line_color}_ana_amount">
+        <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_amount">
           <Data ss:Type="Number">${ana_line.amount_currency}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
@@ -623,7 +632,16 @@ elif ana_line.last_corrected_id:
 endif
 %>
       <Row>
-        <Cell ss:Index="10" ss:StyleID="${line_color}_ana_amount">
+        <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_amount">
           <Data ss:Type="Number">${ana_line.amount_currency}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
