@@ -65,7 +65,7 @@
                                 <button string="Compute Total" name="compute_wizard" type="object" icon='gtk-execute' colspan="4"/>
                                 <group col="6" colspan="4">
                                     <button name="invoice_reset_wizard" string="Reset Invoice" icon="gtk-cancel" type="object" attrs="{'invisible':['|', ('partner_id','=',False), ('date_invoice','=',False)]}"/>
-                                    <button name="invoice_create_wizard" string="Validatesfc3" icon="terp-camera_test" type="object"/>
+                                    <button name="invoice_create_wizard" string="Validate" icon="terp-camera_test" type="object"/>
                                 </group>
                             </group>
                         </page>
@@ -157,7 +157,7 @@
                             </field>
                             <group col="4" colspan="4">
                                 <button string="Compute Total" name="button_dummy_compute_total" type="object" icon='gtk-execute' colspan="4" states="draft,open"/>
-                                <button name="button_close_direct_invoice" string="Validatesfc" icon="terp-camera_test" type="object" colspan="4" states="draft,open"/>
+                                <button name="button_close_direct_invoice" string="Validate" icon="terp-camera_test" type="object" colspan="4" states="draft,open"/>
                             </group>
                         </page>
                         <page string="Other Info">
@@ -257,7 +257,7 @@
                     </field>
                     <button name="action_cancel_draft" position="replace"/>
                     <button name='invoice_open' position="replace">
-                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validatesfc4" icon="gtk-go-forward"/>
+                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
                     </button>
                 </data>
             </field>
@@ -276,7 +276,7 @@
                     </field>
                     <button name="action_cancel_draft" position="replace"/>
                     <button name='invoice_open' position="replace">
-                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validatesfc2" icon="gtk-go-forward"/>
+                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
                         <field name="is_direct_invoice" invisible="1"/>
                     </button>
                     <page string="Payments" position="after">

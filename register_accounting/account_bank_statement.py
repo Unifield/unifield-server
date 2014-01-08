@@ -34,8 +34,6 @@ import decimal_precision as dp
 import netsvc
 from lxml import etree
 
-from decorators import *
-
 def _get_fake(cr, table, ids, *a, **kw):
     ret = {}
     for id in ids:
@@ -1047,9 +1045,10 @@ class account_bank_statement_line(osv.osv):
                 # then via the direct invoice
                 ai = self.pool.get('account.invoice').browse(cr, uid, [absl.invoice_id.id])[0]
                 move_id = ai.move_id.id
-                account_invoice.write(cr, uid, [ai.id],{'move_id': ''})
                 if move_id:
                     move_ids.append(move_id)
+                    account_invoice.write(cr, uid, [ai.id],{'move_id': False})
+
 
                 # TODO: move_id on account.analytic.line is actually account_move_line.id, not account_move.id
                 move_line_ids = account_move_line.search(cr, uid, [('move_id','in',move_ids)])
@@ -1070,6 +1069,7 @@ class account_bank_statement_line(osv.osv):
                 # Delete the move lines
                 account_move.unlink(cr, uid, move_ids)
                 # TODO: Need to fix absl.first_move_line_id
+
         return True
       
 

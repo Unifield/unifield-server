@@ -207,7 +207,6 @@ class account_invoice(osv.osv):
         """
         Add verification on all lines for analytic_distribution_id to be present and valid !
         """
-        print 'sfc: ids:', ids, 'context: ', context, 'args: ', args
         # Some verifications
         if not context:
             context = {}
