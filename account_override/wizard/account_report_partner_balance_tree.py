@@ -326,6 +326,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
 
     _defaults = {
         'display_partner': 'non-zero_balance',
+        'result_selection': 'supplier',
         'journal_ids': _get_journals,
     }
        

@@ -151,7 +151,20 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <NumberFormat ss:Format="#,##0.00"/>
 </Style>
 </Styles>
-% for p_entries in get_partners(data):
+<%
+entries = get_partners(data)
+%>
+% if not entries:
+<Worksheet ss:Name="Not any entries">
+<Table x:FullColumns="1" x:FullRows="1">
+    <Column ss:AutoFitWidth="1" ss:Width="300" />
+    <Row>
+        <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Not any entries</Data></Cell>
+    </Row>
+</Table>
+</Worksheet>
+% else:
+% for p_entries in entries:
 <%
 if p_entries[0].account_type == 'payable':
     worsheet_name = 'Payable Accounts'
@@ -317,7 +330,7 @@ balance = debit - credit
     <Data ss:Type="String">${((aml.period_id and aml.period_id.name) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineWrap">
-    <Data ss:Type="String">${((aml.account_id and aml.account_id.name) or '')|x}</Data>
+    <Data ss:Type="String">${((aml.account_id and aml.account_id.code) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="String">${formatLang(debit)}</Data>
@@ -381,4 +394,6 @@ balance = currency_conv(balance, False)
 </Worksheet>
 % endfor
 ## endfor Worksheet
+% endif 
+## endif if not entries
 </Workbook>
