@@ -316,23 +316,8 @@ header_col_merge_count = col_count - 1
 ## partner row
 % for p_obj in p_entries:
 <Row>
-## <Cell ss:StyleID="ssPartner" ss:MergeAcross="4">
-##    <Data ss:Type="String">${(p_obj.name or '')|x}</Data>
-## </Cell>
-<Cell ss:StyleID="ssPartner">
+<Cell ss:StyleID="ssPartner" ss:MergeAcross="4">
     <Data ss:Type="String">${(p_obj.name or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
     <Data ss:Type="Number">${p_obj.debit or 0.}</Data>
