@@ -225,6 +225,25 @@ class purchase_order(osv.osv):
             res[po.id] = retour
         return res
 
+    def _get_project_ref(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Get the name of the POs at project side
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for po in ids:
+            res[po] = ''
+            so_ids = self.get_so_ids_from_po_ids(cr, uid, po, context=context)
+            for so in self.pool.get('sale.order').browse(cr, uid, so_ids, context=context):
+                if so.origin:
+                    if res[po]:
+                        res[po] += ' - '
+                    res[po] += so.origin
+
+        return res
+
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
@@ -277,6 +296,8 @@ class purchase_order(osv.osv):
                         help="Reference of the document that generated this purchase order request."),
         'project_ref': fields.char(size=256, string='Project Ref.'),
         'message_esc': fields.text(string='ESC Message'),
+        'fnct_project_ref': fields.function(_get_project_ref, method=True, string='Project Ref.',
+                                            type='char', size=256, store=False,),
     }
     
     _defaults = {
@@ -2481,6 +2502,25 @@ class purchase_order_line(osv.osv):
             
         return result
 
+    def _get_project_po_ref(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return the name of the PO at project side
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for line_id in ids:
+            res[line_id] = ''
+            sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, line_id, context=context)
+            for sol in self.pool.get('sale.order.line').browse(cr, uid, sol_ids, context=context):
+                if sol.order_id and sol.order_id.origin:
+                    if res[line_id]:
+                        res[line_id] += ' - '
+                    res[line_id] += sol.order_id.origin
+
+        return res
+
     _columns = {
         'parent_line_id': fields.many2one('purchase.order.line', string='Parent line', ondelete='set null'),
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
@@ -2501,6 +2541,8 @@ class purchase_order_line(osv.osv):
         'project_ref': fields.char(size=256, string='Project Ref.'),
         'select_fo': fields.many2one('sale.order', string='FO'),
         'has_to_be_resourced': fields.boolean(string='Has to be re-sourced'),
+        'fnct_project_ref': fields.function(_get_project_po_ref, method=True, string='Project PO',
+                                            type='char', size=128, store=False),
     }
 
     _defaults = {

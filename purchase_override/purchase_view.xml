@@ -21,6 +21,7 @@
                         <separator colspan="4" string="Information" />
                         <field name="external_ref" readonly="1" />
                         <field name="project_ref" readonly="1" />
+                        <field name="fnct_project_ref" readonly="1" />
                         <separator colspan="4" string="Notes" />
                     </xpath>
                 </data>
