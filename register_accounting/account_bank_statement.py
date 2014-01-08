@@ -2109,7 +2109,6 @@ class account_bank_statement_line(osv.osv):
             'context': {'journal_type': journal_type}
         }
 
-    @trace
     def button_open_invoice(self, cr, uid, ids, context=None):
         """
         Open the attached invoice
