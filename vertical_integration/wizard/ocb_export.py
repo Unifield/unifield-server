@@ -57,7 +57,7 @@ class ocb_export_wizard(osv.osv_memory):
         if wizard.fiscalyear_id:
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
 
-        data['target_filename'] = '%s_%s_formatted data AX import' % (wizard.instance_id and wizard.instance_id.code[0:3] or '', period_name)
+        data['target_filename'] = '%s_%s_formatted data UF to Epicor' % (wizard.instance_id and wizard.instance_id.code[0:3] or '', period_name)
         return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocb', 'datas': data}
 
 ocb_export_wizard()
