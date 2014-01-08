@@ -851,8 +851,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 <group name="import_file_lines" string="Import Lines" colspan="24" col="8">
                     <field name="import_in_progress" invisible="1" />
                     <field name="file_to_import" filename="filename_template" colspan="2"/>
-                    <!--<button name="import_file" string="Import lines" icon="gtk-execute" colspan="1" type="object" />-->
-                    <button name="launch_simulation" string="Simulate" icon="gtk-execute" colspan="1" type="object" />
+                    <button name="import_file" string="Import lines" icon="gtk-execute" colspan="1" type="object" />
                     <field name="import_error_ok" invisible="1"/>
                     <field name="filename" invisible="1"  />
                     <button name="dummy" string="Update" icon="gtk-execute" colspan="1" type="object" />
