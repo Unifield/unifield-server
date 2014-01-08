@@ -190,11 +190,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 entries = get_partners(data)
 %>
 % if not entries:
-<Worksheet ss:Name="Not any entries">
+<Worksheet ss:Name="No entries">
 <Table x:FullColumns="1" x:FullRows="1">
     <Column ss:AutoFitWidth="1" ss:Width="300" />
     <Row>
-        <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Not any entries</Data></Cell>
+        <Cell ss:StyleID="ssHeader"><Data ss:Type="String">No entries</Data></Cell>
     </Row>
 </Table>
 </Worksheet>
