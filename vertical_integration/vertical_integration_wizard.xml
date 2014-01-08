@@ -106,7 +106,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="OCB matching export">
-                <field name="instance_id"/>
+                <field name="instance_id" domain="[('level', '=', 'coordo')]"/>
                 <group colspan="6" col="4">
                     <label string="" colspan="2"/>
                     <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
