@@ -15,7 +15,7 @@
                         attrs="{'invisible': [('revaluation_method', '=', 'other_bs')]}"/>
                     <newline/>
                     <field name="fiscalyear_id"
-                        on_change="on_change_revaluation_method(revaluation_method, fiscalyear_id, False)"/>
+                        on_change="on_change_fiscalyear_id(revaluation_method, fiscalyear_id)"/>
                     <newline/>
                     <field name="period_id"
                         attrs="{'invisible': ['|', ('revaluation_method', '=', 'other_bs'), ('revaluation_year_ok', '=', True)],

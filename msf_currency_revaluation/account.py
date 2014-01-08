@@ -86,7 +86,7 @@ class account_account(osv.osv):
 
     def compute_revaluations(
             self, cr, uid, ids, period_ids, fiscalyear_id,
-            revaluation_date, context=None):
+            revaluation_date, revaluation_method, context=None):
         if context is None:
             context = {}
         accounts = {}
@@ -113,30 +113,31 @@ class account_account(osv.osv):
 
         # Compute for each account the initial balance/debit/credit from the
         # move lines and add it to the previous result
-        ctx_query = context.copy()
-        ctx_query['periods'] = period_ids
-        ctx_query['fiscalyear'] = fiscalyear_id
-        ctx_query['initial_bal'] = True
-        query, params = self._revaluation_query(
-            cr, uid, ids,
-            revaluation_date,
-            context=ctx_query)
-        cr.execute(query, params)
-        lines = cr.dictfetchall()
-        for line in lines:
-            # generate a tree
-            # - account_id
-            # -- currency_id
-            # ----- balances
-            account_id, currency_id = line['id'], line['currency_id']
-            accounts.setdefault(account_id, {})
-            accounts[account_id].setdefault(
-                currency_id,
-                {'balance': 0, 'foreign_balance': 0, 'credit': 0, 'debit': 0})
-            accounts[account_id][currency_id]['balance'] += line['balance']
-            accounts[account_id][currency_id]['foreign_balance'] += line['foreign_balance']
-            accounts[account_id][currency_id]['credit'] += line['credit']
-            accounts[account_id][currency_id]['debit'] += line['debit']
+        if revaluation_method == 'liquidity':
+            ctx_query = context.copy()
+            ctx_query['periods'] = period_ids
+            ctx_query['fiscalyear'] = fiscalyear_id
+            ctx_query['initial_bal'] = True
+            query, params = self._revaluation_query(
+                cr, uid, ids,
+                revaluation_date,
+                context=ctx_query)
+            cr.execute(query, params)
+            lines = cr.dictfetchall()
+            for line in lines:
+                # generate a tree
+                # - account_id
+                # -- currency_id
+                # ----- balances
+                account_id, currency_id = line['id'], line['currency_id']
+                accounts.setdefault(account_id, {})
+                accounts[account_id].setdefault(
+                    currency_id,
+                    {'balance': 0, 'foreign_balance': 0, 'credit': 0, 'debit': 0})
+                accounts[account_id][currency_id]['balance'] += line['balance']
+                accounts[account_id][currency_id]['foreign_balance'] += line['foreign_balance']
+                accounts[account_id][currency_id]['credit'] += line['credit']
+                accounts[account_id][currency_id]['debit'] += line['debit']
 
         return accounts
 
