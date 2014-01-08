@@ -12,7 +12,7 @@
                 <field name="partner_id" string="Partner" />
                 <newline />
                 <group expand="0" string="Group By...">
-                    <filter string="Payable/Receivable"
+                    <filter name="groupby_payable_receivable" string="Payable/Receivable"
                         icon="terp-personal" domain="[]"
                         context="{'group_by':'account_type'}"
                     />
@@ -29,8 +29,7 @@
             <field name="arch" type="xml">
                 <tree string="Partner Balance View"
                     editable="top" noteditable="1" 
-                    hide_new_button="1" hide_delete_button="1"
-                    colors="gray:account_type in('payable')">
+                    hide_new_button="1" hide_delete_button="1">
                     <button
                         name="open_journal_items"
                         string="Open journal items"
@@ -144,7 +143,7 @@
              <field name="view_type">form</field>
              <field name="view_mode">tree,form</field>
              <field name="view_id" ref="wizard_account_report_partner_balance_tree_view"/>
-             <field name="context">{'record_id':active_id}</field>
+             <field name="context">{'record_id':active_id,'search_default_groupby_payable_receivable':'1'}</field>
              <field name="target">new</field>
        </record>
        
