@@ -108,7 +108,7 @@ class finance_archive(finance_export.finance_archive):
                 AND req.period_id = p.id
                 AND p.fiscalyear_id = f.id
                 AND a.type = 'liquidity'
-                AND a.ocb_export_subtotal = 't'
+                AND a.shrink_entries_for_hq = 't'
                 ORDER BY a.code;"""
         cr.execute(sqltwo, (seq,))
         datatwo = cr.fetchall()
@@ -274,7 +274,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 WHERE aml.period_id = %s
                 AND aml.account_id = aa.id
                 AND aa.type = 'liquidity'
-                AND aa.ocb_export_subtotal = 't'
+                AND aa.shrink_entries_for_hq = 't'
                 AND aml.exported != 't';
                 """,
             'bs_entries': """
@@ -282,7 +282,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 FROM account_move_line AS aml, account_account AS a, res_currency AS c, account_move AS m, res_company AS e, res_currency AS cc
                 WHERE aml.period_id = %s
                 AND a.type = 'liquidity'
-                AND a.ocb_export_subtotal = 'f'
+                AND a.shrink_entries_for_hq = 'f'
                 AND aml.account_id = a.id
                 AND aml.currency_id = c.id
                 AND aml.move_id = m.id
