@@ -742,7 +742,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 # keep initial analytic line as corrected line if it the 2nd or more correction on this line
                 if ml.corrected_line_id and search_data[0] == ml.id and first_analytic_line_id:
                     search_data[1].update({'last_corrected_id': first_analytic_line_id, 'have_an_historic': True,})
-                search_ids = al_obj.search(cr, uid, [('move_id', '=', search_data[0])])
+                search_ids = al_obj.search(cr, uid, [('move_id', '=', search_data[0]), ('reversal_origin', '=', False), ('last_corrected_id', '=', False)])
                 if search_ids:
                     al_obj.write(cr, uid, search_ids, search_data[1])
             # Add this line to succeded lines
