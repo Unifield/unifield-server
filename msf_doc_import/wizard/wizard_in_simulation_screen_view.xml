@@ -69,7 +69,7 @@
             <field name="model">wizard.import.in.line.simulation.screen</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Stock Moves">
+                <tree string="Stock Moves" colors="grey: type_change in ('del', 'new'); red: type_change == 'error'; orange: change_ok==True and type_change not in ('del', 'error', 'new'); blue: type_change=='split';">
                     <field name="move_id" invisible="1" />
                     <field name="move_product_id" />
                     <field name="move_product_qty" />
@@ -77,9 +77,11 @@
                     <field name="move_price_unit" />
                     <field name="move_currency_id" />
                     <field name="line_number" />
-                    <field name="change_type" />
+                    <field name="error_msg" invisible="1" />
+                    <button name="get_error_msg" type="object" icon="gtk-dialog-warning" string="See error" attrs="{'invisible': [('error_msg', '=', False)]}" />
+                    <field name="type_change" />
+                    <field name="integrity_status" />
                     <field name="imp_product_id" />
-                    <field name="imp_asset_id" />
                     <field name="imp_product_qty" />
                     <field name="imp_uom_id" />
                     <field name="imp_price_unit" />

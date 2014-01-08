@@ -23,10 +23,10 @@
 import threading
 import pooler
 import base64
-#import time
+import time
 import xml.etree.ElementTree as ET
 
-#from mx import DateTime
+from mx import DateTime
 
 # Server imports
 from osv import osv
@@ -35,6 +35,7 @@ from tools.translate import _
 
 # Addons imports
 from msf_order_date import TRANSPORT_TYPE
+from msf_outgoing import INTEGRITY_STATUS_SELECTION
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 
@@ -77,6 +78,7 @@ HEADER_COLUMNS = [(1, _('Freight'), 'optionnal'),
 
 class wizard_import_in_simulation_screen(osv.osv):
     _name = 'wizard.import.in.simulation.screen'
+    _rec_name = 'picking_id'
 
     def _get_related_values(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -117,7 +119,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         'filename': fields.char(size=64, string='Filename'),                    
         'filetype': fields.selection([('excel', 'Excel file'),                  
                                       ('xml', 'XML file')], string='Type of file',
-                                     required=True),                           
+                                     required=True),
         'error_file': fields.binary(string='File with errors'),                 
         'error_filename': fields.char(size=64, string='Lines with errors'),     
         'nb_file_lines': fields.integer(string='Total of file lines',           
@@ -154,6 +156,7 @@ class wizard_import_in_simulation_screen(osv.osv):
 
     _defaults = {
         'state': 'draft',
+        'filetype': 'excel',
     }
 
     def return_to_in(self, cr, uid, ids, context=None):
@@ -166,13 +169,18 @@ class wizard_import_in_simulation_screen(osv.osv):
             ids = [ids]
 
         picking_id = self.browse(cr, uid, ids[0], context=context).picking_id.id
+        context['pick_type'] = 'incoming'
+
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.picking',
                 'res_id': picking_id,
                 'view_type': 'form',
                 'view_mode': 'form,tree',
-                'target': 'crush'}
+                'view_id': [view_id],
+                'target': 'crush',
+                'context': context}
 
     def go_to_simulation(self, cr, uid, ids, context=None):
         '''
@@ -221,6 +229,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        return self._import(cr, uid, ids, context=context)
         raise osv.except_osv(_('Error'), _('Not implemented'))
 
     def launch_simulate(self, cr, uid, ids, context=None):
@@ -349,7 +358,6 @@ class wizard_import_in_simulation_screen(osv.osv):
         wl_obj = self.pool.get('wizard.import.in.line.simulation.screen')
         prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product_uom')
-        prodlot_obj = self.pool.get('stock.production.lot')
 
         # Declare global variables (need this explicit declaration to clear
         # them at the end of the process
@@ -557,8 +565,6 @@ SCREEN!''')
                 product_id = False
                 uom_id = False
                 qty = 0.00
-                prodlot_id = False
-                expiry_date = False
 
                 vals = values.get(x, [])
                 # Product
@@ -701,15 +707,20 @@ SCREEN!''')
                     if file_line[1] == 'match':
                         err_msg = wl_obj.import_line(cr, uid, in_line, vals, context=context)
                         if file_line[0] in not_ok_file_lines:
-                            wl_obj.write(cr, uid, [in_line], {'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
+                            wl_obj.write(cr, uid, [in_line], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                     elif file_line[1] == 'split':
                         new_wl_id = wl_obj.copy(cr, uid, in_line,
-                                                         {'type_change': 'split',
+                                                         {'move_product_id': False,
+                                                          'move_product_qty': 0.00,
+                                                          'move_uom_id': False,
+                                                          'move_price_unit': 0.00,
+                                                          'move_currenty_id': False,
+                                                          'type_change': 'split',
                                                           'parent_line_id': in_line,
                                                           'move_id': False}, context=context)
                         err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
                         if file_line[0] in not_ok_file_lines:
-                            wl_obj.write(cr, uid, [new_wl_id], {'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
+                            wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                     # Commit modifications
                     cr.commit()
 
@@ -734,7 +745,7 @@ SCREEN!''')
                                                     'simu_id': wiz.id}, context=context)
                 err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
                 if in_line in not_ok_file_lines:
-                    wl_obj.write(cr, uid, [new_wl_id], {'error_msg': not_ok_file_lines[in_line]}, context=context)
+                    wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[in_line]}, context=context)
 
                 if err_msg:
                     for err in err_msg:
@@ -784,11 +795,48 @@ SCREEN!''')
 
         return {'type': 'ir.actions.act_window_close'}
 
+
+    def _import(self, cr, uid, ids, context=None):
+        '''
+        Create memeory moves and return to the standard incoming processing wizard
+        '''
+        line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
+        mem_move_obj = self.pool.get('stock.move.memory.in')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        simu_id = self.browse(cr, uid, ids[0], context=context)
+
+        context['active_id'] = simu_id.picking_id.id
+        context['active_ids'] = [simu_id.picking_id.id]
+        partial_id = self.pool.get('stock.partial.picking').create(cr, uid, {'date': simu_id.picking_id.date}, context=context)
+        line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('del', 'error', 'new')), ('type_change', '=', False)], context=context)
+
+        print simu_id.id, line_ids
+        if not line_ids:
+            raise osv.except_osv(_('Error'), _('Nothing to import'))
+        
+        mem_move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, context=context)
+
+        # delete extra lines
+        del_lines = mem_move_obj.search(cr, uid, [('id', 'not in', mem_move_ids), ('wizard_pick_id', '=', partial_id)], context=context)
+        mem_move_obj.unlink(cr, uid, del_lines, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.partial.picking',
+                'res_id': partial_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'same',
+                'context': context}
+
 wizard_import_in_simulation_screen()
 
 
 class wizard_import_in_line_simulation_screen(osv.osv):
     _name = 'wizard.import.in.line.simulation.screen'
+    _rec_name = 'line_number'
 
     def _get_values(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -802,30 +850,67 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
         res = {}
         for line in self.browse(cr, uid, ids, context=context):
+            price_unit = 0.00
+            if line.move_id.purchase_line_id:
+                price_unit = line.move_id.purchase_line_id.price_unit
+            elif line.move_product_id:
+                price_unit = line.move_product_id.standard_price
+
+            if line.move_id.picking_id and line.move_id.picking_id.purchase_id \
+               and line.move_id.picking_id.purchase_id.pricelist_id \
+               and line.move_id.picking_id.purchase_id.pricelist_id.currency_id:
+                curr_id = line.move_id.picking_id.purchase_id.pricelist_id.currency_id.id
+            else:
+                curr_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+
+
             product = line.imp_product_id or line.move_product_id
             res[line.id] = {'lot_check': product.batch_management,
                             'exp_check': product.perishable,
                             'kc_check': product.heat_sensitive_item and True or False,
                             'dg_check': product.dangerous_goods,
-                            'np_check': product.narcotic,}
+                            'np_check': product.narcotic,
+                            'move_price_unit': price_unit,
+                            'move_currency_id': curr_id,}
+
+        return res
+
+    def _get_imported_values(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Compute some field with imported values
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'imp_cost': 0.00,
+                            'discrepancy': 0.00}
+            if line.simu_id.state != 'draft':
+                res[line.id]['imp_cost'] = line.imp_product_qty * line.imp_price_unit
+                res[line.id]['discrepancy'] = res[line.id]['imp_cost'] - (line.move_product_qty * line.move_price_unit)
 
         return res
 
     _columns = {
-        'simu_id': fields.many2one('wizard.import.in.simulation.screen', string='Simu ID', required=True),
+        'simu_id': fields.many2one('wizard.import.in.simulation.screen', string='Simu ID', required=True, ondelete='cascade'),
         # Values from move line
         'move_id': fields.many2one('stock.move', string='Move', readonly=True),
         'move_product_id': fields.many2one('product.product', string='Product', readonly=True),
         'move_product_qty': fields.float(digits=(16,2), string='Ordered Qty', readonly=True),
         'move_uom_id': fields.many2one('product.uom', string='Ordered UoM', readonly=True),
-        'move_price_unit': fields.float(digits=(16,2), string='Price Unit', readonly=True),
-        'move_currency_id': fields.many2one('res.currency', string='Curr.', readonly=True),
+        'move_price_unit': fields.function(_get_values, method=True, type='float', string='Price Unit',
+                                           digits=(16,2), store=True, readonly=True, multi='computed'),
+        'move_currency_id': fields.function(_get_values, method=True, type='many2one', relation='res.currency',
+                                            string='Curr.', store=True, readonly=True, multi='computed'),
         # Values for the simu line
         'line_number': fields.integer(string='Line'),
-        'change_type': fields.selection([('', ''),
+        'type_change': fields.selection([('', ''),
                                          ('split', 'Split'),
                                          ('error', 'Error'),
+                                         ('del', 'Del.'),
                                          ('new', 'New')], string='CHG', readonly=True),
+        'error_msg': fields.text(string='Error message', readonly=True),
         'parent_line_id': fields.many2one('wizard.import.in.line.simulation.screen', string='Parent line', readonly=True),
         # Values after import
         'imp_product_id': fields.many2one('product.product', string='Product', readonly=True),
@@ -833,11 +918,14 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         'imp_product_qty': fields.float(digits=(16,2), string='Qty to Process', readonly=True),
         'imp_uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
         'imp_price_unit': fields.float(digits=(16,2), string='Price Unit', readonly=True),
-        'imp_cost': fields.float(digits=(16,2), string='Cost', readonly=True),
-        'discrepancy': fields.float(digits=(16,2), string='Discre.', readonly=True),
+        'imp_cost': fields.function(_get_imported_values, method=True, type='float', multi='imported',
+                                    digits=(16,2), string='Cost', readonly=True, store=False),
+        'discrepancy': fields.function(_get_imported_values, method=True, type='float', multi='imported',
+                                       digits=(16,2), string='Discre.', readonly=True, store=False),
         'imp_currency_id': fields.many2one('res.currency', string='Curr.', readonly=True),
         'imp_batch_id': fields.many2one('stock.production.lot', string='Batch Number', readonly=True),
         'imp_exp_date': fields.date(string='Expiry date', readonly=True),
+        'imp_packing_list': fields.char(size=256, string='Packing list', readonly=True),
         'message_esc1': fields.char(size=256, string='Message ESC 1', readonly=True),
         'message_esc2': fields.char(size=256, string='Message ESC 2', readonly=True),
         # Computed fields
@@ -851,9 +939,239 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                                      string='DG', readonly=True, store=False, multi='computed'),
         'np_check': fields.function(_get_values, method=True, type='boolean',
                                      string='NP', readonly=True, store=False, multi='computed'),
+        'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
     }
 
-    def import_line(self, cr, uid, ids, vals, context=None):
-        return ''
+    _defaults = {
+        'integrity_status': 'empty',
+    }
+
+    def import_line(self, cr, uid, ids, values, context=None):
+        '''
+        Write the line with the values
+        '''
+        prod_obj = self.pool.get('product.porduct')
+        uom_obj = self.pool.get('product.uom')
+        prodlot_obj = self.pool.get('stock.production.lot')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        errors = []
+
+        for line in self.browse(cr, uid, ids, context=context):
+            write_vals = {}
+
+            # Product
+            if (values[1] and values[1] == line.move_product_id.default_code) or\
+               (values[2] and values[2] == line.move_product_id.name):
+                write_vals['imp_product_id'] = line.move_product_id and line.move_product_id.id or False
+            else:
+                prod_id = False
+                if values[1]:
+                    prod_id = PRODUCT_CODE_ID.get(values[1])
+                if not prod_id and values[2]:
+                    prod_id = PRODUCT_NAME_ID.get(values[2])
+
+                if not prod_id and (values[1] or values[2]):
+                    prod_ids = prod_obj.search(cr, uid, ['|', ('default_code', '=', values[1]),
+                                                              ('name', '=', values[2])], context=context)
+                    if not prod_ids:
+                        errors.append(_('Product not found in database - Product of the inital line kept.'))
+                        write_vals['imp_product_id'] = line.move_product_id and line.move_product_id.id or False
+                    else:
+                        write_vals['imp_product_id'] = prod_ids[0]
+                else:
+                    write_vals['imp_product_id'] = prod_id
+
+
+            # Product Qty
+            err_msg = _('Incorrect float value for field \'Product Qty\' - Quantity of the initial line kept.')
+            try:
+                qty = float(values[3])
+                write_vals['imp_product_qty'] = qty
+            except Exception:
+                errors.append(err_msg)
+                write_vals['type_change'] = 'error'
+
+            # UoM
+            uom_value = values[4]
+            if str(uom_value) == line.move_uom_id.name:
+                write_vals['imp_uom_id'] = line.move_uom_id.id
+            else:
+                uom_id = UOM_NAME_ID.get(str(uom_value))
+                if not uom_id:
+                    uom_ids = uom_obj.search(cr, uid, [('name', '=', str(uom_value))], context=context)
+                    if uom_ids:
+                        write_vals['imp_uom_id'] = uom_ids[0]
+                    else:
+                        errors.append(_('UoM not found in database - UoM of the initial line kept.'))
+                        write_vals['imp_uom_id'] = line.move_uom_id.id
+                else:
+                    write_vals['imp_uom_id'] = uom_id
+
+            # Unit price
+            err_msg = _('Incorrect float value for field \'Price Unit\' - Price Unit of the initial line kept.')
+            try:
+                unit_price = float(values[5])
+                write_vals['imp_price_unit'] = unit_price
+            except Exception:
+                errors.append(err_msg)
+
+            # Currency
+            currency_value = values[6]
+            if str(currency_value) == line.move_currency_id.name:
+                write_vals['imp_currency_id'] = line.move_currency_id.id
+            elif line.move_currency_id.name:
+                err_msg = _('The currency on the Excel file is not the same as the currency of the IN line - You must have the same currency on both side - Currency of the initial line kept.')
+                errors.append(err_msg)
+
+            # Batch
+            batch_value = values[7]
+            if not line.lot_check and not line.exp_check and batch_value:
+                errors.append(_('A batch is defined on the imported file but the product doesn\'t require batch number - Batch ignored'))
+            elif batch_value:
+                batch_id = PRODLOT_NAME_ID.get(str(batch_value))
+                batch_ids = prodlot_obj.search(cr, uid, [('product_id', '=', write_vals['imp_product_id'])], context=context)
+                if not batch_id or batch_id not in batch_ids:
+                    batch_ids = prodlot_obj.search(cr, uid, [('name', '=', str(batch_value)), ('product_id', '=', write_vals['imp_product_id'])], context=context)
+                    if batch_ids:
+                        write_vals['imp_batch_id'] = batch_ids[0]
+                    else:
+                        errors.append(_('Batch not found in database - Batch not set.'))
+                        write_vals['imp_batch_id'] = False
+                else:
+                    write_vals['imp_batch_id'] = batch_id
+            
+            # Expired date
+            exp_value = values[8]
+            if not line.lot_check and not line.exp_check and exp_value:
+                errors.append(_('An expired date is defined on the imported file but the product doesn\'t require expired date - Expired date ignored'))
+            elif exp_value:
+                if exp_value and type(exp_value) == type(DateTime.now()):
+                    write_vals['imp_exp_date'] = exp_value.strftime('%Y-%m-%d')
+                elif exp_value and isinstance(exp_value, str):
+                    try:
+                        time.strptime(exp_value, '%Y-%m-%d')
+                        write_vals['imp_exp_date'] = exp_value
+                    except ValueError:
+                        err_msg = _('Incorrect date value for field \'Expired date\' - Expired date of the initial line kept.')
+                        errors.append(err_msg)
+                elif exp_value:
+                     err_msg = _('Incorrect date value for field \'Expired date\' - Expired date of the initial line kept.')
+                     errors.append(err_msg)
+
+                if write_vals.get('imp_exp_date') and write_vals.get('imp_batch_id'):
+                    batch_exp_date = prodlot_obj.browse(cr, uid, write_vals.get('imp_batch_id'), context=context).life_date
+                    if batch_exp_date != write_vals.get('imp_exp_date'):
+                        errors.append(_('The \'Expired date\' value doesn\'t match with the expired date of the Batch - The expired date of the Batch was kept.'))
+                        write_vals['imp_exp_date'] = batch_exp_date
+            elif not exp_value and write_vals.get('imp_batch_id'):
+                write_vals['imp_exp_date'] = prodlot_obj.browse(cr, uid, write_vals.get('imp_batch_id'), context=context).life_date
+
+            # Packing list
+            write_vals['imp_packing_list'] = values[9]
+
+            # Message ESC 1
+            write_vals['message_esc1'] = values[10]
+            # Message ESC 2
+            write_vals['message_esc2'] = values[11]
+
+            write_vals['integrity_status'] = self.check_integrity_status(cr, uid, write_vals, context=context)
+            if write_vals['integrity_status'] != 'empty' or len(errors) > 0:
+                write_vals['type_change'] = 'error'
+
+            error_msg = line.error_msg or ''
+            for err in errors:
+                if error_msg:
+                    error_msg += ' - '
+                error_msg += err
+
+            write_vals['error_msg'] = error_msg
+
+            self.write(cr, uid, [line.id], write_vals, context=context)
+
+        return errors
+
+    def get_error_msg(self, cr, uid, ids, context=None):
+        '''
+        Display the error message
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.error_msg:
+                raise osv.except_osv(_('Warning'), line.error_msg)
+
+        return True
+
+    def check_integrity_status(self, cr, uid, vals, context=None):
+        '''
+        Return the integrity_status of the line
+        '''
+        product_obj = self.pool.get('product.product')
+        prodlot_obj = self.pool.get('stock.production.lot')
+        product = vals.get('imp_product_id') and product_obj.browse(cr, uid, vals['imp_product_id'], context=context) or False
+        prodlot_id = vals.get('imp_batch_id') and prodlot_obj.browse(cr, uid, vals['imp_batch_id'], context=context) or False
+        exp_date = vals.get('imp_exp_date')
+
+        if not (product.perishable or product.batch_management):
+            if exp_date or prodlot_id:
+                return 'no_lot_needed'
+
+        if product.batch_management:
+            if not prodlot_id:
+                return 'missing_lot'
+
+            if prodlot_id and prodlot_id.type != 'standard':
+                return 'wrong_lot_type_need_standard'
+
+        if product.perishable:
+            if not exp_date:
+                return 'missing_date'
+
+            if not product.batch_management and prodlot_id and prodlot_id.type != 'internal':
+                return 'wrong_lot_type_need_internal'
+
+        return 'empty'
+
+    def put_in_memory_move(self, cr, uid, ids, partial_id, context=None):
+        '''
+        Create a stock.move.memory.in for each lines
+        '''
+        move_obj = self.pool.get('stock.move.memory.in')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        move_ids = []
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.type_change in ('del', 'error', 'new'):
+                continue
+
+            move = False
+            if line.type_change == 'split':
+                move = line.parent_line_id.move_id
+            else:
+                move = line.move_id
+
+            vals = {'change_reason': '%s - %s' % (line.message_esc1, line.message_esc2),
+                    'cost': line.imp_price_unit,
+                    'currency': line.imp_currency_id.id,
+                    'expiry_date': line.imp_exp_date,
+                    'line_number': line.line_number,
+                    'move_id': move.id,
+                    'prodlot_id': line.imp_batch_id.id,
+                    'product_id': line.imp_product_id.id,
+                    'product_uom': line.imp_uom_id.id,
+                    'quantity': line.imp_product_qty,
+                    'quantity_ordered': line.type_change != 'split' and move.product_qty or 0.00,
+                    'uom_ordered': move.product_uom.id,
+                    'wizard_pick_id': partial_id}
+
+            move_ids.append(move_obj.create(cr, uid, vals, context=context))
+
+        return move_ids
 
 wizard_import_in_line_simulation_screen()

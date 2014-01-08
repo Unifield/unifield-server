@@ -336,6 +336,40 @@ class stock_picking(osv.osv):
         res = super(stock_picking, self).write(cr, uid, ids, vals, context=context)
         
         return res
+
+    def go_to_simulation_screen(self, cr, uid, ids, context=None):
+        '''
+        Return the simulation screen
+        '''
+        simu_obj = self.pool.get('wizard.import.in.simulation.screen')
+        line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        picking_id = ids[0]
+        if not picking_id:
+            raise osv.except_osv(_('Error'), _('No picking defined'))
+
+        simu_id = simu_obj.create(cr, uid, {'picking_id': picking_id,}, context=context)
+        for move in self.browse(cr, uid, picking_id, context=context).move_lines:
+            if move.state not in ('draft', 'cancel', 'done'):
+                line_obj.create(cr, uid, {'move_id': move.id,
+                                          'simu_id': simu_id,
+                                          'move_product_id': move.product_id and move.product_id.id or False,
+                                          'move_product_qty': move.product_qty or 0.00,
+                                          'move_uom_id': move.product_uom and move.product_uom.id or False,
+                                          'move_price_unit': move.price_unit or move.product_id.standard_price,
+                                          'move_currency_id': move.price_currency_id and move.price_currency_id.id or False,
+                                          'line_number': move.line_number,}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.in.simulation.screen',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'target': 'same',
+                'res_id': simu_id,
+                'context': context}
     
     def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
         '''
