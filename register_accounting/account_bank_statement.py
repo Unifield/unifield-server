@@ -1024,11 +1024,15 @@ class account_bank_statement_line(osv.osv):
         }
         
         
-    def unlink_moves(self, cr, uid, ids, *args, **argv):
+    def unlink_moves(self, cr, uid, ids, context=None):
         """
         If invoice is a Direct Invoice and is in draft state, then delete moves and associated records, 
         from the account_bank_statement_line. These are then recreated for the updated invoice line.
         """
+        
+        if context is None:
+            context = {}
+        
         account_move = self.pool.get('account.move')                    # am
         account_move_line = self.pool.get('account.move.line')          # aml
         analytic_distribution = self.pool.get('analytic.distribution')  # ad
@@ -1047,7 +1051,7 @@ class account_bank_statement_line(osv.osv):
                 move_id = ai.move_id.id
                 if move_id:
                     move_ids.append(move_id)
-                    account_invoice.write(cr, uid, [ai.id],{'move_id': False})
+                    account_invoice.write(cr, uid, [ai.id],{'move_id': False}, context=context)
 
 
                 # TODO: move_id on account.analytic.line is actually account_move_line.id, not account_move.id

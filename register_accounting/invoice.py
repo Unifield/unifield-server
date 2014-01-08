@@ -459,13 +459,15 @@ class account_invoice_line(osv.osv):
             ids = [ids]
         # Fetch all invoice_id to check
         direct_invoice_ids = []
+        abst_obj = self.pool.get('account.bank.statement.line')
         for invl in self.browse(cr, uid, ids):
             if invl.invoice_id and invl.invoice_id.is_direct_invoice and invl.invoice_id.state == 'draft':
                 direct_invoice_ids.append(invl.invoice_id.id)
                 # find account_bank_statement_lines and used this to delete the account_moves and associated records
-                for absl_id in self.pool.get('account.bank.statement.line').search(cr, uid, [('invoice_id','=',invl.invoice_id.id)]):
-                    absl = self.pool.get('account.bank.statement.line').browse(cr, uid, absl_id)
-                    absl.unlink_moves(cr, uid, ids)
+                absl_ids = abst_obj.search(cr, uid, [('invoice_id','=',invl.invoice_id.id)])
+                if absl_ids:
+                    abst_obj.unlink_moves(cr, uid, absl_ids, context)
+      
         
         # Normal behaviour
         res = super(account_invoice_line, self).unlink(cr, uid, ids, context)
