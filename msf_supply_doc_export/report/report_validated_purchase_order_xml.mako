@@ -40,7 +40,7 @@
         % endif
         <field name="notes">${o.notes or ''}</field>
         <field name="origin">${o.origin or ''}</field>
-        <field name="project_ref">${o.project_ref or ''}</field>
+        <field name="project_ref">${o.fnct_project_ref or ''}</field>
         <field name="message_esc">${o.message_esc or ''}</field>
         <field name="order_line">
         % for l in o.order_line:
@@ -81,7 +81,7 @@
 				</field>
 				<field name="comment">${l.comment or ''}</field>
 				<field name="notes">${l.notes or ''}</field>
-				<field name="project_ref">${l.project_ref or ''}</field>
+				<field name="project_ref">${l.fnct_project_ref or ''}</field>
 				<field name="message_esc1"></field>
 				<field name="message_esc2"></field>
 			</record>

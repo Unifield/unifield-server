@@ -159,7 +159,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Project Ref.')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.project_ref or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.fnct_project_ref or ''|x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Message ESC Header')}</Data></Cell>
@@ -219,7 +219,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.nomen_manda_2 and line.nomen_manda_2.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.notes or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.project_ref or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.fnct_project_ref or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     </Row>
