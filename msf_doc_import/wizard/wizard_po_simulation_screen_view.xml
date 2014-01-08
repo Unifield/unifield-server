@@ -75,7 +75,7 @@
                         <page string="Details">
                             <!-- LINES -->
                             <field name="simu_line_ids" nolabel="1" colspan="4">
-                                <tree string="Lines" colors="red: type_change == 'del'; orange: change_ok==True and type_change != 'del'; blue: type_change=='split'; green: type_change=='new'">
+                                <tree string="Lines" colors="grey: type_change == 'del'; red: type_change == 'error'; orange: change_ok==True and type_change not in ('del', 'error'); blue: type_change=='split'; green: type_change=='new'">
                                     <field name="in_product_id" />
                                     <field name="in_nomen" />
                                     <field name="in_comment" />
@@ -85,12 +85,14 @@
                                     <field name="in_dcd" />
                                     <field name="in_price" />
                                     <field name="in_currency" />
-                                    <field name="in_line_number" />
+                                    <field name="in_line_number" invisible="1" />
+                                    <field name="str_in_line_number" />
                                     <field name="type_change" />
                                     <field name="error_msg" invisible="1" />
                                     <button name="get_error_msg" type="object" icon="gtk-dialog-warning" string="See error" attrs="{'invisible': [('error_msg', '=', False)]}" />
                                     <field name="imp_product_id" />
                                     <field name="imp_qty" />
+                                    <field name="imp_uom" />
                                     <field name="imp_price" />
                                     <field name="imp_discrepancy" />
                                     <field name="imp_currency" />
