@@ -70,7 +70,7 @@
 ## we loop over the purchase_order_line "%s"%po_name.split('/')[-1])
 
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Order Reference')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Order Reference*')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${o.name or ''|x}</Data></Cell>
     </Row>
     <Row>
@@ -167,23 +167,23 @@
     </Row>
     
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line number*')}</Data></Cell>    
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line number')}</Data></Cell>    
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ext. Ref.')}</Data></Cell>    
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code*')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Qty*')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product UoM')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price Unit')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Origin')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product UoM*')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price Unit*')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency*')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Origin*')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery requested date')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery confirmed date')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery confirmed date*')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Nomen Name')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Nomen Group')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Nomen Family')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Notes')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Project Ref*')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Project Ref')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('ESC Message 1')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('ESC Message 2')}</Data></Cell>
     </Row>
