@@ -93,7 +93,7 @@ class msf_budget(osv.osv):
         'decision_moment_order': fields.related('decision_moment_id', 'order', string="Decision Moment Order", readonly=True, store=True, type="integer"),
         'version': fields.integer('Version'),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
-        'display_type': fields.selection([('all', 'Accounts and destinations only'),
+        'display_type': fields.selection([('all', 'Accounts and destinations'),
                                           ('expense', 'Accounts only'),
                                           ('view', 'Parent accounts only')], string="Display type"),
         'type': fields.selection([('normal', 'Normal'), ('view', 'View')], string="Budget type"),
