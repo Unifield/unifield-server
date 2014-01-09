@@ -43,7 +43,6 @@
         'wizard/wizard_import_fo_line.xml',
         'wizard/wizard_import_tender_line.xml',
         'wizard/wizard_imprort_ir_line.xml',
-        'wizard/wizard_import_int_line.xml',
         'wizard/wizard_po_simulation_screen_view.xml',
         'wizard/wizard_import_picking_line.xml',
         'wizard/wizard_import_auto_supply_line.xml',
