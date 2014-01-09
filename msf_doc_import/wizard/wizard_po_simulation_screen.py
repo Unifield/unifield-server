@@ -1446,8 +1446,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
         if ids:
             return simu_obj.go_to_simulation(cr, uid, line.simu_id.id, context=context)
-        else:
-            return {'type': 'ir.actions.act_window_close'}
               
+        return True
 
 wizard_import_po_simulation_screen_line()
