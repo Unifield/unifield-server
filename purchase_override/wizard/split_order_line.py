@@ -199,6 +199,10 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                     # if original po line is confirmed, we action_confirm new line
                     if split.purchase_line_id.state == 'confirmed':
                         po_line_obj.action_confirm(cr, uid, [new_line_id], context=context)
+                    
+                    if context.get('from_simu_screen'):
+                        return new_line_id
+                
         return {'type': 'ir.actions.act_window_close'}
 
     def line_qty_change(self, cr, uid, ids, original_qty, new_line_qty, context=None):

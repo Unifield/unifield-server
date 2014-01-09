@@ -23,12 +23,25 @@ from tools.translate import _
 
 # if you update a file in PO_COLUMNS_HEADER_FOR_INTEGRATION, check also NEW_COLUMNS_HEADER, you also need to modify the method export_po_integration, get_po_row_values and get_po_header_row_values.
 # in PO_COLUMNS_HEADER_FOR_INTEGRATION, you have all the importable columns possible
-PO_COLUMNS_HEADER_FOR_INTEGRATION=[
-('Line', 'number'), ('Product Code', 'string'), ('Product Description', 'string'), ('Quantity', 'number'), ('UoM', 'string'), ('Price', 'number'), ('Delivery Request Date', 'date'),
-('Delivery Confirmed Date', 'date'), ('Order Reference', 'string'), ('Delivery Confirmed Date (PO)', 'date'),
-('Comment', 'string'), ('Supplier Reference', 'string'), ('Origin', 'string'), ('Notes', 'string'), ('Est. Transport Lead Time', 'number'), ('Transport Mode', 'string'), 
-('Destination Partner', 'string'), ('Destination Address', 'string'), ('Invoicing Address', 'string'), ('Arrival Date in the country', 'string'),
-('Incoterm', 'string'), ('Notes (PO)', 'string')]
+PO_COLUMNS_HEADER_FOR_INTEGRATION = [
+    (_('Line'), 'number'),
+    (_('Ext. Ref.'), 'string'),
+    (_('Product Code'), 'string'),
+    (_('Product Description'), 'string'),
+    (_('Product Qty*'), 'number'),
+    (_('Product UoM*'), 'string'),
+    (_('Price Unit*'), 'number'),
+    (_('Currency*'), 'string'),
+    (_('Origin*'), 'string'),
+    (_('Delivery Reqd Date'), 'date'),
+    (_('Delivery Confd Date*'), 'date'),
+    (_('Nomen Name'), 'string'),
+    (_('Nomen Group'), 'string'),
+    (_('Nomen Family'), 'string'),
+    (_('Comment'), 'string'),
+    (_('Notes'), 'string'),
+    (_('Project Ref.*'), 'string'),
+]
 
 PO_COLUMNS_FOR_INTEGRATION = [x for (x, y) in PO_COLUMNS_HEADER_FOR_INTEGRATION]
 
@@ -74,4 +87,4 @@ import wizard_import_ir_line
 import wizard_import_int_line
 import wiz_common_import
 import wizard_import_tender_line
-
+import wizard_po_simulation_screen

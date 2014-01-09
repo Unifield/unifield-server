@@ -1110,6 +1110,13 @@ class procurement_order(osv.osv):
         - add message at po creation during on_order workflow
         '''
         po_obj = self.pool.get('purchase.order')
+        sol_obj = self.pool.get('sale.order.line')
+
+        # If the line has been created by a confirmed PO, doesn't create a new PO
+        sol_ids = sol_obj.search(cr, uid, [('procurement_id', 'in', ids), ('created_by_po', '!=', False)], context=context)
+        if sol_ids:
+            return sol_obj.read(cr, uid, sol_ids[0], ['created_by_po'], context=context)['created_by_po'][0]
+
         result = super(procurement_order, self).action_po_assign(cr, uid, ids, context=context)
         # The quotation 'SO001' has been converted to a sales order.
         if result:

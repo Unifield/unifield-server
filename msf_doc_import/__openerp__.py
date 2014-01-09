@@ -28,6 +28,7 @@
     "depends": ["sale", "purchase", "tender_flow", "msf_supply_doc_export", "spreadsheet_xml", "account_override", "register_accounting"],
     "init_xml": [],
     "update_xml": [
+        'doc_import_report.xml',
         'view/sale_order_import_lines_view.xml',
         'view/internal_request_import_line_view.xml',
         'view/tender_import_line_view.xml',
@@ -42,6 +43,7 @@
         'wizard/wizard_import_tender_line.xml',
         'wizard/wizard_imprort_ir_line.xml',
         'wizard/wizard_import_int_line.xml',
+        'wizard/wizard_po_simulation_screen_view.xml',
         'view/composition_kit_import_line_view.xml',
         'wizard/wizard_import_po_view.xml',
         'data/msf_doc_import_data.xml',
