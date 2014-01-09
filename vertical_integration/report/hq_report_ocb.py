@@ -96,18 +96,20 @@ class finance_archive(finance_export.finance_archive):
         sqltwo = """SELECT j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS entry_sequence, 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END as debit, CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as credit, c.name AS "booking_currency", c.id
                 FROM (
                     SELECT aml.account_id, aml.journal_id, aml.currency_id, SUM(aml.amount_currency) AS total, aml.period_id
-                    FROM account_move_line AS aml, account_account AS aa
+                    FROM account_move_line AS aml, account_account AS aa, account_journal AS j
                     WHERE exporting_sequence = %s
+                    AND aml.journal_id = j.id
+                    AND j.type not in ('hq', 'migration')
                     GROUP BY aml.period_id, aml.account_id, aml.journal_id, aml.currency_id
                     ORDER BY aml.account_id
                 )
                 AS req, account_account AS a, account_journal AS j, res_currency AS c, account_period AS p, account_fiscalyear AS f
                 WHERE req.account_id = a.id
                 AND req.journal_id = j.id
+                AND j.type not in ('hq', 'migration')
                 AND req.currency_id = c.id
                 AND req.period_id = p.id
                 AND p.fiscalyear_id = f.id
-                AND a.type = 'liquidity'
                 AND a.shrink_entries_for_hq = 't'
                 ORDER BY a.code;"""
         cr.execute(sqltwo, (seq,))
@@ -272,6 +274,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND al.exported != 't';
                 """,
             # Exclude lines that come from a HQ or MIGRATION journal
+            # Take all lines that are on account that is "shrink_entries_for_hq" which will make a consolidation of them (with a second SQL request)
             'bs_entries_consolidated': """
                 SELECT aml.id
                 FROM account_move_line AS aml, account_account AS aa, account_journal AS j
@@ -279,7 +282,6 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND aml.account_id = aa.id
                 AND aml.journal_id = j.id
                 AND j.type not in ('hq', 'migration')
-                AND aa.type = 'liquidity'
                 AND aa.shrink_entries_for_hq = 't'
                 AND aml.exported != 't';
                 """,
