@@ -538,7 +538,7 @@
                         </group>
                     </group>
                    <field name="is_esc" invisible="1" />
-                   <group colspan="4" string="ESC export" attrs="{'invisible': ['|', ('is_esc', '=', False), ('state', 'in', ('cancel', 'done'))]}">
+                   <group colspan="4" string="IN export" attrs="{'invisible': [('state', 'in', ('cancel', 'done'))]}">
                        <field name="filetype" />
                        <button name="export_template_file" colspan="2" string="Export file for ESC" type="object" icon="gtk-print" />
                    </group>
@@ -684,7 +684,9 @@
                                 <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                 <button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find"/>
                                 <button name="force_assign" states="" string="Force Availability" type="object" icon="gtk-jump-to"/>
-                                <button name="go_to_simulation_screen" states="assigned,shipped" string="Simulate" type="object" icon="gtk-execute" attrs="{'invisible': [('is_esc', '=', False)]}" />
+                                <!--
+                                     To go to simulation screen, click on Process then Simulate button on the opened wizard
+                                     <button name="go_to_simulation_screen" states="assigned,shipped" string="Simulate" type="object" icon="gtk-execute" attrs="{'invisible': [('is_esc', '=', False)]}" />-->
                                 <button name="action_process" states="assigned,shipped" string="Process" type="object" icon="gtk-go-forward"/>
                                 <group colspan="1" states="done">
                                     <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>

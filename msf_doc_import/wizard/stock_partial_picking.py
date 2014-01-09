@@ -849,19 +849,30 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 state_index = root.index(fields[0])
                 new_field_txt = """
                 <group name="import_file_lines" string="Import Lines" colspan="24" col="8">
-                    <field name="import_in_progress" invisible="1" />
-                    <field name="file_to_import" filename="filename_template" colspan="2"/>
-                    <button name="import_file" string="Import lines" icon="gtk-execute" colspan="1" type="object" />
-                    <field name="import_error_ok" invisible="1"/>
-                    <field name="filename" invisible="1"  />
-                    <button name="dummy" string="Update" icon="gtk-execute" colspan="1" type="object" />
-                    <newline />
-                    <field name="percent_completed" widget="progressbar" attrs="{\'invisible\': [(\'import_in_progress\', \'=\', False)]}" />
-                    <field name="data" filename="filename" colspan="2" attrs="{\'invisible\':[(\'import_error_ok\', \'=\', False)]}"/>
-                    <newline />
-                    <field name="message" attrs="{\'invisible\':[(\'import_in_progress\', \'=\', False)]}" colspan="4" nolabel="1"/>
-                </group>
-                """
+                    <button name="launch_simulation" string="Simulate" icon="gtk-execute" colspan="1" type="object" />
+                </group>"""
+# QT : Remove the old import following the Skype discussion with Raffaelle on 2014.08.01 :
+#      [15:19:47] Quentin THEURET: For IN simulation screen, should I keep the old import for IN with other suppliers ?
+#      [15:20:30] Raffaelle Hagen: yes please
+#      [15:20:51] Quentin THEURET: ok, thanks
+#      [15:24:28] Raffaelle Hagen: ok, in fact, would it be quicker to do the same for all suppliers?
+#      [15:25:16] Raffaelle Hagen: because actually maybe better that it is not purely limited to ESCs
+#
+#                new_field_txt = """
+#                <group name="import_file_lines" string="Import Lines" colspan="24" col="8">
+#                    <field name="import_in_progress" invisible="1" />
+#                    <field name="file_to_import" filename="filename_template" colspan="2"/>
+#                    <button name="import_file" string="Import lines" icon="gtk-execute" colspan="1" type="object" />
+#                    <field name="import_error_ok" invisible="1"/>
+#                    <field name="filename" invisible="1"  />
+#                    <button name="dummy" string="Update" icon="gtk-execute" colspan="1" type="object" />
+#                    <newline />
+#                    <field name="percent_completed" widget="progressbar" attrs="{\'invisible\': [(\'import_in_progress\', \'=\', False)]}" />
+#                    <field name="data" filename="filename" colspan="2" attrs="{\'invisible\':[(\'import_error_ok\', \'=\', False)]}"/>
+#                    <newline />
+#                    <field name="message" attrs="{\'invisible\':[(\'import_in_progress\', \'=\', False)]}" colspan="4" nolabel="1"/>
+#                </group>
+#                """
                 #generate new xml form
                 new_form = etree.fromstring(new_field_txt)
                 # insert new form just after state index position
