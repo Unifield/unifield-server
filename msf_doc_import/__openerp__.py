@@ -51,6 +51,7 @@
         'workflow/sale_workflow.xml',
         'workflow/tender_flow_workflow.xml',
         'workflow/procurement_request_workflow.xml',
+        'doc_import_report.xml'
     ],
     "demo_xml": [],
     "test": [

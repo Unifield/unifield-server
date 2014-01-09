@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            id="in_simulation_screen_xls"
+            model="wizard.import.in.simulation.screen"
+            name="in.simulation.screen.xls"
+            file="msf_doc_import/report/in_simulation_screen_xls_report.mako"
+            report_type="webkit"
+            header="False"
+            menu="False"
+            auto="False"
+            string="IN simulation screen" />
+
+    </data>
+</openerp>
