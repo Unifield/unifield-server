@@ -42,12 +42,36 @@ class purchase_order_sync(osv.osv):
     _inherit = "purchase.order"
     _logger = logging.getLogger('------sync.purchase.order')
 
+    def _is_confirmed_and_synced(self, cr, uid, ids, field_name, arg, context=None):
+        """fields.function 'is_confirmed_and_synced'."""
+        if context is None:
+            context = {}
+        res = {}
+        sync_msg_obj = self.pool.get('sync.client.message_to_send')
+        for po in self.browse(cr, uid, ids, context=context):
+            res[po.id] = False
+            if po.state == 'confirmed':
+                po_identifier = self.get_sd_ref(cr, uid, po.id, context=context)
+                sync_msg_ids = sync_msg_obj.search(
+                    cr, uid,
+                    [('sent', '=', True),
+                     ('remote_call', '=', 'sale.order.create_so'),
+                     ('identifier', 'like', po_identifier),
+                     ],
+                    context=context)
+                res[po.id] = bool(sync_msg_ids)
+        return res
+
     _columns = {
         'sended_by_supplier': fields.boolean('Sended by supplier', readonly=True),
         'split_po': fields.boolean('Created by split PO', readonly=True),
         'push_fo': fields.boolean('The Push FO case', readonly=False),
         'from_sync': fields.boolean('Updated by synchronization', readonly=False),
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
+        'is_confirmed_and_synced': fields.function(
+            _is_confirmed_and_synced, method=True,
+            type='boolean',
+            string=u"Confirmed and Synced"),
     }
 
     _defaults = {
