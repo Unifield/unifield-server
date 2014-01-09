@@ -237,10 +237,10 @@ class purchase_order(osv.osv):
             res[po] = ''
             so_ids = self.get_so_ids_from_po_ids(cr, uid, po, context=context)
             for so in self.pool.get('sale.order').browse(cr, uid, so_ids, context=context):
-                if so.origin:
+                if so.client_order_ref:
                     if res[po]:
                         res[po] += ' - '
-                    res[po] += so.origin
+                    res[po] += so.client_order_ref
 
         return res
 
@@ -2514,10 +2514,10 @@ class purchase_order_line(osv.osv):
             res[line_id] = ''
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, line_id, context=context)
             for sol in self.pool.get('sale.order.line').browse(cr, uid, sol_ids, context=context):
-                if sol.order_id and sol.order_id.origin:
+                if sol.order_id and sol.order_id.client_order_ref:
                     if res[line_id]:
                         res[line_id] += ' - '
-                    res[line_id] += sol.order_id.origin
+                    res[line_id] += sol.order_id.client_order_ref
 
         return res
 
