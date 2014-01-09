@@ -289,8 +289,7 @@ class purchase_order_sync(osv.osv):
                 ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
             else:
                 ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
-                ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_approve', cr)
-                
+                res = self.purchase_approve(cr, uid, [po_id], context=context) # UTP-972: Use a proper workflow to confirm a PO
         return True
 
     # UTP-872: If the PO is a split one, then still allow it to be confirmed without po_line 
@@ -322,7 +321,7 @@ class purchase_order_sync(osv.osv):
 
         default = {}
         default.update(header_result)
-        
+
         res_id = self.write(cr, uid, po_id, default, context=context)
         return True
     
