@@ -1054,9 +1054,9 @@ class account_bank_statement_line(osv.osv):
                     account_invoice.write(cr, uid, [ai.id],{'move_id': False}, context=context)
 
 
-                # TODO: move_id on account.analytic.line is actually account_move_line.id, not account_move.id
+                # TODO: Needs to be fixed during refactoring. The field move_id on account.analytic.line 
+                # is actually account_move_line.id, not account_move.id
                 move_line_ids = account_move_line.search(cr, uid, [('move_id','in',move_ids)])
-                
                 # Find and delete all analytic lines for this move
                 ad_ids = []
                 aal_ids = []
@@ -1072,8 +1072,6 @@ class account_bank_statement_line(osv.osv):
                     
                 # Delete the move lines
                 account_move.unlink(cr, uid, move_ids)
-                # TODO: Need to fix absl.first_move_line_id
-
         return True
       
 

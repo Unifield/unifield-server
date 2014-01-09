@@ -74,9 +74,6 @@ class account_invoice(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         self._check_analytic_distribution_state(cr, uid, ids, context)
-        
-        # TODO need to include checks if anything was changed. For now assume everything was
-        # Call 
         self._direct_invoice_updated(cr, uid, ids, context)
         
         if context.get('from_register', False):
@@ -99,14 +96,12 @@ class account_invoice(osv.osv):
         
         # get statement line id
         absl = direct_invoice.register_line_ids[0]
-        #absl_id = direct_invoice.register_line_ids[0].id
         
         # Delete moves
         account_bank_statement_line.unlink_moves(cr, uid, [absl.id])
         
         # Re-create moves and temp post them.
         account_bank_statement_line.write(cr, uid, [absl.id], {'state': 'draft'})
-        #move_id = account_bank_statement_line.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
         account_bank_statement_line.button_temp_posting(cr, uid, [absl.id], context=context)
         
         return True
