@@ -17,9 +17,6 @@
                     <field name='date'/>
                     <field name='reference' />
                     <newline/>
-                    <field name="advance_linked_po_auto_invoice" invisible="1" />
-                    <field name="comment" attrs="{'invisible':[('advance_linked_po_auto_invoice', '=', False)]}" />
-                    <newline/>
                     <group colspan="4">
                         <field name='invoice_id' nolabel="1" domain="[('type', '=', 'in_invoice'), ('state', '=', 'open'), 
                             ('currency_id', '=', currency_id), ('purchase_list', '=', True)]"/>
@@ -44,6 +41,8 @@
                     </group>
                     <field name='currency_id' invisible="1" />
                     <field name='display_invoice' invisible="1"/>
+                    <field name="advance_linked_po_auto_invoice" invisible="1" />
+                    <field name="comment" colspan="4" nolabel="1" attrs="{'invisible':[('advance_linked_po_auto_invoice', '=', False)]}" />
                 </form>
             </field>
           </record>

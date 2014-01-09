@@ -219,12 +219,12 @@ class wizard_cash_return(osv.osv_memory):
                         context['po_op_advance_auto_add_invoice_id'] = invoice.id
                         self.action_add_invoice(cr, uid, [id], context=context)
                     if invoice_numbers:
-                        msg = "Operational advance has been linked to a purchase order." \
-                              "\nPurchase order invoices have been added automatically." \
-                              "\n(You can redo a selection by clicking on 'Clean invoices' then adding manually)" \
-                              "\nAutomatically added invoices are: "
-                        msg += ", ".join(invoice_numbers)
-                        msg += "\n(If you input manually a cash return in 'Advance return amount' equal to initial amount (100% cash return), invoices are not taken into account)"
+                        msg = "This operational advance is linked to a PO." \
+                            " Corresponding invoice lines have automatically been added below:" \
+                            "\nInvoice(s) number: "
+                        msg += ", ".join(invoice_numbers) + "."
+                        msg += "\nYou can change selection by clicking on 'Clean invoices' then selecting invoice manually." \
+                            " Entering a 100% cash return (advance return amount = initial advance amount) you will be able to close this advance without linking it to an invoice."
                         values = {
                             'advance_linked_po_auto_invoice': True,
                             'comment': msg,
