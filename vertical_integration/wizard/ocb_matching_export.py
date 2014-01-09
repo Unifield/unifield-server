@@ -30,6 +30,11 @@ class ocb_matching_export_wizard(osv.osv_memory):
 
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True),
+        'reset': fields.boolean('Reset'),
+    }
+
+    _defaults = {
+        'reset': lambda *a: False,
     }
 
     def button_export(self, cr, uid, ids, context=None):
@@ -45,6 +50,10 @@ class ocb_matching_export_wizard(osv.osv_memory):
             # Get projects below instance
             data['form'].update({'instance_ids': [wizard.instance_id.id] + [x.id for x in wizard.instance_id.child_ids]})
         period_name = ''
+        ## DELETE DURING INTEGRATION
+        if wizard.reset:
+            data['form'].update({'reset': True,})
+        ############################
 
         data['target_filename'] = '%s_matching_export' % (wizard.instance_id and wizard.instance_id.code[0:3] or '',)
         return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocb.matching', 'datas': data}

@@ -75,6 +75,14 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
         if not instance_ids:
             raise osv.except_osv(_('Warning'), _('Some info are missing: instance.'))
 
+        ## TO BE DELETE DURING INTEGRATION
+        if form.get('reset', False):
+            delete_sql = "UPDATE account_move_line set exported='f';"
+            cr.execute(delete_sql)
+            delete2_sql = "UPDATE account_analytic_line set exported='f';"
+            cr.execute(delete2_sql)
+        ##################################
+
         # Prepare SQL requests and PROCESS requests for finance_archive object (CF. account_tools/finance_export.py)
         sqlrequests = {
             # Do not take lines that come from a HQ or MIGRATION journal

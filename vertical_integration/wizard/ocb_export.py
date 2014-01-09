@@ -31,11 +31,13 @@ class ocb_export_wizard(osv.osv_memory):
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True),
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', required=True),
-        'period_id': fields.many2one('account.period', 'Period', required=True)
+        'period_id': fields.many2one('account.period', 'Period', required=True),
+        'reset': fields.boolean('Reset'),
     }
 
     _defaults = {
-        'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, strftime('%Y-%m-%d'), context=c)
+        'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, strftime('%Y-%m-%d'), context=c),
+        'reset': lambda *a: False,
     }
 
     def button_export(self, cr, uid, ids, context=None):
@@ -56,6 +58,10 @@ class ocb_export_wizard(osv.osv_memory):
             period_name = strftime('%Y%m', strptime(wizard.period_id.date_start, '%Y-%m-%d'))
         if wizard.fiscalyear_id:
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
+        ## DELETE DURING INTEGRATION
+        if wizard.reset:
+            data['form'].update({'reset': True,})
+        ############################
 
         data['target_filename'] = '%s_%s_formatted data UF to Epicor' % (wizard.instance_id and wizard.instance_id.code[0:3] or '', period_name)
         return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocb', 'datas': data}

@@ -75,6 +75,11 @@
                 <field name="instance_id" domain="[('level', '=', 'coordo')]"/>
                 <field name="fiscalyear_id"/>
                 <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id)]"/>
+                <html>
+                  Reset<span style="color: red;"> (TO BE DELETED DURING INTEGRATION)
+                    <field name="reset"/>
+                  </span>
+                </html>
                 <group colspan="6" col="4">
                     <label string="" colspan="2"/>
                     <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
@@ -107,6 +112,11 @@
             <field name="arch" type="xml">
             <form string="OCB matching export">
                 <field name="instance_id" domain="[('level', '=', 'coordo')]"/>
+                <html>
+                  Reset<span style="color: red;"> (TO BE DELETED DURING INTEGRATION)
+                    <field name="reset"/>
+                  </span>
+                </html>
                 <group colspan="6" col="4">
                     <label string="" colspan="2"/>
                     <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>

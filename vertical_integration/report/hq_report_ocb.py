@@ -199,6 +199,14 @@ class hq_report_ocb(report_sxw.report_sxw):
         first_day_of_period = period.date_start
         period_name = period.name
 
+        ## TO BE DELETE DURING INTEGRATION
+        if form.get('reset', False):
+            delete_sql = "UPDATE account_move_line set exported='f';"
+            cr.execute(delete_sql)
+            delete2_sql = "UPDATE account_analytic_line set exported='f';"
+            cr.execute(delete2_sql)
+        ##################################
+
         # Prepare SQL requests and PROCESS requests for finance_archive object
 
         # SQLREQUESTS DICTIONNARY
