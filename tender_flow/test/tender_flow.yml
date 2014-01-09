@@ -237,7 +237,7 @@
       po.write({'valid_till': '2011-10-31',})
       for pol in po.order_line:
         pol.write({'price_unit':10024})
-      tender_id = po.tender_id
+      tender_id = po.tender_id.id
       # trigger the workflow
       import netsvc
       wf_service = netsvc.LocalService("workflow")
@@ -246,7 +246,7 @@
     
     # simulate the compare rfq wizard
     wiz_obj = self.pool.get('wizard.compare.rfq')
-    action_dic = wiz_obj.start_compare_rfq(cr, uid, ids, context=dict(context, active_ids=ids, tender_id=tender_id))
+    action_dic = wiz_obj.start_compare_rfq(cr, uid, ids, context=dict(context, active_ids=ids, tender_id=tender_id.id))
     wiz_id = action_dic['res_id']
     wiz = wiz_obj.browse(cr, uid, wiz_id)
     wiz_line = wiz.line_ids[0]
