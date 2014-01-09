@@ -32,7 +32,6 @@
     "init_xml" : [],
     "demo_xml" : [],
     "update_xml" : [
-        'account_view.xml',
         'security/ir.model.access.csv',
         'account_export_mapping_view.xml',
         'country_export_mapping_view.xml',
