@@ -362,6 +362,29 @@ class account_bank_statement_line(osv.osv):
     _constraints = [
         (check_is_cash_register_op_advance_po_available, 'You can only link to a purchase order for an Operation advance', ['account_id', 'cash_register_op_advance_po_id']),
     ]
+    
+    def create(self, cr, uid, values, context=None):
+        if 'cash_register_op_advance_po_id' in values:
+            if values['cash_register_op_advance_po_id']:
+                domain = [
+                    ('cash_register_op_advance_po_id','=',values['cash_register_op_advance_po_id']),
+                ]
+                linked_po_ids = self.search(cr, uid, domain, context=context)
+                if linked_po_ids:
+                    raise osv.except_osv(_("Warning"),_("Selected 'OPE ADV - LINK TO PO' purchase order is already linked to another register line."))
+        return super(account_bank_statement_line, self).create(cr, uid, values, context=context)
+
+    def write(self, cr, uid, ids, values, context=None):
+        if 'cash_register_op_advance_po_id' in values:
+            if values['cash_register_op_advance_po_id']:
+                domain = [
+                    ('id', 'not in', ids),
+                    ('cash_register_op_advance_po_id','=',values['cash_register_op_advance_po_id']),
+                ]
+                linked_po_ids = self.search(cr, uid, domain, context=context)
+                if linked_po_ids:
+                    raise osv.except_osv(_("Warning"),_("Selected 'OPE ADV - LINK TO PO' purchase order is already linked to another register line."))
+        return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
 
 account_bank_statement_line()
 
