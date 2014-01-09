@@ -23,7 +23,6 @@
 				<field name="product_uom" key="name">
 					<field name="name">${l.product_uom and l.product_uom.name or ''}</field>
 				</field>
-                <field name="price_unit">${l.price_unit or 0.00}</field>
                 <field name="price_unit">${((l.purchase_line_id and l.purchase_line_id.price_unit) or (l.product_id and l.product_id.standard_price) or 0.00)|x}</field>
 				<field name="price_currency_id" key="name">
                     <field name="name">${(l.picking_id and l.picking_id.purchase_id and l.picking_id.purchase_id.pricelist_id.currency_id.name or l.company_id.currency_id.name or '')|x}</field>

@@ -540,7 +540,7 @@
                    <field name="is_esc" invisible="1" />
                    <group colspan="4" string="IN export" attrs="{'invisible': [('state', 'in', ('cancel', 'done'))]}">
                        <field name="filetype" />
-                       <button name="export_template_file" colspan="2" string="Export file for ESC" type="object" icon="gtk-print" />
+                       <button name="export_template_file" colspan="2" string="Export file" type="object" icon="gtk-print" />
                    </group>
                     <notebook colspan="4">
                         <page string="General Information">

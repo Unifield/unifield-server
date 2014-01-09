@@ -299,13 +299,13 @@ class wizard_import_in_simulation_screen(osv.osv):
                 return index
 
         for field in rec:
-            if field.attrib['name'] != 'order_line':
+            if field.attrib['name'] != 'move_lines':
                 index = get_field_index(field, index)
             else:
                 index += 1
                 values[index] = ['line_number', 'product_code',
                                  'product_name', 'product_qty',
-                                 'uom_id', 'currency_id',
+                                 'uom_id', 'price_unit', 'currency_id',
                                  'prodlot_id', 'expiry_date',
                                  'packing_list', 'message_esc1',
                                  'message_esc2']
@@ -316,7 +316,7 @@ class wizard_import_in_simulation_screen(osv.osv):
             index += 1
             values[index] = []
             for fl in line:
-                if not fl.getchilden():
+                if not fl.getchildren():
                     values[index].append(fl.text or '')
                 else:
                     for sfl in fl:

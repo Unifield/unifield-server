@@ -278,7 +278,7 @@ class incoming_shipment_xml(WebKitParser):
     def create(self, cr, uid, ids, data, context=None):
         ids = getIds(self, cr, uid, ids, context)
         a = super(incoming_shipment_xml, self).create(cr, uid, ids, data, context)
-        return (a[0], 'xls')
+        return (a[0], 'xml')
 
 incoming_shipment_xml('report.incoming.shipment.xml', 'stock.picking', 'addons/msf_supply_doc_export/report/report_incoming_shipment_xml.mako')
 
