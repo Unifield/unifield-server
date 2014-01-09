@@ -572,21 +572,6 @@ class wizard_cash_return(osv.osv_memory):
             }
             self.write(cr, uid, ids, values, context=context)
             wizard = self.browse(cr, uid, ids[0], context=context)
-        
-        # UTP-482: operational advance linked PO: check if at least 1 PO invoice selected
-        if not advance_settled_100_cash_return \
-            and wizard.advance_linked_po_auto_invoice \
-            and wizard.advance_st_line_id.cash_register_op_advance_po_id:
-            one_po_invoice = False
-            linked_po_invoices_ids = []
-            for invoice in wizard.advance_st_line_id.cash_register_op_advance_po_id.invoice_ids:
-                linked_po_invoices_ids.append(invoice.id)
-            for invoice in wizard.invoice_line_ids:
-                if invoice.invoice_id.id in linked_po_invoices_ids:
-                    one_po_invoice = True
-                    break
-            if not one_po_invoice:
-                raise osv.except_osv(_('Warning'), _('Operational Advance has been linked to a purchase order. You must add at least one purchase order invoice.'))
 
         # check if any line with expense account missing the distribution_id value
         for st_line in wizard.advance_line_ids:
