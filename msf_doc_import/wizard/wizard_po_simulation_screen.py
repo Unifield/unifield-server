@@ -608,16 +608,17 @@ class wizard_import_po_simulation_screen(osv.osv):
 
                 # Line 8: Transport mode
                 transport_mode = values.get(8, [])[1]
-                transport_select = self.fields_get(cr, uid, ['imp_transport_mode'], context=context)
-                for x in transport_select['imp_transport_mode']['selection']:
-                    if x[1] == transport_mode:
-                        header_values['imp_transport_mode'] = x[0]
-                        break
-                else:
-                    possible_mode = ', '.join(x[1] for x in transport_select['imp_transport_mode']['selection'] if x[1])
-                    err_msg = _('Line 8 of the file: The transport mode \'%s\' is not \
-    a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_mode)
-                    values_header_errors.append(err_msg)
+                if transport_mode:
+                    transport_select = self.fields_get(cr, uid, ['imp_transport_mode'], context=context)
+                    for x in transport_select['imp_transport_mode']['selection']:
+                        if x[1] == transport_mode:
+                            header_values['imp_transport_mode'] = x[0]
+                            break
+                    else:
+                        possible_mode = ', '.join(x[1] for x in transport_select['imp_transport_mode']['selection'] if x[1])
+                        err_msg = _('Line 8 of the file: The transport mode \'%s\' is not \
+a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_mode)
+                        values_header_errors.append(err_msg)
 
 
                 # Line 9: RTS Date
@@ -1005,6 +1006,7 @@ class wizard_import_po_simulation_screen(osv.osv):
             cr.commit()
             cr.close()
         except Exception:
+            res = True
             cr.rollback()
             cr.close()
             
