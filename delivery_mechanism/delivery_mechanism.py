@@ -513,6 +513,14 @@ class stock_picking(osv.osv):
                               'change_reason': partial['change_reason'],
                               'direct_incoming': partial.get('direct_incoming'),
                               }
+
+                    # UTP-872: Don't change the quantity if the move is canceled
+                    # If the quantity is changed to 0.00, a backorder is created
+                    # for canceled moves
+                    if move.state == 'cancel':
+                        values.update({'product_qty': move.product_qty,
+                                       'product_uos_qty': move.product_uos_qty})
+
                     if 'state' in partial: # UTP-872: Added also the state into the move line if the state comes from the sync
                         values.update({'state': partial['state']})
                     if 'product_price' in partial:
@@ -659,7 +667,7 @@ class stock_picking(osv.osv):
                 # is positive if some qty was removed during the process -> current incoming qty is modified
                 #    create a backorder if does not exist, copy original move with difference qty in it # DOUBLE CHECK ORIGINAL FUNCTION BEHAVIOR !!!!!
                 #    if split happened, update the corresponding out move with diff_qty
-                if diff_qty > 0:
+                if diff_qty > 0 and move.state != 'cancel':
                     if not backorder_id:
                         # create the backorder - with no lines
                         backorder_id = self.copy(cr, uid, pick.id, {'name': sequence_obj.get(cr, uid, 'stock.picking.%s'%(pick.type)),

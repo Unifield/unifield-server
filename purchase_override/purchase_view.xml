@@ -77,6 +77,7 @@
                         <newline />
                         <field name="categ" />
                         <field name="details" />
+                        <field name="parent_order_name" readonly="True" attrs="{'invisible': [('parent_order_name', '=', False)]}" />
                         <newline />
                         <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
                     </xpath>
