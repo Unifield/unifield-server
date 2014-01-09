@@ -255,9 +255,10 @@ class hq_report_ocb(report_sxw.report_sxw):
                 WHERE c.donor_id = d.id
                 AND c.reporting_currency = rc.id;
                 """,
+            # Pay attention to take analytic line that are not on HQ and MIGRATION journals.
             'rawdata': """
                 SELECT al.id, al.entry_sequence, al.name, al.ref, al.document_date, al.date, a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, CASE WHEN al.amount_currency > 0 THEN al.amount_currency ELSE 0.0 END AS debit, CASE WHEN al.amount_currency < 0 THEN ABS(al.amount_currency) ELSE 0.0 END AS credit, c.name AS "booking_currency", CASE WHEN al.amount > 0 THEN al.amount ELSE 0.0 END AS debit, CASE WHEN al.amount < 0 THEN ABS(al.amount) ELSE 0.0 END AS credit, cc.name AS "functional_currency"
-                FROM account_analytic_line AS al, account_account AS a, account_analytic_account AS aa, account_analytic_account AS aa2, account_analytic_account AS aa3, res_currency AS c, res_company AS e, res_currency AS cc
+                FROM account_analytic_line AS al, account_account AS a, account_analytic_account AS aa, account_analytic_account AS aa2, account_analytic_account AS aa3, res_currency AS c, res_company AS e, res_currency AS cc, account_analytic_journal AS j
                 WHERE al.destination_id = aa.id
                 AND al.cost_center_id = aa2.id
                 AND al.account_id = aa3.id
@@ -266,20 +267,26 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND aa3.category = 'FUNDING'
                 AND al.company_id = e.id
                 AND e.currency_id = cc.id
+                AND al.journal_id = j.id
+                AND j.type not in ('hq', 'migration')
                 AND al.exported != 't';
                 """,
+            # Exclude lines that come from a HQ or MIGRATION journal
             'bs_entries_consolidated': """
                 SELECT aml.id
-                FROM account_move_line AS aml, account_account AS aa
+                FROM account_move_line AS aml, account_account AS aa, account_journal AS j
                 WHERE aml.period_id = %s
                 AND aml.account_id = aa.id
+                AND aml.journal_id = j.id
+                AND j.type not in ('hq', 'migration')
                 AND aa.type = 'liquidity'
                 AND aa.shrink_entries_for_hq = 't'
                 AND aml.exported != 't';
                 """,
+            # Do not take lines that come from a HQ or MIGRATION journal
             'bs_entries': """
                 SELECT aml.id, m.name AS "entry_sequence", aml.name AS "desc", aml.ref, aml.document_date, aml.date, a.code AS "account", aml.partner_txt, '' AS "dest", '' AS "cost_center", '' AS "funding_pool", aml.debit_currency, aml.credit_currency, c.name AS "booking_currency", aml.debit, aml.credit, cc.name AS "functional_currency"
-                FROM account_move_line AS aml, account_account AS a, res_currency AS c, account_move AS m, res_company AS e, res_currency AS cc
+                FROM account_move_line AS aml, account_account AS a, res_currency AS c, account_move AS m, res_company AS e, res_currency AS cc, account_journal AS j
                 WHERE aml.period_id = %s
                 AND a.type = 'liquidity'
                 AND a.shrink_entries_for_hq = 'f'
@@ -288,6 +295,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND aml.move_id = m.id
                 AND aml.company_id = e.id
                 AND e.currency_id = cc.id
+                AND aml.journal_id = j.id
+                AND j.type not in ('hq', 'migration')
                 AND aml.exported != 't';
                 """,
         }

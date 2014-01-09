@@ -77,14 +77,17 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
 
         # Prepare SQL requests and PROCESS requests for finance_archive object (CF. account_tools/finance_export.py)
         sqlrequests = {
+            # Do not take lines that come from a HQ or MIGRATION journal
             'reconciliable': """
                 SELECT m.name AS "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code, aml.partner_txt, debit_currency, credit_currency, c.name AS "Booking Currency", aml.debit, aml.credit, cc.name AS "functional_currency", aml.reconcile_id
-                FROM account_move_line AS aml, account_move AS m, account_account AS a, res_currency AS c, res_company AS e, res_currency AS cc
+                FROM account_move_line AS aml, account_move AS m, account_account AS a, res_currency AS c, res_company AS e, res_currency AS cc, account_journal AS j
                 WHERE aml.move_id = m.id
                 AND aml.account_id = a.id
                 AND aml.currency_id = c.id
                 AND aml.company_id = e.id
                 AND e.currency_id = cc.id
+                AND aml.journal_id = j.id
+                AND j.type not in ('hq', 'migration')
                 AND aml.instance_id in %s;
                 """,
         }
