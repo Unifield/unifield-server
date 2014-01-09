@@ -356,10 +356,37 @@ class stock_warehouse_automatic_supply_line(osv.osv):
     _defaults = {
         'product_qty': lambda *a: 1.00,
     }
+
+    def _check_product_qty(self, cr, uid, ids, context=None):
+        '''
+        Check if the quantity is larger than 0.00
+        '''
+        context = context is None and {} or context
+        
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not context.get('noraise'):
+            for line in self.read(cr, uid, ids, ['product_qty'], context=context):
+                if line['product_qty'] <= 0.00:
+                    raise osv.except_osv(_('Error'), _('Lines must have a quantity larger than 0.00'))
+                    return False
+
+        return True
+
+    def create(self, cr, uid, vals, context=None):
+        res = super(stock_warehouse_automatic_supply_line, self).create(cr, uid, vals, context=context)
+        self._check_product_qty(cr, uid, res, context=context)
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        res = super(stock_warehouse_automatic_supply_line, self).write(cr, uid, ids, vals, context=context)
+        self._check_product_qty(cr, uid, ids, context=context)
+        return res
     
-    _sql_constraints = [
-        ('product_qty_check', 'CHECK( product_qty > 0 )', 'Product Qty must be greater than zero.'),
-    ]
+    #_sql_constraints = [
+    #    ('product_qty_check', 'CHECK( product_qty > 0 )', 'Product Qty must be greater than zero.'),
+    #]
     
     def _check_uniqueness(self, cr, uid, ids, context=None):
         '''

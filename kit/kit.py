@@ -1005,6 +1005,7 @@ class composition_item(osv.osv):
         """
         if context is None:
             context = {}
+
         # call super
         result = super(composition_item, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         # columns depending on type

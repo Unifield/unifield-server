@@ -23,108 +23,44 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import base64
-from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from msf_doc_import import GENERIC_MESSAGE
+# import below commented in utp-1344: becomes useless as the import is done in wizard
+#from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+#import check_line
+#from msf_doc_import import MAX_LINES_NB
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
+from msf_doc_import import GENERIC_MESSAGE
+from msf_doc_import.wizard import PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_product_list_import
+from msf_doc_import.wizard import PRODUCT_LIST_COLUMNS_FOR_IMPORT as columns_for_product_list_import
 
 class product_list(osv.osv):
     _inherit = 'product.list'
 
-    _columns = {
-        'file_to_import': fields.binary(string='File to import', filters='*.xml',
-                                        help="""You can use the template of the export for the format that you need to use. \n
-                                        The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : Product Code*, Product Description*, Comment"""),
-    }
-
-    def import_file(self, cr, uid, ids, context=None):
+    def wizard_import_product_list_line(self, cr, uid, ids, context=None):
         '''
-        Import lines form file
+        Launches the wizard to import lines from a file
         '''
-        if not context:
-            context = {}
-
-        product_obj = self.pool.get('product.product')
-        obj_data = self.pool.get('ir.model.data')
-
-        vals = {}
-        vals['product_ids'] = []
-        msg_to_return = _("All lines successfully imported")
-
-        obj = self.browse(cr, uid, ids, context=context)[0]
-        if not obj.file_to_import:
-            raise osv.except_osv(_('Error'), _('Nothing to import.'))
-
-        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
-
-        # iterator on rows
-        reader = fileobj.getRows()
-        
-        # ignore the first row
-        reader.next()
-        line_num = 1
-        for row in reader:
-            line_num += 1
-            # Check length of the row
-            if len(row) < 2 or len(row) > 3:
-                raise osv.except_osv(_('Error'), _("""Line %s - You should have at least 2 columns (max. 3) in this order:
-Product Code*, Product Description*, Comment""" % line_num))
-
-            # default values
-            product_id = False
-            comment = ''
-
-            # Product code
-            product_code = row.cells[0].data
-            if product_code:
-                product_code = product_code.strip()
-                product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code)], context=context)
-                if product_ids:
-                    product_id = product_ids[0]
-
-            # Product name
-            p_name = row.cells[1].data
-            if not product_id and p_name:
-                p_name = p_name.strip()
-                product_ids = product_obj.search(cr, uid, [('name', '=', p_name)], context=context)
-                if product_ids:
-                    product_id = product_ids[0]
-
-            if not product_id:
-                if not product_code and not p_name:
-                    raise osv.except_osv(_('Error'), _('Line %s - You have to fill at least the product code or the product name !') % line_num)
-                raise osv.except_osv(_('Error'), _('Line %s - The Product [%s] %s was not found in the list of products') % (line_num, product_code or 'N/A', p_name or ''))
-
-            # Comment
-            comment = len(row) == 3 and row.cells[2].data or ''
-
-            to_write = {
-                'name': product_id,
-                'comment': comment,
-            }
-            
-            vals['product_ids'].append((0, 0, to_write))
-            
-        # write order line on Inventory
-        vals.update({'file_to_import': False})
-        self.write(cr, uid, ids, vals, context=context)
-        
-        view_id = obj_data.get_object_reference(cr, uid, 'product_list','product_list_form_view')[1]
-       
-        return self.log(cr, uid, obj.id, msg_to_return, context={'view_id': view_id,})
-        
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        '''
-        Remove lines
-        '''
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        vals = {}
-        vals['product_ids'] = []
-        for list in self.browse(cr, uid, ids, context=context):
-            for var in list.product_ids:
-                vals['product_ids'].append((2, var.id))
-            self.write(cr, uid, ids, vals, context=context)
-        return True
-        
-product_list()
+        context.update({'active_id': ids[0]})
+        columns_header = [(_(f[0]), f[1]) for f in columns_header_for_product_list_import]
+        default_template = SpreadsheetCreator('Template of import', columns_header, [])
+        file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        export_id = self.pool.get('wizard.import.product.list').create(cr, uid, {'file': file,
+                                                                                 'filename_template': 'Product List template.xls',
+                                                                                 'message': """%s %s"""  % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_product_list_import]), ),
+                                                                                 'filename': 'Lines_Not_Imported.xls',
+                                                                                 'list_id': ids[0],
+                                                                                 'state': 'draft',}, context)
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.product.list',
+                'res_id': export_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'crush',
+                'context': context,
+                }
 
+product_list()

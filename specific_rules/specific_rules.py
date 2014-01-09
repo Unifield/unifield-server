@@ -1088,7 +1088,7 @@ class stock_production_lot(osv.osv):
         Returns True if the lot is expired
         '''
         res = {}
-        context = context or {}
+        context = context is None and {} or context
 
         if isinstance(ids, (int, long)):
             ids = [ids]

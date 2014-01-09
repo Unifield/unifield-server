@@ -118,23 +118,6 @@ class sale_order(osv.osv):
         (_check_active_product, "You cannot validate this sale order because it contains a line with an inactive product", ['order_line', 'state'])
     ]
 
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        '''
-        Remove lines
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        vals = {}
-        vals['order_line'] = []
-        for line in self.browse(cr, uid, ids, context=context):
-            line_browse_list = line.order_line
-            for var in line_browse_list:
-                vals['order_line'].append((2, var.id))
-            self.write(cr, uid, ids, vals, context=context)
-        return True
-
 # This method was replaced by the one of the wizard wizard_import_fo_line (utp-113)
 #    def import_internal_req(self, cr, uid, ids, context=None):
 #        '''

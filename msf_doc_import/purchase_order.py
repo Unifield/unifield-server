@@ -127,18 +127,6 @@ class purchase_order(osv.osv):
         (_check_active_product, "You cannot validate this purchase order because it contains a line with an inactive product", ['order_line', 'state'])
     ]
 
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        '''
-        Remove lines
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        purchase_line_obj = self.pool.get('purchase.order.line')
-        pol_ids = purchase_line_obj.search(cr, uid, [('order_id', '=', ids[0])])
-        return purchase_line_obj.unlink(cr, uid, pol_ids, context)
-
     def wizard_import_file(self, cr, uid, ids, context=None):
         '''
         Launches the wizard to import lines from a file

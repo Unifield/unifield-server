@@ -52,6 +52,9 @@ class supplier_catalogue(osv.osv):
         '''
         raise osv.except_osv(_('Error'), _('You cannot duplicate a catalogue because you musn\'t have ' \
                                'overlapped catalogue !'))
+
+        default = default or {}
+        default.update({'state': 'draft'})
         
         return False
     
@@ -162,7 +165,8 @@ class supplier_catalogue(osv.osv):
             pricelist_ids = []
             
             for line in catalogue.line_ids:
-                pricelist_ids.append(line.partner_info_id.id)
+                if line.partner_info_id:
+                    pricelist_ids.append(line.partner_info_id.id)
             
             # Check if other catalogues need to be updated because they finished
             # after the starting date of the updated catalogue.
@@ -171,25 +175,66 @@ class supplier_catalogue(osv.osv):
                                                                     vals.get('currency_id', catalogue.currency_id.id),
                                                                     vals.get('partner_id', catalogue.partner_id.id),
                                                                     vals.get('period_to', catalogue.period_to), context=context)
-        
-            new_supinfo_vals = {}            
-            # Change the partner of all supplier info instances
-            if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
-                delay = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context).default_delay
-                new_supinfo_vals.update({'name': vals['partner_id'],
-                                         'delay': delay})
+
+            # Update product pricelists only if the catalogue is confirmed
+            if vals.get('state', catalogue.state) == 'confirmed':
+                new_supinfo_vals = {}            
+                # Change the partner of all supplier info instances
+                if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
+                    delay = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context).default_delay
+                    new_supinfo_vals.update({'name': vals['partner_id'],
+                                             'delay': delay})
             
-            # Change pricelist data according to new data
-            new_price_vals = {'valid_till': vals.get('period_to', None),
-                              'valid_from': vals.get('period_from', catalogue.period_from),
-                              'currency_id': vals.get('currency_id', catalogue.currency_id.id),
-                              'name': vals.get('name', catalogue.name),}
+                # Change pricelist data according to new data
+                new_price_vals = {'valid_till': vals.get('period_to', None),
+                                  'valid_from': vals.get('period_from', catalogue.period_from),
+                                  'currency_id': vals.get('currency_id', catalogue.currency_id.id),
+                                  'name': vals.get('name', catalogue.name),}
                 
-            # Update the supplier info and price lines
-            supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
-            price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
+                # Update the supplier info and price lines
+                supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
+                price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
         
         return super(supplier_catalogue, self).write(cr, uid, ids, vals, context=context)
+
+    def button_confirm(self, cr, uid, ids, context=None):
+        '''
+        Confirm the catalogue and all lines
+        '''
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+        line_obj = self.pool.get('supplier.catalogue.line')
+
+        line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
+
+        if not all(x['state'] == 'draft' for x in self.read(cr, uid, ids, ['state'], context=context)):
+            raise osv.except_osv(_('Error'), _('The catalogue you try to confirm is already confirmed. Please reload the page to update the status of this catalogue'))
+
+        # Update catalogues
+        self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
+        # Update lines
+        line_obj.write(cr, uid, line_ids, {}, context=context)
+
+        return True
+
+    def button_draft(self, cr, uid, ids, context=None):
+        '''
+        Reset to draft the catalogue
+        '''
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+        line_obj = self.pool.get('supplier.catalogue.line')
+        
+        line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
+
+        if not all(x['state'] == 'confirmed' for x in self.read(cr, uid, ids, ['state'], context=context)):
+            raise osv.except_osv(_('Error'), _('The catalogue you try to confirm is already in draft state. Please reload the page to update the status of this catalogue'))
+
+        # Update catalogues
+        self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+        # Update lines
+        line_obj.write(cr, uid, line_ids, {}, context=context)
+
+
+        return True
     
     def name_get(self, cr, uid, ids, context=None):
         '''
@@ -270,6 +315,7 @@ class supplier_catalogue(osv.osv):
         'filename_template': fields.char(string='Template', size=256),
         'import_error_ok': fields.boolean('Display file with error'), 
         'text_error': fields.text('Text Error', readonly=True),
+        'state': fields.selection([('draft', 'Draft'), ('confirmed', 'Confirmed')], string='State', required=True, readonly=True),
     }
     
     _defaults = {
@@ -278,7 +324,8 @@ class supplier_catalogue(osv.osv):
         'partner_id': lambda obj, cr, uid, ctx: ctx.get('partner_id', False),
         'period_from': lambda *a: time.strftime('%Y-%m-%d'),
         'active': lambda *a: True,
-        'filename_template': 'template.xls'
+        'filename_template': 'template.xls',
+        'state': lambda *a: 'draft',
     }
 
     def _check_period(self, cr, uid, ids):
@@ -632,9 +679,18 @@ class supplier_catalogue_line(osv.osv):
         '''
         Create a pricelist line on product supplier information tab
         '''
-        vals = self._create_supplier_info(cr, uid, vals, context=context)
+        cat_state = False
+        if vals.get('catalogue_id'):
+            cat_state = self.pool.get('supplier.catalogue').read(cr, uid, vals.get('catalogue_id'), ['state'], context=context)['state']
+
+        if cat_state != 'draft':
+            vals = self._create_supplier_info(cr, uid, vals, context=context)
         
-        return super(supplier_catalogue_line, self).create(cr, uid, vals, context={})
+        ids = super(supplier_catalogue_line, self).create(cr, uid, vals, context=context)
+
+        self._check_min_quantity(cr, uid, ids, context=context)
+
+        return ids
     
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -645,48 +701,73 @@ class supplier_catalogue_line(osv.osv):
 
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
+        cat_obj = self.pool.get('supplier.catalogue')
         obj_data = self.pool.get('ir.model.data')
         uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
         prod_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
 
-        for line in self.browse(cr, uid, ids, context=context):    
-            if 'product_id' in vals and 'line_uom_id' in vals and vals['product_id'] != prod_id and vals['line_uom_id'] != uom_id:  
-                vals['to_correct_ok'] = False
+        for line in self.browse(cr, uid, ids, context=context):
+            new_vals = vals.copy()
+            cat_state = cat_obj.read(cr, uid, new_vals.get('catalogue_id', line.catalogue_id.id), ['state'], context=context)['state']
+            if 'product_id' in new_vals and 'line_uom_id' in new_vals and new_vals['product_id'] != prod_id and new_vals['line_uom_id'] != uom_id:  
+                new_vals['to_correct_ok'] = False
             # If product is changed
-            if 'product_id' in vals and vals['product_id'] != line.product_id.id:
+            if new_vals.get('product_id', line.product_id.id) != line.product_id.id and cat_state != 'draft':
                 c = context.copy()
                 c.update({'product_change': True})
                 # Remove the old pricelist.partnerinfo and create a new one
-                self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=c)
+                if line.partner_info_id:
+                    self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=c)
         
                 # Check if the removed line wasn't the last line of the supplierinfo
-                if len(line.supplier_info_id.pricelist_ids) == 0:
+                if line.supplier_info_id and len(line.supplier_info_id.pricelist_ids) == 0:
                     # Remove the supplier info
                     self.pool.get('product.supplierinfo').unlink(cr, uid, line.supplier_info_id.id, context=c)
                     
                 # Create new partnerinfo line
-                vals.update({'catalogue_id': vals.get('catalogue_id', line.catalogue_id.id),
-                             'product_id': vals.get('product_id', line.product_id.id),
-                             'min_qty': vals.get('min_qty', line.min_qty),
-                             'line_uom_id': vals.get('line_uom_id', line.line_uom_id.id),
-                             'unit_price': vals.get('unit_price', line.unit_price),
-                             'rounding': vals.get('rounding', line.rounding),
-                             'min_order_qty': vals.get('min_order_qty', line.min_order_qty),
-                             'comment': vals.get('comment', line.comment),
-                             })
-                vals = self._create_supplier_info(cr, uid, vals, context=context)
-            else:
-                pinfo_data = {'min_quantity': vals.get('min_qty', line.min_qty),
-                          'price': vals.get('unit_price', line.unit_price),
-                          'uom_id': vals.get('line_uom_id', line.line_uom_id.id),
-                          'rounding': vals.get('rounding', line.rounding),
-                          'min_order_qty': vals.get('min_order_qty', line.min_order_qty)
+                new_vals.update({'catalogue_id': new_vals.get('catalogue_id', line.catalogue_id.id),
+                                 'product_id': new_vals.get('product_id', line.product_id.id),
+                                 'min_qty': new_vals.get('min_qty', line.min_qty),
+                                 'line_uom_id': new_vals.get('line_uom_id', line.line_uom_id.id),
+                                 'unit_price': new_vals.get('unit_price', line.unit_price),
+                                 'rounding': new_vals.get('rounding', line.rounding),
+                                 'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty),
+                                 'comment': new_vals.get('comment', line.comment),
+                                 })
+                new_vals = self._create_supplier_info(cr, uid, new_vals, context=context)
+            elif cat_state != 'draft' and line.partner_info_id:
+                pinfo_data = {'min_quantity': new_vals.get('min_qty', line.min_qty),
+                          'price': new_vals.get('unit_price', line.unit_price),
+                          'uom_id': new_vals.get('line_uom_id', line.line_uom_id.id),
+                          'rounding': new_vals.get('rounding', line.rounding),
+                          'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty)
                           }
                 # Update the pricelist line on product supplier information tab
                 self.pool.get('pricelist.partnerinfo').write(cr, uid, [line.partner_info_id.id], 
                                                          pinfo_data, context=context) 
+            elif cat_state != 'draft':
+                new_vals.update({'catalogue_id': new_vals.get('catalogue_id', line.catalogue_id.id),
+                                 'product_id': new_vals.get('product_id', line.product_id.id),
+                                 'min_qty': new_vals.get('min_qty', line.min_qty),
+                                 'line_uom_id': new_vals.get('line_uom_id', line.line_uom_id.id),
+                                 'unit_price': new_vals.get('unit_price', line.unit_price),
+                                 'rounding': new_vals.get('rounding', line.rounding),
+                                 'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty),})
+                new_vals = self._create_supplier_info(cr, uid, new_vals, context=context)
+            elif cat_state == 'draft':
+                context.update({'product_change': True})
+                if line.partner_info_id:
+                    self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=context)
+                if line.supplier_info_id and len(line.supplier_info_id.pricelist_ids) == 0:
+                    # Remove the supplier info
+                    self.pool.get('product.supplierinfo').unlink(cr, uid, line.supplier_info_id.id, context=context)
+                context.update({'product_change': False})
         
-        return super(supplier_catalogue_line, self).write(cr, uid, ids, vals, context={})
+            res = super(supplier_catalogue_line, self).write(cr, uid, [line.id], new_vals, context=context)
+
+        self._check_min_quantity(cr, uid, ids, context=context)
+
+        return res
     
     def unlink(self, cr, uid, line_id, context=None):
         '''
@@ -701,7 +782,8 @@ class supplier_catalogue_line(osv.osv):
             c = context.copy()
             c.update({'product_change': True})
             # Remove the pricelist line in product tab
-            self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=c)
+            if line.partner_info_id:
+                self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=c)
             
             # Check if the removed line wasn't the last line of the supplierinfo
             if line.supplier_info_id and len(line.supplier_info_id.pricelist_ids) == 0:
@@ -714,10 +796,16 @@ class supplier_catalogue_line(osv.osv):
         '''
         Check if the min_qty field is set
         '''
-        for line in self.browse(cr, uid, ids, context=context):
-            if line.min_qty <= 0.00:
-                raise osv.except_osv(_('Error'), _('The line of product [%s] %s has a negative or zero min. qty !') % (line.product_id.default_code, line.product_id.name))
-                return False
+        context = context is None and {} or context
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not context.get('noraise'):
+            for line in self.browse(cr, uid, ids, context=context):
+                if line.min_qty <= 0.00:
+                    raise osv.except_osv(_('Error'), _('The line of product [%s] %s has a negative or zero min. qty !') % (line.product_id.default_code, line.product_id.name))
+                    return False
             
         return True
     
@@ -738,10 +826,14 @@ class supplier_catalogue_line(osv.osv):
         'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
         'to_correct_ok': fields.boolean('To correct'),
     }
+
+    _defaults = {
+        'rounding': 1.00,
+    }
     
-    _constraints = [
-        (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_qty']),
-    ]
+#    _constraints = [
+#        (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_qty']),
+#    ]
     
     def product_change(self, cr, uid, ids, product_id, min_qty, min_order_qty, context=None):
         '''

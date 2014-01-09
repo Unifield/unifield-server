@@ -43,3 +43,6 @@ import composition_kit
 import account
 import internal_move
 import report
+import stock_picking
+import replenishment_rules
+import product_list

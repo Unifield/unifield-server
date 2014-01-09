@@ -331,6 +331,10 @@ class tender(osv.osv):
                 for line in tender.tender_line_ids:
                     if line.line_state == 'cancel':
                         continue
+
+                    if line.qty <= 0.00:
+                        raise osv.except_osv(_('Error !'), _('You cannot generate RfQs for an line with a null quantity.'))
+
                     if line.product_id.id == obj_data.get_object_reference(cr, uid,'msf_doc_import', 'product_tbd')[1]:
                         raise osv.except_osv(_('Warning !'), _('You can\'t have "To Be Defined" for the product. Please select an existing product.'))
                     # create an order line for each tender line
@@ -1386,7 +1390,7 @@ class purchase_order_line(osv.osv):
         """
         if context is None:
             context = {}
-                 
+
         # call super
         result = super(purchase_order_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'form':

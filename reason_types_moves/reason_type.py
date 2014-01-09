@@ -396,7 +396,7 @@ class stock_move(osv.osv):
                 logging.getLogger('init').info('Loading default values for stock.picking')
                 vals.update(self._get_default_reason(cr, uid, context))
 
-        if 'location_dest_id' in vals:
+        if 'location_dest_id' in vals and vals.get('location_dest_id'):
             dest_id = self.pool.get('stock.location').browse(cr, uid, vals['location_dest_id'], context=context)
             if dest_id.usage == 'inventory'  and not dest_id.virtual_location :
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
