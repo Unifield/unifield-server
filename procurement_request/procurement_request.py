@@ -615,7 +615,7 @@ class purchase_order(osv.osv):
         # If the line comes from an ISR and it's not splitted line,
         # change the move_dest_id of this line (and their children)
         # to match with the procurement ordre move destination
-        if order_line.move_dest_id and not order_line.parent_line_id:
+        if order_line.move_dest_id and not order_line.is_line_split: # UTP-972: Use the boolean for split line
             proc_ids = proc_obj.search(cr, uid, [('move_id', '=', order_line.move_dest_id.id)], context=context)
             so_line_ids = sale_line_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
             po_line_ids = po_line_obj.search(cr, uid, [('move_dest_id', '=', order_line.move_dest_id.id)], context=context)
