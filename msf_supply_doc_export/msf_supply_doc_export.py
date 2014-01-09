@@ -25,6 +25,7 @@
 from report import report_sxw
 from osv import osv
 from report_webkit.webkit_report import WebKitParser
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 
 import pooler
@@ -91,24 +92,17 @@ class purchase_order_report_xls(WebKitParser):
 purchase_order_report_xls('report.purchase.order_xls','purchase.order','addons/msf_supply_doc_export/report/report_purchase_order_xls.mako')
 
 # VALIDATED PURCHASE ORDER (Excel XML)
-class validated_purchase_order_report_xls(WebKitParser):
-    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+class validated_purchase_order_report_xls(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context):
+        super(validated_purchase_order_report_xls, self).__init__(cr, uid, name, context=context)
 
-    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
-        report_xml.webkit_debug = 1
-        report_xml.header= " "
-        report_xml.webkit_header.html = "${_debug or ''|n}"
-        return super(validated_purchase_order_report_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
-
-    def create(self, cr, uid, ids, data, context=None):
-        ids = getIds(self, cr, uid, ids, context)
-        a = super(validated_purchase_order_report_xls, self).create(cr, uid, ids, data, context)
-        return (a[0], 'xls')
-
-validated_purchase_order_report_xls('report.validated.purchase.order_xls','purchase.order','addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako')
+SpreadsheetReport('report.validated.purchase.order_xls', 'purchase.order', 'addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako', parser=validated_purchase_order_report_xls)
 
 # VALIDATE PURCHASE ORDER (Pure XML)
+class parser_validated_purchase_order_report_xml(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context):
+        super(parser_validated_purchase_order_report_xml, self).__init__(cr, uid, name, context=context)
+
 class validated_purchase_order_report_xml(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
@@ -124,7 +118,7 @@ class validated_purchase_order_report_xml(WebKitParser):
         a = super(validated_purchase_order_report_xml, self).create(cr, uid, ids, data, context)
         return (a[0], 'xml')
 
-validated_purchase_order_report_xml('report.validated.purchase.order_xml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_validated_purchase_order_xml.mako')
+validated_purchase_order_report_xml('report.validated.purchase.order_xml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_validated_purchase_order_xml.mako', parser=parser_validated_purchase_order_report_xml)
 
 class request_for_quotation_report_xls(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):

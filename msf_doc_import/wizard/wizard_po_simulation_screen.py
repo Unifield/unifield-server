@@ -57,7 +57,7 @@ LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
                  (5, _('Product UoM'), 'mandatory'),
                  (6, _('Price Unit'), 'mandatory'),
                  (7, _('Currency'), 'mandatory'),
-                 (8, _('Origin'), 'mandatory'),
+                 (8, _('Origin'), 'optionnal'),
                  (10, _('Delivery Confirmed Date'), 'mandatory'),
                  (16, _('Project Ref.'), 'optionnal'),
                  (17, _('Message ESC 1'), 'optionnal'),
@@ -705,6 +705,14 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % shipment_date
                 line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
                 ext_ref = values.get(x, ['', ''])[1]
 
+                origin = len(values.get(x, [])) > 8 and values.get(x, [])[8] or False
+                if wiz.order_id.po_from_ir or wiz.order_id.po_from_fo and not origin:
+                    not_ok = True
+                    err1 = _('The line must have an origin because the PO comes from a FO - Line not imported')
+                    err = _('Line %s of the file: %s') % (x, err1)
+                    values_line_errors.append(err)
+                    file_line_error.append(err1)
+
                 if not line_number and not ext_ref:
                     not_ok = True
                     err1 = _('The line must have either the line number or the external ref. set - Line not imported')
@@ -936,11 +944,11 @@ a valid date. A date must be formatted like \'YYYY-MM-DD\'') % shipment_date
         cr.close()
 
         # Clear the cache
-        del PRODUCT_NAME_ID
-        del PRODUCT_CODE_ID
-        del UOM_NAME_ID
-        del CURRENCY_NAME_ID
-        del SIMU_LINES
+        PRODUCT_NAME_ID = {}
+        PRODUCT_CODE_ID = {}
+        UOM_NAME_ID = {}
+        CURRENCY_NAME_ID = {}
+        SIMU_LINES = {}
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -1265,8 +1273,16 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # Origin
             write_vals['imp_origin'] = values[8]
-            if not values[8]:
+            if line.simu_id.order_id.po_from_fo and not values[8]:
+                err_msg = _('The Origin is mandatory for a PO coming from a FO')
+                errors.append(err_msg)
                 write_vals['type_change'] = 'error'
+            else:
+                fo_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', values[8])], context=context)
+                if not fo_ids:
+                    err_msg = _('The FO reference in \'Origin\' is not consistent with this PO')
+                    errors.append(err_msg)
+                    write_vals['type_change'] = 'error'
 
             # Delivery Requested Date
             drd_value = values[9]
@@ -1304,8 +1320,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # Project Ref.
             write_vals['imp_project_ref'] = values[16]
-            if line.is_new_line and not values[16]:
-                err_msg = _('The \'Project Ref.\' field is mandatory for new PO line')
+            if line.simu_id.order_id.po_from_fo and not values[16]:
+                err_msg = _('The \'Project Ref.\' field is mandatory for PO coming from a FO.')
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
 
