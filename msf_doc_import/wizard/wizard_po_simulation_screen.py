@@ -1008,6 +1008,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
             cr.close()
         except Exception, e:
             self.write(cr, uid, ids, {'message': e}, context=context)
+            res = True
             cr.commit()
             cr.close()
             
