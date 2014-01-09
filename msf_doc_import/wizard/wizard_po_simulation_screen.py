@@ -943,11 +943,12 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
             UOM_NAME_ID = {}
             CURRENCY_NAME_ID = {}
             SIMU_LINES = {}
-        except Exception:
-            cr.rollback()
+        except Exception, e:
+            self.write(cr, uid, ids, {'message': e}, context=context)
+            cr.commite()
             cr.close()
 
-        return {'type': 'ir.actions.act_window_close'}
+        return True
 
     def launch_import(self, cr, uid, ids, context=None):
         '''
@@ -1001,13 +1002,13 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 self.write(cr, uid, ids, {'state': 'done'}, context=context)
                 res =self.go_to_simulation(cr, uid, [wiz.id], context=context)
             else:
-                res = {'type': 'ir.actions.act_window_close'}
+                res = True
 
             cr.commit()
             cr.close()
-        except Exception:
-            res = True
-            cr.rollback()
+        except Exception, e:
+            self.write(cr, uid, ids, {'message': e}, context=context)
+            cr.commit()
             cr.close()
             
         return res
