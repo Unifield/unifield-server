@@ -275,6 +275,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 """,
             # Exclude lines that come from a HQ or MIGRATION journal
             # Take all lines that are on account that is "shrink_entries_for_hq" which will make a consolidation of them (with a second SQL request)
+            # The subrequest permit to disallow lines that have analytic lines. This is to not retrieve expense/income accounts
             'bs_entries_consolidated': """
                 SELECT aml.id
                 FROM account_move_line AS aml, account_account AS aa, account_journal AS j
@@ -283,23 +284,30 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND aml.journal_id = j.id
                 AND j.type not in ('hq', 'migration')
                 AND aa.shrink_entries_for_hq = 't'
+                AND aml.id not in (SELECT amla.id FROM account_move_line amla, account_analytic_line al WHERE al.move_id = amla.id)
                 AND aml.exported != 't';
                 """,
             # Do not take lines that come from a HQ or MIGRATION journal
+            # Do not take journal items that have analytic lines because they are taken from "rawdata" SQL request
             'bs_entries': """
-                SELECT aml.id, m.name AS "entry_sequence", aml.name AS "desc", aml.ref, aml.document_date, aml.date, a.code AS "account", aml.partner_txt, '' AS "dest", '' AS "cost_center", '' AS "funding_pool", aml.debit_currency, aml.credit_currency, c.name AS "booking_currency", aml.debit, aml.credit, cc.name AS "functional_currency"
-                FROM account_move_line AS aml, account_account AS a, res_currency AS c, account_move AS m, res_company AS e, res_currency AS cc, account_journal AS j
-                WHERE aml.period_id = %s
-                AND a.type = 'liquidity'
-                AND a.shrink_entries_for_hq = 'f'
-                AND aml.account_id = a.id
-                AND aml.currency_id = c.id
+                SELECT aml.id, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code, aml.partner_txt, '', '', '', aml.debit_currency, aml.credit_currency, c.name, aml.debit, aml.credit, cc.name
+                FROM account_move_line AS aml, account_account AS a, res_currency AS c, account_move AS m, res_company AS e, account_journal AS j, res_currency AS cc
+                WHERE aml.account_id = a.id
+                AND aml.id not in (
+                  SELECT amla.id
+                  FROM account_analytic_line al, account_move_line amla
+                  WHERE al.move_id = amla.id
+                )
                 AND aml.move_id = m.id
+                AND aml.currency_id = c.id
                 AND aml.company_id = e.id
-                AND e.currency_id = cc.id
                 AND aml.journal_id = j.id
+                AND e.currency_id = cc.id
+                AND aml.period_id = %s
+                AND a.shrink_entries_for_hq != 't'
                 AND j.type not in ('hq', 'migration')
-                AND aml.exported != 't';
+                AND aml.exported != 't'
+                ORDER BY aml.id;
                 """,
         }
 
