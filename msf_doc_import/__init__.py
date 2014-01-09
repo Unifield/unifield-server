@@ -41,7 +41,6 @@ import wizard
 import import_tools
 import composition_kit
 import account
-import internal_move
 import report
 import stock_picking
 import replenishment_rules
