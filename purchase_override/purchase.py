@@ -275,6 +275,8 @@ class purchase_order(osv.osv):
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
         'origin': fields.text('Source Document', 
                         help="Reference of the document that generated this purchase order request."),
+        # UF-2267: Store also the parent PO as reference in the sourced PO
+        'parent_order_name': fields.many2one('purchase.order', string='Parent PO name', help='If the PO is created from a re-source FO, this field contains the relevant original PO name'),
     }
     
     _defaults = {
@@ -290,6 +292,7 @@ class purchase_order(osv.osv):
         'active': True,
         'name': lambda *a: False,
         'is_a_counterpart': False,
+        'parent_order_name': False,
     }
 
     def _check_po_from_fo(self, cr, uid, ids, context=None):

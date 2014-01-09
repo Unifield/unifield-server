@@ -65,6 +65,7 @@ class wizard_compare_rfq(osv.osv_memory):
 
         products = {}
         
+        tender_lines = self.pool.get('tender.line').search(cr, uid, [('tender_id', '=', tender_id), ('line_state', '=', 'draft')], context=context)
 
         for o in order_obj.browse(cr, uid, ids, context=context):
             if o.state not in ('draft', 'rfq_updated'):
@@ -74,7 +75,7 @@ class wizard_compare_rfq(osv.osv_memory):
                     if not products.get(l.product_id.id, False):
                         products[l.product_id.id] = {'product_id': l.product_id.id, 'po_line_ids': []}
                     products[l.product_id.id]['po_line_ids'].append(l.id)
-                else:
+                elif l.tender_line_id.id in tender_lines:
                     if not lines.get(l.tender_line_id.id, False):
                         lines[l.tender_line_id.id] = {'product_id': l.product_id.id, 'po_line_ids': []}
                     lines[l.tender_line_id.id]['po_line_ids'].append(l.id)
