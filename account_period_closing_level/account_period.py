@@ -67,25 +67,56 @@ class account_period(osv.osv):
         sub_obj = self.pool.get('account.subscription.line')
         curr_obj = self.pool.get('res.currency')
         curr_rate_obj = self.pool.get('res.currency.rate')
-        inv_obj = self.pool.get('account.invoice')
-        
+        inv_obj = self.pool.get('account.invoice') 
         
         # Ticket utp913 set state_sync_flag for conditional sync of state
-        # state = draft -> sync down
-        # state = open (in HQ) -> does not sync
-        # state = any close (in HQ or COORDO) -> sync down (coordo -> project) or (HQ -> coordo & project)
-        # 'none' : no update to the state field
+        # 'none' : no update to the state field via a sync (data is still sent but not updated in target instance)
         # other values; state will be set to this value and then to 'none'
-        # note that 'draft' = 'Open' and 'created' = 'Draft' ... see ACCOUNT_PERIOD_STATE_SELECTION
+        # note that 'draft' = 'Open' and 'created' = 'Draft' ... see ACCOUNT_PERIOD_STATE_SELECTION in init
+        #ACCOUNT_PERIOD_STATE_SELECTION = [('created','Draft'),
+        #                          ('draft', 'Open'),
+        #                          ('field-closed', 'Field-Closed'),
+        #                          ('mission-closed', 'Mission-Closed'),
+        #                          ('done', 'HQ-Closed')
+        
         if context.get('sync_update_execution') == None:
             user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
             level = user.company_id.instance_id.level
-            if level == 'section': 
-                if context['state'] == 'draft':
+            ap_dict = self.read(cr, uid, ids)[0]
+            previous_state = ap_dict['state']
+        
+            if level == 'section': # section = HQ
+                if previous_state == 'created' and context['state'] == 'draft':
+                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})   
+                if previous_state == 'draft' and context['state'] == 'field-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})  
+                if previous_state == 'field-closed' and context['state'] == 'mission-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})    
+                if previous_state == 'mission-closed' and context['state'] == 'done':
                     self.write(cr, uid, ids, {'state_sync_flag': context['state']})   
-            if level in ['section','coordo']:
-                if context['state'] in ['field-closed','mission-closed','done']:
-                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})
+                if previous_state == 'mission-closed' and context['state'] == 'field-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})  
+                if previous_state == 'field-closed' and context['state'] == 'draft':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})    
+                    
+            if level == 'coordo': 
+                if previous_state == 'created' and context['state'] == 'draft':
+                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})   
+                if previous_state == 'draft' and context['state'] == 'field-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})  
+                if previous_state == 'field-closed' and context['state'] == 'mission-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})    
+                if previous_state == 'mission-closed' and context['state'] == 'done':
+                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})   
+                if previous_state == 'mission-closed' and context['state'] == 'field-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})  
+                if previous_state == 'field-closed' and context['state'] == 'draft':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})    
+                    
+            if level == 'project':
+                    self.write(cr, uid, ids, {'state_sync_flag': 'none'}) 
+                
+                        
             
         
         # Do verifications for draft periods
@@ -196,13 +227,14 @@ class account_period(osv.osv):
         if context.get('update_mode') in ['init', 'update'] and 'state' not in vals:
             logging.getLogger('init').info('Loading default created state for account.period')
             vals['state'] = 'created'
-     
+            
+
         return super(account_period, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
         if not context:
             context = {}
-        # control conditional push-down of state from HQ. Ticket UTP-913
+        # control conditional push-down of state from HQ. Ticket UTP-913      
         if context.get('sync_update_execution'):
             if vals['state_sync_flag'] != 'none':
                 vals['state'] = vals['state_sync_flag']
