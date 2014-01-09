@@ -451,7 +451,7 @@ class ImpEx(SecuredController):
             flds = fields_to_read[:]
             params.fields2 = fields_to_read[:]
 
-            data = rpc_obj.read_group(domain, flds, group_by, 0, 0, ctx)
+            data = rpc_obj.read_group(domain, flds, group_by, 0, 2000, ctx)
 
             result_tmp = []  # List of processed data lines (dictionaries)
             # Closure to recursively prepare and insert lines in 'result_tmp'
