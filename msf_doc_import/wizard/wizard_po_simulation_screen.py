@@ -1393,6 +1393,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
                     new_po_line_id = split_obj.split_line(cr, uid, split_id, context=context)
                     context['from_simu_screen'] = False
+                    if not new_po_line_id:
+                        continue
                     
                     line_vals = {'product_uom': line.imp_uom.id,
                                  'product_id': line.imp_product_id.id,

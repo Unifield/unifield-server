@@ -177,6 +177,8 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                         new_po_ids = po_line_obj.search(cr, uid, [('procurement_id', '=', new_proc_id)], context=context)
                         po_line_obj.action_confirm(cr, uid, new_po_ids, context=context)
                  #       po_line_obj.write(cr, uid, [split.purchase_line_id.id], {'move_dest_id': new_move_id}, context=context)
+                        if context.get('from_simu_screen'):
+                            return new_po_ids[0]
 
                 else:
                     # 2) the check box impact corresponding Fo is not check or does not apply (po from scratch or from replenishment),
@@ -203,6 +205,9 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                     if context.get('from_simu_screen'):
                         return new_line_id
                 
+        if context.get('from_simu_screen'):
+            return False
+
         return {'type': 'ir.actions.act_window_close'}
 
     def line_qty_change(self, cr, uid, ids, original_qty, new_line_qty, context=None):
