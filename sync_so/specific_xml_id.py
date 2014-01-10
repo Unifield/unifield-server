@@ -417,36 +417,37 @@ class product_product(osv.osv):
         return get_valid_xml_name('product', product.xmlid_code) if product.xmlid_code else \
                super(product_product, self).get_unique_xml_name(cr, uid, uuid, table_name, res_id)
 
-        # -----------------------------------------
-        # UF-2254: Remove this block of write because Cecile cannot explain why she created this block
-        # JF: You can still keep this commented block when doing integration. Thanks!
-        # -----------------------------------------
+    # -----------------------------------------
+    # UF-2254: Remove this block of write because Cecile cannot explain why she created this block
+    # JF: You can still keep this commented block when doing integration. Thanks!
+    # -----------------------------------------
+
+    def write(self, cr, uid, ids, vals, context=None):
+        list_ids = []
+        if 'default_code' in vals:
+            list_ids = (ids if hasattr(ids, '__iter__') else [ids])
+            browse_list = self.browse(cr, uid, list_ids, context=context)
+            browse_list = filter(lambda x:x.default_code != vals['default_code'], browse_list)
+            list_ids = [x.id for x in browse_list]
+        res = super(product_product, self).write(cr, uid, ids, vals, context=context)
         
-#    def write(self, cr, uid, ids, vals, context=None):
-#        list_ids = []
-#        if 'default_code' in vals:
-#            list_ids = (ids if hasattr(ids, '__iter__') else [ids])
-#            browse_list = self.browse(cr, uid, list_ids, context=context)
-#            browse_list = filter(lambda x:x.default_code != vals['default_code'], browse_list)
-#            list_ids = [x.id for x in browse_list]
-#        res = super(product_product, self).write(cr, uid, ids, vals, context=context)
-#        if list_ids:
-#            entity_uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
-#            model_data = self.pool.get('ir.model.data')
-#            data_ids = model_data.search(cr, uid, [('module','=','sd'),('model','=',self._name),('res_id','in',list_ids)], context=context)
-#            model_data.unlink(cr, uid, data_ids)
-#            now = fields.datetime.now()
-#            for id in list_ids:
-#                xml_name = self.get_unique_xml_name(cr, uid, entity_uuid, self._table, id)
-#                model_data.create(cr, uid, {
-#                    'module' : 'sd',
-#                    'noupdate' : False, # don't set to True otherwise import won't work
-#                    'name' : xml_name,
-#                    'model' : self._name,
-#                    'res_id' : id,
-#                    'last_modification' : now,
-#                })
-#        return res
+        if list_ids:
+            entity_uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
+            model_data = self.pool.get('ir.model.data')
+            data_ids = model_data.search(cr, uid, [('module','=','sd'),('model','=',self._name),('res_id','in',list_ids)], context=context)
+            model_data.unlink(cr, uid, data_ids)
+            now = fields.datetime.now()
+            for id in list_ids:
+                xml_name = self.get_unique_xml_name(cr, uid, entity_uuid, self._table, id)
+                model_data.create(cr, uid, {
+                    'module' : 'sd',
+                    'noupdate' : False, # don't set to True otherwise import won't work
+                    'name' : xml_name,
+                    'model' : self._name,
+                    'res_id' : id,
+                    'last_modification' : now,
+                })
+        return res
 
 product_product()
 
