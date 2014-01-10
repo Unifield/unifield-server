@@ -51,6 +51,7 @@ class ocb_export_wizard(osv.osv_memory):
         data['form'] = {}
         if wizard.instance_id:
             # Get projects below instance
+            data['form'].update({'instance_id': wizard.instance_id.id,})
             data['form'].update({'instance_ids': [wizard.instance_id.id] + [x.id for x in wizard.instance_id.child_ids]})
         period_name = ''
         if wizard.period_id:

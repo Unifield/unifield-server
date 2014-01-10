@@ -134,6 +134,8 @@ class finance_archive():
         """
         # open buffer for result zipfile
         zip_buffer = StringIO()
+        # Prepare some values
+        pool = pooler.get_pool(cr.dbname)
 
         # List is composed of a tuple containing:
         # - filename
@@ -144,8 +146,8 @@ class finance_archive():
                 raise osv.except_osv(_('Error'), _('Filename param is missing!'))
             if not fileparams.get('key', False):
                 raise osv.except_osv(_('Error'), _('Key param is missing!'))
-            # temporary file
-            filename = fileparams['filename']
+            # temporary file (process filename to display datetime data instead of %(year)s chars)
+            filename = pool.get('ir.sequence')._process(cr, uid, fileparams['filename'] or '') or fileparams['filename']
             if filename not in files:
                 tmp_file = NamedTemporaryFile('w+b', delete=False)
             else:

@@ -74,6 +74,9 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
         instance_ids = form.get('instance_ids', False)
         if not instance_ids:
             raise osv.except_osv(_('Warning'), _('Some info are missing: instance.'))
+        instance_id = form.get('instance_id', False)
+        if not instance_id:
+            raise osv.except_osv(_('Warning'), _('Missing info: instance.'))
 
         ## TO BE DELETE DURING INTEGRATION
         if form.get('reset', False):
@@ -100,10 +103,13 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
                 """,
         }
 
+        # Create part of filename (search 3 first code digits)
+        instance = pool.get('msf.instance').browse(cr, uid, instance_id)
+        instance_name = instance.code[0:3]
         processrequests = [
             {
                 'headers': ['Entry Sequence', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third Party', 'Booking Debit', 'Booking Credit', 'Booking Currency', 'Functional Debit', 'Functional Credit', 'Functional Currency', 'Reconcile reference'],
-                'filename': 'Reconciled_Entries.csv',
+                'filename': instance_name + "_%(year)s%(month)s_Check on reconcilable entries.csv",
                 'key': 'reconciliable',
                 'query_params': (tuple(instance_ids),),
                 'function': 'postprocess_reconciliable',
