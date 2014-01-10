@@ -208,7 +208,7 @@ else:
 %>
 <Worksheet ss:Name="${worsheet_name}">
 <%
-    col_count = 8
+    col_count = 9
     if data['model'] == 'account.account':
         header_company_or_chart_of_account = 'Company'
     else:
@@ -229,10 +229,11 @@ else:
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="140" />
+<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="50" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
@@ -274,6 +275,9 @@ header_col_merge_count = col_count - 1
  <Cell ss:StyleID="ssHeaderCell">
      <Data ss:Type="String">${(prop_instances or '')|x}</Data>
  </Cell>
+ <Cell ss:StyleID="ssCell">
+    <Data ss:Type="String"></Data>
+</Cell>
  </Row>
 ## separation line after header
 <Row>
@@ -285,11 +289,11 @@ header_col_merge_count = col_count - 1
 </Row>
 ## partner header
 <Row>
-##<Cell ss:StyleID="ssHeader" ss:MergeAcross="4">
-##    <Data ss:Type="String">Partner/Journal (code/move/posting date/period/account)</Data>
-##</Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Partner Journal</Data>
+    <Data ss:Type="String">Partner</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">Journal</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">Code</Data>
@@ -298,7 +302,7 @@ header_col_merge_count = col_count - 1
     <Data ss:Type="String">Move</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Posting date</Data>
+    <Data ss:Type="String">Posting Date</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
     <Data ss:Type="String">Account</Data>
@@ -315,9 +319,27 @@ header_col_merge_count = col_count - 1
 </Row>
 ## partner row
 % for p_obj in p_entries:
+<%
+partner_name = (p_obj.name or '')
+%>
 <Row>
-<Cell ss:StyleID="ssPartner" ss:MergeAcross="4">
-    <Data ss:Type="String">${(p_obj.name or '')|x}</Data>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String">${partner_name|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
     <Data ss:Type="Number">${p_obj.debit or 0.}</Data>
@@ -337,6 +359,9 @@ credit = currency_conv(aml.credit, aml.date)
 balance = debit - credit
 %>
 <Row>
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String">${partner_name|x}</Data>
+</Cell>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${((aml.journal_id and aml.journal_id.code) or '')|x}</Data>
 </Cell>
@@ -372,7 +397,7 @@ debit = currency_conv(debit, False)
 credit = currency_conv(credit, False)
 balance = currency_conv(balance, False)
 %>
-<Cell ss:StyleID="ssCell" ss:MergeAcross="3">
+<Cell ss:StyleID="ssCell" ss:MergeAcross="4">
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssCellRightBold">
