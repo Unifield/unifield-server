@@ -1006,7 +1006,7 @@ stock moves which are already processed : '''
         lines = []
         sol_ids = set()
         for order in self.browse(cr, uid, ids, context=context):
-            lines.extend([l for l in order.order_line if l.link_so_id and not l.procurement_id])
+            lines.extend([l for l in order.order_line if l.link_so_id and l.link_so_id.state in ('sourced', 'progress', 'manual') and (not l.procurement_id or not l.procurement_id.sale_id)])
 
         for l in lines:
             # Copy the AD
@@ -1023,6 +1023,7 @@ stock moves which are already processed : '''
                                               'product_uom': l.product_uom.id,
                                               'product_uom_qty': l.product_qty,
                                               'price_unit': l.price_unit,
+                                              'procurement_id': l.procurement_id and l.procurement_id.id or False,
                                               'type': 'make_to_order',
                                               'analytic_distribution_id': new_distrib,
                                               'created_by_po': l.order_id.id,
@@ -2162,8 +2163,12 @@ class purchase_order_line(osv.osv):
         other_lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom)], context=context)
         stages = self._get_stages_price(cr, uid, product_id, product_uom, order, context=context)
 
-        if vals.get('origin') and not vals.get('procurement_id'):
-            vals.update(self.update_origin_link(cr, uid, vals.get('origin'), context=context))
+        if vals.get('origin'):
+            proc = False
+            if vals.get('procurement_id'):
+                proc = self.pool.get('procurement.order').browse(cr, uid, vals.get('procurement_id'))
+            if not proc or not proc.sale_id:
+                vals.update(self.update_origin_link(cr, uid, vals.get('origin'), context=context))
 
         if (other_lines and stages and order.state != 'confirmed'):
             context.update({'change_price_ok': False})
@@ -2250,8 +2255,12 @@ class purchase_order_line(osv.osv):
             if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok and not context.get('noraise'):
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
 
-            if vals.get('origin', line.origin) and not vals.get('procurement_id', line.procurement_id):
-                vals.update(self.update_origin_link(cr, uid, vals.get('origin', line.origin), context=context))
+            if vals.get('origin', line.origin):
+                proc = False
+                if vals.get('procurement_id', line.procurement_id.id):
+                    proc = self.pool.get('procurement.order').browse(cr, uid, vals.get('procurement_id', line.procurement_id.id))
+                if not proc or not proc.sale_id:
+                    vals.update(self.update_origin_link(cr, uid, vals.get('origin', line.origin), context=context))
         
         if not context.get('update_merge'):
             for line in ids:

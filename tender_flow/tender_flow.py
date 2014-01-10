@@ -421,6 +421,7 @@ class tender(osv.osv):
                                             'tender_id': tender.id,
                                             'tender_line_id': line.id,
                                             'date_planned': rts,
+                                            'origin': tender.sale_order_id.name,
                                             'supplier': line.purchase_order_line_id.order_id.partner_id.id,
                                             'name': '[%s] %s' % (line.product_id.default_code, line.product_id.name),
                                             'location_id': tender.sale_order_id.warehouse_id.lot_stock_id.id,
