@@ -107,7 +107,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Transport mode')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o, 'transport_type')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o, 'transport_type') or ''|x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('RTS Date')}</Data></Cell>

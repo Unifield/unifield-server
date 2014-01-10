@@ -1417,7 +1417,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                              'price_unit': line.imp_price,
                              'product_qty': line.imp_qty,
                              'line_number': line.in_line_number,
-                             'date_planned': line.imp_drd,
+                             'date_planned': line.imp_drd or line.imp_dcd,
                             }
                 if line.imp_dcd:
                     line_vals['confirmed_delivery_date'] = line.imp_dcd
