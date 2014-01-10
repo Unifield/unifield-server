@@ -935,6 +935,11 @@ class account_bank_statement_line(osv.osv):
                         if ml.reconcile_id and ml.reconcile_id.line_id:
                             for line in ml.reconcile_id.line_id:
                                 res.add(line.move_id.id)
+                        other_ml_ids = self.pool.get('account.move.line').search(cr, uid, ['|', ('reversal_line_id', '=', ml.id), ('corrected_line_id', '=', ml.id)], context=context)
+                        if other_ml_ids:
+                            for el in self.pool.get('account.move.line').read(cr, uid, other_ml_ids, ['move_id'], context=context):
+                                if el.get('move_id', False) and el.get('move_id')[0]:
+                                    res.add(el['move_id'][0])
             # Those from pending payments (imported_invoice_line_ids are move_line)
             if absl.imported_invoice_line_ids:
                 for ml in absl.imported_invoice_line_ids:
