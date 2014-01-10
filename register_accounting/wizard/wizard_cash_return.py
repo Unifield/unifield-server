@@ -220,7 +220,7 @@ class wizard_cash_return(osv.osv_memory):
                         self.action_add_invoice(cr, uid, [id], context=context)
                     if invoice_numbers:
                         msg = "This operational advance is linked to a PO." \
-                            " Corresponding invoice lines have automatically been added below:" \
+                            " Corresponding invoice lines have automatically been added:" \
                             "\nInvoice(s) number: "
                         msg += ", ".join(invoice_numbers) + "."
                         msg += "\nYou can change selection by clicking on 'Clean invoices' then selecting invoice manually." \
