@@ -412,36 +412,60 @@ cost_center_distribution_line()
 class product_product(osv.osv):
     _inherit = 'product.product'
 
+    _columns = {
+        'xmlid_code' : fields.char('Hidden xmlid code', size=64), # this code is only used for xml_id purpose, added ONLY when creating the product
+    }
+    _sql_constraints = [
+        ('xmlid_code', "unique(xmlid_code)", 'The xmlid_code must be unique'),]
+    
+    def create(self, cr, uid, vals, context=None):
+        if 'xmlid_code' not in vals or not vals['xmlid_code']:
+            if vals['default_code']:
+                vals['xmlid_code'] = vals['default_code']
+            else:
+                vals['xmlid_code'] = "EMPTY_CODE"
+            
+        exist = self.search(cr, uid, [('xmlid_code', '=', vals['xmlid_code'])], context=context)
+        if exist: # if the value exist for xml_name, then just add a suffix to differentiate them, no constraint unique required here
+            vals['xmlid_code'] = vals['xmlid_code'] + "_1"
+            
+        return super(product_product, self).create(cr, uid, vals, context=context)
+
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         product = self.browse(cr, uid, res_id)
-        return get_valid_xml_name('product', product.default_code) if product.default_code else \
+        return get_valid_xml_name('product', product.xmlid_code) if product.xmlid_code else \
                super(product_product, self).get_unique_xml_name(cr, uid, uuid, table_name, res_id)
 
-    def write(self, cr, uid, ids, vals, context=None):
-        list_ids = []
-        if 'default_code' in vals:
-            list_ids = (ids if hasattr(ids, '__iter__') else [ids])
-            browse_list = self.browse(cr, uid, list_ids, context=context)
-            browse_list = filter(lambda x:x.default_code != vals['default_code'], browse_list)
-            list_ids = [x.id for x in browse_list]
-        res = super(product_product, self).write(cr, uid, ids, vals, context=context)
-        if list_ids:
-            entity_uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
-            model_data = self.pool.get('ir.model.data')
-            data_ids = model_data.search(cr, uid, [('module','=','sd'),('model','=',self._name),('res_id','in',list_ids)], context=context)
-            model_data.unlink(cr, uid, data_ids)
-            now = fields.datetime.now()
-            for id in list_ids:
-                xml_name = self.get_unique_xml_name(cr, uid, entity_uuid, self._table, id)
-                model_data.create(cr, uid, {
-                    'module' : 'sd',
-                    'noupdate' : False, # don't set to True otherwise import won't work
-                    'name' : xml_name,
-                    'model' : self._name,
-                    'res_id' : id,
-                    'last_modification' : now,
-                })
-        return res
+        # -----------------------------------------
+        # UF-2254: Remove this block of write because Cecile cannot explain why she created this block
+        # JF: You can still keep this commented block when doing integration. Thanks!
+        # -----------------------------------------
+        
+#    def write(self, cr, uid, ids, vals, context=None):
+#        list_ids = []
+#        if 'default_code' in vals:
+#            list_ids = (ids if hasattr(ids, '__iter__') else [ids])
+#            browse_list = self.browse(cr, uid, list_ids, context=context)
+#            browse_list = filter(lambda x:x.default_code != vals['default_code'], browse_list)
+#            list_ids = [x.id for x in browse_list]
+#        res = super(product_product, self).write(cr, uid, ids, vals, context=context)
+#        if list_ids:
+#            entity_uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
+#            model_data = self.pool.get('ir.model.data')
+#            data_ids = model_data.search(cr, uid, [('module','=','sd'),('model','=',self._name),('res_id','in',list_ids)], context=context)
+#            model_data.unlink(cr, uid, data_ids)
+#            now = fields.datetime.now()
+#            for id in list_ids:
+#                xml_name = self.get_unique_xml_name(cr, uid, entity_uuid, self._table, id)
+#                model_data.create(cr, uid, {
+#                    'module' : 'sd',
+#                    'noupdate' : False, # don't set to True otherwise import won't work
+#                    'name' : xml_name,
+#                    'model' : self._name,
+#                    'res_id' : id,
+#                    'last_modification' : now,
+#                })
+#        return res
 
 product_product()
 
