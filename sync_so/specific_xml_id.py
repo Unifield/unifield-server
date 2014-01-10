@@ -412,25 +412,6 @@ cost_center_distribution_line()
 class product_product(osv.osv):
     _inherit = 'product.product'
 
-    _columns = {
-        'xmlid_code' : fields.char('Hidden xmlid code', size=64), # this code is only used for xml_id purpose, added ONLY when creating the product
-    }
-    _sql_constraints = [
-        ('xmlid_code', "unique(xmlid_code)", 'The xmlid_code must be unique'),]
-    
-    def create(self, cr, uid, vals, context=None):
-        if 'xmlid_code' not in vals or not vals['xmlid_code']:
-            if vals['default_code']:
-                vals['xmlid_code'] = vals['default_code']
-            else:
-                vals['xmlid_code'] = "EMPTY_CODE"
-            
-        exist = self.search(cr, uid, [('xmlid_code', '=', vals['xmlid_code'])], context=context)
-        if exist: # if the value exist for xml_name, then just add a suffix to differentiate them, no constraint unique required here
-            vals['xmlid_code'] = vals['xmlid_code'] + "_1"
-            
-        return super(product_product, self).create(cr, uid, vals, context=context)
-
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         product = self.browse(cr, uid, res_id)
         return get_valid_xml_name('product', product.xmlid_code) if product.xmlid_code else \
