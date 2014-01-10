@@ -793,8 +793,9 @@ class wizard_import_in_simulation_screen(osv.osv):
             UOM_NAME_ID = {}
             CURRENCY_NAME_ID = {}
             SIMU_LINES = {}
-        except Exception:
-            cr.rollback()
+        except Exception, e:
+            self.write(cr, uid, ids, {'message': e}, context=context)
+            cr.commit()
             cr.close()
 
         return {'type': 'ir.actions.act_window_close'}
