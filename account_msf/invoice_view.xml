@@ -236,7 +236,7 @@
             <field name="type">tree</field>
             <field name="priority">19</field>
             <field name="arch" type="xml">
-                <tree string="Intermission Voucher" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')" hide_new_button="1">
+                <tree string="Intermission Voucher" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
                     <field name="document_date" string="I/MI voucher date"/>
                     <field name="date_invoice"/>
                     <field name="number"/>
@@ -257,7 +257,7 @@
             <field name="type">form</field>
             <field name="priority">64</field>
             <field name="arch" type="xml">
-                <form string="Intermission Voucher" hide_new_button="1" hide_duplicate_button="1">
+                <form string="Intermission Voucher" hide_duplicate_button="1">
                     <group colspan="4" col="8">
                         <field name="fake_journal_id" domain="[('is_current_instance','=',True)]" widget="selection"/>
                         <field name="number"/>
