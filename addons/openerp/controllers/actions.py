@@ -164,21 +164,9 @@ def execute_report(name, **data):
         state = False
         attempt = 0
         val = None
-        while not state:
-            val = rpc.session.execute('report', 'report_get', report_id)
-            if not val:
-                return False
-            state = val['state']
-            if not state:
-                time.sleep(1)
-                attempt += 1
-            if attempt>200:
-                raise common.message(_('Printing aborted, too long delay'))
-
-        # report name
-        report_name = 'report'
-        report_type = val['format']
-
+        bg_report = False
+        background_id = ctx.get('background_id')
+        max_attempt = ctx.get('background_time', 200)
         if name != 'custom':
             proxy = rpc.RPCProxy('ir.actions.report.xml')
             res = proxy.search([('report_name','=', name)])
@@ -194,6 +182,31 @@ def execute_report(name, **data):
                 report_name = datas['target_filename']
             elif datas.get('context', {}).get('_terp_view_name'):
                 report_name = datas['context']['_terp_view_name']
+        
+        if background_id:
+            bg_report = rpc.session.execute('object', 'execute', 'memory.background.report', 'write', [background_id], {'report_id': background_id, 'report_name': report_name})
+
+
+        while not state:
+            val = rpc.session.execute('report', 'report_get', report_id)
+            if not val:
+                return False
+            state = val['state']
+            if not state:
+                time.sleep(1)
+                attempt += 1
+            if attempt>max_attempt:
+                if bg_report:
+                    cherrypy.response.headers['Content-Type'] = 'text/html'
+                    raise tools.redirect('/openerp/downloadbg', res_id=bg_report)
+#                    return execute_window(False, 'memory.background.report', res_id=bg_report, domain=[], view_type='form', mode='form', target='new')
+                else:
+                    raise common.message(_('Printing aborted, too long delay'))
+
+        cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
+        # report name
+        report_name = 'report'
+        report_type = val['format']
 
         cherrypy.response.headers['Content-Disposition'] = 'filename="' + report_name + '.' + report_type + '"'
 
