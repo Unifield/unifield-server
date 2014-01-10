@@ -1258,6 +1258,12 @@ class procurement_order(osv.osv):
             if order_line_ids:
                 origin_line = self.pool.get('sale.order.line').browse(cr, uid, order_line_ids[0])
                 line.update({'origin': origin_line.order_id.name, 'product_uom': origin_line.product_uom.id, 'product_qty': origin_line.product_uom_qty})
+            
+            # UTP-934: If the procurement is a rfq, the price unit must be taken from this rfq, and not from the pricelist or standard price
+            procurement = kwargs['procurement']
+            if procurement.po_cft == 'rfq':
+                line.update({'price_unit': procurement.price_unit})
+            
         if line.get('price_unit', False) == False:
             cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
             if 'pricelist' in kwargs:
