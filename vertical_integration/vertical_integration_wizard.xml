@@ -67,7 +67,7 @@
     <!-- OCB export -->
 
         <record id="ocb_export_wizard" model="ir.ui.view">
-            <field name="name">Export to HQ system - OCB</field>
+            <field name="name">Export to HQ system (OCB)</field>
             <field name="model">ocb.export.wizard</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
@@ -90,7 +90,7 @@
         </record>
 
         <record id="action_hq_export_ocb" model="ir.actions.act_window">
-            <field name="name">Export to HQ system - OCB</field>
+            <field name="name">Export to HQ system (OCB)</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">ocb.export.wizard</field>
             <field name="view_type">form</field>
