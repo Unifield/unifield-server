@@ -1210,8 +1210,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 write_vals['in_line_number'] = False
                 write_vals['imp_external_ref'] = False
                 write_vals['type_change'] = 'error'
-
-            if line.in_line_number:
+            elif line.in_line_number:
                 pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', line.simu_id.order_id.id), ('line_number', '=', line.in_line_number)], context=context)
                 if not pol_ids:
                     errors.append(_('Line no is not consistent with validated PO.'))
