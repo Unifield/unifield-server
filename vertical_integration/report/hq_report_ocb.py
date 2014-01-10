@@ -93,25 +93,22 @@ class finance_archive(finance_export.finance_archive):
         sqlmark = """UPDATE account_move_line SET exporting_sequence = %s WHERE id in %s;"""
         cr.execute(sqlmark, (seq, tuple(ids),))
         # Do right request
-        sqltwo = """SELECT j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS entry_sequence, 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END as debit, CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as credit, c.name AS "booking_currency", c.id
-                FROM (
-                    SELECT aml.account_id, aml.journal_id, aml.currency_id, SUM(aml.amount_currency) AS total, aml.period_id
-                    FROM account_move_line AS aml, account_account AS aa, account_journal AS j
-                    WHERE exporting_sequence = %s
-                    AND aml.journal_id = j.id
-                    AND j.type not in ('hq', 'migration')
-                    GROUP BY aml.period_id, aml.account_id, aml.journal_id, aml.currency_id
-                    ORDER BY aml.account_id
-                )
-                AS req, account_account AS a, account_journal AS j, res_currency AS c, account_period AS p, account_fiscalyear AS f
-                WHERE req.account_id = a.id
-                AND req.journal_id = j.id
-                AND j.type not in ('hq', 'migration')
-                AND req.currency_id = c.id
-                AND req.period_id = p.id
-                AND p.fiscalyear_id = f.id
-                AND a.shrink_entries_for_hq = 't'
-                ORDER BY a.code;"""
+        sqltwo = """SELECT j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS "entry_sequence", 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END AS "debit", CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as "credit", c.name AS "booking_currency", c.id
+            FROM (
+                SELECT aml.period_id, aml.journal_id, aml.currency_id, aml.account_id, SUM(amount_currency) AS total
+                FROM account_move_line AS aml, account_journal AS j
+                WHERE aml.exporting_sequence = %s
+                AND aml.journal_id = j.id
+                AND j.type NOT IN ('hq', 'migration')
+                GROUP BY aml.period_id, aml.journal_id, aml.currency_id, aml.account_id
+                ORDER BY aml.account_id
+            ) AS req, account_account AS a, account_period AS p, account_journal AS j, res_currency AS c, account_fiscalyear AS f
+            WHERE req.account_id = a.id
+            AND req.period_id = p.id
+            AND req.journal_id = j.id
+            AND req.currency_id = c.id
+            AND p.fiscalyear_id = f.id
+            AND a.shrink_entries_for_hq = 't';"""
         cr.execute(sqltwo, (seq,))
         datatwo = cr.fetchall()
         # post process datas
