@@ -849,7 +849,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 state_index = root.index(fields[0])
                 new_field_txt = """
                 <group name="import_file_lines" string="Import Lines" colspan="24" col="8">
-                    <button name="launch_simulation" string="Simulate" icon="gtk-execute" colspan="1" type="object" />
+                    <button name="launch_simulation" string="Import IN" icon="gtk-execute" colspan="1" type="object" />
                 </group>"""
 # QT : Remove the old import following the Skype discussion with Raffaelle on 2014.08.01 :
 #      [15:19:47] Quentin THEURET: For IN simulation screen, should I keep the old import for IN with other suppliers ?

@@ -808,6 +808,9 @@ class wizard_import_in_simulation_screen(osv.osv):
         line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
         mem_move_obj = self.pool.get('stock.move.memory.in')
 
+        if context is None:
+            context = {}
+
         if isinstance(ids, (int, long)):
             ids = [ids]
 
@@ -818,16 +821,16 @@ class wizard_import_in_simulation_screen(osv.osv):
         partial_id = self.pool.get('stock.partial.picking').create(cr, uid, {'date': simu_id.picking_id.date}, context=context)
         line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('del', 'error', 'new')), ('type_change', '=', False)], context=context)
 
-        print simu_id.id, line_ids
-        if not line_ids:
-            raise osv.except_osv(_('Error'), _('Nothing to import'))
+#        if not line_ids:
+#            raise osv.except_osv(_('Error'), _('Nothing to import'))
         
-        mem_move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, context=context)
+        mem_move_ids, move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, context=context)
 
         # delete extra lines
-        del_lines = mem_move_obj.search(cr, uid, [('id', 'not in', mem_move_ids), ('wizard_pick_id', '=', partial_id)], context=context)
+        del_lines = mem_move_obj.search(cr, uid, [('wizard_pick_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)], context=context)
         mem_move_obj.unlink(cr, uid, del_lines, context=context)
 
+        context['from_simu_screen'] = True
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.partial.picking',
                 'res_id': partial_id,
@@ -842,6 +845,7 @@ wizard_import_in_simulation_screen()
 class wizard_import_in_line_simulation_screen(osv.osv):
     _name = 'wizard.import.in.line.simulation.screen'
     _rec_name = 'line_number'
+    _order = 'line_number, id'
 
     def _get_values(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -968,7 +972,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             write_vals = {}
 
             # Product
-            if (values[1] and values[1] == line.move_product_id.default_code) or\
+            if (values[1] and values[1] == line.move_product_id.default_code) and\
                (values[2] and values[2] == line.move_product_id.name):
                 write_vals['imp_product_id'] = line.move_product_id and line.move_product_id.id or False
             else:
@@ -1086,6 +1090,10 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             if write_vals['integrity_status'] != 'empty' or len(errors) > 0:
                 write_vals['type_change'] = 'error'
 
+            if line.type_change == 'new':
+                write_vals['type_change'] = 'error'
+                errors.append(_('Line does not correspond to original IN'))
+
             error_msg = line.error_msg or ''
             for err in errors:
                 if error_msg:
@@ -1151,6 +1159,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             ids = [ids]
 
         move_ids = []
+        mem_move_ids = []
         for line in self.browse(cr, uid, ids, context=context):
             if line.type_change in ('del', 'error', 'new'):
                 continue
@@ -1175,8 +1184,10 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'uom_ordered': move.product_uom.id,
                     'wizard_pick_id': partial_id}
 
-            move_ids.append(move_obj.create(cr, uid, vals, context=context))
+            mem_move_ids.append(move_obj.create(cr, uid, vals, context=context))
+            if move:
+                move_ids.append(move.id)
 
-        return move_ids
+        return mem_move_ids, move_ids
 
 wizard_import_in_line_simulation_screen()
