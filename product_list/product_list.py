@@ -245,11 +245,26 @@ class product_product(osv.osv):
                                     type='many2many', relation='product.list', method=True, string='Lists'),
         # we can't write the default_code required because it is used in the product addons
         'default_code' : fields.char('CODE', size=14, select=True),
+        'xmlid_code' : fields.char('Hidden xmlid code', size=64), # UF-2254: this code is only used for xml_id purpose, added ONLY when creating the product
     }
 
     _sql_constraints = [
         ('default_code', "unique(default_code)", 'The "Product Code" must be unique'),
+        ('xmlid_code', "unique(xmlid_code)", 'The xmlid_code must be unique'),
     ]
+
+    def create(self, cr, uid, vals, context=None):
+        if 'xmlid_code' not in vals or not vals['xmlid_code']:
+            if vals['default_code']:
+                vals['xmlid_code'] = vals['default_code']
+            else:
+                vals['xmlid_code'] = "EMPTY_CODE"
+            
+        exist = self.search(cr, uid, [('xmlid_code', '=', vals['xmlid_code'])], context=context)
+        if exist: # if the value exist for xml_name, then just add a suffix to differentiate them, no constraint unique required here
+            vals['xmlid_code'] = vals['xmlid_code'] + "_1"
+            
+        return super(product_product, self).create(cr, uid, vals, context=context)
 
 product_product()
 
