@@ -54,6 +54,10 @@ def getIterObjects(self, cr, uid, ids, context):
     pool =  pooler.get_pool(cr.dbname)
     table_obj = pool.get(self.table)
     field_process = None
+    back_browse = False
+    if context.get('background_id'):
+         back_browse = self.pool.get('memory.background.report').browse(cr, uid, context['background_id'])
+
     if hasattr(self, '_fields_process'):
         field_process = self._fields_process
     # we need to sort analytic line by account code
@@ -64,6 +68,8 @@ def getIterObjects(self, cr, uid, ids, context):
             ids.append(i[0])
 
     while l < len_ids:
+        if back_browse:
+            back_browse.update_percent(l/float(len_ids))
         old_l = l
         l = l + steps
         new_ids = ids[old_l:l]
@@ -98,7 +104,6 @@ def create_csv(self, cr, uid, ids, data, context=None):
         zf.close()
         out = file(tmpzipname, 'rb').read()
         os.unlink(tmpzipname)
-        os.unlink(tmpname)
         return (out, 'zip')
 
     return (out, 'csv')

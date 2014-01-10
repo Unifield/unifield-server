@@ -29,6 +29,12 @@ from time import strftime
 import csv
 from tempfile import TemporaryFile
 
+def get_back_browse(self, cr, uid, context):
+    background_id = context.get('background_id')
+    if background_id:
+        return self.pool.get('memory.background.report').browse(cr, uid, background_id)
+    return False
+
 class account_line_csv_export(osv.osv_memory):
     _name = 'account.line.csv.export'
     _description = 'Account Entries CSV Export'
@@ -47,6 +53,7 @@ class account_line_csv_export(osv.osv_memory):
         if not context:
             context = {}
         field_sel = self.pool.get('ir.model.fields').get_browse_selection
+        back_browse = get_back_browse(self, cr, uid, context)
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -72,6 +79,8 @@ class account_line_csv_export(osv.osv_memory):
         l = 0
         steps = 1000
         while l < len_ids:
+            if back_browse:
+                back_browse.update_percent(l/float(len_ids))
             old_l = l
             l += steps
             new_ids = ids[old_l:l]
@@ -157,6 +166,7 @@ class account_line_csv_export(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        back_browse = get_back_browse(self, cr, uid, context)
         # Is funding pool column needed?
         display_fp = context.get('display_fp', False)
         if not writer:
@@ -189,6 +199,8 @@ class account_line_csv_export(osv.osv_memory):
         l = 0
         steps = 1000
         while l < len_ids:
+            if back_browse:
+                back_browse.update_percent(l/float(len_ids))
             old_l = l
             l += steps
             new_ids = ids[old_l:l]
