@@ -84,8 +84,8 @@ class account_account(osv.osv):
         res = {}
         company_account_active = False
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
-        if company and company.supplementary_allocation:
-            company_account_active = company.supplementary_allocation
+        if company and company.additional_allocation:
+            company_account_active = company.additional_allocation
         company_account = 7 # User for accounts that begins by "7"
         # Prepare result
         for account in self.browse(cr, uid, ids, context=context):
@@ -113,8 +113,8 @@ class account_account(osv.osv):
         arg = []
         company_account_active = False
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
-        if company and company.supplementary_allocation:
-            company_account_active = company.supplementary_allocation
+        if company and company.additional_allocation:
+            company_account_active = company.additional_allocation
         company_account = "7"
         for x in args:
             if x[0] == 'is_analytic_addicted' and ((x[1] in ['=', 'is'] and x[2] is True) or (x[1] in ['!=', 'is not', 'not'] and x[2] is False)):

@@ -23,8 +23,8 @@
                     <field name="intermission_default_counterpart" domain="[('type', '!=', 'view')]" colspan="2"/>
                 </group>
                 <group col="2" colspan="2">
-                    <separator string="Income specific configuration" colspan="2"/>
-                    <field name="supplementary_allocation" colspan="2"/>
+                    <separator string="Income accounts specific configuration" colspan="2"/>
+                    <field name="additional_allocation" colspan="2"/>
                 </group>
             </page>
             <xpath expr="/form//field[@name='currency_id']" position="replace">
