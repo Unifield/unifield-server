@@ -176,6 +176,20 @@ class account_invoice(osv.osv):
         'is_inkind_donation': lambda obj, cr, uid, c: c.get('is_inkind_donation', False),
         'is_intermission': lambda obj, cr, uid, c: c.get('is_intermission', False),
     }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        defaults = super(account_invoice, self).default_get(cr, uid, fields, context=context)
+        if context and context.get('is_intermission', False):
+            intermission_type = context.get('intermission_type', False)
+            if intermission_type in ('in', 'out'):
+                # UF-2270: manual intermission (in or out)
+                if defaults is None:
+                    defaults = {}
+                # get company default currency
+                user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+                if user and user[0] and user[0].company_id:
+                    defaults['fake_currency_id'] = user[0].company_id.currency_id.id
+        return defaults
 
     def log(self, cr, uid, id, message, secondary=False, context=None):
         """
