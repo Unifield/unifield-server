@@ -203,8 +203,12 @@ class account_partner_balance_tree(osv.osv):
                                                 r[0]['partner_id'][0],
                                                 context['data'])
                 if move_line_ids:
+                    new_context = {}
                     if context:
-                        new_context = context.copy()
+                        ctx_key_2copy = ('lang', 'tz', 'department_id', 'client', 'name')
+                        for k in ctx_key_2copy:
+                            if k in context:
+                                new_context[k] = context[k]
                         comp_currency_id = self._get_company_currency(cr, uid, context=context)
                         output_currency_id = context['data']['form'].get('output_currency', comp_currency_id)
                         if comp_currency_id and output_currency_id \
