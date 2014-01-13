@@ -96,6 +96,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 res['amount'] = abs((total_amount * percentage) / 100.0)
             elif mode == 'amount' and total_amount:
                 res['percentage'] = abs((amount / total_amount) * 100.0)
+        if context and context.get('is_intermission', False):
+            # I/M vouncher: always MSF Private Funds
+            try:
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                fp_id = 0
+            if fp_id:
+                res['analytic_id'] = fp_id
         return res
 
     def _get_remaining_allocation(self, cr, uid, context=None):
@@ -210,7 +218,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 fp_fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fp_fields:
                     # for accrual lines, only Private Funds must be available
-                    if context.get('from_accrual_line', False):
+                    if context.get('from_accrual_line', False) \
+                        or context.get('is_intermission', False):
                         field.set('domain', "[('id', '=', %s)]" % fp_id)
                     # If context with 'from' exist AND its content is an integer (so an invoice_id)
                     elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
@@ -373,21 +382,23 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
         """
         # Prepare some values
         res = {}
+        # Search MSF Private Fund element, because it's valid with all accounts
+        try:
+            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+            'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            fp_id = 0
+        
         # If all elements given, then search FP compatibility
         if destination_id and analytic_id and account_id:
             fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
-            # Search MSF Private Fund element, because it's valid with all accounts
-            try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
             # Delete analytic_id if not valid with tuple "account_id/destination_id".
             # but do an exception for MSF Private FUND analytic account
             if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids] and analytic_id != fp_id:
                 res = {'value': {'analytic_id': False}}
         # If no destination, do nothing
-        elif not destination_id:
+        elif not destination_id \
+            or analytic_id == fp_id:  # PF always compatible
             res = {}
         # Otherway: delete FP
         else:
@@ -400,17 +411,19 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
         """
         # Prepare some values
         res = {}
+        # Search MSF Private Fund element, because it's valid with all accounts
+        try:
+            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+            'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            fp_id = 0
+        
         if cost_center_id and analytic_id:
             fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
-            # Search MSF Private Fund element, because it's valid with all accounts
-            try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
             if cost_center_id not in [x.id for x in fp_line.cost_center_ids] and analytic_id != fp_id:
                 res = {'value': {'analytic_id': False}}
-        elif not cost_center_id:
+        elif not cost_center_id \
+            or analytic_id == fp_id:  # PF always compatible:
             res = {}
         else:
             res = {'value': {'analytic_id': False}}
