@@ -501,6 +501,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     'analytic_distribution_id': distribution_id,
                 }
                 created_ids.append(create_move_line(move_id, line_data, sums))
+                # Hard post the move
+                move_obj.post(cr, uid, [move_id], context=context)
         # under revaluation
         elif amount <= -0.02:
             amount = -amount
@@ -523,8 +525,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     'account_id': account_id,
                 }
                 created_ids.append(create_move_line(move_id, line_data, sums))
-        # Hard post the move
-        move_obj.post(cr, uid, [move_id], context=context)
+                # Hard post the move
+                move_obj.post(cr, uid, [move_id], context=context)
         return move_id, created_ids
 
     def revaluate_currency(self, cr, uid, ids, context=None):
