@@ -21,7 +21,6 @@
                         <newline />
                         <field name="text_error" colspan="4" nolabel="1" readonly="1" />
                     </xpath>
-
                 </data>
             </field>
         </record>

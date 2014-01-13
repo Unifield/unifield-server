@@ -41,6 +41,8 @@ class stock_picking(osv.osv):
     _columns = {
         'filetype': fields.selection([('excel', 'Excel file'),
                                       ('xml', 'XML file')], string='Type of file',),
+        'last_imported_file': fields.binary(string='Last imported file', readonly=True),
+        'last_imported_filename': fields.char(size=128, string='Filename'),
     }
 
     def export_template_file(self, cr, uid, ids, context=None):

@@ -701,6 +701,8 @@
                             <field name="company_id" widget="selection" invisible="1"/>
                         </page>
                         <page string="Notes">
+                            <field name="last_imported_file" filename="last_imported_filename" />
+                            <field name="last_imported_filename" invisible="1" />
                             <field colspan="4" name="note" nolabel="1"/>
                         </page>
                     </notebook>

@@ -51,7 +51,7 @@ PRODLOT_NAME_ID = {}
 SIMU_LINES = {}
 
 
-LINES_COLUMNS = [(0, _('Line number'), 'mandatory'),
+LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
                  (1, _('Product Code'), 'mandatory'),
                  (2, _('Product Description'), 'optionnal'),
                  (3, _('Product Qty'), 'mandatory'),
@@ -246,7 +246,6 @@ class wizard_import_in_simulation_screen(osv.osv):
             ids = [ids]
 
         return self._import(cr, uid, ids, context=context)
-        raise osv.except_osv(_('Error'), _('Not implemented'))
 
     def launch_simulate(self, cr, uid, ids, context=None):
         '''
@@ -568,10 +567,10 @@ class wizard_import_in_simulation_screen(osv.osv):
                             values_line_errors.append(err)
                             file_line_error.append(err1)
 
-                    if not values.get(x, [])[0]:
-                        continue
-
-                    line_number = int(values.get(x, [])[0])
+                    if not values.get(x, [''])[0]:
+                        line_number = False
+                    else:
+                        line_number = int(values.get(x, [''])[0])
 
                     if not_ok:
                         not_ok_file_lines[x] = ' - '.join(err for err in file_line_error)
@@ -749,7 +748,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                         SIMU_LINES[wiz.id]['line_ids'].pop(index_in_line)
                     vals = values.get(in_line, [])
                     new_wl_id = wl_obj.create(cr, uid, {'type_change': 'new',
-                                                        'line_number': int(values.get(in_line, [])[0]),
+                                                        'line_number': values.get(in_line, [''])[0] and int(values.get(in_line, [''])[0]) or False,
                                                         'simu_id': wiz.id}, context=context)
                     err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
                     if in_line in not_ok_file_lines:
@@ -836,6 +835,8 @@ class wizard_import_in_simulation_screen(osv.osv):
         del_lines = mem_move_obj.search(cr, uid, [('wizard_pick_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)], context=context)
         mem_move_obj.unlink(cr, uid, del_lines, context=context)
 
+        self.pool.get('stock.picking').write(cr, uid, [simu_id.picking_id.id], {'last_imported_file': simu_id.file_to_import, 'last_imported_filename': simu_id.filename}, context=context)
+
         context['from_simu_screen'] = True
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.partial.picking',
@@ -851,7 +852,7 @@ wizard_import_in_simulation_screen()
 class wizard_import_in_line_simulation_screen(osv.osv):
     _name = 'wizard.import.in.line.simulation.screen'
     _rec_name = 'line_number'
-    _order = 'line_number, id'
+    _order = 'line_number_ok, line_number, id'
 
     def _get_values(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -890,6 +891,23 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
         return res
 
+
+    def _get_l_num(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Compute the line number
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'line_number_ok': not line.line_number or line.line_number == 0,
+                            'str_line_number': line.line_number and line.line_number != 0 and line.line_number or ''}
+
+        return res
+
+
     def _get_imported_values(self, cr, uid, ids, field_name, args, context=None):
         '''
         Compute some field with imported values
@@ -920,6 +938,12 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                                             string='Curr.', store=True, readonly=True, multi='computed'),
         # Values for the simu line
         'line_number': fields.integer(string='Line'),
+        'line_number_ok': fields.function(_get_l_num, method=True, type='boolean',
+                                          string='Line number ok', readonly=True, multi='line_num',
+                                          store={'wizard.import.in.line.simulation.screen': (lambda self, cr, uid, ids, c={}: ids, ['line_number'], 20)}),
+        'str_line_number': fields.function(_get_l_num, method=True, type='char', size=32,
+                                           string='Line', readonly=True, multi='line_num',
+                                           store={'wizard.import.in.line.simulation.screen': (lambda self, cr, uid, ids, c={}: ids, ['line_number'], 20)}),
         'type_change': fields.selection([('', ''),
                                          ('split', 'Split'),
                                          ('error', 'Error'),
