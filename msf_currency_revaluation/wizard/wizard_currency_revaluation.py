@@ -34,7 +34,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 'revaluation_method': fields.selection(
                     [('liquidity_month', _("Liquidity (Month-end)")),
                      ('liquidity_year', _("Liquidity (Year-end)")),
-                     ('other_bs', _("Liquidity & Other B/S (Year-end)")),
+                     ('other_bs', _("Other B/S (Year-end)")),
                      ],
                     string=_("Revaluation method"), required=True),
                 #'revaluation_year_ok': fields.boolean(
@@ -554,12 +554,12 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         form = self.browse(cr, uid, ids[0], context=context)
 
         # Set the currency table in the context for later computations
-        if form.revaluation_method == 'other_bs':
+        if form.revaluation_method in ['liquidity_year', 'other_bs']:
             context['currency_table_id'] = form.currency_table_id.id
 
         # Get all currency names to map them with main currencies later
         currency_codes_from_table = {}
-        if form.revaluation_method == 'other_bs':
+        if form.revaluation_method in ['liquidity_year', 'other_bs']:
             for currency in form.currency_table_id.currency_ids:
                 # Check the revaluation date and dates in the currency table
                 #if currency.date != form.revaluation_date:
@@ -659,9 +659,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         for account_id, account_tree in account_sums.iteritems():
             for currency_id, sums in account_tree.iteritems():
                 new_currency_id = currency_id
-                # If the method is 'other_bs', check if the account move
-                # currency is declared in the currency table and get it there
-                if form.revaluation_method == 'other_bs':
+                # If the method is 'other_bs' or 'liquidity_year', check if the
+                # account move currency is declared in the currency table and
+                # get it there
+                if form.revaluation_method in ['liquidity_year', 'other_bs']:
                     currency = currency_obj.browse(cr, uid, currency_id, context=context)
                     if currency.id != company.currency_id.id and currency.name not in currency_codes_from_table:
                         raise osv.except_osv(
@@ -678,9 +679,9 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         for account_id, account_tree in account_sums.iteritems():
             for currency_id, sums in account_tree.iteritems():
                 new_currency_id = currency_id
-                # If the method is 'other_bs', get the account move currency in
-                # the currency table
-                if form.revaluation_method == 'other_bs':
+                # If the method is 'other_bs' or 'liquidity_year', get the
+                # account move currency in the currency table
+                if form.revaluation_method in ['liquidity_year', 'other_bs']:
                     currency = currency_obj.browse(cr, uid, currency_id, context=context)
                     new_currency_id = currency_codes_from_table[currency.name]
                 adj_balance = sums.get('unrealized_gain_loss', 0.0)
