@@ -43,7 +43,6 @@ NB_OF_HEADER_LINES = 7
 NB_LINES_COLUMNS = 12
 
 
-PRODUCT_NAME_ID = {}
 PRODUCT_CODE_ID = {}
 UOM_NAME_ID = {}
 CURRENCY_NAME_ID = {}
@@ -98,7 +97,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                             'backorder_id': simu.picking_id.backorder_id and simu.picking_id.backorder_id.id or False,
                             'header_notes': simu.picking_id.note,
                             'freight_number': simu.picking_id.shipment_ref,
-                            'transport_mode': simu.picking_id and simu.picking_id.purchase_id and simu.picking_id.purchase_id.transport_mode or False}
+                            'transport_mode': simu.picking_id and simu.picking_id.purchase_id and simu.picking_id.purchase_id.transport_type or False}
 
         return res
 
@@ -148,7 +147,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         'message_esc': fields.text(string='Message ESC', readonly=True),
         'imp_origin': fields.char(size=128, string='Origin', readonly=True),
         'imp_freight_number': fields.char(size=128, string='Freight number', readonly=True),
-        'imp_transport_mode': fields.selection(TRANSPORT_TYPE, string='Transpot type', readonly=True),
+        'imp_transport_mode': fields.selection(TRANSPORT_TYPE, string='Transpot mode', readonly=True),
         # Lines
         'line_ids': fields.one2many('wizard.import.in.line.simulation.screen', 'simu_id', string='Stock moves'),
                                          
@@ -158,6 +157,23 @@ class wizard_import_in_simulation_screen(osv.osv):
         'state': 'draft',
         'filetype': 'excel',
     }
+
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Remove the concurrency access warning
+        '''
+        if context is None:
+            context = {}
+
+        buttons = ['return_to_in', 
+                   'go_to_simulation', 
+                   'print_simulation_report', 
+                   'launch_import', 
+                   'simulate']
+        if context.get('button') in buttons:
+            return True
+
+        return super(wizard_import_in_simulation_screen, self).write(cr, uid, ids, vals, context=context)
 
     def return_to_in(self, cr, uid, ids, context=None):
         '''
@@ -358,11 +374,10 @@ class wizard_import_in_simulation_screen(osv.osv):
         try:
             wl_obj = self.pool.get('wizard.import.in.line.simulation.screen')
             prod_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product_uom')
+            uom_obj = self.pool.get('product.uom')
 
             # Declare global variables (need this explicit declaration to clear
             # them at the end of the process
-            global PRODUCT_NAME_ID
             global PRODUCT_CODE_ID
             global UOM_NAME_ID
             global CURRENCY_NAME_ID
@@ -386,7 +401,6 @@ class wizard_import_in_simulation_screen(osv.osv):
                 for line in wiz.line_ids:
                     # Put data in cache
                     if line.move_product_id:
-                        PRODUCT_NAME_ID.setdefault(line.move_product_id.name, line.move_product_id.id)
                         PRODUCT_CODE_ID.setdefault(line.move_product_id.default_code, line.move_product_id.id)
                     if line.move_uom_id:
                         UOM_NAME_ID.setdefault(line.move_uom_id.name, line.move_uom_id.id)
@@ -494,7 +508,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                     message = _('''## IMPORT STOPPED ##
 
     LINE 1 OF THE IMPORTED FILE: THE FREIGHT REFERENCE \
-    IN THE FILE IS NOT THE SAME AS THE FREIGHT REFERENCE OF THE SIMULATION SCREEN.\
+    IN THE FILE IS NOT THE SAME AS THE ORDER REFERENCE OF THE SIMULATION SCREEN.\
 
     YOU SHOULD IMPORT A FILE THAT HAS THE SAME FREIGHT REFERENCE THAT THE SIMULATION\
     SCREEN!''')
@@ -571,18 +585,11 @@ class wizard_import_in_simulation_screen(osv.osv):
                     # Product
                     if vals[1]:
                         product_id = PRODUCT_CODE_ID.get(vals[1], False)
-                    if not product_id and vals[2]:
-                        product_id = PRODUCT_NAME_ID.get(vals[2], False)
                     if not product_id and vals[1]:
                         prod_ids = prod_obj.search(cr, uid, [('default_code', '=', vals[1])], context=context)
                         if prod_ids:
                             product_id = prod_ids[0]
                             PRODUCT_CODE_ID.setdefault(vals[1], product_id)
-                    if not product_id and vals[2]:
-                        prod_ids = prod_obj.search(cr, uid, [('name', '=', vals[2])], context=context)
-                        if prod_ids:
-                            product_id = prod_ids[0]
-                            PRODUCT_NAME_ID.setdefault(vals[2], product_id)
 
                     # UoM
                     if vals[4]:
@@ -788,7 +795,6 @@ class wizard_import_in_simulation_screen(osv.osv):
             cr.close()
 
             # Clear the cache
-            PRODUCT_NAME_ID = {}
             PRODUCT_CODE_ID = {}
             UOM_NAME_ID = {}
             CURRENCY_NAME_ID = {}
@@ -959,7 +965,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         '''
         Write the line with the values
         '''
-        prod_obj = self.pool.get('product.porduct')
+        prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         prodlot_obj = self.pool.get('stock.production.lot')
 
@@ -967,35 +973,36 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             ids = [ids]
 
         errors = []
+        warnings = []
 
         for line in self.browse(cr, uid, ids, context=context):
             write_vals = {}
 
             # Product
-            if (values[1] and values[1] == line.move_product_id.default_code) and\
-               (values[2] and values[2] == line.move_product_id.name):
+            prod_id = False
+            if (values[1] and values[1] == line.move_product_id.default_code):
                 write_vals['imp_product_id'] = line.move_product_id and line.move_product_id.id or False
             else:
                 prod_id = False
                 if values[1]:
                     prod_id = PRODUCT_CODE_ID.get(values[1])
-                if not prod_id and values[2]:
-                    prod_id = PRODUCT_NAME_ID.get(values[2])
 
-                if not prod_id and (values[1] or values[2]):
-                    prod_ids = prod_obj.search(cr, uid, ['|', ('default_code', '=', values[1]),
-                                                              ('name', '=', values[2])], context=context)
+                if not prod_id and values[1]:
+                    prod_ids = prod_obj.search(cr, uid, [('default_code', '=', values[1]),], context=context)
                     if not prod_ids:
-                        errors.append(_('Product not found in database - Product of the inital line kept.'))
-                        write_vals['imp_product_id'] = line.move_product_id and line.move_product_id.id or False
+                        errors.append(_('Product not found in database'))
                     else:
                         write_vals['imp_product_id'] = prod_ids[0]
                 else:
                     write_vals['imp_product_id'] = prod_id
 
+            product = False
+            if prod_id:
+                product = prod_obj.browse(cr, uid, prod_id, context=context)
+
 
             # Product Qty
-            err_msg = _('Incorrect float value for field \'Product Qty\' - Quantity of the initial line kept.')
+            err_msg = _('Incorrect float value for field \'Product Qty\'')
             try:
                 qty = float(values[3])
                 write_vals['imp_product_qty'] = qty
@@ -1014,13 +1021,12 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     if uom_ids:
                         write_vals['imp_uom_id'] = uom_ids[0]
                     else:
-                        errors.append(_('UoM not found in database - UoM of the initial line kept.'))
-                        write_vals['imp_uom_id'] = line.move_uom_id.id
+                        errors.append(_('UoM not found in database'))
                 else:
                     write_vals['imp_uom_id'] = uom_id
 
             # Unit price
-            err_msg = _('Incorrect float value for field \'Price Unit\' - Price Unit of the initial line kept.')
+            err_msg = _('Incorrect float value for field \'Price Unit\'')
             try:
                 unit_price = float(values[5])
                 write_vals['imp_price_unit'] = unit_price
@@ -1037,8 +1043,13 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             # Batch
             batch_value = values[7]
-            if not line.lot_check and not line.exp_check and batch_value:
-                errors.append(_('A batch is defined on the imported file but the product doesn\'t require batch number - Batch ignored'))
+            lot_check = line.lot_check
+            exp_check = line.exp_check
+            if product:
+                lot_check = product.batch_management
+                exp_check = product.perishable
+            if not lot_check and not exp_check and batch_value:
+                warnings.append(_('A batch is defined on the imported file but the product doesn\'t require batch number - Batch ignored'))
             elif batch_value:
                 batch_id = PRODLOT_NAME_ID.get(str(batch_value))
                 batch_ids = prodlot_obj.search(cr, uid, [('product_id', '=', write_vals['imp_product_id'])], context=context)
@@ -1047,15 +1058,15 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     if batch_ids:
                         write_vals['imp_batch_id'] = batch_ids[0]
                     else:
-                        errors.append(_('Batch not found in database - Batch not set.'))
+                        errors.append(_('Batch not found in database'))
                         write_vals['imp_batch_id'] = False
                 else:
                     write_vals['imp_batch_id'] = batch_id
             
             # Expired date
             exp_value = values[8]
-            if not line.lot_check and not line.exp_check and exp_value:
-                errors.append(_('An expired date is defined on the imported file but the product doesn\'t require expired date - Expired date ignored'))
+            if not lot_check and not exp_check and exp_value:
+                warnings.append(_('An expired date is defined on the imported file but the product doesn\'t require expired date - Expired date ignored'))
             elif exp_value:
                 if exp_value and type(exp_value) == type(DateTime.now()):
                     write_vals['imp_exp_date'] = exp_value.strftime('%Y-%m-%d')
@@ -1064,10 +1075,10 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         time.strptime(exp_value, '%Y-%m-%d')
                         write_vals['imp_exp_date'] = exp_value
                     except ValueError:
-                        err_msg = _('Incorrect date value for field \'Expired date\' - Expired date of the initial line kept.')
+                        err_msg = _('Incorrect date value for field \'Expired date\'')
                         errors.append(err_msg)
                 elif exp_value:
-                     err_msg = _('Incorrect date value for field \'Expired date\' - Expired date of the initial line kept.')
+                     err_msg = _('Incorrect date value for field \'Expired date\'')
                      errors.append(err_msg)
 
                 if write_vals.get('imp_exp_date') and write_vals.get('imp_batch_id'):
@@ -1116,6 +1127,15 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             if line.error_msg:
                 raise osv.except_osv(_('Warning'), line.error_msg)
+            if line.integrity_status != 'empty':
+                sel = self.fields_get(cr, uid, ['integrity_status'])
+                integrity_message = dict(sel['integrity_status']['selection']).get(getattr(line, 'integrity_status'), getattr(line, 'integrity_status'))
+                name = '%s,%s' % (self._name, 'integrity_status')
+                tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name), ('src', '=', integrity_message)])
+                if tr_ids:
+                    integrity_message = self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
+
+                raise osv.except_osv(_('Warning'), integrity_message)
 
         return True
 
@@ -1128,6 +1148,9 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         product = vals.get('imp_product_id') and product_obj.browse(cr, uid, vals['imp_product_id'], context=context) or False
         prodlot_id = vals.get('imp_batch_id') and prodlot_obj.browse(cr, uid, vals['imp_batch_id'], context=context) or False
         exp_date = vals.get('imp_exp_date')
+
+        if not product:
+            return 'empty'
 
         if not (product.perishable or product.batch_management):
             if exp_date or prodlot_id:

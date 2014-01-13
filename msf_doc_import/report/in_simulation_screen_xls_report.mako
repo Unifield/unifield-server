@@ -104,7 +104,7 @@
     </Row>
 
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Freight number')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Freight Number')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.freight_number or '')|x}</Data></Cell>
         % if o.freight_number != o.imp_freight_number:
         <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(o.imp_freight_number or '')|x}</Data></Cell>
@@ -149,7 +149,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Discre.')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Curr.')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch number')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch Number')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry date')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Message ESC 1')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Message ESC 2')}</Data></Cell>
@@ -157,9 +157,9 @@
     % for l in o.line_ids:
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.move_product_id and obj_name_get('product.product', l.move_product_id.id) or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="number">${(l.move_product_qty or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.move_product_qty or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.move_uom_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="number">${(l.move_price_unit or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.move_price_unit or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.move_currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.line_number or '')|x}</Data></Cell>
         % if l.type_change == 'error':
@@ -175,9 +175,9 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.imp_product_id.name or '')|x}</Data></Cell>
         % endif
         % if l.imp_product_qty != l.move_product_qty:
-        <Cell ss:StyleID="line_change" ><Data ss:Type="number">${(l.imp_product_qty or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="line_change" ><Data ss:Type="Number">${(l.imp_product_qty or 0.00)|x}</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="number">${(l.imp_product_qty or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.imp_product_qty or 0.00)|x}</Data></Cell>
         % endif
         % if l.imp_uom_id.id != l.move_uom_id.id:
         <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(l.imp_uom_id.name or '')|x}</Data></Cell>
@@ -185,19 +185,19 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.imp_uom_id.name or '')|x}</Data></Cell>
         % endif
         % if l.imp_price_unit != l.move_price_unit:
-        <Cell ss:StyleID="line_change" ><Data ss:Type="number">${(l.imp_price_unit or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="line_change" ><Data ss:Type="Number">${(l.imp_price_unit or 0.00)|x}</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="number">${(l.imp_price_unit or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.imp_price_unit or 0.00)|x}</Data></Cell>
         % endif
         % if (l.imp_price_unit != l.move_price_unit) or (l.imp_product_qty != l.move_product_qty):
-        <Cell ss:StyleID="line_change" ><Data ss:Type="number">${(l.imp_cost or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="line_change" ><Data ss:Type="Number">${(l.imp_cost or 0.00)|x}</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="number">${(l.imp_cost or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.imp_cost or 0.00)|x}</Data></Cell>
         % endif
         % if l.discrepancy:
-        <Cell ss:StyleID="line_change" ><Data ss:Type="number">${(l.discrepancy or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="line_change" ><Data ss:Type="Number">${(l.discrepancy or 0.00)|x}</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="number">${(l.discrepancy or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.discrepancy or 0.00)|x}</Data></Cell>
         % endif
         % if l.imp_currency_id.id != l.move_currency_id.id:
         <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(l.imp_currency_id.name or '')|x}</Data></Cell>
