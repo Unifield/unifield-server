@@ -1080,7 +1080,8 @@ class procurement_order(osv.osv):
                 sale_order_line = sol
             # find the rfq
             rfq_id = False
-            rfq_ids = rfq_obj.search(cr, uid, [('sale_order_id', '=', sale_order.id), ('state', '=', 'draft'), ('rfq_ok', '=', True),], context=context)
+            # UTP-934: If source rfq to different supplier, different rfq must be created, and cannot be using the same rfq 
+            rfq_ids = rfq_obj.search(cr, uid, [('sale_order_id', '=', sale_order.id),('partner_id', '=', proc.supplier.id), ('state', '=', 'draft'), ('rfq_ok', '=', True),], context=context)
             if rfq_ids:
                 rfq_id = rfq_ids[0]
             # create if not found
