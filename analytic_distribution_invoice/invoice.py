@@ -239,14 +239,14 @@ class account_invoice_line(osv.osv):
 
     def _get_is_allocatable(self, cr, uid, ids, name, arg, context=None):
         """
-        If expense account, then this account is allocatable.
+        If analytic-a-holic account, then this account is allocatable.
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = {}
         for invl in self.browse(cr, uid, ids):
             res[invl.id] = True
-            if invl.account_id and invl.account_id.user_type and invl.account_id.user_type.code and invl.account_id.user_type.code != 'expense':
+            if invl.account_id and not invl.account_id.is_analytic_addicted:
                 res[invl.id] = False
         return res
 

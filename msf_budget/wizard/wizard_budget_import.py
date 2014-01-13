@@ -144,8 +144,8 @@ class wizard_budget_import(osv.osv_memory):
                     raise osv.except_osv(_('Warning !'), _("Account/destination %s/%s is twice in the file!")%(account_codes[0], account_codes[1]))
                 # Test account data
                 account = self.pool.get('account.account').browse(cr,uid,account_ids[0], context=context)
-                if account.user_type_code != 'expense':
-                    raise osv.except_osv(_('Warning !'), _("Account %s is not an expense account!") % (account_codes[0],))
+                if not account.is_analytic_addicted:
+                    raise osv.except_osv(_('Warning !'), _("Account %s is not an analytic-a-holic account!") % (account_codes[0],))
                 # Only create "destination" budget lines
                 budget_line_vals.update({'account_id': account_ids[0],
                                          'destination_id': destination_ids[0],
@@ -168,7 +168,7 @@ class wizard_budget_import(osv.osv_memory):
                 # Update created lines dictionary
                 created_lines[destination_link_ids[0]] = True
                 result.append(budget_line_vals)
-        # If expense accounts are not in the file, create those
+        # If analytic-a-holic accounts are not in the file, create those
         missing_lines = [x for x in created_lines if created_lines[x] == False]
         budget_values = str([0]*12)
         for destination_link_id in missing_lines:

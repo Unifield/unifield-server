@@ -192,24 +192,30 @@
 <Cell ss:StyleID="s24"><Data ss:Type="String">${_('Total')}</Data></Cell>
 </Row>
 
+<% view_codes = fetchViewCodes() %>
 % for line in process(o.budget_line_ids):
+<% 
+  isBold = False
+  if line[0] in view_codes:
+    isBold = True
+%>
 <Row>
-<Cell ss:StyleID="${"%s"%( checkCount(line) and 's22bold' or 's22nobold')|x}" ><Data ss:Type="String">${( line[0] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( isBold and 's22bold' or 's22nobold')|x}" ><Data ss:Type="String">${( line[0] )|x}</Data></Cell>
 
-<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="String">${( line[1] )|x}</Data></Cell>
-<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[2] )|x}</Data></Cell>
-<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[3] )|x}</Data></Cell>
-<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[4] )|x}</Data></Cell>
-<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[5] )|x}</Data></Cell>
-<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[6] )|x}</Data></Cell>
-<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[7] )|x}</Data></Cell>
-<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[8] )|x}</Data></Cell>
-<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[9] )|x}</Data></Cell>
-<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[10] )|x}</Data></Cell>
-<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[11] )|x}</Data></Cell>
-<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[12] )|x}</Data></Cell>
-<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[13] )|x}</Data></Cell>
-<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[14] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="String">${( line[1] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[2] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[3] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[4] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[5] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[6] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[7] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[8] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[9] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[10] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[11] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[12] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[13] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[14] )|x}</Data></Cell>
 </Row>
 % endfor
 

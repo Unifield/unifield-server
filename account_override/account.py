@@ -68,6 +68,74 @@ class account_account(osv.osv):
                 arg.append(('inactivation_date', '<=', cmp_date))
         return arg
 
+    def _get_is_analytic_addicted(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        An account is dependant on analytic distribution in these cases:
+        - the account is expense (user_type_code == 'expense')
+
+        Some exclusive cases can be add in the system if you configure your company:
+        - either you also take all income account (user_type_code == 'income') 
+        - or you take accounts that are income + 7xx (account code begins with 7)
+        """
+        # Some checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = {}
+        company_account_active = False
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        if company and company.additional_allocation:
+            company_account_active = company.additional_allocation
+        company_account = 7 # User for accounts that begins by "7"
+        # Prepare result
+        for account in self.browse(cr, uid, ids, context=context):
+            res[account.id] = False
+            if account.user_type_code == 'expense':
+                res[account.id] = True
+            elif account.user_type_code == 'income':
+                if not company_account_active:
+                    res[account.id] = True
+                elif company_account_active and account.code.startswith(str(company_account)):
+                    res[account.id] = True
+        return res
+
+    def _search_is_analytic_addicted(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Search analytic addicted accounts regarding same criteria as those from _get_is_analytic_addicted method.
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        arg = []
+        company_account_active = False
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        if company and company.additional_allocation:
+            company_account_active = company.additional_allocation
+        company_account = "7"
+        for x in args:
+            if x[0] == 'is_analytic_addicted' and ((x[1] in ['=', 'is'] and x[2] is True) or (x[1] in ['!=', 'is not', 'not'] and x[2] is False)):
+                arg.append(('|'))
+                arg.append(('user_type.code', '=', 'expense'))
+                if company_account_active:
+                     arg.append(('&'))
+                arg.append(('user_type.code', '=', 'income'))
+                if company_account_active:
+                    arg.append(('code', '=like', '%s%%' % company_account))
+            elif x[0] == 'is_analytic_addicted' and ((x[1] in ['=', 'is'] and x[2] is False) or (x[1] in ['!=', 'is not', 'not'] and x[2] is True)):
+                arg.append(('user_type.code', '!=', 'expense'))
+                if company_account_active:
+                    arg.append(('|'))
+                    arg.append(('user_type.code', '!=', 'income'))
+                    arg.append(('code', 'not like', '%s%%' % company_account))
+                else:
+                    arg.append(('user_type.code', '!=', 'income'))
+            elif x[0] != 'is_analytic_addicted':
+                arg.append(x)
+            else:
+                raise osv.except_osv(_('Error'), _('Operation not implemented!'))
+        return arg
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'), 
@@ -78,6 +146,7 @@ class account_account(osv.osv):
             """),
         'shrink_entries_for_hq': fields.boolean("Shrink entries for HQ export", help="Check this attribute if you want to consolidate entries on this account before they are exported to the HQ system."),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
+        'is_analytic_addicted': fields.function(_get_is_analytic_addicted, fnct_search=_search_is_analytic_addicted, method=True, type='boolean', string='Analytic-a-holic?', help="Is this account addicted on analytic distribution?", store=False, readonly=True),
     }
 
     _defaults = {
