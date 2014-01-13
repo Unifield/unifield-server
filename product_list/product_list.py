@@ -260,9 +260,10 @@ class product_product(osv.osv):
             else:
                 vals['xmlid_code'] = "EMPTY_CODE"
             
+        # UF-2254: If there is no xmlid_code then just report error for the line
         exist = self.search(cr, uid, [('xmlid_code', '=', vals['xmlid_code'])], context=context)
-        if exist: # if the value exist for xml_name, then just add a suffix to differentiate them, no constraint unique required here
-            vals['xmlid_code'] = vals['xmlid_code'] + "_1"
+        if exist:
+            raise Exception, "Sorry, xmlid_code is duplicated, cannot create the product with this code: " + vals['xmlid_code'] 
             
         return super(product_product, self).create(cr, uid, vals, context=context)
 
