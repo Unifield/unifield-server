@@ -50,7 +50,19 @@
           <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
-        <Interior ss:Color="#ff0000" ss:Pattern="Solid" />>
+        <Interior ss:Color="#ff0000" ss:Pattern="Solid" />
+        <Protection ss:Protected="0" />
+    </Style>
+    <Style ss:ID="line_change_short_date">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+        <Borders>
+          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+        <Interior ss:Color="#ff0000" ss:Pattern="Solid" />
+        <NumberFormat ss:Format="Short Date" />
         <Protection ss:Protected="0" />
     </Style>
   <Style ss:ID="short_date">
@@ -61,7 +73,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <NumberFormat ss:Format="Short Date"/>
+   
    <Protection ss:Protected="0" />
   </Style>
 </Styles>
@@ -111,25 +123,25 @@
 
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Transport Mode')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o, 'in_transport_mode')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o, 'in_transport_mode') or ''|x}</Data></Cell>
         % if o.imp_transport_mode != o.in_transport_mode:
-        <Cell ss:StyleID="line_change" ss:MergeAcross="1" ><Data ss:Type="String">${getSel(o, 'imp_transport_mode')}</Data></Cell>
+        <Cell ss:StyleID="line_change" ss:MergeAcross="1" ><Data ss:Type="String">${getSel(o, 'imp_transport_mode') or ''|x}</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ss:MergeAcross="1" ><Data ss:Type="String">${getSel(o, 'imp_transport_mode')}</Data></Cell>
+        <Cell ss:StyleID="line" ss:MergeAcross="1" ><Data ss:Type="String">${getSel(o, 'imp_transport_mode')or ''|x}</Data></Cell>
         % endif
     </Row>
 
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('RTS Date')}</Data></Cell>
         % if o.in_ready_to_ship_date not in ('False', False):
-        <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${(o.in_ready_to_ship_date)|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(o.in_ready_to_ship_date)|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
         % if o.imp_ready_to_ship_date != o.in_ready_to_ship_date:
-        <Cell ss:StyleID="line_change" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_ready_to_ship_date)|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="line_change_short_date" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_ready_to_ship_date)|n}T00:00:00.000</Data></Cell>
         % elif o.imp_ready_to_ship_date not in ('False', False):
-        <Cell ss:StyleID="line" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_ready_to_ship_date)|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_ready_to_ship_date)|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ss:MergeAcross="1" ><Data ss:Type="String"></Data></Cell>
         % endif
@@ -138,14 +150,14 @@
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Shipment Date')}</Data></Cell>
         % if o.in_shipment_date not in ('False', False):
-        <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${(o.in_shipment_date)|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(o.in_shipment_date)|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
         % if o.imp_shipment_date != o.in_shipment_date:
-        <Cell ss:StyleID="line_change" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_shipment_date)|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="line_change_short_date" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_shipment_date)|n}T00:00:00.000</Data></Cell>
         % elif o.imp_shipment_date not in ('False', False):
-        <Cell ss:StyleID="line" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_shipment_date)|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_shipment_date)|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ss:MergeAcross="1" ><Data ss:Type="String"></Data></Cell>
         % endif
@@ -243,12 +255,12 @@
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.in_qty or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.in_uom and obj_name_get('product.uom', l.in_uom.id) or '')|x}</Data></Cell>
         % if l.in_drd not in ('False', False):
-        <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${(l.in_drd)|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(l.in_drd)|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
         % if l.in_dcd not in ('False', False):
-        <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${(l.in_dcd)|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(l.in_dcd)|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
@@ -282,16 +294,16 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.imp_currency and obj_name_get('res.currency', l.imp_currency.id) or '')|x}</Data></Cell>
         % endif
         % if l.in_drd != l.imp_drd and l.imp_drd not in ('False', False):
-        <Cell ss:StyleID="line_change" ><Data ss:Type="DateTime">${(l.imp_drd)|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="line_change_short_date" ><Data ss:Type="DateTime">${(l.imp_drd)|n}T00:00:00.000</Data></Cell>
         % elif l.imp_drd not in ('False', False):
-        <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${(l.imp_drd)|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(l.imp_drd)|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
         % if l.in_dcd != l.imp_dcd and l.imp_dcd not in ('False', False):
-        <Cell ss:StyleID="line_change" ><Data ss:Type="DateTime">${(l.imp_dcd)|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="line_change_short_date" ><Data ss:Type="DateTime">${(l.imp_dcd)|n}T00:00:00.000</Data></Cell>
         % elif l.imp_dcd not in ('False', False):
-        <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${(l.imp_dcd)|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(l.imp_dcd)|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
