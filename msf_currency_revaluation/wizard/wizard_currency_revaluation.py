@@ -479,6 +479,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 },
                 context=context)
 
+        move_id = False
         created_ids = []
         # over revaluation
         if amount >= 0.02:
@@ -501,8 +502,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     'analytic_distribution_id': distribution_id,
                 }
                 created_ids.append(create_move_line(move_id, line_data, sums))
-                # Hard post the move
-                move_obj.post(cr, uid, [move_id], context=context)
         # under revaluation
         elif amount <= -0.02:
             amount = -amount
@@ -525,8 +524,9 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     'account_id': account_id,
                 }
                 created_ids.append(create_move_line(move_id, line_data, sums))
-                # Hard post the move
-                move_obj.post(cr, uid, [move_id], context=context)
+        # Hard post the move
+        if move_id:
+            move_obj.post(cr, uid, [move_id], context=context)
         return move_id, created_ids
 
     def revaluate_currency(self, cr, uid, ids, context=None):
@@ -702,13 +702,14 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     cr, uid,
                     account_id, currency_id, False, adj_balance,
                     label, rate, form, sums, context=context)
-                created_ids.extend(new_ids)
-                # Create a second journal entry that will offset the first one
-                # if the revaluation method is 'Other B/S'
-                if form.revaluation_method == 'other_bs':
-                    move_id, rev_line_ids = self._reverse_other_bs_move_lines(
-                        cr, uid, form, move_id, new_ids, context=context)
-                    created_ids.extend(rev_line_ids)
+                if move_id:
+                    created_ids.extend(new_ids)
+                    # Create a second journal entry that will offset the first one
+                    # if the revaluation method is 'Other B/S'
+                    if form.revaluation_method == 'other_bs':
+                        move_id, rev_line_ids = self._reverse_other_bs_move_lines(
+                            cr, uid, form, move_id, new_ids, context=context)
+                        created_ids.extend(rev_line_ids)
 
         if created_ids:
             # Set all booking amount to 0 for revaluation lines
