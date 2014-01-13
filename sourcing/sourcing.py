@@ -39,6 +39,7 @@ _SELECTION_PO_CFT = [
                      ('po', 'Purchase Order'),
                      ('dpo', 'Direct Purchase Order'),
                      ('cft', 'Tender'),
+                     ('rfq', 'Request for Quotation'),
                      ]
 
 class sourcing_line(osv.osv):
@@ -347,9 +348,14 @@ class sourcing_line(osv.osv):
                 product_type = line.product_id.type == 'consu' and _('non stockable') or _('service')
                 raise osv.except_osv(_('Warning'), _("""You cannot choose 'from stock' as method to source a %s product !""") % product_type)
 
+            if line.product_id and line.po_cft == 'rfq' and line.supplier.partner_type in ['internal', 'section', 'intermission']:
+                raise osv.except_osv(_('Warning'), _("""You can't source with 'Request for Quotation' to an internal/inter-section/intermission partner."""))
+
             if not line.product_id:
                 if line.po_cft == 'cft':
                     raise osv.except_osv(_('Warning'), _("You can't source with 'Tender' if you don't have product."))
+                if line.po_cft == 'rfq':
+                    raise osv.except_osv(_('Warning'), _("You can't source with 'Request for Quotation' if you don't have product."))
                 if line.type == 'make_to_stock':
                     raise osv.except_osv(_('Warning'), _("You can't Source 'from stock' if you don't have product."))
                 if line.supplier and line.supplier.partner_type in ('external', 'esc'):
@@ -1252,6 +1258,12 @@ class procurement_order(osv.osv):
             if order_line_ids:
                 origin_line = self.pool.get('sale.order.line').browse(cr, uid, order_line_ids[0])
                 line.update({'origin': origin_line.order_id.name, 'product_uom': origin_line.product_uom.id, 'product_qty': origin_line.product_uom_qty})
+            
+            # UTP-934: If the procurement is a rfq, the price unit must be taken from this rfq, and not from the pricelist or standard price
+            procurement = kwargs['procurement']
+            if procurement.po_cft == 'rfq':
+                line.update({'price_unit': procurement.price_unit})
+            
         if line.get('price_unit', False) == False:
             cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
             if 'pricelist' in kwargs:
@@ -1351,6 +1363,12 @@ class procurement_order(osv.osv):
                 values['origin'] = '%s; %s' % (values['origin'], procurement.tender_id.name)
             else:
                 values['origin'] = procurement.tender_id.name
+
+        if procurement.rfq_id:
+            if values.get('origin'):
+                values['origin'] = '%s; %s' % (values['origin'], procurement.rfq_id.name)
+            else:
+                values['origin'] = procurement.rfq_id.name
         
         # Set the analytic distribution on PO line if an analytic distribution is on SO line or SO    
         sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
@@ -1387,7 +1405,7 @@ class procurement_order(osv.osv):
             po = self.pool.get('purchase.order').browse(cr, uid, purchase_ids[0], context=context)
             # Update the origin of the PO with the origin of the procurement 
             # and tender name if exist
-            origins = set([po.origin, procurement.origin, procurement.tender_id and procurement.tender_id.name])
+            origins = set([po.origin, procurement.origin, procurement.tender_id and procurement.tender_id.name, procurement.rfq_id and procurement.rfq_id.name])
             # Add different origin on 'Source document' field if the origin is nat already listed
             origin = ';'.join(o for o in list(origins) if o and (not po.origin or o == po.origin or o not in po.origin))
             write_values = {'origin': origin}
@@ -1502,7 +1520,6 @@ class procurement_order(osv.osv):
         
         return also the price_unit
         '''
-        tender_line_obj = self.pool.get('tender_line')
         # get default values
         result = super(procurement_order, self).get_partner_hook(cr, uid, ids, context=context, *args, **kwargs)
         procurement = kwargs['procurement']
@@ -1528,7 +1545,6 @@ class procurement_order(osv.osv):
                                       seller_qty=seller_qty,
                                       seller_delay=seller_delay,
                                       price_unit=price_unit)
-                        
         elif procurement.supplier:
             # not tender, we might have a selected supplier from sourcing tool
             # if not, we keep default values from super
