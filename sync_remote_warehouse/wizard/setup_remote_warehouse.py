@@ -72,7 +72,7 @@ class setup_remote_warehouse(osv.osv_memory):
         """
         cr.execute("""
             UPDATE ir_model_data
-            SET sync_date = now()
+            SET usb_sync_date = now()
             WHERE sync_date is null AND usb_sync_date is null;
         """)
         
