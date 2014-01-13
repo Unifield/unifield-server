@@ -31,7 +31,9 @@ _SELECTION_TYPE = [
 _SELECTION_PO_CFT = [
     ('po', 'Purchase Order'),
     ('dpo', 'Direct Purchase Order'),
-    ('cft', 'Tender'),]
+    ('cft', 'Tender'),
+    ('rfq', 'Request for Quotation'),
+    ]
 
 
 class multiple_sourcing_wizard(osv.osv_memory):
