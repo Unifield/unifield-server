@@ -140,7 +140,24 @@ class account_invoice(osv.osv):
         res = {}
         name = field_name.replace("fake_", '')
         for i in self.browse(cr, uid, ids):
-            res[i.id] = getattr(i, name, False) and getattr(getattr(i, name, False), 'id', False) or False
+            if context and context.get('is_intermission', False):
+                res[i.id] = False
+                if name == 'account_id':
+                    user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+                    if user[0].company_id.intermission_default_counterpart:
+                        res[i.id] = user[0].company_id.intermission_default_counterpart.id
+                elif name == 'journal_id':
+                    int_journal_id = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission')], context=context)
+                    if int_journal_id:
+                        if isinstance(int_journal_id, (int, long)):
+                            int_journal_id = [int_journal_id]
+                        res[i.id] = int_journal_id[0]
+                elif name == 'currency_id':
+                    user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+                    if user[0].company_id.currency_id:
+                        res[i.id] = user[0].company_id.currency_id.id
+            else:
+                res[i.id] = getattr(i, name, False) and getattr(getattr(i, name, False), 'id', False) or False
         return res
 
     def _get_have_donation_certificate(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -195,6 +212,12 @@ class account_invoice(osv.osv):
                         defaults['fake_account_id'] = user[0].company_id.intermission_default_counterpart.id
                     else:
                         raise osv.except_osv("Error","Company Intermission Counterpart Account must be set")
+                # 'INT' intermission journal
+                int_journal_id = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission')], context=context)
+                if int_journal_id:
+                    if isinstance(int_journal_id, (int, long)):
+                        int_journal_id = [int_journal_id]
+                    defaults['fake_journal_id'] = int_journal_id[0]
         return defaults
 
     def log(self, cr, uid, id, message, secondary=False, context=None):
