@@ -101,6 +101,13 @@ class account_bank_statement(osv.osv):
 
 account_bank_statement()
 
+class account_bank_statement_line(osv.osv):
+    _name = 'account.bank.statement.line'
+    _inherit = 'account.bank.statement.line'
+    _trace = True
+
+account_bank_statement_line()
+
 class account_analytic_account(osv.osv):
     _name = 'account.analytic.account'
     _inherit = 'account.analytic.account'
