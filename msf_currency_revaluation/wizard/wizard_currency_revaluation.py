@@ -537,6 +537,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         if context is None:
             context = {}
         user_obj = self.pool.get('res.users')
+        period_obj = self.pool.get('account.period')
         account_obj = self.pool.get('account.account')
         #move_obj = self.pool.get('account.move')
         currency_obj = self.pool.get('res.currency')
@@ -627,26 +628,27 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         period_ids = []
         if form.revaluation_method == 'liquidity_month':
-            #if form.period_id.state in ['created', 'draft']:
-            #    raise osv.except_osv(
-            #        _(u"Error"),
-            #        _(u"The period %s is not field-closed, revaluation aborted." % (
-            #            form.period_id.name)))
             period_ids = [form.period_id.id]
         else:
             period_ids = []
             for period in form.fiscalyear_id.period_ids:
-                #if period.state in ['created', 'draft']:
-                #    raise osv.except_osv(
-                #        _(u"Error"),
-                #        _(u"The period %s is not field-closed, revaluation aborted." % (
-                #            period.name)))
-                period_ids.append(period.id)
+                if period.number < 13:
+                    period_ids.append(period.id)
         if not period_ids:
             raise osv.except_osv(
                 _('Error!'),
                 _('No period found for the fiscalyear %s') % (
                     form.fiscalyear_id.code))
+        # Check periods state
+        periods_not_field_closed = []
+        for period in period_obj.browse(cr, uid, period_ids, context=context):
+            if period.state in ['created', 'draft']:
+                periods_not_field_closed.append(period.name)
+        if periods_not_field_closed:
+            raise osv.except_osv(
+                _(u"Error"),
+                _(u"Revaluation aborted, the following periods are not field-closed: %s" % (
+                    ', '.join(periods_not_field_closed))))
 
         # Get balance sums
         account_sums = account_obj.compute_revaluations(
