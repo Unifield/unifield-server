@@ -37,9 +37,11 @@ class stock_move(osv.osv):
     _columns = {'line_number': fields.integer(string='Line', required=True),
                 'change_reason': fields.char(string='Change Reason', size=1024, readonly=True),
                 'in_out_updated': fields.boolean(string='IN update OUT'),
+                'original_qty_partial': fields.integer(string='Original Qty for Partial process - only for sync and partial processed line', required=False),
                 }
     _defaults = {'line_number': 0,
-                 'in_out_updated': False}
+                 'in_out_updated': False,
+                 'original_qty_partial': -1}
     _order = 'line_number, date_expected desc, id'
     
     def create(self, cr, uid, vals, context=None):
@@ -333,6 +335,9 @@ class stock_picking(osv.osv):
         assert defaults is not None, 'delivery_mechanism.py >> stock_picking: _do_partial_hook - missing defaults'
         # update the line number, copy original line_number value
         defaults.update({'line_number': move.line_number})
+        
+        #UTP-972: Set the original total qty of the original move to the new partial move, for sync purpose only
+        defaults.update({'original_qty_partial': move.product_qty})
         
         return defaults
     
