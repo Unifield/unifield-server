@@ -1218,7 +1218,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     prod_ids = prod_obj.search(cr, uid, [('default_code', '=', values[2])], context=context)
                     if not prod_ids:
                         write_vals['type_change'] = 'error'
-                        errors.append(_('Product not found in database − Product of the initial line kept.'))
+                        errors.append(_('Product not found in database'))
                     else:
                         write_vals['imp_product_id'] = prod_ids[0]
                 else:
@@ -1227,7 +1227,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         write_vals['type_change'] = 'error'
 
             # Qty
-            err_msg = _('Incorrect float value for field \'Product Qty\' - Quantity of the initial line kept.')
+            err_msg = _('Incorrect float value for field \'Product Qty\'')
             try:
                 qty = float(values[4])
                 write_vals['imp_qty'] = qty
@@ -1263,7 +1263,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     write_vals['type_change'] = 'error'
 
             # Unit price
-            err_msg = _('Incorrect float value for field \'Price Unit\' - Price Unit of the initial line kept.')
+            err_msg = _('Incorrect float value for field \'Price Unit\'')
             try:
                 unit_price = float(values[6])
                 write_vals['imp_price'] = unit_price
@@ -1303,11 +1303,11 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     time.strptime(drd_value, '%Y-%m-%d')
                     write_vals['imp_drd'] = drd_value
                 except ValueError:
-                    err_msg = _('Incorrect date value for field \'Delivery Requested Date\' - Delivery Requested Date of the initial line kept.')
+                    err_msg = _('Incorrect date value for field \'Delivery Requested Date\'')
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
             elif drd_value:
-                err_msg = _('Incorrect date value for field \'Delivery Requested Date\' - Delivery Requested Date of the initial line kept.')
+                err_msg = _('Incorrect date value for field \'Delivery Requested Date\'')
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
 
@@ -1320,11 +1320,11 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     time.strptime(dcd_value, '%Y-%m-%d')
                     write_vals['imp_dcd'] = dcd_value
                 except ValueError:
-                    err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\' - Delivery Confirmed Date of the initial line kept.')
+                    err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
             elif dcd_value:
-                err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\' - Delivery Confirmed Date of the initial line kept.')
+                err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
 
