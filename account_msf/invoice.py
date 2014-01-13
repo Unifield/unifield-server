@@ -185,10 +185,16 @@ class account_invoice(osv.osv):
                 # UF-2270: manual intermission (in or out)
                 if defaults is None:
                     defaults = {}
-                # get company default currency
                 user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
                 if user and user[0] and user[0].company_id:
-                    defaults['fake_currency_id'] = user[0].company_id.currency_id.id
+                    # get company default currency
+                    if user[0].company_id.currency_id:
+                        defaults['fake_currency_id'] = user[0].company_id.currency_id.id
+                    # get 'intermission counter part' account
+                    if user[0].company_id.intermission_default_counterpart:
+                        defaults['fake_account_id'] = user[0].company_id.intermission_default_counterpart.id
+                    else:
+                        raise osv.except_osv("Error","Company Intermission Counterpart Account must be set")
         return defaults
 
     def log(self, cr, uid, id, message, secondary=False, context=None):
