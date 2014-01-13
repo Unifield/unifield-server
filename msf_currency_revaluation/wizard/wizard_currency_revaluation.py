@@ -540,6 +540,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         account_obj = self.pool.get('account.account')
         #move_obj = self.pool.get('account.move')
         currency_obj = self.pool.get('res.currency')
+        seq_obj = self.pool.get('ir.sequence')
 
         company = user_obj.browse(cr, uid, uid).company_id
 
@@ -683,8 +684,14 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     continue
 
                 rate = sums.get('currency_rate', 0.0)
-                label = self._format_label(
-                    cr, uid, form.label, account_id, new_currency_id, rate)
+                #label = self._format_label(
+                #    cr, uid, form.label, account_id, new_currency_id, rate)
+                # Generate the entry sequence
+                seq = seq_obj.get_id(
+                    cr, uid, form.journal_id.sequence_id.id,
+                    context={'fiscalyear_id': form.fiscalyear_id.id})
+                label = "%s-%s-%s" % (
+                    company.instance_id.move_prefix, form.journal_id.code, seq)
 
                 # Write an entry to adjust balance
                 move_id, new_ids = self._write_adjust_balance(

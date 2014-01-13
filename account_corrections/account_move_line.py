@@ -94,6 +94,9 @@ class account_move_line(osv.osv):
             # False if the account is used in a cash/bank/cheque journal
             if ml.account_id.id in account_ids:
                 res[ml.id] = False
+            # False if this line is a revaluation
+            if ml.journal_id.type == 'revaluation':
+                res[ml.id] = False
         return res
 
     _columns = {
