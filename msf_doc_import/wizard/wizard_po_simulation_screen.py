@@ -685,7 +685,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 # Nothing to do
 
                 # Line 20: Message ESC Header
-                header_values['imp_message_esc'] = values.get(19, [])[1]
+                header_values['imp_message_esc'] = values.get(20, [])[1]
 
 
                 '''
