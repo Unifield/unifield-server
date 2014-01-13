@@ -276,6 +276,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND al.company_id = e.id
                 AND e.currency_id = cc.id
                 AND al.journal_id = j.id
+                AND al.date >= %s
+                AND al.date <= %s
                 AND j.type not in ('hq', 'migration')
                 AND al.exported != 't';
                 """,
@@ -387,6 +389,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'headers': ['Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit', 'Functional CCY'],
                 'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
                 'key': 'rawdata',
+                'query_params': (first_day_of_period, last_day_of_period),
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.analytic.line',
