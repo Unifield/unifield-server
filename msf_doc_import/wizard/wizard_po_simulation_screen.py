@@ -42,7 +42,6 @@ NB_OF_HEADER_LINES = 20
 NB_LINES_COLUMNS = 19
 
 
-PRODUCT_NAME_ID = {}
 PRODUCT_CODE_ID = {}
 UOM_NAME_ID = {}
 CURRENCY_NAME_ID = {}
@@ -259,7 +258,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         if context is None:
             context = {}
 
-        if context.get('button') == 'go_to_simulation':
+        if context.get('button') in ('go_to_simulation', 'print_simulation_report', 'return_to_po'):
             return True
 
         return super(wizard_import_po_simulation_screen, self).write(cr, uid, ids, vals, context=context)
@@ -457,7 +456,6 @@ class wizard_import_po_simulation_screen(osv.osv):
 
             # Declare global variables (need this explicit declaration to clear
             # them at the end of the treatment)
-            global PRODUCT_NAME_ID
             global PRODUCT_CODE_ID
             global UOM_NAME_ID
             global CURRENCY_NAME_ID
@@ -480,7 +478,6 @@ class wizard_import_po_simulation_screen(osv.osv):
                 for line in wiz.simu_line_ids:
                     # Put data in cache
                     if line.in_product_id:
-                        PRODUCT_NAME_ID.setdefault(line.in_product_id.name, line.in_product_id.id)
                         PRODUCT_CODE_ID.setdefault(line.in_product_id.default_code, line.in_product_id.id)
                     if line.in_uom:
                         UOM_NAME_ID.setdefault(line.in_uom.name, line.in_uom.id)
@@ -738,18 +735,11 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     # Product
                     if vals[2]:
                         product_id = PRODUCT_CODE_ID.get(vals[2], False)
-                    if not product_id and vals[3]:
-                        product_id = PRODUCT_NAME_ID.get(vals[3], False)
                     if not product_id and vals[2]:
                         prod_ids = prod_obj.search(cr, uid, [('default_code', '=', vals[2])], context=context)
                         if prod_ids:
                             product_id = prod_ids[0]
                             PRODUCT_CODE_ID.setdefault(vals[2], product_id)
-                    if not product_id and vals[3]:
-                        prod_ids = prod_obj.search(cr, uid, [('name', '=', vals[3])], context=context)
-                        if prod_ids:
-                            product_id = prod_ids[0]
-                            PRODUCT_NAME_ID.setdefault(vals[3], product_id)
                     # UoM
                     if vals[5]:
                         uom_id = UOM_NAME_ID.get(vals[5], False)
@@ -947,7 +937,6 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
             cr.close()
 
             # Clear the cache
-            PRODUCT_NAME_ID = {}
             PRODUCT_CODE_ID = {}
             UOM_NAME_ID = {}
             CURRENCY_NAME_ID = {}
@@ -1008,7 +997,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 line_obj.update_po_line(cr, uid, lines, context=context)
 
             if ids:
-                self.write(cr, uid, ids, {'state': 'done'}, context=context)
+                self.write(cr, uid, ids, {'state': 'done', 'percent_completed': 100.00}, context=context)
                 res =self.go_to_simulation(cr, uid, [wiz.id], context=context)
             else:
                 res = True
@@ -1218,19 +1207,15 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     write_vals['type_change'] = 'error'
 
             # Product
-            if (values[2] and values[2] == line.in_product_id.default_code) or\
-               (values[3] and values[3] == line.in_product_id.name):
+            if (values[2] and values[2] == line.in_product_id.default_code):
                 write_vals['imp_product_id'] = line.in_product_id and line.in_product_id.id or False
             else:
                 prod_id = False
                 if values[2]:
                     prod_id = PRODUCT_CODE_ID.get(values[2])
-                if not prod_id and values[3]:
-                    prod_id = PRODUCT_NAME_ID.get(values[3])
 
-                if not prod_id and (values[2] or values[3]):
-                    prod_ids = prod_obj.search(cr, uid, ['|', ('default_code', '=', values[2]),
-                                                              ('name', '=', values[3])], context=context)
+                if not prod_id and values[2]:
+                    prod_ids = prod_obj.search(cr, uid, [('default_code', '=', values[2])], context=context)
                     if not prod_ids:
                         write_vals['type_change'] = 'error'
                         errors.append(_('Product not found in database − Product of the initial line kept.'))
