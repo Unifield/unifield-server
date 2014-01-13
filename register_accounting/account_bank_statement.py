@@ -1034,23 +1034,30 @@ class account_bank_statement_line(osv.osv):
             context = {}
         
         account_move = self.pool.get('account.move')                    # am
+        account_invoice = self.pool.get('account.invoice') #ai
         account_move_line = self.pool.get('account.move.line')          # aml
         analytic_distribution = self.pool.get('analytic.distribution')  # ad
         account_analytic_line = self.pool.get('account.analytic.line')  # aal
-        account_bank_statement_line_move_rel = self.pool.get('account.bank.statement.line.rel') #abslmr
-        account_bank_statement_line = self.pool.get('account.bank.statement.line')  #absl
-        account_invoice = self.pool.get('account.invoice') #ai
+        
+        # create a dict to add seqnum to context, keyed by journal id
+        seqnums = {}
            
         for absl in self.browse(cr, uid, ids):
             if absl.state == 'draft' and absl.direct_invoice == True:
+              
                 # Find all moves lines linked to this register line
                 # first, via the statement
                 move_ids = [x.id for x in absl.move_ids]
+                am1 = account_move.browse(cr, uid, move_ids)[0]
+                seqnums[am1.journal_id.id] = am1.name
+                
                 # then via the direct invoice
-                ai = self.pool.get('account.invoice').browse(cr, uid, [absl.invoice_id.id])[0]
+                ai = account_invoice.browse(cr, uid, [absl.invoice_id.id])[0]
                 move_id = ai.move_id.id
+                
                 if move_id:
                     move_ids.append(move_id)
+                    seqnums[ai.move_id.journal_id.id] = ai.move_id.name
                     account_invoice.write(cr, uid, [ai.id],{'move_id': False}, context=context)
 
 
@@ -1070,7 +1077,8 @@ class account_bank_statement_line(osv.osv):
                 account_analytic_line.unlink(cr, uid, aal_ids)
                 analytic_distribution.unlink(cr, uid, ad_ids)
                     
-                # Delete the move lines
+                # Save the seqnums and delete the move lines
+                context['seqnums'] = seqnums
                 account_move.unlink(cr, uid, move_ids)
         return True
       
@@ -1885,11 +1893,8 @@ class account_bank_statement_line(osv.osv):
             if postype == 'temp' and absl.direct_invoice:  #utp-917
                 self.write(cr, uid, [absl.id], {'direct_state':'draft'})
                 # create the accounting entries
-                #netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', absl.invoice_id.id, 'invoice_open', cr)
-                #netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', absl.invoice_id.id, 'invoice_open', cr)
-                
                 account_invoice = self.pool.get('account.invoice')
-                account_invoice.action_open_invoice(cr, uid, [absl.invoice_id.id])
+                account_invoice.action_open_invoice(cr, uid, [absl.invoice_id.id], context=context)
         
                 # set the invoice form open back to draft
                 #account_invoice = self.pool.get('account.invoice')
@@ -1902,7 +1907,7 @@ class account_bank_statement_line(osv.osv):
                 
                 account_move_line_ids = account_move_line.search(cr, uid, [('move_id', '=', absl.invoice_id.move_id.id)])
                 
-                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'})
+                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'}, context=context)
                 
                 # unreconcile them
                 account_move_obj = account_move.browse(cr, uid, [absl.invoice_id.move_id.id])
@@ -1951,25 +1956,19 @@ class account_bank_statement_line(osv.osv):
                         raise osv.except_osv(_('Error'), _('This line is linked to an unknown Direct Invoice.'))
                     if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
                         raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
-                    #self.do_direct_invoice_reconciliation(cr, uid, [absl.id], context=context)
                     
-                    # Hard post 
+                    # Hard posting
                     # statement line
                     self.write(cr, uid, [absl.id], {'state':'hard','direct_state':'hard'}, context=context)
                     # invoice
-                    x = absl.invoice_id.id
                     self.pool.get('account.invoice').write(cr, uid, [absl.invoice_id.id], {'state':'paid'}, context=context)                    
-                    #move lines
+                    # move lines
                     acc_move_obj.write(cr, uid, [x.id for x in absl.move_ids], {'state':'posted'}, context=context)
                     acc_move_obj.write(cr, uid, [absl.invoice_id.move_id.id], {'state':'posted'}, context=context)
-                    # Do reconciliation
-                    #self.pool.get('account.invoice').action_reconcile_direct_invoice(cr, uid, [absl.invoice_id.id], context=context) 
                 else:
                     acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
                     # do a move that enable a complete supplier follow-up
                     self.do_direct_expense(cr, uid, [absl.id], context=context)
-                    
-  
         return True
     
    

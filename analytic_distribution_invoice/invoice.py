@@ -87,9 +87,6 @@ class account_invoice(osv.osv):
         """
         
         # get object handles
-        account_invoice_line = self.pool.get('account.invoice.line')
-        account_bank_statement_line = self.pool.get('account.bank.statement.line')
-        account_move = self.pool.get('account.move')
         account_bank_statement_line = self.pool.get('account.bank.statement.line')  #absl
 
         direct_invoice = self.browse(cr, uid, ids, context=context)[0]
@@ -98,11 +95,15 @@ class account_invoice(osv.osv):
         absl = direct_invoice.register_line_ids[0]
         
         # Delete moves
-        account_bank_statement_line.unlink_moves(cr, uid, [absl.id])
+        # existing seqnums are saved into context here. utp917
+        account_bank_statement_line.unlink_moves(cr, uid, [absl.id], context=context)
         
         # Re-create moves and temp post them.
-        account_bank_statement_line.write(cr, uid, [absl.id], {'state': 'draft'})
+        account_bank_statement_line.write(cr, uid, [absl.id], {'state': 'draft'}, context=context)
         account_bank_statement_line.button_temp_posting(cr, uid, [absl.id], context=context)
+        
+        # remove seqnums from context
+        context.pop("seqnums",None)
         
         return True
         

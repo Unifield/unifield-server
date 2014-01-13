@@ -324,6 +324,8 @@ class account_invoice(osv.osv):
         # Some verifications
         if not context:
             context = {}
+
+            
         # Prepare workflow object
         wf_service = netsvc.LocalService("workflow")
         for inv in self.browse(cr, uid, ids):
