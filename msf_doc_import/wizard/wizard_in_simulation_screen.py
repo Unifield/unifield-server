@@ -506,10 +506,10 @@ class wizard_import_in_simulation_screen(osv.osv):
                 if picking_ref != wiz.picking_id.name:
                     message = _('''## IMPORT STOPPED ##
 
-    LINE 1 OF THE IMPORTED FILE: THE FREIGHT REFERENCE \
+    LINE 1 OF THE IMPORTED FILE: THE PICKING REFERENCE \
     IN THE FILE IS NOT THE SAME AS THE ORDER REFERENCE OF THE SIMULATION SCREEN.\
 
-    YOU SHOULD IMPORT A FILE THAT HAS THE SAME FREIGHT REFERENCE THAT THE SIMULATION\
+    YOU SHOULD IMPORT A FILE THAT HAS THE SAME PICKING REFERENCE THAT THE SIMULATION\
     SCREEN!''')
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
                     res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
