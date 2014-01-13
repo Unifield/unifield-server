@@ -85,6 +85,8 @@ class stock_picking(osv.osv):
                   'date_expected': data['date_expected'],
                   'state': state, 
 
+                  'original_qty_partial': data['original_qty_partial'], #UTP-972
+
                   'prodlot_id': batch_id,
                   'expired_date': expired_date,
 
@@ -167,15 +169,28 @@ class stock_picking(osv.osv):
                         self._logger.info(message)
                         continue
 
-                    if ln not in line_numbers.keys():
-                        move_ids = move_obj.search(cr, uid, [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))], context=context)
-                        if move_ids and move_ids[0]:
-                            line_numbers[ln] = move_ids[0]
-                        else:
+                    search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
+                    
+                    original_qty_partial = data.get('original_qty_partial')
+                    if original_qty_partial != -1:
+                        search_move.append(('product_qty', '=', original_qty_partial)) 
+                    
+                    move_ids = move_obj.search(cr, uid, search_move, context=context)
+                    if not move_ids:
+                        search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
+                        move_ids = move_obj.search(cr, uid, search_move, context=context)
+                        if not move_ids:
                             message = "Line number "  + str(ln) + " is not found in the original IN or PO"
                             self._logger.info(message)
                             raise Exception(message)
-                    move_id = line_numbers[ln]
+                    
+                    if move_ids and len(move_ids) == 1: # if there is only one move, take it for process
+                        move_id = move_ids[0]
+                    else: # if there are more than 1 moves, then pick the next one not existing in the partial_datas[in_id]
+                        for move in move_ids:
+                            if not partial_datas[in_id].get(move):
+                                move_id = move
+                                continue
 
                     # If we have a shipment with 10 packs and return from shipment
                     # the pack 2 and 3, the IN shouldn't be splitted in three moves (pack 1 available,
