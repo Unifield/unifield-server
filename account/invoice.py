@@ -960,6 +960,11 @@ class account_invoice(osv.osv):
                 move['period_id'] = period_id
                 for i in line:
                     i[2]['period_id'] = period_id
+                    
+            #  ticket utp917 - need seqnums variable in the context if ir is in *args
+            for argdict in args:
+                if 'seqnums' in argdict:
+                    context['seqnums'] = argdict['seqnums']
 
             move_id = self.pool.get('account.move').create(cr, uid, move, context=context)
             new_move_name = self.pool.get('account.move').browse(cr, uid, move_id).name
