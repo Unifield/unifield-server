@@ -113,7 +113,7 @@ class account_account(osv.osv):
 
         # Compute for each account the initial balance/debit/credit from the
         # move lines and add it to the previous result
-        if revaluation_method == 'liquidity':
+        if revaluation_method == 'liquidity_month':
             ctx_query = context.copy()
             ctx_query['periods'] = period_ids
             ctx_query['fiscalyear'] = fiscalyear_id

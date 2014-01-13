@@ -32,21 +32,22 @@ class WizardCurrencyrevaluation(osv.osv_memory):
     _columns = {'revaluation_date': fields.date(
                     _('Revaluation Date')),
                 'revaluation_method': fields.selection(
-                    [('liquidity', _("Liquidity (Month-end)")),
+                    [('liquidity_month', _("Liquidity (Month-end)")),
+                     ('liquidity_year', _("Liquidity (Year-end)")),
                      ('other_bs', _("Liquidity & Other B/S (Year-end)")),
                      ],
                     string=_("Revaluation method"), required=True),
-                'revaluation_year_ok': fields.boolean(
-                    _("Year-end revaluation"),
-                    help=_("In 'Liquidity' mode, you can choose to do a "
-                           "year-end revaluation instead of month-end.")),
+                #'revaluation_year_ok': fields.boolean(
+                #    _("Year-end revaluation"),
+                #    help=_("In 'Liquidity' mode, you can choose to do a "
+                #           "year-end revaluation instead of month-end.")),
                 'fiscalyear_id': fields.many2one(
                     'account.fiscalyear', string=_("Fiscal year"),
                     domain=[('state', '=', 'draft')],
                     required=True),
                 'period_id': fields.many2one(
                     'account.period', string=_("Period"),
-                    domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', '!=', 'created')]"),
+                    domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', 'not in', ['created', 'draft'])]"),
                 'currency_table_id': fields.many2one(
                     'res.currency.table', string=_("Currency table"),
                     domain=[('state', '=', 'valid')]),
@@ -106,8 +107,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         return fiscalyear_ids and fiscalyear_ids[0] or False
 
     _defaults = {
-        'label': "%(currency)s %(account)s %(rate)s currency revaluation",
-        'revaluation_method': lambda *args: 'liquidity',
+        'label': "%(currency)s %(account)s %(rate)s",
+        'revaluation_method': lambda *args: 'liquidity_month',
         'fiscalyear_id': _get_default_fiscalyear_id,
     }
 
@@ -206,7 +207,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # Set values according to the user input
         value['period_id'] = period_id
         value['revaluation_date'] = False
-        if method == 'liquidity':
+        if method == 'liquidity_month':
             #if period_id == 'no_period' and fiscalyear_id:
             #    # If the current fiscal year is the actual one, we get the
             #    # previous month as the right period (except for january)
@@ -250,7 +251,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         fiscalyear_obj = self.pool.get('account.fiscalyear')
         period_obj = self.pool.get('account.period')
         fiscalyear = fiscalyear_obj.browse(cr, uid, fiscalyear_id)
-        if method == 'liquidity':
+        if method in ['liquidity_month', 'liquidity_year']:
             if fiscalyear_id:
                 # If the current fiscal year is the actual one, we get the
                 # previous month as the right period (except for january)
@@ -377,7 +378,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         return text % data
 
     def _write_adjust_balance(self, cr, uid, account_id, currency_id,
-                              partner_id, amount, label, form, sums, context=None):
+                              partner_id, amount, label, rate, form, sums,
+                              context=None):
         """
         Generate entries to adjust balance in the revaluation accounts
 
@@ -397,7 +399,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             currency = self.pool.get('res.currency').browse(
                 cr, uid, currency_id, context=context)
             base_move = {'name': label,
-                         'ref': "%s - %s" % (account.code, currency.name),
+                         'ref': "%s-%s-%s" % (currency.name, account.code, rate),
                          'journal_id': form.journal_id.id,
                          'period_id': form.result_period_id.id,
                          'document_date': form.posting_date,
@@ -406,7 +408,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         def create_move_line(move_id, line_data, sums):
             line_name = "Revaluation - %s" % form.fiscalyear_id.name
-            if form.revaluation_method == 'liquidity' and not form.revaluation_year_ok:
+            if form.revaluation_method == 'liquidity_month':
                 line_name = "Revaluation - %s" % form.period_id.name
             base_line = {'name': line_name,
                          'currency_id': currency_id,
@@ -479,7 +481,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         created_ids = []
         # over revaluation
-        if amount >= 0.01:
+        if amount >= 0.02:
             if revaluation_account_id:
                 move_id = create_move()
                 # Create a move line to Debit account to be revaluated
@@ -500,7 +502,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 }
                 created_ids.append(create_move_line(move_id, line_data, sums))
         # under revaluation
-        elif amount <= -0.01:
+        elif amount <= -0.02:
             amount = -amount
             if revaluation_account_id:
                 move_id = create_move()
@@ -571,7 +573,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # Search for accounts Balance Sheet or Liquidity to be eevaluated
         account_ids = []
-        if form.revaluation_method == 'liquidity':
+        if form.revaluation_method in ['liquidity_month', 'liquidity_year']:
             account_ids = account_obj.search(
                 cr, uid,
                 [('currency_revaluation', '=', True),
@@ -623,10 +625,22 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         #                    fiscalyear.code,)))
 
         period_ids = []
-        if form.revaluation_method == 'liquidity' and not form.revaluation_year_ok:
+        if form.revaluation_method == 'liquidity_month':
+            #if form.period_id.state in ['created', 'draft']:
+            #    raise osv.except_osv(
+            #        _(u"Error"),
+            #        _(u"The period %s is not field-closed, revaluation aborted." % (
+            #            form.period_id.name)))
             period_ids = [form.period_id.id]
         else:
-            period_ids = [p.id for p in form.fiscalyear_id.period_ids]
+            period_ids = []
+            for period in form.fiscalyear_id.period_ids:
+                #if period.state in ['created', 'draft']:
+                #    raise osv.except_osv(
+                #        _(u"Error"),
+                #        _(u"The period %s is not field-closed, revaluation aborted." % (
+                #            period.name)))
+                period_ids.append(period.id)
         if not period_ids:
             raise osv.except_osv(
                 _('Error!'),
@@ -676,7 +690,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 move_id, new_ids = self._write_adjust_balance(
                     cr, uid,
                     account_id, currency_id, False, adj_balance,
-                    label, form, sums, context=context)
+                    label, rate, form, sums, context=context)
                 created_ids.extend(new_ids)
                 # Create a second journal entry that will offset the first one
                 # if the revaluation method is 'Other B/S'
@@ -774,6 +788,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         move_id = move_obj.create(cr, uid, move_vals, context=context)
         # Reverse lines + associate them to the newly created move
         rev_line_ids = []
+        lines_to_reconcile = []
         for line in line_obj.browse(cr, uid, line_ids, context=context):
             # Prepare default value for new line
             vals = {
@@ -806,6 +821,9 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             #    cr, uid, [line.id],
             #    {'corrected': True, 'have_an_historic': True},
             #    context=context)
+            # Keep lines to reconcile
+            if line.account_id.reconcile:
+                lines_to_reconcile.append((line.id, rev_line_id))
             # Search analytic lines from first move line
             aal_ids = aal_obj.search(cr, uid, [('move_id', '=', line.id)])
             aal_obj.write(cr, uid, aal_ids, {'is_reallocated': True})
@@ -815,6 +833,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             rev_line_ids.append(rev_line_id)
         # Hard post the move
         move_obj.post(cr, uid, [move_id], context=context)
+        # Reconcile lines
+        for line_id, rev_line_id in lines_to_reconcile:
+            line_obj.reconcile_partial(
+                cr, uid, [line_id, rev_line_id], context=context)
         return move_id, rev_line_ids
 
 WizardCurrencyrevaluation()
