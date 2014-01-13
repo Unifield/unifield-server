@@ -237,7 +237,7 @@
       po.write({'valid_till': '2011-10-31',})
       for pol in po.order_line:
         pol.write({'price_unit':10024})
-      tender_id = po.tender_id
+      tender_id = po.tender_id.id
       # trigger the workflow
       import netsvc
       wf_service = netsvc.LocalService("workflow")
