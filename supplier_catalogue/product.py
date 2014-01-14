@@ -274,10 +274,6 @@ class pricelist_partnerinfo(osv.osv):
 
         return res
 
-#    _constraints = [
-#        (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_quantity']),
-#    ]
-
 pricelist_partnerinfo()
 
 

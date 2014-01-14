@@ -24,10 +24,6 @@ from osv import fields
 from tools.translate import _
 import base64
 from msf_doc_import import GENERIC_MESSAGE
-# import below commented in utp-1344: becomes useless as the import is done in wizard
-#from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-#import check_line
-#from msf_doc_import import MAX_LINES_NB
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_doc_import import GENERIC_MESSAGE
 from msf_doc_import.wizard import PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_product_list_import

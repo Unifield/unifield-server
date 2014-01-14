@@ -318,24 +318,6 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s : %s')% (plural, message))
         return True
 
-    # UTP-101 : Replaced by a common method
-    #def button_remove_lines(self, cr, uid, ids, context=None):
-    #    '''
-    #    Remove lines
-    #    '''
-    #    if not context:
-    #        context = {}
-    #    if isinstance(ids, (int, long)):
-    #        ids = [ids]
-    #    vals = {}
-    #    vals['inventory_line_id'] = []
-    #    for line in self.browse(cr, uid, ids, context=context):
-    #        line_browse_list = line.inventory_line_id
-    #        for var in line_browse_list:
-    #            vals['inventory_line_id'].append((2, var.id))
-    #        self.write(cr, uid, ids, vals, context=context)
-    #    return True
-        
 stock_inventory()
 
 
