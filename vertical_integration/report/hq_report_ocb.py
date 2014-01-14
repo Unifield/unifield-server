@@ -191,7 +191,8 @@ class hq_report_ocb(report_sxw.report_sxw):
         sqlrequests = {
             'partner': """
                 SELECT name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active
-                FROM res_partner;
+                FROM res_partner
+                WHERE partner_type != 'internal';
                 """,
             'employee': """
                 SELECT r.name, e.identification_id, r.active, e.employee_type
