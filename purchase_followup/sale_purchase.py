@@ -129,6 +129,26 @@ class purchase_order(osv.osv):
                 else:
                     res.append((r.id, '%s' % r.name))
             return res
+        elif context.get('from_followup2'):
+            res = []
+            for r in self.browse(cr, uid, ids, context=context):
+                name = r.name
+                customer_names = []
+                if r.dest_partner_id:
+                    # direct customer
+                    customer_names.append(r.dest_partner_id.name)
+                if r.dest_partner_ids:
+                    # customer from sourcing
+                    for customer in r.dest_partner_ids:
+                        if r.dest_partner_id and not customer.id == r.dest_partner_id.id:
+                            customer_names.append(customer.name)
+                        else:
+                            customer_names.append(customer.name)
+                if customer_names:
+                    # display PO and Customers
+                    name += " (%s)" % ("; ".join(customer_names),)
+                res.append((r.id, name))
+            return res
         else:
             return super(purchase_order, self).name_get(cr, uid, ids, context=context)
     
