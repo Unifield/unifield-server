@@ -10,7 +10,15 @@
     sequence: 0.0
     state: bank
     bank: base.res_bank_1
-
+-
+  I overwrite periods with right number and open them
+-
+  !python {model: account.period}: |
+    import datetime
+    period_ids = self.search(cr, uid, [], order='date_start, name')
+    for p in self.browse(cr, uid, period_ids):
+      self.write(cr, uid, [p.id], {'number': int(datetime.datetime.strptime(p.date_start, '%Y-%m-%d').strftime('%m'))})
+      self.action_set_state(cr, uid, period_ids, {'state': 'draft'})
 -
   I created a new Payment Mode
 -
@@ -20,7 +28,6 @@
     bank_id: res_partner_bank_0
     journal: account.bank_journal
     name: TestMode
-
 -
   I created a Supplier Invoice
 -

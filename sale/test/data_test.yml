@@ -2,6 +2,18 @@
   In order to test the sale module, I need to configure details regarding product,customer and account.
 -
   I am going to sell my Mobile products to the customer with name Cleartrail
+-
+  I overwrite periods with right number and open them
+-
+  !python {model: account.period}: |
+    import datetime
+    to_open = []
+    for i in range (1, 13):
+        to_open.append(ref('account.period_%s'%i))
+    period_ids = self.search(cr, uid, [('id', 'in', to_open)], order='date_start, name')
+    for p in self.browse(cr, uid, period_ids):
+      self.write(cr, uid, [p.id], {'number': int(datetime.datetime.strptime(p.date_start, '%Y-%m-%d').strftime('%m'))})
+    self.action_set_state(cr, uid, period_ids, {'state': 'draft'})
 - 
   I create View Account Type.
 - 

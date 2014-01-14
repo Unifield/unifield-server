@@ -100,19 +100,17 @@ class account_invoice(osv.osv):
                 result[invoice.id] = 0.0
                 continue
             result[invoice.id] = invoice.amount_total
-            # Search if a Journal Entry is linked to this invoice
-            # if yes: 
-            # - search counterparts lines
-            # - for each one, check if partial reconciliation have been done
-            # - substract partical reconciliation lines amount to the total
-            # - if total superior to amount_total: return the associated negative value
-            if invoice.move_id:
-                counterpart_ids = self.pool.get('account.move.line').search(cr, uid, [('is_counterpart', '=', True), ('move_id', '=', invoice.move_id.id)])
-                for counterpart_line in self.pool.get('account.move.line').browse(cr, uid, counterpart_ids, context=context):
-                    if counterpart_line.reconcile_partial_id:
-                        for ml in counterpart_line.reconcile_partial_id.line_partial_ids:
-                            if ml.is_counterpart == False:
-                                result[invoice.id] -= abs(ml.amount_currency)
+            # Browse payments to add/delete their amount regarding the invoice type
+            for payment in invoice.payment_ids:
+                if invoice.type in ['in_invoice', 'out_refund']:
+                    result[invoice.id] -= payment.amount_currency
+                else:
+                    result[invoice.id] += payment.amount_currency
+            # Avoid some problems about negative residual amounts or superior amounts: You have to always have a residual amount between 0 and invoice total amount
+            if result[invoice.id] < 0:
+                result[invoice.id] = 0.0
+            if result[invoice.id] > invoice.amount_total:
+                result[invoice.id] = invoice.amount_total
         return result
 
     # Give Journal Items related to the payment reconciled to this invoice

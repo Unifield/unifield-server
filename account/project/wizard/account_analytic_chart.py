@@ -43,6 +43,7 @@ class account_analytic_chart(osv.osv_memory):
             result_context.update({'from_date': data['from_date']})
         if data['to_date']:
             result_context.update({'to_date': data['to_date']})
+        result_context['target_filename_prefix'] = 'Chart of Analytic Accounts'
         result['context'] = str(result_context)
         return result
 
