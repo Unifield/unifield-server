@@ -1031,7 +1031,33 @@ class analytic_distribution_wizard(osv.osv_memory):
                 move_id = wiz.move_id.id
             elif wiz.move_line_id:
                 move_id = wiz.move_line_id.move_id.id
+            # Prepare some values
+            ana_obj = self.pool.get('account.analytic.line')
+            move = self.pool.get('account.move').browse(cr, uid, [move_id])[0]
+            reversal = False
+            correction = False
+            # UTP-947: a bug appears on lines you correct twice (or more). Links are broken. So we recreate them.
+            for line in move.line_id:
+                if line.reversal:
+                    reversal = True
+                if line.corrected:
+                    correction = True
             self.pool.get('account.move').validate(cr, uid, [move_id])
+            # As analytic lines were deleted and recreated, we need to recreate links between reversal, corrections, etc.
+            if reversal or correction:
+                for line in move.line_id:
+                    analytic_line_ids = ana_obj.search(cr, uid, [('move_id', '=', line.id)])
+                    if line.reversal:
+                        # For each reversal line, search its equivalent and write the right number
+                        rev_ana_ids = ana_obj.search(cr, uid, [('move_id', '=', line.reversal_line_id.id)])
+                        for rev in self.pool.get('account.analytic.line').browse(cr, uid, rev_ana_ids):
+                            to_write = ana_obj.search(cr, uid, [('move_id', '=', line.id), ('cost_center_id', '=', rev.cost_center_id.id), ('account_id', '=', rev.account_id.id), ('destination_id', '=', rev.destination_id.id)])
+                            ana_obj.write(cr, uid, to_write, {'reversal_origin': rev.id})
+                        # Search if some corrections exists for this move line
+                        aml_cor_ids = self.pool.get('account.move.line').search(cr, uid, [('corrected_line_id', '=', line.reversal_line_id.id)])
+                        if aml_cor_ids:
+                            cor_ana_ids = ana_obj.search(cr, uid, [('move_id', 'in', aml_cor_ids)])
+                            ana_obj.write(cr, uid, cor_ana_ids, {'last_corrected_id': rev_ana_ids[0]})
         # Validate account_move if we come from a temp posted register line
         if wiz and (wiz.register_line_id and wiz.register_line_id.state == 'temp'):
             # check account presence

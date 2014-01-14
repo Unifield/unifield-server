@@ -917,6 +917,51 @@ class account_bank_statement_line(osv.osv):
                     result.append(statement.id)
         return result
 
+    def _get_move_ids(self, cr, uid, ids, context=None):
+        """
+        Get all account move linked to the given register, those from analytic lines correction included!
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        res = set()
+        for absl in self.browse(cr, uid, ids, context=context):
+            if absl.move_ids:
+                # Default ones (direct link to register lines)
+                for m in absl.move_ids:
+                    res.add(m.id)
+                    # Those from cash advance return (we should use the reconciliation to find the return and its expenses)
+                    for ml in m.line_id:
+                        if ml.reconcile_id and ml.reconcile_id.line_id:
+                            for line in ml.reconcile_id.line_id:
+                                res.add(line.move_id.id)
+                        other_ml_ids = self.pool.get('account.move.line').search(cr, uid, ['|', ('reversal_line_id', '=', ml.id), ('corrected_line_id', '=', ml.id)], context=context)
+                        if other_ml_ids:
+                            for el in self.pool.get('account.move.line').read(cr, uid, other_ml_ids, ['move_id'], context=context):
+                                if el.get('move_id', False) and el.get('move_id')[0]:
+                                    res.add(el['move_id'][0])
+            # Those from pending payments (imported_invoice_line_ids are move_line)
+            if absl.imported_invoice_line_ids:
+                for ml in absl.imported_invoice_line_ids:
+                    res.add(ml.move_id.id)
+        return list(res)
+
+    def _get_fp_analytic_lines(self, cr, uid, ids, field_name=None, args=None, context=None):
+        """
+        Get all analytic lines linked to the given register lines
+        """
+        # Some checks
+        if not context:
+            context = {}
+        # Prepare some values
+        res = {}
+        for absl in self.browse(cr, uid, ids, context=context):
+            # Fetch all analytic lines linked to this register line
+            ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id.move_id', 'in', self._get_move_ids(cr, uid, [absl.id], context=context)), ('account_id.category', '=', 'FUNDING')])
+            # Then retrieve all corrections/reversals from them
+            res[absl.id] = self.pool.get('account.analytic.line').get_corrections_history(cr, uid, ana_ids, context=context)
+        return res
+
     _columns = {
         'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
@@ -956,6 +1001,7 @@ class account_bank_statement_line(osv.osv):
         'type_for_register': fields.related('account_id','type_for_register', string="Type for register", type='selection', selection=[('none','None'), 
             ('transfer', 'Internal Transfer'), ('transfer_same', 'Internal Transfer (same currency)'), ('advance', 'Operational Advance'), 
             ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')] , readonly=True),
+        'fp_analytic_lines': fields.function(_get_fp_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines linked to the given register line(s). Correction(s) included."),
     }
 
     _defaults = {
@@ -973,9 +1019,9 @@ class account_bank_statement_line(osv.osv):
             return open_register_view(self, cr, uid, st_line.statement_id.id)
         raise osv.except_osv(_('Warning'), _('You have to select some line to return to a register.'))
 
-    def get_analytic_lines(self, cr, uid, ids, context=None):
+    def show_analytic_lines(self, cr, uid, ids, context=None):
         """
-        Give all analytic lines linked to the given register line(s)
+        Show analytic lines list linked to the given register line(s)
         """
         # Some verifications
         if not context:
@@ -986,25 +1032,8 @@ class account_bank_statement_line(osv.osv):
         ids = context.get('active_ids')
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Check which move_id to use
-        move_ids = []
-        for absl in self.browse(cr, uid, ids):
-            if absl.move_ids:
-                # Default ones (direct link to register lines)
-                for m in absl.move_ids:
-                    if m.id not in move_ids:
-                        move_ids.append(m.id)
-                    # Those from cash advance return (we should use the reconciliation to find the return and its expenses)
-                    for ml in m.line_id:
-                        if ml.reconcile_id and ml.reconcile_id.line_id:
-                            for line in ml.reconcile_id.line_id:
-                                if line.move_id and line.move_id.id and line.move_id.id not in move_ids:
-                                    move_ids.append(line.move_id.id)
-            # Those from pending payments (imported_invoice_line_ids are move_line)
-            if absl.imported_invoice_line_ids:
-                for ml in absl.imported_invoice_line_ids:
-                    if ml.move_id and ml.move_id.id not in move_ids:
-                        move_ids.append(ml.move_id.id)
+        # Fetch move_ids linked to these register lines
+        move_ids = self._get_move_ids(cr, uid, ids, context=context)
         # Search valid ids
         domain = [('account_id.category', '=', 'FUNDING'), ('move_id.move_id', 'in', move_ids)]
         context.update({'display_fp': True}) # to display "Funding Pool" column name instead of "Analytic account"
@@ -1880,7 +1909,7 @@ class account_bank_statement_line(osv.osv):
         # Update context
         context.update({'active_ids': ids})
         # Return result of action named "Analytic Lines" on register lines
-        return self.get_analytic_lines(cr, uid, ids, context=context)
+        return self.show_analytic_lines(cr, uid, ids, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
         """
