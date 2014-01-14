@@ -56,7 +56,7 @@
 	        								'readonly': [('past_consumption', '=', False)]}" />
         				</group>
                     </group>
-                    <separator colspan="4" string="Product filters" />
+                    <!--<separator colspan="4" string="Product filters" />
                     <field name="sublist_id" attrs="{'readonly': [('nomen_manda_0', '!=', False)]}"/>
                     <group colspan="2" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
                         <field name="nomen_manda_0"
@@ -83,7 +83,7 @@
                             on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
                         />
                     </group>
-                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
+                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />-->
 
                     <group colspan="4" col="4" >
                         <separator colspan="4" string="Products that will be included in the current policy" />
@@ -96,6 +96,19 @@
                         </field>
                     </group>
                 </form>
+            </field>
+        </record>
+
+        <record id="order_cycle_line_tree_view" model="ir.ui.view">
+            <field name="name">order.cycle.line.tree.view</field>
+            <field name="model">stock.warehouse.order.cycle.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+               	<tree string="Products" editable="top">
+               		<field name="product_id" on_change="product_change(product_id)" domain="[('list_ids', '=', parent.sublist_id), ('type', 'not in', ['service', 'service_recep', 'consu'])]" />
+               		<field name="uom_id" domain="[('uom_by_product', '=', product_id)]" on_change="onchange_uom_qty(uom_id, safety_stock)" />
+               		<field name="safety_stock" on_change="onchange_uom_qty(uom_id, safety_stock)" />
+               	</tree>
             </field>
         </record>
         

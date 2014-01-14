@@ -282,6 +282,27 @@ class sale_order(osv.osv):
         'no_line': lambda *a: True,
     }
 
+    def _check_empty_line(self, cr, uid, ids, context=None):
+        '''
+        Check if all lines have a quantity larger than 0.00
+        '''
+        issue_ids = []
+        for order in self.read(cr, uid, ids, ['state'], context=context):
+            if order['state'] not in ['draft', 'cancel']:
+                issue_ids.append(order['id'])
+
+        line_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', 'in', issue_ids),
+                                                                     ('product_uom_qty', '=', 0.00)], context=context)
+
+        if line_ids:
+            return False
+
+        return True
+
+    _constraints = [
+        (_check_empty_line, 'All lines must have a quantity larger than 0.00', ['order_line']),
+    ]
+
     def _check_own_company(self, cr, uid, company_id, context=None):
         '''
         Remove the possibility to make a SO to user's company
@@ -1634,6 +1655,21 @@ class sale_order_line(osv.osv):
         
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
+    def check_empty_line(self, cr, uid, ids, vals, context=None):               
+        '''                                                                     
+        Return an error if the line has no qty                                  
+        '''                                                                     
+        context = context is None and {} or context                                                                                                                                                                         
+        if not context.get('noraise') and not context.get('import_in_progress'):
+            if ids and not 'product_uom_qty' in vals:                              
+                for line in self.read(cr, uid, ids, ['product_uom_qty'], context=context):
+                    if line['product_uom_qty'] <= 0.00:                            
+                        raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
+                    elif 'product_uom_qty' in vals and vals.get('product_uom_qty') == 0.00:
+                        raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
+                    
+        return True                                                                
+
     def create(self, cr, uid, vals, context=None):
         """
         Override create method so that the procurement method is on order if no product is selected
@@ -1643,6 +1679,8 @@ class sale_order_line(osv.osv):
             context = {}
         if not vals.get('product_id') and context.get('sale_id', []):
             vals.update({'type': 'make_to_order'})
+
+        self.check_empty_line(cr, uid, False, vals, context=context)
         
         # UF-1739: as we do not have product_uos_qty in PO (only in FO), we recompute here the product_uos_qty for the SYNCHRO
         qty = vals.get('product_uom_qty')
@@ -1689,6 +1727,8 @@ class sale_order_line(osv.osv):
         order_id = vals.get('order_id', False)
         if order_id and self.pool.get('sale.order').read(cr, uid, order_id,['procurement_request'], context)['procurement_request']:
             vals.update({'cost_price': vals.get('cost_price', False)})
+
+        self.check_empty_line(cr, uid, ids, vals, context=context)
 
         res = super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
