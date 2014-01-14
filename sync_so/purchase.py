@@ -88,10 +88,14 @@ class purchase_order_sync(osv.osv):
             text = "The given format of the split FO is not valid" + so_info.name
             self._logger.error(text)
             raise Exception, text
-            
+        
+        original_po = self.browse(cr, uid, po_id, context=context)
         # UTP-163: Get the 'source document' of the original PO, and add it into the split PO, if existed
-        origin = self.browse(cr, uid, po_id, context=context)['origin']
+        origin = original_po['origin']
         header_result['origin'] = origin
+
+        # UTP-661: Get the 'Cross Docking' value of the original PO, and add it into the split PO
+        header_result['cross_docking_ok'] = original_po['cross_docking_ok']
 
         # UTP-952: If the partner is section or intermission, then take the AD from the original PO, not from the source instance
         partner_type = so_po_common.get_partner_type(cr, uid, source, context)
