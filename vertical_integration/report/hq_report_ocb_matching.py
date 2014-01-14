@@ -98,6 +98,7 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
                 AND aml.company_id = e.id
                 AND e.currency_id = cc.id
                 AND aml.journal_id = j.id
+                AND a.reconcile = 't'
                 AND j.type not in ('hq', 'migration')
                 AND aml.instance_id in %s;
                 """,
