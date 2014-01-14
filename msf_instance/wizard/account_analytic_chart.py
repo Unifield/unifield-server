@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,31 +18,29 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name" : "MSF Proprietary Instance",
-    "version": "1.1",
-    "author" : "MSF, TeMPO Consulting",
-    "developer": "Matthieu Dietrich",
-    "category" : "Generic Modules/Projects & Services",
-    "depends" : ["account_msf", "res_currency_functional"],
-    "description": """Module for defining proprietary instances, their informations
-    """,
-    "init_xml" : [],
-    "update_xml": [
-        'msf_instance_installer_view.xml',
-        'security/ir.model.access.csv',
-        'msf_instance_view.xml',
-        'wizard/wizard_add_cost_centers_view.xml',
-        'wizard/account_chart_view.xml',
-        'wizard/account_analytic_chart_view.xml',
-    ],
-    "additional_xml": [
-        'data/instance_data.xml',
-    ],
-    'demo_xml': [
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+from osv import osv
+from osv import fields
+
+class account_analytic_chart(osv.osv_memory):
+    _name = 'account.analytic.chart'
+    _inherit = 'account.analytic.chart'
+
+    _columns = {
+        'instance_ids': fields.many2many('msf.instance', 'account_chart_instance_rel', 'wizard_id', 'instance_id', 'Instance'),
+    }
+
+def account_chart_open_window(self, cr, uid, ids, context=None):
+    """
+    Add instance_ids information to only display analytic journal items linked to the given instance
+    """
+    result = super(account_analytic_chart, self).account_chart_open_window(cr, uid, ids, context=context)
+    data = self.read(cr, uid, ids, ['instance_ids'], context=context)[0]
+    if data['instance_ids']:
+        context = eval(result['context'])
+        context.update({'instance_ids': data['instance_ids']})
+        result['context'] = unicode(context)
+    return result
+
+account_analytic_chart()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

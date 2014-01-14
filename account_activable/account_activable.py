@@ -62,6 +62,9 @@ class account_account_activable(osv.osv):
         return super(account_account_activable, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        """
+        Filtering regarding context
+        """
         if not context:
             context = {}
         if context.get('filter_inactive_accounts'):

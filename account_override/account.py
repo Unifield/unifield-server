@@ -27,6 +27,8 @@ from account_override import ACCOUNT_RESTRICTED_AREA
 from tools.translate import _
 from time import strftime
 import datetime
+import decimal_precision as dp
+import netsvc
 
 class account_account(osv.osv):
     _name = "account.account"
@@ -68,6 +70,128 @@ class account_account(osv.osv):
                 arg.append(('activation_date', '>', cmp_date))
                 arg.append(('inactivation_date', '<=', cmp_date))
         return arg
+
+    #@@@override account.account_account.__compute
+    def _compute(self, cr, uid, ids, field_names, arg=None, context=None,
+                  query='', query_params=()):
+        """ compute the balance, debit and/or credit for the provided
+        account ids
+        Arguments:
+        `ids`: account ids
+        `field_names`: the fields to compute (a list of any of
+                       'balance', 'debit' and 'credit')
+        `arg`: unused fields.function stuff
+        `query`: additional query filter (as a string)
+        `query_params`: parameters for the provided query string
+                        (__compute will handle their escaping) as a
+                        tuple
+        """
+        mapping = {
+            'balance': "COALESCE(SUM(l.debit),0) " \
+                       "- COALESCE(SUM(l.credit), 0) as balance",
+            'debit': "COALESCE(SUM(l.debit), 0) as debit",
+            'credit': "COALESCE(SUM(l.credit), 0) as credit"
+        }
+        #get all the necessary accounts
+        children_and_consolidated = self._get_children_and_consol(cr, uid, ids, context=context)
+        #compute for each account the balance/debit/credit from the move lines
+        accounts = {}
+        sums = {}
+        # Add some query/query_params regarding context
+        if 'balance' in field_names:
+            link = " "
+            if context.get('currency_id', False):
+                if query:
+                    link = " AND "
+                query += link + 'currency_id = %s'
+                query_params += tuple([context.get('currency_id')])
+            link = " "
+            if context.get('instance_ids', False):
+                if query:
+                    link = " AND "
+                instance_ids = context.get('instance_ids')
+                if isinstance(instance_ids, (int, long)):
+                    instance_ids = [instance_ids]
+                if len(instance_ids) == 1:
+                    query += link + 'l.instance_id = %s'
+                else:
+                    query += link + 'l.instance_id in %s'
+                query_params += tuple(instance_ids)
+        # Do normal process
+        if children_and_consolidated:
+            aml_query = self.pool.get('account.move.line')._query_get(cr, uid, context=context)
+
+            wheres = [""]
+            if query.strip():
+                wheres.append(query.strip())
+            if aml_query.strip():
+                wheres.append(aml_query.strip())
+            filters = " AND ".join(wheres)
+            # target_move from chart of account wizard
+            filters = filters.replace("AND l.state <> 'draft'", '')
+            prefilters = " "
+            if context.get('move_state', False):
+                prefilters += "AND l.move_id = m.id AND m.state = '%s'" % context.get('move_state')
+            else:
+                prefilters += "AND l.move_id = m.id AND m.state in ('posted', 'draft')"
+            # Notifications
+            self.logger.notifyChannel('addons.'+self._name, netsvc.LOG_DEBUG,
+                                      'Filters: %s'%filters)
+            # IN might not work ideally in case there are too many
+            # children_and_consolidated, in that case join on a
+            # values() e.g.:
+            # SELECT l.account_id as id FROM account_move_line l
+            # INNER JOIN (VALUES (id1), (id2), (id3), ...) AS tmp (id)
+            # ON l.account_id = tmp.id
+            # or make _get_children_and_consol return a query and join on that
+            request = ("SELECT l.account_id as id, " +\
+                       ', '.join(map(mapping.__getitem__, field_names)) +
+                       " FROM account_move_line l, account_move m" +\
+                       " WHERE l.account_id IN %s " \
+                            + prefilters + filters +
+                       " GROUP BY l.account_id")
+            params = (tuple(children_and_consolidated),) + query_params
+            cr.execute(request, params)
+            self.logger.notifyChannel('addons.'+self._name, netsvc.LOG_DEBUG,
+                                      'Status: %s'%cr.statusmessage)
+
+            for res in cr.dictfetchall():
+                accounts[res['id']] = res
+
+            # consolidate accounts with direct children
+            children_and_consolidated.reverse()
+            brs = list(self.browse(cr, uid, children_and_consolidated, context=context))
+            currency_obj = self.pool.get('res.currency')
+            while brs:
+                current = brs[0]
+#                can_compute = True
+#                for child in current.child_id:
+#                    if child.id not in sums:
+#                        can_compute = False
+#                        try:
+#                            brs.insert(0, brs.pop(brs.index(child)))
+#                        except ValueError:
+#                            brs.insert(0, child)
+#                if can_compute:
+                brs.pop(0)
+                for fn in field_names:
+                    sums.setdefault(current.id, {})[fn] = accounts.get(current.id, {}).get(fn, 0.0)
+                    for child in current.child_id:
+                        if child.company_id.currency_id.id == current.company_id.currency_id.id:
+                            sums[current.id][fn] += sums[child.id][fn]
+                        else:
+                            sums[current.id][fn] += currency_obj.compute(cr, uid, child.company_id.currency_id.id, current.company_id.currency_id.id, sums[child.id][fn], context=context)
+        res = {}
+        null_result = dict((fn, 0.0) for fn in field_names)
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+        for id in ids:
+            res[id] = sums.get(id, null_result)
+            # If output_currency_id in context, we change balance computation
+            if context.get('output_currency_id', False) and res[id].get('balance', False):
+                new_balance = currency_obj.compute(cr, uid, context.get('output_currency_id'), company_currency, res[id].get('balance'), context=context)
+                res[id].update({'balance': new_balance,})
+        return res
+    #@@@end
 
     def _get_is_analytic_addicted(self, cr, uid, ids, field_name, arg, context=None):
         """
@@ -195,6 +319,8 @@ class account_account(osv.osv):
             else:
                 raise osv.except_osv(_('Error'), _('Operation not implemented!'))
         return arg
+=======
+>>>>>>> MERGE-SOURCE
 
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
@@ -209,6 +335,7 @@ class account_account(osv.osv):
         'is_analytic_addicted': fields.function(_get_is_analytic_addicted, fnct_search=_search_is_analytic_addicted, method=True, type='boolean', string='Analytic-a-holic?', help="Is this account addicted on analytic distribution?", store=False, readonly=True),
         'restricted_area': fields.function(_get_restricted_area, fnct_search=_search_restricted_area, type='boolean', method=True, string="Is this account allowed?"),
         'cash_domain': fields.function(_get_fake_cash_domain, fnct_search=_search_cash_domain, method=True, type='boolean', string="Domain used to search account in journals", help="This is only to change domain in journal's creation."),
+        'balance': fields.function(_compute, digits_compute=dp.get_precision('Account'), method=True, string='Balance', multi='balance'),
     }
 
     _defaults = {

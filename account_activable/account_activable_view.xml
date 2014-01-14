@@ -21,21 +21,45 @@
                 </page>
             </field>
         </record>
-         
+
+    <!-- Tree view for Balance by Account result -->
+        <record model="ir.ui.view" id="balance_account_tree">
+            <field name="name">balance.account.tree</field>
+            <field name="model">account.account</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_id</field>
+            <field name="priority" eval="25"/>
+            <field name="arch" type="xml">
+                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" expand_button="1">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="note" invisible="1"/>
+                    <field name="type" invisible="1"/>
+                    <field name="user_type" invisible="1"/>
+                    <field name="balance"/>
+                    <field name="activation_date" invisible="1"/>
+                    <field name="inactivation_date" invisible="1"/>
+                    <field name="parent_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Tree view for chart of account result -->
         <record model="ir.ui.view" id="account.view_account_tree">
             <field name="name">account.account_activable.tree</field>
             <field name="model">account.account</field>
             <field name="type">tree</field>
             <field name="field_parent">child_id</field>
+            <field name="priority" eval="12"/>
             <field name="arch" type="xml">
-                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" expand_button="1">
+                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" expand_button="1" nolink="1">
                     <field name="code"/>
                     <field name="name"/>
                     <field name="note"/>
-                    <field name="type"/>
-                    <field name="user_type"/>
-                    <field name="activation_date"/>
-                    <field name="inactivation_date"/>
+                    <field name="type" invisible="1"/>
+                    <field name="user_type" invisible="1"/>
+                    <field name="activation_date" invisible="1"/>
+                    <field name="inactivation_date" invisible="1"/>
                     <field name="parent_id" invisible="1"/>
                     <field name="is_analytic_addicted" invisible="1"/>
                 </tree>
@@ -59,13 +83,15 @@
             </field>
         </record>
 
+    <!-- Tree view for default tree view of accounts -->
         <record id="account.view_account_list" model="ir.ui.view">
             <field name="name">account.account_activable.list</field>
             <field name="model">account.account</field>
             <field name="type">tree</field>
             <field name="field_parent">child_id</field>
+            <field name="priority" eval="10"/>
             <field name="arch" type="xml">
-                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" >
+                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" nolink="1">
                     <field name="code"/>
                     <field name="name"/>
                     <field name="type"/>
@@ -109,6 +135,22 @@
 
         <!-- Menus -->
         <menuitem action="action_account_activable_form" id="account.menu_action_account_form" parent="account.account_account_menu"/>
+
+      <!--
+          Reports
+      -->
+
+        <report
+            id="account_chart_export"
+            string="Balance by account"
+            model="account.account"
+            name="account.chart.export"
+            file="account_activable/report/report_account_chart_export.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
 
     </data>
 </openerp>
