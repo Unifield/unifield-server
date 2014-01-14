@@ -186,30 +186,18 @@ class sourcing_line(osv.osv):
         result = self.pool.get('sourcing.line').search(cr, uid, [('sale_order_id', 'in', ids)], context=context)
         return result
 
+    
     def _get_sale_order_line_ids(self, cr, uid, ids, context=None):
         '''
-        self represents sale.order
-        ids represents the ids of the sale.order.line objects for which procurement_request has changed
-
-        return the list of ids of sourcing.line object which need to get their procurement_request field updated
+        self represents sale.order.line
+        ids represents the ids of sale.order.line objects for which state / procurement_request has changed
+        
+        return the list of ids of sourcing.line object which need to get their state / procurement_request fields updated
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
         # list of sourcing lines having sale_order_line_id within ids
         return self.pool.get('sourcing.line').search(cr, uid, [('sale_order_line_id', 'in', ids)], context=context)
-    
-    def _get_sale_order_line_ids(self, cr, uid, ids, context=None):
-        '''
-        self represents sale.order.line
-        ids represents the ids of sale.order.line objects for which state has changed
-        
-        return the list of ids of sourcing.line object which need to get their state field updated
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # list of sourcing lines having sale_order_line_id within ids
-        result = self.pool.get('sourcing.line').search(cr, uid, [('sale_order_line_id', 'in', ids)], context=context)
-        return result
     
     def _get_souring_lines_ids(self, cr, uid, ids, context=None):
         '''

@@ -21,6 +21,8 @@
 
 from osv import fields, osv
 import decimal_precision as dp
+from tools.translate import _
+
 
 class account_move_compute_currency(osv.osv):
     _inherit = "account.move"

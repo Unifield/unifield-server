@@ -437,7 +437,7 @@ class sale_order(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
-        Remove the possibility to make a SO to user's company
+        Remove the possibility to make a SO to user's company
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
