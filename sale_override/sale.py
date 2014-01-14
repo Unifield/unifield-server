@@ -1282,7 +1282,7 @@ class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
 
     _columns = {'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Sale Price Computation'), readonly=True, states={'draft': [('readonly', False)]}),
-                'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
+                'is_line_split': fields.boolean(string='This line is a split line?'), # UTP-972: Use boolean to indicate if the line is a split line
                 'partner_id': fields.related('order_id', 'partner_id', relation="res.partner", readonly=True, type="many2one", string="Customer"),
                 # this field is used when the po is modified during on order process, and the so must be modified accordingly
                 # the resulting new purchase order line will be merged in specified po_id 
@@ -1304,6 +1304,10 @@ class sale_order_line(osv.osv):
     _sql_constraints = [
         ('product_qty_check', 'CHECK( product_uom_qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]
+
+    _defaults = {
+        'is_line_split': False, # UTP-972: By default set False, not split
+    }
 
     def ask_unlink(self, cr, uid, ids, context=None):
         '''
@@ -1483,6 +1487,7 @@ class sale_order_line(osv.osv):
             default.update({'so_back_update_dest_po_id_sale_order_line': False,
                             'so_back_update_dest_pol_id_sale_order_line': False,})
         default.update({'sync_order_line_db_id': False, 'manually_corrected': False})
+        
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
     def open_order_line_to_correct(self, cr, uid, ids, context=None):
@@ -1626,6 +1631,7 @@ class sale_order_line(osv.osv):
             default = {}
             
         default.update({'sync_order_line_db_id': False, 'manually_corrected': False})
+        
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
     def create(self, cr, uid, vals, context=None):

@@ -2138,7 +2138,7 @@ class purchase_order_line(osv.osv):
         '''
         Remove link to merged line
         '''
-        defaults.update({'merged_id': False, 'sync_order_line_db_id': False, })
+        defaults.update({'merged_id': False, 'sync_order_line_db_id': False})
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
 
@@ -2383,7 +2383,7 @@ class purchase_order_line(osv.osv):
         return result
 
     _columns = {
-        'parent_line_id': fields.many2one('purchase.order.line', string='Parent line', ondelete='set null'),
+        'is_line_split': fields.boolean(string='This line is a split line?'), # UTP-972: Use boolean to indicate if the line is a split line
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=64, string='Origin'),
         'change_price_ok': fields.function(_get_price_change_ok, type='boolean', method=True, string='Price changing'),
@@ -2405,6 +2405,7 @@ class purchase_order_line(osv.osv):
         'product_qty': lambda *a: 0.00,
         'price_unit': lambda *a: 0.00,
         'change_price_ok': lambda *a: True,
+        'is_line_split': False, # UTP-972: by default not a split line
     }
     
     _sql_constraints = [
