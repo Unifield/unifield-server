@@ -7,11 +7,9 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Download Remote Warehouse Database">
+                	<label colspan="4" string="Download and restore this database to create the database for the Remote Warehouse instance"  />
                 	<field name="dump_name" invisible="1" />
                     <field name="database_dump" filename="dump_name" attrs="{'invisible':[('database_dump','=','')]}" />
-                    <group attrs="{'invisible': [('database_dump','=','')]}">
-                    	<label colspan="4" string="No remote warehouse database to download. This database is created when you set up this instance as a central platform."  />
-                    </group>
                 </form>
             </field>
         </record> 

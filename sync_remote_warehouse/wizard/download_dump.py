@@ -13,7 +13,7 @@ class download_dump(osv.osv_memory):
         for wizard_id in ids:
             wizard_record = self.browse(cr, uid, wizard_id)
             f = open(wizard_record.dump_path)
-            res[wizard_id] = base64.encodestring(f.read())
+            res[wizard_id] = f.read()
             f.close()
         return res
     

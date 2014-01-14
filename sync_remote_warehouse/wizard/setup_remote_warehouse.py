@@ -1,9 +1,9 @@
 import os
-from os.path import expanduser
-import subprocess
 from datetime import datetime
 
+import netsvc
 from tools.translate import _
+from tools import config
 from osv import osv, fields
 import logging
 
@@ -77,25 +77,23 @@ class setup_remote_warehouse(osv.osv_memory):
         """)
         
     def _get_db_dump(self, database_name):
-        """ Makes a dump of database_name and returns the SQL """
-        dump = subprocess.Popen(['pg_dump', database_name, '--format=c'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        dump_sql, dump_err = dump.communicate()
-        if dump_err:
-            raise osv.except_osv(_("Error While Backing Up"), _("There was an error while backing up the database: %s") % dump_err)
-        return dump_sql
+        """ Makes a dump of database_name and returns the base64 SQL """
+        db_service = netsvc.ExportService.getService('db')
+        dump_sql_base64 = db_service.exp_dump(database_name)
+        return dump_sql_base64
     
-    def _save_dump_file(self, dump_sql):
-        """ Creates a file in the self.backup_folder_name directory containing the string dump_sql """
-        home = expanduser("~")
-        target_directory = home + '/' + self.backup_folder_name
+    def _save_dump_file(self, dump_sql_base64):
+        """ Creates a file in the self.backup_folder_name directory containing the string dump_sql_base64 """
+        path = os.path.join(config['root_path'])
+        target_directory = os.path.join(path, self.backup_folder_name)
         if not os.path.exists(target_directory):
             os.mkdir(target_directory)
         
-        file_name = self.backup_file_name + '-' + datetime.now().strftime('%Y%M%d-%H%M%S-%f') + '.sql'
-        file_path = home + '/' + self.backup_folder_name + '/' + file_name
+        file_name = self.backup_file_name + '-' + datetime.now().strftime('%Y%M%d-%H%M%S-%f') + '.dump'
+        file_path = os.path.join(target_directory, file_name)
         
         backup_file = open(file_path, 'w')
-        backup_file.write(dump_sql)
+        backup_file.write(dump_sql_base64)
         backup_file.close()
         
         return file_path
