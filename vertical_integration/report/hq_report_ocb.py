@@ -33,42 +33,6 @@ class finance_archive(finance_export.finance_archive):
     Extend existing class with new methods for this particular export.
     """
 
-    def postprocess_add_functional(self, cr, uid, data, changes, column_deletion=False):
-        """
-        Change each line of 'data' to add some amount in another currency.
-        'changes' is a dict containing:
-         - currency: the column number containing the currency_id
-         - columns: the columns to change into another amount
-         - date: the date to use to do amount processing
-        """
-        # Checks
-        if not changes or not changes.get('currency', False) or not changes.get('columns', False) or not changes.get('date', False):
-            return data
-        # Prepare some values
-        pool = pooler.get_pool(cr.dbname)
-        new_data = []
-        company_currency = pool.get('res.users').browse(cr, uid, uid).company_id.currency_id
-        date = changes.get('date')
-        columns = changes.get('columns')
-        context = {'date': date}
-        currency = changes.get('currency')
-        for line in data:
-            tmp_line = list(line[:-1])
-            # Add new columns
-            for col in sorted(columns):
-                new_amount = pool.get('res.currency').compute(cr, uid, line[currency], company_currency.id, line[col], round=False, context=context)
-                tmp_line.append(new_amount)
-            # Add company currency
-            tmp_line.append(company_currency.name)
-            # Delete useless columns
-            if column_deletion:
-                tmp_line = self.delete_x_column(tmp_line, column_deletion)
-            # Convert to UTF-8
-            tmp_line = self.line_to_utf8(tmp_line)
-            # write changes
-            new_data.append(tmp_line)
-        return new_data
-
     def postprocess_consolidated_entries(self, cr, uid, data, date, column_deletion=False):
         """
         Use current SQL result (data) to fetch IDs and mark lines as used.
@@ -84,6 +48,7 @@ class finance_archive(finance_export.finance_archive):
         new_data = []
         pool = pooler.get_pool(cr.dbname)
         ids = [x and x[0] for x in data]
+        company_currency = pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.name
         # In case where no line to return, abort process and return empty data
         if not ids:
             return new_data
@@ -93,9 +58,9 @@ class finance_archive(finance_export.finance_archive):
         sqlmark = """UPDATE account_move_line SET exporting_sequence = %s WHERE id in %s;"""
         cr.execute(sqlmark, (seq, tuple(ids),))
         # Do right request
-        sqltwo = """SELECT j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS "entry_sequence", 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END AS "debit", CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as "credit", c.name AS "booking_currency", c.id
+        sqltwo = """SELECT j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS "entry_sequence", 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END AS "debit", CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as "credit", c.name AS "booking_currency", CASE WHEN req.func_total > 0 THEN req.func_total ELSE 0.0 END AS "func_debit", CASE WHEN req.func_total < 0 THEN ABS(req.func_total) ELSE 0.0 END AS "func_credit"
             FROM (
-                SELECT aml.period_id, aml.journal_id, aml.currency_id, aml.account_id, SUM(amount_currency) AS total
+                SELECT aml.period_id, aml.journal_id, aml.currency_id, aml.account_id, SUM(amount_currency) AS total, SUM(debit - credit) AS func_total
                 FROM account_move_line AS aml, account_journal AS j
                 WHERE aml.exporting_sequence = %s
                 AND aml.journal_id = j.id
@@ -111,8 +76,11 @@ class finance_archive(finance_export.finance_archive):
             AND a.shrink_entries_for_hq = 't';"""
         cr.execute(sqltwo, (seq,))
         datatwo = cr.fetchall()
-        # post process datas
-        new_data = self.postprocess_add_functional(cr, uid, datatwo, {'currency': 13, 'date': date, 'columns': [10, 11]}, column_deletion=column_deletion)
+        # post process datas (add functional currency name, those from company)
+        for line in datatwo:
+            tmp_line = list(line)
+            tmp_line.append(company_currency)
+            new_data.append(tmp_line)
         # mark lines as exported
         sqlmarktwo = """UPDATE account_move_line SET exported = 't', exporting_sequence = Null WHERE id in %s;"""
         cr.execute(sqlmarktwo, (tuple(ids),))
