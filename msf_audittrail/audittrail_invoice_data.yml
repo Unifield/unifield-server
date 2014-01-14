@@ -95,7 +95,7 @@
       fields = [
         'document_date', 'date', 'sequence_for_reference', 'name',
         'account_id', 'partner_type',
-        'amount_id', 'amount_out', 
+        'amount_in', 'amount_out', 
         'reconciled', 'state',
       ]
 
