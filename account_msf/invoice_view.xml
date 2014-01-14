@@ -295,7 +295,7 @@
                                     <field name="analytic_distribution_state" invisible="1"/>
                                     <field name="have_analytic_distribution_from_header" invisible="1"/>
                                     <field name="quantity"/>
-                                    <field name="uos_id" string="UOM"/>
+                                    <field name="uos_id" string="UOM" invisible="1" />
                                     <field name="price_unit"/>
                                     <field name="price_subtotal"/>
                                     <field name="inactive_product" invisible="1" />
