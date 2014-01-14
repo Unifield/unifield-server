@@ -69,7 +69,7 @@ class ViewTree(Form):
         self.toolbar = attrs.get('toolbar', False)
         # Set the button to be optional
         self.expand_button = attrs.get('expand_button', False)
-
+        nolink = attrs.get('nolink', '0')
         ids = []
         id = res_id
         
@@ -104,7 +104,8 @@ class ViewTree(Form):
                                       field_parent=self.field_parent,
                                       onselection="onSelection",
                                       fields_info=fields_info,
-                                      colors=colors)
+                                      colors=colors,
+                                      nolink=nolink)
         self.id = id
         self.ids = ids
 

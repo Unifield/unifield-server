@@ -145,7 +145,7 @@ class Tree(SecuredController):
 
     @expose('json')
     def data(self, ids, model, fields, field_parent=None, icon_name=None,
-             domain=[], context={}, sort_by=None, sort_order="asc", fields_info=None, colors={}):
+             domain=[], context={}, sort_by=None, sort_order="asc", fields_info=None, colors={}, nolink=False):
         
         if ids == 'None' or ids == '':
             ids = []
@@ -226,7 +226,8 @@ class Tree(SecuredController):
                 'children': [],
                 'items': item
             }
-
+            if nolink=='1':
+                record['action'] = None
             if icon_name and item.get(icon_name):
                 icon = item.pop(icon_name)
                 record['icon'] = icons.get_icon(icon)
