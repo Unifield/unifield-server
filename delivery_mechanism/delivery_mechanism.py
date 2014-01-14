@@ -474,6 +474,9 @@ class stock_picking(osv.osv):
             product_avail = {}
             # increase picking version - all case where update_out is True + when the qty is bigger without split nor product change
             update_pick_version = False
+
+            # UF-1617: get the sync_message case            
+            sync_in = context.get('sync_message_execution', False)
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 if move.sale_line_id and move.sale_line_id.order_id:
                     so_to_check.add(move.sale_line_id.order_id.id)
@@ -645,7 +648,10 @@ class stock_picking(osv.osv):
                         uom_partial_qty = self.pool.get('product.uom')._compute_qty(cr, uid, partial['product_uom'], partial_qty, out_move.product_uom.id)
                         if count_partial or uom_partial_qty < out_move.product_qty:
                             # Split the out move
-                            new_move = move_obj.copy(cr, uid, out_move.id, dict(out_values, product_qty=partial_qty, product_uom=partial['product_uom'], in_out_updated=True), context=dict(context, keepLineNumber=True))
+                            vals = dict(out_values, product_qty=partial_qty, product_uom=partial['product_uom'])
+                            if not sync_in:
+                                vals.update({'in_out_updated': True})
+                            new_move = move_obj.copy(cr, uid, out_move.id, vals, context=dict(context, keepLineNumber=True))
                             # Update the initial out move qty
                             move_obj.write(cr, uid, [out_move.id], {'product_qty': out_move.product_qty - uom_partial_qty}, context=context)
                             backlinks.append((move.id, new_move))
@@ -654,13 +660,19 @@ class stock_picking(osv.osv):
 #                                backlinks.append((move.id, out_move.id))
                         elif not count_out or uom_partial_qty == out_move.product_qty:
                             # Update the initial out move qty with the processed qty
-                            move_obj.write(cr, uid, [out_move.id], dict(out_values, product_qty=partial_qty, product_uom=partial['product_uom'], in_out_updated=True), context=context)
+                            vals = dict(out_values, product_qty=partial_qty, product_uom=partial['product_uom'])
+                            if not sync_in:
+                                vals.update({'in_out_updated': True})
+                            move_obj.write(cr, uid, [out_move.id], vals, context=context)
                             backlinks.append((move.id, out_move.id))
                             processed_moves.append(out_move.id)
                             partial_qty = 0.00
                         else:
                             # Just update the data of the initial out move
-                            move_obj.write(cr, uid, [out_move.id], dict(out_values, product_qty=out_move.product_qty, product_uom=partial['product_uom'], in_out_updated=True), context=context)
+                            vals = dict(out_values, product_qty=out_move.product_qty, product_uom=partial['product_uom'])
+                            if not sync_in:
+                                vals.update({'in_out_updated': True})
+                            move_obj.write(cr, uid, [out_move.id], vals, context=context)
                             backlinks.append((move.id, out_move.id))
                             processed_moves.append(out_move.id)
                             partial_qty -= out_move.product_qty
@@ -726,9 +738,6 @@ class stock_picking(osv.osv):
             # clean the picking object - removing lines with 0 qty - force unlink
             # this should not be a problem as IN moves are not referenced by other objects, only OUT moves are referenced
             # no need of skipResequencing as the picking cannot be draft
-
-            # UF-1617: get the sync_message case            
-            sync_in = context.get('sync_message_execution', False)
             
             for move in pick.move_lines:
                 if not move.product_qty and move.state not in ('done', 'cancel'):

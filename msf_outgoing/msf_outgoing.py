@@ -3411,6 +3411,9 @@ class stock_move(osv.osv):
             if not move.picking_id:
                 continue
 
+            if not move.has_to_be_resourced and not move.picking_id.has_to_be_resourced:
+                continue
+
             if move.state == 'cancel':
                 continue
 
@@ -3672,6 +3675,10 @@ class sale_order(osv.osv):
             move_data['location_dest_id'] = self.read(cr, uid, ids, ['location_requestor_id'], context=context)[0]['location_requestor_id'][0]
             if self.pool.get('stock.location').browse(cr, uid, move_data['location_dest_id'], context=context).usage in ('supplier', 'customer'):
                 move_data['type'] = 'out'
+            if 'sale_line_id' in move_data and move_data['sale_line_id']:
+                sale_line = self.pool.get('sale.order.line').browse(cr, uid, move_data['sale_line_id'], context=context)
+                if sale_line.type == 'make_to_stock':
+                    move_data['location_id'] = sale_line.location_id and sale_line.location_id.id or move_data['location_id']
         else:
             # first go to packing location (PICK/PACK/SHIP) or output location (Simple OUT)
             # according to the configuration
