@@ -10,10 +10,19 @@
             <field name="arch" type="xml">
                 <field name="name" position="before">
                     <field name="is_confirmed_and_synced" invisible="1"/>
-                    <group colspan="6"
-                        attrs="{'invisible': [('is_confirmed_and_synced', '=', False)]}">
+                    <group colspan="6">
                         <html>
-                            <p style='text-align:center; color: red; font-weight: bold; font-size: 1.2em;'>WARNING: This PO has already been synched, any modifications you make will not be considered.</p>
+                            <p id="view_purchase_order_form_inherit_is_confirmed_and_synced"
+                            style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                            WARNING: This PO has already been synched, any modifications you make will not be considered.
+                            </p>
+                        <script language="javascript">
+                            var is_synced = $('#is_confirmed_and_synced').val();
+                            if (is_synced == "1") {
+                                msg_dom = $('#view_purchase_order_form_inherit_is_confirmed_and_synced')
+                                msg_dom.show();
+                            }
+                        </script>
                         </html>
                     </group>
                 </field>

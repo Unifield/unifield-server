@@ -79,6 +79,7 @@ class purchase_order_sync(osv.osv):
         'push_fo': False,
         'sended_by_supplier': True,
         'po_updated_by_sync': False,
+        'is_confirmed_and_synced': False,
     }
 
     def copy(self, cr, uid, id, default=None, context=None):
