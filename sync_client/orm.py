@@ -341,8 +341,7 @@ SELECT res_id, touched
                         context=context)
 
         # store changes in the context
-        if context is not None:
-            if 'changes' not in context: context['changes'] = {}
+        if context is not None and 'changes' in context:
             changes = context['changes'].setdefault(self._name, {})
         else:
             changes = {}
@@ -428,7 +427,6 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
     @orm_method_overload
     def create(self, original_create, cr, uid, values, context=None):
         if context is None: context = {}
-        if 'changes' not in context: context['changes'] = {}
         id = original_create(self, cr, uid, values, context=context)
         to_be_synchronized = (
             self._name not in MODELS_TO_IGNORE and
@@ -446,7 +444,6 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
     @orm_method_overload
     def write(self, original_write, cr, uid, ids, values, context=None):
         if context is None: context = {}
-        if 'changes' not in context: context['changes'] = {}
         previous_values = self.read(cr, uid, ids, values.keys(), context=context)
         result = original_write(self, cr, uid, ids, values,context=context)
         to_be_synchronized = (
