@@ -112,8 +112,8 @@
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
                         <newline/>
                         <field name="document_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
-                        <field name="date_invoice" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
-                        <field name="register_posting_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
+                        <field name="date_invoice" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
+                        <field name="register_posting_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
                         <field name="reference" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
                         <newline/>
                         <label string="" colspan="4"/>
