@@ -52,6 +52,7 @@ class hq_entries_validation(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('Currency is missing!'))
         if not date:
             date = strftime('%Y-%m-%d')
+        current_date = strftime('%Y-%m-%d')
         # Prepare some values
         res = {}
         counterpart_account_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.counterpart_hq_entries_default_account and \
@@ -103,8 +104,8 @@ class hq_entries_validation(osv.osv_memory):
                         'distribution_id': distrib_id,
                         'currency_id': currency_id,
                         'percentage': 100.0,
-                        'date': line.get('date', False) or current_date,
-                        'source_date': line.get('date', False) or current_date,
+                        'date': line.get('date', current_date),
+                        'source_date': line.get('date', current_date),
                         'destination_id': destination_id,
                     }
                     common_vals.update({'analytic_id': cc_id,})

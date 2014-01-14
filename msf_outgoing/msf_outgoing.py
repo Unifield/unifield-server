@@ -1774,11 +1774,6 @@ class stock_picking(osv.osv):
     #_order = 'origin desc, name asc'
     _order = 'name desc'
 
-    def create(self, cr, uid, vals, context=None):
-        if not 'move_lines' in vals:
-            vals['line_state'] = 'empty'
-        return super(stock_picking, self).create(cr, uid, vals, context=context)
-
     def onchange_move(self, cr, uid, ids, context=None):
         '''
         Display or not the 'Confirm' button on Picking Ticket

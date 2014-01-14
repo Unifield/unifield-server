@@ -35,7 +35,7 @@ class res_company(osv.osv):
             Create a instance for yml test
         """
         if hasattr(super(res_company, self), 'init'):
-            super(msf_instance, self).init(cr)
+            super(res_company, self).init(cr)
 
         mod_obj = self.pool.get('ir.module.module')
         demo = False

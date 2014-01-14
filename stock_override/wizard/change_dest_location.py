@@ -105,7 +105,7 @@ class change_dest_location(osv.osv_memory):
 
                 if move.state not in ('draft', 'confirmed', 'assigned'):
                     show_warn_msg = True
-                    warn_msg += _('Line %s : The state \'%s\' of the move doesn\'t allow a modification of the destination location. \n') % (move.line_number, getSelection(move, 'state'))
+                    warn_msg += _('Line %s : The state \'%s\' of the move doesn\'t allow a modification of the destination location. \n') % (move.line_number, self.getSelection(move, 'state'))
                     continue
 
 
