@@ -833,7 +833,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         del_lines = mem_move_obj.search(cr, uid, [('wizard_pick_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)], context=context)
         mem_move_obj.unlink(cr, uid, del_lines, context=context)
 
-        self.pool.get('stock.picking').write(cr, uid, [simu_id.picking_id.id], {'last_imported_file': simu_id.file_to_import, 'last_imported_filename': 'Incoming Shipment Excel Export.xls'}, context=context)
+        self.pool.get('stock.picking').write(cr, uid, [simu_id.picking_id.id], {'last_imported_file': simu_id.file_to_import, 'last_imported_filename': simu_id.filename}, context=context)
 
         context['from_simu_screen'] = True
         return {'type': 'ir.actions.act_window',
