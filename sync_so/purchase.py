@@ -96,6 +96,7 @@ class purchase_order_sync(osv.osv):
 
         # UTP-661: Get the 'Cross Docking' value of the original PO, and add it into the split PO
         header_result['cross_docking_ok'] = original_po['cross_docking_ok']
+        header_result['location_id'] = original_po.location_id.id
 
         # UTP-952: If the partner is section or intermission, then take the AD from the original PO, not from the source instance
         partner_type = so_po_common.get_partner_type(cr, uid, source, context)
@@ -282,6 +283,11 @@ class purchase_order_sync(osv.osv):
         if partner_type in ['section', 'intermission']:
             del header_result['analytic_distribution_id']
 
+        original_po = self.browse(cr, uid, po_id, context=context)
+        # UTP-661: Get the 'Cross Docking' value of the original PO, and add it into the split PO
+        header_result['cross_docking_ok'] = original_po['cross_docking_ok']
+        header_result['location_id'] = original_po.location_id.id
+
         default = {}
         default.update(header_result)
         
@@ -323,6 +329,11 @@ class purchase_order_sync(osv.osv):
         partner_type = so_po_common.get_partner_type(cr, uid, source, context)
         if partner_type in ['section', 'intermission']:
             del header_result['analytic_distribution_id']
+
+        original_po = self.browse(cr, uid, po_id, context=context)
+        # UTP-661: Get the 'Cross Docking' value of the original PO, and add it into the split PO
+        header_result['cross_docking_ok'] = original_po['cross_docking_ok']
+        header_result['location_id'] = original_po.location_id.id
 
         default = {}
         default.update(header_result)
