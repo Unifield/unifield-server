@@ -264,7 +264,8 @@ class import_data(osv.osv_memory):
                     ids_to_update = []
 
                     if impobj._name == 'product.product':
-                        ids_to_update = impobj.search(cr, uid, [('default_code', '=', data['default_code'])])
+                        # UF-2254: Allow to update the product, use xmlid_code now for searching
+                        ids_to_update = impobj.search(cr, uid, [('xmlid_code', '=', data['xmlid_code'])])                        
                     
                     if ids_to_update:
                         #UF-2170: remove the standard price value from the list for update product case

@@ -245,11 +245,64 @@ class product_product(osv.osv):
                                     type='many2many', relation='product.list', method=True, string='Lists'),
         # we can't write the default_code required because it is used in the product addons
         'default_code' : fields.char('CODE', size=14, select=True),
+        'xmlid_code' : fields.char('Hidden xmlid code', size=64), # UF-2254: this code is only used for xml_id purpose, added ONLY when creating the product
     }
 
     _sql_constraints = [
         ('default_code', "unique(default_code)", 'The "Product Code" must be unique'),
+        ('xmlid_code', "unique(xmlid_code)", 'The xmlid_code must be unique'),
     ]
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        UF-2254: When creating the product, there are 3 different cases:
+         1. the creation comes from the sync, in this case, report any error if duplication on default_code or xmlid_code
+             otherwise, there will be problem with the update later
+         2. from import product menu: the context is empty: default code and xmlid_code must exist and unique 
+         3. manually creation: the default code must be new (no duplication), xmlid_code = valid default_code
+         4. duplication from GUI: the default code XXX is saved, then modify in the write 
+        '''
+        
+        # The first 2 cases: dup of default_code/xmlid_code not allow
+        if context is None or context.get('sync_update_execution', False):
+            if not vals.get('default_code', False) or not vals.get('xmlid_code', False):
+                raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
+            exist_dc = self.search(cr, uid, [('default_code', '=', vals['default_code'])], context=context)
+            exist_xc = self.search(cr, uid, [('xmlid_code', '=', vals['xmlid_code'])], context=context)
+            if exist_dc or exist_xc: # if any of the code exists, report error!
+                raise Exception, "Problem creating product: Duplicate xmlid_code/default_code found"
+        else: # cases 3 and 4
+            if not vals.get('default_code', False):
+                vals['default_code'] = "DEFAULT_CODE"
+                
+            if vals['default_code'] == 'XXX': # duplicate button clicked from GUI
+                vals['xmlid_code'] = "DEFAULT_CODE"
+    
+            # Search for a proper default code
+            exist = self.search(cr, uid, [('default_code', '=', vals['default_code'])], context=context)
+            while exist:            
+                vals['default_code'] = vals['default_code'] + "_1" ### need another solution to make a loop to look for a valid default code
+                exist = self.search(cr, uid, [('default_code', '=', vals['default_code'])], context=context)
+                
+            if 'xmlid_code' not in vals or not vals['xmlid_code']:
+                if vals['default_code']:
+                    vals['xmlid_code'] = vals['default_code']
+                else:
+                    vals['xmlid_code'] = "EMPTY_CODE"
+                
+            # UF-2254: If there is no xmlid_code then just report error for the line
+            exist = self.search(cr, uid, [('xmlid_code', '=', vals['xmlid_code'])], context=context)
+            if exist:
+                cr.execute("SELECT id FROM product_product ORDER BY id DESC LIMIT 1")
+                max_id = 1
+                if cr.rowcount: # get the max id of product table, and add it as suffix of xmlid
+                    max_id = cr.fetchall()[0][0]
+                while exist:
+                    vals['xmlid_code'] = vals['xmlid_code'] + str(max_id) ### need another solution to make a loop to look for a valid default code
+                    exist = self.search(cr, uid, [('xmlid_code', '=', vals['xmlid_code'])], context=context)
+                    max_id = max_id + 1
+            
+        return super(product_product, self).create(cr, uid, vals, context=context)
 
 product_product()
 
