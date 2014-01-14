@@ -32,7 +32,7 @@ class SpreadsheetReport(WebKitParser):
         if not default_name:
             default_name = 'Sheet %s' % (self.total_sheet_number, )
 
-        default_name = default_name[0:sheet_max_size]
+        default_name = default_name[0:sheet_max_size].replace('/','_')
 
         if default_name in self.sheet_name_used:
             default_name = '%s %s'% (default_name[0:sheet_max_size - len('%s' % self.total_sheet_number) - 1], self.total_sheet_number)

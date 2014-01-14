@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="catalogue_import_lines_xls_form_view" model="ir.ui.view">
+            <field name="name">catalogue.import.lines.xls.form.view</field>
+            <field name="model">catalogue.import.lines.xls</field>
+            <field name="type">form</field>
+            <field name="priority" eval="10" />
+            <field name="arch" type="xml">
+                <form string="Import lines to a catalogue">
+                    <separator colspan="4" string="Data" />
+                    <label colspan="4" string="The file should be in XML Spreadsheet 2003 format." align="0.0"/>
+                    <label colspan="4" string="The columns should be in this order : Product Code*, Product UOM*, Min. Qty*, Unit Price*, Rounding, Min. Order Qty, Comment" align="0.0"/>
+                    <label colspan="4" string="The first row will be ignored by the system." align="0.0"/>
+                    <field name="file_to_import" colspan="4" required="1"/>
+                    <separator colspan="4" string="Actions" />
+                    <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
+                    <button name="import_file" string="Import the file" icon="gtk-execute" colspan="2" type="object" />
+                </form>
+            </field>
+        </record>
+
+        <record id="catalogue_import_lines_xls_report_form_view" model="ir.ui.view">
+            <field name="name">catalogue.import.lines.xls.report.form.view</field>
+            <field name="model">catalogue.import.lines.xls</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import lines to a catalogue: report">
+                    <field name="msg" nolabel="1" readonly="1" colspan="4" />
+                    <field name="hide_error" invisible="1" />
+                    <field name="error" nolabel="1" colspan="4" attrs="{'invisible': [('hide_error', '=', True)]}" />
+                    <button string="Ok" name="close" type="object" icon='gtk-ok' colspan="2" />
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>

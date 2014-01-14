@@ -2310,6 +2310,7 @@ msgstr "Sélectionner si vous voulez suivre la création de tout enregistrement 
 #: field:object.query,user_id:0
 #: report:po.line.allocation.report:0
 #: field:tender,creator:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:501
 msgid "Creator"
 msgstr "Créateur"
 
@@ -4905,6 +4906,7 @@ msgstr "A2 7 420 x 594 mm"
 #: field:tender,warehouse_id:0
 #: field:threshold.value,warehouse_id:0
 #: selection:board.note,type:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:519
 msgid "Warehouse"
 msgstr "Entrepôt"
 
@@ -8066,6 +8068,7 @@ msgstr "Registres à créer"
 
 #. module: tender_flow
 #: field:tender,categ:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:517
 msgid "Tender Category"
 msgstr "Catégorie Appel d'Offres"
 
@@ -9749,10 +9752,11 @@ msgstr "Sélectionner Bon de Commande"
 msgid "When doing real-time inventory valuation, counterpart Journal Items for all incoming stock moves will be posted in this account. If not set on the product, the one from the product category is used."
 msgstr "Lors de la valorisation en temps réel de l'inventaire, des lignes d'écritures du Journal de la contrepartie correspondantes à tous les mouvements d'entrée stock seront comptabilisées sous ce compte. Si la valorisation n'est pas établie sur le produit, alors celle de la catégorie du produit sera utilisée.  "
 
-#. modules: msf_doc_import, msf_partner
+#. modules: msf_doc_import, msf_partner, tender_flow
 #: field:wizard.import.fo.line,fo_id:0
 #: field:wizard.import.ir.line,fo_id:0
 #: model:ir.actions.act_window,name:msf_partner.act_res_partner_2_sale_order
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:509
 msgid "Field Order"
 msgstr "Commande de Terrain"
 
@@ -9969,7 +9973,7 @@ msgstr "S. Georgia & S. Sandwich Isls."
 msgid "Module Name"
 msgstr "Nom du Module"
 
-#. modules: register_accounting, msf_field_access_rights, consumption_calculation, kit, analytic_distribution_invoice, msf_button_access_rights, msf_doc_import
+#. modules: register_accounting, msf_field_access_rights, consumption_calculation, kit, analytic_distribution_invoice, msf_button_access_rights, msf_doc_import, tender_flow
 #: field:account.invoice.line,inactive_error:0
 #: field:real.average.consumption.line,inactive_error:0
 #: field:composition.item,inactive_error:0
@@ -9981,8 +9985,9 @@ msgstr "Nom du Module"
 #: field:stock.inventory.line,inactive_error:0
 #: field:msf_field_access_rights.field_access_rule,comment:0
 #: field:wizard.account.invoice.line,inactive_error:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:552
 msgid "Comment"
-msgstr "Comment"
+msgstr "Commentaire"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,state_id:0
@@ -12700,6 +12705,7 @@ msgstr "Espagnol (VE) / Español (VE)"
 
 #. module: tender_flow
 #: field:tender,name:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:507
 msgid "Tender Reference"
 msgstr "Appel d'Offres - Référence"
 
@@ -21639,6 +21645,7 @@ msgstr "Coût Unitaire pour cette ligne de produits"
 #: field:stock.tracking,date:0
 #: view:purchase.order:0
 #: field:tender,creation_date:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:503
 msgid "Creation Date"
 msgstr "Date de création"
 
@@ -26826,7 +26833,7 @@ msgstr "Politique de Piquage"
 msgid "Only technically to filter currencies according to partner type"
 msgstr "Seulement techniquement pour filtrer les devises d'après le type de partenaire"
 
-#. modules: purchase, product, msf_outgoing, purchase_override, purchase_compare_rfq, supplier_catalogue, sale, account, kit, purchase_allocation_report, order_types, register_accounting, stock
+#. modules: purchase, product, msf_outgoing, purchase_override, purchase_compare_rfq, supplier_catalogue, sale, account, kit, purchase_allocation_report, order_types, register_accounting, stock, tender_flow
 #: field:account.invoice.line,price_unit:0
 #: report:account.invoice2:0
 #: field:kit.selection.line,price_unit_kit_selection_line:0
@@ -26853,6 +26860,7 @@ msgstr "Seulement techniquement pour filtrer les devises d'après le type de par
 #: report:lot.stock.overview_all:0
 #: field:stock.move,price_unit:0
 #: field:supplier.catalogue.line,unit_price:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:551
 msgid "Unit Price"
 msgstr "Prix unitaire"
 
@@ -28025,13 +28033,14 @@ msgstr "L'expédition correspondante en mode brouillon (%s) a été mise à jour
 msgid "You selected a nomenclature of the last mandatory level as parent, the new nomenclature's type must be 'optional'."
 msgstr "Vous avez sélectionné une nomenclature du dernier niveau obligatoire en tant que parent, le type de la nouvelle nomenclature doit être «facultatif»."
 
-#. modules: msf_doc_import, account, msf_supply_doc_export
+#. modules: msf_doc_import, account, msf_supply_doc_export, tender_flow
 #: selection:account.journal.column,field:0
 #: field:incoming.import.xml.line,quantity:0
 #: field:purchase.line.import.xml.line,product_qty:0
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:67
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:547
 msgid "Quantity"
-msgstr "Quantity"
+msgstr "Quantité"
 
 #. module: product_asset
 #: report:product.asset:0
@@ -29678,7 +29687,7 @@ msgstr "Ajoute la colonne  devise si la devise n'est pas celle de la société"
 msgid "From confirmed to assigned."
 msgstr "De confirmé à attribué."
 
-#. modules: purchase_allocation_report, procurement_cycle, return_claim, account_msf, supplier_catalogue, mission_stock, analytic_distribution_invoice, purchase_followup, msf_supply_doc_export, stock, product, stock_override, consumption_calculation, kit, msf_doc_import, procurement_report, sales_followup, account, msf_outgoing, product_attributes, sale, sourcing
+#. modules: purchase_allocation_report, procurement_cycle, return_claim, account_msf, supplier_catalogue, mission_stock, analytic_distribution_invoice, purchase_followup, msf_supply_doc_export, stock, product, stock_override, consumption_calculation, kit, msf_doc_import, procurement_report, sales_followup, account, msf_outgoing, product_attributes, sale, sourcing, tender_flow
 #: field:account.analytic.line,product_uom_id:0
 #: field:account.move.line,product_uom_id:0
 #: view:account.invoice:0
@@ -29732,6 +29741,7 @@ msgstr "De confirmé à attribué."
 #: view:stock.production.lot:0
 #: view:stock.move:0
 #: field:pricelist.partnerinfo,uom_id:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:548
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -31916,7 +31926,7 @@ msgstr "Mise à jour de l'entité"
 msgid "Analytic Selector"
 msgstr "Analytic Selector"
 
-#. modules: sales_followup, register_accounting, msf_outgoing, order_nomenclature, consumption_calculation, product_asset, stock_forecast, product_list, msf_supply_doc_export, msf_doc_import
+#. modules: sales_followup, register_accounting, msf_outgoing, order_nomenclature, consumption_calculation, product_asset, stock_forecast, product_list, msf_supply_doc_export, msf_doc_import, tender_flow
 #: code:addons/consumption_calculation/consumption_calculation.py:359
 #: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:66
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:69
@@ -31948,6 +31958,7 @@ msgstr "Analytic Selector"
 #: field:wizard.account.invoice.line,product_code:0
 #: field:sale.order.line.followup,product_id:0
 #: report:stock.forecast.report:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:545
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -32258,6 +32269,7 @@ msgstr "Nouvelle zone"
 
 #. module: tender_flow
 #: field:tender,priority:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:527
 msgid "Tender Priority"
 msgstr "Appel d'Offres - Priorité"
 
@@ -43897,6 +43909,7 @@ msgstr "Piquage Partiel"
 #. module: tender_flow
 #: field:tender,requested_date:0
 #: field:tender.line,date_planned:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:511
 msgid "Requested Date"
 msgstr "Date demandée"
 
@@ -47652,6 +47665,7 @@ msgstr "Zone - Stock"
 #: view:threshold.value:0
 #: field:threshold.value,location_id:0
 #: field:allocation.stock.setup,error_location_ids:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:515
 msgid "Location"
 msgstr "Zone"
 
@@ -55819,7 +55833,7 @@ msgstr "Lignes d'Ecritures Analytiques"
 msgid "Kind of Node"
 msgstr "Sorte de Node"
 
-#. modules: product, msf_outgoing, order_nomenclature, consumption_calculation, product_asset, stock_forecast, product_list, msf_supply_doc_export, msf_doc_import
+#. modules: product, msf_outgoing, order_nomenclature, consumption_calculation, product_asset, stock_forecast, product_list, msf_supply_doc_export, msf_doc_import, tender_flow
 #: code:addons/consumption_calculation/consumption_calculation.py:359
 #: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:67
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:70
@@ -55848,6 +55862,7 @@ msgstr "Sorte de Node"
 #: field:product.list.line,name:0
 #: report:stock.forecast.report:0
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:66
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:546
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -63247,6 +63262,7 @@ msgstr "Statistiques Ecritures Analytiques"
 #: field:international.transport.cost.report,partner_id:0
 #: view:local.transport.cost.report:0
 #: field:local.transport.cost.report,partner_id:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:539
 #, python-format
 msgid "Supplier"
 msgstr "Fournisseur"
@@ -66188,6 +66204,7 @@ msgstr "Traiter Evénement"
 #: field:purchase.order,details:0
 #: field:sale.order,details:0
 #: field:tender,details:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:523
 msgid "Details"
 msgstr "Détails"
 
@@ -68053,15 +68070,17 @@ msgstr "Les pourcentages pour la Ligne Délai de Paiement doit être entre 0 et 
 msgid "Product Templates"
 msgstr "Produit - Modèles"
 
-#. modules: register_accounting, product_nomenclature, msf_field_access_rights, financing_contract, msf_instance, msf_button_access_rights
+#. modules: register_accounting, product_nomenclature, msf_field_access_rights, financing_contract, msf_instance, msf_button_access_rights, tender_flow
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:444
 #: field:msf_button_access_rights.button_access_rule,name:0
 #: field:msf_field_access_rights.field_access_rule,name:0
 #: field:account.target.costcenter,cost_center_name:0
 #: field:product.nomenclature,custom_name:0
 #: report:addons/register_accounting/report/open_advances_xls.mako:152
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:550
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:622
 msgid "Name"
-msgstr "Name"
+msgstr "Nom"
 
 #. module: product_attributes
 #: field:product.product,sterilized:0
@@ -68328,6 +68347,7 @@ msgstr "%s: NONE!"
 #: report:addons/register_accounting/report/cheque_inventory_xls.mako:160
 #: field:wizard.report.currency.table,currency_id:0
 #: field:wizard.register.import.lines,currency_id:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:525
 #, python-format
 msgid "Currency"
 msgstr "Devises"
@@ -73371,3 +73391,32 @@ msgstr "Code du journal"
 msgid "Currency's code"
 msgstr "Code de la monnaie"
 
+#. module: tender_flow
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:494
+msgid "Comparison - Requests for Quotation"
+msgstr "Comparaison - Demandes de Devis"
+
+#. module: tender_flow
+#: model:ir.actions.report.xml,name:tender_flow.report_tender_rfq_comparison_xls
+msgid "Comparison RfQ"
+msgstr "Comparaison Devis"
+
+#. module: tender_flow
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:618
+msgid "Approved by"
+msgstr "Approuvé par"
+
+#. module: tender_flow
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:541
+msgid "Selected Supplier"
+msgstr "Fournisseur Sélectionné"
+
+#. module: tender_flow
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:544
+msgid "Line nr."
+msgstr "Ligne n°"
+
+#. module: tender_flow
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:616
+msgid "Prepared by"
+msgstr "Preparé par"
