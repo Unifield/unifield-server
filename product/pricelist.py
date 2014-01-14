@@ -162,11 +162,10 @@ class product_pricelist(osv.osv):
                     'ORDER BY min_quantity DESC LIMIT 1', (tuple(sinfo),qty_in_product_uom,))
             res2 = cr.dictfetchone()
             if res2:
-                price = currency_obj.compute(cr, uid, supplier_currency,\
-                        res['currency_id'], res2['price'], round=False, context=context)
+                price = self.pool.get('res.currency').compute(cr, uid, supplier_currency,\
+                        res2['currency_id'], res2['price'], round=False, context=context)
         return price, uom_price_already_computed
 
-    #def price_get_multi(self, cr, uid, product_ids, context=None):
     def price_get_multi(self, cr, uid, pricelist_ids, products_by_qty_by_partner, context=None):
         """multi products 'price_get'.
            @param pricelist_ids:
