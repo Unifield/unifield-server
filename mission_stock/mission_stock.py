@@ -55,10 +55,10 @@ class stock_mission_report(osv.osv):
         
         local_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
         
-        for report in self.browse(cr, uid, ids, context=context):
-            res[report.id] = False
-            if report.instance_id.id == local_instance_id:
-                res[report.id] = True
+        for report in self.read(cr, uid, ids, ['instance_id'], context=context):
+            res[report['id']] = False
+            if report['instance_id'] == local_instance_id:
+                res[report['id']] = True
                 
         return res
     
@@ -188,21 +188,21 @@ class stock_mission_report(osv.osv):
 
 
         # Check in each report if new products are in the database and not in the report
-        for report in self.browse(cr, uid, report_ids, context=context):
+        for report in self.read(cr, uid, report_ids, ['local_report', 'fullview'], context=context):
             #self.write(cr, uid, [report.id], {'export_ok': False}, context=context)
             # Create one line by product
             cr.execute('''SELECT id FROM product_product
                         EXCEPT
-                          SELECT product_id FROM stock_mission_report_line WHERE mission_report_id = %s''' % report.id)
+                          SELECT product_id FROM stock_mission_report_line WHERE mission_report_id = %s''' % report['id'])
             for product in cr.fetchall():
-                line_ids.append(line_obj.create(cr, uid, {'product_id': product, 'mission_report_id': report.id}, context=context))
+                line_ids.append(line_obj.create(cr, uid, {'product_id': product, 'mission_report_id': report['id']}, context=context))
             
             # Don't update lines for full view or non local reports
-            if not report.local_report:
+            if not report['local_report']:
                 continue
         
             # Update the update date on report
-            self.write(cr, uid, [report.id], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S'),
+            self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S'),
                                               'export_ok': False}, context=context)
                
             if context.get('update_full_report'):
@@ -210,11 +210,11 @@ class stock_mission_report(osv.osv):
                 if full_view:
                     line_ids = line_obj.search(cr, uid, [('mission_report_id', 'in', full_view)])
                     line_obj.update_full_view_line(cr, uid, line_ids, context=context)
-            elif not report.full_view:
+            elif not report['full_view']:
                 # Update all lines
-                self.update_lines(cr, uid, [report.id])
+                self.update_lines(cr, uid, [report['id']])
 
-            self._get_export_csv(cr, uid, report.id, product_values, context=context)
+            self._get_export_csv(cr, uid, report['id'], product_values, context=context)
 
         # After update of all normal reports, update the full view report
         if not context.get('update_full_report'):
