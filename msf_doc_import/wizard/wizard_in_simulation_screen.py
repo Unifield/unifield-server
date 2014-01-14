@@ -144,6 +144,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         'transport_mode': fields.function(_get_related_values, method=True, string='Transport mode',
                                           readonly=True, type='selection', selection=TRANSPORT_TYPE, multi='related'),
         # Import fields
+        'imp_notes': fields.text(string='Notes', readonly=True),
         'message_esc': fields.text(string='Message ESC', readonly=True),
         'imp_origin': fields.char(size=128, string='Origin', readonly=True),
         'imp_freight_number': fields.char(size=128, string='Freight number', readonly=True),
@@ -537,8 +538,8 @@ class wizard_import_in_simulation_screen(osv.osv):
                 header_values['imp_transport_mode'] = transport_mode
         
                 # Line 6: Notes
-                header_notes = values.get(6, ['', ''])[1]
-                header_values['header_notes'] = header_notes
+                imp_notes = values.get(6, ['', ''])[1]
+                header_values['imp_notes'] = imp_notes
 
                 # Line 7: Message ESC header
                 esc_message = values.get(7, ['', ''])[1]
@@ -833,7 +834,8 @@ class wizard_import_in_simulation_screen(osv.osv):
         del_lines = mem_move_obj.search(cr, uid, [('wizard_pick_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)], context=context)
         mem_move_obj.unlink(cr, uid, del_lines, context=context)
 
-        self.pool.get('stock.picking').write(cr, uid, [simu_id.picking_id.id], {'last_imported_filename': simu_id.filename}, context=context)
+        self.pool.get('stock.picking').write(cr, uid, [simu_id.picking_id.id], {'last_imported_filename': simu_id.filename,
+                                                                                'note': simu_id.imp_notes}, context=context)
 
         context['from_simu_screen'] = True
         return {'type': 'ir.actions.act_window',
