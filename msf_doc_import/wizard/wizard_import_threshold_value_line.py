@@ -28,6 +28,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
 from msf_doc_import import check_line
 from msf_doc_import.wizard import THRESHOLD_LINE_COLUMNS_FOR_IMPORT as columns_for_threshold_line_import
+from msf_doc_import.wizard import ORDER_CYCLE_LINE_COLUMNS_FOR_IMPORT as columns_for_order_cycle_line_import
 
 class wizard_import_threshold_value_line(osv.osv_memory):
     _name = 'wizard.import.threshold.value.line'
@@ -84,16 +85,16 @@ class wizard_import_threshold_value_line(osv.osv_memory):
                       'uom_id': 2,
                       'qty': 3,
                       'threshold_value': 4}
-        
+
         for wiz_browse in self.browse(cr, uid, ids, context):
             rule_browse = wiz_browse.rule_id
             rule_id = rule_browse.id
-            
+
             ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
             line_ignored_num, error_list = [], []
             error_log, message = '', ''
             header_index = context['header_index']
-            
+
             file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
             # iterator on rows
             rows = file_obj.getRows()
@@ -142,12 +143,12 @@ class wizard_import_threshold_value_line(osv.osv_memory):
 
                     if not to_write.get('product_id'):
                         raise osv.except_osv(_('Error'), '\n'.join(x for x in p_value['error_list']))
-    
+
                     # Cell 3: UoM
                     uom_value = {}
                     uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, cell_nb=cell_index['uom_id'], context=context)
                     to_write.update({'product_uom_id': uom_value['uom_id'], 'error_list': uom_value['error_list']})
-                    
+
                     if not to_write.get('product_uom_id') or to_write.get('uom_id') == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]:
                         raise osv.except_osv(_('Error'), '\n'.join(x for x in p_value['error_list']))
 
@@ -187,14 +188,14 @@ class wizard_import_threshold_value_line(osv.osv_memory):
                         if round_qty.get('warning', {}).get('message'):
                             to_write.update({'fixed_threshold_value': round_qty['value']['fixed_threshold_value']})
                             message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
-    
+
                     line_id = rule_line_obj.create(cr, uid, to_write, context)
                     rule_line_obj.write(cr, uid, [line_id], {'product_id': to_write['product_id']}, context)
                     if 'error_list' in to_write and to_write['error_list']:
                         lines_to_correct += 1
                     percent_completed = float(line_num)/float(total_line_num-1)*100.0
                     complete_lines += 1
-                        
+
                 except IndexError, e:
                     error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
@@ -226,13 +227,13 @@ class wizard_import_threshold_value_line(osv.osv_memory):
                         cr.commit()
             # Write the parent rule to recompute threshold value of imported lines
             rule_obj.write(cr, uid, [rule_id], {'compute_method': rule_browse.compute_method}, context=context)
-        
+
         error_log += '\n'.join(error_list)
         if error_log:
             error_log = _("Reported errors for ignored lines : \n") + error_log
         end_time = time.time()
         total_time = str(round(end_time-start_time)) + _(' second(s)')
-        final_message = _(''' 
+        final_message = _('''
 Importation completed in %s!
 # of imported lines : %s on %s lines
 # of ignored lines: %s
