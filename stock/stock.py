@@ -1979,6 +1979,20 @@ class stock_move(osv.osv):
         '''
         return False
 
+    def _create_chained_picking_internal_request(self, cr, uid, context=None, *args, **kwargs):
+        '''
+        Overrided in delivery_mechanism to create an OUT instead of or in plus of the INT at reception
+        '''
+        pickid = kwargs['picking']
+        picking_obj = self.pool.get('stock.picking')
+        wf_service = netsvc.LocalService("workflow")
+        wf_service.trg_validate(uid, 'stock.picking', pickid, 'button_confirm', cr)
+        wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_assign', cr)
+        # Make the stock moves available
+        picking_obj.action_assign(cr, uid, [pickid], context=context)
+        picking_obj.log_picking(cr, uid, [pickid], context=context)
+        return
+
     def create_chained_picking(self, cr, uid, moves, context=None):
         res_obj = self.pool.get('res.company')
         location_obj = self.pool.get('stock.location')
@@ -2024,11 +2038,7 @@ class stock_move(osv.osv):
                 })
                 new_moves.append(self.browse(cr, uid, [new_id])[0])
             if pickid:
-                wf_service.trg_validate(uid, 'stock.picking', pickid, 'button_confirm', cr)
-                wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_assign', cr)
-                # Make the stock moves available
-                picking_obj.action_assign(cr, uid, [pickid], context=context)
-                picking_obj.log_picking(cr, uid, [pickid], context=context)
+                self._create_chained_picking_internal_request(cr, uid, context=context, picking=pickid)
         if new_moves:
             new_moves += self.create_chained_picking(cr, uid, new_moves, context)
         return new_moves
