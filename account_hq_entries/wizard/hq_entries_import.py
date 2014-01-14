@@ -86,12 +86,20 @@ class hq_entries_import_wizard(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('More than one period found for given date: %s') % (line_date,))
         period_id = period_ids[0]
         vals.update({'period_id': period_id, 'date': line_date})
+        dd = False
         if document_date:
             try:
                 dd = self.parse_date(document_date)
                 vals.update({'document_date': dd})
             except ValueError, e:
                 raise osv.except_osv(_('Error'), _('Wrong format for date: %s: %s') % (document_date, e))
+        # [utp-928] 
+        # Make it impossible to import HQ entries where Doc Date > Posting Date,
+        # it will spare trouble at HQ entry validation.
+        if dd and line_date and dd > line_date:
+            raise osv.except_osv(_('Error'),
+                                  _('Document date "%s" is greater than Posting date "%s"') % (document_date, line_date)
+            )
         # Retrieve account
         if account_description:
             account_data = account_description.split(' ')
@@ -105,6 +113,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         else:
             raise osv.except_osv(_('Error'), _('No account code found!'))
         # Retrieve Destination
+        aa_check_ids = []
         destination_id = False
         account = acc_obj.browse(cr, uid, account_ids[0])
         if account.user_type.code == 'expense':
@@ -119,6 +128,8 @@ class hq_entries_import_wizard(osv.osv_memory):
                     destination_id = dest_id[0]
                 else:
                     raise osv.except_osv(_('Error'), _('Destination "%s" doesn\'t exist!') % (destination,))
+            if destination_id:
+                aa_check_ids.append(destination_id)
         # Retrieve Cost Center and Funding Pool
         cc_id = False
         if cost_center:
@@ -126,6 +137,8 @@ class hq_entries_import_wizard(osv.osv_memory):
             if not cc_id:
                 raise osv.except_osv(_('Error'), _('Cost Center "%s" doesn\'t exist!') % (cost_center,))
             cc_id = cc_id[0]
+            if cc_id:
+                aa_check_ids.append(cc_id)
         # Retrieve Funding Pool
         if funding_pool:
             fp_id = anacc_obj.search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool), ('category', '=', 'FUNDING')])
@@ -137,6 +150,9 @@ class hq_entries_import_wizard(osv.osv_memory):
                 fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
             except ValueError:
                 fp_id = 0
+        if fp_id:
+            aa_check_ids.append(fp_id)
+
         # Retrive Free 1 / Free 2
         free1_id = False
         free2_id = False
@@ -145,12 +161,38 @@ class hq_entries_import_wizard(osv.osv_memory):
             if not free1_id:
                 raise osv.except_osv(_('Error'), _('Free 1 "%s" doesn\'t exist!') % (free1,))
             free1_id = free1_id[0]
+            aa_check_ids.append(free1_id)
         if free2:
             free2_id = anacc_obj.search(cr, uid, ['|', ('code', '=', free2), ('name', '=', free2), ('category', '=', 'FREE2')])
             if not free2_id:
                 raise osv.except_osv(_('Error'), _('Free 2 "%s" doesn\'t exist!') % (free2,))
             free2_id = free2_id[0]
+            aa_check_ids.append(free2_id)
         vals.update({'destination_id_first_value': destination_id, 'destination_id': destination_id, 'cost_center_id': cc_id, 'analytic_id': fp_id, 'cost_center_id_first_value': cc_id, 'analytic_id_first_value': fp_id, 'free_1_id': free1_id, 'free_2_id': free2_id,})
+        
+        # [utp-928] do not import line with a 
+        # 'Destination' or 'Cost Center' or 'Funding Pool', 
+        # of type 'view'
+        aa_check_errors = []
+        aa_check_category_map = {
+            'OC': 'Cost Center',
+            'FUNDING': 'Funding Pool',
+            'DEST': 'Destination',
+            'FREE1': 'Free 1',
+            'FREE2': 'Free 2',
+        }
+        if aa_check_ids:
+            for aa_r in anacc_obj.read(cr, uid, aa_check_ids,
+                                       ['code', 'name', 'type', 'category']):
+                if aa_r['type'] and aa_r['type'] == 'view':
+                    category = ''
+                    if aa_r['category']:
+                        if aa_r['category'] in aa_check_category_map:
+                            category += aa_check_category_map[aa_r['category']] + ' '
+                    aa_check_errors.append('%s"%s - %s" of type "view" is not allowed for import' % (category, aa_r['code'], aa_r['name']))
+        if aa_check_errors:
+            raise osv.except_osv(_('Error'), ", ".join(aa_check_errors))
+        
         # Fetch description
         if description:
             vals.update({'name': description})
