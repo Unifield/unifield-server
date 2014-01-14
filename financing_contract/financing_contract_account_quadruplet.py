@@ -55,6 +55,7 @@ class financing_contract_account_quadruplet(osv.osv):
         return res
 
     def _search_used_in_contract(self, cr, uid, obj, name, args, context=None):
+        # TODO: method not tested
         if not args:
             return []
         if context is None:
@@ -76,9 +77,6 @@ class financing_contract_account_quadruplet(osv.osv):
                     exclude += [x[0] for x in cr.fetchall()]
                 for account_quadruplet in line.account_quadruplet_ids:
                     exclude.append(account_quadruplet.id)
-        for id in ids:
-            res[id] = id in exclude
-
         return [('id', 'not in', exclude)]
 
     _columns = {
