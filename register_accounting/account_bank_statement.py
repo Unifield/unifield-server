@@ -1861,25 +1861,26 @@ class account_bank_statement_line(osv.osv):
         for absl in self.browse(cr, uid, ids, context=context):
             if absl.state == "hard":
                 raise osv.except_osv(_('Warning'), _('You can\'t re-post a hard posted entry !'))
-            elif absl.state == "temp" and postype == "temp":
+            elif absl.state == "temp" and postype == "temp" and absl.direct_invoice == False:
                 raise osv.except_osv(_('Warning'), _('You can\'t temp re-post a temp posted entry !'))
+            
+            if not absl.direct_invoice:
+                # Some checks
+                ## Journal presence for transfers cases - because of UF-1982 migration without journals
+                if absl.account_id.type_for_register in ['transfer', 'transfer_same'] and not absl.transfer_journal_id:
+                    raise osv.except_osv(_('Error'), _('Please give a transfer journal!'))
+                ## Employee presence for operational advance
+                if absl.account_id.type_for_register == 'advance' and not absl.employee_id:
+                    raise osv.except_osv(_('Error'), _('Please give an employee!'))
+                ## Analytic distribution presence
+                if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
+                    raise osv.except_osv(_('Error'), _('Analytic distribution is mandatory for this line: %s') % (absl.name or '',))
+                # Check analytic distribution validity
+                if absl.account_id.user_type.code in ['expense'] and absl.analytic_distribution_state != 'valid' and not context.get('from_yml'):
+                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for this line: %s') % (absl.name or '',))
 
-            # Some checks
-            ## Journal presence for transfers cases - because of UF-1982 migration without journals
-            if absl.account_id.type_for_register in ['transfer', 'transfer_same'] and not absl.transfer_journal_id:
-                raise osv.except_osv(_('Error'), _('Please give a transfer journal!'))
-            ## Employee presence for operational advance
-            if absl.account_id.type_for_register == 'advance' and not absl.employee_id:
-                raise osv.except_osv(_('Error'), _('Please give an employee!'))
-            ## Analytic distribution presence
-            if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
-                raise osv.except_osv(_('Error'), _('Analytic distribution is mandatory for this line: %s') % (absl.name or '',))
-            # Check analytic distribution validity
-            if absl.account_id.user_type.code in ['expense'] and absl.analytic_distribution_state != 'valid' and not context.get('from_yml'):
-                raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for this line: %s') % (absl.name or '',))
-
-            if absl.is_down_payment and not absl.down_payment_id:
-                raise osv.except_osv(_('Error'), _('You need to specify a PO before temp posting the Down Payment!'))
+                if absl.is_down_payment and not absl.down_payment_id:
+                    raise osv.except_osv(_('Error'), _('You need to specify a PO before temp posting the Down Payment!'))
 
             if absl.state == "draft":
                 if postype == 'hard' and absl.direct_invoice:
@@ -1888,10 +1889,11 @@ class account_bank_statement_line(osv.osv):
                     self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
                     # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
                     absl = self.browse(cr, uid, absl.id, context=context)
+
                 
             
             if postype == 'temp' and absl.direct_invoice:  #utp-917
-                self.write(cr, uid, [absl.id], {'direct_state':'draft'}, context=context)
+                self.write(cr, uid, [absl.id], {'direct_state':'temp'}, context=context)
                 # create the accounting entries
                 account_invoice = self.pool.get('account.invoice')
                 account_invoice.action_open_invoice(cr, uid, [absl.invoice_id.id], context=context)

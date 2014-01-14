@@ -65,7 +65,7 @@
                                 <button string="Compute Total" name="compute_wizard" type="object" icon='gtk-execute' colspan="4"/>
                                 <group col="6" colspan="4">
                                     <button name="invoice_reset_wizard" string="Reset Invoice" icon="gtk-cancel" type="object" attrs="{'invisible':['|', ('partner_id','=',False), ('date_invoice','=',False)]}"/>
-                                    <button name="invoice_create_wizard" string="Validate" icon="terp-camera_test" type="object"/>
+                                    <button name="invoice_create_wizard" string="Validates" icon="terp-camera_test" type="object"/>
                                 </group>
                             </group>
                         </page>
@@ -112,8 +112,8 @@
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
                         <newline/>
                         <field name="document_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
-                        <field name="date_invoice" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
-                        <field name="register_posting_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
+                        <field name="date_invoice" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
+                        <field name="register_posting_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
                         <field name="reference" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
                         <newline/>
                         <label string="" colspan="4"/>
@@ -257,7 +257,7 @@
                     </field>
                     <button name="action_cancel_draft" position="replace"/>
                     <button name='invoice_open' position="replace">
-                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
+                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validatesfc2" icon="gtk-go-forward"/>
                     </button>
                 </data>
             </field>

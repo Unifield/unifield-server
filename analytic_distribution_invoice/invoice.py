@@ -83,7 +83,7 @@ class account_invoice(osv.osv):
     def _direct_invoice_updated(self, cr, uid, ids, context=None):
         """
         User has updated the direct invoice. The (parent) statement line needs to be updated, and then 
-        the move lines deleted and re-created. Tickets utp917
+        the move lines deleted and re-created. Tickets utp917. Sheer madness.
         """
         
         # get object handles
@@ -93,6 +93,11 @@ class account_invoice(osv.osv):
         
         # get statement line id
         absl = direct_invoice.register_line_ids[0]
+        
+        if (direct_invoice.document_date != absl.document_date) or (direct_invoice.partner_id != absl.partner_id):
+            account_bank_statement_line.write(cr, uid, [absl.id], {'document_date': direct_invoice.document_date, \
+                                                                   'partner_id': direct_invoice.partner_id.id },     \
+                                                                   context=context)
         
         # Delete moves
         # existing seqnums are saved into context here. utp917
