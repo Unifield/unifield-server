@@ -24,6 +24,8 @@ from osv import osv
 import pooler
 from report_webkit.webkit_report import WebKitParser
 import xml.sax.saxutils
+from tools.translate import _
+
 
 class report_local_expenses(WebKitParser):
     _name = 'report.local.expenses'
