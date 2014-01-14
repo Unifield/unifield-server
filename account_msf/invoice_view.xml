@@ -283,7 +283,7 @@
                             <field name="name" string="Reference"/>
                             <newline/>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'is_intermission': True}">
-                                <tree editable="top" string="Intermission Voucher Lines">
+                                <tree string="Intermission Voucher Lines">
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
                                     <field name="name"/>
@@ -301,6 +301,21 @@
                                     <field name="inactive_product" invisible="1" />
                                     <field name="inactive_error" invisible="1" />
                                 </tree>
+                                <form string="Intermission Voucher Lines">
+                                    <notebook>
+                                        <page string="Line">
+                                            <field name="name"/>
+                                            <field name="account_id" domain="[('type', '!=', 'view')]"/>
+                                            <field name="quantity"/>
+                                            <field name="uos_id" string="UOM"/>
+                                            <field name="price_unit"/>
+                                            <field name="price_subtotal"/>
+                                        </page>
+                                        <page string="Notes">
+                                            <field name="note" nolabel="1" colspan="4"/>
+                                        </page>
+                                    </notebook>
+                                </form>
                             </field>
                             <group col="8" colspan="4">
                                 <label string="" colspan="3"/>
