@@ -23,6 +23,7 @@ from osv import osv
 from osv import fields
 import logging
 import tools
+import time
 from mx.DateTime import *
 from os import path
 from tools.translate import _
@@ -90,6 +91,7 @@ class purchase_order(osv.osv):
 
     _columns = {
         'import_in_progress': fields.boolean(string='Importing'),
+        'import_filenames': fields.one2many('purchase.order.simu.import.file', 'order_id', string='Imported files', readonly=True),
     }
 
     _defaults = {
@@ -491,3 +493,20 @@ class wizard_export_po_validated(osv.osv_memory):
             return order_obj.export_excel_po_integration(cr, uid, wiz.order_id.id, context=context)
 
 wizard_export_po_validated()
+
+
+class purchase_order_simu_import_file(osv.osv):
+    _name = 'purchase.order.simu.import.file'
+    _order = 'timestamp'
+
+    _columns = {
+        'order_id': fields.many2one('purchase.order', string='Order', required=True),
+        'filename': fields.char(size=256, string='Filename', required=True),
+        'timestamp': fields.datetime(string='Date', required=True),
+    }
+
+    _defaults = {
+        'timestamp': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+    }
+
+purchase_order_simu_import_file()

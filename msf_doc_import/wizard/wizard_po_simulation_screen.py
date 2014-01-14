@@ -956,6 +956,10 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'import_progress', 'percent_completed': 0.00}, context=context)
+        for wiz in self.browse(cr, uid, ids, context=context):
+            filename = wiz.filename.split('\\')[-1]
+            self.pool.get('purchase.order.simu.import.file').create(cr, uid, {'order_id': wiz.order_id.id,
+                                                                              'filename': filename,}, context=context)
         cr.commit()
         new_thread = threading.Thread(target=self.run_import, args=(cr.dbname, uid, ids, context))
         new_thread.start()
