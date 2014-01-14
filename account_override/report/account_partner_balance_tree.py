@@ -104,13 +104,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
     def _get_partners_total_debit_credit_balance_by_account_type(self, account_type, data):
         return self.apbt_obj.get_partners_total_debit_credit_balance_by_account_type(self.cr, self.uid, account_type, data)
 
-    def _get_account(self, data):
-        if data['model'] == 'account.account':
-            return self.pool.get('account.account').browse(self.cr, self.uid, data['form']['id']).company_id.name
-        if data.get('form', False) and data['form'].get('chart_account_id', False):
-            return self.pool.get('account.account').browse(self.cr, self.uid, data['form']['chart_account_id']).name
-        return ''
-
     def _get_filter_info(self, data):
         """ get filter info
         _get_filter, _get_start_date, _get_end_date,
