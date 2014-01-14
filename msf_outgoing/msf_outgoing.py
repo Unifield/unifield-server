@@ -3692,6 +3692,8 @@ class sale_order(osv.osv):
                 move_data['move_cross_docking_ok'] = True
                 # Update the stock.picking
                 self.pool.get('stock.picking').write(cr, uid, move_data['picking_id'], {'cross_docking_ok': True}, context=context)
+            elif sale_line.type == 'make_to_stock':
+                move_data['location_id'] = sale_line.location_id and sale_line.location_id.id or order.shop_id.warehouse_id.lot_stock_id.id
 
         move_data['state'] = 'confirmed'
         return move_data

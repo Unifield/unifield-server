@@ -93,9 +93,11 @@ class sourcing_line(osv.osv):
         for sl in self.browse(cr, uid, ids, context):
             product_context = context
             if sl.product_id:
-                real_stock = sl.product_id.qty_available
+                real_stock = sl.real_stock
                 product_context = context
                 product_context.update({'states': ('assigned',), 'what': ('out',)})
+                if sl.type == 'make_to_stock' and sl.location_id:
+                    product_context.update({'location': sl.location_id.id})
                 productId = productObj.get_product_available(cr, uid, [sl.product_id.id], context=product_context)
                 res = real_stock + productId.get(sl.product_id.id, 0.00)
             else:
@@ -124,10 +126,13 @@ class sourcing_line(osv.osv):
         for sl in self.browse(cr, uid, ids, context):
             product_context = context
             rts = sl.rts < time.strftime('%Y-%m-%d') and time.strftime('%Y-%m-%d') or sl.rts
+            if sl.type == 'make_to_stock' and sl.location_id:
+                location_ids = sl.location_id.id
             product_context.update({'location': location_ids, 'to_date': '%s 23:59:59' % rts})
             if sl.product_id:
                 product_virtual = productObj.browse(cr, uid, sl.product_id.id, context=product_context)
-                res = product_virtual.virtual_available
+                res = {'real_stock': product_virtual.qty_available, 
+                       'virtual_stock': product_virtual.virtual_available}
             else:
                 res = 0.00
 
@@ -297,8 +302,9 @@ class sourcing_line(osv.osv):
         'sale_order_line_state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, store=False),
         'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', readonly=True, states={'draft': [('readonly', False)]}),
         'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT', readonly=True, states={'draft': [('readonly', False)]}),
-        'real_stock': fields.related('product_id', 'qty_available', type='float', string='Real Stock', readonly=True),
-        'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        #'real_stock': fields.related('product_id', 'qty_available', type='float', string='Real Stock', readonly=True),
+        'real_stock': fields.function(_getVirtualStock, method=True, type='float', string='Real Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True, multi='stock_qty'),
+        'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True, multi='stock_qty'),
         'available_stock': fields.function(_getAvailableStock, method=True, type='float', string='Available Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'stock_uom_id': fields.related('product_id', 'uom_id', string='UoM', type='many2one', relation='product.uom'),
         'supplier': fields.many2one('res.partner', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}, domain=[('supplier', '=', True)]),
@@ -315,13 +321,33 @@ class sourcing_line(osv.osv):
         # UTP-392: if the FO is loan type, then the procurement method is only Make to Stock allowed        
         'loan_type': fields.function(_get_sourcing_vals, method=True, type='boolean', multi='get_vals_sourcing',),
         'sale_order_in_progress': fields.function(_get_sourcing_vals, method=True, type='boolean', multi='get_vals_sourcing'),
+        # UTP-965 : Select a source stock location for line in make to stock
+        'location_id': fields.many2one('stock.location', string='Location'),
     }
     _order = 'sale_order_id desc, line_number'
     _defaults = {
              'name': lambda self, cr, uid, context=None: self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),
              'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
-    
+
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Set the location_id with the stock location of the warehouse of the order of the line
+        '''
+        # Objects
+        warehouse_obj = self.pool.get('stock.warehouse')
+
+        res = super(sourcing_line, self).default_get(cr, uid, fields, context=context)
+
+        if res is None:
+            res = {}
+
+        warehouse = warehouse_obj.search(cr, uid, [], context=context)
+        if warehouse:
+            res['location_id'] = warehouse_obj.browse(cr, uid, warehouse[0], context=context).lot_stock_id.id
+
+        return res
+
     def _check_line_conditions(self, cr, uid, ids, context=None):
         '''
         Check if the line have good values
@@ -365,6 +391,10 @@ class sourcing_line(osv.osv):
                 # Check product constraints (no external supply, no storage...)
                 check_fnct = self.pool.get('product.product')._get_restriction_error
                 self._check_product_constraints(cr, uid, line.type, line.po_cft, line.product_id.id, line.supplier.id, check_fnct, context=context)
+
+            if line.sale_order_id and line.sale_order_id.procurement_request and line.type == 'make_to_stock':
+                if line.sale_order_id.location_requestor_id.id == line.location_id.id:
+                    raise osv.except_osv(_('Warning'), _("You cannot choose a source location which is the destination location of the Internal Request"))
 
         return True
 
@@ -454,6 +484,10 @@ class sourcing_line(osv.osv):
                     pocft = False
                     values.update({'po_cft': pocft, 'supplier': False})
                     vals.update({'po_cft': pocft, 'supplier': False})
+
+                # location_id
+                if 'location_id' in values:
+                    vals.update({'location_id': values['location_id']})
                 
                 # partner_id
                 if 'supplier' in values:
@@ -485,6 +519,40 @@ class sourcing_line(osv.osv):
         res = super(sourcing_line, self).write(cr, uid, ids, values, context=context)
         self._check_line_conditions(cr, uid, ids, context)
         return res
+
+    def onChangeLocation(self, cr, uid, ids, location_id, product_id, rts, sale_order_id):
+        '''
+        Compute the stock values according to parameters
+        '''
+        prod_obj = self.pool.get('product.product')
+
+        res = {'value': {}}
+
+        if not location_id or not product_id:
+            return res
+
+        if sale_order_id:
+            so = self.pool.get('sale.order').browse(cr, uid, sale_order_id)
+            if so.procurement_request and so.location_requestor_id.id == location_id:
+                return {'value': {'location_id': False,
+                                  'real_stock': 0.00,
+                                  'virtual_stock': 0.00,
+                                  'available_stock': 0.00},
+                        'warning': {'title': _('Warning'),
+                                    'message': _('You cannot choose a source location which is the destination location of the Internal request')}}
+        
+        rts = rts < time.strftime('%Y-%m-%d') and time.strftime('%Y-%m-%d') or rts
+        ctx = {'location': location_id, 'to_date': '%s 23:59:59' % rts}
+        product = prod_obj.browse(cr, uid, product_id, context=ctx)
+        res['value']['real_stock'] = product.qty_available
+        res['value']['virtual_stock'] = product.virtual_available
+
+        ctx2 = {'states': ('assigned',), 'what': ('out',), 'location': location_id}
+        product2 = prod_obj.get_product_available(cr, uid, [product_id], context=ctx2)
+        res['value']['available_stock'] = res['value']['real_stock'] + product2.get(product_id, 0.00)
+
+        return res
+        
     
     def onChangePoCft(self, cr, uid, id, po_cft, order_id=False, partner_id=False, context=None):
         '''
@@ -518,7 +586,7 @@ class sourcing_line(osv.osv):
 
         return res
     
-    def onChangeType(self, cr, uid, id, type, context=None):
+    def onChangeType(self, cr, uid, id, type, location_id=False, context=None):
         '''
         if type == make to stock, change pocft to False
         '''
@@ -536,6 +604,12 @@ class sourcing_line(osv.osv):
                                 'message': _('You cannot choose \'from stock\' as method to source a %s product !') % product_type})
 
         if type == 'make_to_stock':
+            if not location_id:
+                wh_obj = self.pool.get('stock.warehouse')
+                wh_ids = wh_obj.search(cr, uid, [], context=context)
+                if wh_ids:
+                    value.update({'location_id': wh_obj.browse(cr, uid, wh_ids[0], context=context).lot_stock_id.id})
+
             value.update({'po_cft': False})
 
             if id and isinstance(id, list):
@@ -549,6 +623,8 @@ class sourcing_line(osv.osv):
                     res, error = self._check_product_constraints(cr, uid, type, line.po_cft, line.product_id.id, False, check_fnct, field_name='type', values=res, vals={'constraints': ['storage']}, context=context)
                     if error:
                         return res
+        elif type == 'make_to_order':
+            value.update({'location_id': False})
     
         return {'value': value, 'warning': message}
     
@@ -936,6 +1012,7 @@ class sale_order_line(osv.osv):
                 'po_cft': fields.selection(_SELECTION_PO_CFT, string="PO/CFT"),
                 'supplier': fields.many2one('res.partner', 'Supplier'),
                 'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_line_id', 'Sourcing Lines'),
+                'location_id': fields.many2one('stock.location', string='Location'),
                 }
     
     def create(self, cr, uid, vals, context=None):
@@ -1127,6 +1204,8 @@ class sale_order_line(osv.osv):
                 values.update({'product_id': vals['product_id']})
             if 'line_number' in vals:
                 values.update({'line_number': vals['line_number']})
+            if 'location_id' in vals:
+                values.update({'location_id': vals['location_id']})
             
             # If lines are modified after the validation of the FO, update
             # lines values if the order is a loan
