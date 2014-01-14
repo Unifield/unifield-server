@@ -72,7 +72,7 @@ class account_account(osv.osv):
         return arg
 
     #@@@override account.account_account.__compute
-    def _compute(self, cr, uid, ids, field_names, arg=None, context=None,
+    def __compute(self, cr, uid, ids, field_names, arg=None, context=None,
                   query='', query_params=()):
         """ compute the balance, debit and/or credit for the provided
         account ids
@@ -135,7 +135,7 @@ class account_account(osv.osv):
             else:
                 prefilters += "AND l.move_id = m.id AND m.state in ('posted', 'draft')"
             # Notifications
-            self.logger.notifyChannel('addons.'+self._name, netsvc.LOG_DEBUG,
+            self.logger.notifyChannel('account_override.'+self._name, netsvc.LOG_DEBUG,
                                       'Filters: %s'%filters)
             # IN might not work ideally in case there are too many
             # children_and_consolidated, in that case join on a
@@ -152,7 +152,7 @@ class account_account(osv.osv):
                        " GROUP BY l.account_id")
             params = (tuple(children_and_consolidated),) + query_params
             cr.execute(request, params)
-            self.logger.notifyChannel('addons.'+self._name, netsvc.LOG_DEBUG,
+            self.logger.notifyChannel('account_override.'+self._name, netsvc.LOG_DEBUG,
                                       'Status: %s'%cr.statusmessage)
 
             for res in cr.dictfetchall():
@@ -164,15 +164,6 @@ class account_account(osv.osv):
             currency_obj = self.pool.get('res.currency')
             while brs:
                 current = brs[0]
-#                can_compute = True
-#                for child in current.child_id:
-#                    if child.id not in sums:
-#                        can_compute = False
-#                        try:
-#                            brs.insert(0, brs.pop(brs.index(child)))
-#                        except ValueError:
-#                            brs.insert(0, child)
-#                if can_compute:
                 brs.pop(0)
                 for fn in field_names:
                     sums.setdefault(current.id, {})[fn] = accounts.get(current.id, {}).get(fn, 0.0)
@@ -335,7 +326,7 @@ class account_account(osv.osv):
         'is_analytic_addicted': fields.function(_get_is_analytic_addicted, fnct_search=_search_is_analytic_addicted, method=True, type='boolean', string='Analytic-a-holic?', help="Is this account addicted on analytic distribution?", store=False, readonly=True),
         'restricted_area': fields.function(_get_restricted_area, fnct_search=_search_restricted_area, type='boolean', method=True, string="Is this account allowed?"),
         'cash_domain': fields.function(_get_fake_cash_domain, fnct_search=_search_cash_domain, method=True, type='boolean', string="Domain used to search account in journals", help="This is only to change domain in journal's creation."),
-        'balance': fields.function(_compute, digits_compute=dp.get_precision('Account'), method=True, string='Balance', multi='balance'),
+        'balance': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Balance', multi='balance'),
     }
 
     _defaults = {
