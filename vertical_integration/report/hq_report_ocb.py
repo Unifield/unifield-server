@@ -243,8 +243,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 """,
             # Pay attention to take analytic line that are not on HQ and MIGRATION journals.
             'rawdata': """
-                SELECT al.id, al.entry_sequence, al.name, al.ref, al.document_date, al.date, a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, CASE WHEN al.amount_currency < 0 THEN ABS(al.amount_currency) ELSE 0.0 END AS debit, CASE WHEN al.amount_currency > 0 THEN al.amount_currency ELSE 0.0 END AS credit, c.name AS "booking_currency", CASE WHEN al.amount < 0 THEN ABS(al.amount) ELSE 0.0 END AS debit, CASE WHEN al.amount > 0 THEN al.amount ELSE 0.0 END AS credit, cc.name AS "functional_currency"
-                FROM account_analytic_line AS al, account_account AS a, account_analytic_account AS aa, account_analytic_account AS aa2, account_analytic_account AS aa3, res_currency AS c, res_company AS e, res_currency AS cc, account_analytic_journal AS j
+                SELECT al.id, al.entry_sequence, al.name, al.ref, al.document_date, al.date, a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS debit, CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS credit, c.name AS "booking_currency", CASE WHEN al.amount < 0 THEN ABS(al.amount) ELSE 0.0 END AS debit, CASE WHEN al.amount > 0 THEN al.amount ELSE 0.0 END AS credit, cc.name AS "functional_currency"
+                FROM account_analytic_line AS al, account_account AS a, account_analytic_account AS aa, account_analytic_account AS aa2, account_analytic_account AS aa3, res_currency AS c, res_company AS e, res_currency AS cc, account_analytic_journal AS j, account_move_line AS aml
                 WHERE al.destination_id = aa.id
                 AND al.cost_center_id = aa2.id
                 AND al.account_id = aa3.id
@@ -254,6 +254,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND al.company_id = e.id
                 AND e.currency_id = cc.id
                 AND al.journal_id = j.id
+                AND al.move_id = aml.id
                 AND al.date >= %s
                 AND al.date <= %s
                 AND j.type not in ('hq', 'migration')
