@@ -93,7 +93,7 @@
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Order Reference')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.order_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Order Type')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Creation Date')}</Data></Cell>
         % if o.order_id.date_order not in ('False', False):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(o.order_id.date_order)|n}T00:00:00.000</Data></Cell>
         % else:
