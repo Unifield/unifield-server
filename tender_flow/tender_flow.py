@@ -1019,11 +1019,8 @@ class procurement_order(osv.osv):
         tell if the corresponding sale order line is tender/rfq sourcing or not
         '''
         result = {}
-        for id in ids:
-            result[id] = False
-            
         for proc in self.browse(cr, uid, ids, context=context):
-            result[proc.id] = {}
+            result[proc.id] = {'is_tender': False, 'is_rfq': False}
             for line in proc.sale_order_line_ids:
                 result[proc.id]['is_tender'] = line.po_cft == 'cft'
                 result[proc.id]['is_rfq'] = line.po_cft == 'rfq'
