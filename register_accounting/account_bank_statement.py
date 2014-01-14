@@ -1067,19 +1067,19 @@ class account_bank_statement_line(osv.osv):
                 # Find and delete all analytic lines for this move
                 ad_ids = []
                 aal_ids = []
-                for aml in account_move_line.browse(cr, uid, move_line_ids):
+                for aml in account_move_line.browse(cr, uid, move_line_ids, context=context):
                     if aml.analytic_distribution_id:
                         ad_ids.append(aml.analytic_distribution_id.id)
                 for ad in analytic_distribution.browse(cr, uid, ad_ids):
                     if ad.analytic_lines:
                         aal_ids.append(ad.analytic_lines[0].id)
                 
-                account_analytic_line.unlink(cr, uid, aal_ids)
-                analytic_distribution.unlink(cr, uid, ad_ids)
+                account_analytic_line.unlink(cr, uid, aal_ids, context=context)
+                analytic_distribution.unlink(cr, uid, ad_ids, context=context)
                     
                 # Save the seqnums and delete the move lines
                 context['seqnums'] = seqnums
-                account_move.unlink(cr, uid, move_ids)
+                account_move.unlink(cr, uid, move_ids, context=context)
         return True
       
 
@@ -1891,7 +1891,7 @@ class account_bank_statement_line(osv.osv):
                 
             
             if postype == 'temp' and absl.direct_invoice:  #utp-917
-                self.write(cr, uid, [absl.id], {'direct_state':'draft'})
+                self.write(cr, uid, [absl.id], {'direct_state':'draft'}, context=context)
                 # create the accounting entries
                 account_invoice = self.pool.get('account.invoice')
                 account_invoice.action_open_invoice(cr, uid, [absl.invoice_id.id], context=context)
