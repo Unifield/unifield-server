@@ -246,7 +246,7 @@
     
     # simulate the compare rfq wizard
     wiz_obj = self.pool.get('wizard.compare.rfq')
-    action_dic = wiz_obj.start_compare_rfq(cr, uid, ids, context=dict(context, active_ids=ids, tender_id=tender_id.id))
+    action_dic = wiz_obj.start_compare_rfq(cr, uid, ids, context=dict(context, active_ids=ids, tender_id=tender_id))
     wiz_id = action_dic['res_id']
     wiz = wiz_obj.browse(cr, uid, wiz_id)
     wiz_line = wiz.line_ids[0]
