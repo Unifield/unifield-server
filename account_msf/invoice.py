@@ -207,9 +207,11 @@ class account_invoice(osv.osv):
                     # get company default currency
                     if user[0].company_id.currency_id:
                         defaults['fake_currency_id'] = user[0].company_id.currency_id.id
+                        defaults['currency_id'] = defaults['fake_currency_id']
                     # get 'intermission counter part' account
                     if user[0].company_id.intermission_default_counterpart:
                         defaults['fake_account_id'] = user[0].company_id.intermission_default_counterpart.id
+                        defaults['account_id'] = defaults['fake_account_id']
                     else:
                         raise osv.except_osv("Error","Company Intermission Counterpart Account must be set")
                 # 'INT' intermission journal
@@ -218,6 +220,7 @@ class account_invoice(osv.osv):
                     if isinstance(int_journal_id, (int, long)):
                         int_journal_id = [int_journal_id]
                     defaults['fake_journal_id'] = int_journal_id[0]
+                    defaults['journal_id'] = defaults['fake_journal_id']
         return defaults
 
     def log(self, cr, uid, id, message, secondary=False, context=None):
