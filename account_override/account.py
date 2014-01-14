@@ -310,8 +310,6 @@ class account_account(osv.osv):
             else:
                 raise osv.except_osv(_('Error'), _('Operation not implemented!'))
         return arg
-=======
->>>>>>> MERGE-SOURCE
 
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
