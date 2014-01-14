@@ -410,18 +410,6 @@ class procurement_request_line(osv.osv):
         
         return res
     
-    def write(self, cr, uid, ids, vals, context):
-        """
-        Check if product or comment exist and set the the fields required accordingly.
-        """
-        if context is None:
-            context = {}
-        if vals.get('product_id', False):
-            vals.update({'comment_ok': True})
-        if vals.get('comment', False):
-            vals.update({'product_ok': True})
-        return super(procurement_request_line, self).write(cr, uid, ids, vals, context=context)
-    
     def create(self, cr, uid, vals, context=None):
         '''
         Adds the date_planned value.
