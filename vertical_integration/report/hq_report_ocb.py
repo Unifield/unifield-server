@@ -199,8 +199,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 WHERE e.resource_id = r.id;
                 """,
             'journal': """
-                SELECT i.name, j.code, j.name, j.type
-                FROM account_journal AS j, msf_instance AS i
+                SELECT i.name, j.code, j.name, j.type, c.name
+                FROM account_journal AS j LEFT JOIN res_currency c ON j.currency = c.id, msf_instance AS i
                 WHERE j.instance_id = i.id;
                 """,
             'costcenter': """
@@ -328,7 +328,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'key': 'employee',
                 },
             {
-                'headers': ['Instance', 'Code', 'Name', 'Journal type'],
+                'headers': ['Instance', 'Code', 'Name', 'Journal type', 'Currency'],
                 'filename': instance_name + '_%(year)s%(month)s_Journals.csv',
                 'key': 'journal',
                 'function': 'postprocess_selection_columns',
