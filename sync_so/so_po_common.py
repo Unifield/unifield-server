@@ -282,6 +282,10 @@ class so_po_common(osv.osv_memory):
             if line_dict.get('comment'):
                 values['comment'] = line.comment
 
+            # UTP-972: send also the flat is line is a split line
+            if line_dict.get('is_line_split'):
+                values['is_line_split'] = line.is_line_split
+
             if line_dict.get('product_uom_qty'): # come from the SO
                 values['product_qty'] = line.product_uom_qty
 
