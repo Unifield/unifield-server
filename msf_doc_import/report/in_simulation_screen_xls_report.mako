@@ -53,6 +53,18 @@
         <Interior ss:Color="#ff0000" ss:Pattern="Solid" />>
         <Protection ss:Protected="0" />
     </Style>
+    <Style ss:ID="line_change_short_date">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+        <Borders>
+          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+        <NumberFormat ss:Format="Short Date"/>
+        <Interior ss:Color="#ff0000" ss:Pattern="Solid" />>
+        <Protection ss:Protected="0" />
+    </Style>
   <Style ss:ID="short_date">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -210,7 +222,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
         % if l.imp_exp_date not in (False, 'False'):
-        <Cell ss:StyleID="line_change" ><Data ss:Type="DateTime">${(l.imp_exp_date)|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="line_change_short_date" ><Data ss:Type="DateTime">${(l.imp_exp_date)|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
