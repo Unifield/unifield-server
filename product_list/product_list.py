@@ -257,10 +257,12 @@ class product_product(osv.osv):
         #UF-2254: Check if the default code is in the system, if not then build a temp one         
         if not vals.get('default_code', False):
             vals['default_code'] = "DEFAULT_CODE"
-            
+
+        # Search for a proper default code
         exist = self.search(cr, uid, [('default_code', '=', vals['default_code'])], context=context)
-        if exist: # THIS IS NOT A PROPER SOLUTION! Because we continue to add the suffix, the length 64 will exceed quickly after a while!
+        while exist:            
             vals['default_code'] = vals['default_code'] + "_1" ### need another solution to make a loop to look for a valid default code
+            exist = self.search(cr, uid, [('default_code', '=', vals['default_code'])], context=context)
             
         if 'xmlid_code' not in vals or not vals['xmlid_code']:
             if vals['default_code']:
