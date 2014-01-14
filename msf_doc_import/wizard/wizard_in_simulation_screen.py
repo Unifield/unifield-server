@@ -541,6 +541,8 @@ class wizard_import_in_simulation_screen(osv.osv):
                         break
         
                 # Line 6: Notes
+                header_notes = values.get(6, ['', ''])[1]
+                header_values['header_notes'] = header_notes
 
                 # Line 7: Message ESC header
                 esc_message = values.get(7, ['', ''])[1]
