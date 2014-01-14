@@ -125,6 +125,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         self._logger.info("+++ Call to update partial shipment/OUT from supplier %s to INcoming Shipment of PO at %s"%(source, cr.dbname))
+        context['InShipOut'] = ""
 
         pick_dict = out_info.to_dict()
 
@@ -154,6 +155,7 @@ class stock_picking(osv.osv):
             partial_datas = {}
             partial_datas[in_id] = {}
             line_numbers = {}
+            context['InShipOut'] = "IN" # asking the IN object to be logged
             for line in pack_data:
                 line_data = pack_data[line]
 
@@ -340,6 +342,7 @@ class stock_picking(osv.osv):
     def closed_in_validates_delivery_out_ship(self, cr, uid, source, out_info, context=None):
         if not context:
             context = {}
+        context['InShipOut'] = ""
         self._logger.info("+++ Closed INcoming at %s confirms the delivery of the relevant OUT/SHIP at %s"%(source, cr.dbname))
 
         wf_service = netsvc.LocalService("workflow")
@@ -358,27 +361,31 @@ class stock_picking(osv.osv):
 
         # Check if it an SHIP --_> call Shipment object to proceed the validation of delivery, otherwise, call OUT to validate the delivery!
         message = False
-        if 'SHIP' in ship_split[1]:
+        out_doc_name = ship_split[1]
+        if 'SHIP' in out_doc_name:
             shipment_obj = self.pool.get('shipment')
-            ship_ids = shipment_obj.search(cr, uid, [('name', '=', ship_split[1]), ('state', '=', 'done')], context=context)
+            ship_ids = shipment_obj.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'done')], context=context)
             if ship_ids:
                 # set the Shipment to become delivered
+                context['InShipOut'] = "" # ask the PACK object not to log (model stock.picking), because it is logged in SHIP
                 shipment_obj.set_delivered(cr, uid, ship_ids, context=context)
-                message = "The shipment " + ship_split[1] + " has been well delivered to its partner."
+                message = "The shipment " + out_doc_name + " has been well delivered to its partner."
+                shipment_obj.write(cr, uid, ship_ids, {'state': 'delivered',}, context=context) # trigger an on_change in SHIP 
             else:
-                ship_ids = shipment_obj.search(cr, uid, [('name', '=', ship_split[1]), ('state', '=', 'delivered')], context=context)
+                ship_ids = shipment_obj.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'delivered')], context=context)
                 if ship_ids:
-                    message = "The shipment " + ship_split[1] + " has been MANUALLY confirmed as delivered."
-        elif 'OUT' in ship_split[1]:
-            ship_ids = self.search(cr, uid, [('name', '=', ship_split[1]), ('state', '=', 'done')], context=context)
+                    message = "The shipment " + out_doc_name + " has been MANUALLY confirmed as delivered."
+        elif 'OUT' in out_doc_name:
+            ship_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'done')], context=context)
             if ship_ids:
                 # set the Shipment to become delivered
+                context['InShipOut'] = "OUT" # asking OUT object to be logged (model stock.picking)
                 self.set_delivered(cr, uid, ship_ids, context=context)
-                message = "The OUTcoming " + ship_split[1] + " has been well delivered to its partner."
+                message = "The OUTcoming " + out_doc_name + " has been well delivered to its partner."
             else:
-                ship_ids = self.search(cr, uid, [('name', '=', ship_split[1]), ('state', '=', 'delivered')], context=context)
+                ship_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'delivered')], context=context)
                 if ship_ids:
-                    message = "The OUTcoming " + ship_split[1] + " has been MANUALLY confirmed as delivered." 
+                    message = "The OUTcoming " + out_doc_name + " has been MANUALLY confirmed as delivered." 
 
         if message:
             self._logger.info(message)
@@ -638,8 +645,10 @@ class stock_picking(osv.osv):
     def on_change(self, cr, uid, changes, context=None):
         if context is None \
            or not context.get('sync_message_execution') \
-           or context.get('no_store_function'):
+           or context.get('no_store_function') \
+           or not (context.get('InShipOut', "") in ["IN", "OUT"]): # log only for the 2 cases IN and OUT, not for SHIP
             return
+        
         # create a useful mapping purchase.order ->
         #    dict_of_stock.move_changes
         lines = {}
@@ -659,7 +668,7 @@ class stock_picking(osv.osv):
                 logger.is_product_added |= (len(new_lines - old_lines) > 0)
                 logger.is_product_removed |= (len(old_lines - new_lines) > 0)
             logger.is_date_modified |= ('date' in changes)
-            logger.is_status_modified |= ('state' in changes)
+            logger.is_status_modified |= ('state' in changes) | ('delivered' in changes)
             # handle line's changes
             for line_id, line_changes in lines.get(id, {}).items():
                 logger.is_quantity_modified |= ('product_qty' in line_changes)
@@ -667,3 +676,29 @@ class stock_picking(osv.osv):
                     ('price_unit' in line_changes)
 
 stock_picking()
+
+class shipment(osv.osv):
+    _inherit = "shipment"
+
+    def on_change(self, cr, uid, changes, context=None):
+        if context is None \
+           or not context.get('sync_message_execution') \
+           or context.get('no_store_function'):
+            return
+        # create a useful mapping purchase.order ->
+        #    dict_of_stock.move_changes
+        lines = {}
+        if 'shipment' in context['changes']:
+            for rec_line in self.pool.get('shipment').browse(
+                    cr, uid,
+                    context['changes']['shipment'].keys(),
+                    context=context):
+                lines.setdefault(rec_line.id, {})[rec_line.id] = \
+                     context['changes']['shipment'][rec_line.id]
+        # monitor changes on purchase.order
+        for id, changes in changes.items():
+            logger = get_sale_purchase_logger(cr, uid, self, id, \
+                context=context)
+            logger.is_status_modified |= True
+    
+shipment()
