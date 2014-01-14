@@ -32,11 +32,13 @@ class ocb_export_wizard(osv.osv_memory):
         'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True),
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', required=True),
         'period_id': fields.many2one('account.period', 'Period', required=True),
+        'selection': fields.selection([('unexported', 'Not yet exported'), ('all', 'All lines')], string="Select", required=True),
         'reset': fields.boolean('Reset'),
     }
 
     _defaults = {
         'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, strftime('%Y-%m-%d'), context=c),
+        'selection': lambda *a: 'unexported',
         'reset': lambda *a: False,
     }
 
@@ -59,6 +61,7 @@ class ocb_export_wizard(osv.osv_memory):
             period_name = strftime('%Y%m', strptime(wizard.period_id.date_start, '%Y-%m-%d'))
         if wizard.fiscalyear_id:
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
+        data['form'].update({'selection': wizard.selection})
         ## DELETE DURING INTEGRATION
         if wizard.reset:
             data['form'].update({'reset': True,})

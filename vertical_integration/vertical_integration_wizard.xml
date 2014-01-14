@@ -75,7 +75,9 @@
                 <field name="instance_id" domain="[('level', '=', 'coordo')]"/>
                 <field name="fiscalyear_id"/>
                 <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id)]"/>
+                <field name="selection"/>
                 <html>
+                  <br />
                   Reset<span style="color: red;"> (TO BE DELETED DURING INTEGRATION)
                     <field name="reset"/>
                   </span>

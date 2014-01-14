@@ -196,6 +196,16 @@ class hq_report_ocb(report_sxw.report_sxw):
         last_day_of_period = period.date_stop
         first_day_of_period = period.date_start
         period_name = period.name
+        selection = form.get('selection', False)
+        to_export = ['f'] # Default export value for exported field on analytic/move lines
+        if not selection:
+            raise osv.except_osv(_('Error'), _('No selection value for lines to select.'))
+        if selection == 'all':
+            to_export = ['f', 't']
+        elif selection == 'unexported':
+            to_export = ['f']
+        else:
+            raise osv.except_osv(_('Error'), _('Wrong value for selection: %s.') % (selection,))
 
         ## TO BE DELETE DURING INTEGRATION
         if form.get('reset', False):
@@ -279,7 +289,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND al.date >= %s
                 AND al.date <= %s
                 AND j.type not in ('hq', 'migration')
-                AND al.exported != 't';
+                AND al.exported in %s;
                 """,
             # Exclude lines that come from a HQ or MIGRATION journal
             # Take all lines that are on account that is "shrink_entries_for_hq" which will make a consolidation of them (with a second SQL request)
@@ -293,7 +303,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND j.type not in ('hq', 'migration')
                 AND aa.shrink_entries_for_hq = 't'
                 AND aml.id not in (SELECT amla.id FROM account_move_line amla, account_analytic_line al WHERE al.move_id = amla.id)
-                AND aml.exported != 't';
+                AND aml.exported in %s;
                 """,
             # Do not take lines that come from a HQ or MIGRATION journal
             # Do not take journal items that have analytic lines because they are taken from "rawdata" SQL request
@@ -314,7 +324,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND aml.period_id = %s
                 AND a.shrink_entries_for_hq != 't'
                 AND j.type not in ('hq', 'migration')
-                AND aml.exported != 't'
+                AND aml.exported in %s
                 ORDER BY aml.id;
                 """,
         }
@@ -389,7 +399,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'headers': ['Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit', 'Functional CCY'],
                 'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
                 'key': 'rawdata',
-                'query_params': (first_day_of_period, last_day_of_period),
+                'query_params': (first_day_of_period, last_day_of_period, tuple(to_export)),
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.analytic.line',
@@ -397,14 +407,14 @@ class hq_report_ocb(report_sxw.report_sxw):
             {
                 'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
                 'key': 'bs_entries_consolidated',
-                'query_params': ([period.id]),
+                'query_params': (period.id, tuple(to_export)),
                 'function': 'postprocess_consolidated_entries',
                 'fnct_params': last_day_of_period,
                 },
             {
                 'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
                 'key': 'bs_entries',
-                'query_params': ([period.id]),
+                'query_params': (period.id, tuple(to_export)),
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.move.line',
