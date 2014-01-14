@@ -692,11 +692,12 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 #label = self._format_label(
                 #    cr, uid, form.label, account_id, new_currency_id, rate)
                 # Generate the entry sequence
-                seq = seq_obj.get_id(
-                    cr, uid, form.journal_id.sequence_id.id,
-                    context={'fiscalyear_id': form.fiscalyear_id.id})
-                label = "%s-%s-%s" % (
-                    company.instance_id.move_prefix, form.journal_id.code, seq)
+                #seq = seq_obj.get_id(
+                #    cr, uid, form.journal_id.sequence_id.id,
+                #    context={'fiscalyear_id': form.fiscalyear_id.id})
+                #label = "%s-%s-%s" % (
+                #    company.instance_id.move_prefix, form.journal_id.code, seq)
+                label = '/'
 
                 # Write an entry to adjust balance
                 move_id, new_ids = self._write_adjust_balance(
