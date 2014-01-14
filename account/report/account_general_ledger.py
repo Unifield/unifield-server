@@ -31,6 +31,9 @@ import time
 from report import report_sxw
 from common_report_header import common_report_header
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+from osv import osv
+from tools.translate import _
+
 
 class general_ledger(report_sxw.rml_parse, common_report_header):
     _name = 'report.account.general.ledger'
