@@ -316,7 +316,7 @@
     <Row></Row>
 
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Information - Line numbers refer to the line numbers of the PO confirmation import file')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Information (Line numbers refer to the line numbers of the PO confirmation import file)')}</Data></Cell>
         <Cell ss:StyleID="line" MergeAcross="3" ><Data ss:Type="String">${(o.message or '')|x}</Data></Cell>
     </Row>
 
