@@ -220,9 +220,9 @@ def compute_location_value(cr, uid, **kwargs):
                 elif check_type and product_id and check_type == 'dest' and pick_type == 'out' and pick_subtype == 'standard':
                     domain.extend(['|', ('output_ok', '=', True), ('usage', '=', 'customer')])
                 elif check_type and product_id and check_type == 'src' and pick_type == 'out' and pick_subtype == 'picking':
-                    domain.extepnd([('picking_ticket_src', '=', produc_id)])
+                    domain.extend([('picking_ticket_src', '=', product_id)])
                 elif check_type and product_id and check_type == 'dest' and pick_type == 'out' and pick_subtype == 'picking':
-                    pack_loc_id = self.pool.get('ir.model.data').get_object_refence(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
+                    pack_loc_id = loc_obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
                     domain.extend([('id', '=', pack_loc_id)])
 
                 loc_ids = loc_obj.search(cr, uid, domain)
