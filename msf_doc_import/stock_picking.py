@@ -29,7 +29,7 @@ from msf_doc_import.wizard import INT_COLUMNS_HEADER_FOR_IMPORT as columns_heade
 from msf_doc_import.wizard import INT_LINE_COLUMNS_FOR_IMPORT as columns_for_internal_import
 from msf_doc_import.wizard import IN_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_incoming_import
 from msf_doc_import.wizard import IN_LINE_COLUMNS_FOR_IMPORT as columns_for_incoming_import
-from msf_doc_import.wizard import OUT_COLUMNS_HEADER_FOR_IMPORT as columns_headr_for_delivery_import
+from msf_doc_import.wizard import OUT_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_delivery_import
 from msf_doc_import.wizard import OUT_LINE_COLUMNS_FOR_IMPORT as columns_for_delivery_import
 from msf_doc_import import GENERIC_MESSAGE
 
@@ -125,7 +125,7 @@ class stock_move(osv.osv):
         tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
         tbd_product = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
         message = ''
-        
+
         if not context.get('import_in_progress') or not context.get('button') and context.get('button') == 'save_and_close':
             if vals.get('product_uom') == tbd_uom:
                 message += _('You have to define a valid UoM, i.e. not "To be defined".')
