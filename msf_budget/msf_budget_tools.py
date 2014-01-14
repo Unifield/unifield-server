@@ -36,14 +36,21 @@ class msf_budget_tools(osv.osv):
         return
     
     def _get_expense_accounts(self, cr, uid, context=None):
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
         res = []
         account_obj = self.pool.get('account.account')
         # get the last parent
         chart_of_account_ids = account_obj.search(cr, uid, [('code', '=', 'MSF')], context=context)
-        # get normal expense accounts
-        general_account_ids = account_obj.search(cr, uid, [('user_type_code', '=', 'expense'),
-                                                           ('user_type_report_type', '=', 'expense'),
-                                                           ('type', '!=', 'view')], context=context)
+        # get normal analytic-a-holic accounts. UTP-944: only expenses ones if "only_expenses" in context. Do not include Extra-accounting accounts and incomes one.
+        domain = [('type', '!=', 'view'), ('user_type_report_type', '!=', 'none')]
+        if context.get('only_expenses', False) and context.get('only_expenses') is True:
+            domain += [('user_type_code', '=', 'expense'), ('user_type_report_type', '=', 'expense')]
+        else:
+            domain += [('is_analytic_addicted', '=', True)]
+        general_account_ids = account_obj.search(cr, uid, domain, context=context)
         expense_account_ids = [(account_id, False) for account_id in general_account_ids]
         # go through parents
         for account in account_obj.browse(cr, uid, general_account_ids, context=context):

@@ -112,7 +112,7 @@
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="view_hr_payroll_msf_tree"/>
             <field name="search_view_id" ref="view_hr_payroll_msf_filter"/>
-            <field name="domain">[('state', '=', 'draft'), ('account_id.user_type.code', '=', 'expense')]</field>
+            <field name="domain">[('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', True)]</field>
         </record>
 
         <record id="action_employee_allocation_tree" model="ir.actions.act_window">

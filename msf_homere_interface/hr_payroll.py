@@ -67,8 +67,8 @@ class hr_payroll(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = 'valid' # by default
             #### SOME CASE WHERE DISTRO IS OK
-            # if account is not expense, so it's valid
-            if line.account_id and line.account_id.user_type_code and line.account_id.user_type_code != 'expense':
+            # if account is not analytic-a-holic, so it's valid
+            if line.account_id and not line.account_id.is_analytic_addicted:
                 continue
             # Date checks
             # F Check

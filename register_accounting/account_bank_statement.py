@@ -1618,9 +1618,9 @@ class account_bank_statement_line(osv.osv):
             context = {}
         # Tests
         absl = self.browse(cr, uid, id, context=context)
-        if absl.account_id.user_type.code in ['expense'] and not absl.analytic_distribution_id:
+        if absl.account_id.is_analytic_addicted and not absl.analytic_distribution_id:
             return True
-        elif absl.account_id.user_type.code in ['expense'] and not absl.analytic_distribution_id.funding_pool_lines:
+        elif absl.account_id.is_analytic_addicted and not absl.analytic_distribution_id.funding_pool_lines:
             return True
         return False
 
@@ -1810,7 +1810,7 @@ class account_bank_statement_line(osv.osv):
             if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
                 raise osv.except_osv(_('Error'), _('Analytic distribution is mandatory for this line: %s') % (absl.name or '',))
             # Check analytic distribution validity
-            if absl.account_id.user_type.code in ['expense'] and absl.analytic_distribution_state != 'valid' and not context.get('from_yml'):
+            if absl.account_id.is_analytic_addicted and absl.analytic_distribution_state != 'valid' and not context.get('from_yml'):
                 raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for this line: %s') % (absl.name or '',))
 
             if absl.is_down_payment and not absl.down_payment_id:
@@ -1823,7 +1823,7 @@ class account_bank_statement_line(osv.osv):
 
             if postype == "hard":
                 # Update analytic lines
-                if absl.account_id.user_type.code in ['expense']:
+                if absl.account_id.is_analytic_addicted:
                     self.update_analytic_lines(cr, uid, absl.id)
                 # some verifications
                 if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):

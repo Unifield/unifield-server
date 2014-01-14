@@ -47,7 +47,7 @@ class wizard_confirm_closing_period(osv.osv_memory):
         # Then close wizard
         if res:
             return { 'type': 'ir.actions.act_window_close', }
-        raise osv.except_osv(_('Error'), _('An unknown error has occured on Period closing confirmation wizard. Please contact an administrator to solve this problem.'))
+        raise osv.except_osv(_('Error'), _('An unknown error has occurred on Period closing confirmation wizard. Please contact an administrator to solve this problem.'))
 
 wizard_confirm_closing_period()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

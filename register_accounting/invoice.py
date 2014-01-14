@@ -396,6 +396,7 @@ class account_invoice_line(osv.osv):
         """
         res = {}
         for inv_line in self.browse(cr, uid, ids, context=context):
+            res[inv_line.id] = ''
             if inv_line.product_id:
                 res[inv_line.id] = inv_line.product_id.default_code
         return res

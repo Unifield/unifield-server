@@ -30,16 +30,13 @@ class account_move_line(osv.osv):
         """
         Return True for all element that correspond to some criteria:
          - The journal entry state is draft (unposted)
-         - The account is an expense account
+         - The account is analytic-a-holic
         """
         res = {}
         for ml in self.browse(cr, uid, ids, context=context):
             res[ml.id] = True
-#            # False if journal entry is posted
-#            if ml.move_id.state == 'posted':
-#                res[ml.id] = False
-            # False if account not an expense account
-            if ml.account_id.user_type.code not in ['expense']:
+            # False if account not anlaytic-a-holic
+            if not ml.account_id.is_analytic_addicted:
                 res[ml.id] = False
         return res
 
@@ -94,7 +91,8 @@ class account_move_line(osv.osv):
                 from_header = _(' (from header)')
             d_state = get_sel(cr, uid, ml, 'analytic_distribution_state', context)
             res[ml.id] = "%s%s" % (d_state, from_header)
-            if ml.account_id and ml.account_id.user_type and ml.account_id.user_type.code != 'expense':
+            # Do not show any recap for non analytic-a-holic accounts
+            if ml.account_id and not ml.account_id.is_analytic_addicted:
                 res[ml.id] = ''
         return res
 
@@ -114,7 +112,7 @@ class account_move_line(osv.osv):
 
     def create_analytic_lines(self, cr, uid, ids, context=None):
         """
-        Create analytic lines on expense accounts that have an analytical distribution.
+        Create analytic lines on analytic-a-holic accounts that have an analytical distribution.
         """
         # Some verifications
         if not context:
@@ -133,8 +131,8 @@ class account_move_line(osv.osv):
                 for other_line in obj_line.move_id.line_id:
                     if other_line.state != 'valid':
                         other_lines_are_ok = False
-            # Check that line have expense account and have a distribution
-            if line_distrib_id and obj_line.account_id.user_type_code == 'expense' and other_lines_are_ok:
+            # Check that line have analytic-a-holic account and have a distribution
+            if line_distrib_id and obj_line.account_id.is_analytic_addicted and other_lines_are_ok:
                 ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distrib_id, {}, obj_line.account_id.id)
                 # For manual journal entries, do not raise an error. But delete all analytic distribution linked to other_lines because if one line is invalid, all lines should not create analytic lines
                 if ana_state == 'invalid' and obj_line.move_id.status == 'manu':
@@ -269,7 +267,7 @@ class account_move_line(osv.osv):
             # Do not continue if no employee or no cost center (could not be invented)
             if not l.employee_id or not l.employee_id.cost_center_id:
                 continue
-            if l.account_id and l.account_id.user_type.code == 'expense':
+            if l.account_id and l.account_id.is_analytic_addicted:
                 vals = {'cost_center_id': l.employee_id.cost_center_id.id}
                 if l.employee_id.destination_id:
                     if l.employee_id.destination_id.id in [x and x.id for x in l.account_id.destination_ids]:

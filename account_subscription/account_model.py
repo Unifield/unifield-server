@@ -67,14 +67,14 @@ class account_model_line(osv.osv):
 
     def _get_is_allocatable(self, cr, uid, ids, name, arg, context=None):
         """
-        If expense account, then this account is allocatable.
+        If analytic-a-holic account, then this account is allocatable.
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = {}
         for model_line in self.browse(cr, uid, ids):
             res[model_line.id] = True
-            if model_line.account_id and model_line.account_id.user_type and model_line.account_id.user_type.code and model_line.account_id.user_type.code != 'expense':
+            if model_line.account_id and not model_line.account_id.is_analytic_addicted:
                 res[model_line.id] = False
         return res
 
@@ -239,7 +239,7 @@ class account_model(osv.osv):
                     'journal_id': model.journal_id.id,
                     'period_id': period_id,
                 }
-                if line.account_id.user_type_code == 'expense':
+                if line.account_id.is_analytic_addicted:
                     if line.analytic_distribution_state == 'invalid':
                         raise osv.except_osv(_('Invalid Analytic Distribution !'),_("You have to define a valid analytic distribution on the '%s' line or header!") % (line.name))
                     if not model.journal_id.analytic_journal_id:

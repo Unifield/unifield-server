@@ -3254,6 +3254,7 @@
             <field name="user_type" ref="account.account_type_income" />
             <field name="is_not_hq_correctible" eval="False" />
             <field name="accrual_account" eval="False" />
+            <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_operation')])]"/>
         </record>
 
         <record model="account.account" id="msf_chart_of_account.71">
@@ -3278,6 +3279,7 @@
             <field name="user_type" ref="account.account_type_income" />
             <field name="is_not_hq_correctible" eval="False" />
             <field name="accrual_account" eval="False" />
+            <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_support')])]"/>
         </record>
 
         <record model="account.account" id="msf_chart_of_account.7101">
@@ -3290,6 +3292,7 @@
             <field name="user_type" ref="account.account_type_income" />
             <field name="is_not_hq_correctible" eval="False" />
             <field name="accrual_account" eval="False" />
+            <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_operation')])]"/>
         </record>
 
         <record model="account.account" id="msf_chart_of_account.7102">
@@ -3302,6 +3305,7 @@
             <field name="user_type" ref="account.account_type_income" />
             <field name="is_not_hq_correctible" eval="False" />
             <field name="accrual_account" eval="False" />
+            <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_operation')])]"/>
         </record>
 
         <record model="account.account" id="msf_chart_of_account.7103">
@@ -3314,6 +3318,7 @@
             <field name="user_type" ref="account.account_type_income" />
             <field name="is_not_hq_correctible" eval="False" />
             <field name="accrual_account" eval="False" />
+            <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_support')])]"/>
         </record>
 
         <record model="account.account" id="msf_chart_of_account.7110">
@@ -3326,6 +3331,7 @@
             <field name="user_type" ref="account.account_type_income" />
             <field name="is_not_hq_correctible" eval="False" />
             <field name="accrual_account" eval="False" />
+            <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_support')])]"/>
         </record>
 
         <record model="account.account" id="msf_chart_of_account.72">
@@ -3350,6 +3356,7 @@
             <field name="user_type" ref="account.account_type_income" />
             <field name="is_not_hq_correctible" eval="False" />
             <field name="accrual_account" eval="False" />
+            <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_support')])]"/>
         </record>
 
         <record model="account.account" id="msf_chart_of_account.7210">
@@ -3362,6 +3369,7 @@
             <field name="user_type" ref="account.account_type_income" />
             <field name="is_not_hq_correctible" eval="False" />
             <field name="accrual_account" eval="False" />
+            <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_operation')])]"/>
         </record>
 
         <record model="account.account" id="msf_chart_of_account.73">
@@ -3386,6 +3394,7 @@
             <field name="user_type" ref="account.account_type_income" />
             <field name="is_not_hq_correctible" eval="False" />
             <field name="accrual_account" eval="False" />
+            <field name="destination_ids" eval="[(6, 0, [ref('analytic_distribution.analytic_account_destination_operation')])]"/>
         </record>
 
         <record model="account.account" id="msf_chart_of_account.8">
