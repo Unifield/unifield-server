@@ -79,7 +79,7 @@
                     <field name="move_price_unit" />
                     <field name="move_currency_id" />
                     <field name="str_line_number" />
-                    <field name="error_msg" invisible="0" />
+                    <field name="error_msg" invisible="1" />
                     <button name="get_error_msg" type="object" icon="gtk-dialog-warning" string="See error" attrs="{'invisible': [('error_msg', '=', False), ('integrity_status', 'in', ('empty', False, ''))]}" />
                     <field name="type_change" />
                     <field name="integrity_status" />
