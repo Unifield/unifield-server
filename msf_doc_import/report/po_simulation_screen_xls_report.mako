@@ -73,6 +73,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
+   <NumberFormat ss:Format="Short Date" />
    
    <Protection ss:Protected="0" />
   </Style>
