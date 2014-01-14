@@ -170,9 +170,9 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(l, 'integrity_status') or '')|x}</Data></Cell>
         % endif
         % if l.imp_product_id.id != l.move_product_id.id:
-        <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(l.imp_product_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(l.imp_product_id and '[%s] %s' % (l.imp_product_id.default_code, l.imp_product_id.name) or '')|x}</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.imp_product_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.imp_product_id and '[%s] %s' % (l.imp_product_id.default_code, l.imp_product_id.name) or '')|x}</Data></Cell>
         % endif
         % if l.imp_product_qty != l.move_product_qty:
         <Cell ss:StyleID="line_change" ><Data ss:Type="Number">${(l.imp_product_qty or 0.00)|x}</Data></Cell>
