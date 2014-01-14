@@ -30,6 +30,7 @@
 import time
 from report import report_sxw
 from common_report_header import common_report_header
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class general_ledger(report_sxw.rml_parse, common_report_header):
     _name = 'report.account.general.ledger'
@@ -37,6 +38,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
     def set_context(self, objects, data, ids, report_type=None):
         new_ids = ids
         obj_move = self.pool.get('account.move.line')
+        
         self.sortby = data['form'].get('sortby', 'sort_date')
         self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=data['form'].get('used_context',{}))
         ctx2 = data['form'].get('used_context',{}).copy()
@@ -53,11 +55,60 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             ctx['date_from'] = data['form']['date_from']
             ctx['date_to'] =  data['form']['date_to']
         ctx['state'] = data['form']['target_move']
+        if 'instance_ids' in data['form']:
+            ctx['instance_ids'] = data['form']['instance_ids']
         self.context.update(ctx)
         if (data['model'] == 'ir.ui.menu'):
             new_ids = [data['form']['chart_account_id']]
-            objects = self.pool.get('account.account').browse(self.cr, self.uid, new_ids)
-        return super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
+            objects = self.pool.get('account.account').browse(self.cr, self.uid, new_ids, context=self.context)
+        
+        # output currency
+        self.output_currency_id = data['form']['output_currency']
+        self.output_currency_code = ''
+        if self.output_currency_id:
+            ouput_cur_r = self.pool.get('res.currency').read(self.cr,
+                                            self.uid,
+                                            [self.output_currency_id],
+                                            ['name'])
+            if ouput_cur_r and ouput_cur_r[0] and ouput_cur_r[0]['name']:
+                self.output_currency_code = ouput_cur_r[0]['name']
+                
+        # proprietary instances filter
+        self.instance_ids = data['form']['instance_ids'] 
+        if self.instance_ids:
+            # we add instance filter in clauses 'self.query/self.init_query' 
+            instance_ids_in = "l.instance_id in(%s)" % (",".join(map(str, self.instance_ids)))
+            if not self.query:
+                self.query = instance_ids_in
+            else:
+                self.query += ' AND ' + instance_ids_in
+            if not self.init_query:
+                self.init_query = instance_ids_in
+            else:
+                self.init_query += ' AND ' + instance_ids_in
+        
+        res = super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
+
+        # UF-1714
+        # accounts 8*, 9* are not displayed:
+        # we have to deduce debit/credit/balance amounts of MSF account view (root account)
+        self._deduce_accounts = { 
+            '8': {'debit': 0., 'credit': 0., 'balance': 0. },
+            '9': {'debit': 0., 'credit': 0., 'balance': 0. },
+        }
+        a_obj = self.pool.get('account.account')
+        for a_code in self._deduce_accounts:
+            a_ids = a_obj.search(self.cr, self.uid, [('code', '=', a_code)])
+            if a_ids:
+                if isinstance(a_ids, (int, long)):
+                    a_ids = [a_ids]
+                account = a_obj.browse(self.cr, self.uid, a_ids, context=self.context)[0]
+                if account:
+                    self._deduce_accounts[a_code]['debit'] = self._sum_debit_account(account)
+                    self._deduce_accounts[a_code]['credit'] = self._sum_credit_account(account)
+                    self._deduce_accounts[a_code]['balance'] = self._sum_balance_account(account)
+        
+        return res
 
     def __init__(self, cr, uid, name, context=None):
         if context is None:
@@ -68,7 +119,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.period_sql = ""
         self.sold_accounts = {}
         self.sortby = 'sort_date'
-        self.localcontext.update( {
+        self.localcontext.update({
             'time': time,
             'lines': self.lines,
             'sum_debit_account': self._sum_debit_account,
@@ -86,7 +137,27 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_start_date':self._get_start_date,
             'get_end_date':self._get_end_date,
             'get_target_move': self._get_target_move,
+            'get_output_currency_code': self._get_output_currency_code,
+            'get_filter_info': self._get_filter_info,
+            'get_line_debit': self._get_line_debit,
+            'get_line_credit': self._get_line_credit,
+            'get_line_balance': self._get_line_balance,
+            'currency_conv': self._currency_conv,
+            'get_prop_instances': self._get_prop_instances,
         })
+        
+        # company currency
+        self.uid = uid
+        self.currency_id = False
+        self.instance_id = False
+        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+        if user and user[0] and user[0].company_id:
+            self.currency_id = user[0].company_id.currency_id.id
+            if user[0].company_id.instance_id:
+                self.instance_id = user[0].company_id.instance_id.id
+        if not self.currency_id:
+            raise osv.except_osv(_('Error !'), _('Company has no default currency'))
+
         self.context = context
 
     def _sum_currency_amount_account(self, account):
@@ -104,9 +175,13 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
     def get_children_accounts(self, account):
         res = []
         currency_obj = self.pool.get('res.currency')
+         
         ids_acc = self.pool.get('account.account')._get_children_and_consol(self.cr, self.uid, account.id)
         currency = account.currency_id and account.currency_id or account.company_id.currency_id
         for child_account in self.pool.get('account.account').browse(self.cr, self.uid, ids_acc, context=self.context):
+            if child_account.code.startswith('8') or child_account.code.startswith('9'):
+                # UF-1714: exclude accounts '8*'/'9*'
+                continue
             sql = """
                 SELECT count(id)
                 FROM account_move_line AS l
@@ -128,7 +203,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if not res:
             return [account]
         return res
-
     def lines(self, account):
         """ Return all the account_move_line of account with their account code counterparts """
         move_state = ['draft','posted']
@@ -161,7 +235,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         else:
             sql_sort='l.date, l.move_id'
         sql = """
-            SELECT l.id AS lid, l.date AS ldate, j.code AS lcode, l.currency_id,l.amount_currency,l.ref AS lref, l.name AS lname, COALESCE(l.debit,0) AS debit, COALESCE(l.credit,0) AS credit, l.period_id AS lperiod_id, l.partner_id AS lpartner_id,
+            SELECT l.id AS lid, l.date AS ldate, j.code AS lcode, l.currency_id,l.amount_currency,l.ref AS lref, l.name AS lname, COALESCE(l.debit,0) AS debit, COALESCE(l.credit,0) AS credit, COALESCE(l.debit_currency,0) as debit_currency, COALESCE(l.credit_currency,0) as credit_currency, l.period_id AS lperiod_id, l.partner_id AS lpartner_id,
             m.name AS move_name, m.id AS mmove_id,per.code as period_code,
             c.symbol AS currency_code,
             i.id AS invoice_id, i.type AS invoice_type, i.number AS invoice_number,
@@ -181,7 +255,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if res_lines and self.init_balance:
             #FIXME: replace the label of lname with a string translatable
             sql = """
-                SELECT 0 AS lid, '' AS ldate, '' AS lcode, COALESCE(SUM(l.amount_currency),0.0) AS amount_currency, '' AS lref, 'Initial Balance' AS lname, COALESCE(SUM(l.debit),0.0) AS debit, COALESCE(SUM(l.credit),0.0) AS credit, '' AS lperiod_id, '' AS lpartner_id,
+                SELECT 0 AS lid, '' AS ldate, '' AS lcode, COALESCE(SUM(l.amount_currency),0.0) AS amount_currency, '' AS lref, 'Initial Balance' AS lname, COALESCE(SUM(l.debit),0.0) AS debit, COALESCE(SUM(l.credit),0.0) AS credit,COALESCE(SUM(l.debit_currency),0.0) AS debit_currency, COALESCE(SUM(l.credit_currency),0.0) AS credit_currency, '' AS lperiod_id, '' AS lpartner_id,
                 '' AS move_name, '' AS mmove_id, '' AS period_code,
                 '' AS currency_code,
                 NULL AS currency_id,
@@ -215,7 +289,14 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def _sum_debit_account(self, account):
         if account.type == 'view':
-            return account.debit
+            amount = account.debit
+            if not account.parent_id:
+                # UF-1714
+                # accounts 8*, 9* are not displayed:
+                # we have to deduce debit/credit/balance amounts of MSF account view (root account)
+                for a_code in self._deduce_accounts:
+                    amount -= self._deduce_accounts[a_code]['debit']
+            return self._currency_conv(amount)
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
@@ -237,11 +318,19 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     ,(account.id, tuple(move_state)))
             # Add initial balance to the result
             sum_debit += self.cr.fetchone()[0] or 0.0
+        sum_debit = self._currency_conv(sum_debit)
         return sum_debit
 
     def _sum_credit_account(self, account):
         if account.type == 'view':
-            return account.credit
+            amount = account.credit
+            if not account.parent_id:
+                # UF-1714
+                # accounts 8*, 9* are not displayed:
+                # we have to deduce debit/credit/balance amounts of MSF account view (root account)
+                for a_code in self._deduce_accounts:
+                    amount -= self._deduce_accounts[a_code]['credit']
+            return self._currency_conv(amount)
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
@@ -263,11 +352,19 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     ,(account.id, tuple(move_state)))
             # Add initial balance to the result
             sum_credit += self.cr.fetchone()[0] or 0.0
+        sum_credit = self._currency_conv(sum_credit)
         return sum_credit
 
     def _sum_balance_account(self, account):
         if account.type == 'view':
-            return account.balance
+            amount = account.balance
+            if not account.parent_id:
+                # UF-1714
+                # accounts 8*, 9* are not displayed:
+                # we have to deduce debit/credit/balance amounts of MSF account view (root account)
+                for a_code in self._deduce_accounts:
+                    amount -= self._deduce_accounts[a_code]['balance']
+            return self._currency_conv(amount)
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted','']
@@ -289,11 +386,12 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     ,(account.id, tuple(move_state)))
             # Add initial balance to the result
             sum_balance += self.cr.fetchone()[0] or 0.0
+        sum_balance = self._currency_conv(sum_balance)
         return sum_balance
 
     def _get_account(self, data):
         if data['model'] == 'account.account':
-            return self.pool.get('account.account').browse(self.cr, self.uid, data['form']['id']).company_id.name
+            return self.pool.get('account.account').browse(self.cr, self.uid, data['form']['id'], context=self.context).company_id.name
         return super(general_ledger ,self)._get_account(data)
 
     def _get_sortby(self, data):
@@ -302,8 +400,81 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         elif self.sortby == 'sort_journal_partner':
             return 'Journal & Partner'
         return 'Date'
+        
+    def _get_output_currency_code(self, data):
+        if not self.output_currency_code:
+            return ''
+        return self.output_currency_code
+        
+    def _get_filter_info(self, data):
+        """ get filter info
+        _get_filter, _get_start_date, _get_end_date,
+        get_start_period, get_end_period
+        are from common_report_header
+        """
+        res = ''
+        f = self._get_filter(data)
+        if not f:
+            return res
 
+        if f == 'No Filter':
+            res = f
+        elif f == 'Date':
+            res = self.formatLang(self._get_start_date(data), date=True) + ' - ' + self.formatLang(self._get_end_date(data), date=True)
+        elif f == 'Periods':
+            res = self.get_start_period(data) + ' - ' + self.get_end_period(data)
+        return res
+        
+    def _get_line_debit(self, line):
+        return self._currency_conv(line['debit'])
+        
+    def _get_line_credit(self, line):
+        return self._currency_conv(line['credit'])
+        
+    def _get_line_balance(self, line):
+        return self._currency_conv(line['debit'] - line['credit'])
+        
+    def _is_company_currency(self):
+        if not self.output_currency_id or not self.currency_id \
+           or self.output_currency_id == self.currency_id:
+            # ouput currency == company currency
+            return True
+        else:
+            # is other currency
+            return False
+        
+    def _currency_conv(self, amount):
+        if not amount or amount == 0.:
+            return amount
+        if self._is_company_currency():
+            return amount
+        amount = self.pool.get('res.currency').compute(self.cr, self.uid,
+                                                self.currency_id,
+                                                self.output_currency_id,
+                                                amount)
+        if not amount:
+            amount = 0.
+        return amount
+        
+    def _get_prop_instances(self, data):
+        instances = []
+        if data.get('form', False) and data['form'].get('instance_ids', False):
+            self.cr.execute('select code from msf_instance where id IN %s',(tuple(data['form']['instance_ids']),))
+            instances = [x for x, in self.cr.fetchall()]
+        return instances
+                                            
 report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
+
+
+class general_ledger_xls(SpreadsheetReport):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        super(general_ledger_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        #ids = getIds(self, cr, uid, ids, context)
+        a = super(general_ledger_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+general_ledger_xls('report.account.general.ledger_xls', 'account.account', 'addons/account/report/account_general_ledger_xls.mako', parser=general_ledger, header='internal')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

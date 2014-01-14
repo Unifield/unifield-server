@@ -32,31 +32,79 @@ class account_report_general_ledger(osv.osv_memory):
                                           help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
         'amount_currency': fields.boolean("With Currency", help="It adds the currency column if the currency is different then the company currency"),
         'sortby': fields.selection([('sort_date', 'Date'), ('sort_journal_partner', 'Journal & Partner')], 'Sort By', required=True),
+        'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
+        'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
+        #'export_format': fields.selection([('xls', 'Excel'), ('csv', 'CSV'), ('pdf', 'PDF')], string="Export format", required=True),
+        'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
     }
+    
+    def _get_journals(self, cr, uid, context=None):
+        """exclude extra-accounting journals from this report (IKD, ODX)."""
+        domain = [('type', 'not in', ['inkind', 'extra'])]
+        return self.pool.get('account.journal').search(cr, uid, domain, context=context)
+    
     _defaults = {
         'landscape': True,
         'amount_currency': True,
         'sortby': 'sort_date',
         'initial_balance': False,
+        'amount_currency': True,
+        'export_format': 'pdf',
+        'journal_ids': _get_journals,  # exclude extra-accounting journals from this report (IKD, ODX)
     }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(account_report_general_ledger, self).default_get(cr, uid, fields, context=context)
+        # get company default currency
+        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+        if user and user[0] and user[0].company_id:
+            res['output_currency'] = user[0].company_id.currency_id.id
+        return res
 
     def onchange_fiscalyear(self, cr, uid, ids, fiscalyear=False, context=None):
         res = {}
         if not fiscalyear:
             res['value'] = {'initial_balance': False}
         return res
+        
+    def remove_journals(self, cr, uid, ids, context=None):
+        if ids:
+            self.write(cr, uid, ids, { 'journal_ids': [(6, 0, [])] },
+                       context=context)
+        return {}
 
     def _print_report(self, cr, uid, ids, data, context=None):
         if context is None:
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['landscape',  'initial_balance', 'amount_currency', 'sortby'])[0])
+        data['form'].update(self.read(cr, uid, ids, ['landscape',  'initial_balance', 'amount_currency', 'sortby', 'output_currency', 'instance_ids', 'export_format'])[0])
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
             data['form'].update({'initial_balance': False})
+        if data['form']['journal_ids']:
+            default_journals = self._get_journals(cr, uid, context=context)
+            if default_journals:
+                if len(default_journals) == len(data['form']['journal_ids']):
+                    data['form']['all_journals'] = True
+        if data['form']['export_format'] \
+           and data['form']['export_format'] == 'xls':
+            return { 
+                'type': 'ir.actions.report.xml',
+                'report_name': 'account.general.ledger_xls',
+                'datas': data,
+            }
         if data['form']['landscape']:
-            return { 'type': 'ir.actions.report.xml', 'report_name': 'account.general.ledger_landscape', 'datas': data}
-        return { 'type': 'ir.actions.report.xml', 'report_name': 'account.general.ledger', 'datas': data}
-
+            return { 
+                'type': 'ir.actions.report.xml',
+                'report_name': 'account.general.ledger_landscape',
+                'datas': data,
+            }
+        return { 
+            'type': 'ir.actions.report.xml',
+            'report_name': 'account.general.ledger',
+            'datas': data,
+        }
+        
+        
 account_report_general_ledger()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
