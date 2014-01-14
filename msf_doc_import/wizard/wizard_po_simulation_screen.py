@@ -715,7 +715,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
                     if not line_number and not ext_ref:
                         not_ok = True
-                        err1 = _('The line must have either the line number or the external ref. set - Line not imported')
+                        err1 = _('The line must have either the line number or the external ref. set')
                         err = _('Line %s of the file: %s') % (x, err1)
                         values_line_errors.append(err)
                         file_line_error.append(err1)
@@ -723,8 +723,8 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     if not_ok:
                         not_ok_file_lines[x] = ' - '.join(err for err in file_line_error)
 
-                    if not line_number and not ext_ref:
-                        continue
+#                    if not line_number and not ext_ref:
+#                        continue
 
                     # Get values
                     product_id = False
@@ -1205,6 +1205,12 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     errors.append(_('Line no is not consistent with validated PO.'))
                     write_vals['in_line_number'] = False
                     write_vals['type_change'] = 'error'
+
+            if not line.in_line_number and not write_vals.get('imp_external_ref'):
+                errors.append(_('The line should have a Line no. or an Ext Ref.'))
+                write_vals['in_line_number'] = False
+                write_vals['imp_external_ref'] = False
+                write_vals['type_change'] = 'error'
 
             # Product
             if (values[2] and values[2] == line.in_product_id.default_code):
