@@ -105,6 +105,27 @@ class account_bank_statement_line(osv.osv):
     _name = 'account.bank.statement.line'
     _inherit = 'account.bank.statement.line'
     _trace = True
+    
+    def _get_partner_type2(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Get "Third Parties" audittrail version
+        (audittrail does not process field function reference for now)
+        """
+        res = {}
+        for st_line in self.browse(cr, uid, ids, context=context):
+            if st_line.employee_id:
+                res[st_line.id] = st_line.employee_id.name
+            elif st_line.transfer_journal_id:
+                res[st_line.id] = st_line.transfer_journal_id.name
+            elif st_line.partner_id:
+                res[st_line.id] = st_line.partner_id.name
+            else:
+                res[st_line.id] = False
+        return res
+    
+    _columns = {
+        'partner_type2': fields.function(_get_partner_type2, method=True, string="Third Parties"),
+    }
 
 account_bank_statement_line()
 
