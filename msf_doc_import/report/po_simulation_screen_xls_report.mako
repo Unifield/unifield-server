@@ -244,7 +244,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Discrepancy')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery Requested Date')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery Confiremd Date')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery Confirmed Date')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Message ESC 1')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Message ESC 2')}</Data></Cell>
     </Row>
