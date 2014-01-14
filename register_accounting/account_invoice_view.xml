@@ -107,14 +107,14 @@
                         <field name="currency_id" invisible="1" />
                         <field name="fake_currency_id" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
                         <newline/>
-                        <field name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
+                        <field name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
 
-                        <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
+                        <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
                         <newline/>
-                        <field name="document_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
+                        <field name="document_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
                         <field name="date_invoice" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
                         <field name="register_posting_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
-                        <field name="reference" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
+                        <field name="reference" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
                         <newline/>
                         <label string="" colspan="4"/>
                         <field name="amount_total"/>
