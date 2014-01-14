@@ -31,6 +31,7 @@ from tools.misc import ustr
 from tools.translate import _
 import time
 import locale
+from account_override import ACCOUNT_RESTRICTED_AREA
 
 class hq_entries_import_wizard(osv.osv_memory):
     _name = 'hq.entries.import'
@@ -106,9 +107,9 @@ class hq_entries_import_wizard(osv.osv_memory):
             account_code = account_data and account_data[0] or False
             if not account_code:
                 raise osv.except_osv(_('Error'), _('No account code found!'))
-            account_ids = acc_obj.search(cr, uid, [('code', '=', account_code)])
+            account_ids = acc_obj.search(cr, uid, [('code', '=', account_code)] + ACCOUNT_RESTRICTED_AREA['hq_lines'])
             if not account_ids:
-                raise osv.except_osv(_('Error'), _('Account code %s doesn\'t exist!') % (account_code,))
+                raise osv.except_osv(_('Error'), _('Account code %s doesn\'t exist or is not allowed in HQ Entries!') % (account_code,))
             vals.update({'account_id': account_ids[0], 'account_id_first_value': account_ids[0]})
         else:
             raise osv.except_osv(_('Error'), _('No account code found!'))

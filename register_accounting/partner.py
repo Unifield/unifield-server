@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from account_override import ACCOUNT_RESTRICTED_AREA
 
 class res_partner(osv.osv):
     _name = "res.partner"
@@ -113,7 +114,7 @@ class res_partner(osv.osv):
             string="Account Payable",
             method=True,
             view_load=True,
-            domain="[('type', '=', 'payable')]",
+            domain=ACCOUNT_RESTRICTED_AREA['partner_payable'],
             help="This account will be used instead of the default one as the payable account for the current partner",
             required=True,
             fnct_search=_search_property_account),
@@ -124,7 +125,7 @@ class res_partner(osv.osv):
             string="Account Receivable",
             method=True,
             view_load=True,
-            domain="[('type', '=', 'receivable')]",
+            domain=ACCOUNT_RESTRICTED_AREA['partner_receivable'],
             help="This account will be used instead of the default one as the receivable account for the current partner",
             required=True,
             fnct_search=_search_property_account),

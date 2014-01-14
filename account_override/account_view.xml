@@ -32,6 +32,9 @@
             <field name="priority">20</field>
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='account_id']" position="attributes">
+                        <attribute name="domain">[('company_id', '=', company_id), ('restricted_area', '=', 'in_invoice')]</attribute>
+                    </xpath>
                     <xpath expr="//tree[@string='Invoice lines']/field[@name='product_id']" position="before">
                         <field name="line_number"/>
                     </xpath>
@@ -45,6 +48,21 @@
                 </data>
             </field>
         </record>
+
+    <!-- Change account_id domain -->
+        <record id="invoice_line_form3" model="ir.ui.view">
+            <field name="name">account.invoice.line.form</field>
+            <field name="model">account.invoice.line</field>
+            <field name="type">form</field>
+            <field name="priority" eval="20"/>
+            <field name="inherit_id" ref="account.view_invoice_line_form"/>
+            <field name="arch" type="xml">
+              <xpath expr="//field[@name='account_id']" position="attributes">
+                  <attribute name="domain">[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]</attribute>
+              </xpath>
+            </field>
+        </record>
+
 
     <!-- Account View -->
         <record id="inherit_view_account_tree" model="ir.ui.view">
@@ -130,7 +148,7 @@
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="name"/>
                                         <field name="ref"/>
-                                        <field name="account_id"/>
+                                        <field name="account_id" domain="[('restricted_area', '=', 'account_move_lines')]"/>
                                         <field name="partner_id" invisible="1"/>
                                         <field name="debit_currency" sum="Total Booking Debit" string="Book. Debit"/>
                                         <field name="credit_currency" sum="Total Booking Credit" string="Book. Credit"/>

@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from account_override import ACCOUNT_RESTRICTED_AREA
 
 class res_partner(osv.osv):
     _name = 'res.partner'
@@ -30,7 +31,7 @@ class res_partner(osv.osv):
 
     _columns = {
         'donation_payable_account': fields.many2one('account.account', "Donation Payable Account", 
-            domain="[('user_type.code', '=', 'payables'), ('type', '!=', 'view')]"),
+            domain=ACCOUNT_RESTRICTED_AREA['partner_donation']),
     }
 
 res_partner()

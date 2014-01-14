@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from account_override import ACCOUNT_RESTRICTED_AREA
 from tools.translate import _
 from time import strftime
 import datetime
@@ -80,7 +81,6 @@ class account_account(osv.osv):
         # Some checks
         if context is None:
             context = {}
-        # Prepare some values
         res = {}
         company_account_active = False
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
@@ -106,7 +106,6 @@ class account_account(osv.osv):
         # Checks
         if context is None:
             context = {}
-        # Prepare some values
         arg = []
         company_account_active = False
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
@@ -136,6 +135,67 @@ class account_account(osv.osv):
                 raise osv.except_osv(_('Error'), _('Operation not implemented!'))
         return arg
 
+    def _get_restricted_area(self, cr, uid, ids, field_name, args, context=None):
+        """
+        FAKE METHOD
+        """
+        # Check
+        if context is None:
+            context = {}
+        res = {}
+        for account_id in ids:
+            res[account_id] = True
+        return res
+
+    def _search_restricted_area(self, cr, uid, ids, name, args, context=None):
+        """
+        Search the right domain to apply to this account filter.
+        For this, it uses the "ACCOUNT_RESTRICTED_AREA" variable in which we list all well-known cases.
+        The key args is "restricted_area", the param is like "register_lines".
+        In ACCOUNT_RESTRICTED_AREA, we use the param as key. It so return the domain to apply.
+        If no domain, return an empty domain.
+        """
+        # Check
+        if context is None:
+            context = {}
+        arg = []
+        for x in args:
+            if x[0] == 'restricted_area' and x[2]:
+                if x[2] in ACCOUNT_RESTRICTED_AREA:
+                    for subdomain in ACCOUNT_RESTRICTED_AREA[x[2]]:
+                        arg.append(subdomain)
+            elif x[0] != 'restricted_area':
+                arg.append(x)
+            else:
+                raise osv.except_osv(_('Error'), _('Operation not implemented!'))
+        return arg
+
+    def _get_fake_cash_domain(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Fake method for domain
+        """
+        if context is None:
+            context = {}
+        res = {}
+        for cd_id in ids:
+            res[cd_id] = True
+        return res
+
+    def _search_cash_domain(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Return a given domain (defined in ACCOUNT_RESTRICTED_AREA variable)
+        """
+        if context is None:
+            context = {}
+        arg = []
+        for x in args:
+            if x[0] and x[1] == '=' and x[2]:
+                if x[2] in ['cash', 'bank', 'cheque']:
+                    arg.append(('restricted_area', '=', 'journals'))
+            else:
+                raise osv.except_osv(_('Error'), _('Operation not implemented!'))
+        return arg
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'), 
@@ -147,6 +207,8 @@ class account_account(osv.osv):
         'shrink_entries_for_hq': fields.boolean("Shrink entries for HQ export", help="Check this attribute if you want to consolidate entries on this account before they are exported to the HQ system."),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
         'is_analytic_addicted': fields.function(_get_is_analytic_addicted, fnct_search=_search_is_analytic_addicted, method=True, type='boolean', string='Analytic-a-holic?', help="Is this account addicted on analytic distribution?", store=False, readonly=True),
+        'restricted_area': fields.function(_get_restricted_area, fnct_search=_search_restricted_area, type='boolean', method=True, string="Is this account allowed?"),
+        'cash_domain': fields.function(_get_fake_cash_domain, fnct_search=_search_cash_domain, method=True, type='boolean', string="Domain used to search account in journals", help="This is only to change domain in journal's creation."),
     }
 
     _defaults = {

@@ -85,7 +85,7 @@
                 <tree editable="bottom" string="Advance Lines" colors="red:display_analytic_button and not analytic_distribution_id">
                     <field name="document_date" />
                     <field name="description" />
-                    <field name="account_id" domain="[('type', '&lt;&gt;', 'view')]"/>
+                    <field name="account_id" domain="[('restricted_area', '=', 'cash_return')]"/>
                     <field name="partner_id" domain="[('supplier', '=', 'True')]"/>
                     
                     <field name="analytic_distribution_id" invisible="1"/>
