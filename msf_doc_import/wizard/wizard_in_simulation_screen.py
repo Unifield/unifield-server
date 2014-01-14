@@ -147,7 +147,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         'message_esc': fields.text(string='Message ESC', readonly=True),
         'imp_origin': fields.char(size=128, string='Origin', readonly=True),
         'imp_freight_number': fields.char(size=128, string='Freight number', readonly=True),
-        'imp_transport_mode': fields.selection(TRANSPORT_TYPE, string='Transpot mode', readonly=True),
+        'imp_transport_mode': fields.char(string='Transport mode', size=128, readonly=True),
         # Lines
         'line_ids': fields.one2many('wizard.import.in.line.simulation.screen', 'simu_id', string='Stock moves'),
                                          
@@ -534,11 +534,7 @@ class wizard_import_in_simulation_screen(osv.osv):
 
                 # Line 5: Transport mode
                 transport_mode = values.get(5, ['', ''])[1]
-                transport_select = self.fields_get(cr, uid, ['imp_transport_mode'], context=context)
-                for x in transport_select['imp_transport_mode']['selection']:
-                    if x[1] == transport_mode:
-                        header_values['imp_transport_mode'] = x[0]
-                        break
+                header_values['imp_transport_mode'] = transport_mode
         
                 # Line 6: Notes
                 header_notes = values.get(6, ['', ''])[1]
