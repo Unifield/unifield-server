@@ -303,9 +303,20 @@
             </field>
         </record>
 
-        <record id="account.action_account_moves_all_a" model="ir.actions.act_window">
-            <field name="context">{'search_default_posted': 1, 'target_filename_prefix': 'Journal Items'}</field>
-        </record>
+    <!-- UF-1715 -->
+    <report id="account_partner_balance_tree_xls"
+        auto="False" 
+        menu="False"
+        header="False"
+        model="account.partner.balance.tree"
+        name="account.partner.balance.tree_xls"
+        file="account_override/report/account_partner_balance_tree_xls.mako"
+        report_type="webkit" 
+        string="Partner Balance"/>
+
+    <record id="account.action_account_moves_all_a" model="ir.actions.act_window">
+        <field name="context">{'search_default_posted': 1, 'target_filename_prefix': 'Journal Items'}</field>
+    </record>
 
     </data>
 </openerp>
