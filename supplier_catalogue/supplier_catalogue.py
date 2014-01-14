@@ -25,7 +25,7 @@ from osv import fields
 from tools.translate import _
 
 from mx.DateTime import DateFrom, now, RelativeDate
-from datetime import date
+from datetime import date, datetime
 
 import decimal_precision as dp
 
@@ -98,11 +98,15 @@ class supplier_catalogue(osv.osv):
         
         # If overrided catalogues exist, display an error message
         if equal_ids:
-            over_cat = self.browse(cr, uid, equal_ids[0], context=context)
-            over_cat_from = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_from, context=context)
-            over_cat_to = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_to, context=context)
-            raise osv.except_osv(_('Error'), _('This catalogue has the same \'From\' date than the following catalogue : %s (\'From\' : %s - \'To\' : %s) - ' \
-                                               'Please change the \'From\' date of this new catalogue or delete the other catalogue.') % (over_cat.name, over_cat_from, over_cat_to))
+            cat = self.browse(cr, uid, cat_id, context=context)
+            if cat and not cat.is_esc:
+                # [utp-746] no message for an esc supplier catalogue
+                # (no period for an esc supplier catalogue)
+                over_cat = self.browse(cr, uid, equal_ids[0], context=context)
+                over_cat_from = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_from, context=context)
+                over_cat_to = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_to, context=context)
+                raise osv.except_osv(_('Error'), _('This catalogue has the same \'From\' date than the following catalogue : %s (\'From\' : %s - \'To\' : %s) - ' \
+                                                   'Please change the \'From\' date of this new catalogue or delete the other catalogue.') % (over_cat.name, over_cat_from, over_cat_to))
         
         # If overrided catalogues exist, display an error message
         if to_ids:
@@ -137,6 +141,7 @@ class supplier_catalogue(osv.osv):
         '''
         if context is None:
             context = {}
+
         # Check if other catalogues need to be updated because they finished
         # after the starting date of the new catalogue.
         if vals.get('active', True):
@@ -144,7 +149,14 @@ class supplier_catalogue(osv.osv):
                                                         vals.get('currency_id', False),
                                                         vals.get('partner_id', context.get('partner_id', False)),
                                                         vals.get('period_to', False), context=context)
-        return super(supplier_catalogue, self).create(cr, uid, vals, context=context)
+        res = super(supplier_catalogue, self).create(cr, uid, vals, context=context)
+        
+        # UTP-746: now check if the partner is inactive, then set this catalogue also to become inactive
+        catalogue = self.browse(cr, uid, [res], context=context)[0]
+        if not catalogue.partner_id.active:
+            self.write(cr, uid, [res], {'active': False}, context=context)
+        
+        return res
     
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -245,14 +257,43 @@ class supplier_catalogue(osv.osv):
                 return [('id', 'in', ids)]
         
         return ids
+        
+    def _is_esc_from_partner_id(self, cr, uid, partner_id, context=None):
+        """Is an ESC Supplier Catalog ? (from partner id)"""
+        if not partner_id:
+            return False
+        rs = self.pool.get('res.partner').read(cr, uid, [partner_id],
+                                               ['partner_type'],
+                                               context=context)
+        if rs and rs[0] and rs[0]['partner_type'] \
+           and rs[0]['partner_type'] == 'esc':
+                return True
+        return False
+        
+    def _is_esc(self, cr, uid, ids, fieldname, args, context=None):
+        """Is an ESC Supplier Catalog ?"""
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for r in self.read(cr, uid, ids, ['partner_id'],
+                            context=context):
+            res[r['id']] = False
+            if r['partner_id']:
+                res[r['id']] = self._is_esc_from_partner_id(cr, uid,
+                                                    r['partner_id'][0],
+                                                    context=context)
+ 
+        return res
 
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
         'partner_id': fields.many2one('res.partner', string='Partner', required=True,
                                       domain=[('supplier', '=', True)]),
-        'period_from': fields.date(string='From', required=True,
+        'period_from': fields.date(string='From',
                                    help='Starting date of the catalogue.'),
-        'period_to': fields.date(string='To', required=False,
+        'period_to': fields.date(string='To',
                                  help='End date of the catalogue'),
         'currency_id': fields.many2one('res.currency', string='Currency', required=True,
                                        help='Currency used in this catalogue.'),
@@ -270,6 +311,8 @@ class supplier_catalogue(osv.osv):
         'filename_template': fields.char(string='Template', size=256),
         'import_error_ok': fields.boolean('Display file with error'), 
         'text_error': fields.text('Text Error', readonly=True),
+        'esc_update_ts': fields.datetime('Last updated on', readonly=True),  # UTP-746 last update date for ESC Supplier
+        'is_esc': fields.function(_is_esc, type='boolean', string='Is ESC Supplier', method=True),
     }
     
     _defaults = {
@@ -348,7 +391,7 @@ class supplier_catalogue(osv.osv):
                 if type(f) == t_dt:
                     new_f = f.strftime('%Y-%m-%dT%H:%M:%S.000')
                     line[line.index(f)] = (new_f, 'DateTime')
-                elif isinstance(f, str) and columns_header[line.index(f)][1] != 'string':
+                elif isinstance(f, str) and 0 <= line.index(f) < len(columns_header) and columns_header[line.index(f)][1] != 'string':
                     try:
                         line[line.index(f)] = (float(f), 'Number')
                     except:
@@ -380,6 +423,9 @@ class supplier_catalogue(osv.osv):
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
         wiz_common_import = self.pool.get('wiz.common.import')
+        obj_catalog_line = self.pool.get('supplier.catalogue.line')
+        
+        date_format = self.pool.get('date.tools').get_db_date_format(cr, uid, context=context)
 
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.file_to_import:
@@ -510,19 +556,48 @@ class supplier_catalogue(osv.osv):
                     error_list.append('\n -'.join(error_list_line) + '\n')
                     continue
                 line_num += 1
-
-                to_write = {
-                    'to_correct_ok': to_correct_ok, 
-                    'product_id': default_code,
-                    'min_qty': p_min_qty,
-                    'line_uom_id': uom_id,
-                    'unit_price': p_unit_price,
-                    'rounding': p_rounding,
-                    'min_order_qty': p_min_order_qty,
-                    'comment': p_comment,
-                }
-
-                vals['line_ids'].append((0, 0, to_write))
+                
+               # [utp-746] update prices of an already product in catalog
+                criteria = [
+                    ('catalogue_id', '=', obj.id),
+                    ('product_id', '=', default_code),
+                ]
+                catalog_line_id = obj_catalog_line.search(cr, uid, criteria, context=context)
+                if catalog_line_id:
+                    if isinstance(catalog_line_id, (int, long)):
+                        catalog_line_id = [catalog_line_id]
+                    # update product in catalog only if any modification
+                    # and only modified fields (for sync)
+                    cl_obj = obj_catalog_line.browse(cr, uid, catalog_line_id[0], context=context)
+                    if cl_obj:
+                        to_write = {}
+                        if cl_obj.min_qty != p_min_qty:
+                            to_write['min_qty'] = p_min_qty
+                        if cl_obj.line_uom_id.id != uom_id:
+                            to_write['line_uom_id'] = uom_id
+                        if cl_obj.unit_price != p_unit_price:
+                            to_write['unit_price'] = p_unit_price
+                        if cl_obj.rounding != p_rounding:
+                            to_write['rounding'] = p_rounding
+                        if cl_obj.min_order_qty != p_min_order_qty:
+                            to_write['min_order_qty'] = p_min_order_qty
+                        if cl_obj.comment != p_comment:
+                            to_write['comment'] = p_comment
+                        if to_write:
+                            vals['line_ids'].append((1, catalog_line_id[0], to_write))
+                else:
+                    to_write = {
+                        'to_correct_ok': to_correct_ok, 
+                        'product_id': default_code,
+                        'min_qty': p_min_qty,
+                        'line_uom_id': uom_id,
+                        'unit_price': p_unit_price,
+                        'rounding': p_rounding,
+                        'min_order_qty': p_min_order_qty,
+                        'comment': p_comment,
+                    }
+                    vals['line_ids'].append((0, 0, to_write))
+                
             # in case of lines ignored, we notify the user and create a file with the lines ignored
             vals.update({'text_error': _('Lines ignored: %s \n ----------------------\n') % (ignore_lines,) +
                          '\n'.join(error_list), 'data': False, 'import_error_ok': False,
@@ -530,7 +605,7 @@ class supplier_catalogue(osv.osv):
             if line_with_error:
                 file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
                 vals.update(file_to_export)
-
+            vals['esc_update_ts'] = datetime.now().strftime(date_format)
             self.write(cr, uid, ids, vals, context=context)
 
             # TODO: To implement
@@ -567,6 +642,45 @@ class supplier_catalogue(osv.osv):
         if message:
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s : %s')% (plural, message))
         return True
+        
+    def default_get(self, cr, uid, fields, context=None):
+        """[utp-746] ESC supplier catalogue default value
+        and catalogue create not allowed in a not HQ instance"""
+        res = super(supplier_catalogue, self).default_get(cr, uid, fields, context=context)
+        if 'partner_id' in context:
+            res['is_esc'] = self._is_esc_from_partner_id(cr, uid,
+                                                context['partner_id'],
+                                                context=context)
+            if res['is_esc']:
+                supplier_r = self.pool.get('res.partner').read(cr, uid,
+                                                    [context['partner_id']],
+                                                    ['partner_type'],
+                                                    context=context)
+                if supplier_r and supplier_r[0] \
+                   and supplier_r[0]['partner_type'] \
+                   and supplier_r[0]['partner_type'] == 'esc':
+                    users_obj = self.pool.get('res.users')
+                    user_ids = users_obj.search(cr, uid, [('id','=', uid)],
+                                                context=context)
+                    if user_ids:
+                        if isinstance(user_ids, (int, long)):
+                            user_ids = [user_ids]
+                        users = users_obj.browse(cr, uid, user_ids,
+                                                 context=context)
+                        if users:
+                            user = users[0]
+                            if user.company_id and user.company_id.instance_id:
+                                if user.company_id.instance_id.level and \
+                                    user.company_id.instance_id.level !=  'section':
+                                        raise osv.except_osv(
+                                            _('Error'),
+                                            'For an ESC Supplier you must create the catalogue on a HQ instance.'
+                                        )
+                
+                # ESC supplier catalogue: no period date
+                res['period_from'] = False
+                res['period_to'] = False
+        return res
 
 supplier_catalogue()
 
