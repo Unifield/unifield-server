@@ -88,11 +88,19 @@
                     <group colspan="4" col="4" >
                         <separator colspan="4" string="Products that will be included in the current policy" />
                         <field name="product_ids" nolabel="1" colspan="4" mode="tree">
-                        	<tree string="Products" editable="top">
-                        		<field name="product_id" on_change="product_change(product_id)" domain="[('list_ids', '=', parent.sublist_id), ('type', 'not in', ['service', 'service_recep', 'consu'])]" />
-                        		<field name="uom_id" domain="[('uom_by_product', '=', product_id)]" on_change="onchange_uom_qty(uom_id, safety_stock)" />
-                        		<field name="safety_stock" on_change="onchange_uom_qty(uom_id, safety_stock)" />
-                        	</tree>
+                            <tree string="Products" editable="top">
+                                <field name="product_id" on_change="product_change(product_id)" domain="[('list_ids', '=', parent.sublist_id), ('type', 'not in', ['service', 'service_recep', 'consu'])]" />
+                                <field name="uom_id" domain="[('uom_by_product', '=', product_id)]" on_change="onchange_uom_qty(uom_id, safety_stock)" />
+                                <!-- <field name="sud" /> -->
+                                <field name="safety_stock" on_change="onchange_uom_qty(uom_id, safety_stock)" />
+                                <field name="consumption" />
+                                <field name="real_stock" />
+                                <field name="available_stock" />
+                                <field name="expiry_before" />
+                                <field name="qty_to_order" />
+                                <field name="required_date" />
+                                <field name="supplier_id" />
+                            </tree>
                         </field>
                     </group>
                 </form>
