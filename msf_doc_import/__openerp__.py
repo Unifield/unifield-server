@@ -49,6 +49,7 @@
         'wizard/wizard_import_threshold_value_line.xml',
         'wizard/wizard_import_product_list.xml',
         'wizard/wizard_po_simulation_screen_view.xml',
+        'wizard/wizard_in_simulation_screen_view.xml',
         'view/composition_kit_import_line_view.xml',
         'wizard/wizard_import_po_view.xml',
         'wizard/wizard_delete_lines_view.xml',
@@ -59,6 +60,7 @@
         'workflow/sale_workflow.xml',
         'workflow/tender_flow_workflow.xml',
         'workflow/procurement_request_workflow.xml',
+        'doc_import_report.xml'
     ],
     "demo_xml": [],
     "test": [

@@ -276,6 +276,34 @@ class internal_move_xls(WebKitParser):
 internal_move_xls('report.internal.move.xls', 'stock.picking', 'addons/msf_supply_doc_export/report/report_internal_move_xls.mako')
 
 
+class incoming_shipment_xls(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context):
+        super(incoming_shipment_xls, self).__init__(cr, uid, name, context=context)
+
+SpreadsheetReport('report.incoming.shipment.xls', 'stock.picking', 'addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako', parser=incoming_shipment_xls)
+
+class parser_incoming_shipment_xml(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context):
+        super(incoming_shipment_xls, self).__init__(cr, uid, name, context=context)
+
+class incoming_shipment_xml(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header = " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(incoming_shipment_xml, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(incoming_shipment_xml, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xml')
+
+incoming_shipment_xml('report.incoming.shipment.xml', 'stock.picking', 'addons/msf_supply_doc_export/report/report_incoming_shipment_xml.mako')
+
+
 class ir_values(osv.osv):
     """
     we override ir.values because we need to filter where the button to print report is displayed (this was also done in register_accounting/account_bank_statement.py)

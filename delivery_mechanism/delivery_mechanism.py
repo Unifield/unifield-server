@@ -813,6 +813,17 @@ class stock_picking(osv.osv):
             if so.state == 'shipping_except':
                 wf_service.trg_validate(uid, 'sale.order', so.id, 'ship_corrected', cr)
 
+        if context.get('from_simu_screen'):
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'stock.picking',
+                    'res_id': ids[0],
+                    'view_id': [view_id],
+                    'view_mode': 'form, tree',
+                    'view_type': 'form',
+                    'target': 'crush',
+                    'context': context}
+
         return {'type': 'ir.actions.act_window_close'}
     
     def enter_reason(self, cr, uid, ids, context=None):

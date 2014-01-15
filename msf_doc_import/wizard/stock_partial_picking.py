@@ -58,6 +58,44 @@ class stock_partial_picking(osv.osv_memory):
     """
     _inherit = "stock.partial.picking"
 
+    def launch_simulation(self, cr, uid, ids, context=None):
+        '''
+        Launch the simulation screen
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        pick_obj = self.pool.get('stock.picking')
+        simu_obj = self.pool.get('wizard.import.in.simulation.screen')
+        line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
+
+        picking_id = context.get('active_ids', []) and len(context.get('active_ids', [])) and context.get('active_ids', [])[0] or False
+        if not picking_id:
+            raise osv.except_osv(_('Error'), _('No picking defined'))
+
+        simu_id = simu_obj.create(cr, uid, {'picking_id': picking_id,}, context=context)
+        for move in pick_obj.browse(cr, uid, picking_id, context=context).move_lines:
+            if move.state not in ('draft', 'cancel', 'done'):
+                line_obj.create(cr, uid, {'move_id': move.id,
+                                          'simu_id': simu_id,
+                                          'move_product_id': move.product_id and move.product_id.id or False,
+                                          'move_product_qty': move.product_qty or 0.00,
+                                          'move_uom_id': move.product_uom and move.product_uom.id or False,
+                                          'move_price_unit': move.price_unit or move.product_id.standard_price,
+                                          'move_currency_id': move.price_currency_id and move.price_currency_id.id or False,
+                                          'line_number': move.line_number,}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.in.simulation.screen',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'target': 'same',
+                'res_id': simu_id,
+                'context': context}
+
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
         res = {}
         if isinstance(ids, (int, long)):
@@ -811,19 +849,30 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 state_index = root.index(fields[0])
                 new_field_txt = """
                 <group name="import_file_lines" string="Import Lines" colspan="24" col="8">
-                    <field name="import_in_progress" invisible="1" />
-                    <field name="file_to_import" filename="filename_template" colspan="2"/>
-                    <button name="import_file" string="Import lines" icon="gtk-execute" colspan="1" type="object" />
-                    <field name="import_error_ok" invisible="1"/>
-                    <field name="filename" invisible="1"  />
-                    <button name="dummy" string="Update" icon="gtk-execute" colspan="1" type="object" />
-                    <newline />
-                    <field name="percent_completed" widget="progressbar" attrs="{\'invisible\': [(\'import_in_progress\', \'=\', False)]}" />
-                    <field name="data" filename="filename" colspan="2" attrs="{\'invisible\':[(\'import_error_ok\', \'=\', False)]}"/>
-                    <newline />
-                    <field name="message" attrs="{\'invisible\':[(\'import_in_progress\', \'=\', False)]}" colspan="4" nolabel="1"/>
-                </group>
-                """
+                    <button name="launch_simulation" string="Import IN" icon="gtk-execute" colspan="1" type="object" />
+                </group>"""
+# QT : Remove the old import following the Skype discussion with Raffaelle on 2014.08.01 :
+#      [15:19:47] Quentin THEURET: For IN simulation screen, should I keep the old import for IN with other suppliers ?
+#      [15:20:30] Raffaelle Hagen: yes please
+#      [15:20:51] Quentin THEURET: ok, thanks
+#      [15:24:28] Raffaelle Hagen: ok, in fact, would it be quicker to do the same for all suppliers?
+#      [15:25:16] Raffaelle Hagen: because actually maybe better that it is not purely limited to ESCs
+#
+#                new_field_txt = """
+#                <group name="import_file_lines" string="Import Lines" colspan="24" col="8">
+#                    <field name="import_in_progress" invisible="1" />
+#                    <field name="file_to_import" filename="filename_template" colspan="2"/>
+#                    <button name="import_file" string="Import lines" icon="gtk-execute" colspan="1" type="object" />
+#                    <field name="import_error_ok" invisible="1"/>
+#                    <field name="filename" invisible="1"  />
+#                    <button name="dummy" string="Update" icon="gtk-execute" colspan="1" type="object" />
+#                    <newline />
+#                    <field name="percent_completed" widget="progressbar" attrs="{\'invisible\': [(\'import_in_progress\', \'=\', False)]}" />
+#                    <field name="data" filename="filename" colspan="2" attrs="{\'invisible\':[(\'import_error_ok\', \'=\', False)]}"/>
+#                    <newline />
+#                    <field name="message" attrs="{\'invisible\':[(\'import_in_progress\', \'=\', False)]}" colspan="4" nolabel="1"/>
+#                </group>
+#                """
                 #generate new xml form
                 new_form = etree.fromstring(new_field_txt)
                 # insert new form just after state index position

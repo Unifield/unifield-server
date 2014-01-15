@@ -537,6 +537,11 @@
                             <field name="shipment_ref" />
                         </group>
                     </group>
+                   <field name="is_esc" invisible="1" />
+                   <group colspan="4" string="IN export" attrs="{'invisible': [('state', 'in', ('cancel', 'done'))]}">
+                       <field name="filetype" />
+                       <button name="export_template_file" colspan="2" string="Export file" type="object" icon="gtk-print" />
+                   </group>
                     <notebook colspan="4">
                         <page string="General Information">
                             <field name="from_wkf" invisible="1"/>
@@ -679,6 +684,9 @@
                                 <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                 <button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find"/>
                                 <button name="force_assign" states="" string="Force Availability" type="object" icon="gtk-jump-to"/>
+                                <!--
+                                     To go to simulation screen, click on Process then Simulate button on the opened wizard
+                                     <button name="go_to_simulation_screen" states="assigned,shipped" string="Simulate" type="object" icon="gtk-execute" attrs="{'invisible': [('is_esc', '=', False)]}" />-->
                                 <button name="action_process" states="assigned,shipped" string="Process" type="object" icon="gtk-go-forward"/>
                                 <group colspan="1" states="done">
                                     <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
@@ -693,6 +701,7 @@
                             <field name="company_id" widget="selection" invisible="1"/>
                         </page>
                         <page string="Notes">
+                            <field name="last_imported_filename" invisible="0" readonly="1" />
                             <field colspan="4" name="note" nolabel="1"/>
                         </page>
                     </notebook>
@@ -808,7 +817,7 @@
                                 attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
                                 />
                        </group>
-                    </group>
+                   </group>
                     <notebook colspan="4">
                         <page string="Products">
                             <field name="from_wkf" invisible="1"/>
