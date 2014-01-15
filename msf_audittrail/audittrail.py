@@ -112,6 +112,8 @@ class account_bank_statement_line(osv.osv):
         (audittrail does not process field function reference for now)
         """
         res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         for st_line in self.browse(cr, uid, ids, context=context):
             if st_line.employee_id:
                 res[st_line.id] = st_line.employee_id.name
@@ -125,6 +127,10 @@ class account_bank_statement_line(osv.osv):
     
     _columns = {
         'partner_type2': fields.function(_get_partner_type2, method=True, string="Third Parties"),
+    }
+    
+    _defaults = {
+        'name': lambda *a: '',
     }
 
 account_bank_statement_line()

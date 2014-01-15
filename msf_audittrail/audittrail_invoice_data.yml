@@ -93,7 +93,7 @@
     if object_ids and not rule_id:
       # Create the rule
       fields = [
-        'document_date', 'date', 'sequence_for_reference', 'name',
+        'name', 'document_date', 'date', 'sequence_for_reference',
         'account_id', 'partner_type2',
         'amount_in', 'amount_out', 
         'reconciled', 'state',
