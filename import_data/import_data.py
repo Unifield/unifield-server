@@ -255,18 +255,18 @@ class import_data(osv.osv_memory):
                             data.setdefault(points[0], []).append((4, _get_obj(h, row[n], fields_def)))
                 if newo2m and o2mdatas:
                     data.setdefault(newo2m, []).append((0, 0, o2mdatas.copy()))
-                
+
                 if self.post_hook.get(impobj._name):
                     self.post_hook[impobj._name](impobj, cr, uid, data, row, headers)
-                
+
                 if import_mode == 'update':
                     # Search if an object already exist. If not, create it.
                     ids_to_update = []
 
                     if impobj._name == 'product.product':
                         # UF-2254: Allow to update the product, use xmlid_code now for searching
-                        ids_to_update = impobj.search(cr, uid, [('xmlid_code', '=', data['xmlid_code'])])                        
-                    
+                        ids_to_update = impobj.search(cr, uid, [('xmlid_code', '=', data['xmlid_code'])])
+
                     if ids_to_update:
                         #UF-2170: remove the standard price value from the list for update product case
                         if 'standard_price' in data:
@@ -275,11 +275,11 @@ class import_data(osv.osv_memory):
                         nb_update_success += 1
                         cr.commit()
                     else:
-                        impobj.create(cr, uid, data)
+                        impobj.create(cr, uid, data, context={'from_import_menu': True})
                         nb_succes += 1
                         cr.commit()
                 else:
-                    impobj.create(cr, uid, data)
+                    impobj.create(cr, uid, data, context={'from_import_menu': True})
                     nb_succes += 1
                     cr.commit()
             except osv.except_osv, e:
