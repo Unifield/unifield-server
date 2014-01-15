@@ -19,7 +19,6 @@
 #
 ##############################################################################
 
-import product_attributes
-import wizard
+import product_where_used
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
