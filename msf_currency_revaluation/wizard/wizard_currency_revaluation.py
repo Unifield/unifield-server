@@ -336,15 +336,15 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         foreign_balance = adjusted_balance = balances.get('foreign_balance', 0.0)
         balance = balances.get('balance', 0.0)
         unrealized_gain_loss =  0.0
-        # Check if reval_foreign_balance exists
-        if foreign_balance or balances.get('reval_foreign_balance', 0.0) != 0.0:
+        # Check if reval_balance exists
+        if foreign_balance or balances.get('reval_balance', 0.0) != 0.0:
             ctx_rate['revaluation'] = True
-            # Use reval_foreign_balance to fix booking balance problems
+            # Use reval_balance to fix booking balance problems
             adjusted_balance = currency_obj.compute(
                 cr, uid, currency_id, cp_currency_id, foreign_balance,
                 context=ctx_rate)
             # Substract reval lines from amount
-            unrealized_gain_loss =  adjusted_balance - balance - balances.get('reval_foreign_balance', 0.0)
+            unrealized_gain_loss =  adjusted_balance - balance - balances.get('reval_balance', 0.0)
             #revaluated_balance =  balance + unrealized_gain_loss
         else:
             if balance:

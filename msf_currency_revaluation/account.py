@@ -137,24 +137,25 @@ class account_account(osv.osv):
                 accounts.setdefault(account_id, {})
                 accounts[account_id].setdefault(
                     currency_id,
-                    {'balance': 0, 'foreign_balance': 0, 'credit': 0, 'debit': 0, 'reval_foreign_balance': 0})
+                    {'balance': 0, 'foreign_balance': 0, 'credit': 0, 'debit': 0, 'reval_balance': 0})
                 accounts[account_id][currency_id]['balance'] += line['balance']
                 accounts[account_id][currency_id]['foreign_balance'] += line['foreign_balance']
                 accounts[account_id][currency_id]['credit'] += line['credit']
                 accounts[account_id][currency_id]['debit'] += line['debit']
                 # search old revaluation lines for this account and this currency for the given period
                 reval_sql = """
-                SELECT SUM(COALESCE(aml.debit, 0.0) - COALESCE(aml.credit, 0.0)) AS balance FROM account_move_line AS aml
+                SELECT SUM(COALESCE(aml.debit, 0.0) - COALESCE(aml.credit, 0.0)) AS balance
+                FROM account_move_line AS aml
                 WHERE is_revaluated_ok = 't'
                 AND period_id in %s
                 AND account_id = %s
-                AND currency_id = %s
-                ORDER BY aml.period_id, aml.currency_id, aml.account_id;"""
+                AND currency_id = %s;"""
                 cr.execute(reval_sql, (tuple(previous_period_ids), account_id, currency_id))
                 reval_res = cr.dictfetchall()
-                if reval_res and reval_res[0] and reval_res[0].get('balance', 0.0)
-                    accounts[account_id][currency_id]['reval_foreign_balance'] += reval_res[0].get('balance', 0.0)
+                if reval_res and reval_res[0] and reval_res[0].get('balance', 0.0):
+                    accounts[account_id][currency_id]['reval_balance'] += reval_res[0].get('balance', 0.0)
 
+        print "ACCOUNTS", accounts
         return accounts
 
 account_account()
