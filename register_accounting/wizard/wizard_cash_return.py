@@ -172,12 +172,15 @@ class wizard_cash_return(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', string='Currency'),
         'date': fields.date(string='Date for cash return', required=True),
         'reference': fields.char(string='Advance Return Reference', size=64),
+        'advance_linked_po_auto_invoice': fields.boolean(string="Operational advance linked po invoices"),
+        'comment': fields.text(string='Note'),
     }
 
     _defaults = {
         'initial_amount': lambda self, cr, uid, c=None: c.get('amount', False),
         'display_invoice': False, # this permits to show only advance lines tree. Then add an invoice make the invoice tree to be displayed
         'date': lambda *a: time.strftime('%Y-%m-%d'),
+        'advance_linked_po_auto_invoice': False,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -198,12 +201,56 @@ class wizard_cash_return(osv.osv_memory):
                 currency_id = st_line.statement_id.currency.id # currency is a mandatory field on statement/register
                 res.update({'initial_amount': abs(amount), 'advance_st_line_id': context.get('statement_line_id'), 'currency_id': currency_id})
         return res
+        
+    def create(self, cr, uid, values, context=None):
+        id = super(wizard_cash_return, self).create(cr, uid, values, context=context)
+        if context and 'statement_line_id' in context:
+            """"
+            UTP-482 if statment line of Operational Advance,
+            is linked to a PO, automatically adding PO invoices
+            (force user to use invoices for this cash return)
+            """
+            st_line_obj = self.pool.get('account.bank.statement.line')
+            st_line = st_line_obj.browse(cr, uid, context['statement_line_id'], context)
+            if st_line:
+                if st_line.type_for_register == 'advance' \
+                    and st_line.cash_register_op_advance_po_id:
+                    invoice_numbers = []
+                    for invoice in st_line.cash_register_op_advance_po_id.invoice_ids:
+                        invoice_numbers.append(invoice.number)
+                        context['po_op_advance_auto_add_invoice_id'] = invoice.id
+                        self.action_add_invoice(cr, uid, [id], context=context)
+                    if invoice_numbers:
+                        msg = "This operational advance is linked to a PO." \
+                            " Corresponding invoice lines have automatically been added:" \
+                            "\nInvoice(s) number: "
+                        msg += ", ".join(invoice_numbers) + "."
+                        msg += "\nYou can change selection by clicking on 'Clean invoices' then selecting invoice manually." \
+                            " Entering a 100% cash return (advance return amount = initial advance amount) you will be able to close this advance without linking it to an invoice."
+                        values = {
+                            'advance_linked_po_auto_invoice': True,
+                            'comment': msg,
+                        }
+                        self.write(cr, uid, [id], values, context=context)
+        return id
 
-    def onchange_returned_amount(self, cr, uid, ids, amount=0.0, invoices=None, advances=None, display_invoice=None, context=None):
+    def onchange_returned_amount(self, cr, uid, ids, amount=0.0, invoices=None, advances=None, display_invoice=None, initial_amount=0.0, advance_linked_po_auto_invoice=False, context=None):
         """
         When the returned amount change, it update the "Justified amount" (total_amount)
         """
-        res = {}
+        values = {}
+        if advance_linked_po_auto_invoice and amount and initial_amount \
+            and amount >= initial_amount:
+            """
+            UTP-482 operational advance linked to a PO
+                exception: if amount > initial_amount
+                    then add invoice(s) is not mandatory
+                => total_amount does not count invoices amount
+            '1 exception: if advance is settled through 100% cash return,
+            no need to link the advance return with an invoice'
+            """
+            values.update({'total_amount': amount})
+            return {'value': values}
         if amount:
             total_amount = amount + 0.0
             if display_invoice:
@@ -214,8 +261,8 @@ class wizard_cash_return(osv.osv_memory):
                 if advances:
                     for advance in advances:
                         total_amount += advance[2].get('amount', 0.0)
-            res.update({'total_amount': total_amount})
-        return {'value': res}
+            values.update({'total_amount': total_amount})
+        return {'value': values}
 
     def create_move_line(self, cr, uid, ids, date=None, document_date=None, description='/', journal=False, register=False, partner_id=False, employee_id=False, account_id=None, \
         debit=0.0, credit=0.0, reference=None, move_id=None, analytic_distribution_id=None, partner_mandatory=False, context=None):
@@ -360,28 +407,44 @@ class wizard_cash_return(osv.osv_memory):
         Add some invoice elements in the invoice_line_ids field
         """
         wizard = self.browse(cr, uid, ids[0], context=context)
+        if context and 'po_op_advance_auto_add_invoice_id' in context:
+            """"
+            UTP-482 if statment line of Operational Advance,
+            is linked to a PO, automatically adding PO invoices
+            (force user to use invoices for this cash return)
+            """
+            auto_add = True
+            invoice_obj = self.pool.get('account.invoice')
+            invoice = invoice_obj.browse(cr, uid, context['po_op_advance_auto_add_invoice_id'], context)
+            del context['po_op_advance_auto_add_invoice_id']
+            if not invoice:
+                return
+        else:
+            # default behaviour
+            auto_add = False
+            invoice = wizard.invoice_id
         to_write = {}
         new_lines = []
         total = 0.0
-        if wizard.invoice_id:
+        if invoice:
             # Verify that the invoice is in the same currency as those of the register
-            inv_currency = wizard.invoice_id.currency_id.id
+            inv_currency = invoice.currency_id.id
             st_currency = wizard.advance_st_line_id.statement_id.currency.id
             if st_currency and st_currency != inv_currency:
                 raise osv.except_osv(_('Error'), _('The choosen invoice is not in the same currency as those of the register.'))
             # Make a list of invoices that have already been added in this wizard
             added_invoices = [x['invoice_id']['id'] for x in wizard.invoice_line_ids]
             # Do operations only if our invoice is not in our list
-            if wizard.invoice_id.id not in added_invoices:
+            if invoice.id not in added_invoices:
                 # Retrieve some variables
                 move_line_obj = self.pool.get('account.move.line')
-                account_id = wizard.invoice_id.account_id.id
+                account_id = invoice.account_id.id
                 # recompute the total_amount
                 total = wizard.returned_amount or 0
                 for line in wizard.invoice_line_ids:
                     total += line.amount
                 # We search all move_line that results from an invoice (so they have the same move_id that the invoice)
-                line_ids = move_line_obj.search(cr, uid, [('move_id', '=', wizard.invoice_id.move_id.id), \
+                line_ids = move_line_obj.search(cr, uid, [('move_id', '=', invoice.move_id.id), \
                     ('account_id', '=', account_id)], context=context)
                 for move_line in move_line_obj.browse(cr, uid, line_ids, context=context):
                     date = move_line.document_date or False
@@ -397,7 +460,7 @@ class wizard_cash_return(osv.osv_memory):
                         amount = abs(move_line.amount_currency) or 0.0
                     # Add this line to our wizard
                     new_lines.append((0, 0, {'document_date': date, 'reference': reference, 'communication': communication, 'partner_id': partner_id, \
-                        'account_id': account_id, 'amount': amount, 'wizard_id': wizard.id, 'invoice_id': wizard.invoice_id.id}))
+                        'account_id': account_id, 'amount': amount, 'wizard_id': wizard.id, 'invoice_id': invoice.id}))
                     # Add amount to total_amount
                     total += amount
             # Change display_invoice to True in order to show invoice lines
@@ -411,22 +474,31 @@ class wizard_cash_return(osv.osv_memory):
                 to_write['invoice_id'] = False
                 # write changes in the wizard
                 self.write(cr, uid, ids, to_write, context=context)
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'wizard.cash.return',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_id': ids[0],
-            'context': context,
-            'target': 'new',
-        }
+        
+        if not auto_add:
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'wizard.cash.return',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'context': context,
+                'target': 'new',
+            }
 
     def clean_invoices(self, cr, uid, ids, context=None):
         """
         Clean content of invoice list and refresh view.
         """
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        # UTP-482: operation advance linked to a PO, force display_invoice
+        if wizard.advance_linked_po_auto_invoice:
+            display_invoice = True
+        else:
+            display_invoice = False
+        
         # Delete links to invoice_line_ids and inform wizard of that
-        self.write(cr, uid, ids, {'display_invoice': False, 'invoice_line_ids': [(5,)]}, context=context)
+        self.write(cr, uid, ids, {'display_invoice': display_invoice, 'invoice_line_ids': [(5,)]}, context=context)
         # Update total amount
         self.compute_total_amount(cr, uid, ids, context=context)
         return {
@@ -457,13 +529,23 @@ class wizard_cash_return(osv.osv_memory):
         total = 0.0
         total += wizard.returned_amount
         # Do computation for invoice lines only if display_invoice is True
-        if wizard.display_invoice:
-            for move_line in wizard.invoice_line_ids:
-                total += move_line.amount
-        # else do computation for advance lines only
-        else:
-            for st_line in wizard.advance_line_ids:
-                total+= st_line.amount
+        advance_settled_100_cash_return = self._is_advance_settled_100_cash_return(wizard)
+        if not advance_settled_100_cash_return:
+            """
+            UTP-482 operational advance linked to a PO
+            exception: if amount > initial_amount
+            then add invoice(s) is not mandatory
+            => total_amount does not count invoices amount
+            '1 exception: if advance is settled through 100% cash return,
+            no need to link the advance return with an invoice'
+            """
+            if wizard.display_invoice:
+                for move_line in wizard.invoice_line_ids:
+                    total += move_line.amount
+            # else do computation for advance lines only
+            else:
+                for st_line in wizard.advance_line_ids:
+                    total+= st_line.amount
         res.update({'total_amount': total})
         self.write(cr, uid, ids, res, context=context)
         return {
@@ -482,11 +564,28 @@ class wizard_cash_return(osv.osv_memory):
         """
         if context is None:
             context = {}
+        wizard = self.browse(cr, uid, ids[0], context=context)
+
+        advance_settled_100_cash_return = self._is_advance_settled_100_cash_return(wizard)
+        if advance_settled_100_cash_return:
+            """
+            UTP-482 operational advance linked to a PO
+                exception: if amount > initial_amount
+                    then add invoice(s) is not mandatory
+                '1 exception: if advance is settled through 100% cash return,
+                no need to link the advance return with an invoice'
+            => desactivate auto invoice lines
+            """
+            values = {
+                'total_amount': wizard.returned_amount,
+                'invoice_line_ids': [(5,)],
+            }
+            self.write(cr, uid, ids, values, context=context)
+            wizard = self.browse(cr, uid, ids[0], context=context)
 
         # check if any line with an analytic-a-holic account missing the distribution_id value
-        wizard = self.browse(cr, uid, ids[0], context=context)      
         for st_line in wizard.advance_line_ids:
-            if st_line.account_id.is_analytic_addicted and not st_line.analytic_distribution_id:  
+            if st_line.account_id.is_analytic_addicted and not st_line.analytic_distribution_id:
                 raise osv.except_osv(_('Warning'), _('All advance lines with account that depends on analytic distribution must have an allocation.'))
 
         # Do computation of total_amount
@@ -670,6 +769,14 @@ class wizard_cash_return(osv.osv_memory):
 
         # Close Wizard
         return { 'type': 'ir.actions.act_window_close', }
+        
+    def _is_advance_settled_100_cash_return(self, wizard):
+        if wizard and wizard.advance_linked_po_auto_invoice \
+            and wizard.initial_amount and wizard.returned_amount \
+            and wizard.returned_amount >= wizard.initial_amount:
+            # advance settled 100% with cash return in returned_amount
+            return True
+        return False
     
 wizard_cash_return()
 

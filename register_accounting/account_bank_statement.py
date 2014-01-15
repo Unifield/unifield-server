@@ -1964,8 +1964,6 @@ class account_bank_statement_line(osv.osv):
         if amount >= 0:
             raise osv.except_osv(_('Warning'), _('Please select a line with a filled out "amount out"!'))
         wiz_obj = self.pool.get('wizard.cash.return')
-        wiz_id = wiz_obj.create(cr, uid, {'returned_amount': 0.0, 'initial_amount': abs(amount), 'advance_st_line_id': ids[0], \
-            'currency_id': st_line.statement_id.currency.id}, context=context)
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
@@ -1973,6 +1971,8 @@ class account_bank_statement_line(osv.osv):
             'statement_id': statement_id,
             'amount': amount
         })
+        wiz_id = wiz_obj.create(cr, uid, {'returned_amount': 0.0, 'initial_amount': abs(amount), 'advance_st_line_id': ids[0], \
+            'currency_id': st_line.statement_id.currency.id}, context=context)
         if statement_id:
             return {
                 'name' : "Advance Return",
