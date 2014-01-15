@@ -82,10 +82,34 @@ class purchase_order_sync(osv.osv):
         'is_confirmed_and_synced': False,
     }
 
+
+    # UF-2267: Added a new method to update the reference of the FO back to the PO
+    def update_fo_ref(self, cr, uid, source, so_info, context=None):
+        self._logger.info("+++ Update the FO reference from %s to the PO %s"%(source, cr.dbname))
+        if not context:
+            context = {}
+            
+        context['no_check_line'] = True
+        so_po_common = self.pool.get('so.po.common')
+        po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
+        po_value = self.browse(cr, uid, po_id)
+        
+        ref = po_value.partner_ref
+        partner_ref = source + "." + so_info.name
+        
+        if not ref or partner_ref != ref: # only issue a write if the client_order_reference is not yet set!
+            # Sorry: This trick is to avoid creating new useless message to the synchronisation engine!
+            cr.execute('update purchase_order set partner_ref=%s where id=%s', (partner_ref, po_id))
+        
+        message = "The partner reference of the PO " + po_value.name + " got updated successfully"
+        self._logger.info(message)
+        return message
+
+
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
-        default.update({'active': True, 'split_po' : False, 'po_updated_by_sync': False})
+        default.update({'active': True, 'split_po' : False, 'push_fo' : False, 'po_updated_by_sync': False})
         return super(purchase_order_sync, self).copy(cr, uid, id, default, context=context)
         
     def create_split_po(self, cr, uid, source, so_info, context=None):
@@ -116,8 +140,11 @@ class purchase_order_sync(osv.osv):
         
         original_po = self.browse(cr, uid, po_id, context=context)
         # UTP-163: Get the 'source document' of the original PO, and add it into the split PO, if existed
-        origin = original_po['origin']
-        header_result['origin'] = origin
+        header_result['origin'] = original_po.origin
+        
+        # UF-2267: Copy the link to original PO from the split PO to the new PO-2/3 
+        if original_po.parent_order_name and original_po.parent_order_name.id:
+            header_result['parent_order_name'] = original_po.parent_order_name.id
 
         # UTP-661: Get the 'Cross Docking' value of the original PO, and add it into the split PO
         header_result['cross_docking_ok'] = original_po['cross_docking_ok']
@@ -139,7 +166,7 @@ class purchase_order_sync(osv.osv):
                 orig_line = line_obj.browse(cr, uid, orig_line[0], context=context)
                 line[2].update({'move_dest_id': orig_line.move_dest_id and orig_line.move_dest_id.id or False})
 
-        # If partner is intermission or section, copy the ADs from the lines of original PO                
+        # If partner is intermission or section, copy the ADs from the lines of original PO
         if partner_type in ['section', 'intermission']:
             for line in default['order_line']:
                 orig_line = line_obj.search(cr, uid, [('order_id', '=', po_id), ('line_number', '=', line[2].get('line_number'))])

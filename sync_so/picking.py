@@ -163,7 +163,6 @@ class stock_picking(osv.osv):
 
                 # get the corresponding picking line ids
                 for data in line_data['data']:
-                    ln = data.get('line_number', False)
                     #UF-2148: if the line contains 0 qty, just ignore it!
                     qty = data.get('product_qty', 0)
                     if qty == 0:
@@ -172,11 +171,11 @@ class stock_picking(osv.osv):
                         continue
 
                     search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
-                    
+
                     original_qty_partial = data.get('original_qty_partial')
                     if original_qty_partial != -1:
                         search_move.append(('product_qty', '=', original_qty_partial)) 
-                    
+
                     move_ids = move_obj.search(cr, uid, search_move, context=context)
                     if not move_ids:
                         search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
@@ -185,7 +184,15 @@ class stock_picking(osv.osv):
                             message = "Line number "  + str(ln) + " is not found in the original IN or PO"
                             self._logger.info(message)
                             raise Exception(message)
-                    
+
+                    # If the line is canceled, then just ignore it!
+                    state = data.get('state', 'cancel')
+                    if state == 'cancel':
+                        message = "Line number "  + str(ln) + " with state cancel is ignored!"
+                        self._logger.info(message)
+                        continue
+
+
                     if move_ids and len(move_ids) == 1: # if there is only one move, take it for process
                         move_id = move_ids[0]
                     else: # if there are more than 1 moves, then pick the next one not existing in the partial_datas[in_id]
