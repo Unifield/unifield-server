@@ -204,6 +204,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                     FROM account_period AS p, res_currency_rate AS r LEFT JOIN res_currency rc ON r.currency_id = rc.id
                     WHERE p.date_start <= r.name
                     AND p.date_stop >= r.name
+                    AND r.currency_id IS NOT NULL
                     ORDER BY rc.name
                 ) AS req
                 WHERE req.date >= %s
