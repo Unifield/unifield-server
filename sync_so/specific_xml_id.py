@@ -437,7 +437,7 @@ class product_product(osv.osv):
         res_id = ids[0]
         
         prod = self.read(cr, uid, res_id, ['default_code'], context=context)['default_code']
-        if prod is not None or prod != 'XXX': # normal case, do nothing
+        if prod is not None and prod != 'XXX': # normal case, do nothing
             return res
         
         # if the default_code is empty or XXX, rebuild the xmlid
@@ -454,7 +454,10 @@ class product_product(osv.osv):
                 'res_id' : res_id,
                 'version' : 1,
                 'name' : name,
-            }, context=context)            
+            }, context=context)
+        else:
+            if prod == 'XXX': # if the system created automatically the xmlid in ir_model_data, just delete it!
+                model_data_obj.unlink(cr, uid, sdref_ids,context=context)
         
         return res
 
