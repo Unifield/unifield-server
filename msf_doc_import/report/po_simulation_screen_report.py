@@ -19,29 +19,22 @@
 #
 ##############################################################################
 
-from tools.translate import _
+import time
+import pooler
 
-# max number of lines to import per file
-MAX_LINES_NB = 300
-GENERIC_MESSAGE = _("""
-        IMPORTANT : The first line will be ignored by the system.
-        The file should be in XML 2003 format.
+from report import report_sxw
 
-The columns should be in this values: """)
+class po_simulation_report(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(po_simulation_report, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+            'addr_to_str': self._get_addr_to_str,
+        })
 
-import tender
-import purchase_order
-import sale_order
-import initial_stock_inventory
-import stock_cost_reevaluation
-import product_list
-import composition_kit
-import check_line
-import wizard
-import import_tools
-import composition_kit
-import account
-import stock_picking
-import replenishment_rules
-import product_list
-import report
+    def _get_addr_to_str(self, addr):
+       pool = pooler.get_pool(self.cr.dbname)
+       return pool.get('res.partner.address').name_get(self.cr, self.uid, [addr.id])[0][1]
+
+report_sxw.report_sxw('report.po.simulation.screen', 'wizard.import.po.simulation.screen', 'addons/msf_doc_import/report/po_simulation_screen_report.rml', parser=po_simulation_report, header=False)
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

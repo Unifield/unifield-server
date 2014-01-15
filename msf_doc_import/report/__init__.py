@@ -19,29 +19,5 @@
 #
 ##############################################################################
 
-from tools.translate import _
-
-# max number of lines to import per file
-MAX_LINES_NB = 300
-GENERIC_MESSAGE = _("""
-        IMPORTANT : The first line will be ignored by the system.
-        The file should be in XML 2003 format.
-
-The columns should be in this values: """)
-
-import tender
-import purchase_order
-import sale_order
-import initial_stock_inventory
-import stock_cost_reevaluation
-import product_list
-import composition_kit
-import check_line
-import wizard
-import import_tools
-import composition_kit
-import account
-import stock_picking
-import replenishment_rules
-import product_list
-import report
+import po_simulation_screen_report
+import po_simulation_screen_report_xls

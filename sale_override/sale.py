@@ -659,10 +659,13 @@ class sale_order(osv.osv):
             if old_order['state'] == 'draft':
                 return old_order['id']
 
-        order_id = self.copy(cr, uid, order.id, {'order_line': [], 
-                                                 'state': 'draft', 
-                                                 'parent_order_name': old_order_name, 
+        tmp_kco = context.get('keepClientOrder')
+        context['keepClientOrder'] = True
+        order_id = self.copy(cr, uid, order.id, {'order_line': [],
+                                                 'state': 'draft',
+                                                 'parent_order_name': old_order_name,
                                                  'fo_to_resource': True}, context=context)
+        context['keepClientOrder'] = tmp_kco
 
         order_name = self.read(cr, uid, order_id, ['name'], context=context)['name']
 

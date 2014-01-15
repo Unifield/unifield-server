@@ -225,6 +225,25 @@ class purchase_order(osv.osv):
             res[po.id] = retour
         return res
 
+    def _get_project_ref(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Get the name of the POs at project side
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for po in ids:
+            res[po] = ''
+            so_ids = self.get_so_ids_from_po_ids(cr, uid, po, context=context)
+            for so in self.pool.get('sale.order').browse(cr, uid, so_ids, context=context):
+                if so.client_order_ref:
+                    if res[po]:
+                        res[po] += ' - '
+                    res[po] += so.client_order_ref
+
+        return res
+
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
@@ -277,6 +296,10 @@ class purchase_order(osv.osv):
                         help="Reference of the document that generated this purchase order request."),
         # UF-2267: Store also the parent PO as reference in the sourced PO
         'parent_order_name': fields.many2one('purchase.order', string='Parent PO name', help='If the PO is created from a re-source FO, this field contains the relevant original PO name'),
+        'project_ref': fields.char(size=256, string='Project Ref.'),
+        'message_esc': fields.text(string='ESC Message'),
+        'fnct_project_ref': fields.function(_get_project_ref, method=True, string='Project Ref.',
+                                            type='char', size=256, store=False,),
     }
 
     _defaults = {
@@ -373,7 +396,6 @@ class purchase_order(osv.osv):
             raise osv.except_osv(_('Error'), _('You cannot remove a Purchase order that is linked to a Field Order or an Internal Request. Please cancel it instead.'))
 
         return super(purchase_order, self).unlink(cr, uid, ids, context=context)
-
 
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
@@ -932,6 +954,7 @@ stock moves which are already processed : '''
             for line in po.order_line:
                 if not line.confirmed_delivery_date:
                     line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
+        # MOVE code for COMMITMENT into wkf_approve_order
         return True
 
     def create_extra_lines_on_fo(self, cr, uid, ids, context=None):
@@ -2195,6 +2218,21 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def update_origin_link(self, cr, uid, origin, context=None):
+        '''
+        Return the FO/IR that matches with the origin value
+        '''
+        so_obj = self.pool.get('sale.order')
+
+        tmp_proc_context = context.get('procurement_request')
+        context['procurement_request'] = True
+        so_ids = so_obj.search(cr, uid, [('name', '=', origin), ('state', 'in', ('sourced', 'progress', 'manual'))], context=context)
+        context['procurement_request'] = tmp_proc_context
+        if so_ids:
+            return {'link_so_id': so_ids[0]}
+
+        return {}
+
     def ask_unlink(self, cr, uid, ids, context=None):
         '''
         Call the unlink method for lines and if the PO becomes empty
@@ -2293,21 +2331,6 @@ class purchase_order_line(osv.osv):
         self.unlink(cr, uid, line_to_cancel, context=context)
 
         return ids
-
-    def update_origin_link(self, cr, uid, origin, context=None):
-        '''
-        Return the FO/IR that matches with the origin value
-        '''
-        so_obj = self.pool.get('sale.order')
-
-        tmp_proc_context = context.get('procurement_request')
-        context['procurement_request'] = True
-        so_ids = so_obj.search(cr, uid, [('name', '=', origin), ('state', 'in', ('sourced', 'progress', 'manual'))], context=context)
-        context['procurement_request'] = tmp_proc_context
-        if so_ids:
-            return {'link_so_id': so_ids[0]}
-
-        return {}
 
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -2429,6 +2452,25 @@ class purchase_order_line(osv.osv):
 
         return result
 
+    def _get_project_po_ref(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return the name of the PO at project side
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for line_id in ids:
+            res[line_id] = ''
+            sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, line_id, context=context)
+            for sol in self.pool.get('sale.order.line').browse(cr, uid, sol_ids, context=context):
+                if sol.order_id and sol.order_id.client_order_ref:
+                    if res[line_id]:
+                        res[line_id] += ' - '
+                    res[line_id] += sol.order_id.client_order_ref
+
+        return res
+
     _columns = {
         'is_line_split': fields.boolean(string='This line is a split line?'), # UTP-972: Use boolean to indicate if the line is a split line
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
@@ -2445,8 +2487,13 @@ class purchase_order_line(osv.osv):
 
         # This field is used to identify the FO PO line between 2 instances of the sync
         'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
+        'external_ref': fields.char(size=256, string='Ext. Ref.'),
+        'project_ref': fields.char(size=256, string='Project Ref.'),
+        'select_fo': fields.many2one('sale.order', string='FO'),
         'has_to_be_resourced': fields.boolean(string='Has to be re-sourced'),
         'select_fo': fields.many2one('sale.order', string='FO'),
+        'fnct_project_ref': fields.function(_get_project_po_ref, method=True, string='Project PO',
+                                            type='char', size=128, store=False),
     }
 
     _defaults = {

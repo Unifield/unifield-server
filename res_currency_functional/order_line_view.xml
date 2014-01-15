@@ -85,9 +85,17 @@
                             <field name="select_fo" on_change="on_change_select_fo(select_fo)" nolabel="1" domain="[('split_type_sale_order', '=', parent.partner_type == 'esc' and 'esc_split_sale_order' or 'local_purchase_split_sale_order'), ('state', 'in', ('sourced', 'progres', 'manual'))]"/>
                         </group>
                     </field>
+                    <field name="notes" position="after">
+<html><script type="text/javascript">
+$('#order_line\\/select_fo_text').css('display', 'none');
+$('#order_line\\/select_fo_open').css('display', 'none');
+$('#order_line\\/select_fo_select').css('right', '-14px').css('top', '2px');
+$('[for="order_line\\/select_fo"]').css('width', '1%%');
+</script>
+</html>
+                    </field>
                 </data>
             </field>
         </record>
-
     </data>
 </openerp>

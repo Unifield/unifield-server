@@ -12,7 +12,31 @@
             header="False"
             auto="False"
             menu="True"
-         />
+            />
+
+        <report
+            id="report_validated_purchase_order_xls"
+            string="Validated Purchase Order Excel Export"
+            model="purchase.order"
+            name="validated.purchase.order_xls"
+            file="msf_supply_doc_export/report/report_validated_purchase_order_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+            />
+
+        <report
+            id="report_validated_purchase_order_xml"
+            string="Validated Purchase Order XML Export"
+            model="purchase.order"
+            name="validated.purchase.order_xml"
+            file="msf_supply_doc_export/report/report_validated_purchase_order_xml.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+            />
 
         <report
             id="report_request_for_quotation_xls"
