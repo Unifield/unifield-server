@@ -155,7 +155,6 @@ class account_account(osv.osv):
                 if reval_res and reval_res[0] and reval_res[0].get('balance', 0.0):
                     accounts[account_id][currency_id]['reval_balance'] += reval_res[0].get('balance', 0.0)
 
-        print "ACCOUNTS", accounts
         return accounts
 
 account_account()
