@@ -258,11 +258,12 @@ class product_product(osv.osv):
         UF-2254: When creating the product, there are 3 different cases:
          1. the creation comes from the sync, in this case, report any error if duplication on default_code or xmlid_code
              otherwise, there will be problem with the update later
-         2. from import product menu: the context is empty: default code and xmlid_code must exist and unique 
+         2. from import product menu: the context is empty: default code and xmlid_code must exist and unique
          3. manually creation: the default code must be new (no duplication), xmlid_code = valid default_code
-         4. duplication from GUI: the default code XXX is saved, then modify in the write 
+         4. duplication from GUI: the default code XXX is saved, then modify in the write
         '''
-        
+
+        to_overwrite = False
         # The first 2 cases: dup of default_code/xmlid_code not allow
         if context is None or context.get('sync_update_execution', False):
             if not vals.get('default_code', False) or not vals.get('xmlid_code', False):
@@ -271,38 +272,28 @@ class product_product(osv.osv):
             exist_xc = self.search(cr, uid, [('xmlid_code', '=', vals['xmlid_code'])], context=context)
             if exist_dc or exist_xc: # if any of the code exists, report error!
                 raise Exception, "Problem creating product: Duplicate xmlid_code/default_code found"
-        else: # cases 3 and 4
-            if not vals.get('default_code', False):
-                vals['default_code'] = "DEFAULT_CODE"
-                
-            if vals['default_code'] == 'XXX': # duplicate button clicked from GUI
-                vals['xmlid_code'] = "DEFAULT_CODE"
-    
-            # Search for a proper default code
-            exist = self.search(cr, uid, [('default_code', '=', vals['default_code'])], context=context)
-            while exist:            
-                vals['default_code'] = vals['default_code'] + "_1" ### need another solution to make a loop to look for a valid default code
-                exist = self.search(cr, uid, [('default_code', '=', vals['default_code'])], context=context)
-                
-            if 'xmlid_code' not in vals or not vals['xmlid_code']:
-                if vals['default_code']:
-                    vals['xmlid_code'] = vals['default_code']
-                else:
-                    vals['xmlid_code'] = "EMPTY_CODE"
-                
-            # UF-2254: If there is no xmlid_code then just report error for the line
-            exist = self.search(cr, uid, [('xmlid_code', '=', vals['xmlid_code'])], context=context)
-            if exist:
-                cr.execute("SELECT id FROM product_product ORDER BY id DESC LIMIT 1")
-                max_id = 1
-                if cr.rowcount: # get the max id of product table, and add it as suffix of xmlid
-                    max_id = cr.fetchall()[0][0]
-                while exist:
-                    vals['xmlid_code'] = vals['xmlid_code'] + str(max_id) ### need another solution to make a loop to look for a valid default code
-                    exist = self.search(cr, uid, [('xmlid_code', '=', vals['xmlid_code'])], context=context)
-                    max_id = max_id + 1
-            
-        return super(product_product, self).create(cr, uid, vals, context=context)
+        elif vals.get('default_code'): # cases 3, 4
+            vals['xmlid_code'] = vals.get('default_code')
+        else:
+            # not default_code, as this is a mandatory field a default_value will be set later in the code
+            to_overwrite = 1
+        id = super(product_product, self).create(cr, uid, vals, context=context)
+        if to_overwrite:
+            prod = self.read(cr, uid, id, ['default_code'], context=context)
+            self.write(cr, uid, id, {'xmlid_code': prod['default_code']}, context=context)
+        return id
+
+    def write(self, cr, uid, ids, value, context=None):
+        single = False
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+            single = True
+        if value.get('default_code') and value['default_code'] != 'XXX':
+            # do we have any ids with default_code set to 'XXX'
+            xxx_ids = self.search(cr, uid, [('id', 'in', ids), ('default_code', '=', 'XXX')], context=context)
+            if xxx_ids:
+                self.write(cr, id, xxx_ids, {'xmlid_code': value['default_code']}, context=context)
+        return super(product_product, self).write(cr, uid, single and ids[0] or ids, value, context=context)
 
 product_product()
 

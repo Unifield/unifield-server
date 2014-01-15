@@ -35,11 +35,6 @@ class account_cash_statement(osv.osv):
         'state': lambda *a: 'draft',
     }
 
-#    Remove this block because it has been modified and moved to the sync module
-#    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
-#        bank = self.browse(cr, uid, res_id)
-#        return bank.name + '_' +bank.journal_id.code
-
     def _get_starting_balance(self, cr, uid, ids, context=None):
         """ Find starting balance
         @param name: Names of fields.
@@ -331,10 +326,64 @@ class account_cash_statement(osv.osv):
 
 account_cash_statement()
 
-class account_cashbox_line(osv.osv):
 
+class account_cashbox_line(osv.osv):
     _inherit = "account.cashbox.line"
     _order = "pieces"
     
 account_cashbox_line()
+
+
+class account_bank_statement_line(osv.osv):
+    _inherit = 'account.bank.statement.line'
+
+    _columns = {
+        # UTP-482 linked confirmed PO for an operational advance in cache register
+        'cash_register_op_advance_po_id': fields.many2one('purchase.order', 'OPE ADV - LINK TO PO', required=False, help='Operational advance purchase order'),
+    }
+
+    def check_is_cash_register_op_advance_po_available(self, cr, uid, ids, context=None):
+        """
+            cash_register_op_advance_po_id m2o allowed
+            for an Operational advance type for specific treatment account
+        """
+# TODO check with VG: we only check the constraint on the 1st id in ids !?!
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        o = self.browse(cr, uid, ids[0], context=context)
+        if not o.cash_register_op_advance_po_id:
+            return True
+        if o.account_id and o.account_id.type_for_register == 'advance':
+            return True
+        return False
+
+    _constraints = [
+        (check_is_cash_register_op_advance_po_available, 'You can only link to a purchase order for an Operation advance', ['account_id', 'cash_register_op_advance_po_id']),
+    ]
+
+    def create(self, cr, uid, values, context=None):
+        if 'cash_register_op_advance_po_id' in values:
+            if values['cash_register_op_advance_po_id']:
+                domain = [
+                    ('cash_register_op_advance_po_id', '=', values['cash_register_op_advance_po_id'])
+                ]
+                linked_po_ids = self.search(cr, uid, domain, context=context)
+                if linked_po_ids:
+                    raise osv.except_osv(_("Warning"),_("Selected 'OPE ADV - LINK TO PO' purchase order is already linked to another register line."))
+        return super(account_bank_statement_line, self).create(cr, uid, values, context=context)
+
+    def write(self, cr, uid, ids, values, context=None):
+        if 'cash_register_op_advance_po_id' in values:
+            if values['cash_register_op_advance_po_id']:
+                domain = [
+                    ('id', 'not in', ids),
+                    ('cash_register_op_advance_po_id', '=', values['cash_register_op_advance_po_id'])
+                ]
+                linked_po_ids = self.search(cr, uid, domain, context=context)
+                if linked_po_ids:
+                    raise osv.except_osv(_("Warning"),_("Selected 'OPE ADV - LINK TO PO' purchase order is already linked to another register line."))
+        return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
+
+account_bank_statement_line()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
