@@ -13,6 +13,12 @@ class setup_remote_warehouse(osv.osv_memory):
     def get_existing_usb_instance_type(self, cr, uid, ids, field_name=None, arg=None, context=None):
         return self.pool.get('sync.client.entity').get_entity(cr, uid).usb_instance_type
     
+    def _set_entity_type(self, cr, uid, entity_id, type, context=None):
+        self.pool.get('sync.client.entity').write(cr, uid, entity_id, {'usb_instance_type': type}, context=context)
+    
+    def _set_entity_date(self, cr, uid, entity_id, date, context=None):
+        self.pool.get('sync.client.entity').write(cr, uid, entity_id, {'clone_date': date}, context=context)
+    
     remote_warehouse = "remote_warehouse"
     central_platform = "central_platform"
     backup_folder_name = 'openerp_remote_warehouse_backup'
@@ -42,15 +48,18 @@ class setup_remote_warehouse(osv.osv_memory):
         sync_menu_id = self.pool.get('ir.model.data').read(cr, uid, sync_menu_xml_id_id, ['res_id'])['res_id'];
         self.pool.get('ir.ui.menu').write(cr, uid, sync_menu_id, {'active': active})
     
-    def _sync_connection_manager_disconnect(self, cr, uid):
+    def _sync_disconnect(self, cr, uid):
         """ reset connection on connection manager """
         server_connection_pool = self.pool.get('sync.client.sync_server_connection')
         connection_manager_ids = server_connection_pool.search(cr, uid, [])
         if connection_manager_ids:
             server_connection_pool.browse(cr, uid, connection_manager_ids[0]).disconnect()
             
-    def _prefix_sequences(self, cr, uid): 
-        """ add "/RW" prefix to sequences in _sequences_to_prefix to avoid conflicts with central platform """
+    def _prefix_sequences(self, cr, uid, revert=False): 
+        """ 
+        Add "/RW" prefix to sequences in _sequences_to_prefix to avoid conflicts with central platform. 
+        If revert is True, this function will remove /RW from the sequence prefix instead.
+        """
         ir_sequence_object = self.pool.get('ir.sequence')
         
         for sequence in self._sequences_to_prefix:
@@ -61,8 +70,13 @@ class setup_remote_warehouse(osv.osv_memory):
                 continue
             
             sequence_prefix = ir_sequence_object.read(cr, 1, [sequence_id], ['prefix'])[0]['prefix']
-            if sequence_prefix[-3:] != 'RW/':
-                ir_sequence_object.write(cr, 1, sequence_id, {'prefix' : '%sRW/' % sequence_prefix})
+            
+            if not revert:
+                if sequence_prefix[-3:] != 'RW/':
+                    ir_sequence_object.write(cr, 1, sequence_id, {'prefix' : '%sRW/' % sequence_prefix})
+            else:
+                if sequence_prefix[-3:] == 'RW/':
+                    ir_sequence_object.write(cr, 1, sequence_id, {'prefix' : sequence_prefix[:-3]})
                 
     def _fill_ir_model_data_dates(self, cr):
         """ 
@@ -75,6 +89,39 @@ class setup_remote_warehouse(osv.osv_memory):
             SET usb_sync_date = now()
             WHERE sync_date is null AND usb_sync_date is null;
         """)
+        
+    def _setup_remote_warehouse(self, cr, uid, entity_id):
+        """ Perform actions necessary to set up this instance as a remote warehouse """
+        self._set_sync_menu_active(cr, uid, False)
+        self._sync_disconnect(cr, uid)
+        self._prefix_sequences(cr, uid)
+        self._set_entity_type(cr, uid, entity_id, self.remote_warehouse)
+    
+    def _setup_central_platform(self, cr, uid, entity_id):
+        """ First set up as remote warehouse, save db backup, then revert changes and setup as central platform """
+        # Fill ir model data dates then setup as remote warehouse
+        self._fill_ir_model_data_dates(cr)
+        self._setup_remote_warehouse(cr, uid, entity_id)
+        
+        # commit changes to db then take and save backup to file
+        cr.commit()
+        db_dump = self._get_db_dump(cr.dbname)
+        dump_file_path = self._save_dump_file(db_dump)
+        
+        # revert remote warehouse changes and setup as central platform
+        self._revert_remote_warehouse(cr, uid, entity_id)
+        self._set_entity_type(cr, uid, entity_id, self.central_platform)
+        
+        return dump_file_path
+    
+    def _revert_remote_warehouse(self, cr, uid, entity_id):
+        """ Enables sync menu, un-prefixes sequences and clears entity usb instance type """
+        self._set_sync_menu_active(cr, uid, True)
+        self._prefix_sequences(cr, uid, revert=True)
+        self._set_entity_type(cr, uid, entity_id, "", context=None)
+    
+    def _revert_central_platform(self, cr, uid, entity_id):
+        self._set_entity_type(cr, uid, entity_id, "", context=None)
         
     def _get_db_dump(self, database_name):
         """ Makes a dump of database_name and returns the base64 SQL """
@@ -115,12 +162,14 @@ class setup_remote_warehouse(osv.osv_memory):
          - Add /RW prefix to all sequences in the _sequences_to_prefix list
         """
         
-        def set_entity_type(entity_id, type, context=None):
-            entity_pool.write(cr, uid, entity.id, {'usb_instance_type': type}, context=context)
-            
-        def set_entity_date(entity_id, date, context=None):
-            entity_pool.write(cr, uid, entity.id, {'clone_date': date}, context=context)
+        # parameter validation
+        if not isinstance(ids, (list, tuple)):
+            raise TypeError("Expected IDS given to setup remote warehouse wizard to be a list or tuple")
         
+        if len(ids) > 1:
+            raise ValueError("Cannot run setup remote warehouse on multiple wizards")
+        
+        # get entity object
         wizard = self.browse(cr, uid, ids[0])
         entity_pool = self.pool.get('sync.client.entity')
         entity = entity_pool.get_entity(cr, uid, context=context)
@@ -133,29 +182,18 @@ class setup_remote_warehouse(osv.osv_memory):
             raise osv.except_osv('Please Choose an Instance Type', 'Please specify the type of instance that this is')
         
         # Set clone date
-        set_entity_date(entity.id, datetime.now(), context=context)
+        self._set_entity_date(cr, uid, entity.id, datetime.now(), context=context)
         
         # Remote warehouse specific actions
         if wizard.usb_instance_type == self.remote_warehouse:
             self._logger.info('Setting up this instance as a remote warehouse')
-            self._set_sync_menu_active(cr, uid, False)
-            self._sync_connection_manager_disconnect(cr, uid)
-            self._prefix_sequences(cr, uid)
+            self._setup_remote_warehouse(cr, uid, entity.id)
         
         # Central platform specific actions          
         if wizard.usb_instance_type == self.central_platform:
             self._logger.info('Setting up this instance as a central platform')
-            set_entity_type(entity.id, self.remote_warehouse, context=context)
-            self._fill_ir_model_data_dates(cr)
-            cr.commit()
+            dump_file_path = self._setup_central_platform(cr, uid, entity.id)
             
-            dump_sql = self._get_db_dump(cr.dbname)
-            dump_file_path = self._save_dump_file(dump_sql)
-            
-        # mark entity as usb_instance_type 
-        set_entity_type(entity.id, wizard.usb_instance_type, context=None)
-        cr.commit()
-
         if wizard.usb_instance_type == self.remote_warehouse:
             # close wizard
             return {
@@ -179,40 +217,26 @@ class setup_remote_warehouse(osv.osv_memory):
             }
 
     def revert(self, cr, uid, ids, context=None):
-
-        # init
+        """ Undo changes made by the setup function """
+        # Get entity info
         entity_pool = self.pool.get('sync.client.entity')
         entity = entity_pool.get_entity(cr, uid, context=context)
         
         # state checks
         if not entity.usb_instance_type:
             raise osv.except_osv('Not Yet Setup', 'This instance not yet setup with an instance type, so you don\'t need to revert it')
-        
-        if entity.usb_instance_type != self.central_platform:
-            
-            # reactivate sync server connection line to let remote warehouse perform normal sync again
-            self._set_sync_menu_active(cr, uid, True)
-            
-            # remove /RW from ir.sequence prefixes 
-            ir_sequence_object = self.pool.get('ir.sequence')
-            
-            for sequence in self._sequences_to_prefix:
-                try:
-                    sequence_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, *sequence.split('.', 1))[1]
-                except ValueError, v:
-                    self._logger.warning('Could not find sequence with XML ID: %s' % sequence)
-                    continue
-                
-                sequence_prefix = ir_sequence_object.read(cr, 1, [sequence_id], ['prefix'])[0]['prefix']
-                if sequence_prefix[-3:] == 'RW/':
-                    ir_sequence_object.write(cr, 1, sequence_id, {'prefix' : sequence_prefix[:-3]})
 
-        # clear usb instance type
-        entity_pool.write(cr, uid, entity.id, {'usb_instance_type': ''}, context=context)
+        # Remote warehouse specific actions  
+        if entity.usb_instance_type == self.remote_warehouse:
+            self._revert_remote_warehouse(cr, uid, entity.id)
+
+        # Central platform specific actions
+        if entity.usb_instance_type == self.central_platform:
+            self._revert_central_platform(cr, uid, entity.id)
         
+        # Close wizard
         return {
                 'type': 'ir.actions.act_window_close',
         }
 
 setup_remote_warehouse()
-
