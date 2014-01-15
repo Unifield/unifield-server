@@ -30,5 +30,4 @@ import account_analytic_line
 import account_bank_statement
 import report
 import wizard
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -528,6 +528,9 @@ class user_access_configurator(osv.osv_memory):
                                              }
         # create one line for all objects no linked to admin
         no_linked_to_admin_ids = [x for x in model_ids if x not in two_lines_ids.keys()]
+        # we add the ir.values in the list "no_linked_to_admin_ids" because we want the user to be able to add "default" values (utp-457)
+        ir_values_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'ir.values')], context=context)[0]
+        no_linked_to_admin_ids.append(ir_values_id)
         model_obj.write(cr, uid, no_linked_to_admin_ids, {'access_ids' : [(0, 0, acl_one_line_read_no_group_values)]}, context=context)
         # first line, for admin group, all access
         acl_admin_values = {'name': 'admin',
@@ -766,12 +769,16 @@ class res_groups(osv.osv):
     add an active column
     '''
     _inherit = 'res.groups'
-    _columns = {'visible_res_groups': fields.boolean('Visible', readonly=False),
-                'from_file_import_res_groups': fields.boolean('From file Import', readonly=True),
-                }
-    _defaults = {'visible_res_groups': True,
-                 'from_file_import_res_groups': False,
-                 }
+    _columns = {
+        'visible_res_groups': fields.boolean('Visible', readonly=False),
+        'from_file_import_res_groups': fields.boolean('From file Import', readonly=True),
+        'is_an_admin_profile': fields.boolean('Is an admin profile', help="User group members allowed to set default value for all users."),
+    }
+    _defaults = {
+        'visible_res_groups': True,
+        'from_file_import_res_groups': False,
+        'is_an_admin_profile': False,
+    }
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         '''
@@ -894,10 +901,20 @@ res_groups()
 class res_users(osv.osv):
     _inherit = 'res.users'
 
+    def get_admin_profile(self, cr, uid, context=None):
+        """
+        It is called from the web.
+        It enables to display certain fields if the user belongs to a group profiled 'admin'.
+        """
+        for user in self.browse(cr, uid, [uid], context=context):
+            for group in user.groups_id:
+                if group.is_an_admin_profile:
+                    return True
+        return False
+
     _defaults = {
         'groups_id': lambda *a: [],
     }
-
 res_users()
 
 
@@ -932,3 +949,23 @@ class ir_model_access(osv.osv):
         return True
     
 ir_model_access()
+
+class ir_values(osv.osv):
+    _inherit = 'ir.values'
+    _name = 'ir.values'
+
+    def delete_default(self, cr, uid, ids, model, field, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        is_admin = self.pool.get('res.users').get_admin_profile(cr, uid, context)
+        dom = [('id', 'in', ids), ('key', '=', 'default'), ('model', '=', model), ('name', '=', field)]
+        if not is_admin:
+            dom.append(('user_id', '=', uid))
+        else:
+            dom.append(('user_id', 'in', [uid, False]))
+        new_ids = self.search(cr, uid, dom)
+        if new_ids:
+            self.unlink(cr, 1, new_ids)
+        return True
+
+ir_values()

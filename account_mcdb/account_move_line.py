@@ -61,7 +61,17 @@ class account_move_line(osv.osv):
             # output_amount field
             # Update with date
             context.update({'date': ml.source_date or ml.date or strftime('%Y-%m-%d')})
-            mnt = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
+            if ml.is_addendum_line:
+                # UTP-896: addendum line expressed in functional currency, output ccy based on functional ccy vs booking ccy (balance vs amount_currency)
+                # with ADDENDUM we dont use 'balance' field but debit - credit as balance as fix
+                if currency_id != ml.currency_id.id:
+                    # ouput ccy <> booking ccy
+                    balance = ml.debit - ml.credit
+                    mnt = self.pool.get('res.currency').compute(cr, uid, ml.functional_currency_id.id, currency_id, balance, round=True, context=context)
+                else:
+                    mnt = 0  # balance of addendum line with same ccy = 0
+            else:
+                mnt = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
             res[ml.id]['output_amount'] = mnt or 0.0
             if mnt < 0.0:
                 res[ml.id]['output_amount_debit'] = 0.0
