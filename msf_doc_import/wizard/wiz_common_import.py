@@ -730,11 +730,13 @@ class initial_stock_inventory_line(osv.osv):
         location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
         reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'perishable', 'batch_management'], context=context):
             values = {'product_id': p_data['id'],
                       'product_uom': p_data['uom_id'][0],
                       'location_id': location_id,
                       'reason_type_id': reason_id,
+                      'hidden_batch_management_mandatory': p_data['batch_management'],
+                      'hidden_perishable_mandatory': p_data['perishable'],
                       'inventory_id': parent_id}
 
             values.update(self.on_change_product_id(cr, uid, False, location_id, p_data['id'], p_data['uom_id'][0], False).get('value', {}))
