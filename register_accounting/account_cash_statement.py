@@ -352,12 +352,11 @@ class account_bank_statement_line(osv.osv):
         for an Operational advance type for specific treatment account"""
         if isinstance(ids, (int, long)):
             ids = [ids]
-        o = self.browse(cr, uid, ids[0], context=context)
-        if not o.cash_register_op_advance_po_id:
-            return True
-        if o.account_id and o.account_id.type_for_register == 'advance':
-            return True
-        return False
+        for o in self.browse(cr, uid, ids, context=context):
+            if o.cash_register_op_advance_po_id:
+                if o.account_id and o.account_id.type_for_register != 'advance':
+                    return False
+        return True
         
     _constraints = [
         (check_is_cash_register_op_advance_po_available, 'You can only link to a purchase order for an Operation advance', ['account_id', 'cash_register_op_advance_po_id']),
