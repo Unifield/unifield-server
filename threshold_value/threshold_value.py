@@ -343,6 +343,9 @@ class threshold_value_line(osv.osv):
         product_obj = self.pool.get('product.product')
         proc_obj = self.pool.get('procurement.order')
 
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         res = {}
 
         for line in self.browse(cr, uid, ids, context=context):
@@ -359,7 +362,7 @@ class threshold_value_line(osv.osv):
             elif line.threshold_value_id.consumption_method == 'fmc':
                 consu = consu_product.reviewed_consumption
             else:
-				consu = 0.00
+                consu = 0.00
 
             # Expiry values
             d_values = {'reviewed_consumption': line.threshold_value_id.consumption_method == 'fmc',

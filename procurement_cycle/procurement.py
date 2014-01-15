@@ -408,6 +408,9 @@ class stock_warehouse_order_cycle_line(osv.osv):
         proc_obj = self.pool.get('procurement.order')
         prodlot_obj = self.pool.get('stock.production.lot')
 
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         res = {}
 
         for line in self.browse(cr, uid, ids, context=context):
@@ -453,7 +456,7 @@ class stock_warehouse_order_cycle_line(osv.osv):
                             'available_stock': stock_product.virtual_available,
                             'expiry_before': expiry_product_qty,
                             'qty_to_order': qty_to_order >= 0.00 and qty_to_order or 0.00,
-                            'supplier_id': stock_product.seller_id.id,
+                            'supplier_id': stock_product.seller_id and stock_product.seller_id.id or False,
                             'required_date': req_date,
                             }
 
