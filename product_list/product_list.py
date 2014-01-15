@@ -258,14 +258,16 @@ class product_product(osv.osv):
         UF-2254: When creating the product, there are 3 different cases:
          1. the creation comes from the sync, in this case, report any error if duplication on default_code or xmlid_code
              otherwise, there will be problem with the update later
-         2. from import product menu: the context is empty: default code and xmlid_code must exist and unique
+         2. from import product menu: the context contains from_import_menu: default code and xmlid_code must exist and unique
          3. manually creation: the default code must be new (no duplication), xmlid_code = valid default_code
          4. duplication from GUI: the default code XXX is saved, then modify in the write
         '''
 
+        if context is None:
+            context = {}
         to_overwrite = False
         # The first 2 cases: dup of default_code/xmlid_code not allow
-        if context is None or context.get('sync_update_execution', False):
+        if context.get('from_import_menu') or context.get('sync_update_execution', False):
             if not vals.get('default_code', False) or not vals.get('xmlid_code', False):
                 raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
             exist_dc = self.search(cr, uid, [('default_code', '=', vals['default_code'])], context=context)
