@@ -437,6 +437,50 @@ class product_product(osv.osv):
         return get_valid_xml_name('product', product.xmlid_code) if product.xmlid_code else \
                super(product_product, self).get_unique_xml_name(cr, uid, uuid, table_name, res_id)
 
+    def create(self, cr, uid, vals, context=None):
+        id = super(product_product, self).create(cr, uid, vals, context=context)
+
+        prod = self.read(cr, uid, id, ['default_code'], context=context)['default_code']
+        if prod is not None and prod != 'XXX': # normal case, just return
+            return id
+
+        # if the default code is empty or XXX, then delete the relevant xmlid from the ir_model_data table
+        model_data_obj = self.pool.get('ir.model.data')
+        sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','=',id),('module','=','sd')])
+        if sdref_ids:
+            model_data_obj.unlink(cr, uid, sdref_ids,context=context)
+        return id
+
+    # UF-2254: Treat the case of product with empty or XXX for default_code
+    def write(self, cr, uid, ids, vals, context=None):
+        res = super(product_product, self).write(cr, uid, ids, vals, context=context)
+        res_id = ids[0]
+        
+        prod = self.read(cr, uid, res_id, ['default_code'], context=context)['default_code']
+        if prod is not None and prod != 'XXX': # normal case, do nothing
+            return res
+        
+        # if the default_code is empty or XXX, rebuild the xmlid
+        model_data_obj = self.pool.get('ir.model.data')
+        sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','=',res_id),('module','=','sd')])
+        if not sdref_ids: # xmlid not exist in ir model data -> create new
+            identifier = self.pool.get('sync.client.entity')._get_entity(cr).identifier
+            name = xmlids.get(res_id, self.get_unique_xml_name(cr, uid, identifier, self._table, res_id))
+            new_data_id = model_data_obj.create(cr, uid, {
+                'noupdate' : False, # don't set to True otherwise import won't work
+                'module' : 'sd',
+                'last_modification' : now,
+                'model' : self._name,
+                'res_id' : res_id,
+                'version' : 1,
+                'name' : name,
+            }, context=context)
+        else:
+            if prod == 'XXX': # if the system created automatically the xmlid in ir_model_data, just delete it!
+                model_data_obj.unlink(cr, uid, sdref_ids,context=context)
+        
+        return res
+
 product_product()
 
 class product_asset(osv.osv):
