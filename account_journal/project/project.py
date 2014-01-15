@@ -48,6 +48,7 @@ class account_analytic_journal(osv.osv):
             ('migration', 'Migration'),
             ('extra', 'OD-Extra Accounting'),
             ('purchase','Purchase'),
+            ('revaluation', 'Revaluation'),
             ('sale','Sale'),
             ('situation','Situation'),
         ]
