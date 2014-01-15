@@ -106,27 +106,27 @@ class wizard_import_in_simulation_screen(osv.osv):
         'message': fields.text(string='Import message',
                                readonly=True),
         'state': fields.selection([('draft', 'Draft'),
-                                   ('simu_progress', 'Simulation in progress'), 
-                                   ('simu_done', 'Simulation done'),            
-                                   ('import_progress', 'Import in progress'),   
-                                   ('error', 'Error'),                          
-                                   ('done', 'Done')],                           
-                                  string='State',                              
+                                   ('simu_progress', 'Simulation in progress'),
+                                   ('simu_done', 'Simulation done'),
+                                   ('import_progress', 'Import in progress'),
+                                   ('error', 'Error'),
+                                   ('done', 'Done')],
+                                  string='State',
                                   readonly=True),
         # File information
-        'file_to_import': fields.binary(string='File to import'),               
-        'filename': fields.char(size=64, string='Filename'),                    
-        'filetype': fields.selection([('excel', 'Excel file'),                  
+        'file_to_import': fields.binary(string='File to import'),
+        'filename': fields.char(size=64, string='Filename'),
+        'filetype': fields.selection([('excel', 'Excel file'),
                                       ('xml', 'XML file')], string='Type of file',
                                      required=True),
-        'error_file': fields.binary(string='File with errors'),                 
-        'error_filename': fields.char(size=64, string='Lines with errors'),     
-        'nb_file_lines': fields.integer(string='Total of file lines',           
-                                        readonly=True),                         
-        'nb_treated_lines': fields.integer(string='Nb treated lines',           
-                                           readonly=True),                      
-        'percent_completed': fields.float(string='Percent completed',           
-                                          readonly=True),                       
+        'error_file': fields.binary(string='File with errors'),
+        'error_filename': fields.char(size=64, string='Lines with errors'),
+        'nb_file_lines': fields.integer(string='Total of file lines',
+                                        readonly=True),
+        'nb_treated_lines': fields.integer(string='Nb treated lines',
+                                           readonly=True),
+        'percent_completed': fields.float(string='Percent completed',
+                                          readonly=True),
         'import_error_ok': fields.boolean(string='Error at import'),
         # Related fields
         'origin': fields.function(_get_related_values, method=True, string='Origin',
@@ -151,7 +151,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         'imp_transport_mode': fields.char(string='Transport mode', size=128, readonly=True),
         # Lines
         'line_ids': fields.one2many('wizard.import.in.line.simulation.screen', 'simu_id', string='Stock moves'),
-                                         
+
     }
 
     _defaults = {
@@ -397,7 +397,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                     self.write(cr, uid, [wiz.id], {'message': _('No file to import'),
                                                    'state': 'draft'}, context=context)
                     continue
-                
+
                 for line in wiz.line_ids:
                     # Put data in cache
                     if line.move_product_id:
@@ -421,7 +421,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                     SIMU_LINES[wiz.id].setdefault(l_num, {})
                     SIMU_LINES[wiz.id][l_num].setdefault('line_ids', [])
                     SIMU_LINES[wiz.id][l_num]['line_ids'].append(line.id)
-                    # By product                                                    
+                    # By product
                     SIMU_LINES[wiz.id][l_num].setdefault(l_prod, {})
                     SIMU_LINES[wiz.id][l_num][l_prod].setdefault('line_ids', [])
                     SIMU_LINES[wiz.id][l_num][l_prod]['line_ids'].append(line.id)
@@ -522,21 +522,11 @@ class wizard_import_in_simulation_screen(osv.osv):
                 origin = values.get(3, ['', ''])[1]
                 header_values['imp_origin'] = origin
 
-                # Line 4: Supplier
-    #            supplier = values.get(4, ['', ''])[1]
-    #            supplier_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', supplier)], context=context)
-    #            if supplier_ids:
-    #                supplier = supplier_ids[0]
-    #            else:
-    #                err_msg = _('Line 4 of the file: The supplier \'%s\' was not \
-    #found in the database.') % supplier
-    #                values_header_errors.append(err_msg)
-
 
                 # Line 5: Transport mode
                 transport_mode = values.get(5, ['', ''])[1]
                 header_values['imp_transport_mode'] = transport_mode
-        
+
                 # Line 6: Notes
                 imp_notes = values.get(6, ['', ''])[1]
                 header_values['imp_notes'] = imp_notes
@@ -626,7 +616,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                             to_del.append(x)
                             no_match = False
                             break
-                        
+
                     if tmp_wl_ids and no_match:
                         file_in_lines[l].append((x, 'split'))
                         to_del.append(x)
@@ -692,7 +682,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                 for x in to_del:
                     del file_lines[x]
                 to_del = []
-                
+
                 # For file lines with no simu. screen lines with same line number,
                 # create a new simu. screen line
                 for x in file_lines.keys():
@@ -773,7 +763,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                     message += '\n## Error on header values ##\n\n'
                     for err in values_header_errors:
                         message += '%s\n' % err
-                
+
                 if len(values_line_errors):
                     message += '\n## Error on line values ##\n\n'
                     for err in values_line_errors:
@@ -825,9 +815,6 @@ class wizard_import_in_simulation_screen(osv.osv):
         partial_id = self.pool.get('stock.partial.picking').create(cr, uid, {'date': simu_id.picking_id.date}, context=context)
         line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('del', 'error', 'new')), ('type_change', '=', False)], context=context)
 
-#        if not line_ids:
-#            raise osv.except_osv(_('Error'), _('Nothing to import'))
-        
         mem_move_ids, move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, context=context)
 
         # delete extra lines
@@ -1086,7 +1073,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         write_vals['imp_batch_id'] = False
                 else:
                     write_vals['imp_batch_id'] = batch_id
-            
+
             # Expired date
             exp_value = values[8]
             if not lot_check and not exp_check and exp_value:
