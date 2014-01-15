@@ -700,6 +700,8 @@ def create_log_line(self, cr, uid, model, lines=[]):
             old_value = False
         if not new_value:
             new_value = False
+        if new_value == old_value:
+            continue  # nothing has changed, nothing to log
         
         # for the many2one field, we compare old_value and new_value with the name (uf_1624), so the 2nd part of the tupe (old_value[1] == new_value[1])
         if method not in ('create', 'unlink') and (old_value == new_value \
