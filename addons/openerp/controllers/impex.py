@@ -451,7 +451,29 @@ class ImpEx(SecuredController):
             flds = fields_to_read[:]
             params.fields2 = fields_to_read[:]
 
-            result = self.get_grp_data(rpc_obj.read_group(domain, flds, group_by, 0, 0, ctx), flds)
+            data = rpc_obj.read_group(domain, flds, group_by, 0, 2000, ctx)
+
+            result_tmp = []  # List of processed data lines (dictionaries)
+            # Closure to recursively prepare and insert lines in 'result_tmp'
+            # (as much as the number of 'group_by' levels)
+            def process_data(line):
+                domain_line = line.get('__domain', [])
+                grp_by_line = line.get('__context', {}).get('group_by', [])
+                # If there is a 'group_by', we fetch data one level deeper
+                if grp_by_line:
+                    data = rpc_obj.read_group(domain_line, flds, grp_by_line, 0, 0, ctx)
+                    for line2 in data:
+                        line_copy = line.copy()
+                        line_copy.update(line2)
+                        process_data(line_copy)
+                # If 'group_by' is empty, this means we were at the last level
+                # so we insert the line in the final result
+                else:
+                    result_tmp.append(line)
+            # Prepare recursively the data to export (inserted in 'result_tmp')
+            for data_line in data:
+                process_data(data_line)
+            result = self.get_grp_data(result_tmp, flds)
 
             if export_format == "excel":
                 return self.export_html(params.fields2, result, view_name)
