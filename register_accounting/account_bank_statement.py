@@ -1026,7 +1026,7 @@ class account_bank_statement_line(osv.osv):
         
     def unlink_moves(self, cr, uid, ids, context=None):
         """
-        If invoice is a Direct Invoice and is in draft state, then delete moves and associated records, 
+        If invoice is a Direct Invoice and is in temp state, then delete moves and associated records, 
         from the account_bank_statement_line. These are then recreated for the updated invoice line.
         """
         
@@ -1043,7 +1043,7 @@ class account_bank_statement_line(osv.osv):
         seqnums = {}
            
         for absl in self.browse(cr, uid, ids):
-            if absl.state == 'draft' and absl.direct_invoice == True:
+            if absl.state == 'temp' and absl.direct_invoice == True:
               
                 # Find all moves lines linked to this register line
                 # first, via the statement
@@ -1882,7 +1882,7 @@ class account_bank_statement_line(osv.osv):
                 if absl.is_down_payment and not absl.down_payment_id:
                     raise osv.except_osv(_('Error'), _('You need to specify a PO before temp posting the Down Payment!'))
 
-            if absl.state == "draft":
+            if absl.state in ('draft','temp'):
                 if postype == 'hard' and absl.direct_invoice:
                     pass
                 else:

@@ -83,7 +83,7 @@ class account_invoice(osv.osv):
     def _direct_invoice_updated(self, cr, uid, ids, context=None):
         """
         User has updated the direct invoice. The (parent) statement line needs to be updated, and then 
-        the move lines deleted and re-created. Tickets utp917. Sheer madness.
+        the move lines deleted and re-created. Ticket utp917. Sheer madness.
         """
         
         # get object handles
@@ -104,7 +104,7 @@ class account_invoice(osv.osv):
         account_bank_statement_line.unlink_moves(cr, uid, [absl.id], context=context)
         
         # Re-create moves and temp post them.
-        account_bank_statement_line.write(cr, uid, [absl.id], {'state': 'draft'}, context=context)
+        # account_bank_statement_line.write(cr, uid, [absl.id], {'state': 'draft'}, context=context)
         account_bank_statement_line.button_temp_posting(cr, uid, [absl.id], context=context)
         
         # remove seqnums from context
