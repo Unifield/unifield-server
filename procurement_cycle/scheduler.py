@@ -81,7 +81,7 @@ class procurement_order(osv.osv):
                 for line in cycle.product_ids:
                     # Update the safety stock according to the safety stock defined in the line
                     d_values.update({'safety_stock': line.safety_stock})
-                    proc_id = self.create_proc_cycle(cr, uid, cycle, line.product_id.id, location_id, d_values)
+                    proc_id = self.create_proc_cycle(cr, uid, cycle, line.product_id.id, location_id, d_values, line)
 
                     if proc_id:
                         created_proc.append(proc_id)
@@ -133,7 +133,7 @@ Created documents : \n'''
             
         return {}
     
-    def create_proc_cycle(self, cr, uid, cycle, product_id, location_id, d_values=None, context=None):
+    def create_proc_cycle(self, cr, uid, cycle, product_id, location_id, d_values=None, line=None, context=None):
         '''
         Creates a procurement order for a product and a location
         '''
@@ -161,8 +161,11 @@ Created documents : \n'''
             context.update({'from_date': d_values.get('consumption_period_from'), 'to_date': d_values.get('consumption_period_to')})
         
         product = product_obj.browse(cr, uid, product_id[0], context=context)
-            
-        newdate = datetime.today()
+
+        newdate = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        if line and line.required_date:
+            newdate = line.required_date
+
         quantity_to_order = self._compute_quantity(cr, uid, cycle, product, location_id, d_values, context=context)
             
         # Create a procurement only if the quantity to order is more than 0.00
@@ -172,7 +175,7 @@ Created documents : \n'''
             proc_id = proc_obj.create(cr, uid, {
                                     'name': _('Procurement cycle: %s') % (cycle.name,),
                                     'origin': cycle.name,
-                                    'date_planned': newdate.strftime('%Y-%m-%d %H:%M:%S'),
+                                    'date_planned': newdate,
                                     'product_id': product.id,
                                     'product_qty': quantity_to_order,
                                     'product_uom': product.uom_id.id,
