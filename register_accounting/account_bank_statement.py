@@ -1961,7 +1961,7 @@ class account_bank_statement_line(osv.osv):
                     
                     # Hard posting
                     # statement line
-                    self.write(cr, uid, [absl.id], {'state':'hard','direct_state':'hard'}, context=context)
+                    self.write(cr, uid, [absl.id], {'direct_state':'hard'}, context=context)
                     # invoice
                     self.pool.get('account.invoice').write(cr, uid, [absl.invoice_id.id], {'state':'paid'}, context=context)                    
                     # move lines

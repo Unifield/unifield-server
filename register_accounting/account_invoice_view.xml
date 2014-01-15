@@ -65,7 +65,7 @@
                                 <button string="Compute Total" name="compute_wizard" type="object" icon='gtk-execute' colspan="4"/>
                                 <group col="6" colspan="4">
                                     <button name="invoice_reset_wizard" string="Reset Invoice" icon="gtk-cancel" type="object" attrs="{'invisible':['|', ('partner_id','=',False), ('date_invoice','=',False)]}"/>
-                                    <button name="invoice_create_wizard" string="Validates" icon="terp-camera_test" type="object"/>
+                                    <button name="invoice_create_wizard" string="Validate" icon="terp-camera_test" type="object"/>
                                 </group>
                             </group>
                         </page>
@@ -257,7 +257,7 @@
                     </field>
                     <button name="action_cancel_draft" position="replace"/>
                     <button name='invoice_open' position="replace">
-                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validatesfc2" icon="gtk-go-forward"/>
+                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
                     </button>
                 </data>
             </field>

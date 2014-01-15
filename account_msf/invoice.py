@@ -196,6 +196,7 @@ class account_invoice(osv.osv):
         Get default donation account for Donation invoices.
         Get default intermission account for Intermission Voucher IN/OUT invoices.
         Get default currency from partner if this one is linked to a pricelist.
+        Ticket utp917 - added code to avoid currency cd change if a direct invoice
         """
         res = super(account_invoice, self).onchange_partner_id(cr, uid, ids, type, partner_id, date_invoice, payment_term, partner_bank_id, company_id)
         if is_inkind_donation and partner_id:
@@ -212,13 +213,14 @@ class account_invoice(osv.osv):
             res['value'].update({'fake_account_id': res['value'].get('account_id')})
         if partner_id and type:
             p = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            ai = self.browse(cr, uid, ids)[0]
             if p:
                 c_id = False
                 if type in ['in_invoice', 'out_refund'] and p.property_product_pricelist_purchase:
                     c_id = p.property_product_pricelist_purchase.currency_id.id
                 elif type in ['out_invoice', 'in_refund'] and p.property_product_pricelist:
                     c_id = p.property_product_pricelist.currency_id.id
-                if c_id:
+                if c_id and not ai.is_direct_invoice:   #utp917
                     if not res.get('value', False):
                         res['value'] = {'currency_id': c_id}
                     else:
