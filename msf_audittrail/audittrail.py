@@ -309,8 +309,10 @@ class audittrail_rule(osv.osv):
                  "src_model": thisrule.object_id.model,
                  "search_view_id": search_view_id and search_view_id[1] or False,
                  "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
-
             }
+            if thisrule.object_id.model == 'account.bank.statement.line':
+                # for register line we allow to select many lines in track changes view
+                val['domain'] = "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', 'in', active_ids)]"                
 
             action_id = obj_action.create(cr, uid, val)
             self.write(cr, uid, [thisrule.id], {"state": "subscribed", "action_id": action_id})
