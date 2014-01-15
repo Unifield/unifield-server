@@ -23,6 +23,7 @@
 from osv import osv
 from tools.translate import _
 import pooler
+from time import strptime
 
 from account_tools import finance_export
 
@@ -106,27 +107,6 @@ class finance_archive(finance_export.finance_archive):
             new_data.append(self.line_to_utf8(tmp_line))
         return self.postprocess_selection_columns(cr, uid, new_data, [('account.bank.statement', 'state', 6)], column_deletion=column_deletion)
 
-    def postprocess_add_period(self, cr, uid, data, period_name, column_deletion=False):
-        """
-        This method takes each line from data and add period at end of line.
-        """
-        # Checks
-        if not period_name:
-            return data
-        # Prepare some values
-        new_data = []
-        # Browse lines and add period_name at the end
-        for line in data:
-            tmp_line = list(line)
-            tmp_line.append(period_name)
-            # Convert to UTF-8
-            tmp_line = self.line_to_utf8(tmp_line)
-            # Delete useless columns
-            if column_deletion:
-                tmp_line = self.delete_x_column(tmp_line, column_deletion)
-            new_data.append(tmp_line)
-        return new_data
-
 class hq_report_ocb(report_sxw.report_sxw):
 
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -160,6 +140,9 @@ class hq_report_ocb(report_sxw.report_sxw):
         instance_id = form.get('instance_id', False)
         if not fy_id or not period_id or not instance_ids or not instance_id:
             raise osv.except_osv(_('Warning'), _('Some info are missing. Either fiscalyear or period or instance.'))
+        fy = pool.get('account.fiscalyear').browse(cr, uid, fy_id)
+        last_fy_year = strptime(fy.date_start, '%Y-%m-%d').tm_year - 1 # Take previous year regarding given fiscalyear
+        first_day_of_last_fy = '%s-01-01' % (last_fy_year)
         period = pool.get('account.period').browse(cr, uid, period_id)
         last_day_of_period = period.date_stop
         first_day_of_period = period.date_start
@@ -215,17 +198,16 @@ class hq_report_ocb(report_sxw.report_sxw):
                 );
                 """,
             'fxrate': """
-                SELECT c.currency_name, c.name, r.rate
-                FROM res_currency AS c
-                LEFT JOIN res_currency_rate r ON r.currency_id = c.id AND r.id IN (
-                    SELECT dd.id
-                    FROM res_currency_rate dd
-                    WHERE dd.currency_id = c.id
-                    AND dd.name <= %s
-                    AND dd.name >= %s
-                    ORDER BY dd.name ASC LIMIT 1
-                )
-                ORDER BY c.name;
+                SELECT req.name, req.code, req.rate, req.period
+                FROM (
+                    SELECT rc.currency_name AS "name", rc.name AS "code", r.rate AS "rate", r.name AS "date", p.name AS "period"
+                    FROM account_period AS p, res_currency_rate AS r LEFT JOIN res_currency rc ON r.currency_id = rc.id
+                    WHERE p.date_start <= r.name
+                    AND p.date_stop >= r.name
+                    ORDER BY rc.name
+                ) AS req
+                WHERE req.date >= %s
+                AND req.date <= %s;
                 """,
             'register': """
                 SELECT i.name AS instance, st.name, p.name AS period, st.balance_start, st.id, CASE WHEN st.balance_end_real IS NOT NULL THEN st.balance_end_real ELSE 0.0 END AS balance_end_real, st.state, j.code AS "journal_code"
@@ -347,9 +329,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'headers': ['CCY code', 'CCY name', 'Rate', 'Month'],
                 'filename': instance_name + '_%(year)s%(month)s_FX rates.csv',
                 'key': 'fxrate',
-                'query_params': (last_day_of_period, first_day_of_period),
-                'function': 'postprocess_add_period',
-                'fnct_params': period_name,
+                'query_params': (first_day_of_last_fy, last_day_of_period),
                 },
             {
                 'headers': ['Instance', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance', 'State', 'Journal code'],
