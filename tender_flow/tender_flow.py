@@ -843,7 +843,7 @@ class tender_line(osv.osv):
         return True
 
     _sql_constraints = [
-        ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
+#        ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]
 
 

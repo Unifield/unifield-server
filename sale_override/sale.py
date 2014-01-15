@@ -1336,7 +1336,7 @@ class sale_order_line(osv.osv):
                 }
 
     _sql_constraints = [
-        ('product_qty_check', 'CHECK( product_uom_qty > 0 )', 'Product Quantity must be greater than zero.'),
+#        ('product_qty_check', 'CHECK( product_uom_qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]
 
     def ask_unlink(self, cr, uid, ids, context=None):
