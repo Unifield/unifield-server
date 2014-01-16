@@ -57,7 +57,7 @@ For FR
     "license": 'AGPL-3',
     "depends": ["base",
                 "account",
-                "msf_chart_of_account"],
+            ],
     "init_xml": [
                  #"res_currency_view.xml",
                  "account_view.xml",
