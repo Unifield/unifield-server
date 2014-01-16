@@ -101,6 +101,40 @@ class account_bank_statement(osv.osv):
 
 account_bank_statement()
 
+class account_bank_statement_line(osv.osv):
+    _name = 'account.bank.statement.line'
+    _inherit = 'account.bank.statement.line'
+    _trace = True
+
+    def _get_partner_type2(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Get "Third Parties" audittrail version
+        (audittrail does not process field function reference for now)
+        """
+        res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for st_line in self.browse(cr, uid, ids, context=context):
+            if st_line.employee_id:
+                res[st_line.id] = st_line.employee_id.name
+            elif st_line.transfer_journal_id:
+                res[st_line.id] = st_line.transfer_journal_id.name
+            elif st_line.partner_id:
+                res[st_line.id] = st_line.partner_id.name
+            else:
+                res[st_line.id] = False
+        return res
+
+    _columns = {
+        'partner_type2': fields.function(_get_partner_type2, method=True, string="Third Parties"),
+    }
+
+    _defaults = {
+        'name': lambda *a: '',
+    }
+
+account_bank_statement_line()
+
 class account_analytic_account(osv.osv):
     _name = 'account.analytic.account'
     _inherit = 'account.analytic.account'
@@ -275,8 +309,10 @@ class audittrail_rule(osv.osv):
                  "src_model": thisrule.object_id.model,
                  "search_view_id": search_view_id and search_view_id[1] or False,
                  "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
-
             }
+            if thisrule.object_id.model == 'account.bank.statement.line':
+                # for register line we allow to select many lines in track changes view
+                val['domain'] = "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', 'in', active_ids)]"
 
             action_id = obj_action.create(cr, uid, val)
             self.write(cr, uid, [thisrule.id], {"state": "subscribed", "action_id": action_id})
@@ -672,6 +708,8 @@ def create_log_line(self, cr, uid, model, lines=[]):
             old_value = False
         if not new_value:
             new_value = False
+        if new_value == old_value:
+            continue  # nothing has changed, nothing to log
         
         # for the many2one field, we compare old_value and new_value with the name (uf_1624), so the 2nd part of the tupe (old_value[1] == new_value[1])
         if method not in ('create', 'unlink') and (old_value == new_value \
