@@ -175,7 +175,10 @@
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                     </notebook>
-                    <field name="state" readonly="1" colspan="4"/>
+                    <group col="4" colspan="4">
+                    	<field name="state" readonly="1" colspan="2"/>
+                    	<button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute" colspan="2"/>
+                    </group>
                 </form>
             </field>
         </record>
