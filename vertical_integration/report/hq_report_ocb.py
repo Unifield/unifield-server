@@ -34,7 +34,7 @@ class finance_archive(finance_export.finance_archive):
     Extend existing class with new methods for this particular export.
     """
 
-    def postprocess_consolidated_entries(self, cr, uid, data, date, column_deletion=False):
+    def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False):
         """
         Use current SQL result (data) to fetch IDs and mark lines as used.
         Then do another request.
@@ -43,8 +43,8 @@ class finance_archive(finance_export.finance_archive):
         Data is a list of tuples.
         """
         # Checks
-        if not date:
-            raise osv.except_osv(_('Warning'), _('Need a date for next SQL request.'))
+        if not excluded_journal_types:
+            raise osv.except_osv(_('Warning'), _('Excluded journal_types not found!'))
         # Prepare some values
         new_data = []
         pool = pooler.get_pool(cr.dbname)
@@ -65,7 +65,7 @@ class finance_archive(finance_export.finance_archive):
                 FROM account_move_line AS aml, account_journal AS j
                 WHERE aml.exporting_sequence = %s
                 AND aml.journal_id = j.id
-                AND j.type NOT IN ('hq', 'migration')
+                AND j.type NOT IN %s
                 GROUP BY aml.period_id, aml.journal_id, aml.currency_id, aml.account_id
                 ORDER BY aml.account_id
             ) AS req, account_account AS a, account_period AS p, account_journal AS j, res_currency AS c, account_fiscalyear AS f
@@ -75,7 +75,7 @@ class finance_archive(finance_export.finance_archive):
             AND req.currency_id = c.id
             AND p.fiscalyear_id = f.id
             AND a.shrink_entries_for_hq = 't';"""
-        cr.execute(sqltwo, (seq,))
+        cr.execute(sqltwo, (seq, tuple(excluded_journal_types)))
         datatwo = cr.fetchall()
         # post process datas (add functional currency name, those from company)
         for line in datatwo:
@@ -130,6 +130,7 @@ class hq_report_ocb(report_sxw.report_sxw):
             context = {}
         # Prepare some values
         pool = pooler.get_pool(cr.dbname)
+        excluded_journal_types = ['hq','migration', 'cur_adj'] # journal types that should not be used to take lines
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
@@ -242,7 +243,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND al.move_id = aml.id
                 AND al.date >= %s
                 AND al.date <= %s
-                AND j.type not in ('hq', 'migration')
+                AND j.type not in %s
                 AND al.exported in %s;
                 """,
             # Exclude lines that come from a HQ or MIGRATION journal
@@ -254,7 +255,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 WHERE aml.period_id = %s
                 AND aml.account_id = aa.id
                 AND aml.journal_id = j.id
-                AND j.type not in ('hq', 'migration')
+                AND j.type not in %s
                 AND aa.shrink_entries_for_hq = 't'
                 AND aml.id not in (SELECT amla.id FROM account_move_line amla, account_analytic_line al WHERE al.move_id = amla.id)
                 AND aml.exported in %s;
@@ -277,7 +278,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND e.currency_id = cc.id
                 AND aml.period_id = %s
                 AND a.shrink_entries_for_hq != 't'
-                AND j.type not in ('hq', 'migration')
+                AND j.type not in %s
                 AND aml.exported in %s
                 ORDER BY aml.id;
                 """,
@@ -351,7 +352,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'headers': ['Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit', 'Functional CCY'],
                 'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
                 'key': 'rawdata',
-                'query_params': (first_day_of_period, last_day_of_period, tuple(to_export)),
+                'query_params': (first_day_of_period, last_day_of_period, tuple(excluded_journal_types), tuple(to_export)),
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.analytic.line',
@@ -359,14 +360,14 @@ class hq_report_ocb(report_sxw.report_sxw):
             {
                 'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
                 'key': 'bs_entries_consolidated',
-                'query_params': (period.id, tuple(to_export)),
+                'query_params': (period.id, tuple(excluded_journal_types), tuple(to_export)),
                 'function': 'postprocess_consolidated_entries',
-                'fnct_params': last_day_of_period,
+                'fnct_params': excluded_journal_types,
                 },
             {
                 'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
                 'key': 'bs_entries',
-                'query_params': (period.id, tuple(to_export)),
+                'query_params': (period.id, tuple(excluded_journal_types), tuple(to_export)),
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.move.line',

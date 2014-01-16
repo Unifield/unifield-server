@@ -67,6 +67,7 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
             context = {}
         # Prepare some values
         pool = pooler.get_pool(cr.dbname)
+        excluded_journal_types = ['hq', 'migration', 'cur_adj']
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
@@ -99,7 +100,7 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
                 AND e.currency_id = cc.id
                 AND aml.journal_id = j.id
                 AND a.reconcile = 't'
-                AND j.type not in ('hq', 'migration')
+                AND j.type not in %s
                 AND aml.instance_id in %s;
                 """,
         }
@@ -112,7 +113,7 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
                 'headers': ['Entry Sequence', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third Party', 'Booking Debit', 'Booking Credit', 'Booking Currency', 'Functional Debit', 'Functional Credit', 'Functional Currency', 'Reconcile reference'],
                 'filename': instance_name + "_%(year)s%(month)s_Check on reconcilable entries.csv",
                 'key': 'reconciliable',
-                'query_params': (tuple(instance_ids),),
+                'query_params': (tuple(excluded_journal_types), tuple(instance_ids),),
                 'function': 'postprocess_reconciliable',
                 },
         ]
