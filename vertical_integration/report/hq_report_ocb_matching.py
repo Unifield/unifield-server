@@ -31,8 +31,8 @@ from report import report_sxw
 class finance_archive(finance_export.finance_archive):
     def postprocess_reconciliable(self, cr, uid, data, column_deletion=False):
         """
-        Replace 14th column by its reconcile name.
-        Note: as we begin to 0, the python column is 13.
+        Replace 15th column by its reconcile name.
+        Note: as we begin to 0, the python column is 14.
         """
         # Checks
         if not data:
@@ -43,11 +43,11 @@ class finance_archive(finance_export.finance_archive):
         reconcile_obj = pool.get('account.move.reconcile')
         for line in data:
             tmp_line = list(line)
-            reconcile_id = line[13]
+            reconcile_id = line[14]
             if reconcile_id:
                 reconcile = reconcile_obj.read(cr, uid, reconcile_id, ['name'])
                 if reconcile and reconcile.get('name', False):
-                    tmp_line[13] = reconcile.get('name')
+                    tmp_line[14] = reconcile.get('name')
             new_data.append(tmp_line)
         return new_data
 
@@ -91,7 +91,7 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
         sqlrequests = {
             # Do not take lines that come from a HQ or MIGRATION journal
             'reconciliable': """
-                SELECT m.name AS "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code, aml.partner_txt, debit_currency, credit_currency, c.name AS "Booking Currency", aml.debit, aml.credit, cc.name AS "functional_currency", aml.reconcile_id
+                SELECT m.name || '-' || aml.line_number, m.name AS "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code, aml.partner_txt, debit_currency, credit_currency, c.name AS "Booking Currency", aml.debit, aml.credit, cc.name AS "functional_currency", aml.reconcile_id
                 FROM account_move_line AS aml, account_move AS m, account_account AS a, res_currency AS c, res_company AS e, res_currency AS cc, account_journal AS j
                 WHERE aml.move_id = m.id
                 AND aml.account_id = a.id
@@ -110,7 +110,7 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
         instance_name = instance.code[0:3]
         processrequests = [
             {
-                'headers': ['Entry Sequence', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third Party', 'Booking Debit', 'Booking Credit', 'Booking Currency', 'Functional Debit', 'Functional Credit', 'Functional Currency', 'Reconcile reference'],
+                'headers': ['DB ID', 'Entry Sequence', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third Party', 'Booking Debit', 'Booking Credit', 'Booking Currency', 'Functional Debit', 'Functional Credit', 'Functional Currency', 'Reconcile reference'],
                 'filename': instance_name + "_%(year)s%(month)s_Check on reconcilable entries.csv",
                 'key': 'reconciliable',
                 'query_params': (tuple(excluded_journal_types), tuple(instance_ids),),
