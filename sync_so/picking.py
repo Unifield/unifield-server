@@ -170,6 +170,13 @@ class stock_picking(osv.osv):
                         self._logger.info(message)
                         continue
 
+                    # If the line is canceled, then just ignore it!
+                    state = data.get('state', 'cancel')
+                    if state == 'cancel':
+                        message = "Line number "  + str(ln) + " with state cancel is ignored!"
+                        self._logger.info(message)
+                        continue
+
                     search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
 
                     original_qty_partial = data.get('original_qty_partial')
@@ -184,14 +191,6 @@ class stock_picking(osv.osv):
                             message = "Line number "  + str(ln) + " is not found in the original IN or PO"
                             self._logger.info(message)
                             raise Exception(message)
-
-                    # If the line is canceled, then just ignore it!
-                    state = data.get('state', 'cancel')
-                    if state == 'cancel':
-                        message = "Line number "  + str(ln) + " with state cancel is ignored!"
-                        self._logger.info(message)
-                        continue
-
 
                     if move_ids and len(move_ids) == 1: # if there is only one move, take it for process
                         move_id = move_ids[0]
