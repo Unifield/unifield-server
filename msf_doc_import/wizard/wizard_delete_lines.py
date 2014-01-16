@@ -128,6 +128,10 @@ class purchase_order(osv.osv):
     _inherit = 'purchase.order'
 
     def button_remove_lines(self, cr, uid, ids, context=None):
+        for order in self.browse(cr, uid, ids, context=context):
+            if order.rfq_ok and order.tender_id:
+                raise osv.except_osv(_('Warning'), _('You cannot remove lines on a RfQ created by a tender. Leave the lines with Unit price = 0.00 if you dont\'t have answer for them.'))
+
         return brl(self, cr, uid, ids, context=context)
 
 

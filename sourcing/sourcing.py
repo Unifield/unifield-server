@@ -1325,7 +1325,14 @@ class procurement_order(osv.osv):
             if order_line_ids:
                 origin_line = self.pool.get('sale.order.line').browse(cr, uid, order_line_ids[0])
                 line.update({'origin': origin_line.order_id.name, 'product_uom': origin_line.product_uom.id, 'product_qty': origin_line.product_uom_qty})
-            
+            else:
+                # Update the link to the original FO to create new line on it at PO confirmation
+                procurement = kwargs['procurement']
+                if procurement.origin:
+                    link_so = self.pool.get('purchase.order.line').update_origin_link(cr, uid, procurement.origin, context=context)
+                    if link_so.get('link_so_id'):
+                        line.update({'origin': procurement.origin, 'link_so_id': link_so.get('link_so_id')})
+
             # UTP-934: If the procurement is a rfq, the price unit must be taken from this rfq, and not from the pricelist or standard price
             procurement = kwargs['procurement']
             if procurement.po_cft == 'rfq':

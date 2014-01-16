@@ -421,6 +421,7 @@ class tender(osv.osv):
                                             'tender_id': tender.id,
                                             'tender_line_id': line.id,
                                             'date_planned': rts,
+                                            'origin': tender.sale_order_id.name,
                                             'supplier': line.purchase_order_line_id.order_id.partner_id.id,
                                             'name': '[%s] %s' % (line.product_id.default_code, line.product_id.name),
                                             'location_id': tender.sale_order_id.warehouse_id.lot_stock_id.id,
@@ -842,7 +843,7 @@ class tender_line(osv.osv):
         return True
 
     _sql_constraints = [
-        ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
+#        ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]
 
 
@@ -1469,11 +1470,47 @@ class purchase_order(osv.osv):
         '''
         Set the state to done and update the price unit in the procurement order
         '''
+        wf_service = netsvc.LocalService("workflow")
+        proc_obj = self.pool.get('procurement.order')
+        date_tools = self.pool.get('date.tools')
+        fields_tools = self.pool.get('fields.tools')
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         for rfq in self.browse(cr, uid, ids, context=context):
             if rfq.from_procurement:
                 for line in rfq.order_line:
                     if line.procurement_id:
                         self.pool.get('procurement.order').write(cr, uid, [line.procurement_id.id], {'price_unit': line.price_unit}, context=context)
+                    elif not rfq.tender_id:
+                        prep_lt = fields_tools.get_field_from_company(cr, uid, object='sale.order', field='preparation_lead_time', context=context)
+                        rts = datetime.strptime(rfq.sale_order_id.ready_to_ship_date, db_date_format)
+                        rts = rts - relativedelta(days=prep_lt or 0)
+                        rts = rts.strftime(db_date_format)
+                        vals = {'product_id': line.product_id.id,
+                                'product_uom': line.product_uom.id,
+                                'product_uos': line.product_uom.id,
+                                'product_qty': line.product_qty,
+                                'product_uos_qty': line.product_qty,
+                                'procure_method': 'make_to_order',
+                                'is_rfq': True,
+                                'rfq_id': rfq.id,
+                                'rfq_line_id': line.id,
+                                'is_tender': False,
+                                'tender_id': False,
+                                'tender_line_id': False,
+                                'date_planned': rts,
+                                'origin': rfq.sale_order_id.name,
+                                'supplier': rfq.partner_id.id,
+                                'name': '[%s] %s' % (line.product_id.default_code, line.product_id.name),
+                                'location_id': rfq.sale_order_id.warehouse_id.lot_stock_id.id,
+                                'po_cft': 'rfq',
+                                }
+                        proc_id = proc_obj.create(cr, uid, vals, context=context)
+                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
 
         return self.write(cr, uid, ids, {'state': 'done'}, context=context)
 

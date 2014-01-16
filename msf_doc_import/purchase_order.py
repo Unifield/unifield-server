@@ -128,7 +128,7 @@ class purchase_order(osv.osv):
             export_line_obj.create(cr, uid, {'po_line_id': l.id,
                                              'in_line_number': l.line_number,
                                              'simu_id': export_id}, context=context)
-
+        
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.po.simulation.screen',
                 'res_id': export_id,
@@ -156,7 +156,7 @@ class purchase_order(osv.osv):
                 'view_mode': 'form',
                 'target': 'new',
                 'context': context}
-        
+
 
     def export_xml_po_integration(self, cr, uid, ids, context=None):
         '''

@@ -665,6 +665,7 @@ class sale_order(osv.osv):
                                                  'state': 'draft',
                                                  'parent_order_name': old_order_name,
                                                  'fo_to_resource': True}, context=context)
+
         context['keepClientOrder'] = tmp_kco
 
         order_name = self.read(cr, uid, order_id, ['name'], context=context)['name']
@@ -1336,10 +1337,6 @@ class sale_order_line(osv.osv):
                 'created_by_po': fields.many2one('purchase.order', string='Created by PO'),
                 'created_by_po_line': fields.many2one('purchase.order.line', string='Created by PO line'),
                 }
-
-    _sql_constraints = [
-        ('product_qty_check', 'CHECK( product_uom_qty > 0 )', 'Product Quantity must be greater than zero.'),
-    ]
 
     _defaults = {
         'is_line_split': False, # UTP-972: By default set False, not split
