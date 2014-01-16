@@ -205,6 +205,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                     WHERE p.date_start <= r.name
                     AND p.date_stop >= r.name
                     AND r.currency_id IS NOT NULL
+                    AND rc.active = 't'
                     ORDER BY rc.name
                 ) AS req
                 WHERE req.date >= %s
