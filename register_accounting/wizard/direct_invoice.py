@@ -188,6 +188,7 @@ class wizard_account_invoice(osv.osv):
 
         # Delete the wizard
         self.unlink(cr, uid, ids, context=context)
+        # TODO: unlink the wizard_account_invoice_line rows also
 
         return open_register_view(self, cr, uid,inv['register_id'][0])
 
@@ -280,7 +281,7 @@ class wizard_account_invoice_line(osv.osv):
         
         fields_to_write = ['journal_id', 'partner_id', 'address_invoice_id', 'date_invoice', 'register_posting_date', 
             'account_id', 'partner_bank_id', 'payment_term', 'name', 'document_date',
-            'origin', 'address_contact_id', 'user_id', 'comment','reference']
+            'origin', 'address_contact_id', 'user_id', 'comment', 'reference']
         to_write = {}
         for f in fields_to_write:
             if 'd_%s'%(f,) in context:

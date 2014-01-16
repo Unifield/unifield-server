@@ -83,7 +83,7 @@
                                         <field name="is_transfer_with_change" invisible="1"/>
                                         <button name="button_transfer" string="Transfer details" type="object" 
                                             icon="terp-stock_format-default" context="context" attrs="{'invisible': [('is_transfer_with_change', '=', False)]}"/>
-                                        <field name="direct_invoice" invisible="1"/>
+                                        <field name="direct_invoice" invisible="1" />
                                         <field name="invoice_id" invisible="1"/>
                                         <field name="number_imported_invoice"  invisible="1"/>
                                         <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}" 
@@ -94,8 +94,6 @@
                                         <button name="button_down_payment" string="Down payment" type="object" 
                                             icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
                                         <field name="reconciled"/>
-                                        <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
-                                            context="context"/>
                                         <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
                                             context="context"/>
                                         <field name="state" readonly="True"/>
@@ -243,7 +241,8 @@
                                         <!-- UTP-482 operational advance linked confirmed PO -->
                                         <field name="cash_register_op_advance_po_id"
                                             domain="[('state', 'in', ['approved'])]" />
-                                        <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
+                                        <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr"
+                                            attrs="{'invisible': [('direct_invoice', '=', True)]}"
                                             context="context"/>
                                         <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
                                             context="context"/>
@@ -717,8 +716,6 @@
                                     <button name="button_down_payment" string="Down payment" type="object" 
                                         icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
                                     <field name="reconciled"/>
-                                    <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
-                                        context="context"/>
                                     <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
                                         context="context"/>
                                     <field name="state" readonly="True"/>

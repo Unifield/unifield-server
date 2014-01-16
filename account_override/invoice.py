@@ -143,7 +143,7 @@ class account_invoice(osv.osv):
             if partner and partner[0] and not partner[0].active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
         return super(account_invoice, self).create(cr, uid, vals, context)
-
+    
     def _check_document_date(self, cr, uid, ids):
         """
         Check that document's date is done BEFORE posting date
