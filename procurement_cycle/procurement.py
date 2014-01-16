@@ -440,6 +440,7 @@ class stock_warehouse_order_cycle_line(osv.osv):
                         'safety_stock': line.safety_stock,
                         'safety_time': line.order_cycle_id.safety_stock_time}
             expiry_product_qty = product_obj.get_expiry_qty(cr, uid, line.product_id.id, location_id, False, d_values, context=dict(context, location=location_id, compute_child=True))
+            expiry_product_qty = expiry_product_qty or 0.00
 
             qty_to_order, req_date = proc_obj._compute_quantity(cr, uid, False, line.product_id, line.order_cycle_id.location_id.id, d_values, context=dict(context, from_date=from_date, to_date=to_date, get_data=True))
 
