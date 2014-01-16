@@ -219,7 +219,6 @@ class hq_entries_import_wizard(osv.osv_memory):
                     'cost_center_id': employee.cost_center_id.id,
                 })
             if employee.funding_pool_id:
-                fp = self.pool.get('account.analytic.account').browse(cr, uid, employee.funding_pool_id.id)
                 vals.update({
                     'analytic_id_first_value': employee.funding_pool_id.id,
                     'analytic_id': employee.funding_pool_id.id,
@@ -297,7 +296,6 @@ class hq_entries_import_wizard(osv.osv_memory):
                 if filename.split('.')[-1] != 'csv':
                     raise osv.except_osv(_('Warning'), _('You are trying to import a file with the wrong file format; please import a CSV file.'))
             res = True
-            res_amount = 0.0
             amount = 0.0
             # Omit first line that contains columns ' name
             try:

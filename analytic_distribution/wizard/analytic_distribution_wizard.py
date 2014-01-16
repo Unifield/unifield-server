@@ -603,7 +603,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         'from_direct_inv': fields.many2one('account.bank.statement.line', string="Register Line For Direct Invoice"),
         'posting_date': fields.date('Posting date', readonly=True),
         'document_date': fields.date('Document date', readonly=True),
-        'partner_type': fields.char('Partner Type', readonly=1, size=128),
         'register_line_state': fields.function(_get_register_line_state, method=True, string='Register line state', type='selection', selection=[('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')], readonly=True, store=False),
         'partner_type': fields.text(string='Partner Type of FO/PO', required=False, readonly=True), #UF-2138: added the ref to partner type of FO/PO
         'cash_return_id': fields.many2one('wizard.cash.return', string="Advance Return"),

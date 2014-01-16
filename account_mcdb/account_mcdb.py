@@ -492,11 +492,13 @@ class account_mcdb(osv.osv):
             'target': 'crush',
         }
 
-    def _button_add(self, cr, uid, ids, obj=False, field=False, args=[], context=None):
+    def _button_add(self, cr, uid, ids, obj=False, field=False, args=None, context=None):
         """
         Search all elements of an object (obj) regarding criteria (args). Then return wizard and complete given field (field).
         NB: We consider field is always a MANY2ONE field! (no sense to add all elements of another field...)
         """
+        if args is None:
+            args = []
         # Some verifications
         if not context:
             context = {}

@@ -268,7 +268,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                 xml_file = base64.decodestring(wiz.file_to_import)
                 root = ET.fromstring(xml_file)
                 if root.tag != 'data':
-                    raise osv.except_osve(_('Error'), _('The given file is not a valid XML file !'))
+                    raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
                 
             self.write(cr, uid, ids, {'state': 'simu_progress'}, context=context)
             cr.commit()

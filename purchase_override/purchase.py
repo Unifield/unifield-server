@@ -2489,7 +2489,6 @@ class purchase_order_line(osv.osv):
         'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
         'external_ref': fields.char(size=256, string='Ext. Ref.'),
         'project_ref': fields.char(size=256, string='Project Ref.'),
-        'select_fo': fields.many2one('sale.order', string='FO'),
         'has_to_be_resourced': fields.boolean(string='Has to be re-sourced'),
         'select_fo': fields.many2one('sale.order', string='FO'),
         'fnct_project_ref': fields.function(_get_project_po_ref, method=True, string='Project PO',

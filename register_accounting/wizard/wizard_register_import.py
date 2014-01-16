@@ -49,7 +49,6 @@ class wizard_register_import(osv.osv_memory):
     }
 
     _defaults = {
-        'state': lambda *a: 'draft',
         'progression': lambda *a: 0.0,
         'state': lambda *a: 'draft',
     }
