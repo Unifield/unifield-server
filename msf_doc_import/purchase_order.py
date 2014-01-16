@@ -40,6 +40,19 @@ from msf_doc_import import check_line
 from lxml import etree
 
 
+def get_selection(self, cr, uid, o, field):
+    """
+    Retourne le libellé d'un champ sélection
+    """
+    sel = self.pool.get(o._name).fields_get(cr, uid, [field])
+    res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+    name = '%s,%s' % (o._name, field)
+    tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
+    if tr_ids:
+        return self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
+    else:
+        return res
+
 class purchase_order(osv.osv):
     _inherit = 'purchase.order'
 
@@ -122,13 +135,16 @@ class purchase_order(osv.osv):
         export_ids = export_obj.search(cr, uid, [('order_id', '=', ids[0])], context=context)
         export_obj.unlink(cr, uid, export_ids, context=context)
         export_id = export_obj.create(cr, uid, {
+#                                               'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])),
+#                                               'filename_template': 'template.xls',
+#                                               'filename': 'Lines_Not_Imported.xls',
                                                 'order_id': ids[0]}, context)
 
         for l in self.pool.get('purchase.order').browse(cr, uid, ids[0], context=context).order_line:
             export_line_obj.create(cr, uid, {'po_line_id': l.id,
                                              'in_line_number': l.line_number,
                                              'simu_id': export_id}, context=context)
-
+        
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.po.simulation.screen',
                 'res_id': export_id,
@@ -172,11 +188,11 @@ class purchase_order(osv.osv):
         datas['ids'] = ids
         report_name = 'validated.purchase.order_xml'
 
-        return {
-                'type': 'ir.actions.report.xml',
-                'report_name': report_name,
-                'datas': datas,
-                'context': context,
+        return {                                                                
+                'type': 'ir.actions.report.xml',                                    
+                'report_name': report_name,                                         
+                'datas': datas,                                                     
+                'context': context,                                                 
                }
 
     def export_excel_po_integration(self, cr, uid, ids, context=None):

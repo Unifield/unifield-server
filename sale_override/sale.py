@@ -665,6 +665,7 @@ class sale_order(osv.osv):
                                                  'state': 'draft',
                                                  'parent_order_name': old_order_name,
                                                  'fo_to_resource': True}, context=context)
+
         context['keepClientOrder'] = tmp_kco
 
         order_name = self.read(cr, uid, order_id, ['name'], context=context)['name']
@@ -1338,7 +1339,7 @@ class sale_order_line(osv.osv):
                 }
 
     _sql_constraints = [
-        ('product_qty_check', 'CHECK( product_uom_qty > 0 )', 'Product Quantity must be greater than zero.'),
+#        ('product_qty_check', 'CHECK( product_uom_qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]
 
     _defaults = {
