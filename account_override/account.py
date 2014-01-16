@@ -152,6 +152,8 @@ class account_move(osv.osv):
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \
             help="This indicates which Journal Type is attached to this Journal Entry"),
+        'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
+            help="This field contains the information related to the numbering of the lines of this journal entry."),
     }
 
     _defaults = {
@@ -203,6 +205,30 @@ class account_move(osv.osv):
             raise osv.except_osv(_('Error'), _("Journal item does not have same posting date (%s) as journal entry (%s).") % (move_line.date, move_line.move_id.date))
         return res
 
+    def create_sequence(self, cr, uid, vals, context=None):
+        """
+        Create new entry sequence for every new journal entry
+        """
+        seq_pool = self.pool.get('ir.sequence')
+        seq_typ_pool = self.pool.get('ir.sequence.type')
+
+        name = 'Journal Items L' # For Journal Items Lines
+        code = 'account.move'
+
+        types = {
+            'name': name,
+            'code': code
+        }
+        seq_typ_pool.create(cr, uid, types)
+
+        seq = {
+            'name': name,
+            'code': code,
+            'prefix': '',
+            'padding': 0,
+        }
+        return seq_pool.create(cr, uid, seq)
+
     def create(self, cr, uid, vals, context=None):
         """
         Change move line's sequence (name) by using instance move prefix.
@@ -236,6 +262,10 @@ class account_move(osv.osv):
             if not instance.move_prefix:
                 raise osv.except_osv(_('Warning'), _('No move prefix found for this instance! Please configure it on Company view.'))
             vals['name'] = "%s-%s-%s" % (instance.move_prefix, journal.code, sequence_number)
+        # Create a sequence for this new journal entry
+        res_seq = self.create_sequence(cr, uid, vals, context)
+        vals.update({'sequence_id': res_seq,})
+        # Default behaviour (create)
         res = super(account_move, self).create(cr, uid, vals, context=context)
         self._check_document_date(cr, uid, res, context)
         self._check_date_in_period(cr, uid, res, context)
