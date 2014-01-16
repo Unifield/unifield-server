@@ -213,18 +213,20 @@ class account_invoice(osv.osv):
             res['value'].update({'fake_account_id': res['value'].get('account_id')})
         if partner_id and type:
             p = self.pool.get('res.partner').browse(cr, uid, partner_id)
-            ai = self.browse(cr, uid, ids)[0]
+            if ids: #utp917
+                ai = self.browse(cr, uid, ids)[0]
             if p:
                 c_id = False
                 if type in ['in_invoice', 'out_refund'] and p.property_product_pricelist_purchase:
                     c_id = p.property_product_pricelist_purchase.currency_id.id
                 elif type in ['out_invoice', 'in_refund'] and p.property_product_pricelist:
                     c_id = p.property_product_pricelist.currency_id.id
-                if c_id and not ai.is_direct_invoice:   #utp917
-                    if not res.get('value', False):
-                        res['value'] = {'currency_id': c_id}
-                    else:
-                        res['value'].update({'currency_id': c_id})
+                if ids:
+                    if c_id and not ai.is_direct_invoice:   #utp917
+                        if not res.get('value', False):
+                            res['value'] = {'currency_id': c_id}
+                        else:
+                            res['value'].update({'currency_id': c_id})
 
         return res
 
