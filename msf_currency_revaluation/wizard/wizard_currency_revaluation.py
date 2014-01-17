@@ -648,7 +648,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         if created_ids:
             # Set all booking amount to 0 for revaluation lines
             cr.execute('UPDATE account_move_line '
-                       'SET debit_currency = 0, credit_currency = 0'
+                       'SET debit_currency = 0, credit_currency = 0, amount_currency = 0'
                        'WHERE id IN %s', (tuple(created_ids),))
             # Return the view
             return {'domain': "[('id','in', %s)]" % (created_ids,),
