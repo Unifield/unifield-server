@@ -1,10 +1,8 @@
-#!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -21,24 +19,19 @@
 #
 ##############################################################################
 
-import cashbox_closing
-import cashbox_write_off
-import temp_posting
-import hard_posting
-import wizard_cash_return
-import direct_invoice
-import import_invoice_on_registers
-import import_cheque_on_bank_registers
-import register_creation
-import wizard_confirm_bank
-import invoice_date
-import down_payment
-import transfer_with_change
-import wizard_register_import
-import account_invoice_refund
+import time
 
+from osv import fields, osv
+from tools.translate import _
+import netsvc
 
+class account_invoice_refund(osv.osv_memory):
 
+    """Refunds invoice """
 
+    _name = "account.invoice.refund"
+    _inherit = "account.invoice.refund" 
+    
+account_invoice_refund()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
