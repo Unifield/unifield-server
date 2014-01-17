@@ -343,8 +343,10 @@ class update_received(osv.osv):
             sync_log(self, e)
         return True
 
-    def execute_update(self, cr, uid, ids=None, context=None):
+    def execute_update(self, cr, uid, ids=None, priorities=None, context=None):
         context = dict(context or {}, sync_update_execution=True)
+        local_entity = self.pool.get('sync.client.entity').get_entity(
+            cr, uid, context=context)
 
         if ids is None:
             update_ids = self.search(cr, uid, [('run','=',False)], order='id asc', context=context)
@@ -352,6 +354,11 @@ class update_received(osv.osv):
             update_ids = ids
         if not update_ids:
             return ''
+
+        if priorities is None:
+            self._logger.warn(
+                "Executing update without having entity priorities... "
+                "this may results in a lost of modification to push")
 
         # Sort updates by rule_sequence
         whole = self.browse(cr, uid, update_ids, context=context)
@@ -420,8 +427,14 @@ class update_received(osv.osv):
                 logs.clear()
                 for sdref, version in versions.items():
                     try:
-                        self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-                            sdref, {'version': version, self._sync_field: fields.datetime.now()},
+                        self.pool.get('ir.model.data').update_sd_ref(
+                            cr, uid, sdref,
+                            {
+                                'version': version,
+                                self._sync_field: fields.datetime.now(),
+                                'force_recreation' : False,
+                                'touched' : '[]',
+                            },
                             context=context)
                     except ValueError:
                         self._logger.warning("Cannot find record %s during update execution process!" % update.sdref)
@@ -447,11 +460,6 @@ class update_received(osv.osv):
                 values.append(row)
                 update_ids.append(update.id)
                 versions.append( (update.sdref, update.version) )
-
-                #1 conflict detection
-                if self._conflict(cr, uid, update.sdref, update.version, context=context):
-                    #2 if conflict => manage conflict according rules : report conflict and how it's solve
-                    logs[update.id] = sync_log(self, "Conflict detected!", 'warning', data=(update.id, update.fields, update.values)) + "\n"
 
             if bad_fields:
                 import_fields = [import_fields[i] for i in range(len(import_fields)) if i not in bad_fields]
@@ -575,9 +583,52 @@ class update_received(osv.osv):
             updates = filter(lambda update: update.id not in deleted_update_ids or
                                             (not do_deletion and force_recreation),
                              updates)
-            if not updates: continue
+            # ignore updates of instances that have lower priorities
+            if priorities is not None:
+                assert local_entity.name in priorities, \
+                    "Oops! I don't even know my own priority."
+                import_fields = eval(updates[0].fields)
+                sdref_res_id = obj.find_sd_ref(cr, uid,
+                    sdref_update_ids.keys(),
+                    context=context)
+                confilcting_ids = obj.need_to_push(cr, uid,
+                    sdref_res_id.values(), import_fields, context=context)
+                confilcting_updates = filter(
+                    lambda update: update.sdref in sdref_res_id and \
+                        sdref_res_id[update.sdref] in confilcting_ids,
+                    updates)
+                updates_to_ignore = filter(
+                    lambda update: priorities[update.source] \
+                                   > priorities[local_entity.name],
+                    confilcting_updates)
+                for update in confilcting_updates:
+                    if update not in updates_to_ignore:
+                        self._logger.warn(
+                            "The update %d has overwritten your modification "
+                            "on record sd.%s because of higher priority "
+                            "(update source: %s > local instance: %s)"
+                            % (update.id, update.sdref,
+                               update.source, local_entity.name))
+                self.write(cr, uid,
+                    [update.id for update in updates_to_ignore],
+                    {
+                        'editable' : False,
+                        'run' : True,
+                        'log' : \
+                            "This update has been ignored because it " \
+                            "interfere with a local modification while the " \
+                            "origin instance has a lower priority.\n\n" \
+                            "(update source: %s < local instance: %s)" \
+                            % (update.source, local_entity.name),
+                    },
+                    context=context)
+                updates = filter(
+                    lambda update: update not in updates_to_ignore,
+                    updates)
             # Proceed
-            if do_deletion:
+            if not updates:
+                continue
+            elif do_deletion:
                 group_unlink_update_execution(obj, dict((update.sdref, update.id) for update in updates))
                 deleted += len(updates)
             else:
@@ -612,18 +663,6 @@ class update_received(osv.osv):
             values.pop(i)
         
         return (fields, values)
-    
-    def _conflict(self, cr, uid, sdref, next_version, context=None):
-        ir_data = self.pool.get('ir.model.data')
-        data_id = ir_data.find_sd_ref(cr, uid, sdref, context=context)
-        # no data => no record => no conflict
-        if not data_id: return False
-        data_rec = ir_data.browse(cr, uid, data_id, context=context)
-        return (not data_rec.is_deleted                                       # record doesn't exists => no conflict
-                and (not data_rec.sync_date                                   # never synced => conflict
-                     or (data_rec.last_modification                           # if last_modification exists, try the next
-                         and data_rec.sync_date < data_rec.last_modification) # modification after synchro => conflict
-                     or next_version < data_rec.version))                     # next version is lower than current version
     
     def _check_and_replace_missing_id(self, cr, uid, fields, values, fallback, message, context=None):
         ir_model_data_obj = self.pool.get('ir.model.data')
