@@ -177,7 +177,7 @@
                     </notebook>
                     <group col="4" colspan="4">
                     	<field name="state" readonly="1" colspan="2"/>
-                    	<button name="action_direct_invoice_refund" type='action' string='Refund' states='open,paid' icon="gtk-execute" colspan="2"/>
+                    	<button name="%(action_direct_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute" colspan="2"/>
                     </group>
                 </form>
             </field>
@@ -195,7 +195,7 @@
                          <field name="journal_id" widget='selection'/>
                          <field name="date"/>
                          <field name="period"/>
-                         <field name="filter_refund" readonly="1" context="{'filter_refund':'refund'}" />
+                         <field name="filter_refund" readonly="1" />
                     </group>
                     <separator colspan="4"/>
                     <group col="4" colspan="4" fill="1">

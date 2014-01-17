@@ -32,6 +32,10 @@ class account_invoice_refund(osv.osv_memory):
     _name = "account.invoice.refund"
     _inherit = "account.invoice.refund" 
     
+    _defaults = {
+        'filter_refund': 'refund',
+    }
+    
 account_invoice_refund()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
