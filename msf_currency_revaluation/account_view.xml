@@ -9,10 +9,10 @@
             <field name="inherit_id" ref="account.view_account_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//notebook" position="inside">
-                    <page string="Currency Revaluation" attrs="{'invisible': [('instance_level', '!=', 'section')]}">
+                    <page string="Currency Revaluation" attrs="{'invisible': [('instance_level', '=', 'project')]}">
                         <field name="instance_level" invisible="1"/>
                         <field name="currency_revaluation"
-                            attrs="{'readonly': [('user_type_code', 'not in', ['receivables', 'payables', 'cash', 'asset', 'stock'])]}"/>
+                            attrs="{'readonly': ['|', ('instance_level', '!=', 'section'), ('user_type_code', 'not in', ['receivables', 'payables', 'cash', 'asset', 'stock'])]}"/>
                     </page>
                 </xpath>
             </field>
