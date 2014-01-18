@@ -1,50 +1,50 @@
 id,user_type,currency_revaluation,accrual_account,activation_date,code,default_destination_id,inactivation_date,type,name,note,parent_id,reconcile,type_for_register,user_type_code
 msf_msf_chart_of_accounts,View,FALSE,FALSE,01-Jan-12,MSF,,,View,MSF Chart of Accounts,,,FALSE,None,view
-1_current_assets,Cash,TRUE,FALSE,01-Jan-12,1,,,View,Current Assets,,MSF MSF Chart of Accounts,FALSE,None,cash
-10_cash_and_cash_equivalents,Cash,TRUE,FALSE,01-Jan-12,10,,,View,Cash and cash equivalents,,1 Current Assets,FALSE,None,cash
-101_cash_on_hand,Cash,TRUE,FALSE,01-Jan-12,101,,,View,Cash on hand,,10 Cash and cash equivalents,FALSE,None,cash
+1_current_assets,Cash,FALSE,FALSE,01-Jan-12,1,,,View,Current Assets,,MSF MSF Chart of Accounts,FALSE,None,cash
+10_cash_and_cash_equivalents,Cash,FALSE,FALSE,01-Jan-12,10,,,View,Cash and cash equivalents,,1 Current Assets,FALSE,None,cash
+101_cash_on_hand,Cash,FALSE,FALSE,01-Jan-12,101,,,View,Cash on hand,,10 Cash and cash equivalents,FALSE,None,cash
 1010_cash_on_hand,Cash,TRUE,FALSE,01-Jan-12,1010,,,Liquidity,Cash on hand,,101 Cash on hand,FALSE,None,cash
-102_cash_at_bank,Cash,TRUE,FALSE,01-Jan-12,102,,,View,Cash at Bank,,10 Cash and cash equivalents,FALSE,None,cash
+102_cash_at_bank,Cash,FALSE,FALSE,01-Jan-12,102,,,View,Cash at Bank,,10 Cash and cash equivalents,FALSE,None,cash
 1020_cash_at_bank,Cash,TRUE,FALSE,01-Jan-12,1020,,,Liquidity,Cash at Bank,,102 Cash at Bank,FALSE,None,cash
 103_short_term_deposits,Asset,FALSE,FALSE,01-Jan-12,103,,,View,Short term deposits,,10 Cash and cash equivalents,FALSE,None,asset
 1030_short_term_deposits,Asset,FALSE,FALSE,01-Jan-12,1030,,,Regular,Short term deposits,,103 Short term deposits,TRUE,None,asset
 11_financial_assets,Asset,FALSE,FALSE,01-Jan-12,11,,,View,Financial assets,,1 Current Assets,FALSE,None,asset
 110_guarantee_and_deposits,Asset,FALSE,FALSE,01-Jan-12,110,,,View,Guarantee and  Deposits,,11 Financial assets,FALSE,None,asset
 1100_guarantee_and_deposits,Asset,FALSE,FALSE,01-Jan-12,1100,,,Regular,Guarantee and  Deposits,,110 Guarantee and  Deposits,FALSE,None,asset
-12_accounts_receivable,Receivables,TRUE,FALSE,01-Jan-12,12,,,View,Accounts receivable,,1 Current Assets,FALSE,None,receivables
-120_receivables,Receivables,TRUE,FALSE,01-Jan-12,120,,,View,Receivables,,12 Accounts receivable,FALSE,None,receivables
+12_accounts_receivable,Receivables,FALSE,FALSE,01-Jan-12,12,,,View,Accounts receivable,,1 Current Assets,FALSE,None,receivables
+120_receivables,Receivables,FALSE,FALSE,01-Jan-12,120,,,View,Receivables,,12 Accounts receivable,FALSE,None,receivables
 1200_receivable_from_other_missions,Receivables,TRUE,FALSE,01-Jan-12,1200,,,Receivable,Receivable from other missions,,120 Receivables,TRUE,None,receivables
 1201_receivable_from_other_sections,Receivables,TRUE,FALSE,01-Jan-12,1201,,,Receivable,Receivable from other sections,,120 Receivables,TRUE,None,receivables
 1202_vat_recoverable,Receivables,TRUE,FALSE,01-Jan-12,1202,,,Receivable,VAT recoverable,,120 Receivables,TRUE,None,receivables
 1203_taxes_receivables,Receivables,TRUE,FALSE,01-Jan-12,1203,,,Receivable,Taxes receivables,,120 Receivables,TRUE,None,receivables
 1204_social_security_receivable,Receivables,TRUE,FALSE,01-Jan-12,1204,,,Receivable,Social security receivable,,120 Receivables,TRUE,None,receivables
 1205_other_receivables,Receivables,TRUE,FALSE,01-Jan-12,1205,,,Receivable,Other receivables,,120 Receivables,TRUE,None,receivables
-13_advances_and_prepayment,Receivables,TRUE,FALSE,01-Jan-12,13,,,View,Advances and Prepayment,,1 Current Assets,FALSE,None,receivables
-130_internal_advances,Receivables,TRUE,FALSE,01-Jan-12,130,,,View,Internal advances,,13 Advances and Prepayment,FALSE,None,receivables
+13_advances_and_prepayment,Receivables,FALSE,FALSE,01-Jan-12,13,,,View,Advances and Prepayment,,1 Current Assets,FALSE,None,receivables
+130_internal_advances,Receivables,FALSE,FALSE,01-Jan-12,130,,,View,Internal advances,,13 Advances and Prepayment,FALSE,None,receivables
 1300_operating_advances,Receivables,TRUE,FALSE,01-Jan-12,1300,,,Receivable,Operating advances,,130 Internal advances,TRUE,Operational Advance,receivables
 1301_security_enveloppes_,Receivables,TRUE,FALSE,01-Jan-12,1301,,,Receivable,Security enveloppes  ,,130 Internal advances,TRUE,Operational Advance,receivables
 1302_advances_to_suppliers,Receivables,TRUE,FALSE,01-Jan-12,1302,,,Receivable,Advances to suppliers,,130 Internal advances,TRUE,None,receivables
 4203_advance_with_suppliers_and_various,Receivables,TRUE,FALSE,01-Jan-12,4203,,,Receivable,Advance with suppliers and various,,130 Internal advances,TRUE,None,receivables
-131_advances_done_to_third_parties,Receivables,TRUE,FALSE,01-Jan-12,131,,,View,Advances done to third parties,,13 Advances and Prepayment,FALSE,None,receivables
+131_advances_done_to_third_parties,Receivables,FALSE,FALSE,01-Jan-12,131,,,View,Advances done to third parties,,13 Advances and Prepayment,FALSE,None,receivables
 1310_advances_done_to_third_parties,Receivables,TRUE,FALSE,01-Jan-12,1310,,,Receivable,Advances done to third parties,,131 Advances done to third parties,TRUE,None,receivables
-132_advances_to_personal,Receivables,TRUE,FALSE,01-Jan-12,132,,,View,Advances to personal,,13 Advances and Prepayment,FALSE,None,receivables
+132_advances_to_personal,Receivables,FALSE,FALSE,01-Jan-12,132,,,View,Advances to personal,,13 Advances and Prepayment,FALSE,None,receivables
 1320_advances_on_salaries_of_expatriates,Receivables,TRUE,FALSE,01-Jan-12,1320,,,Receivable,Advances on salaries of expatriates,,132 Advances to personal,TRUE,None,receivables
 1321_advances_on_salaries_of_national_staff,Receivables,TRUE,FALSE,01-Jan-12,1321,,,Receivable,Advances on salaries of national staff,,132 Advances to personal,TRUE,None,receivables
 1322_advances_on_insurance,Receivables,TRUE,FALSE,01-Jan-12,1322,,,Receivable,Advances on insurance,,132 Advances to personal,TRUE,None,receivables
 4101_advance_on_salaries_and_allowances_of_expatriates,Receivables,TRUE,FALSE,01-Jan-12,4101,,,Receivable,Advance on salaries and allowances of expatriates,,132 Advances to personal,TRUE,None,receivables
 4202_advance_to_the_staff,Receivables,TRUE,FALSE,01-Jan-12,4202,,,Receivable,Advance to the staff,,132 Advances to personal,TRUE,None,receivables
-133_prepaid_expenses,Receivables,TRUE,FALSE,01-Jan-12,133,,,View,Prepaid expenses,,13 Advances and Prepayment,FALSE,None,receivables
+133_prepaid_expenses,Receivables,FALSE,FALSE,01-Jan-12,133,,,View,Prepaid expenses,,13 Advances and Prepayment,FALSE,None,receivables
 1330_prepaid_expenses_rentals,Receivables,TRUE,FALSE,01-Jan-12,1330,,,Receivable,Prepaid expenses rentals,,133 Prepaid expenses,TRUE,None,receivables
 1331_prepaid_expenses_insurances,Receivables,TRUE,FALSE,01-Jan-12,1331,,,Receivable,Prepaid expenses insurances,,133 Prepaid expenses,TRUE,None,receivables
 1332_other_prepaid,Receivables,TRUE,FALSE,01-Jan-12,1332,,,Receivable,Other prepaid,,133 Prepaid expenses,TRUE,None,receivables
-14_suspense_accounts_,Cash,TRUE,FALSE,01-Jan-12,14,,,View,Suspense accounts: ,,1 Current Assets,FALSE,None,cash
-140_non_monetary_,Cash,TRUE,FALSE,01-Jan-12,140,,,View,Non monetary ,,14 Suspense accounts: ,FALSE,None,cash
+14_suspense_accounts_,Cash,FALSE,FALSE,01-Jan-12,14,,,View,Suspense accounts: ,,1 Current Assets,FALSE,None,cash
+140_non_monetary_,Cash,FALSE,FALSE,01-Jan-12,140,,,View,Non monetary ,,14 Suspense accounts: ,FALSE,None,cash
 1400_advances_to_hq_departments,Cash,TRUE,FALSE,01-Jan-12,1400,,,Receivable,Advances to HQ departments,,140 Non monetary ,TRUE,None,cash
 1401_advances_or_expenses_for_other_missions_,Cash,TRUE,FALSE,01-Jan-12,1401,,,Receivable,Advances or expenses for other missions ,,140 Non monetary ,TRUE,None,cash
 1402_advances_and_expenses_for_other_msf_section,Cash,TRUE,FALSE,01-Jan-12,1402,,,Receivable,Advances and expenses for other MSF section,,140 Non monetary ,TRUE,None,cash
 1403_advances_and_expenses_for_other_ngo,Cash,TRUE,FALSE,01-Jan-12,1403,,,Receivable,Advances and expenses for other NGO,,140 Non monetary ,TRUE,None,cash
 1404_to_be_re-invoiced_to_other_msf_section,Cash,TRUE,FALSE,01-Jan-12,1404,,,Receivable,To be re-invoiced to other MSF section,,140 Non monetary ,TRUE,None,cash
-141_monetary_transfers,Cash,TRUE,FALSE,01-Jan-12,141,,,View,Monetary Transfers,,14 Suspense accounts: ,FALSE,None,cash
+141_monetary_transfers,Cash,FALSE,FALSE,01-Jan-12,141,,,View,Monetary Transfers,,14 Suspense accounts: ,FALSE,None,cash
 1410_bank_transfer_with_hq,Cash,TRUE,FALSE,01-Jan-12,1410,,,Regular,Bank transfer with HQ,,141 Monetary Transfers,TRUE,None,cash
 1411_cash_transfer_with_hq,Cash,TRUE,FALSE,01-Jan-12,1411,,,Regular,Cash transfer with HQ,,141 Monetary Transfers,TRUE,None,cash
 1412_internal_transfer_same_currency,Cash,TRUE,FALSE,01-Jan-12,1412,,,Regular,Internal transfer same currency,,141 Monetary Transfers,TRUE,Internal Transfer (same currency),cash
@@ -92,45 +92,45 @@ msf_msf_chart_of_accounts,View,FALSE,FALSE,01-Jan-12,MSF,,,View,MSF Chart of Acc
 25_other_non-current_assets,Asset,FALSE,FALSE,01-Jan-12,25,,,View,Other non-current assets,,2 Non current assets,FALSE,None,asset
 250_other_non-current_assets,Asset,FALSE,FALSE,01-Jan-12,250,,,View,Other non-current assets,,25 Other non-current assets,FALSE,None,asset
 2500_other_non-current_assets,Asset,FALSE,FALSE,01-Jan-12,2500,,,Regular,Other non-current assets,,250 Other non-current assets,FALSE,None,asset
-3_current_liabilities,Payables,TRUE,FALSE,01-Jan-12,3,,,View,Current Liabilities,,MSF MSF Chart of Accounts,FALSE,None,payables
-30_accounts_payable,Payables,TRUE,FALSE,01-Jan-12,30,,,View,Accounts payable,,3 Current Liabilities,FALSE,None,payables
-300_payables,Payables,TRUE,FALSE,01-Jan-12,300,,,View,Payables,,30 Accounts payable,FALSE,None,payables
+3_current_liabilities,Payables,FALSE,FALSE,01-Jan-12,3,,,View,Current Liabilities,,MSF MSF Chart of Accounts,FALSE,None,payables
+30_accounts_payable,Payables,FALSE,FALSE,01-Jan-12,30,,,View,Accounts payable,,3 Current Liabilities,FALSE,None,payables
+300_payables,Payables,FALSE,FALSE,01-Jan-12,300,,,View,Payables,,30 Accounts payable,FALSE,None,payables
 3000_trade_payables,Payables,TRUE,FALSE,01-Jan-12,3000,,,Payable,Trade payables,,300 Payables,TRUE,None,payables
 3001_check_-_suspense_account,Cash,TRUE,FALSE,01-Jan-12,3001,,,Liquidity,Check - suspense account,,300 Payables,TRUE,None,cash
-301_personel_related_accounts,Payables,TRUE,FALSE,01-Jan-12,301,,,View,Personel related accounts,,30 Accounts payable,FALSE,None,payables
+301_personel_related_accounts,Payables,FALSE,FALSE,01-Jan-12,301,,,View,Personel related accounts,,30 Accounts payable,FALSE,None,payables
 3010_remuneration_payable,Payables,TRUE,FALSE,01-Jan-12,3010,,,Payable,Remuneration payable,,301 Personel related accounts,TRUE,None,payables
 3011_expatriates_payables_-_oca_only,Payables,TRUE,FALSE,01-Jan-12,3011,,,Payable,expatriates payables - OCA only,,301 Personel related accounts,TRUE,None,payables
-302_social_security_,Payables,TRUE,FALSE,01-Jan-12,302,,,View,Social security ,,30 Accounts payable,FALSE,None,payables
+302_social_security_,Payables,FALSE,FALSE,01-Jan-12,302,,,View,Social security ,,30 Accounts payable,FALSE,None,payables
 3020_social_security,Payables,TRUE,FALSE,01-Jan-12,3020,,,Payable,Social security,,302 Social security ,TRUE,None,payables
-303_state_and_other_public_authority_related_accounts,Payables,TRUE,FALSE,01-Jan-12,303,,,View,State and other public authority related accounts,,30 Accounts payable,FALSE,None,payables
+303_state_and_other_public_authority_related_accounts,Payables,FALSE,FALSE,01-Jan-12,303,,,View,State and other public authority related accounts,,30 Accounts payable,FALSE,None,payables
 3030_vat_payable,Tax,FALSE,FALSE,01-Jan-12,3030,,,Regular,VAT payable,,303 State and other public authority related accounts,TRUE,None,tax
 3031_payroll_taxes_paye_payable,Payables,TRUE,FALSE,01-Jan-12,3031,,,Payable,Payroll taxes / PAYE payable,,303 State and other public authority related accounts,TRUE,None,payables
 3032_other_taxes,Payables,TRUE,FALSE,01-Jan-12,3032,,,Payable,Other Taxes,,303 State and other public authority related accounts,TRUE,None,payables
-31_accrued_liabilities,Payables,TRUE,FALSE,01-Jan-12,31,,,View,Accrued liabilities,,3 Current Liabilities,FALSE,None,payables
-310_employee_costs,Payables,TRUE,FALSE,01-Jan-12,310,,,View,Employee costs,,31 Accrued liabilities,FALSE,None,payables
+31_accrued_liabilities,Payables,FALSE,FALSE,01-Jan-12,31,,,View,Accrued liabilities,,3 Current Liabilities,FALSE,None,payables
+310_employee_costs,Payables,FALSE,FALSE,01-Jan-12,310,,,View,Employee costs,,31 Accrued liabilities,FALSE,None,payables
 3100_accrued_salaries_payable_,Payables,TRUE,FALSE,01-Jan-12,3100,,,Payable,Accrued salaries payable ,,310 Employee costs,TRUE,None,payables
 3101_accrued_13th_month_payable,Payables,TRUE,FALSE,01-Jan-12,3101,,,Payable,Accrued 13th month payable,,310 Employee costs,TRUE,None,payables
 3102_accrued_holiday_pay_-_leave_days_payement,Payables,TRUE,FALSE,01-Jan-12,3102,,,Payable,Accrued holiday pay - leave days payement,,310 Employee costs,TRUE,None,payables
 3103_accrued_severance_pay_-_employees_benefits_,Payables,TRUE,FALSE,01-Jan-12,3103,,,Payable,Accrued severance pay - employees benefits ,,310 Employee costs,TRUE,None,payables
 3104_other_accrued_employee_costs,Payables,TRUE,FALSE,01-Jan-12,3104,,,Payable,Other accrued employee costs,,310 Employee costs,TRUE,None,payables
-311_accrued_payroll_taxes,Payables,TRUE,FALSE,01-Jan-12,311,,,View,Accrued Payroll taxes,,31 Accrued liabilities,FALSE,None,payables
+311_accrued_payroll_taxes,Payables,FALSE,FALSE,01-Jan-12,311,,,View,Accrued Payroll taxes,,31 Accrued liabilities,FALSE,None,payables
 3110_accrued_payroll_taxes,Payables,TRUE,FALSE,01-Jan-12,3110,,,Payable,Accrued Payroll taxes,,311 Accrued Payroll taxes,TRUE,None,payables
-312_accrued_social_security_,Payables,TRUE,FALSE,01-Jan-12,312,,,View,Accrued social security ,,31 Accrued liabilities,FALSE,None,payables
+312_accrued_social_security_,Payables,FALSE,FALSE,01-Jan-12,312,,,View,Accrued social security ,,31 Accrued liabilities,FALSE,None,payables
 3120_accrued_social_security_,Payables,TRUE,FALSE,01-Jan-12,3120,,,Payable,Accrued social security ,,312 Accrued social security ,TRUE,None,payables
-313_other_accrued_liabilities_,Payables,TRUE,FALSE,01-Jan-12,313,,,View,Other accrued liabilities ,,31 Accrued liabilities,FALSE,None,payables
+313_other_accrued_liabilities_,Payables,FALSE,FALSE,01-Jan-12,313,,,View,Other accrued liabilities ,,31 Accrued liabilities,FALSE,None,payables
 3130_other_accrued_liabilities_,Payables,TRUE,FALSE,01-Jan-12,3130,,,Payable,Other accrued liabilities ,,313 Other accrued liabilities ,TRUE,None,payables
-32_short_term_provisions,Debt,TRUE,FALSE,01-Jan-12,32,,,View,Short term provisions,,3 Current Liabilities,FALSE,None,debt
-320_provisions,Debt,TRUE,FALSE,01-Jan-12,320,,,View,Provisions,,32 Short term provisions,FALSE,None,debt
+32_short_term_provisions,Debt,FALSE,FALSE,01-Jan-12,32,,,View,Short term provisions,,3 Current Liabilities,FALSE,None,debt
+320_provisions,Debt,FALSE,FALSE,01-Jan-12,320,,,View,Provisions,,32 Short term provisions,FALSE,None,debt
 3200_provisions,Debt,TRUE,FALSE,01-Jan-12,3200,,,Regular,Provisions,,320 Provisions,TRUE,None,debt
-33_other_current_liabilities,Debt,TRUE,FALSE,01-Jan-12,33,,,View,Other current liabilities,,3 Current Liabilities,FALSE,None,debt
-330_other_current_liabilities,Debt,TRUE,FALSE,01-Jan-12,330,,,View,Other current liabilities,,33 Other current liabilities,FALSE,None,debt
+33_other_current_liabilities,Debt,FALSE,FALSE,01-Jan-12,33,,,View,Other current liabilities,,3 Current Liabilities,FALSE,None,debt
+330_other_current_liabilities,Debt,FALSE,FALSE,01-Jan-12,330,,,View,Other current liabilities,,33 Other current liabilities,FALSE,None,debt
 3300_other_current_liabilities,Debt,TRUE,FALSE,01-Jan-12,3300,,,Regular,Other current liabilities,,330 Other current liabilities,TRUE,None,debt
-4_non-current_liabilities,Debt,TRUE,FALSE,01-Jan-12,4,,,View,Non-current Liabilities,,MSF MSF Chart of Accounts,FALSE,None,debt
-40_non_current_amounts_payable_,Debt,TRUE,FALSE,01-Jan-12,40,,,View,Non current amounts payable ,,4 Non-current Liabilities,FALSE,None,debt
-400_non_current_amounts_payable_,Debt,TRUE,FALSE,01-Jan-12,400,,,View,Non current amounts payable ,,40 Non current amounts payable ,FALSE,None,debt
+4_non-current_liabilities,Debt,FALSE,FALSE,01-Jan-12,4,,,View,Non-current Liabilities,,MSF MSF Chart of Accounts,FALSE,None,debt
+40_non_current_amounts_payable_,Debt,FALSE,FALSE,01-Jan-12,40,,,View,Non current amounts payable ,,4 Non-current Liabilities,FALSE,None,debt
+400_non_current_amounts_payable_,Debt,FALSE,FALSE,01-Jan-12,400,,,View,Non current amounts payable ,,40 Non current amounts payable ,FALSE,None,debt
 4000_non_current_amounts_payable_,Debt,TRUE,FALSE,01-Jan-12,4000,,,Regular,Non current amounts payable ,,400 Non current amounts payable ,FALSE,None,debt
-41_long_term_provisions_,Debt,TRUE,FALSE,01-Jan-12,41,,,View,Long term provisions ,,4 Non-current Liabilities,FALSE,None,debt
-410_long_term_provisions_,Debt,TRUE,FALSE,01-Jan-12,410,,,View,Long term provisions ,,41 Long term provisions ,FALSE,None,debt
+41_long_term_provisions_,Debt,FALSE,FALSE,01-Jan-12,41,,,View,Long term provisions ,,4 Non-current Liabilities,FALSE,None,debt
+410_long_term_provisions_,Debt,FALSE,FALSE,01-Jan-12,410,,,View,Long term provisions ,,41 Long term provisions ,FALSE,None,debt
 4100_long_term_provisions,Debt,TRUE,FALSE,01-Jan-12,4100,,,Regular,Long term provisions,,410 Long term provisions ,FALSE,None,debt
 5_reserves,Equity,FALSE,FALSE,01-Jan-12,5,,,View,Reserves,,MSF MSF Chart of Accounts,FALSE,None,equity
 50_surplus_deficit_carried_forward,Equity,FALSE,FALSE,01-Jan-12,50,,,View,Surplus / Deficit carried forward,,5 Reserves,FALSE,None,equity
