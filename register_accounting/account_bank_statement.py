@@ -1911,15 +1911,20 @@ class account_bank_statement_line(osv.osv):
                 if absl.is_down_payment and not absl.down_payment_id:
                     raise osv.except_osv(_('Error'), _('You need to specify a PO before temp posting the Down Payment!'))
 
-            if absl.state in ('draft','temp'):
-                if postype == 'hard' and absl.direct_invoice:
-                    pass
-                else:
-                    self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
-                    # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
-                    absl = self.browse(cr, uid, absl.id, context=context)
-
-
+            # UF-2281 (linked to UTP-917)
+            #+ We need to create move from st line in the given use cases:
+            #+  FROM  |  TO  | IS DIRECT INVOICE? | Create move from st line ? |
+            #+  draft | temp |         NO         |            YES             |
+            #+  draft | temp |         YES        |            YES             |
+            #+  draft | hard |         NO         |            YES             |
+            #+  draft | hard |         YES        |            NO              |
+            #+  temp  | hard |         NO         |            NO              |
+            #+  temp  | hard |         YES        |            NO              |
+            #+  As temp state is not effective on direct invoice and that previously we just create move when we are in draft and do not want to hard post a direct invoice
+            if absl.state in ('draft') and not (postype == 'hard' and absl.direct_invoice):
+                self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
+                # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
+                absl = self.browse(cr, uid, absl.id, context=context)
 
             if postype == 'temp' and absl.direct_invoice:  #utp-917
                 self.write(cr, uid, [absl.id], {'direct_state':'temp'}, context=context)
