@@ -1821,6 +1821,7 @@ class account_bank_statement_line(osv.osv):
             'from_cash_return': False,
             'from_import_cheque_id': False,
             'imported_invoice_line_ids': False,
+            'cash_register_op_advance_po_id': False,
             'invoice_id': False,
             'move_ids': False,
             'reconciled': False,
