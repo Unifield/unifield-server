@@ -165,6 +165,7 @@ class purchase_order_sync(osv.osv):
             if orig_line:
                 orig_line = line_obj.browse(cr, uid, orig_line[0], context=context)
                 line[2].update({'move_dest_id': orig_line.move_dest_id and orig_line.move_dest_id.id or False})
+                line[2].update({'origin': orig_line.origin}) # UF-2291: set also the origin into the new line of the split PO 
 
         # If partner is intermission or section, copy the ADs from the lines of original PO
         if partner_type in ['section', 'intermission']:
