@@ -986,19 +986,28 @@ stock moves which are already processed : '''
                 new_distrib = ad_obj.copy(cr, uid, l.order_id.analytic_distribution_id.id, {}, context=context)
             # Creates the FO lines
             tmp_sale_context = context.get('sale_id')
+            # create new line in FOXXXX-Y
             context['sale_id'] = l.link_so_id.id
-            sol_id = sol_obj.create(cr, uid, {'order_id': l.link_so_id.id,
-                                              'product_id': l.product_id.id,
-                                              'product_uom': l.product_uom.id,
-                                              'product_uom_qty': l.product_qty,
-                                              'price_unit': l.price_unit,
-                                              'procurement_id': l.procurement_id and l.procurement_id.id or False,
-                                              'type': 'make_to_order',
-                                              'analytic_distribution_id': new_distrib,
-                                              'created_by_po': l.order_id.id,
-                                              'created_by_po_line': l.id,
-                                              'name': '[%s] %s' % (l.product_id.default_code, l.product_id.name),}, context=context)
+            vals = {'order_id': l.link_so_id.id,
+                    'product_id': l.product_id.id,
+                    'product_uom': l.product_uom.id,
+                    'product_uom_qty': l.product_qty,
+                    'price_unit': l.price_unit,
+                    'procurement_id': l.procurement_id and l.procurement_id.id or False,
+                    'type': 'make_to_order',
+                    'analytic_distribution_id': new_distrib,
+                    'created_by_po': l.order_id.id,
+                    'created_by_po_line': l.id,
+                    'name': '[%s] %s' % (l.product_id.default_code, l.product_id.name)}
+            sol_obj.create(cr, uid, vals, context=context)
+            # Create new line in FOXXXX (original FO)
+            if l.link_so_id.original_so_id_sale_order:
+                context['sale_id'] = l.link_so_id.original_so_id_sale_order.id
+                vals.update({'order_id': l.link_so_id.original_so_id_sale_order.id,
+                             'state': 'done'})
+                sol_obj.create(cr, uid, vals, context=context)
             context['sale_id'] = tmp_sale_context
+
             sol_ids.add(l.link_so_id.id)
 
         so_obj.action_ship_proc_create(cr, uid, list(sol_ids), context=context)
