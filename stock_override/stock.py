@@ -1286,18 +1286,20 @@ class stock_move(osv.osv):
                                     existed_moves = self.search(cr, uid, [('picking_id', '!=', False), ('picking_id', '=', move.picking_id.id),
                                                                           ('product_id', '=', move.product_id.id), ('product_uom', '=', loc['uom_id']),
                                                                           ('line_number', '=', move.line_number), ('location_id', '=', loc['location_id']),
-                                                                          ('prodlot_id', '=', loc['prodlot_id'])], context=context)
+                                                                          ('location_dest_id', '=', move.location_dest_id.id), ('prodlot_id', '=', loc['prodlot_id'])], context=context)
                                 # as long all needed are not fulfilled
                                 if needed_qty:
                                     # if the batch already exists and qty is enough, it is available (assigned)
                                     if needed_qty <= loc['qty']:
-                                        # Why this condition because move.prodlot_id is always False (e.g. line 1261 of this file)
+                                        # TODO: Why this condition because move.prodlot_id is always False (e.g. line 1261 of this file)
                                         if move.prodlot_id.id == loc['prodlot_id']:
                                             self.write(cr, uid, move.id, {'state': 'assigned'}, context)
                                         elif existed_moves:
                                             exist_move = self.browse(cr, uid, existed_moves[0], context)
                                             self.write(cr, uid, [exist_move.id], {'product_qty': needed_qty + exist_move.product_qty}, context)
                                             self.write(cr, uid, [move.id], {'state': 'draft'}, context=context)
+                                            # We update the linked documents
+                                            self.update_linked_documents(cr, uid, [move.id], exist_move.id, context=context)
                                             self.unlink(cr, uid, [move.id], context)
                                         else:
                                             self.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'], 
