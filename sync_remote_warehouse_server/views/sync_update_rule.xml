@@ -39,9 +39,8 @@
             <field name="model">sync_server.sync_rule</field>
             <field name="inherit_id" ref="sync_server.sync_rule_form_view" />
             <field name="arch" type="xml">
-                <field name="direction" position="replace">
-                	<field name="direction" attrs="{'invisible': [('type_id.name','=','USB')]}" />
-                	<field name="direction_usb" attrs="{'invisible': [('type_id.name','!=','USB')]}" />
+                <field name="owner_field" position="after">
+                	<field name="direction_usb" string="USB Direction" colspan="4"/>
                 </field>
             </field>
         </record>

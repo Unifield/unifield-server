@@ -48,6 +48,7 @@ class local_rule(osv.osv):
         'can_delete': fields.boolean('Can delete record?', readonly=True, help='Propagate the delete of old unused records'),
         'active' : fields.boolean('Active', select=True),
         'type' : fields.char('Group Type', size=256),
+        'handle_priority': fields.boolean('Handle Priority'),
     }
 
     _defaults = {
@@ -118,6 +119,7 @@ class update_to_send(osv.osv):
         'fields':fields.text('Fields', size=128, readonly=True),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
         'force_recreation' : fields.boolean('Force record recreation', readonly=True),
+        'handle_priority': fields.boolean('Handle Priority'),
     }
     
     _defaults = {
@@ -169,6 +171,7 @@ class update_to_send(osv.osv):
                         'force_recreation' : force_recreation,
                         'fields' : ustr_export_fields,
                         'values' : tools.ustr(row),
+                        'handle_priority' : rule.handle_priority,
                     }, context=context)
                     update._logger.debug("Created 'normal' update model=%s id=%d (rule sequence=%d)" % (self._name, update_id, rule.id))
 
@@ -236,6 +239,7 @@ class update_to_send(osv.osv):
                     'owner' : update.owner,
                     'sdref' : update.sdref,
                     'force_recreation' : update.force_recreation,
+                    'handle_priority' : update.handle_priority,
                 })
             ids_in_package.append(update.id)
         data['load'] = values
@@ -280,6 +284,7 @@ class update_received(osv.osv):
         'run' : fields.boolean("Run", readonly=True, select=True),
         'log' : fields.text("Execution Messages", readonly=True),
         'fallback_values':fields.text('Fallback values'),
+        'handle_priority': fields.boolean('Handle Priority', readonly=True),
 
         'create_date':fields.datetime('Synchro date/time', readonly=True),
         'execution_date':fields.datetime('Execution date', readonly=True),
@@ -319,6 +324,7 @@ class update_received(osv.osv):
                     'owner' : load_item['owner_name'],
                     'sdref' : load_item['sdref'],
                     'force_recreation' : load_item['force_recreation'],
+                    'handle_priority' : load_item['handle_priority'],
                 })
                 self.create(cr, uid, data, context=context)
             return len(packet['load'])
@@ -594,7 +600,8 @@ class update_received(osv.osv):
                 confilcting_ids = obj.need_to_push(cr, uid,
                     sdref_res_id.values(), import_fields, context=context)
                 confilcting_updates = filter(
-                    lambda update: update.sdref in sdref_res_id and \
+                    lambda update: update.handle_priority and \
+                        update.sdref in sdref_res_id and \
                         sdref_res_id[update.sdref] in confilcting_ids,
                     updates)
                 updates_to_ignore = filter(

@@ -130,13 +130,15 @@ class sync_rule(osv.osv):
         'can_delete': fields.boolean('Can delete record?', help='Propagate the delete of old unused records'),
         'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True),
         'active': fields.boolean('Active'),
-        'model_ids' : fields.function(_get_all_model, string="Parents Model", type="many2many", relation="ir.model", method=True)
+        'model_ids' : fields.function(_get_all_model, string="Parents Model", type="many2many", relation="ir.model", method=True),
+        'handle_priority': fields.boolean('Handle Priority'),
     }
 
     _defaults = {
         'domain': '[]',
         'active': False,
         'status': 'invalid',
+        'handle_priority' : False,
     }
 
     _order = 'sequence_number asc,model_id asc'
@@ -221,6 +223,7 @@ class sync_rule(osv.osv):
         'included_fields' : 'included_fields',
         'can_delete' : 'can_delete',
         'type_name' : 'type',
+        'handle_priority' : 'handle_priority',
     }
 
     def _serialize_rule(self, cr, uid, ids, context=None):
