@@ -1924,7 +1924,7 @@ class account_bank_statement_line(osv.osv):
             #+  As temp state is not effective on direct invoice and that previously we just create move when we are in draft and do not want to hard post a direct invoice
             #+  Note that direct invoice moves though temp state and back to draft via code (not user actions).
             #+  Code is duplicated below for clarifty. TODO: fix during refactoring of dirct invoices
-            if absl.state in ('draft') and not (postype == 'hard' and absl.direct_invoice):
+            if absl.state == 'draft' and not absl.direct_invoice:
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
                 absl = self.browse(cr, uid, absl.id, context=context)
