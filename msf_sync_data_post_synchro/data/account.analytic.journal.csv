@@ -16,3 +16,4 @@ TRUE,AMT,Miscellaneous Transactions Journal,cur_adj
 TRUE,AC,Accruals,general
 TRUE,AIKD,Analytic In-kind Donation,inkind
 TRUE,AINT,Analytic Intermission,intermission
+TRUE,REVAL,Revaluation,revaluation
