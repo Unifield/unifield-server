@@ -454,6 +454,8 @@ class product_product(osv.osv):
     # UF-2254: Treat the case of product with empty or XXX for default_code
     def write(self, cr, uid, ids, vals, context=None):
         res = super(product_product, self).write(cr, uid, ids, vals, context=context)
+        if isinstance(ids, (long, int)):
+            ids = [ids]
         res_id = ids[0]
         
         prod = self.read(cr, uid, res_id, ['default_code'], context=context)['default_code']
