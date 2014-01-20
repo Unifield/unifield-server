@@ -33,6 +33,7 @@ from sync_common import sync_log, \
     split_xml_ids_list, normalize_xmlid
 
 re_fieldname = re.compile(r"^\w+")
+re_subfield_separator = re.compile(r"[./]")
 
 class local_rule(osv.osv):
     _name = "sync.client.rule"
@@ -591,7 +592,10 @@ class update_received(osv.osv):
             if priorities is not None:
                 assert local_entity.name in priorities, \
                     "Oops! I don't even know my own priority."
-                import_fields = eval(updates[0].fields)
+                import_fields = [
+                    re_subfield_separator.split(field)[0]
+                    for field in eval(updates[0].fields)
+                ]
                 sdref_res_id = obj.find_sd_ref(cr, uid,
                     sdref_update_ids.keys(),
                     context=context)
