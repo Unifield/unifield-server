@@ -73,6 +73,7 @@ class sale_order(osv.osv):
             default.update({'fo_to_resource': False})
         if 'parent_order_name' not in default:
             default.update({'parent_order_name': False})
+
         return super(sale_order, self).copy(cr, uid, id, default=default, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
@@ -659,14 +660,11 @@ class sale_order(osv.osv):
             if old_order['state'] == 'draft':
                 return old_order['id']
 
-        tmp_kco = context.get('keepClientOrder')
-        context['keepClientOrder'] = True
         order_id = self.copy(cr, uid, order.id, {'order_line': [],
                                                  'state': 'draft',
                                                  'parent_order_name': old_order_name,
                                                  'fo_to_resource': True}, context=context)
 
-        context['keepClientOrder'] = tmp_kco
 
         order_name = self.read(cr, uid, order_id, ['name'], context=context)['name']
 
