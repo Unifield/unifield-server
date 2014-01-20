@@ -1496,6 +1496,7 @@ class purchase_order(osv.osv):
                                 'product_uos': line.product_uom.id,
                                 'product_qty': line.product_qty,
                                 'product_uos_qty': line.product_qty,
+                                'price_unit': line.price_unit,
                                 'procure_method': 'make_to_order',
                                 'is_rfq': True,
                                 'rfq_id': rfq.id,
