@@ -406,6 +406,7 @@ class tender(osv.osv):
                             'product_uom': line.product_uom.id,
                             'product_uos': line.product_uom.id,
                             'product_qty': line.qty,
+                            'price_unit': line.price_unit,
                             'product_uos_qty': line.qty}
                     if line.sale_order_line_id and line.sale_order_line_id.procurement_id:
                         proc_id = line.sale_order_line_id.procurement_id.id
@@ -420,6 +421,7 @@ class tender(osv.osv):
                                             'is_tender': True,
                                             'tender_id': tender.id,
                                             'tender_line_id': line.id,
+                                            'price_unit': line.price_unit,
                                             'date_planned': rts,
                                             'origin': tender.sale_order_id.name,
                                             'supplier': line.purchase_order_line_id.order_id.partner_id.id,
