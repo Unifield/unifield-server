@@ -289,15 +289,13 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         foreign_balance = adjusted_balance = balances.get('foreign_balance', 0.0)
         balance = balances.get('balance', 0.0)
         unrealized_gain_loss =  0.0
-        # Check if reval_balance exists
-        if foreign_balance or balances.get('reval_balance', 0.0) != 0.0:
+        if foreign_balance:
             ctx_rate['revaluation'] = True
-            # Use reval_balance to fix booking balance problems
             adjusted_balance = currency_obj.compute(
                 cr, uid, currency_id, cp_currency_id, foreign_balance,
                 context=ctx_rate)
             # Substract reval lines from amount
-            unrealized_gain_loss =  adjusted_balance - balance - balances.get('reval_balance', 0.0)
+            unrealized_gain_loss =  adjusted_balance - balance
         else:
             if balance:
                 if currency_id != cp_currency_id:
@@ -390,7 +388,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         #revaluation_account_id = model_data_obj.get_object_reference(
         #    cr, uid, 'msf_chart_of_account', '6940')[1]
-        # TOFIX
+        # FIXME: Use a method to configure this via the web interface
         revaluation_account_ids = account_obj.search(cr, uid, [('code', '=', '6940')])
         if not revaluation_account_ids:
             raise osv.except_osv(_('Settings Error!'), _('G/L account 6940 is missing, please create it'))
@@ -650,7 +648,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         if created_ids:
             # Set all booking amount to 0 for revaluation lines
             cr.execute('UPDATE account_move_line '
-                       'SET debit_currency = 0, credit_currency = 0'
+                       'SET debit_currency = 0, credit_currency = 0, amount_currency = 0'
                        'WHERE id IN %s', (tuple(created_ids),))
             # Return the view
             return {'domain': "[('id','in', %s)]" % (created_ids,),
