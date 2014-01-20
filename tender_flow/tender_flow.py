@@ -406,11 +406,12 @@ class tender(osv.osv):
                             'product_uom': line.product_uom.id,
                             'product_uos': line.product_uom.id,
                             'product_qty': line.qty,
+                            'price_unit': line.price_unit,
                             'product_uos_qty': line.qty}
                     if line.sale_order_line_id and line.sale_order_line_id.procurement_id:
                         proc_id = line.sale_order_line_id.procurement_id.id
                         proc_obj.write(cr, uid, [proc_id], vals, context=context)
-                    elif line.created_by_rfq:   # Create procurement order to add the lines in a PO
+                    else: # Create procurement order to add the lines in a PO
                         create_vals = vals.copy()
                         prep_lt = fields_tools.get_field_from_company(cr, uid, object='sale.order', field='preparation_lead_time', context=context)
                         rts = datetime.strptime(tender.sale_order_id.ready_to_ship_date, db_date_format)       
@@ -420,6 +421,7 @@ class tender(osv.osv):
                                             'is_tender': True,
                                             'tender_id': tender.id,
                                             'tender_line_id': line.id,
+                                            'price_unit': line.price_unit,
                                             'date_planned': rts,
                                             'origin': tender.sale_order_id.name,
                                             'supplier': line.purchase_order_line_id.order_id.partner_id.id,
@@ -1494,6 +1496,7 @@ class purchase_order(osv.osv):
                                 'product_uos': line.product_uom.id,
                                 'product_qty': line.product_qty,
                                 'product_uos_qty': line.product_qty,
+                                'price_unit': line.price_unit,
                                 'procure_method': 'make_to_order',
                                 'is_rfq': True,
                                 'rfq_id': rfq.id,

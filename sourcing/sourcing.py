@@ -1335,7 +1335,7 @@ class procurement_order(osv.osv):
 
             # UTP-934: If the procurement is a rfq, the price unit must be taken from this rfq, and not from the pricelist or standard price
             procurement = kwargs['procurement']
-            if procurement.po_cft == 'rfq':
+            if procurement.po_cft in ('cft', 'rfq') and procurement.price_unit:
                 line.update({'price_unit': procurement.price_unit})
             
         if line.get('price_unit', False) == False:
