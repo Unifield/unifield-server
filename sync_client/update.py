@@ -175,8 +175,6 @@ class update_to_send(osv.osv):
                     }, context=context)
                     update._logger.debug("Created 'normal' update model=%s id=%d (rule sequence=%d)" % (self._name, update_id, rule.id))
 
-            self.clear_synchronization(cr, uid, ids_to_compute, context=context)
-
             return len(ids_to_compute)
 
         def create_delete_update(self, rule, context):
