@@ -2005,6 +2005,8 @@ class account_bank_statement_line(osv.osv):
                     self.write(cr, uid, [absl.id], {'direct_state':'hard'}, context=context)
                     # invoice
                     self.pool.get('account.invoice').write(cr, uid, [absl.invoice_id.id], {'state':'paid'}, context=context)
+                    # reconcile lines
+                    self.pool.get('account.invoice').action_reconcile_direct_invoice(cr, uid, [absl.invoice_id.id], context=context)
                     # move lines
                     acc_move_obj.write(cr, uid, [x.id for x in absl.move_ids], {'state':'posted'}, context=context)
                     acc_move_obj.write(cr, uid, [absl.invoice_id.move_id.id], {'state':'posted'}, context=context)
