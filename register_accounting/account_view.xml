@@ -94,6 +94,9 @@
                                         <button name="button_down_payment" string="Down payment" type="object" 
                                             icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
                                         <field name="reconciled"/>
+                                        <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr"
+                                            attrs="{'invisible': [('direct_invoice', '=', True)]}"
+                                            context="context"/>
                                         <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
                                             context="context"/>
                                         <field name="state" readonly="True"/>
@@ -716,6 +719,9 @@
                                     <button name="button_down_payment" string="Down payment" type="object" 
                                         icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
                                     <field name="reconciled"/>
+                                    <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr"
+                                            attrs="{'invisible': [('direct_invoice', '=', True)]}"
+                                            context="context"/>
                                     <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
                                         context="context"/>
                                     <field name="state" readonly="True"/>
