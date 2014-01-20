@@ -383,7 +383,7 @@ SELECT res_id, touched
     def clear_synchronization(self, cr, uid, ids, context=None):
         data_ids = self.get_sd_ref(cr, uid, ids, field='id', context=context)
         return self.pool.get('ir.model.data').write(cr, uid, data_ids.values(),
-            {'force_recreation':False,'touched':'[]'}, context=context)
+            {'force_recreation':False,'touched':False}, context=context)
 
     def find_sd_ref(self, cr, uid, sdrefs, field=None, context=None):
         """
