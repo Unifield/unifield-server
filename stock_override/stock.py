@@ -1280,15 +1280,28 @@ class stock_move(osv.osv):
                             # we ignore the batch that are outdated
                             expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
                             if datetime.strptime(expired_date, "%Y-%m-%d") >= datetime.today():
+                                existed_moves = []
+                                if not move.move_dest_id:
+                                    # Search if a stock move with the same location_id and same product_id and same prodlot_id exist
+                                    existed_moves = self.search(cr, uid, [('picking_id', '!=', False), ('picking_id', '=', move.picking_id.id),
+                                                                          ('product_id', '=', move.product_id.id), ('product_uom', '=', loc['uom_id']),
+                                                                          ('line_number', '=', move.line_number), ('location_id', '=', loc['location_id']),
+                                                                          ('prodlot_id', '=', loc['prodlot_id'])], context=context)
                                 # as long all needed are not fulfilled
                                 if needed_qty:
                                     # if the batch already exists and qty is enough, it is available (assigned)
                                     if needed_qty <= loc['qty']:
+                                        # Why this condition because move.prodlot_id is always False (e.g. line 1261 of this file)
                                         if move.prodlot_id.id == loc['prodlot_id']:
                                             self.write(cr, uid, move.id, {'state': 'assigned'}, context)
+                                        elif existed_moves:
+                                            exist_move = self.browse(cr, uid, existed_moves[0], context)
+                                            self.write(cr, uid, [exist_move.id], {'product_qty': needed_qty + exist_move.product_qty}, context)
+                                            self.write(cr, uid, [move.id], {'state': 'draft'}, context=context)
+                                            self.unlink(cr, uid, [move.id], context)
                                         else:
                                             self.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'], 
-                                                                        'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
+                                                                          'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
                                         needed_qty = 0.0
                                         break
                                     elif needed_qty:
@@ -1298,7 +1311,11 @@ class stock_move(osv.osv):
                                         dict_for_create = {}
                                         dict_for_create = values.copy()
                                         dict_for_create.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id'], 'line_number': move.line_number, 'move_cross_docking_ok': move.move_cross_docking_ok})
-                                        self.create(cr, uid, dict_for_create, context)
+                                        if existed_moves:
+                                            exist_move = self.browse(cr, uid, existed_moves[0], context)
+                                            self.write(cr, uid, [exist_move.id], {'product_qty': selected_qty + exist_move.product_qty}, context)
+                                        else:
+                                            self.create(cr, uid, dict_for_create, context)
                                         self.write(cr, uid, move.id, {'product_qty': needed_qty})
                     # if the batch is outdated, we remove it
                     if not context.get('yml_test', False):
@@ -1356,6 +1373,7 @@ class stock_move(osv.osv):
 
         if notdone:
             self.write(cr, uid, notdone, {'state': 'confirmed'})
+            self.action_assign(cr, uid, notdone)
         return count
     
     def _hook_check_assign(self, cr, uid, *args, **kwargs):
