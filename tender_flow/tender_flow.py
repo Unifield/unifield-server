@@ -410,7 +410,7 @@ class tender(osv.osv):
                     if line.sale_order_line_id and line.sale_order_line_id.procurement_id:
                         proc_id = line.sale_order_line_id.procurement_id.id
                         proc_obj.write(cr, uid, [proc_id], vals, context=context)
-                    elif line.created_by_rfq:   # Create procurement order to add the lines in a PO
+                    else: # Create procurement order to add the lines in a PO
                         create_vals = vals.copy()
                         prep_lt = fields_tools.get_field_from_company(cr, uid, object='sale.order', field='preparation_lead_time', context=context)
                         rts = datetime.strptime(tender.sale_order_id.ready_to_ship_date, db_date_format)       
