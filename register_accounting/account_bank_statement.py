@@ -1077,8 +1077,9 @@ class account_bank_statement_line(osv.osv):
                 # Find all moves lines linked to this register line
                 # first, via the statement
                 move_ids = [x.id for x in absl.move_ids]
-                am1 = account_move.browse(cr, uid, move_ids)[0]
-                seqnums[am1.journal_id.id] = am1.name
+                if move_ids:
+                    am1 = account_move.browse(cr, uid, move_ids)[0]
+                    seqnums[am1.journal_id.id] = am1.name
 
                 # then via the direct invoice
                 ai = account_invoice.browse(cr, uid, [absl.invoice_id.id])[0]
@@ -1915,16 +1916,22 @@ class account_bank_statement_line(osv.osv):
             #+ We need to create move from st line in the given use cases:
             #+  FROM  |  TO  | IS DIRECT INVOICE? | Create move from st line ? |
             #+  draft | temp |         NO         |            YES             |
-            #+  draft | temp |         YES        |            YES             |
             #+  draft | hard |         NO         |            YES             |
-            #+  draft | hard |         YES        |            NO              |
             #+  temp  | hard |         NO         |            NO              |
+            #+  draft | temp |         YES        |            YES             |
+            #+  draft | hard |         YES        |            YES             |
             #+  temp  | hard |         YES        |            NO              |
             #+  As temp state is not effective on direct invoice and that previously we just create move when we are in draft and do not want to hard post a direct invoice
+            #+  Note that direct invoice moves though temp state and back to draft via code (not user actions).
+            #+  Code is duplicated below for clarifty. TODO: fix during refactoring of dirct invoices
             if absl.state in ('draft') and not (postype == 'hard' and absl.direct_invoice):
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
                 absl = self.browse(cr, uid, absl.id, context=context)
+            if absl.state in ('draft','temp') and absl.direct_invoice and postype != 'hard':
+                self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
+                # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
+                absl = self.browse(cr, uid, absl.id, context=context) 
 
             if postype == 'temp' and absl.direct_invoice:  #utp-917
                 self.write(cr, uid, [absl.id], {'direct_state':'temp'}, context=context)
