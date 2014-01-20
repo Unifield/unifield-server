@@ -240,7 +240,7 @@
                                         <field name="reconciled"/>
                                         <!-- UTP-482 operational advance linked confirmed PO -->
                                         <field name="cash_register_op_advance_po_id"
-                                            domain="[('state', 'in', ['approved'])]" />
+                                            domain="[('state', 'in', ['approved']), ('currency_id', '=', parent.currency_id), ('order_type', '=', 'purchase_list')]" />
                                         <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr"
                                             attrs="{'invisible': [('direct_invoice', '=', True)]}"
                                             context="context"/>
