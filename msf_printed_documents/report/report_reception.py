@@ -51,6 +51,10 @@ class report_reception(report_sxw.rml_parse):
             'getQtyIS': self.getQtyIS,
             'getWarning': self.getWarning,
             'getOriginRef': self.getOriginRef,
+            'getBatch': self.getBatch,
+            'getExpDate': self.getExpDate,
+            'getActualReceiptDate': self.getActualReceiptDate,
+            'getQtyBO': self.getQtyBO,
         })
 
     def getOriginRef(self,o):
@@ -79,14 +83,17 @@ class report_reception(report_sxw.rml_parse):
         return warn
 
     def getQtyPO(self,line):
-        if line.picking_id:
-            for x in line.picking_id.move_lines:
-                if x.line_number == line.line_number:
-                    return x.product_qty
-        return False
-
-    def getQtyIS(self,line):
-        return line.product_qty
+        val = line.purchase_line_id.product_qty if line.purchase_line_id else 0
+        return "{0:.2f}".format(val)
+    
+    def getQtyBO(self,line,o):
+        val = (line.purchase_line_id.product_qty - line.product_qty) if o.state == 'done' else 0
+        return "{0:.2f}".format(val)
+    
+    def getQtyIS(self,line,o):
+        val = line.product_qty if o.state == 'done' else 0
+        return "{0:.2f}".format(val)
+    
 
     def getProject(self,o):
         return o and o.purchase_id and o.purchase_id.dest_address_id and o.purchase_id.dest_address_id.name or False
@@ -148,8 +155,17 @@ class report_reception(report_sxw.rml_parse):
 
     def getDateCreation(self, o):
         return time.strftime('%d-%b-%Y', time.strptime(o.creation_date,'%Y-%m-%d %H:%M:%S'))
+    
+    def getBatch(self, line):
+        return line.prodlot_id.name
+    
+    def getExpDate(self, line):
+        return time.strftime('%d/%m/%Y', time.strptime(line.prodlot_id.life_date,'%Y-%m-%d'))
 
-
+    
+    def getActualReceiptDate(self,o):
+        return time.strftime('%d/%m/%Y', time.strptime(o.date_done,'%Y-%m-%d %H:%M:%S'))
+            
     def get_lines(self, o):
         return o.move_lines
 
