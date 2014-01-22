@@ -459,10 +459,7 @@ def common_create(self, cr, uid, data, type, context=None):
     '''
     if context is None:
         context = {}
-    # if comes from automatic data - fill confirmed date
-    if (context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in data) or data.get('from_yml_test'):
-        data['delivery_confirmed_date'] = '2012-01-17'
-        
+
     # fill partner_type data
     if data.get('partner_id', False):
         partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id'), context=context)

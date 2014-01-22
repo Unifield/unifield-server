@@ -737,11 +737,8 @@ class sourcing_line(osv.osv):
                 self.pool.get('sale.order').write(cr, uid, [sl.sale_order_id.id], 
                                                     {'sourcing_trace_ok': True,
                                                      'sourcing_trace': 'Sourcing in progress'}, context=context)
-                if context.get('update_mode') in ['init', 'update']:
-                    self.confirmOrder(cr, uid, sl, context=context, new_cursor=False)
-                else:
-                    thread = threading.Thread(target=self.confirmOrder, args=(cr, uid, sl, context))
-                    thread.start()
+                thread = threading.Thread(target=self.confirmOrder, args=(cr, uid, sl, context))
+                thread.start()
                 
         return result
 

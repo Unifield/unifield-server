@@ -255,10 +255,9 @@ class account_period(osv.osv):
         if not context:
             context = {}
 
-        if context.get('update_mode') in ['init', 'update'] and 'state' not in vals:
+        if context.get('sync_update_execution') and 'state' not in vals:
             logging.getLogger('init').info('Loading default draft - created - state for account.period')
             vals['state'] = 'created'
-            
 
         return super(account_period, self).create(cr, uid, vals, context=context)
     

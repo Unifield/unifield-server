@@ -412,10 +412,6 @@ class sale_order(osv.osv):
         if context is None:
             context = {}
 
-        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
-            logging.getLogger('init').info('SO: set from yml test to True')
-            vals['from_yml_test'] = True
-
         # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
             self._check_own_company(cr, uid, vals['partner_id'], context=context)
