@@ -32,6 +32,7 @@
                         <group name="partner_info" colspan="4" col="4">
                             <field name="po_from_ir" invisible="1" />
                             <field name="po_from_fo" invisible="1" />
+                            <field name="canceled_end" invisible="1" />
                             <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}"
                                 domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', {'order_type':order_type, 'partner_id': partner_id}),  ('check_partner_rfq', '=', tender_id), ('partner_not_int', 'in', {'type':'po', 'ids':[active_id]})]"
                                 attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" />
@@ -84,7 +85,7 @@
                             <button name="purchase_cancel"  type="object"
                             attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'confirmed', 'rfq_sent']), '&amp;',('partner_type', '!=', 'external'), ('state', '=', 'confirmed')]}" 
                             string="Cancel" icon="gtk-cancel"/>
-                            <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
+                            <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
                             <!-- UTP-469 − Remove the cancel button
                                  <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state','not in', ['approved','except_picking','except_invoice','wait'])]}"/> -->
                             <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_picking')]}"/>
