@@ -37,15 +37,21 @@ class account_move_line(osv.osv):
         func_amount = ml.amount_currency
         original_currency = ml.currency_id.id
         if ml.journal_id.type == 'cur_adj':
-            # UTP-896: addendum line expressed in functional currency, output ccy based on functional ccy vs booking ccy (balance vs amount_currency)
-            if currency_id != original_currency:
-                return 0
+            # UF-2296: in case of Current Adjustmeent Journal (MT)
+            # if output ccy == fonctional ccy we must return functional amount
+            # explanation: export search result account_mcdb/report/account_mcdb_export.py
+            # uses 'output_currency_id' for amount computing even if no output ccy
+            return_func_amount = False
+            if currency_id == ml.functional_currency_id.id:
+                return_func_amount = True
             #UTP-936: In case of MT journal, the conversion is from functional currency to output currency
-            original_currency = ml.functional_currency_id.id
             if ml.debit:
                 func_amount = ml.debit
             elif ml.credit:
                 func_amount = -ml.credit
+            if return_func_amount:  # UF-2296
+                return func_amount
+            original_currency = ml.functional_currency_id.id
         # Perform the conversion from original currency to selected currency
         return currency_obj.compute(cr, uid, original_currency, currency_id, func_amount, round=round, context=context)
 
