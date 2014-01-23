@@ -940,6 +940,7 @@ stock moves which are already processed : '''
         delivery confirmed date at po level is mandatory
         update corresponding date at line level if needed.
         Check analytic distribution
+        Check that no line have a 0 price unit.
         '''
         # objects
         ana_obj = self.pool.get('analytic.distribution')
@@ -947,6 +948,9 @@ stock moves which are already processed : '''
         # Check analytic distribution
         self.check_analytic_distribution(cr, uid, ids, context=context)
         for po in self.browse(cr, uid, ids, context=context):
+            # prepare some values
+            is_regular = po.order_type == 'regular' # True if order_type is regular, else False
+            line_error = []
             # msf_order_date checks
             if not po.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
@@ -954,6 +958,13 @@ stock moves which are already processed : '''
             for line in po.order_line:
                 if not line.confirmed_delivery_date:
                     line.write({'confirmed_delivery_date': po.delivery_confirmed_date,}, context=context)
+                # Don't accept the confirmation of regular PO with 0.00 unit price lines
+                if is_regular and line.price_unit == 0.00:
+                    line_error.append(line.line_number)
+
+            if len(line_error) > 0:
+                errors = ' / '.join(str(x) for x in line_error)
+                raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line with a 0.00 Unit Price. Lines in exception : %s') % errors)
         # MOVE code for COMMITMENT into wkf_approve_order
         return True
 
@@ -1323,17 +1334,6 @@ stock moves which are already processed : '''
                 # UTP-827: no commitment if they are imported for ESC partners
                 if not (order.partner_id.partner_type == 'esc' and setup.import_commitments):
                     self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
-            # Don't accept the confirmation of regular PO with 0.00 unit price lines
-            if order.order_type == 'regular':
-                line_error = []
-                for line in order.order_line:
-                    if line.price_unit == 0.00:
-                        line_error.append(line.line_number)
-
-                if len(line_error) > 0:
-                    errors = ' / '.join(str(x) for x in line_error)
-                    raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line with a 0.00 Unit Price. Lines in exception : %s') % errors)
-
             todo = []
             todo2 = []
             todo3 = []
