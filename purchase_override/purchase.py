@@ -2119,6 +2119,8 @@ class purchase_order_line(osv.osv):
         if order_id.rfq_ok:
             vals.update({'change_price_manually': True})
         else:
+            if order_id.po_from_fo or order_id.po_from_ir:
+                vals['from_fo'] = True
             if vals.get('product_qty', 0.00) == 0.00 and not context.get('noraise'):
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
 
@@ -2225,6 +2227,9 @@ class purchase_order_line(osv.osv):
                     proc = self.pool.get('procurement.order').browse(cr, uid, vals.get('procurement_id', line.procurement_id.id))
                 if not proc or not proc.sale_id:
                     vals.update(self.update_origin_link(cr, uid, vals.get('origin', line.origin), context=context))
+
+            if line.order_id and not line.order_id.rfq_ok and (line.order_id.po_from_fo or line.order_id.po_from_ir):
+                vals['from_fo'] = True
 
         if not context.get('update_merge'):
             for line in ids:
@@ -2512,6 +2517,7 @@ class purchase_order_line(osv.osv):
         'select_fo': fields.many2one('sale.order', string='FO'),
         'fnct_project_ref': fields.function(_get_project_po_ref, method=True, string='Project PO',
                                             type='char', size=128, store=False),
+        'from_fo': fields.boolean(string='From FO', readonly=True),
     }
 
     _defaults = {
@@ -2520,6 +2526,7 @@ class purchase_order_line(osv.osv):
         'price_unit': lambda *a: 0.00,
         'change_price_ok': lambda *a: True,
         'is_line_split': False, # UTP-972: by default not a split line
+        'from_fo': lambda self, cr, uid, c: not c.get('rfq_ok', False) and c.get('from_fo', False),
     }
 
     def product_uom_change(self, cr, uid, ids, pricelist, product, qty, uom,
