@@ -290,6 +290,7 @@ class purchase_order(osv.osv):
         'active': fields.boolean('Active', readonly=True),
         'po_from_ir': fields.function(_is_po_from_ir, method=True, type='boolean', string='Is PO from IR ?',),
         'po_from_fo': fields.function(_is_po_from_fo, method=True, type='boolean', string='Is PO from FO ?',),
+        'canceled_end': fields.boolean(string='Canceled End', readonly=True),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
         'origin': fields.text('Source Document', 
@@ -316,6 +317,7 @@ class purchase_order(osv.osv):
         'name': lambda *a: False,
         'is_a_counterpart': False,
         'parent_order_name': False,
+        'canceled_end': False,
     }
 
     def _check_po_from_fo(self, cr, uid, ids, context=None):
@@ -3002,6 +3004,7 @@ class purchase_order_cancel_wizard(osv.osv_memory):
         '''
         Cancel the PO and display his form
         '''
+        po_obj = self.pool.get('purchase.order')
         line_obj = self.pool.get('purchase.order.line')
         wf_service = netsvc.LocalService("workflow")
 
@@ -3020,7 +3023,8 @@ class purchase_order_cancel_wizard(osv.osv_memory):
 
         # Mark lines as 'To be resourced'
         line_obj.write(cr, uid, line_ids, {'has_to_be_resourced': True}, context=context)
-
+    
+        po_obj.write(cr, uid, order_ids, {'canceled_end': True}, context=context)
         for order_id in order_ids:
             wf_service.trg_validate(uid, 'purchase.order', order_id, 'purchase_cancel', cr)
 
