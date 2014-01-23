@@ -244,6 +244,11 @@ SELECT res_id, touched
             ...
         }
         """
+
+        # UF-2294: disable assert error
+        if context.get('offline_synchronization') and not synchronize and not previous_values:
+            return {}
+
         assert not self._name == 'ir.model.data', \
             "Can not call this method on object ir.model.data!"
         assert hasattr(self, '_all_columns'), \
