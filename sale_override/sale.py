@@ -1149,7 +1149,7 @@ class sale_order(osv.osv):
                 # when the line is sourced, we already get a procurement for the line
                 # when the line is confirmed, the corresponding procurement order has already been processed
                 # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
-                if line.state in ['sourced', 'confirmed', 'done']:
+                if line.state in ['sourced', 'confirmed', 'done'] or (line.created_by_po_line and line.procurement_id):
                     continue
 
                 if line.product_id:
