@@ -3,7 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Copyright (C) 2013 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -21,12 +21,22 @@
 #
 ##############################################################################
 
-import account
-import account_move_line
-import account_analytic_line
-import account_export_mapping
-import country_export_mapping
-import report
-import wizard
+from osv import osv
+from osv import fields
 
+class account_move_line(osv.osv):
+    _name = "account.move.line"
+    _inherit = "account.move.line"
+
+    _columns = {
+        'exported': fields.boolean('Exported'),
+        'exporting_sequence': fields.text("Export ' sequence", help="Temporary sequence when exporting data in OCB."),
+    }
+
+    _defaults = {
+        'exported': lambda *a: False,
+        'exporting_sequence': lambda *a: False,
+    }
+
+account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
