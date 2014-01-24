@@ -134,7 +134,8 @@ class sourcing_line(osv.osv):
                 res = {'real_stock': product_virtual.qty_available, 
                        'virtual_stock': product_virtual.virtual_available}
             else:
-                res = 0.00
+                res = {'real_stock': 0.00,
+                       'virtual_stock': 0.00}
 
             result[sl.id] = res
             
