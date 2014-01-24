@@ -1638,10 +1638,6 @@ stock moves which are already processed : '''
         if not context:
             context = {}
 
-        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
-            logging.getLogger('init').info('PO: set from yml test to True')
-            vals['from_yml_test'] = True
-
         if vals.get('order_type'):
             if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
                 vals.update({'invoice_method': 'manual'})

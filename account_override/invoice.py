@@ -127,9 +127,6 @@ class account_invoice(osv.osv):
         """
         if not context:
             context = {}
-        if context.get('update_mode') in ['init', 'update']:
-            logging.getLogger('init').info('INV: set from yml test to True')
-            vals['from_yml_test'] = True
         # Create a sequence for this new invoice
         res_seq = self.create_sequence(cr, uid, vals, context)
         vals.update({'sequence_id': res_seq,})
@@ -273,9 +270,6 @@ class account_invoice_line(osv.osv):
         """
         if not context:
             context = {}
-        if context.get('update_mode') in ['init', 'update']:
-            logging.getLogger('init').info('INV: set from yml test to True')
-            vals['from_yml_test'] = True
         # Create new number with invoice sequence
         if vals.get('invoice_id') and self._name in ['account.invoice.line']:
             invoice = self.pool.get('account.invoice').browse(cr, uid, vals['invoice_id'])

@@ -47,9 +47,6 @@ class procurement_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
-            logging.getLogger('init').info('PRO: set from yml test to True')
-            vals['from_yml_test'] = True
         return super(procurement_order, self).create(cr, uid, vals, context=context)
 
     def action_confirm(self, cr, uid, ids, context=None):
@@ -291,10 +288,6 @@ class stock_picking(osv.osv):
         if context.get('not_workflow', False):
             vals['from_wkf'] = False
     
-        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
-            logging.getLogger('init').info('PICKING: set from yml test to True')
-            vals['from_yml_test'] = True
-            
         if not vals.get('partner_id2') and vals.get('address_id'):
             addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
             vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False

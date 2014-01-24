@@ -869,11 +869,6 @@ class stock_production_lot(osv.osv):
         sequence = self.create_sequence(cr, uid, vals, context=context)
         vals.update({'sequence_id': sequence,})
         
-        if context.get('update_mode') in ['init', 'update']:
-            if not vals.get('life_date'):
-                # default value to today
-                vals.update(life_date=time.strftime('%Y-%m-%d'))
-        
         return super(stock_production_lot, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
