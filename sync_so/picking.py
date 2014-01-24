@@ -195,10 +195,16 @@ class stock_picking(osv.osv):
                     if move_ids and len(move_ids) == 1: # if there is only one move, take it for process
                         move_id = move_ids[0]
                     else: # if there are more than 1 moves, then pick the next one not existing in the partial_datas[in_id]
-                        for move in move_ids:
-                            if not partial_datas[in_id].get(move):
-                                move_id = move
-                                continue
+                        # Search the best matching move
+                        best_diff = False
+                        for move in move_obj.read(cr, uid, move_ids, ['product_qty'], context=context):
+                            if not partial_datas[in_id].get(move['id']):
+                                diff = abs(move['product_qty'] - data.get('product_qty'))
+                                if not best_diff or diff < best_diff:
+                                    best_diff = diff
+                                    move_id = move['id']
+                                    if best_diff == 0.00:
+                                        break
 
                     # If we have a shipment with 10 packs and return from shipment
                     # the pack 2 and 3, the IN shouldn't be splitted in three moves (pack 1 available,
