@@ -41,7 +41,7 @@
                             <field name="name"/>
                             <field name="ref"/>
                             <field name="account_hq_correctible" invisible="1"/>
-                            <field name="account_id" attrs="{'readonly': [('account_hq_correctible', '=', True)]}" domain="[('type', '!=', 'view'), ('restricted_area', '=', 'hq_lines')]"/>
+                            <field name="account_id" attrs="{'readonly': [('account_hq_correctible', '=', True)]}" domain="[('type', '!=', 'view'), ('restricted_area', '=', 'hq_lines'), ('is_not_hq_correctible', '=', False)]"/>
                             <field name="amount"/>
                             <field name="destination_id"/>
                             <field name="cost_center_id"/>
