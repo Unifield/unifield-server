@@ -96,7 +96,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 % endif
 % if previous != o.account_id.id:
 <Row>
-  <Cell ss:StyleID="ssBorderTotal" ss:MergeAcross="13"><Data ss:Type="String">${_('Subtotal')} </Data></Cell>
+  <Cell ss:StyleID="ssBorderTotal" ss:MergeAcross="12"><Data ss:Type="String">${_('Subtotal')} </Data></Cell>
   <Cell ss:StyleID="ssBorderNumber"><Data ss:Type="Number">${total}</Data></Cell>
 </Row>
 <%
@@ -183,11 +183,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 % endfor
 <!-- Last subtotal and GRAND TOTAL -->
 <Row>
-  <Cell ss:StyleID="ssBorderTotal" ss:MergeAcross="13"><Data ss:Type="String">${_('Subtotal')} </Data></Cell>
+  <Cell ss:StyleID="ssBorderTotal" ss:MergeAcross="12"><Data ss:Type="String">${_('Subtotal')} </Data></Cell>
   <Cell ss:StyleID="ssBorderNumber"><Data ss:Type="Number">${total}</Data></Cell>
 </Row>
 <Row>
-  <Cell ss:StyleID="ssBorderTotal" ss:MergeAcross="13"><Data ss:Type="String">${_('Total')} </Data></Cell>
+  <Cell ss:StyleID="ssBorderTotal" ss:MergeAcross="12"><Data ss:Type="String">${_('Total')} </Data></Cell>
   <Cell ss:StyleID="ssBorderNumber"><Data ss:Type="Number">${grand_total}</Data></Cell>
 </Row>
 </Table>
