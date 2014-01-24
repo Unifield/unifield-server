@@ -40,7 +40,8 @@
                         <tree string="Split Lines" editable="top" colors="red:state == 'invalid'; black: state == 'valid'">
                             <field name="name"/>
                             <field name="ref"/>
-                            <field name="account_id"/>
+                            <field name="account_hq_correctible" invisible="1"/>
+                            <field name="account_id" attrs="{'readonly': [('account_hq_correctible', '=', True)]}" domain="[('type', '!=', 'view'), ('restricted_area', '=', 'hq_lines')]"/>
                             <field name="amount"/>
                             <field name="destination_id"/>
                             <field name="cost_center_id"/>
