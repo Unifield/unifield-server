@@ -180,8 +180,10 @@ class stock_picking(osv.osv):
                     search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
 
                     original_qty_partial = data.get('original_qty_partial')
+                    orig_qty = data.get('product_qty')
                     if original_qty_partial != -1:
                         search_move.append(('product_qty', '=', original_qty_partial)) 
+                        orig_qty = original_qty_partial
 
                     move_ids = move_obj.search(cr, uid, search_move, context=context)
                     if not move_ids:
@@ -199,7 +201,7 @@ class stock_picking(osv.osv):
                         best_diff = False
                         for move in move_obj.read(cr, uid, move_ids, ['product_qty'], context=context):
                             if not partial_datas[in_id].get(move['id']):
-                                diff = abs(move['product_qty'] - data.get('product_qty'))
+                                diff = abs(move['product_qty'] - orig_qty)
                                 if not best_diff or diff < best_diff:
                                     best_diff = diff
                                     move_id = move['id']
