@@ -186,6 +186,10 @@ class stock_picking(osv.osv):
                         orig_qty = original_qty_partial
 
                     move_ids = move_obj.search(cr, uid, search_move, context=context)
+                    if not move_ids and original_qty_partial != -1:
+                        search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('original_qty_partial', '=', original_qty_partial)]
+                        move_ids = move_obj.search(cr, uid, search_move, context=context)
+
                     if not move_ids:
                         search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
                         move_ids = move_obj.search(cr, uid, search_move, context=context)
