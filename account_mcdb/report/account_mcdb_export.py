@@ -99,7 +99,8 @@ class account_line_csv_export(osv.osv_memory):
             csv_line.append(ml.credit_currency or 0.0)
             #currency_id
             csv_line.append(ml.currency_id and ml.currency_id.name and ml.currency_id.name.encode('utf-8') or '')
-            if not currency_id:
+            if not currency_id or (currency_id and currency_id == ml.currency_id):
+                # uf-2327 no currency or same as booking
                 #debit
                 csv_line.append(ml.debit or 0.0)
                 #credit
