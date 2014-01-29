@@ -187,6 +187,25 @@ class stock_picking(osv.osv):
 
         return res
 
+    def _get_dpo_incoming(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the picking is an incoming and if one the stock move are linked to dpo_line
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for pick in self.browse(cr, uid, ids, context=context):
+            print pick.type
+            res[pick.id] = False
+            if pick.type == 'in':
+                for move in pick.move_lines:
+                    print move.dpo_line_id
+                    if move.dpo_line_id:
+                        res[pick.id] = True
+                        break
+        return res
+
     _columns = {
         'state': fields.selection([
             ('draft', 'Draft'),
@@ -219,6 +238,7 @@ class stock_picking(osv.osv):
         'move_lines': fields.one2many('stock.move', 'picking_id', 'Internal Moves', states={'done': [('readonly', True)], 'cancel': [('readonly', True)], 'import': [('readonly', True)]}),
         'state_before_import': fields.char(size=64, string='State before import', readonly=True),
         'is_esc': fields.function(_get_is_esc, method=True, string='ESC Partner ?', type='boolean', store=False),
+        'dpo_incoming': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Incoming', store=False),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
@@ -1050,6 +1070,7 @@ class stock_move(osv.osv):
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
         'already_confirmed': fields.boolean(string='Already confirmed'),
         'dpo_id': fields.many2one('purchase.order', string='Direct PO', help='PO from where this stock move is sourced.'),
+        'dpo_line_id': fields.integer(string='Direct PO line', help='PO line from where this stock move is sourced (for sync. engine).'),
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
         'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
         'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
@@ -1237,6 +1258,18 @@ class stock_move(osv.osv):
         default.update({'already_confirmed':False})
         
         return super(stock_move, self).copy(cr, uid, id, default, context=context)
+
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        Remove the dpo_line_id link
+        '''
+        if default is None:
+            default = {}
+        
+        if not 'dpo_line_id' in default:
+            default['dpo_line_id'] = 0
+
+        return super(stock_move, self).copy_data(cr, uid, id, default, context=context)
     
     def fefo_update(self, cr, uid, ids, context=None):
         """

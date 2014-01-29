@@ -522,6 +522,9 @@ class stock_picking(osv.osv):
                               'direct_incoming': partial.get('direct_incoming'),
                               }
 
+                    if partial.get('dpo_line_id'):
+                        values['dpo_line_id'] = partial['dpo_line_id']
+
                     # UTP-872: Don't change the quantity if the move is canceled
                     # If the quantity is changed to 0.00, a backorder is created
                     # for canceled moves
@@ -701,6 +704,7 @@ class stock_picking(osv.osv):
                                 'picking_id': pick.id, # put in the current picking which will be the actual backorder (OpenERP logic)
                                 'prodlot_id': False,
                                 'state': 'assigned',
+                                'dpo_line_id': move.dpo_line_id,
                                 'move_dest_id': False,
                                 'price_unit': move.price_unit,
                                 'change_reason': False,
@@ -709,6 +713,7 @@ class stock_picking(osv.osv):
                     # average computation - empty if not average
                     defaults.update(average_values)
                     new_back_move = move_obj.copy(cr, uid, move.id, defaults, context=dict(context, keepLineNumber=True))
+                    move_obj.write(cr, uid, [move.id], {'dpo_line_id': 0}, context=context)
                     #move_obj.write(cr, uid, [out_move_id], {'product_qty': diff_qty}, context=context)
                     # if split happened
                     #if update_out:

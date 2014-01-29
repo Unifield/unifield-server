@@ -1339,6 +1339,7 @@ stock moves which are already processed : '''
             todo = []
             todo2 = []
             todo3 = []
+            todo4 = {}
             if order.partner_id.partner_type in ('internal', 'esc') and order.order_type == 'regular' or \
                          order.order_type in ['donation_exp', 'donation_st', 'loan']:
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
@@ -1351,7 +1352,9 @@ stock moves which are already processed : '''
                 if order.partner_id.partner_type != 'esc':
                     self.write(cr, uid, [order.id], {'invoice_method': 'order'}, context=context)
                 for line in order.order_line:
-                    if line.procurement_id: todo.append(line.procurement_id.id)
+                    if line.procurement_id: 
+                        todo.append(line.procurement_id.id)
+                        todo4.update({line.procurement_id.id: line.id})
 
             if todo:
                 todo2 = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', 'in', todo)], context=context)
@@ -1372,7 +1375,9 @@ stock moves which are already processed : '''
                             location_id = cross_id
                         elif move.product_id.type == 'consu':
                             location_id = non_stock_id
-                        move_obj.write(cr, uid, [move.id], {'dpo_id': order.id, 'state': 'done',
+                        move_obj.write(cr, uid, [move.id], {'dpo_id': order.id, 
+                                                            'state': 'done',
+                                                            'dpo_line_id': todo4.get(move.sale_line_id.procurement_id.id, False),
                                                             'location_id': location_id,
                                                             'location_dest_id': location_id, 
                                                             'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
@@ -2498,6 +2503,7 @@ class purchase_order_line(osv.osv):
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=64, string='Origin'),
         'link_so_id': fields.many2one('sale.order', string='Linked FO/IR', readonly=True),
+        'dpo_received': fields.boolean(string='Is the IN has been received at Project side ?'),
         'change_price_ok': fields.function(_get_price_change_ok, type='boolean', method=True, string='Price changing'),
         'change_price_manually': fields.boolean(string='Update price manually'),
         # openerp bug: eval invisible in p.o use the po line state and not the po state !
