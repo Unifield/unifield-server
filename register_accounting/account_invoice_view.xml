@@ -91,6 +91,7 @@
             <field name="name">account.direct.refund.form</field>
             <field name="model">account.invoice.refund</field>
             <field name="type">form</field>
+            <field name="priority" eval="100" />
             <field name="arch" type="xml">
                 <form string="Refund Invoice">
                 <separator string="Refund Invoice Options" colspan="4"/>
