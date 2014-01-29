@@ -294,7 +294,8 @@ class wizard_cash_return(osv.osv_memory):
                     and st_line.cash_register_op_advance_po_id.order_type in ('regular', 'purchase_list', 'direct'):
                     invoice_numbers = []
                     for invoice in st_line.cash_register_op_advance_po_id.invoice_ids:
-                        if invoice.number:
+                        if invoice.state and invoice.state == 'open' \
+                            and invoice.number:
                             invoice_numbers.append(invoice.number)
                             context['po_op_advance_auto_add_invoice_id'] = invoice.id
                             self.action_add_invoice(cr, uid, [id], context=context)
