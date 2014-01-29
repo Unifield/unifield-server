@@ -289,12 +289,15 @@ class wizard_cash_return(osv.osv_memory):
             st_line = st_line_obj.browse(cr, uid, context['statement_line_id'], context)
             if st_line:
                 if st_line.type_for_register == 'advance' \
-                    and st_line.cash_register_op_advance_po_id:
+                    and st_line.cash_register_op_advance_po_id \
+                    and st_line.cash_register_op_advance_po_id.order_type \
+                    and st_line.cash_register_op_advance_po_id.order_type in ('regular', 'purchase_list', 'direct'):
                     invoice_numbers = []
                     for invoice in st_line.cash_register_op_advance_po_id.invoice_ids:
-                        invoice_numbers.append(invoice.number)
-                        context['po_op_advance_auto_add_invoice_id'] = invoice.id
-                        self.action_add_invoice(cr, uid, [id], context=context)
+                        if invoice.number:
+                            invoice_numbers.append(invoice.number)
+                            context['po_op_advance_auto_add_invoice_id'] = invoice.id
+                            self.action_add_invoice(cr, uid, [id], context=context)
                     if invoice_numbers:
                         msg = "This operational advance is linked to a PO." \
                             " Corresponding invoice lines have automatically been added:" \
