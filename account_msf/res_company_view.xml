@@ -16,7 +16,7 @@
                 <group col="2" colspan="2">
                     <separator string="Re-billing Inter-section account" colspan="2"/>
                     <field name="import_invoice_default_account" colspan="2"
-                    domain="[('type', '!=', 'view'), ('user_type_code', '=', 'receivables')]"/>
+                    domain="[('type', 'in', ('other','receivable'))]"/>
                 </group>
                 <group col="2" colspan="2">
                     <separator string="Intermission configuration" colspan="2"/>
