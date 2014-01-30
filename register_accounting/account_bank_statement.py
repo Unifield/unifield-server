@@ -2105,14 +2105,11 @@ class account_bank_statement_line(osv.osv):
                 if st_line.state == "hard":
                     raise osv.except_osv(_('Error'), _('You are not allowed to delete hard posting lines!'))
                 else:
-                    # In case of line that content some move_line that come from imported invoices
-                    # delete link between account_move_line and register_line that will be unlinked
-                    #if st_line.imported_invoice_line_ids:
-                    #    self.pool.get('account.move.line').write(cr, uid, [x['id'] for x in st_line.imported_invoice_line_ids], 
-                    #        {'imported_invoice_line_ids': (3, st_line.id, False)}, context=context)
                     self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids])
             # Delete direct invoice if exists
             if st_line.direct_invoice and st_line.invoice_id and not context.get('from_direct_invoice', False):
+                # unlink moves and analytic lines before deleting the line
+                self.unlink_moves(cr, uid, [st_line.invoice_id.id], context=context)
                 self.pool.get('account.invoice').unlink(cr, uid, [st_line.invoice_id.id], {'from_register': True})
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
 
