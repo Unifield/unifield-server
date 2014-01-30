@@ -76,6 +76,9 @@ class stock_picking(osv.osv):
         if state == 'done':
             state = 'assigned'
 
+        # UF-2301: Take care of DPO reception
+        dpo_line_id = data['dpo_line_id']
+
         # build a dic which can be used directly to update the stock move
         result = {'line_number': data['line_number'],
                   'product_id': product_id,
@@ -89,6 +92,9 @@ class stock_picking(osv.osv):
 
                   'prodlot_id': batch_id,
                   'expired_date': expired_date,
+
+                  'dpo_line_id': dpo_line_id,
+                  'sync_dpo': dpo_line_id and True or False,
 
                   'asset_id': asset_id,
                   'change_reason': data['change_reason'] or None,
@@ -115,6 +121,26 @@ class stock_picking(osv.osv):
                     # set the flag to know if the data has already been processed (partially or completely) in Out side
                     line_dic.update({'out_processed':  line_dic.setdefault('out_processed', False) or line['processed_stock_move']})
 
+
+        return result
+
+    def picking_data_update_in(self, cr, uid, source, out_info, context=None):
+        '''
+        If data come from a stock move (DPO), re-arrange data to match with partial_shipped_fo_updates_in_po method
+        '''
+        result = {}
+
+        for key in out_info.keys():
+            if key != 'move_lines':
+                result[key] = out_info.get(key)
+        
+        if out_info.get('subtype', False) in ('standard', 'picking') and out_info.get('move_lines', False):
+            for line in out_info['move_lines']:
+                # Don't get the lines without dpo_line_id
+                if line.get('dpo_line_id', False):
+                    result.setdefault('move_lines', [])
+                    result['move_lines'].append(line)
+
         return result
 
     def partial_shipped_fo_updates_in_po(self, cr, uid, source, out_info, context=None):
@@ -130,6 +156,8 @@ class stock_picking(osv.osv):
         context['InShipOut'] = ""
 
         pick_dict = out_info.to_dict()
+
+        pick_dict = self.picking_data_update_in(cr, uid, source, pick_dict, context=context)
 
         # objects
         so_po_common = self.pool.get('so.po.common')
@@ -360,6 +388,38 @@ class stock_picking(osv.osv):
 
         raise Exception("There is a problem (no PO or IN found) when cancel the IN at project")
 
+
+    def closed_in_confirms_dpo_reception(self, cr, uid, source, out_info, context=None):
+        if not context:
+            context = {}
+        self._logger.info("+++ Closed INcoming at %s confirms the delivery to DPO at %s"%(source, cr.dbname))
+
+        wf_service = netsvc.LocalService("workflow")
+        so_po_common = self.pool.get('so.po.common')
+        pick_dict = out_info.to_dict()
+
+        dpo_line_id = pick_dict.get('dpo_line_id', False)
+        if not dpo_line_id:
+            raise Exception("The DPO line reference is empty. The action cannot be executed.")
+
+        message = False
+        self.pool.get('purchase.order.line').write(cr, uid, [dpo_line_id], {'dpo_received': True}, context=context)
+        po_id = self.pool.get('purchase.order.line').browse(cr, uid, dpo_line_id, context=context).order_id
+        
+        if po_id and all(l.dpo_received for l in po_id.order_line):
+            wf_service.trg_validate(uid, 'purchase.order', po_id.id, 'dpo_received', cr)
+            message = "The reception of the DPO " + po_id.name + " has been confirmed"
+        elif po_id:
+            message = "The DPO " + po_id.name + " hasn't been confirmed because some goods remain to receive"
+
+
+        if message:
+            self._logger.info(message)
+            return message
+
+        message = "Something goes wrong with this message and no confirmation of reception of the DPO %s" % (po_id and po_id.name or '')
+        self._logger.info(message)
+        raise Exception(message)
 
     def closed_in_validates_delivery_out_ship(self, cr, uid, source, out_info, context=None):
         if not context:
