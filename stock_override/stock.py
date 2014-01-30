@@ -196,15 +196,28 @@ class stock_picking(osv.osv):
 
         res = {}
         for pick in self.browse(cr, uid, ids, context=context):
-            print pick.type
-            res[pick.id] = False
+            res[pick.id] = {'dpo_incoming': False,
+                            'dpo_out': False}
             if pick.type == 'in':
                 for move in pick.move_lines:
-                    print move.dpo_line_id
-                    if move.dpo_line_id:
-                        res[pick.id] = True
+                    if move.sync_dpo or move.dpo_line_id:
+                        res[pick.id]['dpo_incoming'] = True
+                        break
+
+            if pick.type == 'out' and pick.subtype in ('standard', 'picking'):
+                for move in pick.move_lines:
+                    if move.sync_dpo or move.dpo_line_id:
+                        res[pick.id]['dpo_out'] = True
                         break
         return res
+
+    def _get_dpo_picking_ids(self, cr, uid, ids, context=None):
+        result = []
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.picking_id and obj.picking_id.id not in result:
+                result.append(obj.picking_id.id)
+
+        return result
 
     _columns = {
         'state': fields.selection([
@@ -238,7 +251,12 @@ class stock_picking(osv.osv):
         'move_lines': fields.one2many('stock.move', 'picking_id', 'Internal Moves', states={'done': [('readonly', True)], 'cancel': [('readonly', True)], 'import': [('readonly', True)]}),
         'state_before_import': fields.char(size=64, string='State before import', readonly=True),
         'is_esc': fields.function(_get_is_esc, method=True, string='ESC Partner ?', type='boolean', store=False),
-        'dpo_incoming': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Incoming', store=False),
+        'dpo_incoming': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Incoming', multi='dpo',
+                                        store={'stock.move': (_get_dpo_picking_ids, ['sync_dpo', 'dpo_line_id', 'picking_id'], 10,),
+                                               'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
+        'dpo_out': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Out', multi='dpo',
+                                        store={'stock.move': (_get_dpo_picking_ids, ['sync_dpo', 'dpo_line_id', 'picking_id'], 10,),
+                                               'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
@@ -1072,6 +1090,7 @@ class stock_move(osv.osv):
         'dpo_id': fields.many2one('purchase.order', string='Direct PO', help='PO from where this stock move is sourced.'),
         'dpo_line_id': fields.integer(string='Direct PO line', help='PO line from where this stock move is sourced (for sync. engine).'),
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
+        'sync_dpo': fields.boolean(string='Sync. DPO'),
         'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
         'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
         'processed_stock_move': fields.boolean(string='Processed Stock Move'),
@@ -1268,6 +1287,9 @@ class stock_move(osv.osv):
         
         if not 'dpo_line_id' in default:
             default['dpo_line_id'] = 0
+        
+        if not 'sync_dpo' in default:
+            default['sync_dpo'] = False
 
         return super(stock_move, self).copy_data(cr, uid, id, default, context=context)
     
