@@ -233,8 +233,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['lname'] or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${((strip_name(line['line_corresp'].replace(', ',''),25)) or '')|x}</Data>
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String">${((strip_name(line['line_corresp'].replace(',',', '),25)) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${get_line_debit(line)}</Data>
