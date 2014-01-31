@@ -205,12 +205,14 @@ class stock_picking(osv.osv):
                         best_diff = False
                         for move in move_obj.read(cr, uid, move_ids, ['product_qty'], context=context):
                             if not partial_datas[in_id].get(move['id']):
-                                diff = abs(move['product_qty'] - orig_qty)
-                                if not best_diff or diff < best_diff:
+                                diff = move['product_qty'] - orig_qty
+                                if diff >= 0 and (not best_diff or diff < best_diff):
                                     best_diff = diff
                                     move_id = move['id']
                                     if best_diff == 0.00:
                                         break
+                        if not move_id:
+                            move_id = move_ids[0]
 
                     # If we have a shipment with 10 packs and return from shipment
                     # the pack 2 and 3, the IN shouldn't be splitted in three moves (pack 1 available,
