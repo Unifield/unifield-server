@@ -295,7 +295,7 @@ class hq_entries_validation(osv.osv_memory):
                     correction_line_amount_booking = -1 * split_line.amount
                     context['date'] = split_line.date
                     correction_line_fonctional_amount = self.pool.get('res.currency').compute(cr, uid,
-                        split_line.currency_id.id, comp_currency_id, correction_line_amount_booking, round=True, context=None)
+                        split_line.currency_id.id, comp_currency_id, correction_line_amount_booking, round=True, context=context)
                     cor_id = ana_line_obj.copy(cr, uid, initial_ana_ids[0], {'date': line.date, 'source_date': line.date, 'cost_center_id': split_line.cost_center_id.id, 
                         'account_id': split_line.analytic_id.id, 'destination_id': split_line.destination_id.id, 'journal_id': acor_journal_id, 'last_correction_id': initial_ana_ids[0], 
                         'name': split_line.name, 'ref': split_line.ref, 'amount_currency': correction_line_amount_booking, 'amount': correction_line_fonctional_amount, })
