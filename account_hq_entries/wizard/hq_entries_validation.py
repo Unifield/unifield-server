@@ -188,6 +188,11 @@ class hq_entries_validation(osv.osv_memory):
         if not lines:
             return False
         # Prepare some values
+        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+        if user and user[0] and user[0].company_id:
+            comp_currency_id = user[0].company_id.currency_id.id
+        else:
+            comp_currency_id = False
         original_lines = set()
         ana_line_obj = self.pool.get('account.analytic.line')
         od_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
@@ -286,9 +291,14 @@ class hq_entries_validation(osv.osv_memory):
                         common_vals.update({'analytic_id': split_line.free_2_id.id,})
                         self.pool.get('free.2.distribution.line').create(cr, uid, common_vals, context=context)
                     # create analytic correction line
+                    # UFTP-37 calculation of correction line functional amount
+                    correction_line_amount_booking = -1 * split_line.amount
+                    context['date'] = split_line.date
+                    correction_line_fonctional_amount = self.pool.get('res.currency').compute(cr, uid,
+                        split_line.currency_id.id, comp_currency_id, correction_line_amount_booking, round=True, context=None)
                     cor_id = ana_line_obj.copy(cr, uid, initial_ana_ids[0], {'date': line.date, 'source_date': line.date, 'cost_center_id': split_line.cost_center_id.id, 
                         'account_id': split_line.analytic_id.id, 'destination_id': split_line.destination_id.id, 'journal_id': acor_journal_id, 'last_correction_id': initial_ana_ids[0], 
-                        'name': split_line.name, 'ref': split_line.ref, 'amount_currency': -1 * split_line.amount,})
+                        'name': split_line.name, 'ref': split_line.ref, 'amount_currency': correction_line_amount_booking, 'amount': correction_line_fonctional_amount, })
                     # update new ana line
                     ana_line_obj.write(cr, uid, cor_id, {'last_corrected_id': initial_ana_ids[0], 'move_id': move_line.id}, context=context)
                     # Add correction line to the list of them
