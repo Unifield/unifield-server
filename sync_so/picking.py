@@ -163,6 +163,7 @@ class stock_picking(osv.osv):
 
                 # get the corresponding picking line ids
                 for data in line_data['data']:
+                    ln = data.get('line_number')
                     #UF-2148: if the line contains 0 qty, just ignore it!
                     qty = data.get('product_qty', 0)
                     if qty == 0:
