@@ -242,7 +242,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND al.date >= %s
                 AND al.date <= %s
                 AND j.type not in %s
-                AND al.exported in %s;
+                AND al.exported in %s
+                AND al.instance_id in %s;
                 """,
             # Exclude lines that come from a HQ or MIGRATION journal
             # Take all lines that are on account that is "shrink_entries_for_hq" which will make a consolidation of them (with a second SQL request)
@@ -256,7 +257,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND j.type not in %s
                 AND aa.shrink_entries_for_hq = 't'
                 AND aml.id not in (SELECT amla.id FROM account_move_line amla, account_analytic_line al WHERE al.move_id = amla.id)
-                AND aml.exported in %s;
+                AND aml.exported in %s
+                AND aml.instance_id in %s;
                 """,
             # Do not take lines that come from a HQ or MIGRATION journal
             # Do not take journal items that have analytic lines because they are taken from "rawdata" SQL request
@@ -279,6 +281,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND a.shrink_entries_for_hq != 't'
                 AND j.type not in %s
                 AND aml.exported in %s
+                AND aml.instance_id in %s
                 ORDER BY aml.id;
                 """,
         }
@@ -353,7 +356,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'headers': ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit', 'Functional CCY'],
                 'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
                 'key': 'rawdata',
-                'query_params': (first_day_of_period, last_day_of_period, tuple(excluded_journal_types), tuple(to_export)),
+                'query_params': (first_day_of_period, last_day_of_period, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.analytic.line',
@@ -361,14 +364,14 @@ class hq_report_ocb(report_sxw.report_sxw):
             {
                 'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
                 'key': 'bs_entries_consolidated',
-                'query_params': (period.id, tuple(excluded_journal_types), tuple(to_export)),
+                'query_params': (period.id, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'function': 'postprocess_consolidated_entries',
                 'fnct_params': excluded_journal_types,
                 },
             {
                 'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
                 'key': 'bs_entries',
-                'query_params': (period.id, tuple(excluded_journal_types), tuple(to_export)),
+                'query_params': (period.id, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.move.line',
