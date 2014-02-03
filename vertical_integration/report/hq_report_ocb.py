@@ -179,7 +179,8 @@ class hq_report_ocb(report_sxw.report_sxw):
             'journal': """
                 SELECT i.name, j.code, j.name, j.type, c.name
                 FROM account_journal AS j LEFT JOIN res_currency c ON j.currency = c.id, msf_instance AS i
-                WHERE j.instance_id = i.id;
+                WHERE j.instance_id = i.id
+                AND j.instance_id in %s;
                 """,
             'costcenter': """
                 SELECT name, code, type, CASE WHEN date_start < %s AND (date IS NULL OR date > %s) THEN 'Active' ELSE 'Inactive' END AS Status
@@ -314,6 +315,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'headers': ['Instance', 'Code', 'Name', 'Journal type', 'Currency'],
                 'filename': instance_name + '_%(year)s%(month)s_Journals.csv',
                 'key': 'journal',
+                'query_params': (tuple(instance_ids),),
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('account.journal', 'type', 3)],
                 },
