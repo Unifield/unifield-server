@@ -201,6 +201,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                     AND p.date_stop >= r.name
                     AND r.currency_id IS NOT NULL
                     AND rc.active = 't'
+                    AND p.number NOT IN (13, 14, 15)
                     ORDER BY rc.name
                 ) AS req
                 WHERE req.date >= %s
