@@ -218,7 +218,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 SELECT c.name, c.code, d.code, c.grant_amount, rc.name, c.state
                 FROM financing_contract_contract AS c, financing_contract_donor AS d, res_currency AS rc
                 WHERE c.donor_id = d.id
-                AND c.reporting_currency = rc.id;
+                AND c.reporting_currency = rc.id
+                AND c.instance_id in %s;
                 """,
             # Pay attention to take analytic line that are not on HQ and MIGRATION journals.
             'rawdata': """
@@ -341,6 +342,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'headers': ['Name', 'Code', 'Donor code', 'Grant amount', 'Reporting CCY', 'State'],
                 'filename': instance_name + '_%(year)s%(month)s_Financing contracts.csv',
                 'key': 'contract',
+                'query_params': (tuple(instance_ids),),
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('financing.contract.contract', 'state', 5)],
                 },
