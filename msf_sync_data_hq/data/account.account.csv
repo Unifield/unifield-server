@@ -1,268 +1,290 @@
-id,user_type,currency_revaluation,accrual_account,activation_date,code,default_destination_id,inactivation_date,type,name,note,parent_id,reconcile,type_for_register,user_type_code
-msf_msf_chart_of_accounts,View,FALSE,FALSE,01-Jan-12,MSF,,,View,MSF Chart of Accounts,,,FALSE,None,view
-1_current_assets,Cash,FALSE,FALSE,01-Jan-12,1,,,View,Current Assets,,MSF MSF Chart of Accounts,FALSE,None,cash
-10_cash_and_cash_equivalents,Cash,FALSE,FALSE,01-Jan-12,10,,,View,Cash and cash equivalents,,1 Current Assets,FALSE,None,cash
-101_cash_on_hand,Cash,FALSE,FALSE,01-Jan-12,101,,,View,Cash on hand,,10 Cash and cash equivalents,FALSE,None,cash
-1010_cash_on_hand,Cash,TRUE,FALSE,01-Jan-12,1010,,,Liquidity,Cash on hand,,101 Cash on hand,FALSE,None,cash
-102_cash_at_bank,Cash,FALSE,FALSE,01-Jan-12,102,,,View,Cash at Bank,,10 Cash and cash equivalents,FALSE,None,cash
-1020_cash_at_bank,Cash,TRUE,FALSE,01-Jan-12,1020,,,Liquidity,Cash at Bank,,102 Cash at Bank,FALSE,None,cash
-103_short_term_deposits,Asset,FALSE,FALSE,01-Jan-12,103,,,View,Short term deposits,,10 Cash and cash equivalents,FALSE,None,asset
-1030_short_term_deposits,Asset,FALSE,FALSE,01-Jan-12,1030,,,Regular,Short term deposits,,103 Short term deposits,TRUE,None,asset
-11_financial_assets,Asset,FALSE,FALSE,01-Jan-12,11,,,View,Financial assets,,1 Current Assets,FALSE,None,asset
-110_guarantee_and_deposits,Asset,FALSE,FALSE,01-Jan-12,110,,,View,Guarantee and  Deposits,,11 Financial assets,FALSE,None,asset
-1100_guarantee_and_deposits,Asset,FALSE,FALSE,01-Jan-12,1100,,,Regular,Guarantee and  Deposits,,110 Guarantee and  Deposits,FALSE,None,asset
-12_accounts_receivable,Receivables,FALSE,FALSE,01-Jan-12,12,,,View,Accounts receivable,,1 Current Assets,FALSE,None,receivables
-120_receivables,Receivables,FALSE,FALSE,01-Jan-12,120,,,View,Receivables,,12 Accounts receivable,FALSE,None,receivables
-1200_receivable_from_other_missions,Receivables,TRUE,FALSE,01-Jan-12,1200,,,Receivable,Receivable from other missions,,120 Receivables,TRUE,None,receivables
-1201_receivable_from_other_sections,Receivables,TRUE,FALSE,01-Jan-12,1201,,,Receivable,Receivable from other sections,,120 Receivables,TRUE,None,receivables
-1202_vat_recoverable,Receivables,TRUE,FALSE,01-Jan-12,1202,,,Receivable,VAT recoverable,,120 Receivables,TRUE,None,receivables
-1203_taxes_receivables,Receivables,TRUE,FALSE,01-Jan-12,1203,,,Receivable,Taxes receivables,,120 Receivables,TRUE,None,receivables
-1204_social_security_receivable,Receivables,TRUE,FALSE,01-Jan-12,1204,,,Receivable,Social security receivable,,120 Receivables,TRUE,None,receivables
-1205_other_receivables,Receivables,TRUE,FALSE,01-Jan-12,1205,,,Receivable,Other receivables,,120 Receivables,TRUE,None,receivables
-13_advances_and_prepayment,Receivables,FALSE,FALSE,01-Jan-12,13,,,View,Advances and Prepayment,,1 Current Assets,FALSE,None,receivables
-130_internal_advances,Receivables,FALSE,FALSE,01-Jan-12,130,,,View,Internal advances,,13 Advances and Prepayment,FALSE,None,receivables
-1300_operating_advances,Receivables,TRUE,FALSE,01-Jan-12,1300,,,Receivable,Operating advances,,130 Internal advances,TRUE,Operational Advance,receivables
-1301_security_enveloppes_,Receivables,TRUE,FALSE,01-Jan-12,1301,,,Receivable,Security enveloppes  ,,130 Internal advances,TRUE,Operational Advance,receivables
-1302_advances_to_suppliers,Receivables,TRUE,FALSE,01-Jan-12,1302,,,Receivable,Advances to suppliers,,130 Internal advances,TRUE,None,receivables
-4203_advance_with_suppliers_and_various,Receivables,TRUE,FALSE,01-Jan-12,4203,,,Receivable,Advance with suppliers and various,,130 Internal advances,TRUE,None,receivables
-131_advances_done_to_third_parties,Receivables,FALSE,FALSE,01-Jan-12,131,,,View,Advances done to third parties,,13 Advances and Prepayment,FALSE,None,receivables
-1310_advances_done_to_third_parties,Receivables,TRUE,FALSE,01-Jan-12,1310,,,Receivable,Advances done to third parties,,131 Advances done to third parties,TRUE,None,receivables
-132_advances_to_personal,Receivables,FALSE,FALSE,01-Jan-12,132,,,View,Advances to personal,,13 Advances and Prepayment,FALSE,None,receivables
-1320_advances_on_salaries_of_expatriates,Receivables,TRUE,FALSE,01-Jan-12,1320,,,Receivable,Advances on salaries of expatriates,,132 Advances to personal,TRUE,None,receivables
-1321_advances_on_salaries_of_national_staff,Receivables,TRUE,FALSE,01-Jan-12,1321,,,Receivable,Advances on salaries of national staff,,132 Advances to personal,TRUE,None,receivables
-1322_advances_on_insurance,Receivables,TRUE,FALSE,01-Jan-12,1322,,,Receivable,Advances on insurance,,132 Advances to personal,TRUE,None,receivables
-4101_advance_on_salaries_and_allowances_of_expatriates,Receivables,TRUE,FALSE,01-Jan-12,4101,,,Receivable,Advance on salaries and allowances of expatriates,,132 Advances to personal,TRUE,None,receivables
-4202_advance_to_the_staff,Receivables,TRUE,FALSE,01-Jan-12,4202,,,Receivable,Advance to the staff,,132 Advances to personal,TRUE,None,receivables
-133_prepaid_expenses,Receivables,FALSE,FALSE,01-Jan-12,133,,,View,Prepaid expenses,,13 Advances and Prepayment,FALSE,None,receivables
-1330_prepaid_expenses_rentals,Receivables,TRUE,FALSE,01-Jan-12,1330,,,Receivable,Prepaid expenses rentals,,133 Prepaid expenses,TRUE,None,receivables
-1331_prepaid_expenses_insurances,Receivables,TRUE,FALSE,01-Jan-12,1331,,,Receivable,Prepaid expenses insurances,,133 Prepaid expenses,TRUE,None,receivables
-1332_other_prepaid,Receivables,TRUE,FALSE,01-Jan-12,1332,,,Receivable,Other prepaid,,133 Prepaid expenses,TRUE,None,receivables
-14_suspense_accounts_,Cash,FALSE,FALSE,01-Jan-12,14,,,View,Suspense accounts: ,,1 Current Assets,FALSE,None,cash
-140_non_monetary_,Cash,FALSE,FALSE,01-Jan-12,140,,,View,Non monetary ,,14 Suspense accounts: ,FALSE,None,cash
-1400_advances_to_hq_departments,Cash,TRUE,FALSE,01-Jan-12,1400,,,Receivable,Advances to HQ departments,,140 Non monetary ,TRUE,None,cash
-1401_advances_or_expenses_for_other_missions_,Cash,TRUE,FALSE,01-Jan-12,1401,,,Receivable,Advances or expenses for other missions ,,140 Non monetary ,TRUE,None,cash
-1402_advances_and_expenses_for_other_msf_section,Cash,TRUE,FALSE,01-Jan-12,1402,,,Receivable,Advances and expenses for other MSF section,,140 Non monetary ,TRUE,None,cash
-1403_advances_and_expenses_for_other_ngo,Cash,TRUE,FALSE,01-Jan-12,1403,,,Receivable,Advances and expenses for other NGO,,140 Non monetary ,TRUE,None,cash
-1404_to_be_re-invoiced_to_other_msf_section,Cash,TRUE,FALSE,01-Jan-12,1404,,,Receivable,To be re-invoiced to other MSF section,,140 Non monetary ,TRUE,None,cash
-141_monetary_transfers,Cash,FALSE,FALSE,01-Jan-12,141,,,View,Monetary Transfers,,14 Suspense accounts: ,FALSE,None,cash
-1410_bank_transfer_with_hq,Cash,TRUE,FALSE,01-Jan-12,1410,,,Regular,Bank transfer with HQ,,141 Monetary Transfers,TRUE,None,cash
-1411_cash_transfer_with_hq,Cash,TRUE,FALSE,01-Jan-12,1411,,,Regular,Cash transfer with HQ,,141 Monetary Transfers,TRUE,None,cash
-1412_internal_transfer_same_currency,Cash,TRUE,FALSE,01-Jan-12,1412,,,Regular,Internal transfer same currency,,141 Monetary Transfers,TRUE,Internal Transfer (same currency),cash
-1413_internal_transfer_with_currency_exchange,Cash,TRUE,FALSE,01-Jan-12,1413,,,Regular,Internal transfer with currency exchange,,141 Monetary Transfers,TRUE,Internal Transfer,cash
-1414_transfer_to_another_financial_mission_same_section,Cash,TRUE,FALSE,01-Jan-12,1414,,,Regular,Transfer to another financial mission: Same section,,141 Monetary Transfers,TRUE,Internal Transfer (same currency),cash
-1415_transfer_to_another_financial_mission_other_section,Cash,TRUE,FALSE,01-Jan-12,1415,,,Regular,Transfer to another financial mission: Other section,,141 Monetary Transfers,TRUE,Internal Transfer (same currency),cash
-1416_others,Cash,TRUE,FALSE,01-Jan-12,1416,,,Regular,Others,,141 Monetary Transfers,TRUE,Internal Transfer (same currency),cash
-15_inventories,Asset,FALSE,FALSE,01-Jan-12,15,,,View,Inventories,,1 Current Assets,FALSE,None,asset
-150_medical_goods,Asset,FALSE,FALSE,01-Jan-12,150,,,View,Medical goods,,15 Inventories,FALSE,None,asset
-1500_medical_goods,Asset,FALSE,FALSE,01-Jan-12,1500,,,Regular,Medical goods,,150 Medical goods,FALSE,None,asset
-151_non_medical_goods,Asset,FALSE,FALSE,01-Jan-12,151,,,View,Non medical goods,,15 Inventories,FALSE,None,asset
-1510_non_medical_goods,Asset,FALSE,FALSE,01-Jan-12,1510,,,Regular,Non medical goods,,151 Non medical goods,FALSE,None,asset
-152_other_inventories,Asset,FALSE,FALSE,01-Jan-12,152,,,View,Other inventories,,15 Inventories,FALSE,None,asset
-1520_other_inventories,Asset,FALSE,FALSE,01-Jan-12,1520,,,Regular,Other Inventories,,152 Other inventories,FALSE,None,asset
-153_stock_transfers,Asset,FALSE,FALSE,01-Jan-12,153,,,View,Stock Transfers,,15 Inventories,FALSE,None,asset
-1530_stock_transfers_between_missions,Asset,FALSE,FALSE,01-Jan-12,1530,,,Regular,Stock transfers between missions,,153 Stock Transfers,FALSE,None,asset
-1531_stock_transfers_between_sections,Asset,FALSE,FALSE,01-Jan-12,1531,,,Regular,Stock transfers between sections,,153 Stock Transfers,FALSE,None,asset
-1532_stock_in_transit_,Asset,FALSE,FALSE,01-Jan-12,1532,,,Regular,Stock in transit ,,153 Stock Transfers,TRUE,None,asset
-2_non_current_assets,Asset,FALSE,FALSE,01-Jan-12,2,,,View,Non current assets,,MSF MSF Chart of Accounts,FALSE,None,asset
-20_property_plant_and_equipement,Asset,FALSE,FALSE,01-Jan-12,20,,,View,"Property, plant and equipement",,2 Non current assets,FALSE,None,asset
-200_lands,Asset,FALSE,FALSE,01-Jan-12,200,,,View,Lands,,"20 Property, plant and equipement",FALSE,None,asset
-2000_lands,Asset,FALSE,FALSE,01-Jan-12,2000,,,Regular,Lands,,200 Lands,FALSE,None,asset
-201_buildings,Asset,FALSE,FALSE,01-Jan-12,201,,,View,Buildings,,"20 Property, plant and equipement",FALSE,None,asset
-2010_buildings,Asset,FALSE,FALSE,01-Jan-12,2010,,,Regular,Buildings,,201 Buildings,FALSE,None,asset
-202_medical_equipments,Asset,FALSE,FALSE,01-Jan-12,202,,,View,Medical equipments,,"20 Property, plant and equipement",FALSE,None,asset
-2020_medical_equipments,Asset,FALSE,FALSE,01-Jan-12,2020,,,Regular,Medical equipments,,202 Medical equipments,FALSE,None,asset
-203_non_medical_equipments,Asset,FALSE,FALSE,01-Jan-12,203,,,View,Non medical equipments,,"20 Property, plant and equipement",FALSE,None,asset
-2030_non_medical_equipments,Asset,FALSE,FALSE,01-Jan-12,2030,,,Regular,Non medical equipments,,203 Non medical equipments,FALSE,None,asset
-21_accumulated_depreciation,Asset,FALSE,FALSE,01-Jan-12,21,,,View,Accumulated depreciation,,2 Non current assets,FALSE,None,asset
-210_buildings_-_accumulated_depreciation,Asset,FALSE,FALSE,01-Jan-12,210,,,View,Buildings - accumulated depreciation,,21 Accumulated depreciation,FALSE,None,asset
-2100_buildings_-_accumulated_depreciation,Asset,FALSE,FALSE,01-Jan-12,2100,,,Regular,Buildings - accumulated depreciation,,210 Buildings - accumulated depreciation,TRUE,None,asset
-211_medical_equipments_-_accumulated_depreciation,Asset,FALSE,FALSE,01-Jan-12,211,,,View,Medical equipments - accumulated depreciation,,21 Accumulated depreciation,FALSE,None,asset
-2110_medical_equipments_-_accumulated_depreciation,Asset,FALSE,FALSE,01-Jan-12,2110,,,Regular,Medical equipments - accumulated depreciation,,211 Medical equipments - accumulated depreciation,TRUE,None,asset
-212_non_medical_equipments_-_accumulated_depreciation,Asset,FALSE,FALSE,01-Jan-12,212,,,View,Non medical equipments - accumulated depreciation,,21 Accumulated depreciation,FALSE,None,asset
-2120_non_medical_equipments_-_accumulated_depreciation,Asset,FALSE,FALSE,01-Jan-12,2120,,,Regular,Non medical equipments - accumulated depreciation,,212 Non medical equipments - accumulated depreciation,TRUE,None,asset
-22_intangibles_assets,Asset,FALSE,FALSE,01-Jan-12,22,,,View,Intangibles assets,,2 Non current assets,FALSE,None,asset
-220_softwares_-_trademarks_and_licences,Asset,FALSE,FALSE,01-Jan-12,220,,,View,Softwares - trademarks and licences,,22 Intangibles assets,FALSE,None,asset
-2200_softwares_-_trademarks_and_licences,Asset,FALSE,FALSE,01-Jan-12,2200,,,Regular,Softwares - trademarks and licences,,220 Softwares - trademarks and licences,FALSE,None,asset
-23_accumulated_depreciation_on_intangibles_assets_,Asset,FALSE,FALSE,01-Jan-12,23,,,View,Accumulated depreciation on intangibles assets ,,2 Non current assets,FALSE,None,asset
-230_softwares_-_trademarks_and_licence_-_accumulated_depreciation,Asset,FALSE,FALSE,01-Jan-12,230,,,View,Softwares - trademarks and licence  - accumulated depreciation,,23 Accumulated depreciation on intangibles assets ,FALSE,None,asset
-2300_softwares_-_trademarks_and_licence_-_accumulated_depreciation,Asset,FALSE,FALSE,01-Jan-12,2300,,,Regular,Softwares - trademarks and licence - accumulated depreciation,,230 Softwares - trademarks and licence  - accumulated depreciation,TRUE,None,asset
-24_long_term_investments,Asset,FALSE,FALSE,01-Jan-12,24,,,View,Long term investments,,2 Non current assets,FALSE,None,asset
-240_guarantees_deposits_greater_than_1_year,Asset,FALSE,FALSE,01-Jan-12,240,,,View,Guarantees & deposits: Greater than 1 year,,24 Long term investments,FALSE,None,asset
-2400_guarantees_deposits_greater_than_1_year,Asset,FALSE,FALSE,01-Jan-12,2400,,,Regular,Guarantees & deposits: Greater than 1 year,,240 Guarantees & deposits: Greater than 1 year,FALSE,None,asset
-25_other_non-current_assets,Asset,FALSE,FALSE,01-Jan-12,25,,,View,Other non-current assets,,2 Non current assets,FALSE,None,asset
-250_other_non-current_assets,Asset,FALSE,FALSE,01-Jan-12,250,,,View,Other non-current assets,,25 Other non-current assets,FALSE,None,asset
-2500_other_non-current_assets,Asset,FALSE,FALSE,01-Jan-12,2500,,,Regular,Other non-current assets,,250 Other non-current assets,FALSE,None,asset
-3_current_liabilities,Payables,FALSE,FALSE,01-Jan-12,3,,,View,Current Liabilities,,MSF MSF Chart of Accounts,FALSE,None,payables
-30_accounts_payable,Payables,FALSE,FALSE,01-Jan-12,30,,,View,Accounts payable,,3 Current Liabilities,FALSE,None,payables
-300_payables,Payables,FALSE,FALSE,01-Jan-12,300,,,View,Payables,,30 Accounts payable,FALSE,None,payables
-3000_trade_payables,Payables,TRUE,FALSE,01-Jan-12,3000,,,Payable,Trade payables,,300 Payables,TRUE,None,payables
-3001_check_-_suspense_account,Cash,TRUE,FALSE,01-Jan-12,3001,,,Liquidity,Check - suspense account,,300 Payables,TRUE,None,cash
-301_personel_related_accounts,Payables,FALSE,FALSE,01-Jan-12,301,,,View,Personel related accounts,,30 Accounts payable,FALSE,None,payables
-3010_remuneration_payable,Payables,TRUE,FALSE,01-Jan-12,3010,,,Payable,Remuneration payable,,301 Personel related accounts,TRUE,None,payables
-3011_expatriates_payables_-_oca_only,Payables,TRUE,FALSE,01-Jan-12,3011,,,Payable,expatriates payables - OCA only,,301 Personel related accounts,TRUE,None,payables
-302_social_security_,Payables,FALSE,FALSE,01-Jan-12,302,,,View,Social security ,,30 Accounts payable,FALSE,None,payables
-3020_social_security,Payables,TRUE,FALSE,01-Jan-12,3020,,,Payable,Social security,,302 Social security ,TRUE,None,payables
-303_state_and_other_public_authority_related_accounts,Payables,FALSE,FALSE,01-Jan-12,303,,,View,State and other public authority related accounts,,30 Accounts payable,FALSE,None,payables
-3030_vat_payable,Tax,FALSE,FALSE,01-Jan-12,3030,,,Regular,VAT payable,,303 State and other public authority related accounts,TRUE,None,tax
-3031_payroll_taxes_paye_payable,Payables,TRUE,FALSE,01-Jan-12,3031,,,Payable,Payroll taxes / PAYE payable,,303 State and other public authority related accounts,TRUE,None,payables
-3032_other_taxes,Payables,TRUE,FALSE,01-Jan-12,3032,,,Payable,Other Taxes,,303 State and other public authority related accounts,TRUE,None,payables
-31_accrued_liabilities,Payables,FALSE,FALSE,01-Jan-12,31,,,View,Accrued liabilities,,3 Current Liabilities,FALSE,None,payables
-310_employee_costs,Payables,FALSE,FALSE,01-Jan-12,310,,,View,Employee costs,,31 Accrued liabilities,FALSE,None,payables
-3100_accrued_salaries_payable_,Payables,TRUE,FALSE,01-Jan-12,3100,,,Payable,Accrued salaries payable ,,310 Employee costs,TRUE,None,payables
-3101_accrued_13th_month_payable,Payables,TRUE,FALSE,01-Jan-12,3101,,,Payable,Accrued 13th month payable,,310 Employee costs,TRUE,None,payables
-3102_accrued_holiday_pay_-_leave_days_payement,Payables,TRUE,FALSE,01-Jan-12,3102,,,Payable,Accrued holiday pay - leave days payement,,310 Employee costs,TRUE,None,payables
-3103_accrued_severance_pay_-_employees_benefits_,Payables,TRUE,FALSE,01-Jan-12,3103,,,Payable,Accrued severance pay - employees benefits ,,310 Employee costs,TRUE,None,payables
-3104_other_accrued_employee_costs,Payables,TRUE,FALSE,01-Jan-12,3104,,,Payable,Other accrued employee costs,,310 Employee costs,TRUE,None,payables
-311_accrued_payroll_taxes,Payables,FALSE,FALSE,01-Jan-12,311,,,View,Accrued Payroll taxes,,31 Accrued liabilities,FALSE,None,payables
-3110_accrued_payroll_taxes,Payables,TRUE,FALSE,01-Jan-12,3110,,,Payable,Accrued Payroll taxes,,311 Accrued Payroll taxes,TRUE,None,payables
-312_accrued_social_security_,Payables,FALSE,FALSE,01-Jan-12,312,,,View,Accrued social security ,,31 Accrued liabilities,FALSE,None,payables
-3120_accrued_social_security_,Payables,TRUE,FALSE,01-Jan-12,3120,,,Payable,Accrued social security ,,312 Accrued social security ,TRUE,None,payables
-313_other_accrued_liabilities_,Payables,FALSE,FALSE,01-Jan-12,313,,,View,Other accrued liabilities ,,31 Accrued liabilities,FALSE,None,payables
-3130_other_accrued_liabilities_,Payables,TRUE,FALSE,01-Jan-12,3130,,,Payable,Other accrued liabilities ,,313 Other accrued liabilities ,TRUE,None,payables
-32_short_term_provisions,Debt,FALSE,FALSE,01-Jan-12,32,,,View,Short term provisions,,3 Current Liabilities,FALSE,None,debt
-320_provisions,Debt,FALSE,FALSE,01-Jan-12,320,,,View,Provisions,,32 Short term provisions,FALSE,None,debt
-3200_provisions,Debt,TRUE,FALSE,01-Jan-12,3200,,,Regular,Provisions,,320 Provisions,TRUE,None,debt
-33_other_current_liabilities,Debt,FALSE,FALSE,01-Jan-12,33,,,View,Other current liabilities,,3 Current Liabilities,FALSE,None,debt
-330_other_current_liabilities,Debt,FALSE,FALSE,01-Jan-12,330,,,View,Other current liabilities,,33 Other current liabilities,FALSE,None,debt
-3300_other_current_liabilities,Debt,TRUE,FALSE,01-Jan-12,3300,,,Regular,Other current liabilities,,330 Other current liabilities,TRUE,None,debt
-4_non-current_liabilities,Debt,FALSE,FALSE,01-Jan-12,4,,,View,Non-current Liabilities,,MSF MSF Chart of Accounts,FALSE,None,debt
-40_non_current_amounts_payable_,Debt,FALSE,FALSE,01-Jan-12,40,,,View,Non current amounts payable ,,4 Non-current Liabilities,FALSE,None,debt
-400_non_current_amounts_payable_,Debt,FALSE,FALSE,01-Jan-12,400,,,View,Non current amounts payable ,,40 Non current amounts payable ,FALSE,None,debt
-4000_non_current_amounts_payable_,Debt,TRUE,FALSE,01-Jan-12,4000,,,Regular,Non current amounts payable ,,400 Non current amounts payable ,FALSE,None,debt
-41_long_term_provisions_,Debt,FALSE,FALSE,01-Jan-12,41,,,View,Long term provisions ,,4 Non-current Liabilities,FALSE,None,debt
-410_long_term_provisions_,Debt,FALSE,FALSE,01-Jan-12,410,,,View,Long term provisions ,,41 Long term provisions ,FALSE,None,debt
-4100_long_term_provisions,Debt,TRUE,FALSE,01-Jan-12,4100,,,Regular,Long term provisions,,410 Long term provisions ,FALSE,None,debt
-5_reserves,Equity,FALSE,FALSE,01-Jan-12,5,,,View,Reserves,,MSF MSF Chart of Accounts,FALSE,None,equity
-50_surplus_deficit_carried_forward,Equity,FALSE,FALSE,01-Jan-12,50,,,View,Surplus / Deficit carried forward,,5 Reserves,FALSE,None,equity
-500_surplus_carried_forward,Equity,FALSE,FALSE,01-Jan-12,500,,,View,Surplus carried forward,,50 Surplus / Deficit carried forward,FALSE,None,equity
-5000_surplus_carried_forward,Equity,FALSE,FALSE,01-Jan-12,5000,,,Regular,Surplus carried forward,,500 Surplus carried forward,TRUE,None,equity
-510_deficit_carried_forward,Equity,FALSE,FALSE,01-Jan-12,510,,,View,Deficit carried forward,,50 Surplus / Deficit carried forward,FALSE,None,equity
-5100_deficit_carried_forward,Equity,FALSE,FALSE,01-Jan-12,5100,,,Regular,Deficit carried forward,,510 Deficit carried forward,TRUE,None,equity
-6_expenses,View,FALSE,FALSE,01-Jan-12,6,,,View,Expenses,,MSF MSF Chart of Accounts,FALSE,None,view
-61_expatriate_staff,View,FALSE,FALSE,01-Jan-12,61,,,View,Expatriate staff,,6 Expenses,FALSE,None,view
-6100_per_diem,Expense,FALSE,FALSE,01-Jan-12,6100,Expatriates,,Regular,Per diem,,61 Expatriate staff,FALSE,None,expense
-6101_team_living_expenses,Expense,FALSE,FALSE,01-Jan-12,6101,Expatriates,,Regular,Team living expenses,,61 Expatriate staff,FALSE,None,expense
-6102_medical_expenses_repatriation_costs,Expense,FALSE,FALSE,01-Jan-12,6102,Expatriates,,Regular,Medical expenses / repatriation costs,,61 Expatriate staff,FALSE,None,expense
-6103_expat_training_costs_school_fees_etc_,Expense,FALSE,FALSE,01-Jan-12,6103,Expatriates,,Regular,"Expat training costs, school fees, etc..",,61 Expatriate staff,FALSE,None,expense
-6111_expat_housing_rent_running_costs,Expense,FALSE,FALSE,01-Jan-12,6111,Expatriates,,Regular,Expat housing : rent & running costs,,61 Expatriate staff,FALSE,None,expense
-6112_expat_housing_equipment_furniture,Expense,FALSE,FALSE,01-Jan-12,6112,Expatriates,,Regular,Expat housing : equipment & furniture,,61 Expatriate staff,FALSE,None,expense
-6115_expat_housing_construction_rehabilitation,Expense,FALSE,FALSE,01-Jan-12,6115,Expatriates,,Regular,Expat housing : construction & rehabilitation,,61 Expatriate staff,FALSE,None,expense
-6124_daily_tariff_irp_hq_only,Expense,FALSE,FALSE,01-Jan-12,6124,Expatriates,,Regular,Daily tariff (IRP) HQ ONLY,,61 Expatriate staff,FALSE,None,expense
-6140_expat_transport_visa_costs_hq_mission,Expense,FALSE,FALSE,01-Jan-12,6140,Expatriates,,Regular,Expat transport & visa costs (HQ / mission),,61 Expatriate staff,FALSE,None,expense
-6141_expat_posting_tariff_hq_only,Expense,FALSE,FALSE,01-Jan-12,6141,Expatriates,,Regular,Expat posting tariff (HQ ONLY),,61 Expatriate staff,FALSE,None,expense
-62_national_staff,View,FALSE,FALSE,01-Jan-12,62,,,View,National staff,,6 Expenses,FALSE,None,view
-6210_domestic_staff_salaries_charges,Expense,FALSE,FALSE,01-Jan-12,6210,National Staff,,Regular,Domestic staff salaries / charges,,62 National staff,FALSE,None,expense
-6220_administrative_staff_salaries_charges,Expense,FALSE,FALSE,01-Jan-12,6220,National Staff,,Regular,Administrative staff salaries / charges,,62 National staff,FALSE,None,expense
-6230_medical_staff_salaries_charges,Expense,FALSE,FALSE,01-Jan-12,6230,National Staff,,Regular,Medical staff salaries / charges,,62 National staff,FALSE,None,expense
-6240_logistics_and_sanitation_staff_salaries_charges,Expense,FALSE,FALSE,01-Jan-12,6240,National Staff,,Regular,Logistics and sanitation staff salaries / charges,,62 National staff,FALSE,None,expense
-6250_drivers_and_mechanics_staff_salaries_charges,Expense,FALSE,FALSE,01-Jan-12,6250,National Staff,,Regular,Drivers and mechanics staff salaries / charges,,62 National staff,FALSE,None,expense
-6259_test,Expense,FALSE,FALSE,01-Jan-12,6259,National Staff,,Regular,TEST,,62 National staff,FALSE,None,expense
-6260_non_msf_staff_salaries_incentives,Expense,FALSE,FALSE,01-Jan-12,6260,National Staff,,Regular,Non MSF staff salaries & incentives,,62 National staff,FALSE,None,expense
-6270_daily_workers,Expense,FALSE,FALSE,01-Jan-12,6270,National Staff,,Regular,Daily workers,,62 National staff,FALSE,None,expense
-6280_national_staff_medical_expenses,Expense,FALSE,FALSE,01-Jan-12,6280,National Staff,,Regular,National staff : medical expenses,,62 National staff,FALSE,None,expense
-6285_national_staff_training_costs,Expense,FALSE,FALSE,01-Jan-12,6285,National Staff,,Regular,National staff : training costs,,62 National staff,FALSE,None,expense
-6295_national_staff_housing_costs,Expense,FALSE,FALSE,01-Jan-12,6295,National Staff,,Regular,National staff : housing costs,,62 National staff,FALSE,None,expense
-63_office_costs,View,FALSE,FALSE,01-Jan-12,63,,,View,Office costs,,6 Expenses,FALSE,None,view
-6301_office_stationery_small_supplies,Expense,FALSE,FALSE,01-Jan-12,6301,Support,,Regular,Office: stationery & small supplies,,63 Office costs,FALSE,None,expense
-6302_communication_equipment,Expense,FALSE,FALSE,01-Jan-12,6302,Support,,Regular,Communication equipment,,63 Office costs,FALSE,None,expense
-6303_office_furniture_it_energy_equipment,Expense,FALSE,FALSE,01-Jan-12,6303,Support,,Regular,"Office : furniture, IT, energy equipment",,63 Office costs,FALSE,None,expense
-6304_maintenance_office_equipment_hardware,Expense,FALSE,FALSE,01-Jan-12,6304,Support,,Regular,Maintenance office equipment & hardware,,63 Office costs,FALSE,None,expense
-6311_office_rent_running_costs,Expense,FALSE,FALSE,01-Jan-12,6311,Support,,Regular,Office : rent & running costs,,63 Office costs,FALSE,None,expense
-6312_taxes,Expense,FALSE,FALSE,01-Jan-12,6312,Support,,Regular,Taxes,,63 Office costs,FALSE,None,expense
-6315_office_construction_rehabilitation,Expense,FALSE,FALSE,01-Jan-12,6315,Support,,Regular,Office : construction & rehabilitation,,63 Office costs,FALSE,None,expense
-6320_telephone_communication_costs,Expense,FALSE,FALSE,01-Jan-12,6320,Support,,Regular,Telephone & communication costs,,63 Office costs,FALSE,None,expense
-6321_bank_fees,Expense,FALSE,FALSE,01-Jan-12,6321,Support,,Regular,Bank fees,,63 Office costs,FALSE,None,expense
-6330_printing_and_documentation,Expense,FALSE,FALSE,01-Jan-12,6330,Support,,Regular,Printing and documentation,,63 Office costs,FALSE,None,expense
-6331_identification_materials,Expense,FALSE,FALSE,01-Jan-12,6331,Operations,,Regular,Identification materials,,63 Office costs,FALSE,None,expense
-6340_internal_external_representation_costs,Expense,FALSE,FALSE,01-Jan-12,6340,Support,,Regular,Internal & external representation costs,,63 Office costs,FALSE,None,expense
-64_medical,View,FALSE,FALSE,01-Jan-12,64,,,View,Medical,,6 Expenses,FALSE,None,view
-6400_medicines,Expense,FALSE,FALSE,01-Jan-12,6400,Operations,,Regular,Medicines,,64 Medical,FALSE,None,expense
-6401_medical_kits,Expense,FALSE,FALSE,01-Jan-12,6401,Operations,,Regular,Medical kits,,64 Medical,FALSE,None,expense
-6412_cold_chain_material_equipment,Expense,FALSE,FALSE,01-Jan-12,6412,Operations,,Regular,Cold chain material & equipment,,64 Medical,FALSE,None,expense
-6420_vaccines_vaccination_material,Expense,FALSE,FALSE,01-Jan-12,6420,Operations,,Regular,Vaccines & vaccination material,,64 Medical,FALSE,None,expense
-6430_food_non-specialized,Expense,FALSE,FALSE,01-Jan-12,6430,Operations,,Regular,Food : non-specialized,,64 Medical,FALSE,None,expense
-6431_food_specialized_therapeutic,Expense,FALSE,FALSE,01-Jan-12,6431,Operations,,Regular,Food : specialized (therapeutic),,64 Medical,FALSE,None,expense
-6440_misc_costs_for_patients_food_hotel_transport,Expense,FALSE,FALSE,01-Jan-12,6440,Operations,,Regular,"Misc. costs for patients (food, hotel, transport)",,64 Medical,FALSE,None,expense
-6441_external_specialist_consultations_tests_references,Expense,FALSE,FALSE,01-Jan-12,6441,Operations,,Regular,"External specialist consultations, tests & references",,64 Medical,FALSE,None,expense
-6450_health_facilities_rent_running_costs,Expense,FALSE,FALSE,01-Jan-12,6450,Operations,,Regular,Health facilities : rent & running costs,,64 Medical,FALSE,None,expense
-6451_health_facilities_non-medical_equipmentfurniture,Expense,FALSE,FALSE,01-Jan-12,6451,Operations,,Regular,Health facilities : non-medical equipment/furniture,,64 Medical,FALSE,None,expense
-6460_medical_small_material,Expense,FALSE,FALSE,01-Jan-12,6460,Operations,,Regular,Medical small material,,64 Medical,FALSE,None,expense
-6461_medical_equipment,Expense,FALSE,FALSE,01-Jan-12,6461,Operations,,Regular,Medical equipment,,64 Medical,FALSE,None,expense
-6470_lab_small_material_reagents,Expense,FALSE,FALSE,01-Jan-12,6470,Operations,,Regular,Lab small material & reagents,,64 Medical,FALSE,None,expense
-6471_lab_equipment,Expense,FALSE,FALSE,01-Jan-12,6471,Operations,,Regular,Lab equipment,,64 Medical,FALSE,None,expense
-6480_medical_nutrition_-_cost_of_destruction,Expense,FALSE,FALSE,01-Jan-12,6480,Operations,,Regular,Medical & nutrition - cost of destruction,,64 Medical,FALSE,None,expense
-65_construction_water_sanitation,View,FALSE,FALSE,01-Jan-12,65,,,View,"Construction, Water, Sanitation",,6 Expenses,FALSE,None,view
-6500_logistic_kits_,Expense,FALSE,FALSE,01-Jan-12,6500,Operations,,Regular,Logistic kits ,,"65 Construction, Water, Sanitation",FALSE,None,expense
-6510_construction_rehabilitation_material,Expense,FALSE,FALSE,01-Jan-12,6510,Operations,,Regular,Construction & rehabilitation material,,"65 Construction, Water, Sanitation",FALSE,None,expense
-6511_construction_equipment_tools,Expense,FALSE,FALSE,01-Jan-12,6511,Operations,,Regular,Construction equipment & tools,,"65 Construction, Water, Sanitation",FALSE,None,expense
-6520_watersanitation_material_and_product,Expense,FALSE,FALSE,01-Jan-12,6520,Operations,,Regular,Water/sanitation material and product,,"65 Construction, Water, Sanitation",FALSE,None,expense
-6521_watersanitation_equipment,Expense,FALSE,FALSE,01-Jan-12,6521,Operations,,Regular,Water/sanitation equipment,,"65 Construction, Water, Sanitation",FALSE,None,expense
-6530_energy_equipment,Expense,FALSE,FALSE,01-Jan-12,6530,Operations,,Regular,Energy equipment,,"65 Construction, Water, Sanitation",FALSE,None,expense
-6540_logistics_material,Expense,FALSE,FALSE,01-Jan-12,6540,Operations,,Regular,Logistics material,,"65 Construction, Water, Sanitation",FALSE,None,expense
-6550_non-food_relief_items_for_distributions,Expense,FALSE,FALSE,01-Jan-12,6550,Operations,,Regular,Non-food relief items for distributions,,"65 Construction, Water, Sanitation",FALSE,None,expense
-6551_temporary_structures,Expense,FALSE,FALSE,01-Jan-12,6551,Operations,,Regular,Temporary structures,,"65 Construction, Water, Sanitation",FALSE,None,expense
-6560_fuel_excluding_vehicles,Expense,FALSE,FALSE,01-Jan-12,6560,Operations,,Regular,Fuel (excluding vehicles),,"65 Construction, Water, Sanitation",FALSE,None,expense
-6570_subcontracted_building_work,Expense,FALSE,FALSE,01-Jan-12,6570,Operations,,Regular,Subcontracted building work,,"65 Construction, Water, Sanitation",FALSE,None,expense
-66_external_training_local_support_costs,View,FALSE,FALSE,01-Jan-12,66,,,View,External training & local support costs,,6 Expenses,FALSE,None,view
-6620_training_sessions_non_msf_staff,Expense,FALSE,FALSE,01-Jan-12,6620,Operations,,Regular,Training sessions (non MSF staff),,66 External training & local support costs,FALSE,None,expense
-6630_gifts_and_subsidies_from_msf,Expense,FALSE,FALSE,01-Jan-12,6630,Operations,,Regular,Gifts and subsidies from MSF,,66 External training & local support costs,FALSE,None,expense
-6640_advocacy_and_external_communication,Expense,FALSE,FALSE,01-Jan-12,6640,Operations,,Regular,Advocacy and external communication,,66 External training & local support costs,FALSE,None,expense
-67_transport_freight_storage,View,FALSE,FALSE,01-Jan-12,67,,,View,"Transport Freight, Storage",,6 Expenses,FALSE,None,view
-6700_vehicle_purchase,Expense,FALSE,FALSE,01-Jan-12,6700,Operations,,Regular,Vehicle purchase,,"67 Transport Freight, Storage",FALSE,None,expense
-6701_insurance_taxes_vehicles,Expense,FALSE,FALSE,01-Jan-12,6701,Operations,,Regular,Insurance & taxes vehicles,,"67 Transport Freight, Storage",FALSE,None,expense
-6710_car_and_small_vehicle_rental,Expense,FALSE,FALSE,01-Jan-12,6710,Operations,,Regular,Car and small vehicle rental,,"67 Transport Freight, Storage",FALSE,None,expense
-6711_truck_rental_,Expense,FALSE,FALSE,01-Jan-12,6711,Operations,,Regular,Truck rental ,,"67 Transport Freight, Storage",FALSE,None,expense
-6712_plane_rental,Expense,FALSE,FALSE,01-Jan-12,6712,Operations,,Regular,Plane rental,,"67 Transport Freight, Storage",FALSE,None,expense
-6713_other_transport_rentals,Expense,FALSE,FALSE,01-Jan-12,6713,Operations,,Regular,Other transport rentals,,"67 Transport Freight, Storage",FALSE,None,expense
-6720_vehicles_repair_maintenance_spare_parts,Expense,FALSE,FALSE,01-Jan-12,6720,Support,,Regular,"Vehicles repair, maintenance, spare parts",,"67 Transport Freight, Storage",FALSE,None,expense
-6722_fuel_for_vehicles_and_transport_facilities,Expense,FALSE,FALSE,01-Jan-12,6722,Operations,,Regular,Fuel for vehicles and transport facilities,,"67 Transport Freight, Storage",FALSE,None,expense
-6730_international_freight_-_by_air,Expense,FALSE,FALSE,01-Jan-12,6730,Operations,,Regular,International freight - by AIR,,"67 Transport Freight, Storage",FALSE,None,expense
-6731_international_freight_-_by_searoad,Expense,FALSE,FALSE,01-Jan-12,6731,Operations,,Regular,International freight - by SEA/ROAD,,"67 Transport Freight, Storage",FALSE,None,expense
-6732_local_customs_clearance_costs,Expense,FALSE,FALSE,01-Jan-12,6732,Operations,,Regular,Local customs & clearance costs,,"67 Transport Freight, Storage",FALSE,None,expense
-6740_local_transport_cost_msf_staff,Expense,FALSE,FALSE,01-Jan-12,6740,Expatriates,,Regular,Local transport cost MSF staff,,"67 Transport Freight, Storage",FALSE,None,expense
-6750_garage_rent_maintenance,Expense,FALSE,FALSE,01-Jan-12,6750,Support,,Regular,Garage rent & maintenance,,"67 Transport Freight, Storage",FALSE,None,expense
-6751_warehouse_rent_maintenance,Expense,FALSE,FALSE,01-Jan-12,6751,Operations,,Regular,Warehouse rent & maintenance,,"67 Transport Freight, Storage",FALSE,None,expense
-68_consultant_field_support,View,FALSE,FALSE,01-Jan-12,68,,,View,Consultant & field support,,6 Expenses,FALSE,None,view
-6800_medical_survey_consultant_specialist_costs,Expense,FALSE,FALSE,01-Jan-12,6800,Operations,,Regular,"Medical survey, consultant & specialist costs",,68 Consultant & field support,FALSE,None,expense
-6801_non-medical_survey_consultant_specialist_costs,Expense,FALSE,FALSE,01-Jan-12,6801,Operations,,Regular,"Non-medical survey, consultant & specialist costs",,68 Consultant & field support,FALSE,None,expense
-6810_expertise_fee_non-medical,Expense,FALSE,FALSE,01-Jan-12,6810,Support,,Regular,Expertise fee (non-medical),,68 Consultant & field support,FALSE,None,expense
-6811_audits,Expense,FALSE,FALSE,01-Jan-12,6811,Support,,Regular,Audits,,68 Consultant & field support,FALSE,None,expense
-6820_hqstaff_salary_charged_to_the_field_hq_only,Expense,FALSE,FALSE,01-Jan-12,6820,Expatriates,,Regular,HQstaff salary charged to the field HQ ONLY,,68 Consultant & field support,FALSE,None,expense
-6821_transport_and_expenses_for_headquarters_staff,Expense,FALSE,FALSE,01-Jan-12,6821,Support,,Regular,Transport and expenses for headquarters staff,,68 Consultant & field support,FALSE,None,expense
-69_miscellaneous,View,FALSE,FALSE,01-Jan-12,69,,,View,Miscellaneous,,6 Expenses,FALSE,None,view
-6920_cash_difference,Expense,FALSE,FALSE,01-Jan-12,6920,Support,,Regular,Cash difference,,69 Miscellaneous,FALSE,None,expense
-6930_theft,Expense,FALSE,FALSE,01-Jan-12,6930,Support,,Regular,Theft,,69 Miscellaneous,FALSE,None,expense
-6931_lostbad_debts,Expense,FALSE,FALSE,01-Jan-12,6931,Support,,Regular,Lost/bad debts,,69 Miscellaneous,FALSE,None,expense
-6935_litigation,Expense,FALSE,FALSE,01-Jan-12,6935,Support,,Regular,Litigation,,69 Miscellaneous,FALSE,None,expense
-6940_currency_exchange_difference_hq_only,Expense,FALSE,FALSE,01-Jan-12,6940,Support,,Regular,Currency exchange difference HQ ONLY,,69 Miscellaneous,FALSE,None,expense
-7_income,View,FALSE,FALSE,01-Jan-12,7,,,View,Income,,MSF MSF Chart of Accounts,FALSE,None,view
-7000_financial_income,Income,FALSE,FALSE,01-Jan-12,7000,,,Regular,Financial income,,7 Income,FALSE,None,income
-7010_donations_received,Income,FALSE,FALSE,01-Jan-12,7010,,,Regular,Donations received,,7 Income,FALSE,None,income
-7020_reinvoicing_income,Income,FALSE,FALSE,01-Jan-12,7020,,,Regular,Reinvoicing income,,7 Income,FALSE,None,income
-7030_cost_recovery,Income,FALSE,FALSE,01-Jan-12,7030,,,Regular,Cost recovery,,7 Income,FALSE,None,income
-7040_gain_on_sale_of_fixed_assets,Income,FALSE,FALSE,01-Jan-12,7040,,,Regular,(Gain on) sale of fixed assets,,7 Income,FALSE,None,income
-7099_other_income,Income,FALSE,FALSE,01-Jan-12,7099,,,Regular,Other income,,7 Income,FALSE,None,income
-7101_exceptional_income,Income,FALSE,FALSE,01-Jan-12,7101,,,Regular,Exceptional income,,7 Income,FALSE,None,income
-7103_financial_interest,Income,FALSE,FALSE,01-Jan-12,7103,,,Regular,Financial interest,,7 Income,FALSE,None,income
-8_off_balance_sheet_suspense_accounts,View,FALSE,FALSE,01-Jan-12,8,,,View,Off Balance sheet suspense accounts,,MSF MSF Chart of Accounts,FALSE,None,view
-80_stock_variation,View,FALSE,FALSE,01-Jan-12,80,,,View,Stock variation,,8 Off Balance sheet suspense accounts,FALSE,None,view
-8000_stock_variation,Specific,FALSE,FALSE,01-Jan-12,8000,,,Regular,Stock variation,,80 Stock variation,FALSE,None,specific
-81_donations_received,View,FALSE,FALSE,01-Jan-12,81,,,View,Donations received,,8 Off Balance sheet suspense accounts,FALSE,None,view
-8100_donations_received,Specific,FALSE,FALSE,01-Jan-12,8100,,,Regular,Donations received,,81 Donations received,FALSE,None,specific
-9_off-balance_sheet_items,View,FALSE,FALSE,01-Jan-12,9,,,View,Off-balance sheet items,,MSF MSF Chart of Accounts,FALSE,None,view
-90_inventories,View,FALSE,FALSE,01-Jan-12,90,,,View,Inventories,,9 Off-balance sheet items,FALSE,None,view
-900_medical_goods,View,FALSE,FALSE,01-Jan-12,900,,,View,Medical goods,,90 Inventories,FALSE,None,view
-9000_medical_goods,Specific,FALSE,FALSE,01-Jan-12,9000,,,Regular,Medical goods,,900 Medical goods,FALSE,None,specific
-901_non_medical_goods,View,FALSE,FALSE,01-Jan-12,901,,,View,Non medical goods,,90 Inventories,FALSE,None,view
-9010_non_medical_goods,Specific,FALSE,FALSE,01-Jan-12,9010,,,Regular,Non medical goods,,901 Non medical goods,FALSE,None,specific
-902_other_inventories,View,FALSE,FALSE,01-Jan-12,902,,,View,Other inventories,,90 Inventories,FALSE,None,view
-9020_other_inventories,Specific,FALSE,FALSE,01-Jan-12,9020,,,Regular,Other Inventories,,902 Other inventories,FALSE,None,specific
-903_stock_transfers,View,FALSE,FALSE,01-Jan-12,903,,,View,Stock Transfers,,90 Inventories,FALSE,None,view
-9030_stock_in_transit_,Specific,FALSE,FALSE,01-Jan-12,9030,,,Regular,Stock in transit ,,903 Stock Transfers,FALSE,None,specific
-91_in-kind_donations,View,FALSE,FALSE,01-Jan-12,91,,,View,In-Kind donations,,9 Off-balance sheet items,FALSE,None,view
-910_in-kind_donations_of_medical_items,View,FALSE,FALSE,01-Jan-12,910,,,View,In-kind Donations of Medical items,,91 In-Kind donations,FALSE,None,view
-9100_in-kind_donations_of_medical_items,Specific,FALSE,FALSE,01-Jan-12,9100,,,Regular,In-kind Donations of medical items,,910 In-kind Donations of Medical items,FALSE,None,specific
-920_in-kind_donations_of_non_medical_items,View,FALSE,FALSE,01-Jan-12,920,,,View,In-kind Donations of non Medical items,,91 In-Kind donations,FALSE,None,view
-9200_in-kind_donations_of_non_therapeutic_food,Specific,FALSE,FALSE,01-Jan-12,9200,,,Regular,In-kind Donations of non therapeutic food,,920 In-kind Donations of non Medical items,FALSE,None,specific
-9201_in-kind_donations_of_relief_material,Specific,FALSE,FALSE,01-Jan-12,9201,,,Regular,In-kind Donations of relief material,,920 In-kind Donations of non Medical items,FALSE,None,specific
-9202_in-kind_donations_of_logistics_material,Specific,FALSE,FALSE,01-Jan-12,9202,,,Regular,In-kind Donations of logistics material,,920 In-kind Donations of non Medical items,FALSE,None,specific
+id,user_type,accrual_account,activation_date,code,default_destination_id,inactivation_date,type,name,note,parent_id,is_not_hq_correctible,reconcile,type_for_register
+account_MSF,View,FALSE,01-Jan-12,MSF,,,View,MSF Chart of Accounts,,,,FALSE,None
+account_1,View,FALSE,01-Jan-12,1,,,View,Current Assets  < 12 months,,MSF,,FALSE,None
+account_10,View,FALSE,01-Jan-12,10,,,View,Cash and cash equivalents,,1,,FALSE,None
+account_101,View,FALSE,01-Jan-12,101,,,View,Cash on hand,,10,,FALSE,None
+account_1010,Cash,FALSE,01-Jan-12,1010,,,Liquidity,Cash on hand,,101,,FALSE,None
+account_102,View,FALSE,01-Jan-12,102,,,View,Cash at Bank,,10,,FALSE,None
+account_1020,Cash,FALSE,01-Jan-12,1020,,,Liquidity,Cash at Bank,,102,,FALSE,None
+account_1021,Cash,FALSE,01-Jan-12,1021,,,Liquidity,Outstanding cheques,,102,,TRUE,None
+account_11,View,FALSE,01-Jan-12,11,,,View,Financial Assets ,,1,,FALSE,None
+account_110,View,FALSE,01-Jan-12,110,,,View,Guarantee and  Deposits,,11,,FALSE,None
+account_1100,Asset,FALSE,01-Jan-12,1100,,,Regular,Guarantee and  Deposits,,110,,TRUE,None
+account_12,View,FALSE,01-Jan-12,12,,,View,Accounts receivable,,1,,FALSE,None
+account_120,View,FALSE,01-Jan-12,120,,,View,Receivables,,12,,FALSE,None
+account_1200,Receivables,FALSE,01-Jan-12,1200,,,Receivable,Receivable from other missions,,120,,TRUE,None
+account_1201,Receivables,FALSE,01-Jan-12,1201,,,Receivable,Receivable from other sections,,120,,TRUE,None
+account_1202,Receivables,FALSE,01-Jan-12,1202,,,Receivable,VAT recoverable,,120,,TRUE,None
+account_1203,Receivables,FALSE,01-Jan-12,1203,,,Receivable,Taxes receivables,,120,,TRUE,None
+account_1204,Receivables,FALSE,01-Jan-12,1204,,,Receivable,Social security receivable,,120,,TRUE,None
+account_1205,Receivables,FALSE,01-Jan-12,1205,,,Receivable,Other receivables,,120,,TRUE,None
+account_1209,Cash,FALSE,01-Jan-12,1209,,,Receivable,To be reinvoiced to other sections,,120,,TRUE,None
+account_129,View,FALSE,01-Jan-12,129,,,View,Depreciation on receivables,,12,,FALSE,None
+account_1299,Receivables,FALSE,01-Jan-12,1299,,,Receivable,Depreciation on receivables,,129,,TRUE,None
+account_13,View,FALSE,01-Jan-12,13,,,View,Advances and Prepayment,,1,,FALSE,None
+account_130,View,FALSE,01-Jan-12,130,,,View,Internal advances,,13,,FALSE,None
+account_1300,Receivables,FALSE,01-Jan-12,1300,,,Receivable,Operating advances,,130,,TRUE,Operational Advance
+account_1301,Receivables,FALSE,01-Jan-12,1301,,,Receivable,Security enveloppes  ,,130,,TRUE,Operational Advance
+account_131,View,FALSE,01-Jan-12,131,,,View,Advances done to third parties,,13,,FALSE,None
+account_1310,Receivables,FALSE,01-Jan-12,1310,,,Receivable,Advances to third parties,,131,,TRUE,Down payment
+account_132,View,FALSE,01-Jan-12,132,,,View,Advances to personal,,13,,FALSE,None
+account_1320,Receivables,FALSE,01-Jan-12,1320,,,Receivable,Advances on salaries of expatriates,,132,,TRUE,None
+account_1321,Receivables,FALSE,01-Jan-12,1321,,,Receivable,Advances on salaries of national staff,,132,,TRUE,Third party required - Payroll
+account_4202,Receivables,FALSE,01-Jan-12,4202,,,Receivable,Advance to the staff,,132,,TRUE,None
+account_133,View,FALSE,01-Jan-12,133,,,View,Prepaid Expenses,,13,,FALSE,None
+account_4203,Receivables,FALSE,01-Jan-12,4203,,,Receivable,Advance with supplier and various,,133,,TRUE,Third party required - Payroll
+account_1330,Receivables,FALSE,01-Jan-12,1330,,,Receivable,Prepaid Expenses rentals,,133,,TRUE,None
+account_1331,Receivables,FALSE,01-Jan-12,1331,,,Receivable,Prepaid Expenses insurances,,133,,TRUE,None
+account_1332,Receivables,FALSE,01-Jan-12,1332,,,Receivable,Other prepaid,,133,,TRUE,None
+account_134,View,FALSE,01-Jan-12,134,,,View,Prepayment - goods not yet allocated to a project ,,13,,FALSE,None
+account_1340,Receivables,FALSE,01-Jan-12,1340,,,Receivable,Goods not yet allocated to a project ,,134,,TRUE,None
+account_14,View,FALSE,01-Jan-12,14,,,View,Suspense accounts: ,,1,,FALSE,None
+account_140,View,FALSE,01-Jan-12,140,,,View,Non monetary ,,14,,FALSE,None
+account_1400,Cash,FALSE,01-Jan-12,1400,,,Regular,Advances to/from HQ departments,,140,,TRUE,None
+account_1401,Cash,FALSE,01-Jan-12,1401,,,Regular,Advances or expenses paid for/by other missions ,,140,,TRUE,None
+account_1402,Cash,FALSE,01-Jan-12,1402,,,Regular,Advances and expenses paid for/by other MSF section,,140,,TRUE,None
+account_1403,Cash,FALSE,01-Jan-12,1403,,,Regular,Advances and expenses paid for/by other NGO,,140,,TRUE,None
+account_1404,Cash,FALSE,01-Jan-12,1404,,,Regular,Locally received donations (OCA only),,140,,TRUE,None
+account_141,View,FALSE,01-Jan-12,141,,,View,Monetary Transfers,,14,,FALSE,None
+account_1410,Cash,FALSE,01-Jan-12,1410,,,Regular,Bank transfer with HQ,,141,,TRUE,None
+account_1411,Cash,FALSE,01-Jan-12,1411,,,Regular,Cash transfer with HQ,,141,,TRUE,None
+account_1412,Cash,FALSE,01-Jan-12,1412,,,Regular,Internal transfer same currency,,141,,TRUE,Internal Transfer (same currency)
+account_1413,Cash,FALSE,01-Jan-12,1413,,,Regular,Internal transfer with currency exchange,,141,,TRUE,Internal Transfer
+account_1414,Cash,FALSE,01-Jan-12,1414,,,Regular,Transfer to/from another financial mission: Same section,,141,,TRUE,None
+account_1415,Cash,FALSE,01-Jan-12,1415,,,Regular,Transfer to/from another financial mission: Other section,,141,,TRUE,None
+account_1416,Cash,FALSE,01-Jan-12,1416,,,Regular,Others,,141,,TRUE,None
+account_15,View,FALSE,01-Jan-12,15,,,View,Inventory,,1,,FALSE,None
+account_150,View,FALSE,01-Jan-12,150,,,View,Medical inventory,,15,,FALSE,None
+account_1500,Stock,FALSE,01-Jan-12,1500,,,Regular,Medical inventory,,150,,FALSE,None
+account_151,View,FALSE,01-Jan-12,151,,,View,Non medical inventory,,15,,FALSE,None
+account_1510,Stock,FALSE,01-Jan-12,1510,,,Regular,Non medical inventory,,151,,FALSE,None
+account_152,View,FALSE,01-Jan-12,152,,,View,Other inventories,,15,,FALSE,None
+account_1520,Stock,FALSE,01-Jan-12,1520,,,Regular,Other Inventory,,152,,FALSE,None
+account_153,View,FALSE,01-Jan-12,153,,,View,Stock Transfers,,15,,FALSE,None
+account_1530,Stock,FALSE,01-Jan-12,1530,,,Regular,Stock transfers between missions,,153,,FALSE,None
+account_1531,Stock,FALSE,01-Jan-12,1531,,,Regular,Stock transfers between sections,,153,,FALSE,None
+account_1532,Stock,FALSE,01-Jan-12,1532,,,Regular,Stock in transit ,,153,,FALSE,None
+account_159,View,FALSE,01-Jan-12,159,,,View,Depreciation on inventory,,15,,FALSE,None
+account_1591,Stock,FALSE,01-Jan-12,1591,,,Regular,Depreciation on medical inventory,,159,,FALSE,None
+account_1592,Stock,FALSE,01-Jan-12,1592,,,Regular,Depreciation on non medical inventory,,159,,FALSE,None
+account_1593,Stock,FALSE,01-Jan-12,1593,,,Regular,Depreciation on other inventory,,159,,FALSE,None
+account_2,View,FALSE,01-Jan-12,2,,,View,Non current Assets  > 12 months,,MSF,,FALSE,None
+account_20,View,FALSE,01-Jan-12,20,,,View,"Property, plant and equipement",,2,,FALSE,None
+account_200,View,FALSE,01-Jan-12,200,,,View,Land,,20,,FALSE,None
+account_2000,Asset,FALSE,01-Jan-12,2000,,,Regular,Land,,200,,FALSE,None
+account_201,View,FALSE,01-Jan-12,201,,,View,Buildings,,20,,FALSE,None
+account_2010,Asset,FALSE,01-Jan-12,2010,,,Regular,Buildings,,201,,FALSE,None
+account_202,View,FALSE,01-Jan-12,202,,,View,Medical equipment,,20,,FALSE,None
+account_2020,Asset,FALSE,01-Jan-12,2020,,,Regular,Medical equipment,,202,,FALSE,None
+account_203,View,FALSE,01-Jan-12,203,,,View,Non medical equipment,,20,,FALSE,None
+account_2030,Asset,FALSE,01-Jan-12,2030,,,Regular,Non medical equipment,,203,,FALSE,None
+account_21,View,FALSE,01-Jan-12,21,,,View,Accumulated depreciation,,2,,FALSE,None
+account_210,View,FALSE,01-Jan-12,210,,,View,Buildings - accumulated depreciation,,21,,FALSE,None
+account_2100,Asset,FALSE,01-Jan-12,2100,,,Regular,Buildings - accumulated depreciation,,210,,FALSE,None
+account_211,View,FALSE,01-Jan-12,211,,,View,Medical equipment-accumulated depreciation,,21,,FALSE,None
+account_2110,Asset,FALSE,01-Jan-12,2110,,,Regular,Medical equipment- accumulated depreciation,,211,,FALSE,None
+account_212,View,FALSE,01-Jan-12,212,,,View,Non medical equipment - accumulated depreciation,,21,,FALSE,None
+account_2120,Asset,FALSE,01-Jan-12,2120,,,Regular,Non medical equipment - accumulated depreciation,,212,,FALSE,None
+account_22,View,FALSE,01-Jan-12,22,,,View,Intangibles Assets,,2,,FALSE,None
+account_220,View,FALSE,01-Jan-12,220,,,View,Softwares - trademarks and licences,,22,,FALSE,None
+account_2200,Asset,FALSE,01-Jan-12,2200,,,Regular,Softwares - trademarks and licences,,22,,FALSE,None
+account_23,View,FALSE,01-Jan-12,23,,,View,Accumulated depreciation on intangibles Assets ,,2,,FALSE,None
+account_230,View,FALSE,01-Jan-12,230,,,View,Softwares - trademarks and licence  - accumulated depreciation,,23,,FALSE,None
+account_2300,Asset,FALSE,01-Jan-12,2300,,,Regular,Softwares - trademarks and licence - accumulated depreciation,,230,,FALSE,None
+account_24,View,FALSE,01-Jan-12,24,,,View,Long term investments,,2,,FALSE,None
+account_240,View,FALSE,01-Jan-12,240,,,View,Guarantees & deposits: Greater than 1 year,,24,,FALSE,None
+account_2400,Asset,FALSE,01-Jan-12,2400,,,Regular,Guarantees & deposits: Greater than 1 year,,240,,TRUE,None
+account_25,View,FALSE,01-Jan-12,25,,,View,Other non-current Assets,,2,,FALSE,None
+account_250,View,FALSE,01-Jan-12,250,,,View,Other non-current Assets,,25,,FALSE,None
+account_2500,Asset,FALSE,01-Jan-12,2500,,,Regular,Other non-current Assets,,250,,FALSE,None
+account_3,View,FALSE,01-Jan-12,3,,,View,Current Liabilities < 12 months,,MSF,,FALSE,None
+account_30,View,FALSE,01-Jan-12,30,,,View,Accounts payable,,3,,FALSE,None
+account_300,View,FALSE,01-Jan-12,300,,,View,Payables,,30,,FALSE,None
+account_3000,Payables,FALSE,01-Jan-12,3000,,,Payable,Payable to other missions,,300,,TRUE,None
+account_3001,Payables,FALSE,01-Jan-12,3001,,,Payable,Payable to other sections,,300,,TRUE,None
+account_3002,Payables,FALSE,01-Jan-12,3002,,,Payable,Trade Payables,,300,,TRUE,None
+account_301,View,FALSE,01-Jan-12,301,,,View,Personel related accounts,,30,,FALSE,None
+account_3010,Payables,FALSE,01-Jan-12,3010,,,Payable,Remuneration (net salary) payable,,301,,TRUE,None
+account_3011,Payables,FALSE,01-Jan-12,3011,,,Payable,Expatriates Payables - (OCA only),,301,,TRUE,None
+account_302,View,FALSE,01-Jan-12,302,,,View,Social security ,,30,,FALSE,None
+account_3020,Payables,FALSE,01-Jan-12,3020,,,Payable,Social security,,302,,TRUE,None
+account_303,View,FALSE,01-Jan-12,303,,,View,State and other public authority related accounts,,30,,FALSE,None
+account_3030,Tax,FALSE,01-Jan-12,3030,,,Regular,VAT payable,,303,,TRUE,None
+account_3031,Payables,FALSE,01-Jan-12,3031,,,Payable,Payroll taxes / PAYE payable,,303,,TRUE,None
+account_3032,Payables,FALSE,01-Jan-12,3032,,,Payable,Other Taxes,,303,,TRUE,None
+account_31,View,FALSE,01-Jan-12,31,,,View,Accrued liabilities,,3,,FALSE,None
+account_310,View,FALSE,01-Jan-12,310,,,View,Employee costs,,31,,FALSE,None
+account_3100,Payables,TRUE,01-Jan-12,3100,,,Payable,Accrued salaries payable ,,310,,TRUE,None
+account_3101,Payables,TRUE,01-Jan-12,3101,,,Payable,Accrued 13th month payable,,310,,TRUE,None
+account_3102,Payables,TRUE,01-Jan-12,3102,,,Payable,Accrued holiday pay - leave days payement,,310,,TRUE,None
+account_3103,Payables,TRUE,01-Jan-12,3103,,,Payable,Accrued severance pay - employees benefits ,,310,,TRUE,None
+account_3104,Payables,TRUE,01-Jan-12,3104,,,Payable,Other accrued employee costs,,310,,TRUE,None
+account_311,View,FALSE,01-Jan-12,311,,,View,Accrued Payroll taxes,,31,,FALSE,None
+account_3110,Payables,TRUE,01-Jan-12,3110,,,Payable,Accrued Payroll taxes,,311,,TRUE,None
+account_312,View,FALSE,01-Jan-12,312,,,View,Accrued social security ,,31,,FALSE,None
+account_3120,Payables,TRUE,01-Jan-12,3120,,,Payable,Accrued social security ,,312,,TRUE,None
+account_313,View,FALSE,01-Jan-12,313,,,View,Other accrued liabilities ,,31,,FALSE,None
+account_3130,Payables,TRUE,01-Jan-12,3130,,,Payable,Other accrued liabilities ,,313,,TRUE,None
+account_32,View,FALSE,01-Jan-12,32,,,View,Short term provisions,,3,,FALSE,None
+account_320,View,FALSE,01-Jan-12,320,,,View,Provisions,,32,,FALSE,None
+account_3200,Debt,TRUE,01-Jan-12,3200,,,Regular,Provisions,,320,,TRUE,None
+account_33,View,FALSE,01-Jan-12,33,,,View,Other current liabilities,,3,,FALSE,None
+account_330,View,FALSE,01-Jan-12,330,,,View,Other current liabilities,,33,,FALSE,None
+account_3300,Debt,FALSE,01-Jan-12,3300,,,Regular,Other current liabilities,,330,,TRUE,None
+account_3301,Debt,FALSE,01-Jan-12,3301,,,Regular,Expenses paid at HQ,,330,,TRUE,None
+account_4,View,FALSE,01-Jan-12,4,,,View,Non-current Liabilities > 12 months,,MSF,,FALSE,None
+account_40,View,FALSE,01-Jan-12,40,,,View,Non current amounts payable ,,4,,FALSE,None
+account_400,View,FALSE,01-Jan-12,400,,,View,Non current amounts payable ,,40,,FALSE,None
+account_4000,Debt,FALSE,01-Jan-12,4000,,,Regular,Non current amounts payable ,,40,,TRUE,None
+account_41,View,FALSE,01-Jan-12,41,,,View,Long term provisions ,,4,,FALSE,None
+account_410,View,FALSE,01-Jan-12,410,,,View,Long term provisions ,,41,,FALSE,None
+account_4100,Debt,FALSE,01-Jan-12,4100,,,Regular,Long term provisions,,410,,TRUE,None
+account_5,View,FALSE,01-Jan-12,5,,,View,Reserves,,MSF,,FALSE,None
+account_50,View,FALSE,01-Jan-12,50,,,View,Surplus / Deficit carried forward,,5,,FALSE,None
+account_500,View,FALSE,01-Jan-12,500,,,View,Surplus carried forward,,50,,FALSE,None
+account_5000,Equity,FALSE,01-Jan-12,5000,,,Regular,Surplus carried forward,,500,,FALSE,None
+account_51,View,FALSE,01-Jan-12,51,,,View,Deficit carried forward,,5,,FALSE,None
+account_510,View,FALSE,01-Jan-12,510,,,View,Deficit carried forward,,50,,FALSE,None
+account_5100,Equity,FALSE,01-Jan-12,5100,,,Regular,Deficit carried forward,,510,,FALSE,None
+account_52,View,FALSE,01-Jan-12,52,,,View,Reserves,,5,,FALSE,None
+account_520,View,FALSE,01-Jan-12,520,,,View,Reserves,,50,,FALSE,None
+account_5201,Equity,FALSE,01-Jan-12,5201,,,Regular,Transfert of cash counter part,,520,,FALSE,None
+account_5202,Equity,FALSE,01-Jan-12,5202,,,Regular,HQ AR and HQ AP accounts counterpart,,520,,FALSE,None
+account_6,View,FALSE,01-Jan-12,6,,,View,Expenses,,MSF,,FALSE,None
+account_61,View,FALSE,01-Jan-12,61,,,View,Expatriate staff,,6,,FALSE,None
+account_6100,Expense,FALSE,01-Jan-12,6100,Expatriates,,Regular,Per diem,,61,,FALSE,None
+account_6101,Expense,FALSE,01-Jan-12,6101,Expatriates,,Regular,Team living Expenses,,61,,FALSE,None
+account_6102,Expense,FALSE,01-Jan-12,6102,Expatriates,,Regular,Medical Expenses / repatriation costs,,61,,FALSE,None
+account_6103,Expense,FALSE,01-Jan-12,6103,Expatriates,,Regular,"Expat training costs, school fees, etc..",,61,,FALSE,None
+account_6109,Expense,FALSE,01-Jan-12,6109,Expatriates,,Regular,Perdiem paid at HQ non taxable,,61,,FALSE,None
+account_6111,Expense,FALSE,01-Jan-12,6111,Expatriates,,Regular,Expat housing : rent & running costs,,61,,FALSE,None
+account_6112,Expense,FALSE,01-Jan-12,6112,Expatriates,,Regular,Expat housing : equipment & furniture,,61,,FALSE,None
+account_6115,Expense,FALSE,01-Jan-12,6115,Expatriates,,Regular,Expat housing : construction & rehabilitation,,61,,FALSE,None
+account_6120,Expense,FALSE,01-Jan-12,6120,Expatriates,,Regular,MSF Field expatriate salaries (HQ ONLY),,61,TRUE,FALSE,None
+account_6124,Expense,FALSE,01-Jan-12,6124,Expatriates,,Regular,Daily tariff (IRP) HQ ONLY,,61,TRUE,FALSE,None
+account_6133,Expense,FALSE,01-Jan-12,6133,Expatriates,,Regular,MSF expatriates' insurance (HQ ONLY),,61,TRUE,FALSE,None
+account_6140,Expense,FALSE,01-Jan-12,6140,Expatriates,,Regular,Expat transport & visa costs (HQ / mission),,61,TRUE,FALSE,None
+account_6141,Expense,FALSE,01-Jan-12,6141,Expatriates,,Regular,Expat posting tariff (HQ ONLY),,61,TRUE,FALSE,None
+account_6150,Expense,FALSE,01-Jan-12,6150,Expatriates,,Regular,Salaries and indemnities reinvoiced by others sections,,61,,FALSE,None
+account_62,View,FALSE,01-Jan-12,62,,,View,National staff,,6,,FALSE,None
+account_6210,Expense,FALSE,01-Jan-12,6210,National Staff,,Regular,Domestic staff salaries / charges,,62,,FALSE,None
+account_6220,Expense,FALSE,01-Jan-12,6220,National Staff,,Regular,Administrative staff salaries / charges,,62,,FALSE,None
+account_6230,Expense,FALSE,01-Jan-12,6230,National Staff,,Regular,Medical staff salaries / charges,,62,,FALSE,None
+account_6240,Expense,FALSE,01-Jan-12,6240,National Staff,,Regular,Logistics and sanitation staff salaries / charges,,62,,FALSE,None
+account_6250,Expense,FALSE,01-Jan-12,6250,National Staff,,Regular,Drivers and mechanics staff salaries / charges,,62,,FALSE,None
+account_6260,Expense,FALSE,01-Jan-12,6260,National Staff,,Regular,Non MSF staff salaries & incentives,,62,,FALSE,None
+account_6270,Expense,FALSE,01-Jan-12,6270,National Staff,,Regular,Daily workers,,62,,FALSE,None
+account_6280,Expense,FALSE,01-Jan-12,6280,National Staff,,Regular,National staff : medical Expenses,,62,,FALSE,None
+account_6285,Expense,FALSE,01-Jan-12,6285,National Staff,,Regular,National staff : training costs,,62,,FALSE,None
+account_6295,Expense,FALSE,01-Jan-12,6295,National Staff,,Regular,National staff : housing costs,,62,,FALSE,None
+account_63,View,FALSE,01-Jan-12,63,,,View,Office costs,,6,,FALSE,None
+account_6301,Expense,FALSE,01-Jan-12,6301,Support,,Regular,Office: stationery & small supplies,,63,,FALSE,None
+account_6302,Expense,FALSE,01-Jan-12,6302,Support,,Regular,Communication equipment,,63,,FALSE,None
+account_6303,Expense,FALSE,01-Jan-12,6303,Support,,Regular,"Office : furniture, IT, energy equipment",,63,,FALSE,None
+account_6304,Expense,FALSE,01-Jan-12,6304,Support,,Regular,Maintenance office equipment & hardware,,63,,FALSE,None
+account_6311,Expense,FALSE,01-Jan-12,6311,Support,,Regular,Office : rent & running costs,,63,,FALSE,None
+account_6312,Expense,FALSE,01-Jan-12,6312,Support,,Regular,Taxes,,63,,FALSE,None
+account_6315,Expense,FALSE,01-Jan-12,6315,Support,,Regular,Office : construction & rehabilitation,,63,,FALSE,None
+account_6320,Expense,FALSE,01-Jan-12,6320,Support,,Regular,Telephone & communication costs,,63,,FALSE,None
+account_6321,Expense,FALSE,01-Jan-12,6321,Support,,Regular,Bank fees,,63,,FALSE,None
+account_6330,Expense,FALSE,01-Jan-12,6330,Support,,Regular,Printing and documentation,,63,,FALSE,None
+account_6331,Expense,FALSE,01-Jan-12,6331,Support,,Regular,Identification materials,,63,,FALSE,None
+account_6340,Expense,FALSE,01-Jan-12,6340,Support,,Regular,Internal & external representation costs,,63,,FALSE,None
+account_64,View,FALSE,01-Jan-12,64,,,View,Medical,,6,,FALSE,None
+account_6400,Expense,FALSE,01-Jan-12,6400,Operations,,Regular,Medicines,,64,,FALSE,None
+account_6401,Expense,FALSE,01-Jan-12,6401,Operations,,Regular,Medical kits,,64,,FALSE,None
+account_6412,Expense,FALSE,01-Jan-12,6412,Operations,,Regular,Cold chain material & equipment,,64,,FALSE,None
+account_6420,Expense,FALSE,01-Jan-12,6420,Operations,,Regular,Vaccines & vaccination material,,64,,FALSE,None
+account_6430,Expense,FALSE,01-Jan-12,6430,Operations,,Regular,Food : non-specialized,,64,,FALSE,None
+account_6431,Expense,FALSE,01-Jan-12,6431,Operations,,Regular,Food : specialized (therapeutic),,64,,FALSE,None
+account_6440,Expense,FALSE,01-Jan-12,6440,Operations,,Regular,"Misc. costs for patients (food, hotel, transport)",,64,,FALSE,None
+account_6441,Expense,FALSE,01-Jan-12,6441,Operations,,Regular,"External specialist consultations, tests & references",,64,,FALSE,None
+account_6450,Expense,FALSE,01-Jan-12,6450,Operations,,Regular,Health facilities : rent & running costs,,64,,FALSE,None
+account_6451,Expense,FALSE,01-Jan-12,6451,Operations,,Regular,Health facilities : non-medical equipment/furniture,,64,,FALSE,None
+account_6460,Expense,FALSE,01-Jan-12,6460,Operations,,Regular,Medical small material,,64,,FALSE,None
+account_6461,Expense,FALSE,01-Jan-12,6461,Operations,,Regular,Medical equipment,,64,,FALSE,None
+account_6470,Expense,FALSE,01-Jan-12,6470,Operations,,Regular,Lab small material & reagents,,64,,FALSE,None
+account_6471,Expense,FALSE,01-Jan-12,6471,Operations,,Regular,Lab equipment,,64,,FALSE,None
+account_6480,Expense,FALSE,01-Jan-12,6480,Operations,,Regular,Medical & nutrition - cost of destruction,,64,,FALSE,None
+account_65,View,FALSE,01-Jan-12,65,,,View,"Construction, Water, Sanitation",,6,,FALSE,None
+account_6500,Expense,FALSE,01-Jan-12,6500,Operations,,Regular,Logistic kits,,65,,FALSE,None
+account_6510,Expense,FALSE,01-Jan-12,6510,Operations,,Regular,Construction & rehabilitation material,,65,,FALSE,None
+account_6511,Expense,FALSE,01-Jan-12,6511,Operations,,Regular,Construction equipment & tools,,65,,FALSE,None
+account_6520,Expense,FALSE,01-Jan-12,6520,Operations,,Regular,Water/sanitation material and product,,65,,FALSE,None
+account_6521,Expense,FALSE,01-Jan-12,6521,Operations,,Regular,Water/sanitation equipment,,65,,FALSE,None
+account_6530,Expense,FALSE,01-Jan-12,6530,Operations,,Regular,Energy equipment,,65,,FALSE,None
+account_6540,Expense,FALSE,01-Jan-12,6540,Operations,,Regular,Logistics material,,65,,FALSE,None
+account_6550,Expense,FALSE,01-Jan-12,6550,Operations,,Regular,Non-food relief items for distributions,,65,,FALSE,None
+account_6551,Expense,FALSE,01-Jan-12,6551,Operations,,Regular,Temporary structures,,65,,FALSE,None
+account_6560,Expense,FALSE,01-Jan-12,6560,Operations,,Regular,Fuel (excluding vehicles),,65,,FALSE,None
+account_6570,Expense,FALSE,01-Jan-12,6570,Operations,,Regular,Subcontracted building work,,65,,FALSE,None
+account_66,View,FALSE,01-Jan-12,66,,,View,External training & local support costs,,6,,FALSE,None
+account_6620,Expense,FALSE,01-Jan-12,6620,Operations,,Regular,Training sessions (non MSF staff),,66,,FALSE,None
+account_6630,Expense,FALSE,01-Jan-12,6630,Operations,,Regular,Gifts and subsidies from MSF,,66,,FALSE,None
+account_6640,Expense,FALSE,01-Jan-12,6640,Operations,,Regular,Advocacy and external communication,,66,,FALSE,None
+account_67,View,FALSE,01-Jan-12,67,,,View,"Transport Freight, Storage",,6,,FALSE,None
+account_6700,Expense,FALSE,01-Jan-12,6700,Operations,,Regular,Vehicle purchase,,67,,FALSE,None
+account_6701,Expense,FALSE,01-Jan-12,6701,Operations,,Regular,Insurance & taxes vehicles,,67,,FALSE,None
+account_6710,Expense,FALSE,01-Jan-12,6710,Operations,,Regular,Car and small vehicle rental,,67,,FALSE,None
+account_6711,Expense,FALSE,01-Jan-12,6711,Operations,,Regular,Truck rental ,,67,,FALSE,None
+account_6712,Expense,FALSE,01-Jan-12,6712,Operations,,Regular,Plane rental,,67,,FALSE,None
+account_6713,Expense,FALSE,01-Jan-12,6713,Operations,,Regular,Other transport rentals,,67,,FALSE,None
+account_6720,Expense,FALSE,01-Jan-12,6720,Operations,,Regular,"Vehicles repair, maintenance, spare parts",,67,,FALSE,None
+account_6722,Expense,FALSE,01-Jan-12,6722,Operations,,Regular,Fuel for vehicles and transport facilities,,67,,FALSE,None
+account_6730,Expense,FALSE,01-Jan-12,6730,Operations,,Regular,International freight - by AIR,,67,,FALSE,None
+account_6731,Expense,FALSE,01-Jan-12,6731,Operations,,Regular,International freight - by SEA/ROAD,,67,,FALSE,None
+account_6732,Expense,FALSE,01-Jan-12,6732,Operations,,Regular,Local customs & clearance costs,,67,,FALSE,None
+account_6740,Expense,FALSE,01-Jan-12,6740,Operations,,Regular,Local transport cost MSF staff,,67,,FALSE,None
+account_6750,Expense,FALSE,01-Jan-12,6750,Operations,,Regular,Garage rent & maintenance,,67,,FALSE,None
+account_6751,Expense,FALSE,01-Jan-12,6751,Operations,,Regular,Warehouse rent & maintenance,,67,,FALSE,None
+account_68,View,FALSE,01-Jan-12,68,,,View,Consultant & field support,,6,,FALSE,None
+account_6800,Expense,FALSE,01-Jan-12,6800,Operations,,Regular,"Medical survey, consultant & specialist costs",,68,,FALSE,None
+account_6801,Expense,FALSE,01-Jan-12,6801,Operations,,Regular,"Non-medical survey, consultant & specialist costs",,68,,FALSE,None
+account_6810,Expense,FALSE,01-Jan-12,6810,Operations,,Regular,Expertise fee (non-medical),,68,,FALSE,None
+account_6811,Expense,FALSE,01-Jan-12,6811,Operations,,Regular,Audits,,68,,FALSE,None
+account_6820,Expense,FALSE,01-Jan-12,6820,Operations,,Regular,HQstaff salary charged to the field HQ ONLY,,68,TRUE,FALSE,None
+account_6821,Expense,FALSE,01-Jan-12,6821,Operations,,Regular,Transport and Expenses for headquarters staff,,68,,FALSE,None
+account_69,View,FALSE,01-Jan-12,69,,,View,Miscellaneous,,6,,FALSE,None
+account_6910,Expense,FALSE,01-Jan-12,6910,Support,,Regular,Filming costs,,69,,FALSE,None
+account_6920,Expense,FALSE,01-Jan-12,6920,Support,,Regular,Cash difference,,69,,FALSE,None
+account_6930,Expense,FALSE,01-Jan-12,6930,Support,,Regular,Theft,,69,,FALSE,None
+account_6931,Expense,FALSE,01-Jan-12,6931,Support,,Regular,Lost/bad Debts,,69,,FALSE,None
+account_6935,Expense,FALSE,01-Jan-12,6935,Support,,Regular,Litigation,,69,,FALSE,None
+account_6940,Expense,FALSE,01-Jan-12,6940,Support,,Regular,Currency exchange difference HQ ONLY,,69,TRUE,FALSE,None
+account_6950,Expense,FALSE,01-Jan-12,6950,Support,,Regular,Fund-raising (HQ ONLY),,69,TRUE,FALSE,None
+account_7,View,FALSE,01-Jan-12,7,,,View,Income,,MSF,,FALSE,None
+account_70,View,FALSE,01-Jan-12,70,,,View,Donations received in the field,,7,,FALSE,None
+account_7000,Income,FALSE,01-Jan-12,7000,,,Regular,Donations received in the field,,70,,FALSE,None
+account_71,View,FALSE,01-Jan-12,71,,,View,Financial income,,7,,FALSE,None
+account_7100,Income,FALSE,01-Jan-12,7100,,,Regular,Interest income,,71,,FALSE,None
+account_7101,Income,FALSE,01-Jan-12,7101,,,Regular,Exceptional income,,71,,FALSE,None
+account_7102,Income,FALSE,01-Jan-12,7102,,,Regular,Re-invoicing income,,71,,FALSE,None
+account_7103,Income,FALSE,01-Jan-12,7103,,,Regular,Financial interest,,71,,FALSE,None
+account_7110,Income,FALSE,01-Jan-12,7110,,,Regular,Realized gain on currency exchange,,71,,FALSE,None
+account_72,View,FALSE,01-Jan-12,72,,,View,Sales of equipments and goods,,7,,FALSE,None
+account_7200,Income,FALSE,01-Jan-12,7200,,,Regular,Sales of equipments,,72,,FALSE,None
+account_7210,Income,FALSE,01-Jan-12,7210,,,Regular,Other sales,,72,,FALSE,None
+account_73,View,FALSE,01-Jan-12,73,,,View,Gain on inventory,,7,,FALSE,None
+account_7300,Income,FALSE,01-Jan-12,7300,,,Regular,Differences of inventory (gain),,73,,FALSE,None
+account_8,View,FALSE,01-Jan-12,8,,,View,Off balance sheet suspense accounts ,,MSF,,FALSE,None
+account_80,View,FALSE,01-Jan-12,80,,,View,Inventories variation,,8,,FALSE,None
+account_8000,Stock,FALSE,01-Jan-12,8000,,,Regular,Variation of medical stock inventory,,80,,FALSE,None
+account_8010,Stock,FALSE,01-Jan-12,8010,,,Regular,Variation on non medical stock inventory,,80,,FALSE,None
+account_81,View,FALSE,01-Jan-12,81,,,View,Contribution in kind  (Assets),,8,,FALSE,None
+account_8100,Payables,FALSE,01-Jan-12,8100,,,Payable,Medical goods received in kind,,81,,FALSE,Donation
+account_8110,Payables,FALSE,01-Jan-12,8110,,,Payable,Non medical goods received in kind,,81,,FALSE,Donation
+account_9,View,FALSE,01-Jan-12,9,,,View,Off balance sheet items,,MSF,,FALSE,None
+account_90,View,FALSE,01-Jan-12,90,,,View,Inventories,,9,,FALSE,None
+account_900,View,FALSE,01-Jan-12,900,,,View,Medical inventory,,90,,FALSE,None
+account_9000,Stock,FALSE,01-Jan-12,9000,,,Regular,Medical inventory,,900,,FALSE,None
+account_901,View,FALSE,01-Jan-12,901,,,View,Non medical inventory,,90,,FALSE,None
+account_9010,Stock,FALSE,01-Jan-12,9010,,,Regular,Non medical inventory,,901,,FALSE,None
+account_902,View,FALSE,01-Jan-12,902,,,View,Stock transfers,,90,,FALSE,None
+account_9020,Stock,FALSE,01-Jan-12,9020,,,Regular,Stock in transit ,,902,,FALSE,None
+account_91,View,FALSE,01-Jan-12,91,,,View,In-Kind donations,,9,,FALSE,None
+account_910,View,FALSE,01-Jan-12,910,,,View,In-kind Donations of Medical items,,91,,FALSE,None
+account_9100,Extra-accounting expenses,FALSE,01-Jan-12,9100,Operations,,Regular,In-kind Donations of medical items,,910,,FALSE,Donation
+account_920,View,FALSE,01-Jan-12,920,,,View,In-kind Donations of non Medical items,,91,,FALSE,None
+account_9200,Extra-accounting expenses,FALSE,01-Jan-12,9200,Operations,,Regular,In-kind Donations of non therapeutic food,,920,,FALSE,Donation
+account_9201,Extra-accounting expenses,FALSE,01-Jan-12,9201,Operations,,Regular,In-kind Donations of relief material,,920,,FALSE,Donation
+account_9202,Extra-accounting expenses,FALSE,01-Jan-12,9202,Operations,,Regular,In-kind Donations of logistics material,,920,,FALSE,Donation
