@@ -87,6 +87,43 @@
             </field>
         </record>
 
+        <record id="view_direct_invoice_refund" model="ir.ui.view">
+            <field name="name">account.direct.refund.form</field>
+            <field name="model">account.invoice.refund</field>
+            <field name="type">form</field>
+            <field name="priority" eval="100" />
+            <field name="arch" type="xml">
+                <form string="Refund Invoice">
+                <separator string="Refund Invoice Options" colspan="4"/>
+                <group colspan="4" >
+                    <field name="description"/>
+                    <field name="journal_id" widget='selection'/>
+                    <field name="document_date"/>
+                    <field name="date" on_change="onchange_date(date)"/>
+                    <field name="filter_refund" readonly="1" />
+                </group>
+                <separator colspan="4"/>
+                <group col="4" colspan="4" fill="1">
+                    <label align="0.0" width="300" string="Refund Invoice: Creates the refund invoice, ready for editing."/>
+                </group>
+                <separator colspan="4"/>
+                <group colspan="4" col="6">
+                    <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                    <button string='Refund' icon="gtk-execute" name="invoice_refund" type="object"/>
+                </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_direct_invoice_refund" model="ir.actions.act_window">
+            <field name="name">Refund</field>
+            <field name="res_model">account.invoice.refund</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_direct_invoice_refund"/>
+            <field name="target">new</field>
+        </record>
+
     <!--
         Supplier Direct Invoice Pop-up for Registers 
     -->
@@ -173,7 +210,10 @@
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                     </notebook>
-                    <field name="state" readonly="1" colspan="4"/>
+                    <group col="4" colspan="4">
+                        <field name="state" readonly="1" colspan="2"/>
+                        <button name="%(action_direct_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute" colspan="2"/>
+                    </group>
                 </form>
             </field>
         </record>
