@@ -1890,6 +1890,7 @@ class account_bank_statement_line(osv.osv):
         acc_move_obj = self.pool.get("account.move")
         # browse all statement lines for creating move lines
         for absl in self.browse(cr, uid, ids, context=context):
+            previous_state = ''.join(absl.state)
             if absl.state == "hard":
                 raise osv.except_osv(_('Warning'), _('You can\'t re-post a hard posted entry !'))
             elif absl.state == "temp" and postype == "temp" and absl.direct_invoice == False:
@@ -2015,15 +2016,20 @@ class account_bank_statement_line(osv.osv):
                     acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
                     # do a move that enable a complete supplier follow-up
                     self.do_direct_expense(cr, uid, [absl.id], context=context)
-                self._set_register_line_audittrail_post_temp2hard(cr, uid, absl.id, context=context)
+                if previous_state == 'draft':
+                    direct_hard_post = True  # UF-2316
+                else:
+                    direct_hard_post = False
+                self._set_register_line_audittrail_post_hard_state_log(cr, uid, absl.id, direct_hard_post, context=context)
         return True
 
-    def _set_register_line_audittrail_post_temp2hard(self, cr, uid, this_id, context=None):
+    def _set_register_line_audittrail_post_hard_state_log(self, cr, uid, this_id, direct_hard_post, context=None):
         """UF-2269 Timing fix: journal items updated after register line audit
         so we have to audit directly the Hard Poster state"""
         domain = [('model', '=', 'account.bank.statement.line')]
         object_id = self.pool.get('ir.model').search(cr, uid, domain, context=context)
         if object_id:
+            audit_line_obj = self.pool.get('audittrail.log.line')
             if isinstance(object_id, (int, long)):
                 object_id = [object_id]
             # get field id
@@ -2034,41 +2040,83 @@ class account_bank_statement_line(osv.osv):
                 field_ids = field_pool.search(cr, uid, [('name', '=', 'state'), ('model_id', 'in', (object_id, inherits_ids[0]))])
             else:
                 field_ids = field_pool.search(cr, uid, [('name', '=', 'state'), ('model_id', '=', object_id)])
-                field_id = field_ids and field_ids[0] or False
+            field_id = field_ids and field_ids[0] or False
+            if not field_id:
+                return
             # get next sequence
             domain = [
                 ('model', '=', 'account.bank.statement.line'),
                 ('res_id', '=', this_id),
             ]
-            log_sequence = self.pool.get('audittrail.log.sequence').search(cr, uid, domain)
-            if log_sequence:
-                log_seq = self.pool.get('audittrail.log.sequence').browse(cr, uid, log_sequence[0]).sequence
-                log = log_seq.get_id(code_or_id='id')
+            if direct_hard_post:
+                # for a direct hard post, an audit line with Draft 2 Temp is already created
+                # we have to update this line with Draft 2 Hard vs create a new one
+                
+                # search the audit line
+                domain = [
+                        ('field_id', '=', field_id),
+                        ('object_id', '=', object_id[0]),
+                        ('res_id', '=', this_id),
+                        ('method', '=', 'write'),
+                        ('name', '=', 'state'),
+                        ('new_value', '=', 'temp'),
+                    ]
+                direct_hard_post_audit_line_ids = audit_line_obj.search(cr, uid, domain, context=context)
+                if not direct_hard_post_audit_line_ids or len(direct_hard_post_audit_line_ids) != 1:
+                    return
             else:
-                log = False
+                log_sequence = self.pool.get('audittrail.log.sequence').search(cr, uid, domain)
+                if log_sequence:
+                    log_seq = self.pool.get('audittrail.log.sequence').browse(cr, uid, log_sequence[0]).sequence
+                    # get new id
+                    log = log_seq.get_id(code_or_id='id')
+                else:
+                    log = False
             # set vals
-            vals = {
-                'object_id': object_id[0],
-                'user_id': uid,
-                'method': 'write',
-                'name': 'state',
-                'res_id': this_id,
-                'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
-                'field_description': 'Status',
-                'trans_field_description': 'Status',
-                'old_value': 'temp',
-                'old_value_text': 'Temp',
-                'old_value_fct': 'Temp',
-                'new_value': 'hard',
-                'new_value_text': 'Hard',
-                'new_value_fct': 'Hard',
-            }
-            if log:
+            if direct_hard_post:
+                # UF-2316
+                old_value_vals = {
+                    'old_value': 'draft',
+                    'old_value_text': 'Draft',
+                    'old_value_fct': 'Draft',
+                }
+            else:
+                old_value_vals = {
+                    'old_value': 'temp',
+                    'old_value_text': 'Temp',
+                    'old_value_fct': 'Temp',
+                }
+            if direct_hard_post:
+                vals = {
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'new_value': 'hard',
+                    'new_value_text': 'Hard',
+                    'new_value_fct': 'Hard',
+                }
+            else:
+                vals = {
+                    'object_id': object_id[0],
+                    'user_id': uid,
+                    'method': 'write',
+                    'name': 'state',
+                    'res_id': this_id,
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'field_description': 'Status',
+                    'trans_field_description': 'Status',
+                    'new_value': 'hard',
+                    'new_value_text': 'Hard',
+                    'new_value_fct': 'Hard',
+                }
+            vals.update(old_value_vals)
+            if field_id:
                 vals['field_id'] = field_id
-            if log:
-                vals['log'] = log
-
-            self.pool.get('audittrail.log.line').create(cr, uid, vals, context=context)
+            
+            if direct_hard_post:
+                audit_line_obj.write(cr, uid, direct_hard_post_audit_line_ids[0], vals, context=context)
+            else:
+                if log:
+                    vals['log'] = log
+                audit_line_obj.create(cr, uid, vals, context=context)
 
     def button_hard_posting(self, cr, uid, ids, context=None):
         """
