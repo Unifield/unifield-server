@@ -2109,7 +2109,7 @@ class account_bank_statement_line(osv.osv):
             # Delete direct invoice if exists
             if st_line.direct_invoice and st_line.invoice_id and not context.get('from_direct_invoice', False):
                 # unlink moves and analytic lines before deleting the line
-                self.unlink_moves(cr, uid, [st_line.invoice_id.id], context=context)
+                self.unlink_moves(cr, uid, [st_line.id], context=context)
                 self.pool.get('account.invoice').unlink(cr, uid, [st_line.invoice_id.id], {'from_register': True})
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
 
