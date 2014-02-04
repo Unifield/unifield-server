@@ -247,10 +247,6 @@ SELECT res_id, touched
         if context is None:
             context = {}
 
-        # UF-2294: disable assert error
-        if context.get('offline_synchronization') and not synchronize and not previous_values:
-            return {}
-
         assert not self._name == 'ir.model.data', \
             "Can not call this method on object ir.model.data!"
         assert hasattr(self, '_all_columns'), \
@@ -280,6 +276,8 @@ SELECT res_id, touched
             data_base_values = {
                 'last_modification' : fields.datetime.now(),
             }
+        else:
+            data_base_values = {}
 
         def touch(data_ids, touched_fields):
             if synchronize:
@@ -340,12 +338,13 @@ SELECT res_id, touched
                         modified.union(eval(touched) if touched else [])
                     ))
                 # handle one2many (because orm don't call write() on them)
-                for field, column in filter_o2m(whole_fields):
-                    self.pool.get(column._obj).touch(
-                        cr, uid, list(set(prev_rec[field] + next_rec[field])),
-                        None, data_base_values,
-                        _previous_calls=_previous_calls,
-                        context=context)
+                if synchronize:
+                    for field, column in filter_o2m(whole_fields):
+                        self.pool.get(column._obj).touch(
+                            cr, uid, list(set(prev_rec[field] + next_rec[field])),
+                            None, data_base_values,
+                            _previous_calls=_previous_calls,
+                            context=context)
 
         # store changes in the context
         if context is not None and 'changes' in context:
@@ -439,13 +438,13 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             self._name not in MODELS_TO_IGNORE and
             (not context.get('sync_update_execution') and
              not context.get('sync_update_creation')))
-        if to_be_synchronized or hasattr(self, 'on_create'):
+        if to_be_synchronized:
             self.touch(cr, uid, [id], None,
                 to_be_synchronized, context=context)
-            if hasattr(self, 'on_create'):
-                self.on_create(cr, uid, id,
-                    self.read(cr, uid, [id], values.keys(), context=context)[0],
-                    context=context)
+        if hasattr(self, 'on_create'):
+            self.on_create(cr, uid, id,
+                self.read(cr, uid, [id], values.keys(), context=context)[0],
+                context=context)
         return id
 
     @orm_method_overload
