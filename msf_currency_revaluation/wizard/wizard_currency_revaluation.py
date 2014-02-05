@@ -144,9 +144,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         revaluation_account = cp.revaluation_default_account
         if not revaluation_account:
             raise osv.except_osv(_('Settings Error!'), _('Revaluation account is not set in company settings'))
-        if not revaluation_account.default_destination_id \
-            or revaluation_account.default_destination_id.code != 'SUP':
-                raise osv.except_osv('Settings Error!','The default revaluation account must have a default destination SUP')
+        if not self.pool.get('res.company').check_revaluation_default_account_has_sup_destination(cr, uid, cp, context=context):
+            raise osv.except_osv('Settings Error!','The default revaluation account must have a default destination SUP')
         # Entry period
         res['result_period_id'] = False
         if res['fiscalyear_id']:
