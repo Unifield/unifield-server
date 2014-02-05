@@ -126,8 +126,15 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             cr, uid, period_date.strftime('%Y-%m-%d'))
         res['period_id'] = period_ids and period_ids[0] or False
         # Journal
-        journal_ids = journal_obj.search(
-            cr, uid, [('code', '=', 'REVAL')], context=context)
+        # UFTP-44: journal of instance and of type 'revaluation'
+        if cp:
+            domain = [
+                ('instance_id', '=', cp.instance_id.id),
+                ('type', '=', 'revaluation'),
+            ]
+            journal_ids = journal_obj.search(cr, uid, domain, context=context)
+        else:
+            journal_ids = False
         if not journal_ids:
             raise osv.except_osv(
                 _(u"Error"),
