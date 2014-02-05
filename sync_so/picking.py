@@ -77,7 +77,7 @@ class stock_picking(osv.osv):
             state = 'assigned'
 
         # UF-2301: Take care of DPO reception
-        dpo_line_id = data['dpo_line_id']
+        dpo_line_id = data.get('dpo_line_id', False)
 
         # build a dic which can be used directly to update the stock move
         result = {'line_number': data['line_number'],
@@ -143,6 +143,14 @@ class stock_picking(osv.osv):
 
         return result
 
+    def partial_shippped_dpo_updates_in_po(self, cr, uid, source, out_info, context=None):
+        if context is None:
+            context = {}
+
+        context.update({'for_dpo': True})
+
+        return self.partial_shipped_fo_updates_in_po(cr, uid, source, out_info, context=context)
+
     def partial_shipped_fo_updates_in_po(self, cr, uid, source, out_info, context=None):
         '''
         ' This sync method is used for updating the IN of Project side when the OUT/PICK at Coordo side became done.
@@ -157,7 +165,8 @@ class stock_picking(osv.osv):
 
         pick_dict = out_info.to_dict()
 
-        pick_dict = self.picking_data_update_in(cr, uid, source, pick_dict, context=context)
+        if context.get('for_dpo'):
+            pick_dict = self.picking_data_update_in(cr, uid, source, pick_dict, context=context)
 
         # objects
         so_po_common = self.pool.get('so.po.common')
