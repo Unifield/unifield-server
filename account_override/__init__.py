@@ -138,6 +138,7 @@ ACCOUNT_RESTRICTED_AREA = {
     'account_move_lines': [
         ('type', 'not in', ['view', 'consolidation', 'closed']),
         '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
+        ('is_not_hq_correctible', '=', False),
     ],
     # FINANCING CONTRACT - REPORTING LINES
     'contract_reporting_lines': [
