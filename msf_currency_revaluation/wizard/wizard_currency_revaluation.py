@@ -531,20 +531,21 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         form.posting_date = form.result_period_id and form.result_period_id.date_stop
 
         # Search for accounts Balance Sheet or Liquidity to be eevaluated
+        """Determine accounts to be used in the revaluation based on the "included in reval" checkbox.
+        Liquidity revaluation will only concern accounts that have this checkbox set to True and the internal type Liquidity"
+        B/S revaluation will only concern accounts that have this checkbox set to True and the internal type is not Liquidity"""
         account_ids = []
         if form.revaluation_method in ['liquidity_month', 'liquidity_year']:
-            account_ids = account_obj.search(
-                cr, uid,
-                [('currency_revaluation', '=', True),
-                 ('type', '=', 'liquidity'),
-                 ('user_type_code', '=', 'cash')],
-                context=context)
+            account_ids_domain = [
+                ('currency_revaluation', '=', True),
+                ('type', '=', 'liquidity'),
+            ]
         elif form.revaluation_method == 'other_bs':
-            account_ids = account_obj.search(
-                cr, uid,
-                [('currency_revaluation', '=', True),
-                 ('user_type_code', 'in', ['receivables', 'payables', 'asset', 'stock'])],
-                context=context)
+            account_ids_domain = [
+                ('currency_revaluation', '=', True),
+                ('type', '!=', 'liquidity'),
+            ]
+        account_ids = account_obj.search(cr, uid, account_ids_domain, context=context)
         if not account_ids:
             raise osv.except_osv(
                 _('Settings Error!'),
