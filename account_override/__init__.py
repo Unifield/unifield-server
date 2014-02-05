@@ -156,7 +156,7 @@ ACCOUNT_RESTRICTED_AREA = {
     'partner_payable': [
         ('type', '!=', 'view'),
         ('type', '=', 'payable'),
-        ('user_type_code', '=', 'payables'),
+        ('user_type_code', 'in', ['payables', 'tax']),
         ('type_for_register', '!=', 'donation'),
     ],
     # PARTNER - RECEIVABLE DEFAULT ACCOUNT
