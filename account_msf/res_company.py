@@ -34,7 +34,23 @@ class res_company(osv.osv):
         'intermission_default_counterpart': fields.many2one('account.account', string="Intermission counterpart", 
             help="Default account used for partner in Intermission Voucher IN/OUT"),
         'additional_allocation': fields.boolean('Additional allocation condition?', help="If you check this attribute, analytic allocation will be required for income accounts with an account code starting with \"7\"; if unchecked, the analytic allocation will be required for all income accounts."),
+        'revaluation_default_account': fields.many2one('account.account', string="Revaluation account", 
+            help="Default account used for revaluation"),
     }
+    
+    def _check_revaluation_default_account(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.revaluation_default_account:
+                if not obj.revaluation_default_account.default_destination_id \
+                    or obj.revaluation_default_account.default_destination_id.code != 'SUP':
+                    raise osv.except_osv('Settings Error!','The default revaluation account must have a default destination SUP')
+        return True
+        
+    _constraints = [
+        (_check_revaluation_default_account, 'The default revaluation account must have a default destination SUP', ['revaluation_default_account'])
+    ]
 
 res_company()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
