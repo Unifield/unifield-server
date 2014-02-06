@@ -404,7 +404,12 @@ class so_po_common(osv.osv_memory):
             if existing_line_ids and update_lines:
                 for existing_line in existing_line_ids:
                     if existing_line not in update_lines:
-                        line_result.append((2, existing_line))
+                        if po_id:
+                            self.pool.get('purchase.order.line').fake_unlink(cr, uid, [existing_line], context=context)
+                        elif so_id:
+                            self.pool.get('sale.order.line').ask_order_unlink(cr, uid, [existing_line], context=context)
+                        else:
+                            line_result.append((2, existing_line))
                 
         return line_result 
 
