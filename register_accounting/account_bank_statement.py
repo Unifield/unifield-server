@@ -2020,33 +2020,27 @@ class account_bank_statement_line(osv.osv):
                     direct_hard_post = True  # UF-2316
                 else:
                     direct_hard_post = False
-                self._set_register_line_audittrail_post_hard_state_log(cr, uid, absl.id, direct_hard_post, context=context)
+                self._set_register_line_audittrail_post_hard_state_log(cr, uid, absl, direct_hard_post, context=context)
         return True
 
-    def _set_register_line_audittrail_post_hard_state_log(self, cr, uid, this_id, direct_hard_post, context=None):
+    def _set_register_line_audittrail_post_hard_state_log(self, cr, uid, absl, direct_hard_post, context=None):
         """UF-2269 Timing fix: journal items updated after register line audit
         so we have to audit directly the Hard Poster state"""
-        domain = [('model', '=', 'account.bank.statement.line')]
-        object_id = self.pool.get('ir.model').search(cr, uid, domain, context=context)
-        if object_id:
+        model_name = 'account.bank.statement'
+        object_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name)], context=context)
+        fct_object_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'account.bank.statement.line')], context=context)
+        if object_id and fct_object_id:
             audit_line_obj = self.pool.get('audittrail.log.line')
-            if isinstance(object_id, (int, long)):
-                object_id = [object_id]
-            # get field id
-            model_pool = self.pool.get('ir.model')
+            # get state field id
             field_pool = self.pool.get('ir.model.fields')
-            if self._inherits:
-                inherits_ids = model_pool.search(cr, uid, [('model', '=', self._inherits.keys()[0])])
-                field_ids = field_pool.search(cr, uid, [('name', '=', 'state'), ('model_id', 'in', (object_id, inherits_ids[0]))])
-            else:
-                field_ids = field_pool.search(cr, uid, [('name', '=', 'state'), ('model_id', '=', object_id)])
+            field_ids = field_pool.search(cr, uid, [('name', '=', 'state'), ('model_id', '=', fct_object_id)])
             field_id = field_ids and field_ids[0] or False
             if not field_id:
                 return
             # get next sequence
             domain = [
-                ('model', '=', 'account.bank.statement.line'),
-                ('res_id', '=', this_id),
+                ('model', '=', model_name),
+                ('res_id', '=', absl.statement_id.id),
             ]
             if direct_hard_post:
                 # for a direct hard post, an audit line with Draft 2 Temp is already created
@@ -2056,9 +2050,10 @@ class account_bank_statement_line(osv.osv):
                 domain = [
                         ('field_id', '=', field_id),
                         ('object_id', '=', object_id[0]),
-                        ('res_id', '=', this_id),
+                        ('res_id', '=', absl.statement_id.id),
+                        ('fct_object_id', '=', fct_object_id[0]),
+                        ('fct_res_id', '=', absl.id),
                         ('method', '=', 'write'),
-                        ('name', '=', 'state'),
                         ('new_value', '=', 'temp'),
                     ]
                 direct_hard_post_audit_line_ids = audit_line_obj.search(cr, uid, domain, context=context)
@@ -2075,31 +2070,27 @@ class account_bank_statement_line(osv.osv):
             # set vals
             if direct_hard_post:
                 # UF-2316
-                old_value_vals = {
-                    'old_value': 'draft',
-                    'old_value_text': 'Draft',
-                    'old_value_fct': 'Draft',
-                }
-            else:
-                old_value_vals = {
-                    'old_value': 'temp',
-                    'old_value_text': 'Temp',
-                    'old_value_fct': 'Temp',
-                }
-            if direct_hard_post:
                 vals = {
                     'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
                     'new_value': 'hard',
                     'new_value_text': 'Hard',
                     'new_value_fct': 'Hard',
                 }
+                old_value_vals = {
+                    'old_value': 'draft',
+                    'old_value_text': 'Draft',
+                    'old_value_fct': 'Draft',
+                }
             else:
                 vals = {
-                    'object_id': object_id[0],
                     'user_id': uid,
                     'method': 'write',
                     'name': 'state',
-                    'res_id': this_id,
+                    'object_id': object_id[0],
+                    'res_id': absl.statement_id.id,
+                    'fct_object_id': fct_object_id[0],
+                    'fct_res_id': absl.id,
+                    'sub_obj_name': absl.name,
                     'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
                     'field_description': 'Status',
                     'trans_field_description': 'Status',
@@ -2107,6 +2098,12 @@ class account_bank_statement_line(osv.osv):
                     'new_value_text': 'Hard',
                     'new_value_fct': 'Hard',
                 }
+                old_value_vals = {
+                    'old_value': 'temp',
+                    'old_value_text': 'Temp',
+                    'old_value_fct': 'Temp',
+                }
+                
             vals.update(old_value_vals)
             if field_id:
                 vals['field_id'] = field_id
