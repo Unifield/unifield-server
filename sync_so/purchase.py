@@ -24,6 +24,7 @@ import netsvc
 
 import logging
 import pdb
+from tools.translate import _
 
 from sync_client import get_sale_purchase_logger
 
