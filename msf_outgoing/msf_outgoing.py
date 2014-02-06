@@ -2683,6 +2683,9 @@ class stock_picking(osv.osv):
                     total_qty = uom_obj._compute_qty(cr, uid, partial['product_uom'], partial['product_qty'], move.product_uom.id)
                     # the quantity
                     count = count + total_qty
+                    orig_qty = move.product_qty
+                    if move.original_qty_partial and move.original_qty_partial != -1:
+                        orig_qty = move.original_qty_partial
                     if first:
                         first = False
                         # update existing move
@@ -2692,6 +2695,7 @@ class stock_picking(osv.osv):
                                   'product_uos': partial['product_uom'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'line_number': partial['line_number'],
+                                  'original_qty_partial': orig_qty,
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
                         values = self.do_validate_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
@@ -2706,6 +2710,7 @@ class stock_picking(osv.osv):
                                   'product_uos': partial['product_uom'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'line_number': partial['line_number'],
+                                  'original_qty_partial': orig_qty,
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
                         values = self.do_validate_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)

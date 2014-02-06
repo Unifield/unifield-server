@@ -337,7 +337,10 @@ class stock_picking(osv.osv):
         defaults.update({'line_number': move.line_number})
         
         #UTP-972: Set the original total qty of the original move to the new partial move, for sync purpose only
-        defaults.update({'original_qty_partial': move.product_qty})
+        orig_qty = move.product_qty
+        if move.original_qty_partial and move.original_qty_partial != -1:
+            orig_qty = move.original_qty_partial
+        defaults.update({'original_qty_partial': orig_qty})
         
         return defaults
     
@@ -503,6 +506,9 @@ class stock_picking(osv.osv):
                 # average price computation, new values - should be the same for every partial
                 average_values = {}
 
+                orig_qty = move.product_qty
+                if move.original_qty_partial and move.original_qty_partial != -1:
+                    orig_qty = move.original_qty_partial
                 
                 # partial list
                 for partial in partial_datas[pick.id][move.id]:
@@ -514,6 +520,7 @@ class stock_picking(osv.osv):
                               'product_id': partial['product_id'],
                               'product_qty': partial['product_qty'],
                               'product_uos_qty': partial['product_qty'],
+                              'original_qty_partial': orig_qty,
                               'prodlot_id': partial['prodlot_id'],
                               'product_uom': partial['product_uom'],
                               'product_uos': partial['product_uom'],
@@ -653,7 +660,7 @@ class stock_picking(osv.osv):
                                 vals.update({'in_out_updated': True})
                             new_move = move_obj.copy(cr, uid, out_move.id, vals, context=dict(context, keepLineNumber=True))
                             # Update the initial out move qty
-                            move_obj.write(cr, uid, [out_move.id], {'product_qty': out_move.product_qty - uom_partial_qty}, context=context)
+                            move_obj.write(cr, uid, [out_move.id], {'product_qty': out_move.product_qty - uom_partial_qty, 'original_qty_partial': orig_qty}, context=context)
                             backlinks.append((move.id, new_move))
                             partial_qty = 0.00
 #                            if not count_out:
@@ -698,6 +705,7 @@ class stock_picking(osv.osv):
                                 'asset_id': False,
                                 'product_qty': diff_qty,
                                 'product_uos_qty': diff_qty,
+                                'original_qty_partial': orig_qty,
                                 'picking_id': pick.id, # put in the current picking which will be the actual backorder (OpenERP logic)
                                 'prodlot_id': False,
                                 'state': 'assigned',
