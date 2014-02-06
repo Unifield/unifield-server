@@ -181,10 +181,16 @@ class stock_picking(osv.osv):
                     search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
 
                     original_qty_partial = data.get('original_qty_partial')
+                    orig_qty = data.get('product_qty')
                     if original_qty_partial != -1:
                         search_move.append(('product_qty', '=', original_qty_partial)) 
+                        orig_qty = original_qty_partial
 
                     move_ids = move_obj.search(cr, uid, search_move, context=context)
+                    if not move_ids and original_qty_partial != -1:
+                        search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('original_qty_partial', '=', original_qty_partial)]
+                        move_ids = move_obj.search(cr, uid, search_move, context=context)
+
                     if not move_ids:
                         search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
                         move_ids = move_obj.search(cr, uid, search_move, context=context)
@@ -196,10 +202,18 @@ class stock_picking(osv.osv):
                     if move_ids and len(move_ids) == 1: # if there is only one move, take it for process
                         move_id = move_ids[0]
                     else: # if there are more than 1 moves, then pick the next one not existing in the partial_datas[in_id]
-                        for move in move_ids:
-                            if not partial_datas[in_id].get(move):
-                                move_id = move
-                                continue
+                        # Search the best matching move
+                        best_diff = False
+                        for move in move_obj.read(cr, uid, move_ids, ['product_qty'], context=context):
+                            if not partial_datas[in_id].get(move['id']):
+                                diff = move['product_qty'] - orig_qty
+                                if diff >= 0 and (not best_diff or diff < best_diff):
+                                    best_diff = diff
+                                    move_id = move['id']
+                                    if best_diff == 0.00:
+                                        break
+                        if not move_id:
+                            move_id = move_ids[0]
 
                     # If we have a shipment with 10 packs and return from shipment
                     # the pack 2 and 3, the IN shouldn't be splitted in three moves (pack 1 available,
