@@ -64,7 +64,7 @@ class Root(SecuredController):
                 user_action_id[0], home_action=True, context=context)
         return ''
 
-    @expose(content_type='application/octet-stream')
+    @expose()
     def report(self, report_name=None, **kw):
         import actions
         return actions.execute_report(report_name, **TinyDict(**kw))
