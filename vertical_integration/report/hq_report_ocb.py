@@ -216,6 +216,51 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND p.id = %s
                 ORDER BY st.name, p.number;
                 """,
+            'liquidity': """
+                SELECT i.code AS instance, j.code, j.name, %s AS period, req.opening, req.calculated, req.closing
+                FROM (
+                    SELECT journal_id, account_id, SUM(col1) AS opening, SUM(col2) AS calculated, SUM(col3) AS closing
+                    FROM (
+                        (
+                            SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, ROUND(SUM(debit-credit), 2) as col1, 0.00 as col2, 0.00 as col3
+                            FROM account_move_line AS aml 
+                            LEFT JOIN account_journal j 
+                                ON aml.journal_id = j.id 
+                            WHERE j.type IN ('cash', 'bank', 'cheque')
+                            AND aml.date < %s
+                            AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
+                            GROUP BY aml.journal_id, aml.account_id
+                        )
+                    UNION
+                        (
+                            SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, 0.00 as col1, ROUND(SUM(debit-credit), 2) as col2, 0.00 as col3
+                            FROM account_move_line AS aml 
+                            LEFT JOIN account_journal j 
+                                ON aml.journal_id = j.id 
+                            WHERE j.type IN ('cash', 'bank', 'cheque')
+                            AND aml.period_id = %s
+                            AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
+                            GROUP BY aml.journal_id, aml.account_id
+                        )
+                    UNION
+                        (
+                            SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, 0.00 as col1, 0.00 as col2, ROUND(SUM(debit-credit), 2) as col3
+                            FROM account_move_line AS aml 
+                            LEFT JOIN account_journal j 
+                                ON aml.journal_id = j.id 
+                            WHERE j.type IN ('cash', 'bank', 'cheque')
+                            AND aml.date <= %s
+                            AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
+                            GROUP BY aml.journal_id, aml.account_id
+                        )
+                    ) AS ssreq
+                    GROUP BY journal_id, account_id
+                    ORDER BY journal_id, account_id
+                ) AS req, account_journal j, msf_instance i
+                WHERE req.journal_id = j.id
+                AND j.instance_id = i.id
+                AND j.instance_id IN %s;
+            """,
             'contract': """
                 SELECT c.name, c.code, d.code, c.grant_amount, rc.name, c.state
                 FROM financing_contract_contract AS c, financing_contract_donor AS d, res_currency AS rc
@@ -338,11 +383,10 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'query_params': (first_day_of_last_fy, last_day_of_period),
                 },
             {
-                'headers': ['Instance', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance', 'State', 'Journal code'],
+                'headers': ['Instance', 'Code', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance'],
                 'filename': instance_name + '_%(year)s%(month)s_Liquidity Balances.csv',
-                'key': 'register',
-                'query_params': tuple([period.id]),
-                'function': 'postprocess_register',
+                'key': 'liquidity',
+                'query_params': (tuple([period.code]), first_day_of_period, period.id, last_day_of_period, tuple(instance_ids)),
                 },
             {
                 'headers': ['Name', 'Code', 'Donor code', 'Grant amount', 'Reporting CCY', 'State'],
