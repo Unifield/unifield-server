@@ -1072,7 +1072,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         rev_ana_ids = ana_obj.search(cr, uid, [('move_id', '=', line.reversal_line_id.id)])
                         for rev in self.pool.get('account.analytic.line').browse(cr, uid, rev_ana_ids):
                             to_write = ana_obj.search(cr, uid, [('move_id', '=', line.id), ('cost_center_id', '=', rev.cost_center_id.id), ('account_id', '=', rev.account_id.id), ('destination_id', '=', rev.destination_id.id)])
-                            ana_obj.write(cr, uid, to_write, {'reversal_origin': rev.id})
+                            ana_obj.write(cr, uid, to_write, {'reversal_origin': rev.id, 'is_reversal': True})
                         # Search if some corrections exists for this move line
                         aml_cor_ids = self.pool.get('account.move.line').search(cr, uid, [('corrected_line_id', '=', line.reversal_line_id.id)])
                         if aml_cor_ids:
