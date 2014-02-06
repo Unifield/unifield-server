@@ -99,7 +99,8 @@ class account_line_csv_export(osv.osv_memory):
             csv_line.append(ml.credit_currency or 0.0)
             #currency_id
             csv_line.append(ml.currency_id and ml.currency_id.name and ml.currency_id.name.encode('utf-8') or '')
-            if not currency_id:
+            if not currency_id or (currency_id and currency_id == ml.currency_id):
+                # uf-2327 no currency or same as booking
                 #debit
                 csv_line.append(ml.debit or 0.0)
                 #credit
@@ -108,6 +109,8 @@ class account_line_csv_export(osv.osv_memory):
                 csv_line.append(ml.functional_currency_id and ml.functional_currency_id.name and ml.functional_currency_id.name.encode('utf-8') or '')
             else:
                 #UTP-936: Now call the common method to calculate the output values
+                if ml.date:  # uf-2327 [FIX] posting date to context
+                    context['date'] = ml.date
                 amount = account_move_line_obj.calculate_output(cr, uid, currency_id, ml, round=False, context=context)
                 if amount < 0.0:
                     csv_line.append(0.0)
