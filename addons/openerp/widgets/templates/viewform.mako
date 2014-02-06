@@ -51,7 +51,7 @@
                                 <optgroup label="${_('Actions')}">
                                     <option value="nf">${_("New Filter")}</option>
                                     <option value="sf">${_("Save Filter")}</option>
-                                    <option value="mf">${_("Manage Filters")}</option>
+                                    ##<option value="mf">${_("Manage Filters")}</option>
                                 </optgroup>
                             </select>
                         </td>
