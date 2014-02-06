@@ -70,8 +70,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
-<!-- We get the length objects. We add Grand Total and columns header (2) and we add all subtotals for each account_id.code (so we sort objects, retrieve unique account_id.code and calculate the number of them). Which give the ExpandedRowCount value. -->
-<Table ss:ExpandedColumnCount="19" ss:ExpandedRowCount="${len(objects)+len(set([x.account_id and x.account_id.code for x in sorted(objects, key=lambda x: x.account_id and x.account_id.code)]))+2}" x:FullColumns="1" x:FullRows="1">
+<Table ss:ExpandedColumnCount="19" x:FullColumns="1" x:FullRows="1">
 % for x in range(0,19):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
@@ -85,7 +84,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   total = 0.0
   grand_total = 0.0
 %>
-% for o in sorted(objects, key=lambda x: x.account_id and x.account_id.code and x.account_id.code):
+% for o in objects:
 <%
   grand_total += o.amount
 %>
