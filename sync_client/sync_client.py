@@ -104,7 +104,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
 
             # Lock is acquired, so don't put any code outside the try...catch!!
             res = False
-            context = kwargs['context'] = dict(kwargs.get('context', {}))
+            context = kwargs['context'] = kwargs.get('context') is not None and dict(kwargs.get('context', {})) or {}
             try:
                 # more information to the logger
                 def add_information(logger):
