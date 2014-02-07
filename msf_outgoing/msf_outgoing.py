@@ -3410,8 +3410,8 @@ class stock_move(osv.osv):
             if not move.picking_id:
                 continue
 
-            if not move.has_to_be_resourced and not move.picking_id.has_to_be_resourced:
-                continue
+#            if not move.has_to_be_resourced and not move.picking_id.has_to_be_resourced:
+#                continue
 
             if move.state == 'cancel':
                 continue
