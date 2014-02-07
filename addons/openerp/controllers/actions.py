@@ -168,6 +168,8 @@ def execute_report(name, **data):
         bg_report = False
         background_id = ctx.get('background_id')
         max_attempt = ctx.get('background_time', 200)
+        report_name = 'report'
+
         if name != 'custom':
             proxy = rpc.RPCProxy('ir.actions.report.xml')
             res = proxy.search([('report_name','=', name)])
@@ -205,8 +207,6 @@ def execute_report(name, **data):
                     raise common.message(_('Printing aborted, too long delay'))
 
         cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
-        # report name
-        report_name = 'report'
         report_type = val['format']
 
         cherrypy.response.headers['Content-Disposition'] = 'filename="' + report_name + '.' + report_type + '"'
