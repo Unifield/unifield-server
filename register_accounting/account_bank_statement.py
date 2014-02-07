@@ -1452,7 +1452,9 @@ class account_bank_statement_line(osv.osv):
                 # Amount currency for "other line" is the opposite of "register line"
                 other_amount_currency = -register_amount_currency
             # Update values for register line
-            for el in ['is_transfer_with_change', 'transfer_amount']:
+            # FIXME: List fields to take instead of removing fields we don't want
+            # TODO: Make a guideline to explain what's to be done when you create a new column in register lines
+            for el in ['is_transfer_with_change', 'transfer_amount', 'imported_invoice_line_ids']:
                 if el in move_line_values:
                     del(move_line_values[el])
             move_line_values.update({'account_id': register_account_id, 'debit': register_debit, 'credit': register_credit, 
