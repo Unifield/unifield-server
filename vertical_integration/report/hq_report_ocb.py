@@ -151,6 +151,8 @@ class hq_report_ocb(report_sxw.report_sxw):
         period_name = period.name
         selection = form.get('selection', False)
         to_export = ['f'] # Default export value for exported field on analytic/move lines
+        year = '%s' % (strptime(first_day_of_period, '%Y-%m-%d').tm_year)
+        month = '%02d' % (strptime(first_day_of_period, '%Y-%m-%d').tm_mon)
         if not selection:
             raise osv.except_osv(_('Error'), _('No selection value for lines to select.'))
         if selection == 'all':
@@ -350,19 +352,19 @@ class hq_report_ocb(report_sxw.report_sxw):
         processrequests = [
             {
                 'headers': ['Name', 'Reference', 'Partner type', 'Active/inactive'],
-                'filename': instance_name + '_%(year)s%(month)s_Partners.csv',
+                'filename': instance_name + '_' + year + month + '_Partners.csv',
                 'key': 'partner',
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('res.partner', 'partner_type', 2)],
                 },
             {
                 'headers': ['Name', 'Identification No', 'Active', 'Employee type'],
-                'filename': instance_name + '_%(year)s%(month)s_Employees.csv',
+                'filename': instance_name + '_' + year + month + '_Employees.csv',
                 'key': 'employee',
                 },
             {
                 'headers': ['Instance', 'Code', 'Name', 'Journal type', 'Currency'],
-                'filename': instance_name + '_%(year)s%(month)s_Journals.csv',
+                'filename': instance_name + '_' + year + month + '_Journals.csv',
                 'key': 'journal',
                 'query_params': (tuple(instance_ids),),
                 'function': 'postprocess_selection_columns',
@@ -370,7 +372,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 },
             {
                 'headers': ['Name', 'Code', 'Type', 'Status'],
-                'filename': instance_name + '_%(year)s%(month)s_Cost Centres.csv',
+                'filename': instance_name + '_' + year + month + '_Cost Centres.csv',
                 'key': 'costcenter',
                 'query_params': (last_day_of_period, last_day_of_period, tuple(instance_ids)),
                 'function': 'postprocess_selection_columns',
@@ -378,19 +380,19 @@ class hq_report_ocb(report_sxw.report_sxw):
                 },
             {
                 'headers': ['CCY code', 'CCY name', 'Rate', 'Month'],
-                'filename': instance_name + '_%(year)s%(month)s_FX rates.csv',
+                'filename': instance_name + '_' + year + month + '_FX rates.csv',
                 'key': 'fxrate',
                 'query_params': (first_day_of_last_fy, last_day_of_period),
                 },
             {
                 'headers': ['Instance', 'Code', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance'],
-                'filename': instance_name + '_%(year)s%(month)s_Liquidity Balances.csv',
+                'filename': instance_name + '_' + year + month + '_Liquidity Balances.csv',
                 'key': 'liquidity',
                 'query_params': (tuple([period.code]), first_day_of_period, period.id, last_day_of_period, tuple(instance_ids)),
                 },
             {
                 'headers': ['Name', 'Code', 'Donor code', 'Grant amount', 'Reporting CCY', 'State'],
-                'filename': instance_name + '_%(year)s%(month)s_Financing contracts.csv',
+                'filename': instance_name + '_' + year + month + '_Financing contracts.csv',
                 'key': 'contract',
                 'query_params': (tuple(instance_ids),),
                 'function': 'postprocess_selection_columns',
@@ -398,7 +400,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 },
             {
                 'headers': ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit', 'Functional CCY'],
-                'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
+                'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
                 'key': 'rawdata',
                 'query_params': (first_day_of_period, last_day_of_period, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'delete_columns': [0],
@@ -406,14 +408,14 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'object': 'account.analytic.line',
                 },
             {
-                'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
+                'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
                 'key': 'bs_entries_consolidated',
                 'query_params': (period.id, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'function': 'postprocess_consolidated_entries',
                 'fnct_params': excluded_journal_types,
                 },
             {
-                'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
+                'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
                 'key': 'bs_entries',
                 'query_params': (period.id, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'delete_columns': [0],
