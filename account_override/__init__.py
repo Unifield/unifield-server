@@ -182,6 +182,11 @@ ACCOUNT_RESTRICTED_AREA = {
         ('user_type_code', '=', 'cash'),
         ('type', '=', 'liquidity'),
     ],
+    # CORRECTION WIZARD LINES
+    'correction_wizard': [
+        ('type', '!=', 'view'),
+        ('is_not_hq_correctible', '=', False), # Do not allow user to select accounts with "Not HQ correctible" set to True
+    ],
 }
 
 import res_currency
