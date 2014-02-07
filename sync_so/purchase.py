@@ -182,7 +182,7 @@ class purchase_order_sync(osv.osv):
         proc_ids = []
         order_ids = []
         order = self.browse(cr, uid, res_id, context=context)
-        pdb.set_trace()
+        #pdb.set_trace()
         for order_line in order.order_line:
             if order_line.original_purchase_line_id:
                 orig_line = line_obj.search(cr, uid, [('sync_order_line_db_id', '=', order_line.original_purchase_line_id)], context=context)
