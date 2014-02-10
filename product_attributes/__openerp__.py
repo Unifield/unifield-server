@@ -30,6 +30,7 @@
     'depends': ['product_expiry', 'product_manufacturer', 'sale', 'product_list', 'purchase'],
     'init_xml': [
         'security/ir.model.access.csv',
+        'wizard/product_where_used_view.xml',
         'data/product_section_code.xml',
         'data/product_supply_source.xml',
         'data/product_justification_code.xml',

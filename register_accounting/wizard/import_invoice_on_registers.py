@@ -94,10 +94,12 @@ class wizard_import_invoice(osv.osv_memory):
         'date': fields.date('Payment posting date'),
         'document_date': fields.date('Document Date'),
         'state': fields.selection( (('draft', 'Draft'), ('open', 'Open')), string="State", required=True),
+        'locked_ok': fields.boolean(u"Lock"),
     }
 
     _defaults = {
         'state': lambda *a: 'draft',
+        'locked_ok': lambda *a: False,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -188,60 +190,71 @@ class wizard_import_invoice(osv.osv_memory):
         """
         Take all given lines and do Journal Entries (account_move) for each partner_id
         """
-        # TODO: REFACTORING (create more functions)
-        # FIXME:
-        # - verify amount regarding foreign currency !!!
+        # Cancel the operation if it is already performed
         wizard = self.browse(cr, uid, ids[0], context=context)
+        if wizard.locked_ok:
+            return False
+        # Lock the operation to avoid repeated user's actions
+        self.write(cr, uid, ids, {'locked_ok': True}, context=context)
+        try:
+            # TODO: REFACTORING (create more functions)
+            # FIXME:
+            # - verify amount regarding foreign currency !!!
+            wizard = self.browse(cr, uid, ids[0], context=context)
 
-        # Prepare some values
-        move_line_obj = self.pool.get('account.move.line')
-        absl_obj = self.pool.get('account.bank.statement.line')
-        st = wizard.statement_id
-        st_id = st.id
-        journal_id = st.journal_id.id
-        period_id = st.period_id.id
-        cheque = False
-        if st.journal_id.type == 'cheque':
-            cheque = True
-        st_line_ids = []
+            # Prepare some values
+            move_line_obj = self.pool.get('account.move.line')
+            absl_obj = self.pool.get('account.bank.statement.line')
+            st = wizard.statement_id
+            st_id = st.id
+            journal_id = st.journal_id.id
+            period_id = st.period_id.id
+            cheque = False
+            if st.journal_id.type == 'cheque':
+                cheque = True
+            st_line_ids = []
 
-        # For each partner, do an account_move with all lines => lines merge
-        for line in wizard.invoice_lines_ids:
-            if cheque and not line.cheque_number:
-                raise osv.except_osv(_('Warning'), _('Please add a cheque number to red lines.'))
+            # For each partner, do an account_move with all lines => lines merge
+            for line in wizard.invoice_lines_ids:
+                if cheque and not line.cheque_number:
+                    raise osv.except_osv(_('Warning'), _('Please add a cheque number to red lines.'))
 
-            # Create register line
-            partial = False
-            if line.amount and line.amount_to_pay and line.amount < abs(line.amount_to_pay):
-                partial = ' - ' + _('partial pymt')
-            register_vals = {
-                'name': '%s Imported Invoice(s)%s' % (line.number_invoices, partial or ''),
-                'ref': line.ref,
-                'date': line.date,
-                'document_date': line.document_date,
-                'statement_id': st_id,
-                'account_id': line.account_id.id,
-                'partner_id': line.partner_id.id,
-                'amount': line.amount_currency < 0 and -line.amount or line.amount,
-                'imported_invoice_line_ids': [(4, x.id) for x in line.line_ids],
-            }
-            # if we come from cheque, add a column for that
-            if cheque:
-                register_vals.update({'cheque_number': line.cheque_number})
-            
-            absl_id = absl_obj.create(cr, uid, register_vals, context=context)
-            
-            # Temp post the register line
-            res = absl_obj.posting(cr, uid, [absl_id], 'temp', context=context)
+                # Create register line
+                partial = False
+                if line.amount and line.amount_to_pay and line.amount < abs(line.amount_to_pay):
+                    partial = ' - ' + _('partial pymt')
+                register_vals = {
+                    'name': '%s Imported Invoice(s)%s' % (line.number_invoices, partial or ''),
+                    'ref': line.ref,
+                    'date': line.date,
+                    'document_date': line.document_date,
+                    'statement_id': st_id,
+                    'account_id': line.account_id.id,
+                    'partner_id': line.partner_id.id,
+                    'amount': line.amount_currency < 0 and -line.amount or line.amount,
+                    'imported_invoice_line_ids': [(4, x.id) for x in line.line_ids],
+                }
+                # if we come from cheque, add a column for that
+                if cheque:
+                    register_vals.update({'cheque_number': line.cheque_number})
 
-            # Add id of register line in the exit of this function
-            st_line_ids.append(absl_id)
-        
-        if not len(st_line_ids):
-            raise osv.except_osv(_('Warning'), _('No line created!'))
-        # Close Wizard
-        # st_line_ids could be necessary for some tests
-        return { 'type': 'ir.actions.act_window_close', 'st_line_ids': st_line_ids, 'o2m_refresh': 'line_ids'}
+                absl_id = absl_obj.create(cr, uid, register_vals, context=context)
+
+                # Temp post the register line
+                res = absl_obj.posting(cr, uid, [absl_id], 'temp', context=context)
+
+                # Add id of register line in the exit of this function
+                st_line_ids.append(absl_id)
+
+            if not len(st_line_ids):
+                raise osv.except_osv(_('Warning'), _('No line created!'))
+            # Close Wizard
+            # st_line_ids could be necessary for some tests
+            return { 'type': 'ir.actions.act_window_close', 'st_line_ids': st_line_ids, 'o2m_refresh': 'line_ids'}
+        except Exception, exc:
+            # Release the lock if an error occurred during the process
+            self.write(cr, uid, ids, {'locked_ok': False}, context=context)
+            raise exc
 
 wizard_import_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

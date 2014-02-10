@@ -146,7 +146,7 @@
   </Row>
   <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 
-	<Row ss:Index="6">
+	<Row>
         	<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Proprietary Instance')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Register Name')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Journal Code')}</Data></Cell>

@@ -23,9 +23,12 @@
 
 from osv import osv
 from osv import fields
+from account_override import ACCOUNT_RESTRICTED_AREA
 from tools.translate import _
 from time import strftime
 import datetime
+import decimal_precision as dp
+import netsvc
 
 class account_account(osv.osv):
     _name = "account.account"
@@ -68,6 +71,246 @@ class account_account(osv.osv):
                 arg.append(('inactivation_date', '<=', cmp_date))
         return arg
 
+    #@@@override account.account_account.__compute
+    def __compute(self, cr, uid, ids, field_names, arg=None, context=None,
+                  query='', query_params=()):
+        """ compute the balance, debit and/or credit for the provided
+        account ids
+        Arguments:
+        `ids`: account ids
+        `field_names`: the fields to compute (a list of any of
+                       'balance', 'debit' and 'credit')
+        `arg`: unused fields.function stuff
+        `query`: additional query filter (as a string)
+        `query_params`: parameters for the provided query string
+                        (__compute will handle their escaping) as a
+                        tuple
+        """
+        mapping = {
+            'balance': "COALESCE(SUM(l.debit),0) " \
+                       "- COALESCE(SUM(l.credit), 0) as balance",
+            'debit': "COALESCE(SUM(l.debit), 0) as debit",
+            'credit': "COALESCE(SUM(l.credit), 0) as credit"
+        }
+        #get all the necessary accounts
+        children_and_consolidated = self._get_children_and_consol(cr, uid, ids, context=context)
+        #compute for each account the balance/debit/credit from the move lines
+        accounts = {}
+        sums = {}
+        # Add some query/query_params regarding context
+        link = " "
+        if context.get('currency_id', False):
+            if query:
+                link = " AND "
+            query += link + 'currency_id = %s'
+            query_params += tuple([context.get('currency_id')])
+        link = " "
+        if context.get('instance_ids', False):
+            if query:
+                link = " AND "
+            instance_ids = context.get('instance_ids')
+            if isinstance(instance_ids, (int, long)):
+                instance_ids = [instance_ids]
+            if len(instance_ids) == 1:
+                query += link + 'l.instance_id = %s'
+            else:
+                query += link + 'l.instance_id in %s'
+            query_params += tuple(instance_ids)
+        # Do normal process
+        if children_and_consolidated:
+            aml_query = self.pool.get('account.move.line')._query_get(cr, uid, context=context)
+
+            wheres = [""]
+            if query.strip():
+                wheres.append(query.strip())
+            if aml_query.strip():
+                wheres.append(aml_query.strip())
+            filters = " AND ".join(wheres)
+            # target_move from chart of account wizard
+            filters = filters.replace("AND l.state <> 'draft'", '')
+            prefilters = " "
+            if context.get('move_state', False):
+                prefilters += "AND l.move_id = m.id AND m.state = '%s'" % context.get('move_state')
+            else:
+                prefilters += "AND l.move_id = m.id AND m.state in ('posted', 'draft')"
+            # Notifications
+            self.logger.notifyChannel('account_override.'+self._name, netsvc.LOG_DEBUG,
+                                      'Filters: %s'%filters)
+            # IN might not work ideally in case there are too many
+            # children_and_consolidated, in that case join on a
+            # values() e.g.:
+            # SELECT l.account_id as id FROM account_move_line l
+            # INNER JOIN (VALUES (id1), (id2), (id3), ...) AS tmp (id)
+            # ON l.account_id = tmp.id
+            # or make _get_children_and_consol return a query and join on that
+            request = ("SELECT l.account_id as id, " +\
+                       ', '.join(map(mapping.__getitem__, field_names)) +
+                       " FROM account_move_line l, account_move m" +\
+                       " WHERE l.account_id IN %s " \
+                            + prefilters + filters +
+                       " GROUP BY l.account_id")
+            params = (tuple(children_and_consolidated),) + query_params
+            cr.execute(request, params)
+            self.logger.notifyChannel('account_override.'+self._name, netsvc.LOG_DEBUG,
+                                      'Status: %s'%cr.statusmessage)
+
+            for res in cr.dictfetchall():
+                accounts[res['id']] = res
+
+            # consolidate accounts with direct children
+            children_and_consolidated.reverse()
+            brs = list(self.browse(cr, uid, children_and_consolidated, context=context))
+            currency_obj = self.pool.get('res.currency')
+            while brs:
+                current = brs[0]
+                brs.pop(0)
+                for fn in field_names:
+                    sums.setdefault(current.id, {})[fn] = accounts.get(current.id, {}).get(fn, 0.0)
+                    for child in current.child_id:
+                        if child.company_id.currency_id.id == current.company_id.currency_id.id:
+                            sums[current.id][fn] += sums[child.id][fn]
+                        else:
+                            sums[current.id][fn] += currency_obj.compute(cr, uid, child.company_id.currency_id.id, current.company_id.currency_id.id, sums[child.id][fn], context=context)
+        res = {}
+        null_result = dict((fn, 0.0) for fn in field_names)
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+        for id in ids:
+            res[id] = sums.get(id, null_result)
+            # If output_currency_id in context, we change computation
+            for f_name in ('debit', 'credit', 'balance'):
+                if context.get('output_currency_id', False) and res[id].get(f_name, False):
+                    new_amount = currency_obj.compute(cr, uid, context.get('output_currency_id'), company_currency, res[id].get(f_name), context=context)
+                    res[id][f_name] = new_amount
+        return res
+    #@@@end
+
+    def _get_is_analytic_addicted(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        An account is dependant on analytic distribution in these cases:
+        - the account is expense (user_type_code == 'expense')
+
+        Some exclusive cases can be add in the system if you configure your company:
+        - either you also take all income account (user_type_code == 'income') 
+        - or you take accounts that are income + 7xx (account code begins with 7)
+        """
+        # Some checks
+        if context is None:
+            context = {}
+        res = {}
+        company_account_active = False
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        if company and company.additional_allocation:
+            company_account_active = company.additional_allocation
+        company_account = 7 # User for accounts that begins by "7"
+        # Prepare result
+        for account in self.browse(cr, uid, ids, context=context):
+            res[account.id] = False
+            if account.user_type_code == 'expense':
+                res[account.id] = True
+            elif account.user_type_code == 'income':
+                if not company_account_active:
+                    res[account.id] = True
+                elif company_account_active and account.code.startswith(str(company_account)):
+                    res[account.id] = True
+        return res
+
+    def _search_is_analytic_addicted(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Search analytic addicted accounts regarding same criteria as those from _get_is_analytic_addicted method.
+        """
+        # Checks
+        if context is None:
+            context = {}
+        arg = []
+        company_account_active = False
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        if company and company.additional_allocation:
+            company_account_active = company.additional_allocation
+        company_account = "7"
+        for x in args:
+            if x[0] == 'is_analytic_addicted' and ((x[1] in ['=', 'is'] and x[2] is True) or (x[1] in ['!=', 'is not', 'not'] and x[2] is False)):
+                arg.append(('|'))
+                arg.append(('user_type.code', '=', 'expense'))
+                if company_account_active:
+                     arg.append(('&'))
+                arg.append(('user_type.code', '=', 'income'))
+                if company_account_active:
+                    arg.append(('code', '=like', '%s%%' % company_account))
+            elif x[0] == 'is_analytic_addicted' and ((x[1] in ['=', 'is'] and x[2] is False) or (x[1] in ['!=', 'is not', 'not'] and x[2] is True)):
+                arg.append(('user_type.code', '!=', 'expense'))
+                if company_account_active:
+                    arg.append(('|'))
+                    arg.append(('user_type.code', '!=', 'income'))
+                    arg.append(('code', 'not like', '%s%%' % company_account))
+                else:
+                    arg.append(('user_type.code', '!=', 'income'))
+            elif x[0] != 'is_analytic_addicted':
+                arg.append(x)
+            else:
+                raise osv.except_osv(_('Error'), _('Operation not implemented!'))
+        return arg
+
+    def _get_restricted_area(self, cr, uid, ids, field_name, args, context=None):
+        """
+        FAKE METHOD
+        """
+        # Check
+        if context is None:
+            context = {}
+        res = {}
+        for account_id in ids:
+            res[account_id] = True
+        return res
+
+    def _search_restricted_area(self, cr, uid, ids, name, args, context=None):
+        """
+        Search the right domain to apply to this account filter.
+        For this, it uses the "ACCOUNT_RESTRICTED_AREA" variable in which we list all well-known cases.
+        The key args is "restricted_area", the param is like "register_lines".
+        In ACCOUNT_RESTRICTED_AREA, we use the param as key. It so return the domain to apply.
+        If no domain, return an empty domain.
+        """
+        # Check
+        if context is None:
+            context = {}
+        arg = []
+        for x in args:
+            if x[0] == 'restricted_area' and x[2]:
+                if x[2] in ACCOUNT_RESTRICTED_AREA:
+                    for subdomain in ACCOUNT_RESTRICTED_AREA[x[2]]:
+                        arg.append(subdomain)
+            elif x[0] != 'restricted_area':
+                arg.append(x)
+            else:
+                raise osv.except_osv(_('Error'), _('Operation not implemented!'))
+        return arg
+
+    def _get_fake_cash_domain(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Fake method for domain
+        """
+        if context is None:
+            context = {}
+        res = {}
+        for cd_id in ids:
+            res[cd_id] = True
+        return res
+
+    def _search_cash_domain(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Return a given domain (defined in ACCOUNT_RESTRICTED_AREA variable)
+        """
+        if context is None:
+            context = {}
+        arg = []
+        for x in args:
+            if x[0] and x[1] == '=' and x[2]:
+                if x[2] in ['cash', 'bank', 'cheque']:
+                    arg.append(('restricted_area', '=', 'journals'))
+            else:
+                raise osv.except_osv(_('Error'), _('Operation not implemented!'))
+        return arg
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'), 
@@ -78,6 +321,12 @@ class account_account(osv.osv):
             """),
         'shrink_entries_for_hq': fields.boolean("Shrink entries for HQ export", help="Check this attribute if you want to consolidate entries on this account before they are exported to the HQ system."),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
+        'is_analytic_addicted': fields.function(_get_is_analytic_addicted, fnct_search=_search_is_analytic_addicted, method=True, type='boolean', string='Analytic-a-holic?', help="Is this account addicted on analytic distribution?", store=False, readonly=True),
+        'restricted_area': fields.function(_get_restricted_area, fnct_search=_search_restricted_area, type='boolean', method=True, string="Is this account allowed?"),
+        'cash_domain': fields.function(_get_fake_cash_domain, fnct_search=_search_cash_domain, method=True, type='boolean', string="Domain used to search account in journals", help="This is only to change domain in journal's creation."),
+        'balance': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Balance', multi='balance'),
+        'debit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Debit', multi='balance'),
+        'credit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Credit', multi='balance'),
     }
 
     _defaults = {
@@ -152,6 +401,8 @@ class account_move(osv.osv):
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \
             help="This indicates which Journal Type is attached to this Journal Entry"),
+        'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
+            help="This field contains the information related to the numbering of the lines of this journal entry."),
     }
 
     _defaults = {
@@ -203,6 +454,30 @@ class account_move(osv.osv):
             raise osv.except_osv(_('Error'), _("Journal item does not have same posting date (%s) as journal entry (%s).") % (move_line.date, move_line.move_id.date))
         return res
 
+    def create_sequence(self, cr, uid, vals, context=None):
+        """
+        Create new entry sequence for every new journal entry
+        """
+        seq_pool = self.pool.get('ir.sequence')
+        seq_typ_pool = self.pool.get('ir.sequence.type')
+
+        name = 'Journal Items L' # For Journal Items Lines
+        code = 'account.move'
+
+        types = {
+            'name': name,
+            'code': code
+        }
+        seq_typ_pool.create(cr, uid, types)
+
+        seq = {
+            'name': name,
+            'code': code,
+            'prefix': '',
+            'padding': 0,
+        }
+        return seq_pool.create(cr, uid, seq)
+
     def create(self, cr, uid, vals, context=None):
         """
         Change move line's sequence (name) by using instance move prefix.
@@ -225,17 +500,27 @@ class account_move(osv.osv):
                 context['document_date'] = vals.get('document_date')
             if 'date' in vals:
                 context['date'] = vals.get('date')
-        # Create sequence for move lines
-        period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, vals['date'])
-        if not period_ids:
-            raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (vals['date'] or ''))
-        period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
-        # Context is very important to fetch the RIGHT sequence linked to the fiscalyear!
-        sequence_number = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': period.fiscalyear_id.id})
-        if instance and journal and sequence_number and ('name' not in vals or vals['name'] == '/'):
-            if not instance.move_prefix:
-                raise osv.except_osv(_('Warning'), _('No move prefix found for this instance! Please configure it on Company view.'))
-            vals['name'] = "%s-%s-%s" % (instance.move_prefix, journal.code, sequence_number)
+
+        if context.get('seqnums',False):
+            # utp913 - reuse sequence numbers if in the context
+            vals['name'] = context['seqnums'][journal.id]  
+        else:
+            # Create sequence for move lines
+            period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, vals['date'])
+            if not period_ids:
+                raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (vals['date'] or ''))
+            period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
+            # Context is very important to fetch the RIGHT sequence linked to the fiscalyear!
+            sequence_number = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': period.fiscalyear_id.id})
+            if instance and journal and sequence_number and ('name' not in vals or vals['name'] == '/'):
+                if not instance.move_prefix:
+                    raise osv.except_osv(_('Warning'), _('No move prefix found for this instance! Please configure it on Company view.'))
+                vals['name'] = "%s-%s-%s" % (instance.move_prefix, journal.code, sequence_number)
+
+        # Create a sequence for this new journal entry
+        res_seq = self.create_sequence(cr, uid, vals, context)
+        vals.update({'sequence_id': res_seq,})
+        # Default behaviour (create)
         res = super(account_move, self).create(cr, uid, vals, context=context)
         self._check_document_date(cr, uid, res, context)
         self._check_date_in_period(cr, uid, res, context)

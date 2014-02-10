@@ -8,7 +8,7 @@
             <field name="view_mode">tree,form</field>
             <!-- 'assigned' is for 'Available' -->
             <field name="domain">[('type','=','in'), ('state', 'not in', ['done', 'cancel'])]</field>
-            <field name="context">{'contact_display': 'partner_address',"search_default_available":1, 'wh_dashboard': True, 'pick_type': 'incoming'}</field>
+            <field name="context">{'contact_display': 'partner_address',"search_default_available":1, 'wh_dashboard': True, 'pick_type': 'incoming', 'picking_type': 'incoming_shipment'}</field>
             <field name="search_view_id" ref="stock.view_picking_in_search"/>
         </record>
         <record id="action_picking_tree_available_tree" model="ir.actions.act_window.view">

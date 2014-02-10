@@ -94,6 +94,9 @@ class account_move_line(osv.osv):
             # False if the account is used in a cash/bank/cheque journal
             if ml.account_id.id in account_ids:
                 res[ml.id] = False
+            # False if this line is a revaluation
+            if ml.journal_id.type == 'revaluation':
+                res[ml.id] = False
         return res
 
     _columns = {
@@ -647,7 +650,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Retrieve right journal
             journal_id = j_corr_id
 
-            # Abort process if the move line is a donation expense account and that new account is not a donation expense account
+            # Abort process if the move line is a donation account (type for specific treatment) and that new account is not a donation account
             if ml.account_id.type_for_register == 'donation':
                 journal_id = j_extra_id
                 if not journal_id:
@@ -704,7 +707,6 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'journal_id': journal_id,
                 'corrected_line_id': ml.id,
                 'account_id': new_account_id,
-                'ref': ml.ref,
                 'source_date': ml.source_date or ml.date,
                 'have_an_historic': True,
                 'document_date': ml.document_date,
@@ -742,7 +744,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 # keep initial analytic line as corrected line if it the 2nd or more correction on this line
                 if ml.corrected_line_id and search_data[0] == ml.id and first_analytic_line_id:
                     search_data[1].update({'last_corrected_id': first_analytic_line_id, 'have_an_historic': True,})
-                search_ids = al_obj.search(cr, uid, [('move_id', '=', search_data[0])])
+                search_ids = al_obj.search(cr, uid, [('move_id', '=', search_data[0]), ('reversal_origin', '=', False), ('last_corrected_id', '=', False)])
                 if search_ids:
                     al_obj.write(cr, uid, search_ids, search_data[1])
             # Add this line to succeded lines

@@ -53,7 +53,8 @@ class account_bank_statement_line(osv.osv):
         # UTP-317: Check partner (if active or not)
         if res:
             absl = self.browse(cr, uid, [res], context)
-            if absl and absl[0] and absl[0].partner_id and not absl[0].partner_id.active:
+            # UF-2300: for the case of sync, the line can also be created if the partner is inactive
+            if not context.get('sync_update_execution', False) and absl and absl[0] and absl[0].partner_id and not absl[0].partner_id.active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (absl[0].partner_id.name or '',))
         return res
     _columns = {

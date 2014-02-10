@@ -1774,11 +1774,6 @@ class stock_picking(osv.osv):
     #_order = 'origin desc, name asc'
     _order = 'name desc'
 
-    def create(self, cr, uid, vals, context=None):
-        if not 'move_lines' in vals:
-            vals['line_state'] = 'empty'
-        return super(stock_picking, self).create(cr, uid, vals, context=context)
-
     def onchange_move(self, cr, uid, ids, context=None):
         '''
         Display or not the 'Confirm' button on Picking Ticket
@@ -1857,8 +1852,12 @@ class stock_picking(osv.osv):
                     values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id]['qty_to_pick_sm'] += move.product_qty
                     # total quantity from SALE_ORDER_LINES, which can be different from the one from stock moves
                     # if stock moves have been created manually in the picking, no present in the so, equal to 0 if not linked to an so
-                    values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id].setdefault('qty_to_pick_so', 0)
-                    values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id]['qty_to_pick_so'] += move.sale_line_id and move.sale_line_id.product_uom_qty or 0.0 
+                    
+                    # UF-2227: Qty of FO line is only taken once, and use it, do not accumulate for the case the line got split!
+                    if 'qty_to_pick_so' not in values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id]:
+                        values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id].setdefault('qty_to_pick_so', 0)
+                        values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id]['qty_to_pick_so'] += move.sale_line_id and move.sale_line_id.product_uom_qty or 0.0
+
                     # store the object for info retrieval
                     values[sale_line_id]['products'][move.product_id.id]['obj'] = move.product_id
                     
@@ -2392,6 +2391,14 @@ class stock_picking(osv.osv):
 
                     new_move_id = move_obj.copy(cr, uid, move.id, vals, context=context)
 
+                    # Compute the chained location as an initial confirmation of move
+                    if move.state == 'assigned':
+                        new_move = move_obj.browse(cr, uid, new_move_id, context=context)
+                        tmp_ac = context.get('action_confirm', False)
+                        context['action_confirm'] = True
+                        move_obj.create_chained_picking(cr, uid, [new_move], context=context)
+                        context['action_confirm'] = tmp_ac
+
                     # Update all linked objects to avoid close of related documents
                     if move.id not in keep_move or not keep_move[move.id]:
                         move_obj.update_linked_documents(cr, uid, move.id, new_move_id, context=context)
@@ -2405,14 +2412,14 @@ class stock_picking(osv.osv):
             if pick_to_check:
                 for ptc_id in pick_to_check:
                     ptc = self.browse(cr, uid, ptc_id, context=context)
-                    if all(m.product_qty == 0.00 and m.state in ('done', 'cancel') for m in ptc.move_lines):
+                    if all(m.product_qty == 0.00 or m.state in ('done', 'cancel') for m in ptc.move_lines):
                         ptc.action_done(context=context)
 
             # trigger workflow (confirm picking)
             self.draft_force_assign(cr, uid, [new_pick_id or obj.id])
 
             for s in moves_states:
-                self.pool.get('stock.move').write(cr, uid, s, {'state': moves_states[s]}, context=context)
+                move_obj.write(cr, uid, [s], {'state': moves_states[s]}, context=context)
 
             # check availability
             self.action_assign(cr, uid, [new_pick_id or obj.id], context=context)
@@ -2420,7 +2427,7 @@ class stock_picking(osv.osv):
             if 'assigned' in moves_states.values():
                 # Add an empty write to display the 'Process' button on OUT
                 self.write(cr, uid, [new_pick_id or obj.id], {'state': 'assigned'}, context=context)
-        
+
             # TODO which behavior
             data_obj = self.pool.get('ir.model.data')
             view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
@@ -2676,6 +2683,9 @@ class stock_picking(osv.osv):
                     total_qty = uom_obj._compute_qty(cr, uid, partial['product_uom'], partial['product_qty'], move.product_uom.id)
                     # the quantity
                     count = count + total_qty
+                    orig_qty = move.product_qty
+                    if move.original_qty_partial and move.original_qty_partial != -1:
+                        orig_qty = move.original_qty_partial
                     if first:
                         first = False
                         # update existing move
@@ -2685,6 +2695,7 @@ class stock_picking(osv.osv):
                                   'product_uos': partial['product_uom'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'line_number': partial['line_number'],
+                                  'original_qty_partial': orig_qty,
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
                         values = self.do_validate_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
@@ -2699,6 +2710,7 @@ class stock_picking(osv.osv):
                                   'product_uos': partial['product_uom'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'line_number': partial['line_number'],
+                                  'original_qty_partial': orig_qty,
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
                         values = self.do_validate_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
@@ -3410,6 +3422,9 @@ class stock_move(osv.osv):
                 continue
 
             pick_type = move.picking_id.type
+            pick_subtype = move.picking_id.subtype
+            pick_state = move.picking_id.state
+            subtype_ok = pick_type == 'out' and (pick_subtype == 'standard' or (pick_subtype == 'picking' and pick_state == 'draft'))
 
             if pick_type == 'in' and move.purchase_line_id:
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
@@ -3418,7 +3433,7 @@ class stock_move(osv.osv):
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
                         sol_obj.add_resource_line(cr, uid, sol.id, False, diff_qty, context=context)
                     sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, context=context)
-            elif pick_type in ('internal', 'out') and move.sale_line_id:
+            elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
                     sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
@@ -3664,6 +3679,10 @@ class sale_order(osv.osv):
             move_data['location_dest_id'] = self.read(cr, uid, ids, ['location_requestor_id'], context=context)[0]['location_requestor_id'][0]
             if self.pool.get('stock.location').browse(cr, uid, move_data['location_dest_id'], context=context).usage in ('supplier', 'customer'):
                 move_data['type'] = 'out'
+            if 'sale_line_id' in move_data and move_data['sale_line_id']:
+                sale_line = self.pool.get('sale.order.line').browse(cr, uid, move_data['sale_line_id'], context=context)
+                if sale_line.type == 'make_to_stock':
+                    move_data['location_id'] = sale_line.location_id and sale_line.location_id.id or move_data['location_id']
         else:
             # first go to packing location (PICK/PACK/SHIP) or output location (Simple OUT)
             # according to the configuration
@@ -3684,6 +3703,8 @@ class sale_order(osv.osv):
                 move_data['move_cross_docking_ok'] = True
                 # Update the stock.picking
                 self.pool.get('stock.picking').write(cr, uid, move_data['picking_id'], {'cross_docking_ok': True}, context=context)
+            elif sale_line.type == 'make_to_stock':
+                move_data['location_id'] = sale_line.location_id and sale_line.location_id.id or order.shop_id.warehouse_id.lot_stock_id.id
 
         move_data['state'] = 'confirmed'
         return move_data

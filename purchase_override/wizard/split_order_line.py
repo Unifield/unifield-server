@@ -176,13 +176,13 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                         # the correct line number according to new line number policy is set in po_line_values_hook of order_line_number/order_line_number.py/procurement_order
                         new_po_ids = po_line_obj.search(cr, uid, [('procurement_id', '=', new_proc_id)], context=context)
                         po_line_obj.action_confirm(cr, uid, new_po_ids, context=context)
-                 #       po_line_obj.write(cr, uid, [split.purchase_line_id.id], {'move_dest_id': new_move_id}, context=context)
-
+                        if context.get('from_simu_screen'):
+                            return new_po_ids[0]
                 else:
                     # 2) the check box impact corresponding Fo is not check or does not apply (po from scratch or from replenishment),
                     #    a new line is simply created
                     # Create the new line
-                    po_copy_data = {'parent_line_id': split.purchase_line_id.id,
+                    po_copy_data = {'is_line_split': True, # UTP-972: Indicate only that the line is a split one
                                     'change_price_manually': split.purchase_line_id.change_price_manually,
                                     'price_unit': split.purchase_line_id.price_unit,
                                     'move_dest_id': split.purchase_line_id.move_dest_id.id,
@@ -199,6 +199,13 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                     # if original po line is confirmed, we action_confirm new line
                     if split.purchase_line_id.state == 'confirmed':
                         po_line_obj.action_confirm(cr, uid, [new_line_id], context=context)
+
+                    if context.get('from_simu_screen'):
+                        return new_line_id
+
+        if context.get('from_simu_screen'):
+            return False
+
         return {'type': 'ir.actions.act_window_close'}
 
     def line_qty_change(self, cr, uid, ids, original_qty, new_line_qty, context=None):

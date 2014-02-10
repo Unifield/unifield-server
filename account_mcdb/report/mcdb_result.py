@@ -24,30 +24,67 @@
 from report import report_sxw
 import pooler
 import csv
-from tempfile import TemporaryFile
 from report_webkit.webkit_report import WebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+import zipfile
+import tempfile
+import os
 
+limit_tozip = 15000
 
-def getIds(self, cr, uid, ids, context):
+def getIds(self, cr, uid, ids, limit=5000, context=None):
     if not context:
         context = {}
-    if context.get('from_domain') and 'search_domain' in context:
+    if context.get('from_domain') and 'search_domain' in context and not context.get('export_selected'):
         table_obj = pooler.get_pool(cr.dbname).get(self.table)
-        ids = table_obj.search(cr, uid, context.get('search_domain'), limit=5000)
+        ids = table_obj.search(cr, uid, context.get('search_domain'), limit=limit)
     return ids
 
 def getObjects(self, cr, uid, ids, context):
     ids = getIds(self, cr, uid, ids, context)
     return super(self.__class__, self).getObjects(cr, uid, ids, context)
 
-def create_csv(self, cr, uid, ids, data, context=None):
-    if not context:
+def getIterObjects(self, cr, uid, ids, context):
+    if context is None:
         context = {}
-    ids = getIds(self, cr, uid, ids, context)
+    ids = getIds(self, cr, uid, ids, limit=65000, context=context)
+    len_ids = len(ids)
+    l = 0
+    steps = 1000
+    pool =  pooler.get_pool(cr.dbname)
+    table_obj = pool.get(self.table)
+    field_process = None
+    back_browse = False
+    if context.get('background_id'):
+         back_browse = self.pool.get('memory.background.report').browse(cr, uid, context['background_id'])
+
+    if hasattr(self, '_fields_process'):
+        field_process = self._fields_process
+    # we need to sort analytic line by account code
+    if context.get('sort_by_account_code') and len_ids > 1:
+        cr.execute('select an.id from account_analytic_line an left join account_analytic_account a on an.account_id = a.id where an.id in %s order by a.code', (tuple(ids), ))
+        ids = []
+        for i in cr.fetchall():
+            ids.append(i[0])
+
+    while l < len_ids:
+        if back_browse:
+            back_browse.update_percent(l/float(len_ids))
+        old_l = l
+        l = l + steps
+        new_ids = ids[old_l:l]
+        if new_ids:
+            for o in table_obj.browse(cr, uid, new_ids, list_class=report_sxw.browse_record_list, context=context, fields_process=field_process):
+                yield o
+    raise StopIteration
+
+def create_csv(self, cr, uid, ids, data, context=None):
+    if context is None:
+        context = {}
+    ids = getIds(self, cr, uid, ids, limit=65000, context=context)
     pool = pooler.get_pool(cr.dbname)
     obj = pool.get('account.line.csv.export')
-    outfile = TemporaryFile('w+')
+    outfile = tempfile.TemporaryFile('w+')
     writer = csv.writer(outfile, quotechar='"', delimiter=',')
 
     if self.table == 'account.analytic.line':
@@ -60,6 +97,15 @@ def create_csv(self, cr, uid, ids, data, context=None):
     outfile.seek(0)
     out = outfile.read()
     outfile.close()
+    if len(ids) > limit_tozip:
+        null, tmpzipname = tempfile.mkstemp()
+        zf = zipfile.ZipFile(tmpzipname, 'w')
+        zf.writestr('export_result.csv', out)
+        zf.close()
+        out = file(tmpzipname, 'rb').read()
+        os.unlink(tmpzipname)
+        return (out, 'zip')
+
     return (out, 'csv')
 
 
@@ -87,17 +133,41 @@ class account_move_line_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         super(account_move_line_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
+    def getObjects(self, cr, uid, ids, context):
+        return getIterObjects(self, cr, uid, ids, context)
+
     def create(self, cr, uid, ids, data, context=None):
-        ids = getIds(self, cr, uid, ids, context)
-        a = super(account_move_line_report_xls, self).create(cr, uid, ids, data, context)
-        return (a[0], 'xls')
+        ids = getIds(self, cr, uid, ids, limit=65000, context=context)
+        if context is None:
+            context = {}
+        if len(ids) > limit_tozip:
+            context['zipit'] = True
+        return super(account_move_line_report_xls, self).create(cr, uid, ids, data, context=context)
 
 class parser_account_move_line(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(parser_account_move_line, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'reconcile_name': self.reconcile_name,
+            #'getSub': self.getSub,
         })
+
+#    def getSub(self):
+#        len_ids = len(self.localcontext.get('ids'))
+#        obj = self.pool.get('account.move.line')
+#        ctx = {}
+#        l = 0
+#        steps = 1000
+#        output_cur = self.localcontext.get('data',{}).get('context', {}).get('output_currency_id')
+#        if output_cur and output_cur != self.localcontext.get('company').currency_id.id:
+#            ctx['output_currency_id'] = output_cur
+#        else:
+#            output_cur = False
+#        while l < len_ids:
+#            old_l = l
+#            l = l+steps
+#            yield obj.browse(self.cr, self.uid, self.localcontext.get('ids')[old_l:l], context={'output_currency_id': output_cur})
+#        yield []
 
     def reconcile_name(self, r_id=None, context=None):
         if not r_id:
@@ -136,9 +206,12 @@ class account_analytic_line_report_xls(SpreadsheetReport):
         super(account_analytic_line_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
-        ids = getIds(self, cr, uid, ids, context)
-        a = super(account_analytic_line_report_xls, self).create(cr, uid, ids, data, context)
-        return (a[0], 'xls')
+        ids = getIds(self, cr, uid, ids, limit=65000, context=context)
+        if context is None:
+            context = {}
+        if len(ids) > limit_tozip:
+            context['zipit'] = True
+        return super(account_analytic_line_report_xls, self).create(cr, uid, ids, data, context)
 
 account_analytic_line_report_xls('report.account.analytic.line_xls','account.analytic.line','addons/account_mcdb/report/report_account_analytic_line_xls.mako')
 
@@ -146,10 +219,19 @@ class account_analytic_line_free_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         super(account_analytic_line_free_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
+    def getObjects(self, cr, uid, ids, context):
+        if context is None:
+            context = {}
+        context['sort_by_account_code'] = 1
+        return getIterObjects(self, cr, uid, ids, context)
+
     def create(self, cr, uid, ids, data, context=None):
         ids = getIds(self, cr, uid, ids, context)
-        a = super(account_analytic_line_free_report_xls, self).create(cr, uid, ids, data, context)
-        return (a[0], 'xls')
+        if context is None:
+            context = {}
+        if len(ids) > limit_tozip:
+            context['zipit'] = True
+        return super(account_analytic_line_free_report_xls, self).create(cr, uid, ids, data, context)
 
 account_analytic_line_free_report_xls('report.account.analytic.line.free_xls','account.analytic.line','addons/account_mcdb/report/report_account_analytic_line_free_xls.mako')
 

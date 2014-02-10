@@ -47,9 +47,6 @@ class procurement_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
-            logging.getLogger('init').info('PRO: set from yml test to True')
-            vals['from_yml_test'] = True
         return super(procurement_order, self).create(cr, uid, vals, context=context)
 
     def action_confirm(self, cr, uid, ids, context=None):
@@ -176,6 +173,52 @@ class stock_picking(osv.osv):
         
         return res
 
+    def _get_is_esc(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the partner is an ESC
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for pick in self.browse(cr, uid, ids, context=context):
+            res[pick.id] = pick.partner_id2 and pick.partner_id2.partner_type == 'esc' or False
+
+        return res
+
+    def _get_dpo_incoming(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the picking is an incoming and if one the stock move are linked to dpo_line
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for pick in self.browse(cr, uid, ids, context=context):
+            res[pick.id] = {'dpo_incoming': False,
+                            'dpo_out': False}
+            if pick.type == 'in':
+                for move in pick.move_lines:
+                    if move.sync_dpo or move.dpo_line_id:
+                        res[pick.id]['dpo_incoming'] = True
+                        break
+
+            if pick.type == 'out' and pick.subtype in ('standard', 'picking'):
+                for move in pick.move_lines:
+                    if move.sync_dpo or move.dpo_line_id:
+                        res[pick.id]['dpo_out'] = True
+                        break
+        return res
+
+    def _get_dpo_picking_ids(self, cr, uid, ids, context=None):
+        result = []
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.picking_id and obj.picking_id.id not in result:
+                result.append(obj.picking_id.id)
+
+        return result
+
     _columns = {
         'state': fields.selection([
             ('draft', 'Draft'),
@@ -207,6 +250,13 @@ class stock_picking(osv.osv):
         'shipment_ref': fields.char(string='Ship Reference', size=256, readonly=True), #UF-1617: indicating the reference to the SHIP object at supplier
         'move_lines': fields.one2many('stock.move', 'picking_id', 'Internal Moves', states={'done': [('readonly', True)], 'cancel': [('readonly', True)], 'import': [('readonly', True)]}),
         'state_before_import': fields.char(size=64, string='State before import', readonly=True),
+        'is_esc': fields.function(_get_is_esc, method=True, string='ESC Partner ?', type='boolean', store=False),
+        'dpo_incoming': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Incoming', multi='dpo',
+                                        store={'stock.move': (_get_dpo_picking_ids, ['sync_dpo', 'dpo_line_id', 'picking_id'], 10,),
+                                               'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
+        'dpo_out': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Out', multi='dpo',
+                                        store={'stock.move': (_get_dpo_picking_ids, ['sync_dpo', 'dpo_line_id', 'picking_id'], 10,),
+                                               'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
@@ -276,10 +326,6 @@ class stock_picking(osv.osv):
         if context.get('not_workflow', False):
             vals['from_wkf'] = False
     
-        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
-            logging.getLogger('init').info('PICKING: set from yml test to True')
-            vals['from_yml_test'] = True
-            
         if not vals.get('partner_id2') and vals.get('address_id'):
             addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
             vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
@@ -321,6 +367,40 @@ class stock_picking(osv.osv):
         res = super(stock_picking, self).write(cr, uid, ids, vals, context=context)
         
         return res
+
+    def go_to_simulation_screen(self, cr, uid, ids, context=None):
+        '''
+        Return the simulation screen
+        '''
+        simu_obj = self.pool.get('wizard.import.in.simulation.screen')
+        line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        picking_id = ids[0]
+        if not picking_id:
+            raise osv.except_osv(_('Error'), _('No picking defined'))
+
+        simu_id = simu_obj.create(cr, uid, {'picking_id': picking_id,}, context=context)
+        for move in self.browse(cr, uid, picking_id, context=context).move_lines:
+            if move.state not in ('draft', 'cancel', 'done'):
+                line_obj.create(cr, uid, {'move_id': move.id,
+                                          'simu_id': simu_id,
+                                          'move_product_id': move.product_id and move.product_id.id or False,
+                                          'move_product_qty': move.product_qty or 0.00,
+                                          'move_uom_id': move.product_uom and move.product_uom.id or False,
+                                          'move_price_unit': move.price_unit or move.product_id.standard_price,
+                                          'move_currency_id': move.price_currency_id and move.price_currency_id.id or False,
+                                          'line_number': move.line_number,}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.in.simulation.screen',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'target': 'same',
+                'res_id': simu_id,
+                'context': context}
     
     def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
         '''
@@ -330,9 +410,10 @@ class stock_picking(osv.osv):
         d = {}
         
         if not partner_id:
-            v.update({'address_id': False})
+            v.update({'address_id': False, 'is_esc': False})
         else:
             d.update({'address_id': [('partner_id', '=', partner_id)]})
+            v.update({'is_esc': self.pool.get('res.partner').browse(cr, uid, partner_id).partner_type == 'esc'})
             
 
         if address_id:
@@ -1007,7 +1088,9 @@ class stock_move(osv.osv):
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
         'already_confirmed': fields.boolean(string='Already confirmed'),
         'dpo_id': fields.many2one('purchase.order', string='Direct PO', help='PO from where this stock move is sourced.'),
+        'dpo_line_id': fields.integer(string='Direct PO line', help='PO line from where this stock move is sourced (for sync. engine).'),
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
+        'sync_dpo': fields.boolean(string='Sync. DPO'),
         'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
         'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
         'processed_stock_move': fields.boolean(string='Processed Stock Move'),
@@ -1045,7 +1128,7 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if backmove_ids or move.product_qty == 0.00:
                 raise osv.except_osv(_('Error'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
-            if (move.sale_line_id and move.sale_line_id.order_id) or (move.purchase_line_id and move.purchase_line_id.order_id):
+            if (move.sale_line_id and move.sale_line_id.order_id) or (move.purchase_line_id and move.purchase_line_id.order_id and (move.purchase_line_id.order_id.po_from_ir or move.purchase_line_id.order_id.po_from_fo)):
                 wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, {'move_id': ids[0]}, context=context)
 
                 return {'type': 'ir.actions.act_window',
@@ -1194,6 +1277,21 @@ class stock_move(osv.osv):
         default.update({'already_confirmed':False})
         
         return super(stock_move, self).copy(cr, uid, id, default, context=context)
+
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        Remove the dpo_line_id link
+        '''
+        if default is None:
+            default = {}
+        
+        if not 'dpo_line_id' in default:
+            default['dpo_line_id'] = 0
+        
+        if not 'sync_dpo' in default:
+            default['sync_dpo'] = False
+
+        return super(stock_move, self).copy_data(cr, uid, id, default, context=context)
     
     def fefo_update(self, cr, uid, ids, context=None):
         """
@@ -1230,15 +1328,30 @@ class stock_move(osv.osv):
                             # we ignore the batch that are outdated
                             expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
                             if datetime.strptime(expired_date, "%Y-%m-%d") >= datetime.today():
+                                existed_moves = []
+                                if not move.move_dest_id:
+                                    # Search if a stock move with the same location_id and same product_id and same prodlot_id exist
+                                    existed_moves = self.search(cr, uid, [('picking_id', '!=', False), ('picking_id', '=', move.picking_id.id),
+                                                                          ('product_id', '=', move.product_id.id), ('product_uom', '=', loc['uom_id']),
+                                                                          ('line_number', '=', move.line_number), ('location_id', '=', loc['location_id']),
+                                                                          ('location_dest_id', '=', move.location_dest_id.id), ('prodlot_id', '=', loc['prodlot_id'])], context=context)
                                 # as long all needed are not fulfilled
                                 if needed_qty:
                                     # if the batch already exists and qty is enough, it is available (assigned)
                                     if needed_qty <= loc['qty']:
+                                        # TODO: Why this condition because move.prodlot_id is always False (e.g. line 1261 of this file)
                                         if move.prodlot_id.id == loc['prodlot_id']:
                                             self.write(cr, uid, move.id, {'state': 'assigned'}, context)
+                                        elif existed_moves:
+                                            exist_move = self.browse(cr, uid, existed_moves[0], context)
+                                            self.write(cr, uid, [exist_move.id], {'product_qty': needed_qty + exist_move.product_qty}, context)
+                                            self.write(cr, uid, [move.id], {'state': 'draft'}, context=context)
+                                            # We update the linked documents
+                                            self.update_linked_documents(cr, uid, [move.id], exist_move.id, context=context)
+                                            self.unlink(cr, uid, [move.id], context)
                                         else:
                                             self.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'], 
-                                                                        'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
+                                                                          'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
                                         needed_qty = 0.0
                                         break
                                     elif needed_qty:
@@ -1248,7 +1361,11 @@ class stock_move(osv.osv):
                                         dict_for_create = {}
                                         dict_for_create = values.copy()
                                         dict_for_create.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id'], 'line_number': move.line_number, 'move_cross_docking_ok': move.move_cross_docking_ok})
-                                        self.create(cr, uid, dict_for_create, context)
+                                        if existed_moves:
+                                            exist_move = self.browse(cr, uid, existed_moves[0], context)
+                                            self.write(cr, uid, [exist_move.id], {'product_qty': selected_qty + exist_move.product_qty}, context)
+                                        else:
+                                            self.create(cr, uid, dict_for_create, context)
                                         self.write(cr, uid, move.id, {'product_qty': needed_qty})
                     # if the batch is outdated, we remove it
                     if not context.get('yml_test', False):
@@ -1265,6 +1382,11 @@ class stock_move(osv.osv):
         '''
         Set the bool already confirmed to True
         '''
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.product_qty <= 0.00:
+                raise osv.except_osv(_('Error'), _('You cannot confirm a stock move without quantity.'))
+
         res = super(stock_move, self).action_confirm(cr, uid, ids, context=context)
         
         self.write(cr, uid, ids, {'already_confirmed': True}, context=context)
@@ -1301,6 +1423,7 @@ class stock_move(osv.osv):
 
         if notdone:
             self.write(cr, uid, notdone, {'state': 'confirmed'})
+            self.action_assign(cr, uid, notdone)
         return count
     
     def _hook_check_assign(self, cr, uid, *args, **kwargs):

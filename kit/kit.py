@@ -551,7 +551,8 @@ class composition_kit(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.composition_type == 'theoretical':
                 date = datetime.strptime(obj.composition_creation_date, db_date_format)
-                name = obj.composition_version + ' - ' + date.strftime(date_format)
+                version = obj.composition_version or 'no_version'
+                name = version + ' - ' + date.strftime(date_format)
             else:
                 name = obj.composition_combined_ref_lot
                 
@@ -1005,6 +1006,7 @@ class composition_item(osv.osv):
         """
         if context is None:
             context = {}
+
         # call super
         result = super(composition_item, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         # columns depending on type

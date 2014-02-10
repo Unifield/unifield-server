@@ -29,8 +29,7 @@ class product_product(osv.osv):
     _inherit = 'product.product'
 
     _columns = {
-        'donation_expense_account': fields.many2one('account.account', "Donation Account", 
-            domain="[('user_type.code', '=', 'expense'), ('type', '!=', 'view'), ('type_for_register', '=', 'donation')]"),
+        'donation_expense_account': fields.many2one('account.account', "Donation Account"),
     }
 
 product_product()
@@ -40,8 +39,7 @@ class product_category(osv.osv):
     _inherit = 'product.category'
 
     _columns = {
-        'donation_expense_account': fields.many2one('account.account', "Donation Account", 
-            domain="[('user_type.code', '=', 'expense'), ('type', '!=', 'view'), ('type_for_register', '=', 'donation')]"),
+        'donation_expense_account': fields.many2one('account.account', "Donation Account"),
     }
 
 product_category()

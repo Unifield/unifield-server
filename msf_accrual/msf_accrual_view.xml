@@ -22,8 +22,8 @@
                             <field name="employee_id" nolabel="1" context="{'search_default_active': True}"
                                 attrs="{'required': [('third_party_type', '=', 'hr.employee')], 'invisible': [('third_party_type', '!=', 'hr.employee')]}"/>
                             <newline/>
-                            <field name="expense_account_id" colspan="2"/>
-                            <field name="accrual_account_id" colspan="2" domain="[('accrual_account', '=', True)]"/>
+                            <field name="expense_account_id" colspan="2" domain="[('restricted_area', '=', 'accruals')]"/>
+                            <field name="accrual_account_id" colspan="2" domain="[('restricted_area', '=', 'accruals_accrual')]"/>
                             <newline/>
                             <field name="journal_id" domain="[('is_current_instance','=',True)]" colspan="2" readonly="1"/>
                             <newline/>

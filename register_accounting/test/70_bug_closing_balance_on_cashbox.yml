@@ -30,12 +30,6 @@
     name: PER-02
     special: 1
 -
-  I open all periods
--
-  !python {model: account.period}: |
-      self.action_set_state(cr, uid, [ref('cashbox_creation_period_01')], {'state': 'draft'})
-      self.action_set_state(cr, uid, [ref('cashbox_creation_period_02')], {'state': 'draft'})
--
   I create a cashbox in USD
 -
   !record {model: account.bank.statement, id: cashbox_bug_01}:

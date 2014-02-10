@@ -1680,6 +1680,7 @@ msgstr "Kit y lista teórica completa "
 
 #. module: tender_flow
 #: field:tender,priority:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:527
 msgid "Tender Priority"
 msgstr "Prioridad de licitación"
 
@@ -5250,6 +5251,7 @@ msgstr "Si se establece el control de la facturación de un pedido como \"Manual
 #: view:threshold.value:0
 #: field:threshold.value,location_id:0
 #: field:allocation.stock.setup,error_location_ids:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:515
 msgid "Location"
 msgstr "Ubicación"
 
@@ -7803,12 +7805,6 @@ msgstr "La cuenta de débito por defecto debería ser una cuenta de gastos para 
 msgid "15th"
 msgstr "15º"
 
-#. module: msf_supply_doc_export
-#: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:69
-#: report:addons/msf_supply_doc_export/report/stock_inventory_xls.mako:60
-msgid "Product Description"
-msgstr "Product Description"
-
 #. module: msf_cross_docking
 #: code:addons/msf_cross_docking/wizard/stock_partial_picking.py:118
 #, python-format
@@ -7853,7 +7849,7 @@ msgstr "A9 13 37 x 52 mm"
 msgid "Line %s. No G/L account specified!"
 msgstr "Línea %s. ¡Cuenta de mayor no definida!"
 
-#. modules: stock, stock_forecast, account, msf_outgoing, resource, msf_homere_interface, stock_schedule, financing_contract, stock_override, product_asset, account_voucher, kit, account_corrections, base, msf_audittrail, board, sync_client, msf_accrual, analytic_distribution
+#. modules: stock, stock_forecast, account, msf_outgoing, resource, msf_homere_interface, stock_schedule, financing_contract, stock_override, product_asset, account_voucher, kit, account_corrections, base, msf_audittrail, board, sync_client, msf_accrual, analytic_distribution, tender_flow
 #: selection:account.aged.trial.balance,filter:0
 #: report:account.analytic.account.journal:0
 #: selection:account.balance.report,filter:0
@@ -7934,6 +7930,7 @@ msgstr "Línea %s. ¡Cuenta de mayor no definida!"
 #: view:stock.move:0
 #: field:stock.frequence,yearly_date_ok:0
 #: view:sync.client.update_to_send:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:622
 #, python-format
 msgid "Date"
 msgstr "Fecha"
@@ -11183,15 +11180,16 @@ msgstr "unifield.setup.configuration"
 msgid "You cannot change the G/L account since it is used in a closed financing contract."
 msgstr "No se puede cambiar la cuenta de mayor, ya que se utiliza en un contrato de financiación cerrado."
 
-#. modules: msf_outgoing, sale, kit
+#. modules: msf_outgoing, sale, kit, tender_flow
 #: report:kit.report:0
 #: field:memory.additionalitems,comment:0
 #: report:packing.list:0
 #: field:shipment.additionalitems,comment:0
 #: field:stock.move.memory.shipment.additionalitems,comment:0
 #: report:msf.freight_manifest:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:552
 msgid "Comment"
-msgstr "Comment"
+msgstr "Comentario"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/initial_stock_inventory.py:190
@@ -11207,7 +11205,7 @@ msgstr "La ubicación debe ser una cadena."
 msgid "Increment number must not be zero."
 msgstr "Increment number must not be zero."
 
-#. modules: product, msf_outgoing, order_nomenclature, consumption_calculation, product_asset, stock_forecast, product_list, msf_supply_doc_export, msf_doc_import
+#. modules: product, msf_outgoing, order_nomenclature, consumption_calculation, product_asset, stock_forecast, product_list, msf_supply_doc_export, msf_doc_import, tender_flow, msf_supply_doc_export
 #: code:addons/consumption_calculation/consumption_calculation.py:364
 #: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:67
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:70
@@ -11237,6 +11235,9 @@ msgstr "Increment number must not be zero."
 #: field:old.product.list.line,name:0
 #: field:product.list.line,name:0
 #: report:stock.forecast.report:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:546
+#: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:69
+#: report:addons/msf_supply_doc_export/report/stock_inventory_xls.mako:60
 #, python-format
 msgid "Product Description"
 msgstr "Descripción de producto"
@@ -11540,6 +11541,7 @@ msgstr "Herramientas adicionales"
 
 #. module: tender_flow
 #: field:tender,categ:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:517
 msgid "Tender Category"
 msgstr "Categoría de licitación"
 
@@ -29208,6 +29210,7 @@ msgstr "La moneda en que se expresa este campo."
 #: field:purchase.order,details:0
 #: field:sale.order,details:0
 #: field:tender,details:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:523
 msgid "Details"
 msgstr "Detalles"
 
@@ -30106,7 +30109,7 @@ msgstr "¡No hay almacén definido!"
 msgid "Sale Tax(%)"
 msgstr "Impuestos de venta (%)"
 
-#. modules: msf_supply_doc_export, msf_outgoing, sale, stock_override, procurement_request
+#. modules: msf_supply_doc_export, msf_outgoing, sale, stock_override, procurement_request, tender_flow
 #: field:memory.additionalitems,quantity:0
 #: report:packing.list:0
 #: field:shipment.additionalitems,quantity:0
@@ -30117,8 +30120,9 @@ msgstr "Impuestos de venta (%)"
 #: report:msf.freight_manifest:0
 #: report:delivery.order:0
 #: report:internal.move:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:547
 msgid "Quantity"
-msgstr "Quantity"
+msgstr "Cantidad"
 
 #. module: account_corrections
 #: model:ir.model,name:account_corrections.model_wizard_journal_items_corrections
@@ -30573,10 +30577,11 @@ msgstr "27º"
 msgid "MOROCCAN DIRHAM"
 msgstr "MOROCCAN DIRHAM"
 
-#. modules: msf_doc_import, msf_partner
+#. modules: msf_doc_import, msf_partner, tender_flow
 #: field:wizard.import.fo.line,fo_id:0
 #: field:wizard.import.ir.line,fo_id:0
 #: model:ir.actions.act_window,name:msf_partner.act_res_partner_2_sale_order
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:509
 msgid "Field Order"
 msgstr "Pedido de terreno"
 
@@ -31893,7 +31898,7 @@ msgstr "Available stock"
 msgid "Exclude Funding Pool selection"
 msgstr "Excluir selección de grupos de fondos"
 
-#. modules: purchase_allocation_report, procurement_cycle, return_claim, account_msf, supplier_catalogue, mission_stock, analytic_distribution_invoice, purchase_followup, msf_supply_doc_export, stock, product, stock_override, consumption_calculation, kit, msf_doc_import, procurement_report, sales_followup, account, msf_outgoing, product_attributes, sale, sourcing
+#. modules: purchase_allocation_report, procurement_cycle, return_claim, account_msf, supplier_catalogue, mission_stock, analytic_distribution_invoice, purchase_followup, msf_supply_doc_export, stock, product, stock_override, consumption_calculation, kit, msf_doc_import, procurement_report, sales_followup, account, msf_outgoing, product_attributes, sale, sourcing, tender_flow
 #: field:account.analytic.line,product_uom_id:0
 #: selection:account.journal.column,field:0
 #: field:account.move.line,product_uom_id:0
@@ -31953,6 +31958,7 @@ msgstr "Excluir selección de grupos de fondos"
 #: view:stock.production.lot:0
 #: view:stock.move:0
 #: field:pricelist.partnerinfo,uom_id:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:548
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -35361,7 +35367,7 @@ msgstr "EAN"
 #: field:product.asset,partner_id:0
 #: field:stock.production.lot,partner_id:0
 msgid "Supplier"
-msgstr "Supplier"
+msgstr "Proveedor"
 
 #. module: stock
 #: field:report.stock.move,product_qty_in:0
@@ -42034,7 +42040,7 @@ msgstr "No existe ningún lenguaje con el código \"%s\""
 msgid "Sort By"
 msgstr "Filtrar por"
 
-#. modules: purchase, product, msf_outgoing, purchase_override, purchase_compare_rfq, supplier_catalogue, sale, account, kit, purchase_allocation_report, order_types, register_accounting, stock
+#. modules: purchase, product, msf_outgoing, purchase_override, purchase_compare_rfq, supplier_catalogue, sale, account, kit, purchase_allocation_report, order_types, register_accounting, stock, tender_flow
 #: field:account.invoice.line,price_unit:0
 #: report:account.invoice2:0
 #: field:kit.selection.line,price_unit_kit_selection_line:0
@@ -42061,6 +42067,7 @@ msgstr "Filtrar por"
 #: report:lot.stock.overview_all:0
 #: field:stock.move,price_unit:0
 #: field:supplier.catalogue.line,unit_price:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:551
 msgid "Unit Price"
 msgstr "Precio unitario"
 
@@ -49250,6 +49257,7 @@ msgstr "No se permite copiar la lista de preembalaje"
 #: field:stock.tracking,date:0
 #: view:purchase.order:0
 #: field:tender,creation_date:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:503
 msgid "Creation Date"
 msgstr "Fecha de creación"
 
@@ -50691,6 +50699,7 @@ msgstr "Warning!"
 #. module: tender_flow
 #: field:tender,requested_date:0
 #: field:tender.line,date_planned:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:511
 msgid "Requested Date"
 msgstr "Fecha solicitada"
 
@@ -53029,6 +53038,7 @@ msgstr "¡Abrir partidas contables!"
 #: field:international.transport.cost.report,partner_id:0
 #: view:local.transport.cost.report:0
 #: field:local.transport.cost.report,partner_id:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:539
 #, python-format
 msgid "Supplier"
 msgstr "Proveedor"
@@ -53709,7 +53719,7 @@ msgstr "Campos de tipo de banco"
 msgid "The read method is not implemented on this object !"
 msgstr "The read method is not implemented on this object !"
 
-#. modules: sales_followup, register_accounting, msf_outgoing, order_nomenclature, consumption_calculation, product_asset, stock_forecast, product_list, msf_supply_doc_export, msf_doc_import
+#. modules: sales_followup, register_accounting, msf_outgoing, order_nomenclature, consumption_calculation, product_asset, stock_forecast, product_list, msf_supply_doc_export, msf_doc_import, tender_flow
 #: code:addons/consumption_calculation/consumption_calculation.py:364
 #: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:66
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:69
@@ -53743,6 +53753,7 @@ msgstr "The read method is not implemented on this object !"
 #: field:wizard.account.invoice.line,product_code:0
 #: field:sale.order.line.followup,product_id:0
 #: report:stock.forecast.report:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:545
 #, python-format
 msgid "Product Code"
 msgstr "Código de producto"
@@ -59297,6 +59308,7 @@ msgstr "Incluir los saldos iniciales"
 #: field:object.query,user_id:0
 #: report:po.line.allocation.report:0
 #: field:tender,creator:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:501
 msgid "Creator"
 msgstr "Creador"
 
@@ -62008,13 +62020,14 @@ msgstr "America / Resuelto"
 msgid "Import FAILED."
 msgstr "Import FAILED."
 
-#. modules: base, msf_outgoing
+#. modules: base, msf_outgoing, tender_flow
 #: field:res.config.users,signature:0
 #: view:res.users:0
 #: field:res.users,signature:0
 #: field:shipment,carrier_signature:0
 #: field:shipment,consignee_signature:0
 #: field:shipment,shipper_signature:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:622
 msgid "Signature"
 msgstr "Firma"
 
@@ -62268,6 +62281,7 @@ msgstr "Nombre del archivo"
 #: report:stock.forecast.report:0
 #: field:tender,warehouse_id:0
 #: field:threshold.value,warehouse_id:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:519
 msgid "Warehouse"
 msgstr "Almacén"
 
@@ -63148,6 +63162,7 @@ msgstr "¡Los módulos seleccionados han sido actualizados/ instalados!"
 #: field:local.transport.cost.report,func_currency_id:0
 #: field:local.transport.cost.report,transport_currency_id:0
 #: field:purchase.order,transport_currency_id:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:525
 #, python-format
 msgid "Currency"
 msgstr "Divisa"
@@ -64934,6 +64949,7 @@ msgstr "Ruta completa (absoluta) del archivo ejecutable wkhtmltopdf."
 
 #. module: tender_flow
 #: field:tender,name:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:507
 msgid "Tender Reference"
 msgstr "Referencia de licitación"
 
@@ -65744,9 +65760,10 @@ msgstr "Cuando una versión está duplicada, esta se desactiva para que las fech
 msgid "HQ Entry"
 msgstr "HQ Entry"
 
-#. modules: hr, msf_homere_interface
+#. modules: hr, msf_homere_interface, tender_flow
 #: view:hr.employee:0
 #: view:hr.employee:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:622
 msgid "Position"
 msgstr "Posición"
 
@@ -72360,7 +72377,7 @@ msgstr "Fecha validación"
 msgid "New Value"
 msgstr "Nuevo valor"
 
-#. modules: product_attributes, stock_override, consumption_calculation, procurement_request
+#. modules: product_attributes, stock_override, consumption_calculation, procurement_request, tender_flow
 #: field:product.history.consumption.product,name:0
 #: report:procurement.request.report:0
 #: field:product.cold_chain,name:0
@@ -72369,8 +72386,10 @@ msgstr "Nuevo valor"
 #: field:product.status,name:0
 #: report:delivery.order:0
 #: report:internal.move:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:550
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:622
 msgid "Name"
-msgstr "Name"
+msgstr "Nombre"
 
 #. module: import_data
 #: model:ir.actions.act_window,name:import_data.import_request_action

@@ -33,42 +33,128 @@ class account_period(osv.osv):
     # the state are:
     #  - 'created' for Draft
     #  - 'draft' for Open
-    #  - 'done' for HQ-Closed
+    #  - 'done' for HQ-Closed    
+        # 1 = state created as 'Draft' ('created') at HQ (update to state handled in create)
+        # 2 = state moves from 'Open' ('draft') -> any close at HQ (sync down)
+        # 3 = 
+        # 3 = state reopened at HQ -> reopen at all levels
 
-# uf-1624: we replace the function with the import of ACCOUNT_PERIOD_STATE_SELECTION (because of problem in the track changes)
-#    def _get_state(self, cursor, user_id, context=None):
-#        return (('created','Draft'), \
-#                ('draft', 'Open'), \
-#                ('field-closed', 'Field-Closed'), \
-#                ('mission-closed', 'Mission-Closed'), \
-#                ('done', 'HQ-Closed'))
-    
+
     def action_set_state(self, cr, uid, ids, context):
         """
         Change period state
         """
-        
+
         # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         # Prepare some elements
         reg_obj = self.pool.get('account.bank.statement')
         sub_obj = self.pool.get('account.subscription.line')
         curr_obj = self.pool.get('res.currency')
         curr_rate_obj = self.pool.get('res.currency.rate')
-        inv_obj = self.pool.get('account.invoice')
-        
+
+        # Ticket utp913 set state_sync_flag for conditional sync of state
+        # 'none' : no update to the state field via a sync (data is still sent but not updated in target instance)
+        # other values; state will be set to this value and then to 'none'
+        # note that 'draft' = 'Open' and 'created' = 'Draft' ... see ACCOUNT_PERIOD_STATE_SELECTION in init
+
+        if context.get('sync_update_execution') is None:
+            user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+            level = user.company_id.instance_id.level
+            ap_dict = self.read(cr, uid, ids)[0]
+            previous_state = ap_dict['state']
+
+            if level == 'section': # section = HQ
+                if previous_state == 'created' and context['state'] == 'draft':
+                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})   
+                if previous_state == 'draft' and context['state'] == 'field-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})  
+                if previous_state == 'field-closed' and context['state'] == 'mission-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})    
+                if previous_state == 'mission-closed' and context['state'] == 'done':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})   
+                if previous_state == 'mission-closed' and context['state'] == 'field-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})  
+                if previous_state == 'field-closed' and context['state'] == 'draft':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})    
+
+            if level == 'coordo': 
+                if previous_state == 'created' and context['state'] == 'draft':
+                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})   
+                if previous_state == 'draft' and context['state'] == 'field-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})  
+                if previous_state == 'field-closed' and context['state'] == 'mission-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})    
+                if previous_state == 'mission-closed' and context['state'] == 'done':
+                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})   
+                if previous_state == 'mission-closed' and context['state'] == 'field-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})  
+                if previous_state == 'field-closed' and context['state'] == 'draft':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})    
+
+            if level == 'project':
+                    self.write(cr, uid, ids, {'state_sync_flag': 'none'}) 
+
         # Do verifications for draft periods
         for period in self.browse(cr, uid, ids, context=context):
+            # Check state consistency about previous and next periods
             # UF-550: A period now can only be opened if all previous periods (of the same fiscal year) have been already opened
-            if period.state == 'created':
-                previous_period_ids = self.search(cr, uid, [('date_start', '<', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id)], context=context,)
-                for pp in self.browse(cr, uid, previous_period_ids, context=context):
-                    if pp.state == 'created':
-                        raise osv.except_osv(_('Warning'), _("Cannot open this period. All previous periods must be opened before opening this one."))
+            # UTP-755: More global than the UF-550:
+            #       - A period now can only be set to the next state if all
+            #         previous periods (of the same fiscal year) are set at a
+            #         higher state,
+            #       - A period now can only be set to a previous state if all
+            #         next periods (of the same fiscal year) are set at a lower
+            #         state.
+            check_errors = {
+                'created': _(
+                    "Cannot open this period. "
+                    "All previous periods must be opened before opening this one."),
+                'draft': _(
+                    "Cannot close this period at the field level. "
+                    "All previous periods must be closed before closing this one."),
+                'field-closed': _(
+                    "Cannot close this period at the mission level. "
+                    "All previous periods must be closed before closing this one."),
+                'mission-closed': _(
+                    "Cannot close this period at the HQ level. "
+                    "All previous periods must be closed before closing this one."),
+            }
+            check_states = ['created', 'draft', 'field-closed', 'mission-closed', 'done']
+            if not context.get('state'):
+                raise osv.except_osv(
+                    _("Error"),
+                    _("Next state unknown"))
+            backward_asked = check_states.index(context['state']) < check_states.index(period.state)
+            # Forward operation, no check for 'created' state
+            if period.state in check_states[1:] and not backward_asked:
+                pp_ids = self.search(
+                    cr, uid,
+                    [('date_start', '<', period.date_start),
+                    ('fiscalyear_id', '=', period.fiscalyear_id.id)],
+                    context=context)
+                for pp in self.browse(cr, uid, pp_ids, context=context):
+                    if check_states.index(pp.state) <= check_states.index(period.state):
+                        raise osv.except_osv(_('Warning'), check_errors[period.state])
+            # For backward operation, all next periods have to be at the
+            # same state or higher than the current period
+            elif backward_asked:
+                np_ids = self.search(
+                    cr, uid,
+                    [('date_start', '>', period.date_start),
+                    ('fiscalyear_id', '=', period.fiscalyear_id.id)],
+                    context=context)
+                for np in self.browse(cr, uid, np_ids, context=context):
+                    if check_states.index(np.state) >= check_states.index(period.state):
+                        raise osv.except_osv(
+                            _('Warning'),
+                            _("Cannot backward the state of this period. "
+                              "All next periods must be at a lower state."))
+            # / Check state consistency
             
             if period.state == 'draft':
                 # first verify that all existent registers for this period are closed
@@ -112,6 +198,9 @@ class account_period(osv.osv):
 #"Open overdue invoice" button and fix the problem.'))
                 
                 # Display a wizard to inform user all kind of verifications he have to verify in order to close period
+                # FIXME: return in the middle of a 'ids' loop
+                if len(ids) > 1:
+                    logging.getLogger('account_period_closing_level').warn("Check stopped in the middle of the loop, it's ok if we are in yml tests.")
                 return {
                     'name': "Period closing confirmation wizard",
                     'type': 'ir.actions.act_window',
@@ -157,6 +246,7 @@ class account_period(osv.osv):
         'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State', readonly=True,
             help='HQ opens a monthly period. After validation, it will be closed by the different levels.'),
         'number': fields.integer(string="Number for register creation", help="This number informs period's order. Should be between 1 and 15. If 16: have not been defined yet."),
+        'state_sync_flag': fields.char('Sync Flag', required=True, size=64, help='Flag for controlling sync actions on the period state.'),
     }
 
     _order = 'date_start, number'
@@ -165,16 +255,31 @@ class account_period(osv.osv):
         if not context:
             context = {}
 
-        if context.get('update_mode') in ['init', 'update'] and 'state' not in vals:
-            logging.getLogger('init').info('Loading default draft state for account.period')
-            vals['state'] = 'draft'
+        if context.get('sync_update_execution') and 'state' not in vals:
+            logging.getLogger('init').info('Loading default draft - created - state for account.period')
+            vals['state'] = 'created'
 
         return super(account_period, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if not context:
+            context = {}
+        # control conditional push-down of state from HQ. Ticket UTP-913      
+        if context.get('sync_update_execution'):
+            if vals['state_sync_flag'] != 'none':
+                vals['state'] = vals['state_sync_flag']
+                vals['state_sync_flag'] = 'none'
+            else:
+                vals['state_sync_flag'] = 'none'
+            
+        return super(account_period, self).write(cr, uid, ids, vals, context=context)
+            
 
     _defaults = {
         'state': lambda *a: 'created',
         'number': lambda *a: 16, # Because of 15 period in MSF, no period would use 16 number.
         'special': lambda *a: False,
+        'state_sync_flag': lambda *a: 'none',
     }
 
     def button_overdue_invoice(self, cr, uid, ids, context=None):

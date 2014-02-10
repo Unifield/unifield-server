@@ -178,7 +178,7 @@ class mass_reallocation_wizard(osv.osv_memory):
                 ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|',
                 ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                 ('is_reversal', '=', True),
-                ('journal_id.type', '=', 'engagement'),
+                ('journal_id.type', 'in', ['engagement', 'revaluation']),
                 ('from_write_off', '=', True),
                 ('move_state', '=', 'draft'),
                 ('account_id.category', 'in', ['FREE1', 'FREE2'])

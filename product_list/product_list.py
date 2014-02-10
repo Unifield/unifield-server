@@ -245,11 +245,57 @@ class product_product(osv.osv):
                                     type='many2many', relation='product.list', method=True, string='Lists'),
         # we can't write the default_code required because it is used in the product addons
         'default_code' : fields.char('CODE', size=14, select=True),
+        'xmlid_code' : fields.char('Hidden xmlid code', size=64), # UF-2254: this code is only used for xml_id purpose, added ONLY when creating the product
     }
 
     _sql_constraints = [
         ('default_code', "unique(default_code)", 'The "Product Code" must be unique'),
+        ('xmlid_code', "unique(xmlid_code)", 'The xmlid_code must be unique'),
     ]
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        UF-2254: When creating the product, there are 3 different cases:
+         1. the creation comes from the sync, in this case, report any error if duplication on default_code or xmlid_code
+             otherwise, there will be problem with the update later
+         2. from import product menu: the context contains from_import_menu: default code and xmlid_code must exist and unique
+         3. manually creation: the default code must be new (no duplication), xmlid_code = valid default_code
+         4. duplication from GUI: the default code XXX is saved, then modify in the write
+        '''
+
+        if context is None:
+            context = {}
+        to_overwrite = False
+        # The first 2 cases: dup of default_code/xmlid_code not allow
+        if context.get('from_import_menu') or context.get('sync_update_execution', False):
+            if not vals.get('default_code', False) or not vals.get('xmlid_code', False):
+                raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
+            exist_dc = self.search(cr, uid, [('default_code', '=', vals['default_code'])], context=context)
+            exist_xc = self.search(cr, uid, [('xmlid_code', '=', vals['xmlid_code'])], context=context)
+            if exist_dc or exist_xc: # if any of the code exists, report error!
+                raise Exception, "Problem creating product: Duplicate xmlid_code/default_code found"
+        elif vals.get('default_code'): # cases 3, 4
+            vals['xmlid_code'] = vals.get('default_code')
+        else:
+            # not default_code, as this is a mandatory field a default_value will be set later in the code
+            to_overwrite = 1
+        id = super(product_product, self).create(cr, uid, vals, context=context)
+        if to_overwrite:
+            prod = self.read(cr, uid, id, ['default_code'], context=context)
+            self.write(cr, uid, id, {'xmlid_code': prod['default_code']}, context=context)
+        return id
+
+    def write(self, cr, uid, ids, value, context=None):
+        single = False
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+            single = True
+        if value.get('default_code') and value['default_code'] != 'XXX':
+            # do we have any ids with default_code set to 'XXX'
+            xxx_ids = self.search(cr, uid, [('id', 'in', ids), ('default_code', '=', 'XXX')], context=context)
+            if xxx_ids:
+                self.write(cr, uid, xxx_ids, {'xmlid_code': value['default_code']}, context=context)
+        return super(product_product, self).write(cr, uid, single and ids[0] or ids, value, context=context)
 
 product_product()
 

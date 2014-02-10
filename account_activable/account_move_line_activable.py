@@ -36,6 +36,17 @@ class account_move_line_activable(osv.osv):
                 raise osv.except_osv(_('Error !'), _('The selected account is not active: %s.') % (account.code or '',))
         return super(account_move_line_activable, self)._check_date(cr, uid, vals, context, check)
 
-account_move_line_activable()
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        """
+        Filtering regarding context
+        """
+        if not context:
+            context = {}
+        if context.get('currency_id'):
+            args.append(('currency_id', '=', context.get('currency_id')))
+        if context.get('move_state'):
+            args.append(('move_state', '=', context.get('move_state')))
+        return super(account_move_line_activable, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
+account_move_line_activable()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

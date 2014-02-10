@@ -14,7 +14,7 @@
                     <field name="document_date"/>
                     <field name="date"/>
                     <field name="period_id"/>
-                    <field name="account_id" domain="[('type', '!=', 'view'), ('user_type.code', '=', 'expense'), ('is_not_hq_correctible','=',False)]"/>
+                    <field name="account_id" domain="[('type', '!=', 'view'), ('restricted_area', '=', 'hq_lines'), ('is_not_hq_correctible', '=', False)]"/>
                     <field name="partner_txt"/>
                     <field name="amount"/>
                     <field name="currency_id"/>
@@ -196,7 +196,7 @@
             <field name="priority" eval="20"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='activation_date']" position="before">
-                    <field name="is_not_hq_correctible"/>
+                    <field name="is_not_hq_correctible" invisible="1"/>
                 </xpath>
             </field>
         </record>

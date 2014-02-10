@@ -27,17 +27,23 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 class monthly_budget(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(monthly_budget, self).__init__(cr, uid, name, context=context)
+        self.account_codes = self.get_account_codes()
         self.localcontext.update({
             'process': self.process,
-            'checkCount': self.checkCount,
+            'account_codes': self.account_codes,
+            'isBold': self.isBold,
         })
         return
 
-    def checkCount(self, line):
-        if line[0] and line[0].split():
-            if int(line[0].split()[0]) in [6, 61, 62, 63, 64, 65, 66, 67, 68, 69]:
-                return True
-        return False
+    def get_account_codes(self):
+        account_view_ids = self.pool.get('account.account').search(self.cr, self.uid, [('type', '=', 'view')])
+        account_codes = [x.get('code', False) and x.get('code') for x in self.pool.get('account.account').read(self.cr, self.uid, account_view_ids, ['code'])]
+        return account_codes
+
+    def isBold(self, line):
+      if line[0] and line[0].split() and line[0].split()[0] in self.account_codes:
+          return True
+      return False
 
     def process(self, selected_lines):
         result = []
@@ -73,15 +79,14 @@ class monthly_budget2(report_sxw.rml_parse):
         super(monthly_budget2, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'process': self.process,
-            'checkCount': self.checkCount,
+            'fetchViewCodes': self.fetchViewCodes,
         })
         return
 
-    def checkCount(self, line):
-        if line[0] and line[0].split():
-            if int(line[0].split()[0]) in [6, 61, 62, 63, 64, 65, 66, 67, 68, 69]:
-                return True
-        return False
+    def fetchViewCodes(self):
+        account_view_ids = self.pool.get('account.account').search(self.cr, self.uid, [('user_type.code', '=', 'view')])
+        account_codes = [x.get('code', False) and x.get('code') for x in self.pool.get('account.account').read(self.cr, self.uid, account_view_ids, ['code'])]
+        return account_codes
 
     def process(self, selected_lines):
         result = []

@@ -31,7 +31,7 @@ class account_analytic_journal(osv.osv):
     _description = 'Analytic Journal'
     _inherit = 'account.analytic.journal'
 
-    def get_journal_type(self, cr, uid, context={}):
+    def get_journal_type(self, cr, uid, context=None):
         """
         Get all analytic journal type
         """
@@ -48,6 +48,7 @@ class account_analytic_journal(osv.osv):
             ('migration', 'Migration'),
             ('extra', 'OD-Extra Accounting'),
             ('purchase','Purchase'),
+            ('revaluation', 'Revaluation'),
             ('sale','Sale'),
             ('situation','Situation'),
         ]

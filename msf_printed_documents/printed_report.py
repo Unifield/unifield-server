@@ -99,6 +99,7 @@ class ir_actions_report_xml(osv.osv):
             else:
                 return False
 
+        error = ''
         if report.target_filename:
             report_name = self.pool.get('ir.sequence')._process(cr, uid, report.target_filename)
             values_to_compute = re.findall('\${((?:\w+.?)*)}', report_name)

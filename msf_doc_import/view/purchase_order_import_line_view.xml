@@ -14,20 +14,30 @@
                     <field name="to_correct_ok" invisible="1"/>
                 </xpath>
                 <xpath expr="/form/notebook/page/field[@name='order_line']/tree//field[@name='default_name']" position="after">
-                	<field name="inactive_product" invisible="1" />
-                    <!-- <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" /> -->
+                    <field name="inactive_product" invisible="1" />
                 </xpath>
                 <xpath expr="/form/notebook/page/field[@name='order_line']/tree" position="attributes" >
-                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True; #C8C8C8: fake_state == 'cancel'</attribute>
+                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00</attribute>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Notes']/field[@name='notes']" position="before">
                     <field name="import_in_progress" readonly="1" invisible="0" />
                 </xpath>
+                <xpath expr="/form/notebook/page[@string='Notes']/field[@name='project_ref']" position="after">
+                    <separator colspan="4" string="Import filenames" />
+                    <field name="import_filenames" mode="tree" readonly="1" nolabel="1" colspan="4">
+                        <tree string="Imported filenames">
+                            <field name="timestamp" />
+                            <field name="filename" />
+                        </tree>
+                    </field>
+                </xpath>
                 <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="before" >
-                <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
+                  <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                     <button name="wizard_import_po_line" string="Import lines" icon="gtk-dnd" col="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
-                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" invisible="1" confirm="Are you sure that you want to remove all the lines of this Purchase order?"/>
-                    <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0"/>
+                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': ['|', ('po_from_fo', '=', True), ('po_from_ir', '=', True)]}" />
+                    <button name="button_remove_lines" string="Delete Lines" confirm="This document originated from an IR/FO, if you delete these products now, they will all be deleted. If you wish to Cancel &amp; Resource them, please do this line by line." icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': [('po_from_fo', '=', False), ('po_from_ir', '=', False)]}" />
+                    <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" context="{'rfq_ok': rfq_ok}"/>
+                    <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
                 </group>
                 <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'confirmed')]}"/>
                 <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'confirmed')]}"/>
@@ -106,6 +116,24 @@
                     <newline />
                     <label colspan="2" />
                     <button name="close_window" type="object" string="Close window" icon="gtk-cancel" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="wizard_export_po_validated_form_view" model="ir.ui.view">
+            <field name="name">wizard.export.po.validated.form.view</field>
+            <field name="model">wizard.export.po.validated</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Export PO validated">
+                    <separator colspan="4" string="File format" />
+                    <field name="file_type" />
+                    <separator colspan="4" string="Actions" />
+                    <group colspan="4" col="4">
+                        <label> </label>
+                        <button special="cancel" string="Close window" icon="gtk-cancel" colspan="1" />
+                        <button name="export_file" string="Download file" icon="gtk-execute" type="object" colspan="2" />
+                    </group>
                 </form>
             </field>
         </record>

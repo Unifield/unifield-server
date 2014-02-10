@@ -111,7 +111,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
                 domain = "[('employee_type', '=', 'local')]"
             if context.get('from') == 'payroll_import':
                 result = ('view_hr_payroll_msf_tree', 'hr.payroll.msf')
-                domain = "[('state', '=', 'draft'), ('account_id.user_type.code', '=', 'expense')]"
+                domain = "[('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', True)]"
             if context.get('from') == 'hq_entries_import':
                 result = ('hq_entries_tree', 'hq.entries', 'account_hq_entries')
                 domain = ""
@@ -253,7 +253,6 @@ class hr_payroll_employee_import(osv.osv_memory):
             e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff), ('homere_id_unique', '=', uniq_id)])
             # Prepare vals
             res = False
-            name = (nom and prenom and ustr(nom) + ', ' + ustr(prenom)) or (nom and ustr(nom)) or (prenom and ustr(prenom)) or False
             vals = {
                 'active': True,
                 'employee_type': 'local',
@@ -267,7 +266,6 @@ class hr_payroll_employee_import(osv.osv_memory):
                 'work_email': email or False,
                 # Do "NOM, Prenom"
                 'name': employee_name,
-                'name': name,
                 'ssnid': num_soc or False,
                 'mobile_phone': portable or False,
                 'work_phone': tel_bureau or False,

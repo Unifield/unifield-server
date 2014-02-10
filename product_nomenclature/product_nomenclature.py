@@ -616,17 +616,6 @@ class product_template(osv.osv):
         '''
         if context is None:
             context = {}
-        if context.get('update_mode') in ['init', 'update']:
-            required = ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3']
-            has_required = False
-            for req in required:
-                if  req in vals:
-                    has_required = True
-                    break
-            if not has_required:
-                logging.getLogger('init').info('Loading default values for product.template')
-                vals.update(self._get_default_nom(cr, uid, context))
-                
         # Set the category according to the Family
         if vals.get('nomen_manda_2'):
             vals['categ_id'] = self.pool.get('product.nomenclature').browse(cr, uid, vals['nomen_manda_2'], context=context).category_id.id
@@ -972,19 +961,6 @@ class product_category(osv.osv):
         '''
         if context is None:
             context = {}
-        nomen_obj = self.pool.get('product.nomenclature')
-        if context.get('update_mode') in ['init', 'update']:
-            required = ['family_id']
-            has_required = False
-            for req in required:
-                if  req in vals:
-                    has_required = True
-                    break
-            if not has_required:
-                logging.getLogger('init').info('Loading default values for product.category')
-                search_nomen_list = nomen_obj.search(cr, uid, [('level', '=', 2), ('type', '=', 'mandatory'), ('category_id', '=', False)], limit=1)
-                if search_nomen_list:
-                    vals.update({'family_id': search_nomen_list[0]})
 
         return super(product_category, self).create(cr, uid, vals, context)
 

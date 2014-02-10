@@ -37,9 +37,11 @@ class stock_move(osv.osv):
     _columns = {'line_number': fields.integer(string='Line', required=True),
                 'change_reason': fields.char(string='Change Reason', size=1024, readonly=True),
                 'in_out_updated': fields.boolean(string='IN update OUT'),
+                'original_qty_partial': fields.integer(string='Original Qty for Partial process - only for sync and partial processed line', required=False),
                 }
     _defaults = {'line_number': 0,
-                 'in_out_updated': False}
+                 'in_out_updated': False,
+                 'original_qty_partial': -1}
     _order = 'line_number, date_expected desc, id'
     
     def create(self, cr, uid, vals, context=None):
@@ -334,6 +336,12 @@ class stock_picking(osv.osv):
         # update the line number, copy original line_number value
         defaults.update({'line_number': move.line_number})
         
+        #UTP-972: Set the original total qty of the original move to the new partial move, for sync purpose only
+        orig_qty = move.product_qty
+        if move.original_qty_partial and move.original_qty_partial != -1:
+            orig_qty = move.original_qty_partial
+        defaults.update({'original_qty_partial': orig_qty})
+        
         return defaults
     
     def create_data_back(self, cr, uid, move, context=None):
@@ -469,6 +477,9 @@ class stock_picking(osv.osv):
             product_avail = {}
             # increase picking version - all case where update_out is True + when the qty is bigger without split nor product change
             update_pick_version = False
+
+            # UF-1617: get the sync_message case            
+            sync_in = context.get('sync_message_execution', False)
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 if move.sale_line_id and move.sale_line_id.order_id:
                     so_to_check.add(move.sale_line_id.order_id.id)
@@ -495,6 +506,9 @@ class stock_picking(osv.osv):
                 # average price computation, new values - should be the same for every partial
                 average_values = {}
 
+                orig_qty = move.product_qty
+                if move.original_qty_partial and move.original_qty_partial != -1:
+                    orig_qty = move.original_qty_partial
                 
                 # partial list
                 for partial in partial_datas[pick.id][move.id]:
@@ -506,13 +520,27 @@ class stock_picking(osv.osv):
                               'product_id': partial['product_id'],
                               'product_qty': partial['product_qty'],
                               'product_uos_qty': partial['product_qty'],
+                              'original_qty_partial': orig_qty,
                               'prodlot_id': partial['prodlot_id'],
                               'product_uom': partial['product_uom'],
                               'product_uos': partial['product_uom'],
+                              'sync_dpo': move.sync_dpo,
                               'asset_id': partial['asset_id'],
                               'change_reason': partial['change_reason'],
                               'direct_incoming': partial.get('direct_incoming'),
                               }
+
+                    if partial.get('dpo_line_id'):
+                        values['dpo_line_id'] = partial['dpo_line_id']
+                        values['sync_dpo'] = partial['dpo_line_id'] and True or False
+
+                    # UTP-872: Don't change the quantity if the move is canceled
+                    # If the quantity is changed to 0.00, a backorder is created
+                    # for canceled moves
+                    if move.state == 'cancel':
+                        values.update({'product_qty': move.product_qty,
+                                       'product_uos_qty': move.product_uos_qty})
+
                     if 'state' in partial: # UTP-872: Added also the state into the move line if the state comes from the sync
                         values.update({'state': partial['state']})
                     if 'product_price' in partial:
@@ -610,6 +638,9 @@ class stock_picking(osv.osv):
                         
                     
                     out_values = values.copy()
+                    # Remove sync. dpo fields
+                    out_values['dpo_line_id'] = 0
+                    out_values['sync_dpo'] = False
                     out_values.update({'state': 'confirmed'})
                     if out_values.get('location_dest_id', False):
                         out_values.pop('location_dest_id')
@@ -632,22 +663,31 @@ class stock_picking(osv.osv):
                         uom_partial_qty = self.pool.get('product.uom')._compute_qty(cr, uid, partial['product_uom'], partial_qty, out_move.product_uom.id)
                         if count_partial or uom_partial_qty < out_move.product_qty:
                             # Split the out move
-                            new_move = move_obj.copy(cr, uid, out_move.id, dict(out_values, product_qty=partial_qty, product_uom=partial['product_uom'], in_out_updated=True), context=dict(context, keepLineNumber=True))
+                            vals = dict(out_values, product_qty=partial_qty, product_uom=partial['product_uom'])
+                            if not sync_in:
+                                vals.update({'in_out_updated': True})
+                            new_move = move_obj.copy(cr, uid, out_move.id, vals, context=dict(context, keepLineNumber=True))
                             # Update the initial out move qty
-                            move_obj.write(cr, uid, [out_move.id], {'product_qty': out_move.product_qty - uom_partial_qty}, context=context)
+                            move_obj.write(cr, uid, [out_move.id], {'product_qty': out_move.product_qty - uom_partial_qty, 'original_qty_partial': orig_qty}, context=context)
                             backlinks.append((move.id, new_move))
                             partial_qty = 0.00
 #                            if not count_out:
 #                                backlinks.append((move.id, out_move.id))
                         elif not count_out or uom_partial_qty == out_move.product_qty:
                             # Update the initial out move qty with the processed qty
-                            move_obj.write(cr, uid, [out_move.id], dict(out_values, product_qty=partial_qty, product_uom=partial['product_uom'], in_out_updated=True), context=context)
+                            vals = dict(out_values, product_qty=partial_qty, product_uom=partial['product_uom'])
+                            if not sync_in:
+                                vals.update({'in_out_updated': True})
+                            move_obj.write(cr, uid, [out_move.id], vals, context=context)
                             backlinks.append((move.id, out_move.id))
                             processed_moves.append(out_move.id)
                             partial_qty = 0.00
                         else:
                             # Just update the data of the initial out move
-                            move_obj.write(cr, uid, [out_move.id], dict(out_values, product_qty=out_move.product_qty, product_uom=partial['product_uom'], in_out_updated=True), context=context)
+                            vals = dict(out_values, product_qty=out_move.product_qty, product_uom=partial['product_uom'])
+                            if not sync_in:
+                                vals.update({'in_out_updated': True})
+                            move_obj.write(cr, uid, [out_move.id], vals, context=context)
                             backlinks.append((move.id, out_move.id))
                             processed_moves.append(out_move.id)
                             partial_qty -= out_move.product_qty
@@ -659,7 +699,7 @@ class stock_picking(osv.osv):
                 # is positive if some qty was removed during the process -> current incoming qty is modified
                 #    create a backorder if does not exist, copy original move with difference qty in it # DOUBLE CHECK ORIGINAL FUNCTION BEHAVIOR !!!!!
                 #    if split happened, update the corresponding out move with diff_qty
-                if diff_qty > 0:
+                if diff_qty > 0 and move.state != 'cancel':
                     if not backorder_id:
                         # create the backorder - with no lines
                         backorder_id = self.copy(cr, uid, pick.id, {'name': sequence_obj.get(cr, uid, 'stock.picking.%s'%(pick.type)),
@@ -673,9 +713,12 @@ class stock_picking(osv.osv):
                                 'asset_id': False,
                                 'product_qty': diff_qty,
                                 'product_uos_qty': diff_qty,
+                                'original_qty_partial': orig_qty,
                                 'picking_id': pick.id, # put in the current picking which will be the actual backorder (OpenERP logic)
                                 'prodlot_id': False,
                                 'state': 'assigned',
+                                'dpo_line_id': move.dpo_line_id,
+                                'sync_dpo': move.dpo_line_id and True or False,
                                 'move_dest_id': False,
                                 'price_unit': move.price_unit,
                                 'change_reason': False,
@@ -684,6 +727,7 @@ class stock_picking(osv.osv):
                     # average computation - empty if not average
                     defaults.update(average_values)
                     new_back_move = move_obj.copy(cr, uid, move.id, defaults, context=dict(context, keepLineNumber=True))
+                    move_obj.write(cr, uid, [move.id], {'dpo_line_id': 0}, context=context)
                     #move_obj.write(cr, uid, [out_move_id], {'product_qty': diff_qty}, context=context)
                     # if split happened
                     #if update_out:
@@ -713,9 +757,6 @@ class stock_picking(osv.osv):
             # clean the picking object - removing lines with 0 qty - force unlink
             # this should not be a problem as IN moves are not referenced by other objects, only OUT moves are referenced
             # no need of skipResequencing as the picking cannot be draft
-
-            # UF-1617: get the sync_message case            
-            sync_in = context.get('sync_message_execution', False)
             
             for move in pick.move_lines:
                 if not move.product_qty and move.state not in ('done', 'cancel'):
@@ -790,6 +831,17 @@ class stock_picking(osv.osv):
         for so in self.pool.get('sale.order').browse(cr, uid, list(so_to_check), context=context):
             if so.state == 'shipping_except':
                 wf_service.trg_validate(uid, 'sale.order', so.id, 'ship_corrected', cr)
+
+        if context.get('from_simu_screen'):
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'stock.picking',
+                    'res_id': ids[0],
+                    'view_id': [view_id],
+                    'view_mode': 'form, tree',
+                    'view_type': 'form',
+                    'target': 'crush',
+                    'context': context}
 
         return {'type': 'ir.actions.act_window_close'}
     

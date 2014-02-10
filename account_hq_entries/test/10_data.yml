@@ -8,6 +8,7 @@
     code: expense
     name: Expense
     sign: 1
+    report_type: expense
 -
   I create a Debt account type.
 -
