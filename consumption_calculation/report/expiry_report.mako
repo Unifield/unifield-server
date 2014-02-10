@@ -83,6 +83,16 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+    <Style ss:ID="lineNumber">
+    <Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+    </Borders>
+    <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
     <Style ss:ID="short_date">
      <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
      <Borders>
@@ -158,13 +168,13 @@ now = time.strftime('%Y-%m-%d')
 <Cell ss:StyleID="line"><Data ss:Type="String">${(l.product_id.default_code or '')|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.product_name|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.location_id and l.location_id.name|x}</Data></Cell>
-<Cell ss:StyleID="lineRight"><Data ss:Type="String">${formatLang(l.real_stock or 0.0)}</Data></Cell>
+<Cell ss:StyleID="lineNumber"><Data ss:Type="Number">${l.real_stock or 0.0}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.uom_id and l.uom_id.name|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.batch_number|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.expiry_date|x}</Data></Cell>
-<Cell ss:StyleID="lineRight"><Data ss:Type="String">${formatLang(l.expired_qty or 0.00)}</Data></Cell>
-<Cell ss:StyleID="lineRight"><Data ss:Type="String">${l.product_id and l.product_id.standard_price or '0.00'}</Data></Cell>
-<Cell ss:StyleID="lineRight"><Data ss:Type="String">${formatLang(l.product_id and l.product_id.standard_price*l.expired_qty or 0.0)}</Data></Cell>
+<Cell ss:StyleID="lineNumber"><Data ss:Type="Number">${l.expired_qty or 0.00}</Data></Cell>
+<Cell ss:StyleID="lineNumber"><Data ss:Type="Number">${l.product_id and l.product_id.standard_price or '0.00'}</Data></Cell>
+<Cell ss:StyleID="lineNumber"><Data ss:Type="Number">${l.product_id and l.product_id.standard_price*l.expired_qty or 0.0}</Data></Cell>
 </Row>
 % endif
 % endfor
@@ -207,13 +217,13 @@ now = time.strftime('%Y-%m-%d')
 <Cell ss:StyleID="line"><Data ss:Type="String">${(l.product_id.default_code or '')|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.product_name|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.location_id and l.location_id.name|x}</Data></Cell>
-<Cell ss:StyleID="lineRight"><Data ss:Type="String">${formatLang(l.real_stock or 0.0)}</Data></Cell>
+<Cell ss:StyleID="lineNumber"><Data ss:Type="Number">${l.real_stock or 0.0}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.uom_id and l.uom_id.name|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.batch_number|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.expiry_date|x}</Data></Cell>
-<Cell ss:StyleID="lineRight"><Data ss:Type="String">${formatLang(l.expired_qty or 0.00)}</Data></Cell>
-<Cell ss:StyleID="lineRight"><Data ss:Type="String">${l.product_id and l.product_id.standard_price or '0.00'}</Data></Cell>
-<Cell ss:StyleID="lineRight"><Data ss:Type="String">${formatLang(l.product_id and l.product_id.standard_price*l.expired_qty or 0.0)}</Data></Cell>
+<Cell ss:StyleID="lineNumber"><Data ss:Type="Number">${l.expired_qty or 0.00}</Data></Cell>
+<Cell ss:StyleID="lineNumber"><Data ss:Type="Number">${l.product_id and l.product_id.standard_price or '0.00'}</Data></Cell>
+<Cell ss:StyleID="lineNumber"><Data ss:Type="Number">${l.product_id and l.product_id.standard_price*l.expired_qty or 0.0}</Data></Cell>
 </Row>
 % endif
 % endfor
