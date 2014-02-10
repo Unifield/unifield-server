@@ -1113,7 +1113,7 @@ class account_bank_statement_line(osv.osv):
         return True
 
 
-    def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
+    def create_move_from_st_line(self, cr, uid, st_line, company_currency_id, st_line_number, context=None):
         """
         Create move from the register line
         """
@@ -1123,7 +1123,6 @@ class account_bank_statement_line(osv.osv):
         res_currency_obj = self.pool.get('res.currency')
         account_move_obj = self.pool.get('account.move')
         account_move_line_obj = self.pool.get('account.move.line')
-        st_line = self.browse(cr, uid, st_line_id, context=context)
         st = st_line.statement_id
 
         context.update({'date': st_line.date})
@@ -1233,20 +1232,20 @@ class account_bank_statement_line(osv.osv):
             'period_id': st.period_id.id,
             'amount_currency': amount_currency,
             'currency_id': currency_id,
-            }, context=context)
+            }, context=context, check=True)
+        torec.append(first_move_line_id)
 
-        for line in account_move_line_obj.browse(cr, uid, [x.id for x in
-                account_move_obj.browse(cr, uid, move_id,
-                    context=context).line_id],
-                context=context):
-            if line.state <> 'valid':
+        # Optimization: do not browse the move to browse move lines. Just read content of created move lines.
+        #+ This is because no other move lines should be created in this method for the given account_move object.
+        for line in account_move_line_obj.read(cr, uid, torec, ['state', 'name']):
+            if line.get('state') <> 'valid':
                 raise osv.except_osv(_('Error !'),
-                        _('Journal Item "%s" is not valid') % line.name)
+                        _('Journal Item "%s" is not valid') % line.get('name'))
         # @@@end
 
         # Removed post from original method
 
-        self.write(cr, uid, [st_line_id], {'first_move_line_id': first_move_line_id}, context=context)
+        self.write(cr, uid, [st_line.id], {'first_move_line_id': first_move_line_id}, context=context)
         return move_id
 
     def _update_amount(self, values):
@@ -1928,11 +1927,11 @@ class account_bank_statement_line(osv.osv):
             #+  Note that direct invoice moves though temp state and back to draft via code (not user actions).
             #+  Code is duplicated below for clarifty. TODO: fix during refactoring of dirct invoices
             if absl.state == 'draft' and not absl.direct_invoice:
-                self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
+                self.create_move_from_st_line(cr, uid, absl, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
                 absl = self.browse(cr, uid, absl.id, context=context)
             if absl.state in ('draft','temp') and absl.direct_invoice and postype != 'hard':
-                self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
+                self.create_move_from_st_line(cr, uid, absl, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
                 absl = self.browse(cr, uid, absl.id, context=context) 
 
