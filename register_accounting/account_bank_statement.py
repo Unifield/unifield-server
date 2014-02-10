@@ -1200,7 +1200,8 @@ class account_bank_statement_line(osv.osv):
                     st_line.account_id.currency_id.id, amount, context=context)
             val['amount_currency'] = -amount_cur
 
-        move_line_id = account_move_line_obj.create(cr, uid, val, context=context)
+        # Optimization: check=False for the first move line. Then do it for the second line
+        move_line_id = account_move_line_obj.create(cr, uid, val, context=context, check=False)
         torec.append(move_line_id)
 
         # Fill the secondary amount/currency
@@ -1211,6 +1212,7 @@ class account_bank_statement_line(osv.osv):
             amount_currency = st_line.amount
             currency_id = st.currency.id
         # Add register_line_id variable
+        # Optimization: check=True to check all move lines
         first_move_line_id = account_move_line_obj.create(cr, uid, {
             'name': st_line.name,
             'date': st_line.date,
