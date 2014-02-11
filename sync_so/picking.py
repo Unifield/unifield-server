@@ -697,6 +697,35 @@ class stock_picking(osv.osv):
                 logger.is_product_price_modified |= \
                     ('price_unit' in line_changes)
 
+    def action_invoice_create(self, cr, uid, ids, journal_id=False,
+            group=False, type='out_invoice', context=None):
+        """ 
+        If Remote Warehouse module is installed, only create supplier invoice at Central Platform
+        """
+        invoice_result = {}
+        do_invoice = True
+        
+        # Handle purchase pickings only
+        if type == 'in_invoice':
+            
+            while True:
+            
+                # Is remote warehouse module installed?
+                update_obj = self.pool.get('sync_remote_warehouse.update_to_send')
+                if not update_obj:
+                    break
+                
+                # Are we setup as a central platform?
+                entity_obj = self.pool.get('sync.client.entity')
+                if entity_obj.get_entity(cr, 1).usb_instance_type != 'central_platform':
+                    do_invoice = False
+                    
+                break
+                
+        if do_invoice: 
+            invoice_result = super(stock_picking, self).action_invoice_create(cr, uid, ids, 
+                                  journal_id=journal_id, group=group, type=type, context=context)
+        return invoice_result
 stock_picking()
 
 class shipment(osv.osv):
