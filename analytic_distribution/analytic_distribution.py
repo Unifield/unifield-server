@@ -276,11 +276,11 @@ class analytic_distribution(osv.osv):
             for dl_name in ['cost.center.distribution.line', 'funding.pool.distribution.line', 'free.1.distribution.line', 'free.2.distribution.line']:
                 dl_obj = self.pool.get(dl_name)
                 dl_ids = dl_obj.search(cr, uid, [('distribution_id', '=', distrib_id)], context=context)
-                for dl in dl_obj.browse(cr, uid, dl_ids, context=context):
+                for dl in dl_obj.read(cr, uid, dl_ids, ['percentage'], context=context):
                     dl_vals = {
-                        'amount': round(dl.percentage * amount) / 100.0,
+                        'amount': round(dl.get('percentage', False) * amount) / 100.0,
                     }
-                    dl_obj.write(cr, uid, [dl.id], dl_vals, context=context)
+                    dl_obj.write(cr, uid, [dl.get('id')], dl_vals, context=context)
         return True
 
     def update_distribution_line_account(self, cr, uid, line_ids, account_id, context=None):
