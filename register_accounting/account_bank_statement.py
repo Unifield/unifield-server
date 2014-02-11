@@ -1296,9 +1296,9 @@ class account_bank_statement_line(osv.osv):
         # Check that an employee is given in employee_id or third_parties
         if values.get('employee_id', False) or values.get('partner_type', False):
             # Fetch account (should be mandatory)
-            account = self.pool.get('account.account').browse(cr, uid, values.get('account_id'))
+            account = self.pool.get('account.account').read(cr, uid, values.get('account_id'), ['user_type_code', 'default_destination_id'])
             is_expense = False
-            if account.user_type and account.user_type.code == 'expense':
+            if account.get('user_type_code', False) == 'expense':
                 is_expense = True
             if values.get('employee_id'):
                 emp_id = values.get('employee_id')
@@ -1311,14 +1311,14 @@ class account_bank_statement_line(osv.osv):
                 if third and third[0] and third[0] != "hr.employee":
                     return res
                 emp_id = third and third[1] or False
-            employee = self.pool.get('hr.employee').browse(cr, uid, int(emp_id))
-            if is_expense and employee.cost_center_id:
+            employee = self.pool.get('hr.employee').read(cr, uid, int(emp_id), ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id'])
+            if is_expense and employee.get('cost_center_id', False):
                 # Create a distribution
-                destination_id = (employee.destination_id and employee.destination_id.id) or (account.default_destination_id and account.default_destination_id.id) or False
-                cc_id = employee.cost_center_id and employee.cost_center_id.id or False
-                fp_id = employee.funding_pool_id and employee.funding_pool_id.id or False
-                f1_id = employee.free1_id and employee.free1_id.id or False
-                f2_id = employee.free2_id and employee.free2_id.id or False
+                destination_id = (employee.get('destination_id', [False])[0]) or (account.get('default_destination_id', [False])[0]) or False
+                cc_id = employee.get('cost_center_id', [False])[0] or False
+                fp_id = employee.get('funding_pool_id',[False])[0] or False
+                f1_id = employee.get('free1_id', [False])[0] or False
+                f2_id = employee.get('free2_id', [False])[0] or False
                 if not fp_id:
                     fp_id = msf_fp_id
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
