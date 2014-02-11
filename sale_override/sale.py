@@ -1330,6 +1330,7 @@ class sale_order_line(osv.osv):
                 'manually_corrected': fields.boolean(string='FO line is manually corrected by user'),
                 'created_by_po': fields.many2one('purchase.order', string='Created by PO'),
                 'created_by_po_line': fields.many2one('purchase.order.line', string='Created by PO line'),
+                'dpo_line_id': fields.many2one('purchase.order.line', string='DPO line'),
                 }
 
     _defaults = {
