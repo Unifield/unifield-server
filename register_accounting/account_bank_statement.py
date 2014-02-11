@@ -1465,7 +1465,8 @@ class account_bank_statement_line(osv.osv):
             move_line_values.update({'account_id': register_account_id, 'debit': register_debit, 'credit': register_credit, 
                 'amount_currency': register_amount_currency, 'currency_id': currency_id,})
             # Write move line object for register line
-            acc_move_line_obj.write(cr, uid, [register_line.id], move_line_values, context=context)
+            #+ Optimization: Do not check line because of account_move.write() method at the end of this method
+            acc_move_line_obj.write(cr, uid, [register_line.id], move_line_values, context=context, check=False, update_check=False)
             # Update values for other line
             move_line_values.update({'account_id': other_account_id, 'debit': other_debit, 'credit': other_credit, 'amount_currency': other_amount_currency, 
                 'currency_id': currency_id,})
@@ -1476,7 +1477,8 @@ class account_bank_statement_line(osv.osv):
             # Write move line object for other line
             # UTP-407: Add new message for temp posted register line if you change account and that it's not valid with analytic distribution
             try:
-                acc_move_line_obj.write(cr, uid, [other_line.id], move_line_values, context=context)
+                # Optimization: Do not check line because of account_move.write() method at the end of this method
+                acc_move_line_obj.write(cr, uid, [other_line.id], move_line_values, context=context, check=False, update_check=False)
             except osv.except_osv, e:
                 msg = e.value
                 if 'account_id' in values and st_line.state == 'temp' and other_line.analytic_distribution_state == 'invalid':
