@@ -888,11 +888,18 @@ class account_bank_statement_line(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
+        sql = """
+        SELECT absl.id, a.type_for_register
+        FROM account_bank_statement_line AS absl, account_account AS a
+        WHERE absl.account_id = a.id
+        AND absl.id IN %s
+        ORDER BY absl.id;
+        """
+        cr.execute(sql, (tuple(ids),))
         # Browse elements
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = False
-            if line.account_id and line.account_id.type_for_register and line.account_id.type_for_register == 'transfer':
-                res[line.id] = True
+        #+ If type_for_register is transfer, True. Otherwise False.
+        for line in cr.fetchall():
+            res[line[0]] = line[1] == 'transfer'
         return res
     
     def _get_sequence(self, cr, uid, ids, field_name=None, args=None, context=None):
