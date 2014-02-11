@@ -1962,24 +1962,20 @@ class account_bank_statement_line(osv.osv):
                 account_move.write(cr, uid, [absl.invoice_id.move_id.id],{'state':'draft'}, context=context)
 
                 account_move_line_ids = account_move_line.search(cr, uid, [('move_id', '=', absl.invoice_id.move_id.id)])
-
-                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'}, context=context)
-
-                # unreconcile them
-                account_move_obj = account_move.browse(cr, uid, [absl.invoice_id.move_id.id])
-
+                # Optimizations: Do check=False and update_check=False because it would be done for the same move lines at the end of this loop
+                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'}, context=context, check=False, update_check=False)
                 # link to account_move_reconcile on account_move_line
-                account_move_line_objs = account_move_line.browse(cr, uid, account_move_line_ids)
                 account_move_reconcile = self.pool.get('account.move.reconcile')
-                for line in account_move_line_objs:
-                    if line.reconcile_id:
-                        account_move_reconcile.unlink(cr,uid,[line.reconcile_id])
+                for line in account_move_line.read(cr, uid, account_move_line_ids, ['reconcile_id'], context=context):
+                    if line.get('reconcile_id', False):
+                        account_move_reconcile.unlink(cr, uid, [line.get('reconcile_id')[0]], context=context)
 
                 # update the invoice 'name' (ref)  TODO - does this need to be set to "/" ?
                 inv_number = self.pool.get('account.invoice').read(cr, uid, absl.invoice_id.id, ['number'])['number']
                 # self.write(cr, uid, [absl.id], {'name': "/"})
                 account_move_line_ids = account_move_line.search(cr, uid, [('move_id', '=', absl.invoice_id.move_id.id)])
-                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'})
+                # Optimization: Do check=True and update_check=True because it was out from previous lines.
+                account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'}, context=context, check=True, update_check=True)
 
             if postype == "hard":
                 # Update analytic lines
