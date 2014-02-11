@@ -1810,9 +1810,9 @@ class account_bank_statement_line(osv.osv):
         # Update the bank statement lines with 'values'
         res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
         # Amount verification regarding Down payments
-        for line in self.browse(cr, uid, ids):
-            if line.is_down_payment and line.down_payment_id:
-                if not self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, line.id, line.down_payment_id.id, context=context):
+        for line in self.read(cr, uid, ids, ['is_down_payment', 'down_payment_id']):
+            if line.get('is_down_payment', False) and line.get('down_payment_id'):
+                if not self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, line.get('id'), line.get('down_payment_id')[0], context=context):
                     raise osv.except_osv(_('Warning'), _('An error occured on down_payment check. Please contact an administrator to resolve this problem.'))
         return res
 
