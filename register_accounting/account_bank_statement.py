@@ -673,22 +673,26 @@ class account_bank_statement_line(osv.osv):
         - unknown if an error occured or anything else (for an example the move have a new state)
         """
         res = {}
-        for absl in self.browse(cr, uid, ids, context=context):
-            if absl.direct_invoice:   #utp-917
-                res[absl.id] = absl.direct_state 
-            else:
-                # Verify move existence
-                if not absl.move_ids:
-                    res[absl.id] = 'draft'
-                else:
-                    # If exists, check move state
-                    state = absl.move_ids[0].state
-                    if state == 'draft':
-                        res[absl.id] = 'temp'
-                    elif state == 'posted':
-                        res[absl.id] = 'hard'
-                    else:
-                        res[absl.id] = 'unknown'
+        # Optimization: Use SQL request instead of a browse to improve result generation for cases where you have a lot of line (30+)
+        sql = """
+            SELECT
+                absl.id,
+                CASE
+                    WHEN absl.direct_invoice = 'f' AND am.state IS NULL THEN 'draft'
+                    WHEN absl.direct_invoice = 'f' AND am.state = 'draft' THEN 'temp'
+                    WHEN absl.direct_invoice = 'f' AND am.state = 'posted' THEN 'hard'
+                    WHEN absl.direct_invoice = 't' THEN absl.direct_state
+                    ELSE 'unknown'
+                END AS absl_state
+            FROM account_bank_statement_line AS absl
+                LEFT JOIN account_bank_statement_line_move_rel AS abslm ON abslm.move_id = absl.id
+                LEFT JOIN account_move AS am ON abslm.statement_id = am.id
+            WHERE absl.id IN %s
+            ORDER BY absl.id;"""
+        cr.execute(sql, (tuple(ids),))
+        tmp_res = cr.fetchall()
+        if tmp_res:
+            res = dict(tmp_res)
         return res
 
     def _get_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):
