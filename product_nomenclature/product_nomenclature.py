@@ -616,9 +616,19 @@ class product_template(osv.osv):
         '''
         if context is None:
             context = {}
+            
+        nomen_obj = self.pool.get('product.nomenclature')
+        
+        from_import_menu = context.get('from_import_menu', False)
         # Set the category according to the Family
         if vals.get('nomen_manda_2'):
-            vals['categ_id'] = self.pool.get('product.nomenclature').browse(cr, uid, vals['nomen_manda_2'], context=context).category_id.id
+            if from_import_menu and nomen_obj._cache.get(vals['nomen_manda_2'], False):
+                vals['categ_id'] = nomen_obj._cache.get(vals['nomen_manda_2'], False)
+            else:
+                print 'browse'
+                vals['categ_id'] = self.pool.get('product.nomenclature').read(cr, uid, vals['nomen_manda_2'], ['category_id'], context=context)['category_id'][0]
+                if from_import_menu:
+                    nomen_obj._cache[vals['nomen_manda_2']] = vals['categ_id']
         return super(product_template, self).create(cr, uid, vals, context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -649,10 +659,74 @@ class product_product(osv.osv):
         '''
         override to complete nomenclature_description
         '''
+        # Objects
         sale = self.pool.get('sale.order.line')
+        
+        if context is None:
+            context = {}
+            
+        default_code = vals.get('default_code', False)
+        p_type = vals.get('type', False)
+        
+        if p_type == 'service':
+            vals.update({'type': 'service_recep',
+                         'procure_method': 'make_to_order'})
+        '''
+        if a product is not of type product, it is set to single subtype
+        '''
+        # fetch the product
+        if p_type != 'product':
+            vals['subtype'] = 'single'
+            
+        # save the data to db
+        if 'batch_management' in vals:
+            vals.update({'track_production': vals['batch_management'],
+                         'track_incoming': vals['batch_management'],
+                         'track_outgoing': vals['batch_management'],
+                         'perishable': vals['batch_management']})
+                
+        if default_code:
+            vals['duplicate_ok'] = default_code == 'XXX'
+        '''
+        UF-2254: When creating the product, there are 3 different cases:
+         1. the creation comes from the sync, in this case, report any error if duplication on default_code or xmlid_code
+             otherwise, there will be problem with the update later
+         2. from import product menu: the context contains from_import_menu: default code and xmlid_code must exist and unique
+         3. manually creation: the default code must be new (no duplication), xmlid_code = valid default_code
+         4. duplication from GUI: the default code XXX is saved, then modify in the write
+        '''
+        to_overwrite = False
+        # The first 2 cases: dup of default_code/xmlid_code not allow
+        if context.get('from_import_menu') or context.get('sync_update_execution', False):
+            if not default_code or not vals.get('xmlid_code', False):
+                raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
+            exist_dc_xc = self.search(cr, uid, ['|', ('default_code', '=', default_code),
+                                                     ('xmlid_code', '=', default_code)], context=context)
+            if exist_dc_xc: # if any of the code exists, report error!,
+                raise Exception, "Problem creating product: Duplicate xmlid_code/default_code found"
+        elif default_code: # cases 3, 4
+            vals['xmlid_code'] = default_code
+        else:
+            # not default_code, as this is a mandatory field a default_value will be set later in the code
+            to_overwrite = 1
+            
         sale._setNomenclatureInfo(cr, uid, vals, context)
         
-        return super(product_product, self).create(cr, uid, vals, context)
+        res = super(product_product, self).create(cr, uid, vals, context=context)
+        
+        prod_default_code = default_code or self.read(cr, uid, id, ['default_code'], context=context)
+        if to_overwrite:
+            self.write(cr, uid, id, {'xmlid_code': prod_default_code}, context=context)
+            
+        if prod_default_code != 'XXX':
+            return res
+
+        # if the default code is empty or XXX, then delete the relevant xmlid from the ir_model_data table
+        model_data_obj = self.pool.get('ir.model.data')
+        sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','=',id),('module','=','sd')])
+        if sdref_ids:
+            model_data_obj.unlink(cr, uid, sdref_ids,context=context)
+        return id
     
     def write(self, cr, uid, ids, vals, context=None):
         '''

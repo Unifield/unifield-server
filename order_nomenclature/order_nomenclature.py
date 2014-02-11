@@ -436,10 +436,10 @@ class sale_order_line(osv.osv):
         sublevels = constants['sublevels']
         ids = filter(lambda x: ('nomen_sub_%i'%x in values) and (values['nomen_sub_%i'%x]), range(sublevels))
         ids = map(lambda x: values['nomen_sub_%i'%x], ids)
-        subNomenclatures = self.pool.get('product.nomenclature').browse(cr, uid, ids, context)
+        subNomenclatures = self.pool.get('product.nomenclature').read(cr, uid, ids, ['name'], context=context)
         
         for n in subNomenclatures:
-            description.append(n.name)
+            description.append(n['name'])
 
         values.update({'nomenclature_description': ':'.join(description)})
     

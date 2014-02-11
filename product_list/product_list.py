@@ -252,39 +252,7 @@ class product_product(osv.osv):
         ('default_code', "unique(default_code)", 'The "Product Code" must be unique'),
         ('xmlid_code', "unique(xmlid_code)", 'The xmlid_code must be unique'),
     ]
-
-    def create(self, cr, uid, vals, context=None):
-        '''
-        UF-2254: When creating the product, there are 3 different cases:
-         1. the creation comes from the sync, in this case, report any error if duplication on default_code or xmlid_code
-             otherwise, there will be problem with the update later
-         2. from import product menu: the context contains from_import_menu: default code and xmlid_code must exist and unique
-         3. manually creation: the default code must be new (no duplication), xmlid_code = valid default_code
-         4. duplication from GUI: the default code XXX is saved, then modify in the write
-        '''
-
-        if context is None:
-            context = {}
-        to_overwrite = False
-        # The first 2 cases: dup of default_code/xmlid_code not allow
-        if context.get('from_import_menu') or context.get('sync_update_execution', False):
-            if not vals.get('default_code', False) or not vals.get('xmlid_code', False):
-                raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
-            exist_dc = self.search(cr, uid, [('default_code', '=', vals['default_code'])], context=context)
-            exist_xc = self.search(cr, uid, [('xmlid_code', '=', vals['xmlid_code'])], context=context)
-            if exist_dc or exist_xc: # if any of the code exists, report error!
-                raise Exception, "Problem creating product: Duplicate xmlid_code/default_code found"
-        elif vals.get('default_code'): # cases 3, 4
-            vals['xmlid_code'] = vals.get('default_code')
-        else:
-            # not default_code, as this is a mandatory field a default_value will be set later in the code
-            to_overwrite = 1
-        id = super(product_product, self).create(cr, uid, vals, context=context)
-        if to_overwrite:
-            prod = self.read(cr, uid, id, ['default_code'], context=context)
-            self.write(cr, uid, id, {'xmlid_code': prod['default_code']}, context=context)
-        return id
-
+    
     def write(self, cr, uid, ids, value, context=None):
         single = False
         if isinstance(ids, (long, int)):
