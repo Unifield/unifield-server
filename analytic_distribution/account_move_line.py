@@ -55,9 +55,16 @@ class account_move_line(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
-        # Browse all given lines
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.move_id and line.move_id.analytic_distribution_id and line.move_id.analytic_distribution_id.id or False, line.account_id.id)
+        distrib_obj = self.pool.get('analytic.distribution')
+        sql = """
+            SELECT aml.id, aml.analytic_distribution_id AS distrib_id, m.analytic_distribution_id AS move_distrib_id, aml.account_id
+            FROM account_move_line AS aml, account_move AS m
+            WHERE aml.move_id = m.id
+            AND aml.id IN %s
+            ORDER BY aml.id;"""
+        cr.execute(sql, (tuple(ids),))
+        for line in cr.fetchall():
+            res[line[0]] = distrib_obj._get_distribution_state(cr, uid, line[1], line[2], line[3])
         return res
 
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
