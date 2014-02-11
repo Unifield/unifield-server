@@ -1382,125 +1382,125 @@ class account_bank_statement_line(osv.osv):
         (_verify_dates, "Date is not correct. Verify that it's in the register's period. ", ['date']),
     ]
 
-    def _update_move_from_st_line(self, cr, uid, st_line_id=None, values=None, context=None):
+    def _update_move_from_st_line(self, cr, uid, ids, values=None, context=None):
         """
         Update move lines from given statement lines
         """
-        if not st_line_id or not values:
+        if not values:
             return False
 
         if context is None:
             context = {}
 
-        # Prepare some values
-        move_line_values = dict(values)
-        acc_move_line_obj = self.pool.get('account.move.line')
-        st_line = self.browse(cr, uid, st_line_id, context=context)
-        # Get first line (from Register account)
-        register_line = st_line.first_move_line_id
-        # Delete 'from_import_cheque_id' field not to break the account move line write
-        if 'from_import_cheque_id' in move_line_values:
-            del(move_line_values['from_import_cheque_id'])
-        # Delete down_payment value not to be given to account_move_line
-        if 'down_payment_id' in move_line_values:
-            del(move_line_values['down_payment_id'])
-        # Delete analytic distribution from move_line_values because each move line should have its own analytic distribution
-        if 'analytic_distribution_id' in move_line_values:
-            del(move_line_values['analytic_distribution_id'])
-        if register_line:
-            # Search second move line
-            other_line_id = acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', register_line.id)], context=context)[0]
-            other_line = acc_move_line_obj.browse(cr, uid, other_line_id, context=context)
-            other_account_id = move_line_values.get('account_id', other_line.account_id.id)
-            amount = move_line_values.get('amount', st_line.amount)
-            # Search all data for move lines
-            register_account_id = st_line.statement_id.journal_id.default_debit_account_id.id
-            if amount < 0:
-                register_account_id = st_line.statement_id.journal_id.default_credit_account_id.id
-                register_debit = 0.0
-                register_credit = abs(amount)
-                other_debit = abs(amount)
-                other_credit = 0.0
-            else:
-                register_debit = amount
-                register_credit = 0.0
-                other_debit = 0.0
-                other_credit = amount
-            # What's about register currency ?
-            register_amount_currency = False
-            other_amount_currency = False
-            currency_id = st_line.statement_id.currency.id
-            if st_line.statement_id.currency.id != st_line.statement_id.company_id.currency_id.id:
-                # Prepare value
-                res_currency_obj = self.pool.get('res.currency')
-                # Get date for having a good change rate
-                context.update({'date': move_line_values.get('date', st_line.date)})
-                # Change amount
-                new_amount = res_currency_obj.compute(cr, uid, \
-                    st_line.statement_id.journal_id.currency.id, st_line.company_id.currency_id.id, abs(amount), round=False, context=context)
-                # Take currency for the move lines
-                currency_id = st_line.statement_id.journal_id.currency.id
-                # Default amount currency
-                register_amount_currency = False
+        for st_line in self.browse(cr, uid, ids, context=context):
+            # Prepare some values
+            move_line_values = dict(values)
+            acc_move_line_obj = self.pool.get('account.move.line')
+            # Get first line (from Register account)
+            register_line = st_line.first_move_line_id
+            # Delete 'from_import_cheque_id' field not to break the account move line write
+            if 'from_import_cheque_id' in move_line_values:
+                del(move_line_values['from_import_cheque_id'])
+            # Delete down_payment value not to be given to account_move_line
+            if 'down_payment_id' in move_line_values:
+                del(move_line_values['down_payment_id'])
+            # Delete analytic distribution from move_line_values because each move line should have its own analytic distribution
+            if 'analytic_distribution_id' in move_line_values:
+                del(move_line_values['analytic_distribution_id'])
+            if register_line:
+                # Search second move line
+                other_line_id = acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', register_line.id)], context=context)[0]
+                other_line = acc_move_line_obj.read(cr, uid, other_line_id, ['account_id', 'analytic_distribution_state'], context=context)
+                other_account_id = move_line_values.get('account_id', other_line.get('account_id')[0])
+                amount = move_line_values.get('amount', st_line.amount)
+                # Search all data for move lines
+                register_account_id = st_line.statement_id.journal_id.default_debit_account_id.id
                 if amount < 0:
-                    register_amount_currency = -abs(amount)
+                    register_account_id = st_line.statement_id.journal_id.default_credit_account_id.id
                     register_debit = 0.0
-                    register_credit = new_amount
-                    other_debit = new_amount
+                    register_credit = abs(amount)
+                    other_debit = abs(amount)
                     other_credit = 0.0
                 else:
-                    register_amount_currency = abs(amount)
-                    register_debit = new_amount
+                    register_debit = amount
                     register_credit = 0.0
                     other_debit = 0.0
-                    other_credit = new_amount
-                # Amount currency for "other line" is the opposite of "register line"
-                other_amount_currency = -register_amount_currency
-            # Update values for register line
-            # FIXME: List fields to take instead of removing fields we don't want
-            # TODO: Make a guideline to explain what's to be done when you create a new column in register lines
-            for el in ['is_transfer_with_change', 'transfer_amount', 'imported_invoice_line_ids']:
-                if el in move_line_values:
-                    del(move_line_values[el])
-            move_line_values.update({'account_id': register_account_id, 'debit': register_debit, 'credit': register_credit, 
-                'amount_currency': register_amount_currency, 'currency_id': currency_id,})
-            # Write move line object for register line
-            #+ Optimization: Do not check line because of account_move.write() method at the end of this method
-            acc_move_line_obj.write(cr, uid, [register_line.id], move_line_values, context=context, check=False, update_check=False)
-            # Update values for other line
-            move_line_values.update({'account_id': other_account_id, 'debit': other_debit, 'credit': other_credit, 'amount_currency': other_amount_currency, 
-                'currency_id': currency_id,})
-            if st_line.is_transfer_with_change:
-                move_line_values.update({'is_transfer_with_change': True})
-                if st_line.transfer_amount:
-                    move_line_values.update({'transfer_amount': st_line.transfer_amount or 0.0})
-            # Write move line object for other line
-            # UTP-407: Add new message for temp posted register line if you change account and that it's not valid with analytic distribution
-            try:
-                # Optimization: Do not check line because of account_move.write() method at the end of this method
-                acc_move_line_obj.write(cr, uid, [other_line.id], move_line_values, context=context, check=False, update_check=False)
-            except osv.except_osv, e:
-                msg = e.value
-                if 'account_id' in values and st_line.state == 'temp' and other_line.analytic_distribution_state == 'invalid':
-                    msg = _('The account modification required makes the analytic distribution previously defined invalid; please perform the account modification through the analytic distribution wizard')
-                raise osv.except_osv(e.name, msg)
-            # Update analytic distribution lines
-            analytic_amount = acc_move_line_obj.read(cr, uid, [other_line.id], ['amount_currency'], context=context)[0].get('amount_currency', False)
-            if analytic_amount:
-                self.pool.get('analytic.distribution').update_distribution_line_amount(cr, uid, [st_line.analytic_distribution_id.id], 
-                amount=analytic_amount, context=context)
-            # Update move
-            # first prepare partner_type
-            partner_type = False
-            if st_line.third_parties:
-                partner_type = ','.join([str(st_line.third_parties._table_name), str(st_line.third_parties.id)])
-            # finally write move object
-            move_vals = {'partner_type': partner_type}
-            if 'document_date' in move_line_values:
-                move_vals.update({'document_date': move_line_values.get('document_date')})
-            if 'cheque_number' in move_line_values:
-                move_vals.update({'cheque_number': move_line_values.get('cheque_number')})
-            self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], move_vals, context=context)
+                    other_credit = amount
+                # What's about register currency ?
+                register_amount_currency = False
+                other_amount_currency = False
+                currency_id = st_line.statement_id.currency.id
+                if st_line.statement_id.currency.id != st_line.statement_id.company_id.currency_id.id:
+                    # Prepare value
+                    res_currency_obj = self.pool.get('res.currency')
+                    # Get date for having a good change rate
+                    context.update({'date': move_line_values.get('date', st_line.date)})
+                    # Change amount
+                    new_amount = res_currency_obj.compute(cr, uid, \
+                        st_line.statement_id.journal_id.currency.id, st_line.company_id.currency_id.id, abs(amount), round=False, context=context)
+                    # Take currency for the move lines
+                    currency_id = st_line.statement_id.journal_id.currency.id
+                    # Default amount currency
+                    register_amount_currency = False
+                    if amount < 0:
+                        register_amount_currency = -abs(amount)
+                        register_debit = 0.0
+                        register_credit = new_amount
+                        other_debit = new_amount
+                        other_credit = 0.0
+                    else:
+                        register_amount_currency = abs(amount)
+                        register_debit = new_amount
+                        register_credit = 0.0
+                        other_debit = 0.0
+                        other_credit = new_amount
+                    # Amount currency for "other line" is the opposite of "register line"
+                    other_amount_currency = -register_amount_currency
+                # Update values for register line
+                # FIXME: List fields to take instead of removing fields we don't want
+                # TODO: Make a guideline to explain what's to be done when you create a new column in register lines
+                for el in ['is_transfer_with_change', 'transfer_amount', 'imported_invoice_line_ids']:
+                    if el in move_line_values:
+                        del(move_line_values[el])
+                move_line_values.update({'account_id': register_account_id, 'debit': register_debit, 'credit': register_credit, 
+                    'amount_currency': register_amount_currency, 'currency_id': currency_id,})
+                # Write move line object for register line
+                #+ Optimization: Do not check line because of account_move.write() method at the end of this method
+                acc_move_line_obj.write(cr, uid, [register_line.id], move_line_values, context=context, check=False, update_check=False)
+                # Update values for other line
+                move_line_values.update({'account_id': other_account_id, 'debit': other_debit, 'credit': other_credit, 'amount_currency': other_amount_currency, 
+                    'currency_id': currency_id,})
+                if st_line.is_transfer_with_change:
+                    move_line_values.update({'is_transfer_with_change': True})
+                    if st_line.transfer_amount:
+                        move_line_values.update({'transfer_amount': st_line.transfer_amount or 0.0})
+                # Write move line object for other line
+                # UTP-407: Add new message for temp posted register line if you change account and that it's not valid with analytic distribution
+                try:
+                    # Optimization: Do not check line because of account_move.write() method at the end of this method
+                    acc_move_line_obj.write(cr, uid, [other_line.get('id')], move_line_values, context=context, check=False, update_check=False)
+                except osv.except_osv, e:
+                    msg = e.value
+                    if 'account_id' in values and st_line.state == 'temp' and other_line.get('analytic_distribution_state') == 'invalid':
+                        msg = _('The account modification required makes the analytic distribution previously defined invalid; please perform the account modification through the analytic distribution wizard')
+                    raise osv.except_osv(e.name, msg)
+                # Update analytic distribution lines
+                analytic_amount = acc_move_line_obj.read(cr, uid, [other_line.get('id')], ['amount_currency'], context=context)[0].get('amount_currency', False)
+                if analytic_amount:
+                    self.pool.get('analytic.distribution').update_distribution_line_amount(cr, uid, [st_line.analytic_distribution_id.id], 
+                    amount=analytic_amount, context=context)
+                # Update move
+                # first prepare partner_type
+                partner_type = False
+                if st_line.third_parties:
+                    partner_type = ','.join([str(st_line.third_parties._table_name), str(st_line.third_parties.id)])
+                # finally write move object
+                move_vals = {'partner_type': partner_type}
+                if 'document_date' in move_line_values:
+                    move_vals.update({'document_date': move_line_values.get('document_date')})
+                if 'cheque_number' in move_line_values:
+                    move_vals.update({'cheque_number': move_line_values.get('cheque_number')})
+                self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], move_vals, context=context)
         return True
 
     def do_direct_expense(self, cr, uid, ids, context=None):
@@ -1785,8 +1785,7 @@ class account_bank_statement_line(osv.osv):
             saveddate = False
             if values.get('date'):
                 saveddate = values['date']
-            for id in ids:
-                self._update_move_from_st_line(cr, uid, id, values, context=context)
+            self._update_move_from_st_line(cr, uid, ids, values, context=context)
             if saveddate:
                 values['date'] = saveddate
         # Then update analytic distribution
