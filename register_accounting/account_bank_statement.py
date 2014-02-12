@@ -1731,7 +1731,7 @@ class account_bank_statement_line(osv.osv):
             return True
         return False
 
-    def create_down_payment_link(self, cr, uid, ids, context=None):
+    def create_down_payment_link(self, cr, uid, absl, context=None):
         """
         Copy down_payment link to right move line
         """
@@ -1739,15 +1739,14 @@ class account_bank_statement_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # browse all bank statement line
-        for absl in self.browse(cr, uid, ids):
-            if not absl.is_down_payment:
-                continue
-            move_ids = [x.id or None for x in absl.move_ids]
-            # Search line that have same account for given register line
-            line_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', absl.account_id.id), ('move_id', 'in', move_ids)])
-            # Add down_payment link
-            for line_id in line_ids:
-                self.pool.get('account.move.line').write(cr, uid, [line_id], {'down_payment_id': absl.down_payment_id.id})
+        if not absl.is_down_payment:
+            return False
+        move_ids = [x.id or None for x in absl.move_ids]
+        # Search line that have same account for given register line
+        line_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', absl.account_id.id), ('move_id', 'in', move_ids)])
+        # Add down_payment link
+        for line_id in line_ids:
+            self.pool.get('account.move.line').write(cr, uid, [line_id], {'down_payment_id': absl.down_payment_id.id}, update_check=False, check=False)
         return True
 
     def create(self, cr, uid, values, context=None):
@@ -1991,7 +1990,7 @@ class account_bank_statement_line(osv.osv):
 
                 if absl.is_down_payment:
                     self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, absl.id, absl.down_payment_id.id, context=context)
-                    self.create_down_payment_link(cr, uid, absl.id, context=context)
+                    self.create_down_payment_link(cr, uid, absl, context=context)
 
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
