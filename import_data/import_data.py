@@ -35,7 +35,6 @@ import time
 class import_data(osv.osv_memory):
     _name = 'import_data'
     _description = 'Import Datas'
-    _cache = {}
 
     def _set_code_name(self, cr, uid, data, row, headers):
         if not data.get('name'):
@@ -51,7 +50,6 @@ class import_data(osv.osv_memory):
 
     def _set_full_path_nomen(self, cr, uid, headers, row, col):
         if not col:
-#            self._cache = {}
             # modify headers if needed
             for n,h in enumerate(headers):
                 m = re.match("^nomen_manda_([0123]).name$", h)
@@ -64,10 +62,6 @@ class import_data(osv.osv_memory):
                 if manda != 0:
                     row[col[manda]] = ' | '.join([row[col[manda-1]], row[col[manda]]])
         return col
-
-    def _del_product_cache(self, cr, uid):
-    #    self._cache = {}
-        return
 
     def _set_default_value(self, cr, uid, data, row, headers):
         # Create new list of headers with the name of each fields (without dots)
@@ -97,7 +91,6 @@ class import_data(osv.osv_memory):
     }
 
     post_load_hook = {
-        'product.product': _del_product_cache,
     }
 
     def _get_image(self, cr, uid, context=None):
@@ -157,22 +150,29 @@ class import_data(osv.osv_memory):
         headers = []
 
         if impobj._name == 'product.product':
-            self.pool.get('product.nomenclature')._cache = {}
+            # Create the cache
+            if not hasattr(self, '_cache'):
+                self._cache = {}
+            self._cache.setdefault(dbname, {})
+            
+            if not hasattr(self.pool.get('product.nomenclature'), '_cache'):
+                self.pool.get('product.nomenclature')._cache = {}
+            self.pool.get('product.nomenclature')._cache.setdefault(dbname, {})
+            
             # Clear the cache
-            self._cache = {'product.nomenclature': {'name': {}, 'complete_name': {}},
-                           'product.uom': {'name': {}},
-                           'product.asset.type': {'name': {}},
-                           'product.international.status': {'name': {}},
-                           'product.justification.code': {'name': {}},
-                           }
+            self._cache[dbname] = {'product.nomenclature': {'name': {}, 'complete_name': {}},
+                                   'product.uom': {'name': {}},
+                                   'product.asset.type': {'name': {}},
+                                   'product.international.status': {'name': {}},
+                                   }
             # Product nomenclature
             cr.execute('SELECT name, id FROM product_nomenclature;')
             for nv in cr.dictfetchall():
-                self._cache['product.nomenclature']['name'].update({nv['name']: nv['id']})
+                self._cache[dbname]['product.nomenclature']['name'].update({nv['name']: nv['id']})
             # Product category
             cr.execute('SELECT id, family_id FROM product_category;')
             for pc in cr.dictfetchall():
-                self.pool.get('product.nomenclature')._cache.update({pc['family_id']: pc['id']})
+                self.pool.get('product.nomenclature')._cache[dbname].update({pc['family_id']: pc['id']})
             # Product nomenclature complete name
             cr.execute('''SELECT id, name FROM
 ((SELECT n0.id, n0.name AS name FROM product_nomenclature n0 WHERE n0.level = 0)
@@ -183,19 +183,19 @@ UNION
 UNION
 (SELECT n3.id, n0.name ||' | '|| n1.name ||' | '|| n2.name ||' | '|| n3.name AS name FROM product_nomenclature n1 LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id LEFT JOIN product_nomenclature n2 ON n2.parent_id = n1.id LEFT JOIN product_nomenclature n3 ON n3.parent_id = n2.id WHERE n3.level = 3)) AS cn''')
             for cnv in cr.dictfetchall():
-                self._cache['product.nomenclature']['complete_name'].update({cnv['name']: cnv['id']})
+                self._cache[dbname]['product.nomenclature']['complete_name'].update({cnv['name']: cnv['id']})
             # Product UoM
             cr.execute('SELECT name, id FROM product_uom;')
             for uv in cr.dictfetchall():
-                self._cache['product.uom']['name'].update({uv['name']: uv['id']})
+                self._cache[dbname]['product.uom']['name'].update({uv['name']: uv['id']})
             # Asset type
             cr.execute('SELECT name, id FROM product_asset_type;')
             for av in cr.dictfetchall():
-                self._cache['product.asset.type']['name'].update({av['name']: av['id']})
+                self._cache[dbname]['product.asset.type']['name'].update({av['name']: av['id']})
             # International status
             cr.execute('SELECT name, id FROM product_international_status;')
             for iv in cr.dictfetchall():
-                self._cache['product.international.status']['name'].update({iv['name']: iv['id']})
+                self._cache[dbname]['product.international.status']['name'].update({iv['name']: iv['id']})
 
         errorfile = TemporaryFile('w+')
         writer = csv.writer(errorfile, quotechar='"', delimiter=';')
@@ -211,8 +211,8 @@ UNION
         def _get_obj(header, value, fields_def):
             list_obj = header.split('.')
             relation = fields_def[list_obj[0]]['relation']
-            if impobj._name == 'product.product' and value in self._cache.get(relation, {}).get(list_obj[1], {}):
-                return self._cache[relation][list_obj[1]][value]
+            if impobj._name == 'product.product' and value in self._cache.get(dbname, {}).get(relation, {}).get(list_obj[1], {}):
+                return self._cache[dbname][relation][list_obj[1]][value]
             new_obj = self.pool.get(relation)
             newids = new_obj.search(cr, uid, [(list_obj[1], '=', value)], limit=1)
             if not newids:
@@ -220,9 +220,9 @@ UNION
                 raise osv.except_osv(_('Warning !'), _('%s does not exist')%(value,))
 
             if impobj._name == 'product.product':
-                self._cache.setdefault(relation, {})
-                self._cache[relation].setdefault(list_obj[1], {})
-                self._cache[relation][list_obj[1]][value] = newids[0]
+                self._cache[dbname].setdefault(relation, {})
+                self._cache[dbname][relation].setdefault(list_obj[1], {})
+                self._cache[dbname][relation][list_obj[1]][value] = newids[0]
             return newids[0]
 
         def process_data(field, value, fields_def):
@@ -233,15 +233,15 @@ UNION
                 if fields_def[field]['type'] == 'boolean':
                     value = value.lower() not in ('0', 'false', 'off','-', 'no', 'n')
                 elif fields_def[field]['type'] == 'selection':
-                    if impobj == 'product.product' and self._cache.get('product.product.%s.%s' % (field, value), False):
-                        value = self._cache['product.product.%s.%s' % (field, value)]
+                    if impobj == 'product.product' and self._cache[dbname].get('product.product.%s.%s' % (field, value), False):
+                        value = self._cache[dbname]['product.product.%s.%s' % (field, value)]
                     else:
                         for key, val in fields_def[field]['selection']:
                             if value.lower() in [tools.ustr(key).lower(), tools.ustr(val).lower()]:
                                 value = key
                                 if impobj == 'product.product':
-                                    self._cache.setdefault('product.product.%s' % field, {})
-                                    self._cache['product.product.%s.%s' % (field, value)] = key
+                                    self._cache[dbname].setdefault('product.product.%s' % field, {})
+                                    self._cache[dbname]['product.product.%s.%s' % (field, value)] = key
                                 break
                 elif fields_def[field]['type'] == 'date':
                     dt = DateTime.strptime(value,"%d/%m/%Y")
@@ -402,13 +402,15 @@ Find in attachment the rejected lines'''%(nb_error)
                 'res_id': req_id,
                 'datas': base64.encodestring(errorfile.read()),
             })
+            
+        if impobj == 'product.product':
+            # Clear the cache
+            self._cache[dbname] = {}
+            self.pool.get('product.nomenclature')._cache[dbname] = {}
 
         errorfile.close()
         cr.commit()
         cr.close()
-        # Clear the cache
-        self._cache = {}
-        self.pool.get('product.nomenclature')._cache = {}
         print time.time() - start
 
     def import_csv(self, cr, uid, ids, context=None):
