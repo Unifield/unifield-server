@@ -232,6 +232,17 @@ class wizard_cash_return(osv.osv_memory):
         self.write(cr, uid, ids, {'returned_amount': returned_amount, 'total_amount': total_amount, 'date': date, 'reference': reference}, context=context)
         return {'value': {'total_amount': total_amount}}
 
+    def _get_ok_with_confirm(self, cr, uid, ids, fieldname, args, context=None):
+        """UFTP-24 display confirm message at wizard validation when linked to a PO and no invoices selected"""
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        fields = ['advance_linked_po_auto_invoice', 'invoice_line_ids']
+        for r in self.read(cr, uid, ids, fields, context=context):
+            res[r['id']] = r['advance_linked_po_auto_invoice'] and not r['invoice_line_ids']
+        return res
 
     _columns = {
         'initial_amount': fields.float(string="Initial Advance amount", digits=(16,2), readonly=True),
@@ -250,6 +261,7 @@ class wizard_cash_return(osv.osv_memory):
         'comment': fields.text(string='Note'),
         'analytic_distribution_id': fields.many2one(
             'analytic.distribution', 'Analytic Distribution', readonly=True),
+        'ok_with_confirm': fields.function(_get_ok_with_confirm, type='boolean', string='Ok button with confirm', method=True),
     }
 
     _defaults = {
@@ -851,6 +863,11 @@ class wizard_cash_return(osv.osv_memory):
         # Close Wizard
         return { 'type': 'ir.actions.act_window_close', }
         
+    def action_confirm_cash_return2(self, cr, uid, ids, context=None):
+        """UFTP-24 same action handler as action_confirm_cash_return
+        for a button with a confirm attribute"""
+        return self.action_confirm_cash_return(cr, uid, ids, context=context)
+        
     def _is_advance_settled_100_cash_return(self, wizard):
         if wizard and wizard.advance_linked_po_auto_invoice \
             and wizard.initial_amount and wizard.returned_amount \
@@ -928,12 +945,23 @@ class wizard_cash_return(osv.osv_memory):
         if 'cash_register_op_advance_po_id' in context:
             doc = etree.XML(res['arch'])
                 
-            # UFTP-24 (points 6)
+            # UFTP-24
             # if cash return linked to a PO remove the purchase_list filter of invoice
             # (POs of type regular, direct, purchase_list)
             nodes = doc.xpath("//field[@name='invoice_id']")
             for node in nodes:
                 node.set('domain', "[('type', '=', 'in_invoice'), ('state', '=', 'open'), ('currency_id', '=', currency_id)]")
+            
+            # UFTP-24
+            # if cash return linked to a PO dynamically define confirm message
+            # of the 'ok button with confirm' variant
+            po = self.pool.get('purchase.order').browse(cr, uid, context['cash_register_op_advance_po_id'], context=context)
+            if po:
+                msg_base = _("No invoice selected in the cash return wizard. The corresponding cash return has been linked with PO %s - Please confirm you wish to proceed.")
+                msg = msg_base % (po.name,)
+                nodes = doc.xpath("//button[@name='action_confirm_cash_return2']")
+                for node in nodes:
+                    node.set('confirm', msg)
             
             res['arch'] = etree.tostring(doc)
         return res

@@ -48,11 +48,15 @@
                     <group colspan="4">
                         <button string='Cancel' special='cancel' icon='gtk-cancel' />
                         <button string="Compute" name="compute_total_amount" type="object" icon='gtk-execute'/>
-                        <button string='Ok' name='action_confirm_cash_return' type='object' icon='gtk-apply' />
+                        <button string='Ok' name='action_confirm_cash_return' type='object' icon='gtk-apply'
+                            attrs="{'invisible': [('ok_with_confirm', '=', True)]}" />
+                        <button string='Ok' name='action_confirm_cash_return2' type='object' icon='gtk-apply' confirm="Proceed ?"
+                            attrs="{'invisible': [('ok_with_confirm', '=', False)]}" />
                     </group>
                     <field name='currency_id' invisible="1" />
                     <field name='display_invoice' invisible="1"/>
                     <field name="advance_linked_po_auto_invoice" invisible="1" />
+                    <field name="ok_with_confirm" invisible="1" />
                     <field name="comment" colspan="4" nolabel="1" readonly="1" attrs="{'invisible':[('advance_linked_po_auto_invoice', '=', False)]}" />
                 </form>
             </field>
