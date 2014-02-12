@@ -1155,9 +1155,8 @@ class account_bank_statement_line(osv.osv):
 #            'partner_type': partner_type or False,
             # end of add
         }, context=context)
-        self.write(cr, uid, [st_line.id], {
-            'move_ids': [(4, move_id, False)]
-        })
+        # Optimization on write for this field
+        self.write(cr, uid, [st_line.id], {'move_ids': [(4, move_id, False)]}, context=context)
 
         torec = []
         if st_line.amount >= 0:
@@ -1257,7 +1256,7 @@ class account_bank_statement_line(osv.osv):
         # @@@end
 
         # Removed post from original method
-
+        # Optimization on write for this field
         self.write(cr, uid, [st_line.id], {'first_move_line_id': first_move_line_id}, context=context)
         return move_id
 
@@ -1576,6 +1575,7 @@ class account_bank_statement_line(osv.osv):
                 # Do reconciliation
                 move_line_obj.reconcile_partial(cr, uid, [move_line_debit_id, move_line_credit_id])
                 # Disable the cash return button on this line
+                # Optimization on write() for this field
                 self.write(cr, uid, [st_line.id], {'from_cash_return': True}, context=context)
         return True
 
@@ -1710,7 +1710,8 @@ class account_bank_statement_line(osv.osv):
                 netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', stl.invoice_id.id, 'invoice_open', cr)
                 # Add name to the register line
                 inv_number = self.pool.get('account.invoice').read(cr, uid, stl.invoice_id.id, ['number'])['number']
-                self.write(cr, uid, [stl.id], {'name': inv_number})
+                # Optimization on write() for this field
+                self.write(cr, uid, [stl.id], {'name': inv_number}, context=context)
                 # Hard post register line
                 self.pool.get('account.move').post(cr, uid, [stl.move_ids[0].id])
                 # Do reconciliation
@@ -1773,6 +1774,9 @@ class account_bank_statement_line(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
+        # Optimization: if only one field to change and that this field is not needed by some other, no impact on them and no change, so we can call the super method
+        if len(values) == 1 and values.keys()[0] in ['move_ids', 'first_move_line_id', 'from_cash_return', 'name', 'direct_state', 'sequence_for_reference']:
+            return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
         # Prepare some values
         state = self._get_state(cr, uid, ids, context=context).values()[0]
         # Verify that the statement line isn't in hard state
@@ -1943,7 +1947,8 @@ class account_bank_statement_line(osv.osv):
                 absl = self.browse(cr, uid, absl.id, context=context) 
 
             if postype == 'temp' and absl.direct_invoice:  #utp-917
-                self.write(cr, uid, [absl.id], {'direct_state':'temp'}, context=context)
+                # Optimization on writ() for this field
+                self.write(cr, uid, [absl.id], {'direct_state': 'temp'}, context=context)
                 # create the accounting entries
                 account_invoice = self.pool.get('account.invoice')
                 account_invoice.action_open_invoice(cr, uid, [absl.invoice_id.id], context=context)
@@ -1993,7 +1998,8 @@ class account_bank_statement_line(osv.osv):
                     self.create_down_payment_link(cr, uid, absl, context=context)
 
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
-                self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
+                # Optimization on write() for this field
+                self.write(cr, uid, [absl.id], {'sequence_for_reference': seq,}, context=context)
                 # Case where this line come from an "Pending Payments" Wizard
                 if absl.imported_invoice_line_ids:
                     self.do_import_invoices_reconciliation(cr, uid, [absl.id], context=context)
@@ -2007,7 +2013,8 @@ class account_bank_statement_line(osv.osv):
 
                     # Hard posting
                     # statement line
-                    self.write(cr, uid, [absl.id], {'direct_state':'hard'}, context=context)
+                    # Optimization on write() for this field
+                    self.write(cr, uid, [absl.id], {'direct_state': 'hard'}, context=context)
                     # invoice
                     self.pool.get('account.invoice').write(cr, uid, [absl.invoice_id.id], {'state':'paid'}, context=context)
                     # reconcile lines
