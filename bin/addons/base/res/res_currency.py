@@ -100,31 +100,30 @@ class res_currency(osv.osv):
         if from_currency['rate'] == 0 or to_currency['rate'] == 0:
             date = context.get('date', time.strftime('%Y-%m-%d'))
             if from_currency['rate'] == 0:
-                currency_name = from_currency.name
+                currency_name = from_currency['name']
             else:
-                currency_name = to_currency.name
+                currency_name = to_currency['name']
             raise osv.except_osv(_('Error'), _('No rate found \n' \
                     'for the currency: %s \n' \
                     'at the date: %s') % (currency_name, date))
-        return to_currency.rate/from_currency.rate
+        return to_currency['rate']/from_currency['rate']
 
     def compute(self, cr, uid, from_currency_id, to_currency_id, from_amount, round=True, context=None):
         if not from_currency_id:
             from_currency_id = to_currency_id
         if not to_currency_id:
             to_currency_id = from_currency_id
-        xc = self.browse(cr, uid, [from_currency_id,to_currency_id], context=context)
-        from_currency = (xc[0].id == from_currency_id and xc[0]) or xc[1]
-        to_currency = (xc[0].id == to_currency_id and xc[0]) or xc[1]
+        from_currency = self.read(cr, uid, from_currency_id, ['rounding', 'name', 'rate'], context=context)
+        to_currency = self.read(cr, uid, to_currency_id, ['rounding', 'name', 'rate'], context=context)
         if to_currency_id == from_currency_id:
             if round:
-                return self.round(cr, uid, to_currency.rounding, from_amount)
+                return self.round(cr, uid, to_currency['rounding'], from_amount)
             else:
                 return from_amount
         else:
             rate = self._get_conversion_rate(cr, uid, from_currency, to_currency, context=context)
             if round:
-                return self.round(cr, uid, to_currency.rounding, from_amount * rate)
+                return self.round(cr, uid, to_currency['rounding'], from_amount * rate)
             else:
                 return (from_amount * rate)
 
