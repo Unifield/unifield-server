@@ -30,7 +30,6 @@ import tools
 from mx import DateTime
 import re
 import logging
-import time
 
 class import_data(osv.osv_memory):
     _name = 'import_data'
@@ -123,14 +122,8 @@ class import_data(osv.osv_memory):
         'debug': False,
         'import_mode': lambda *a: 'create',
     }
-    
-    def _import_log(self, dbname, uid, ids, context=None):
-        import cProfile
-        command = """self._import(dbname, uid, ids, context=context)"""
-        cProfile.runctx(command, globals(), locals(), filename="/home/qt/import_product.log")
 
     def _import(self, dbname, uid, ids, context=None):
-        start = time.time()
         cr = pooler.get_db(dbname).cursor()
 
         obj = self.read(cr, uid, ids[0])
@@ -233,7 +226,7 @@ WHERE n3.level = 3)
             new_obj = self.pool.get(relation)
             newids = new_obj.search(cr, uid, [(list_obj[1], '=', value)], limit=1)
             if not newids:
-                # TODO: no obj
+                # no obj
                 raise osv.except_osv(_('Warning !'), _('%s does not exist')%(value,))
 
             if impobj._name == 'product.product':
@@ -428,7 +421,6 @@ Find in attachment the rejected lines'''%(nb_error)
         errorfile.close()
         cr.commit()
         cr.close()
-        print time.time() - start
 
     def import_csv(self, cr, uid, ids, context=None):
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
