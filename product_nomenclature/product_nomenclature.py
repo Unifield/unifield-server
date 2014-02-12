@@ -626,6 +626,23 @@ stock moves will be posted in this account. If not set on the product, the one f
 stock moves will be posted in this account. If not set on the product, the one from the product category is used.'),
     }
     ### END OF COPY
+    
+    def _get_property_stock(self, cr, uid, domain=[], context=None):
+        loc_ids = self.pool.get('stock.location').search(cr, uid, domain, context=context)
+        if loc_ids:
+            return loc_ids[0]
+        
+        return False
+    
+    _defaults = {
+        'property_stock_procurement': lambda self, cr, uid, c={}: self._get_property_stock(cr, uid, [('usage', 'like', 'procurement')], context=c),
+        'property_stock_production': lambda self, cr, uid, c={}: self._get_property_stock(cr, uid, [('usage', 'like', 'production')], context=c),
+        'property_stock_inventory': lambda self, cr, uid, c={}: self._get_property_stock(cr, uid, [('usage', 'like', 'inventory')], context=c),
+        'property_account_income': False,
+        'property_account_expense': False,
+        'property_stock_account_input': False,
+        'property_stock_account_output': False,
+    }
 
     def _get_default_nom(self, cr, uid, context=None):
         # Some verifications
@@ -676,9 +693,6 @@ stock moves will be posted in this account. If not set on the product, the one f
         if vals.get('nomen_manda_2'):
             vals['categ_id'] = self.pool.get('product.nomenclature').browse(cr, uid, vals['nomen_manda_2'], context=context).category_id.id
         return super(product_template, self).write(cr, uid, ids, vals, context)
-
-    _defaults = {
-    }
 
 product_template()
 
