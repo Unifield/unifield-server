@@ -214,13 +214,16 @@ class account_invoice(osv.osv):
                 el[2].update({'document_date': inv.document_date})
         return res
 
-    def copy(self, cr, uid, id, default={}, context=None):
+    def copy(self, cr, uid, id, default=None, context=None):
         """
         Delete period_id from invoice
         """
         if default is None:
             default = {}
-        default.update({'period_id': False,})
+        default.update({
+            'period_id': False,
+            'purchase_ids': False,  # UFTP-24: do not copy linked POs
+        })
         return super(account_invoice, self).copy(cr, uid, id, default, context)
 
     def __hook_lines_before_pay_and_reconcile(self, cr, uid, lines):
