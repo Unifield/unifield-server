@@ -219,11 +219,18 @@ class account_move_line(osv.osv):
         """
         if not context:
             context = {}
-        # Search moves
+        # Search manual moves to revalidate
         move_ids = []
-        for ml in self.browse(cr, uid, ids):
-            if ml.move_id and ml.move_id.state == 'manu':
-                move_ids.append(ml.move_id.id)
+        sql = """
+            SELECT m.id
+            FROM account_move_line AS ml, account_move AS m
+            WHERE ml.move_id = m.id
+            AND m.status = 'manu'
+            AND ml.id IN %s
+            GROUP BY m.id
+            ORDER BY m.id;"""
+        cr.execute(sql, (tuple(ids),))
+        move_ids += cr.fetchall()
         # Search analytic lines
         ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', ids)])
         self.pool.get('account.analytic.line').unlink(cr, uid, ana_ids)
