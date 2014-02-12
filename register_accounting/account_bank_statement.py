@@ -1913,10 +1913,10 @@ class account_bank_statement_line(osv.osv):
                 if absl.account_id.type_for_register == 'advance' and not absl.employee_id:
                     raise osv.except_osv(_('Error'), _('Please give an employee!'))
                 ## Analytic distribution presence
-                if self.analytic_distribution_is_mandatory(cr, uid, absl, context=context) and not context.get('from_yml'):
+                if self.analytic_distribution_is_mandatory(cr, uid, absl, context=context):
                     raise osv.except_osv(_('Error'), _('Analytic distribution is mandatory for this line: %s') % (absl.name or '',))
                 # Check analytic distribution validity
-                if absl.account_id.is_analytic_addicted and absl.analytic_distribution_state != 'valid' and not context.get('from_yml'):
+                if absl.account_id.is_analytic_addicted and absl.analytic_distribution_state != 'valid':
                     raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for this line: %s') % (absl.name or '',))
 
                 if absl.is_down_payment and not absl.down_payment_id:
@@ -1979,7 +1979,7 @@ class account_bank_statement_line(osv.osv):
                 if absl.account_id.is_analytic_addicted:
                     self.update_analytic_lines(cr, uid, absl)
                 # some verifications
-                if self.analytic_distribution_is_mandatory(cr, uid, absl, context=context) and not context.get('from_yml'):
+                if self.analytic_distribution_is_mandatory(cr, uid, absl, context=context):
                     vals = self._update_employee_analytic_distribution(cr, uid, {'employee_id': absl.employee_id and absl.employee_id.id or False, 'account_id': absl.account_id.id, 'statement_id': absl.statement_id.id,})
                     if 'analytic_distribution_id' in vals:
                         self.write(cr, uid, [absl.id], {'analytic_distribution_id': vals.get('analytic_distribution_id'),})
