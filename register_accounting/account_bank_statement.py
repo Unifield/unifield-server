@@ -1853,40 +1853,37 @@ class account_bank_statement_line(osv.osv):
                 default.update({'analytic_distribution_id': new_distrib_id})
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
-    def update_analytic_lines(self, cr, uid, ids, distrib=False, context=None):
+    def update_analytic_lines(self, cr, uid, absl, distrib=False, context=None):
         """
         Update analytic lines for temp posted lines
         """
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
+        if not absl:
+            return False
         # Prepare some values
         ml_obj = self.pool.get('account.move.line')
         distro_obj = self.pool.get('analytic.distribution')
         aal_obj = self.pool.get('account.analytic.line')
-        for absl in self.browse(cr, uid, ids):
-            if absl.state != 'temp':
-                continue
-            # Search all moves lines linked to this register line
-            move_ids = [x.id for x in absl.move_ids]
-            move_line_ids = ml_obj.search(cr, uid, [('move_id', 'in', move_ids)])
-            # Renew analytic lines
-            for line in ml_obj.browse(cr, uid, move_line_ids):
-                if line.analytic_distribution_id:
-                    # remove distribution
-                    distro_obj.unlink(cr, uid, line.analytic_distribution_id.id)
-                    distrib_id = distrib or (absl.analytic_distribution_id and absl.analytic_distribution_id.id) or False
-                    if not distrib_id:
-                        raise osv.except_osv(_('Error'), _('Problem with analytic distribution for this line: %s') % (absl.name or '',))
-                    new_distrib_id = distro_obj.copy(cr, uid, distrib_id, {})
-                    ml_obj.write(cr, uid, [line.id], {'analytic_distribution_id': new_distrib_id})
-            aal_ids = aal_obj.search(cr, uid, [('move_id', 'in', move_line_ids)], context=context)
-            # first delete them
-            aal_obj.unlink(cr, uid, aal_ids)
-            # then create them again
-            ml_obj.create_analytic_lines(cr, uid, move_line_ids)
+        if absl.state != 'temp':
+            return True
+        # Search all moves lines linked to this register line
+        move_ids = [x.id for x in absl.move_ids]
+        move_line_ids = ml_obj.search(cr, uid, [('move_id', 'in', move_ids)])
+        # Renew analytic lines
+        for line in ml_obj.read(cr, uid, move_line_ids, ['analytic_distribution_id']):
+            if line.get('analytic_distribution_id', False):
+                distrib_id = distrib or line.get('analytic_distribution_id')[0] or False
+                if not distrib_id:
+                    raise osv.except_osv(_('Error'), _('Problem with analytic distribution for this line: %s') % (absl.name or '',))
+                new_distrib_id = distro_obj.copy(cr, uid, distrib_id, {})
+                # remove old distribution
+                distro_obj.unlink(cr, uid, line.get('analytic_distribution_id')[0])
+                # Optimization: do not check move lines. This should be done at the end of this method
+                ml_obj.write(cr, uid, [line.get('id')], {'analytic_distribution_id': new_distrib_id}, update_check=False, check=False)
+        # Optimization: Validate moves so that analytic lines are delete and recreated
+        self.pool.get('account.move').validate(cr, uid, move_ids, context=context)
         return True
 
     def posting(self, cr, uid, ids, postype, context=None):
@@ -1980,7 +1977,7 @@ class account_bank_statement_line(osv.osv):
             if postype == "hard":
                 # Update analytic lines
                 if absl.account_id.is_analytic_addicted:
-                    self.update_analytic_lines(cr, uid, absl.id)
+                    self.update_analytic_lines(cr, uid, absl)
                 # some verifications
                 if self.analytic_distribution_is_mandatory(cr, uid, absl, context=context) and not context.get('from_yml'):
                     vals = self._update_employee_analytic_distribution(cr, uid, {'employee_id': absl.employee_id and absl.employee_id.id or False, 'account_id': absl.account_id.id, 'statement_id': absl.statement_id.id,})
