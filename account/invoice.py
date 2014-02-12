@@ -1310,7 +1310,7 @@ class account_invoice_line(osv.osv):
             res[line.id] = taxes['total']
             if line.invoice_id:
                 cur = line.invoice_id.currency_id
-                res[line.id] = cur_obj.round(cr, uid, cur, res[line.id])
+                res[line.id] = cur_obj.round(cr, uid, cur.rounding, res[line.id])
         return res
 
     def _price_unit_default(self, cr, uid, context=None):
@@ -1681,10 +1681,10 @@ class account_invoice_tax(osv.osv):
                     tax_grouped[key]['tax_amount'] += val['tax_amount']
 
         for t in tax_grouped.values():
-            t['base'] = cur_obj.round(cr, uid, cur, t['base'])
-            t['amount'] = cur_obj.round(cr, uid, cur, t['amount'])
-            t['base_amount'] = cur_obj.round(cr, uid, cur, t['base_amount'])
-            t['tax_amount'] = cur_obj.round(cr, uid, cur, t['tax_amount'])
+            t['base'] = cur_obj.round(cr, uid, cur.rounding, t['base'])
+            t['amount'] = cur_obj.round(cr, uid, cur.rounding, t['amount'])
+            t['base_amount'] = cur_obj.round(cr, uid, cur.rounding, t['base_amount'])
+            t['tax_amount'] = cur_obj.round(cr, uid, cur.rounding, t['tax_amount'])
         return tax_grouped
 
     def move_line_get(self, cr, uid, invoice_id):

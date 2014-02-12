@@ -180,8 +180,8 @@ class pos_order(osv.osv):
                                                  line.price_unit * (1-(line.discount or 0.0)/100.0), \
                                                  line.qty,  line.product_id, line.order_id.partner_id)['taxes']:
                         val += c.get('amount', 0.0)
-            res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur, val)
-            res[order.id]['amount_total'] = res[order.id]['amount_tax'] + cur_obj.round(cr, uid, cur, val1)
+            res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur.rounding, val)
+            res[order.id]['amount_total'] = res[order.id]['amount_tax'] + cur_obj.round(cr, uid, cur.rounding, val1)
         return res
 
     def _sale_journal_get(self, cr, uid, context=None):
@@ -1017,7 +1017,7 @@ class pos_order_line(osv.osv):
                     price = line.price_unit * (1 - (line.discount or 0.0) / 100.0)
                     computed_taxes = account_tax_obj.compute_all(cr, uid, taxes, price, line.qty)
                     cur = line.order_id.pricelist_id.currency_id
-                    res[line.id][f] = self.pool.get('res.currency').round(cr, uid, cur, computed_taxes['total'])
+                    res[line.id][f] = self.pool.get('res.currency').round(cr, uid, cur.rounding, computed_taxes['total'])
         return res
 
     def price_by_product_multi(self, cr, uid, ids, context=None):

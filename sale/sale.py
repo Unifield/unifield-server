@@ -86,8 +86,8 @@ class sale_order(osv.osv):
             for line in order.order_line:
                 val1 += line.price_subtotal
                 val += self._amount_line_tax(cr, uid, line, context=context)
-            res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur, val)
-            res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur, val1)
+            res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur.rounding, val)
+            res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur.rounding, val1)
             res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
         return res
 
@@ -976,7 +976,7 @@ class sale_order_line(osv.osv):
             price = line.price_unit * (1 - (line.discount or 0.0) / 100.0)
             taxes = tax_obj.compute_all(cr, uid, line.tax_id, price, line.product_uom_qty, line.order_id.partner_invoice_id.id, line.product_id, line.order_id.partner_id)
             cur = line.order_id.pricelist_id.currency_id
-            res[line.id] = cur_obj.round(cr, uid, cur, taxes['total'])
+            res[line.id] = cur_obj.round(cr, uid, cur.rounding, taxes['total'])
         return res
 
     def _number_packages(self, cr, uid, ids, field_name, arg, context=None):

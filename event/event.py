@@ -289,7 +289,7 @@ class event_registration(osv.osv):
             price = line.unit_price * line.nb_register
             pricelist = line.event_id.pricelist_id or line.partner_invoice_id.property_product_pricelist
             cur = pricelist and pricelist.currency_id or False
-            res[line.id] = cur and cur_obj.round(cr, uid, cur, price) or price
+            res[line.id] = cur and cur_obj.round(cr, uid, cur.rounding, price) or price
         return res
 
     _columns = {
