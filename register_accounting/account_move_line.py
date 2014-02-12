@@ -130,7 +130,7 @@ class account_move_line(osv.osv):
                         amount_reg -= ml.amount_currency
 
             result = move_line_total
-            res[move_line.id] =  sign * (move_line.currency_id and self.pool.get('res.currency').round(cr, uid, move_line.currency_id, result) or result)
+            res[move_line.id] =  sign * (move_line.currency_id and self.pool.get('res.currency').round(cr, uid, move_line.currency_id.rounding, result) or result)
         return res
 
     def _get_reconciles(self, cr, uid, ids, context=None):

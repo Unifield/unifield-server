@@ -40,7 +40,7 @@ class procurement_request(osv.osv):
                 curr_browse = self.pool.get('res.users').browse(cr, uid, [uid], context)[0].company_id.currency_id
                 for line in ir.order_line:
                     val += line.price_subtotal
-                res[ir.id] = cur_obj.round(cr, uid, curr_browse, val)
+                res[ir.id] = cur_obj.round(cr, uid, curr_browse.rounding, val)
         return res
     
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
@@ -402,7 +402,7 @@ class procurement_request_line(osv.osv):
         for line in self.browse(cr, uid, ids):
             if line.order_id.procurement_request:
                 subtotal = line.cost_price * line.product_uom_qty
-                res[line.id] = cur_obj.round(cr, uid, curr_browse, subtotal)
+                res[line.id] = cur_obj.round(cr, uid, curr_browse.rounding, subtotal)
             else:
                 new_ids.append(line.id)
                 

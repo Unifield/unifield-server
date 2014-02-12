@@ -1755,11 +1755,11 @@ class stock_location(osv.osv):
                             result[loc_id][f] += prod.virtual_available
                         elif f == 'stock_real_value':
                             amount = prod.qty_available * prod.standard_price
-                            amount = currency_obj.round(cr, uid, currency, amount)
+                            amount = currency_obj.round(cr, uid, currency.rounding, amount)
                             result[loc_id][f] += amount
                         elif f == 'stock_virtual_value':
                             amount = prod.virtual_available * prod.standard_price
-                            amount = currency_obj.round(cr, uid, currency, amount)
+                            amount = currency_obj.round(cr, uid, currency.rounding, amount)
                             result[loc_id][f] += amount
                             
         return result
