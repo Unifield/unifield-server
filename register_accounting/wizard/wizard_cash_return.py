@@ -26,6 +26,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import time
+from lxml import etree
 
 class wizard_invoice_line(osv.osv_memory):
     """
@@ -921,6 +922,21 @@ class wizard_cash_return(osv.osv_memory):
             'res_id': [wiz_id],
             'context': context,
         }
+    
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        res = super(wizard_cash_return, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if 'cash_register_op_advance_po_id' in context:
+            doc = etree.XML(res['arch'])
+                
+            # UFTP-24 (points 6)
+            # if cash return linked to a PO remove the purchase_list filter of invoice
+            # (POs of type regular, direct, purchase_list)
+            nodes = doc.xpath("//field[@name='invoice_id']")
+            for node in nodes:
+                node.set('domain', "[('type', '=', 'in_invoice'), ('state', '=', 'open'), ('currency_id', '=', currency_id)]")
+            
+            res['arch'] = etree.tostring(doc)
+        return res
     
 wizard_cash_return()
 
