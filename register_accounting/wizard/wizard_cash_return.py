@@ -871,7 +871,7 @@ class wizard_cash_return(osv.osv_memory):
             rec_targets = [ml_ids[0], addl_dr_move_line_id, adv_closing_id]
         else:
             rec_targets = [ml_ids[0], adv_closing_id]
-        move_line_obj.reconcile_partial(cr, uid, [ml_ids[0], rec_targets)
+        move_line_obj.reconcile_partial(cr, uid, rec_targets)
         # create the statement line for the advance closing
         adv_closing_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, adv_closing_id, context=context)
         
