@@ -343,7 +343,7 @@ class msf_budget_line(osv.osv):
         # It also adds budget values to parent lines
         parent_account_id = False
         parent_line_ids = []
-        if 'account_id' in vals and 'budget_id' in vals:
+        if vals.get('account_id', False) and vals.get('budget_id', False):
             if 'destination_id' in vals:
                 # Special case: the line has a destination, so the parent is a line
                 # with the same account and no destination
