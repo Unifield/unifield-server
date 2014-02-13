@@ -1698,30 +1698,6 @@ class account_bank_statement_line(osv.osv):
         move_line_obj.reconcile_partial(cr, uid, [st_line.from_import_cheque_id.id, move_line_id[0]], context=context)
         return True
 
-    def do_direct_invoice_reconciliation(self, cr, uid, st_lines=None, context=None):
-        """
-        Do a reconciliation between given register lines and their Direct invoice.
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if not st_lines or isinstance(st_lines, (int, long)):
-            st_lines = []
-        # Parse register lines
-        for stl in self.browse(cr, uid, st_lines):
-            if stl.invoice_id:
-                # Approve invoice
-                netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', stl.invoice_id.id, 'invoice_open', cr)
-                # Add name to the register line
-                inv_number = self.pool.get('account.invoice').read(cr, uid, stl.invoice_id.id, ['number'])['number']
-                # Optimization on write() for this field
-                self.write(cr, uid, [stl.id], {'name': inv_number}, context=context)
-                # Hard post register line
-                self.pool.get('account.move').post(cr, uid, [stl.move_ids[0].id])
-                # Do reconciliation
-                self.pool.get('account.invoice').action_reconcile_direct_invoice(cr, uid, stl.invoice_id, context=context)
-        return True
-
     def analytic_distribution_is_mandatory(self, cr, uid, line, context=None):
         """
         Verify that no analytic distribution is mandatory. It's not until one of test is true
