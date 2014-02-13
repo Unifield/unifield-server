@@ -37,7 +37,7 @@
         'data/product.nomenclature.csv',
         'data/product.category.csv',
         'data/product.product.csv',
-        'data/destination.link.csv'
+        'data/account.destination.link.csv'
     ],
     'demo_xml': [],
     'test':[],
