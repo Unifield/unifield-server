@@ -870,12 +870,18 @@ class account_bank_statement_line(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
-        # Browse elements
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = False
-            if line.account_id and line.account_id.type_for_register and line.account_id.type_for_register == 'down_payment' and line.amount < 0.0:
-                res[line.id] = True
-        return res
+        sql = """
+            SELECT absl.id, CASE WHEN absl.amount < 0 AND a.type_for_register = 'down_payment' THEN true ELSE false END AS res
+            FROM account_bank_statement_line AS absl, account_account AS a
+            WHERE absl.account_id = a.id
+            AND absl.id IN %s
+            ORDER BY absl.id;
+        """
+        cr.execute(sql, (tuple(ids),))
+        tmp_res = cr.fetchall()
+        if not tmp_res:
+            return res
+        return dict(tmp_res)
 
     def _get_transfer_with_change_state(self, cr, uid, ids, field_name=None, args=None, context=None):
         """
@@ -1746,8 +1752,7 @@ class account_bank_statement_line(osv.osv):
         # Search line that have same account for given register line
         line_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', absl.account_id.id), ('move_id', 'in', move_ids)])
         # Add down_payment link
-        for line_id in line_ids:
-            self.pool.get('account.move.line').write(cr, uid, [line_id], {'down_payment_id': absl.down_payment_id.id}, update_check=False, check=False)
+        self.pool.get('account.move.line').write(cr, uid, line_ids, {'down_payment_id': absl.down_payment_id.id}, update_check=False, check=False)
         return True
 
     def create(self, cr, uid, values, context=None):
@@ -1947,7 +1952,7 @@ class account_bank_statement_line(osv.osv):
                 absl = self.browse(cr, uid, absl.id, context=context) 
 
             if postype == 'temp' and absl.direct_invoice:  #utp-917
-                # Optimization on writ() for this field
+                # Optimization on write() for this field
                 self.write(cr, uid, [absl.id], {'direct_state': 'temp'}, context=context)
                 # create the accounting entries
                 account_invoice = self.pool.get('account.invoice')
