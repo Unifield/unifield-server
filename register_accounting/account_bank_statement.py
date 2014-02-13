@@ -1585,7 +1585,7 @@ class account_bank_statement_line(osv.osv):
                 self.write(cr, uid, [st_line.id], {'from_cash_return': True}, context=context)
         return True
 
-    def do_import_invoices_reconciliation(self, cr, uid, st_lines=None, context=None):
+    def do_import_invoices_reconciliation(self, cr, uid, st_line, context=None):
         """
         Reconcile line that come from an import invoices wizard in 3 steps :
          - split line into the move
@@ -1595,111 +1595,107 @@ class account_bank_statement_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if not st_lines or isinstance(st_lines, (int, long)):
-            st_lines = []
+        if not st_line:
+            return False
 
         # Prepare some values
         absl_obj = self.pool.get('account.bank.statement.line')
         move_line_obj = self.pool.get('account.move.line')
         move_obj = self.pool.get('account.move')
 
-        # Parse register lines
-        for st_line in absl_obj.browse(cr, uid, st_lines, context=context):
-            # Verification if st_line have some imported invoice lines
-            if not st_line.imported_invoice_line_ids:
-                continue
-           
-            total_amount = 0
-            for invoice_move_line in st_line.imported_invoice_line_ids:
-                total_amount += invoice_move_line.amount_currency
+        # Verification if st_line have some imported invoice lines
+        if not st_line.imported_invoice_line_ids:
+            continue
+       
+        total_amount = 0
+        for invoice_move_line in st_line.imported_invoice_line_ids:
+            total_amount += invoice_move_line.amount_currency
 
-            ## STEP 1 : Split lines
-            # Prepate some values
-            move_ids = [x.id for x in st_line.move_ids]
-            # Search move lines that are attached to move_ids
-            move_lines = move_line_obj.search(cr, uid, [('move_id', 'in', move_ids), 
-                ('id', '!=', st_line.first_move_line_id.id)]) # move lines that have been created AFTER import invoice wizard
-            # Add new lines
-            amount = abs(st_line.first_move_line_id.amount_currency)
-            sign = 1
-            if st_line.first_move_line_id.amount_currency > 0:
-                sign = -1
-            res_ml_ids = []
-            process_invoice_move_line_ids = []
-            total_payment = True
-            if st_line.first_move_line_id.amount_currency != total_amount:
-                # multi unpartial payment
-                total_payment = False
-                # Delete them
-                #+ Optimization: As we post the move at the end of this method, no need to check lines after their deletion
-                move_line_obj.unlink(cr, uid, move_lines, context=context, check=False)
-                for invoice_move_line in sorted(st_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
-                    if abs(invoice_move_line.amount_currency) <= amount:
-                        amount_to_write = sign * abs(invoice_move_line.amount_currency)
-                    else:
-                        amount_to_write = sign * amount
-                    # create a new move_line corresponding to this invoice move line
-                    aml_vals = {
-                        'name': invoice_move_line.invoice.number or st_line.first_move_line_id.name or '', # UTP-793 fix
-                        'move_id': move_ids[0],
-                        'partner_id': invoice_move_line.partner_id.id,
-                        'account_id': st_line.account_id.id,
-                        'amount_currency': amount_to_write,
-                        'statement_id': st_line.statement_id.id,
-                        'currency_id': st_line.statement_id.currency.id,
-                        'from_import_invoice_ml_id': invoice_move_line.id, # FIXME: add this ONLY IF total amount was paid
-                        'date': st_line.date,
-                        'document_date': st_line.document_date,
-                    }
-                    process_invoice_move_line_ids.append(invoice_move_line.id)
-                    # Optimization: As we post the move at the end of this method, no need to check creation
-                    move_line_id = move_line_obj.create(cr, uid, aml_vals, context=context, check=False)
-                    res_ml_ids.append(move_line_id)
-                    
-                    amount -= abs(amount_to_write)
-                    if not amount:
-                        todo = [x.id for x in st_line.imported_invoice_line_ids if x.id not in process_invoice_move_line_ids]
-                        # remove remaining invoice lines
-                        if todo:
-                            absl_obj.write(cr, uid, [st_line.id], {'imported_invoice_line_ids': [(3, x) for x in todo]}, context=context)
-                        break
-            # STEP 2 : Post moves
-            move_obj.post(cr, uid, move_ids, context=context)
-            
-            # STEP 3 : Reconcile
-            # UTP-574 Avoid problem of reconciliation for pending payments
-            context.update({'pending_payment': True})
-            if total_payment:
-                move_line_obj.reconcile_partial(cr, uid, move_lines+[x.id for x in st_line.imported_invoice_line_ids], context=context)
-            else:
-                for ml in move_line_obj.browse(cr, uid, res_ml_ids, context=context):
-                    # reconcile lines
-                    move_line_obj.reconcile_partial(cr, uid, [ml.id, ml.from_import_invoice_ml_id.id], context=context)
+        ## STEP 1 : Split lines
+        # Prepate some values
+        move_ids = [x.id for x in st_line.move_ids]
+        # Search move lines that are attached to move_ids
+        move_lines = move_line_obj.search(cr, uid, [('move_id', 'in', move_ids), 
+            ('id', '!=', st_line.first_move_line_id.id)]) # move lines that have been created AFTER import invoice wizard
+        # Add new lines
+        amount = abs(st_line.first_move_line_id.amount_currency)
+        sign = 1
+        if st_line.first_move_line_id.amount_currency > 0:
+            sign = -1
+        res_ml_ids = []
+        process_invoice_move_line_ids = []
+        total_payment = True
+        if st_line.first_move_line_id.amount_currency != total_amount:
+            # multi unpartial payment
+            total_payment = False
+            # Delete them
+            #+ Optimization: As we post the move at the end of this method, no need to check lines after their deletion
+            move_line_obj.unlink(cr, uid, move_lines, context=context, check=False)
+            for invoice_move_line in sorted(st_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
+                if abs(invoice_move_line.amount_currency) <= amount:
+                    amount_to_write = sign * abs(invoice_move_line.amount_currency)
+                else:
+                    amount_to_write = sign * amount
+                # create a new move_line corresponding to this invoice move line
+                aml_vals = {
+                    'name': invoice_move_line.invoice.number or st_line.first_move_line_id.name or '', # UTP-793 fix
+                    'move_id': move_ids[0],
+                    'partner_id': invoice_move_line.partner_id.id,
+                    'account_id': st_line.account_id.id,
+                    'amount_currency': amount_to_write,
+                    'statement_id': st_line.statement_id.id,
+                    'currency_id': st_line.statement_id.currency.id,
+                    'from_import_invoice_ml_id': invoice_move_line.id, # FIXME: add this ONLY IF total amount was paid
+                    'date': st_line.date,
+                    'document_date': st_line.document_date,
+                }
+                process_invoice_move_line_ids.append(invoice_move_line.id)
+                # Optimization: As we post the move at the end of this method, no need to check creation
+                move_line_id = move_line_obj.create(cr, uid, aml_vals, context=context, check=False)
+                res_ml_ids.append(move_line_id)
+                
+                amount -= abs(amount_to_write)
+                if not amount:
+                    todo = [x.id for x in st_line.imported_invoice_line_ids if x.id not in process_invoice_move_line_ids]
+                    # remove remaining invoice lines
+                    if todo:
+                        absl_obj.write(cr, uid, [st_line.id], {'imported_invoice_line_ids': [(3, x) for x in todo]}, context=context)
+                    break
+        # STEP 2 : Post moves
+        move_obj.post(cr, uid, move_ids, context=context)
+        
+        # STEP 3 : Reconcile
+        # UTP-574 Avoid problem of reconciliation for pending payments
+        context.update({'pending_payment': True})
+        if total_payment:
+            move_line_obj.reconcile_partial(cr, uid, move_lines+[x.id for x in st_line.imported_invoice_line_ids], context=context)
+        else:
+            for ml in move_line_obj.browse(cr, uid, res_ml_ids, context=context):
+                # reconcile lines
+                move_line_obj.reconcile_partial(cr, uid, [ml.id, ml.from_import_invoice_ml_id.id], context=context)
         return True
 
-    def do_import_cheque_reconciliation(self, cr, uid, st_lines=None, context=None):
+    def do_import_cheque_reconciliation(self, cr, uid, st_line, context=None):
         """
         Do a reconciliation of an imported cheque and the current register line
         """
         # Some verifications
         if not context:
             context = {}
-        if not st_lines or isinstance(st_lines, (int, long)):
-            st_lines = []
+        if not st_line:
+            return False
         # Prepare some values
         move_obj = self.pool.get('account.move')
         move_line_obj = self.pool.get('account.move.line')
-        # Parse register lines
-        for st_line in self.browse(cr, uid, st_lines, context=context):
-            # Verification if st_line have some imported invoice lines
-            if not st_line.from_import_cheque_id:
-                continue
-            move_obj.post(cr, uid, [st_line.move_ids[0].id], context=context)
-            # Search the line that would be reconcile after hard post
-            move_line_id = move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', st_line.first_move_line_id.id)], 
-                context=context)
-            # Do reconciliation
-            move_line_obj.reconcile_partial(cr, uid, [st_line.from_import_cheque_id.id, move_line_id[0]], context=context)
+        # Verification if st_line have some imported invoice lines
+        if not st_line.from_import_cheque_id:
+            continue
+        move_obj.post(cr, uid, [st_line.move_ids[0].id], context=context)
+        # Search the line that would be reconcile after hard post
+        move_line_id = move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', st_line.first_move_line_id.id)], 
+            context=context)
+        # Do reconciliation
+        move_line_obj.reconcile_partial(cr, uid, [st_line.from_import_cheque_id.id, move_line_id[0]], context=context)
         return True
 
     def do_direct_invoice_reconciliation(self, cr, uid, st_lines=None, context=None):
@@ -2009,9 +2005,9 @@ class account_bank_statement_line(osv.osv):
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq,}, context=context)
                 # Case where this line come from an "Pending Payments" Wizard
                 if absl.imported_invoice_line_ids:
-                    self.do_import_invoices_reconciliation(cr, uid, [absl.id], context=context)
+                    self.do_import_invoices_reconciliation(cr, uid, absl, context=context)
                 elif absl.from_import_cheque_id:
-                    self.do_import_cheque_reconciliation(cr, uid, [absl.id], context=context)
+                    self.do_import_cheque_reconciliation(cr, uid, absl, context=context)
                 elif absl.direct_invoice:
                     if not absl.invoice_id:
                         raise osv.except_osv(_('Error'), _('This line is linked to an unknown Direct Invoice.'))
