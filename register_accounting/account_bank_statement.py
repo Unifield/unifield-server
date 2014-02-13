@@ -1515,74 +1515,77 @@ class account_bank_statement_line(osv.osv):
                 self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], move_vals, context=context)
         return True
 
-    def do_direct_expense(self, cr, uid, ids, context=None):
+    def do_direct_expense(self, cr, uid, st_line, context=None):
         """
         Do a direct expense when the line is hard posted and content a supplier
         """
         if context is None:
             context = {}
-        for st_line in self.browse(cr, uid, ids, context=context):
-            # Do the treatment only if the line is hard posted and have a partner who is a supplier
-            if st_line.state == "hard" and st_line.partner_id and st_line.account_id.user_type.code in ('expense', 'income') and \
-                st_line.direct_invoice is False:
-                # Prepare some elements
-                move_obj = self.pool.get('account.move')
-                move_line_obj = self.pool.get('account.move.line')
-                curr_date = time.strftime('%Y-%m-%d')
-                # Create a move
-                move_vals= {
-                    'journal_id': st_line.statement_id.journal_id.id,
-                    'period_id': st_line.statement_id.period_id.id,
-                    'date': st_line.date or curr_date,
-                    'document_date': st_line.document_date or curr_date,
-                    # name removed from UF-1542 because of a bug from UF-1129
-                    #'name': 'DirectExpense/' + st_line.name,
-                    'partner_id': st_line.partner_id.id,
-                }
-                move_id = move_obj.create(cr, uid, move_vals, context=context)
-                # Create move lines
-                account_id = False
-                if st_line.account_id.user_type.code == 'expense':
-                    account_id = st_line.partner_id.property_account_payable.id or False
-                elif st_line.account_id.user_type.code == 'income':
-                    account_id = st_line.partner_id.property_account_receivable.id or False
-                if not account_id:
-                    raise osv.except_osv(_('Warning'), _('The supplier seems not have an incorrect account. \
-                            Please contact an accountant administrator to resolve this problem.'))
-                val = {
-                    'name': st_line.name,
-                    'date': st_line.date or curr_date,
-                    'document_date': st_line.document_date or curr_date,
-                    'ref': st_line.ref,
-                    'move_id': move_id,
-                    'partner_id': st_line.partner_id.id or False,
-                    'partner_type_mandatory': True,
-                    'account_id': account_id,
-                    'credit': 0.0,
-                    'debit': 0.0,
-                    'statement_id': st_line.statement_id.id,
-                    'journal_id': st_line.statement_id.journal_id.id,
-                    'period_id': st_line.statement_id.period_id.id,
-                    'currency_id': st_line.statement_id.currency.id,
-                    'analytic_account_id': st_line.analytic_account_id and st_line.analytic_account_id.id or False
-                }
-                amount = abs(st_line.amount)
-                # update values if we have a different currency that company currency
-                if st_line.statement_id.currency.id != st_line.statement_id.company_id.currency_id.id:
-                    context['date'] = st_line.document_date or st_line.date or curr_date
-                    amount = self.pool.get('res.currency').compute(cr, uid, st_line.statement_id.currency.id, 
-                        st_line.statement_id.company_id.currency_id.id, amount, round=False, context=context)
-                val.update({'debit': amount, 'credit': 0.0, 'amount_currency': abs(st_line.amount)})
-                move_line_debit_id = move_line_obj.create(cr, uid, val, context=context)
-                val.update({'debit': 0.0, 'credit': amount, 'amount_currency': -abs(st_line.amount)})
-                move_line_credit_id = move_line_obj.create(cr, uid, val, context=context)
-                # Post the move
-                move_obj.post(cr, uid, [move_id], context=context)
-                # Do reconciliation
-                move_line_obj.reconcile_partial(cr, uid, [move_line_debit_id, move_line_credit_id])
-                # Disable the cash return button on this line
-                # Optimization on write() for this field
-                self.write(cr, uid, [st_line.id], {'from_cash_return': True}, context=context)
+        if not st_line:
+            return False
+        # Do the treatment only if the line is hard posted and have a partner who is a supplier
+        if st_line.state == "hard" and st_line.partner_id and st_line.account_id.user_type.code in ('expense', 'income') and \
+            st_line.direct_invoice is False:
+            # Prepare some elements
+            move_obj = self.pool.get('account.move')
+            move_line_obj = self.pool.get('account.move.line')
+            curr_date = time.strftime('%Y-%m-%d')
+            # Create a move
+            move_vals= {
+                'journal_id': st_line.statement_id.journal_id.id,
+                'period_id': st_line.statement_id.period_id.id,
+                'date': st_line.date or curr_date,
+                'document_date': st_line.document_date or curr_date,
+                # name removed from UF-1542 because of a bug from UF-1129
+                #'name': 'DirectExpense/' + st_line.name,
+                'partner_id': st_line.partner_id.id,
+            }
+            move_id = move_obj.create(cr, uid, move_vals, context=context)
+            # Create move lines
+            account_id = False
+            if st_line.account_id.user_type.code == 'expense':
+                account_id = st_line.partner_id.property_account_payable.id or False
+            elif st_line.account_id.user_type.code == 'income':
+                account_id = st_line.partner_id.property_account_receivable.id or False
+            if not account_id:
+                raise osv.except_osv(_('Warning'), _('The supplier seems not have an incorrect account. \
+                        Please contact an accountant administrator to resolve this problem.'))
+            val = {
+                'name': st_line.name,
+                'date': st_line.date or curr_date,
+                'document_date': st_line.document_date or curr_date,
+                'ref': st_line.ref,
+                'move_id': move_id,
+                'partner_id': st_line.partner_id.id or False,
+                'partner_type_mandatory': True,
+                'account_id': account_id,
+                'credit': 0.0,
+                'debit': 0.0,
+                'statement_id': st_line.statement_id.id,
+                'journal_id': st_line.statement_id.journal_id.id,
+                'period_id': st_line.statement_id.period_id.id,
+                'currency_id': st_line.statement_id.currency.id,
+                'analytic_account_id': st_line.analytic_account_id and st_line.analytic_account_id.id or False
+            }
+            amount = abs(st_line.amount)
+            # update values if we have a different currency that company currency
+            if st_line.statement_id.currency.id != st_line.statement_id.company_id.currency_id.id:
+                context['date'] = st_line.document_date or st_line.date or curr_date
+                amount = self.pool.get('res.currency').compute(cr, uid, st_line.statement_id.currency.id, 
+                    st_line.statement_id.company_id.currency_id.id, amount, round=False, context=context)
+            val.update({'debit': amount, 'credit': 0.0, 'amount_currency': abs(st_line.amount)})
+            # Optimization: Add check=False because of next post() for the move
+            move_line_debit_id = move_line_obj.create(cr, uid, val, context=context, check=False)
+            val.update({'debit': 0.0, 'credit': amount, 'amount_currency': -abs(st_line.amount)})
+            # Optimization: Add check=False because of next post() for the move
+            move_line_credit_id = move_line_obj.create(cr, uid, val, context=context, check=False)
+            # Post the move
+            move_obj.post(cr, uid, [move_id], context=context)
+            # Do reconciliation
+            move_line_obj.reconcile_partial(cr, uid, [move_line_debit_id, move_line_credit_id])
+            # Disable the cash return button on this line
+            # Optimization on write() for this field
+            self.write(cr, uid, [st_line.id], {'from_cash_return': True}, context=context)
         return True
 
     def do_import_invoices_reconciliation(self, cr, uid, st_line, context=None):
@@ -2004,7 +2007,7 @@ class account_bank_statement_line(osv.osv):
                 else:
                     acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
                     # do a move that enable a complete supplier follow-up
-                    self.do_direct_expense(cr, uid, [absl.id], context=context)
+                    self.do_direct_expense(cr, uid, absl, context=context)
                 self._set_register_line_audittrail_post_temp2hard(cr, uid, absl.id, context=context)
         return True
 
