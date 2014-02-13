@@ -134,7 +134,8 @@ class sourcing_line(osv.osv):
                 res = {'real_stock': product_virtual.qty_available, 
                        'virtual_stock': product_virtual.virtual_available}
             else:
-                res = 0.00
+                res = {'real_stock': 0.00,
+                       'virtual_stock': 0.00}
 
             result[sl.id] = res
             
@@ -467,6 +468,8 @@ class sourcing_line(osv.osv):
                             # no supplier for tender
                             values.update({'supplier': False})
                             vals.update({'supplier': False})
+                    values.update({'location_id': False})
+                    vals.update({'location_id': False})
                 else:
                     # if make to stock, reset anyway to False
                     pocft = False
@@ -611,8 +614,6 @@ class sourcing_line(osv.osv):
                     res, error = self._check_product_constraints(cr, uid, type, line.po_cft, line.product_id.id, False, check_fnct, field_name='type', values=res, vals={'constraints': ['storage']}, context=context)
                     if error:
                         return res
-        elif type == 'make_to_order':
-            value.update({'location_id': False})
     
         return {'value': value, 'warning': message}
     
@@ -737,11 +738,8 @@ class sourcing_line(osv.osv):
                 self.pool.get('sale.order').write(cr, uid, [sl.sale_order_id.id], 
                                                     {'sourcing_trace_ok': True,
                                                      'sourcing_trace': 'Sourcing in progress'}, context=context)
-                if context.get('update_mode') in ['init', 'update']:
-                    self.confirmOrder(cr, uid, sl, context=context, new_cursor=False)
-                else:
-                    thread = threading.Thread(target=self.confirmOrder, args=(cr, uid, sl, context))
-                    thread.start()
+                thread = threading.Thread(target=self.confirmOrder, args=(cr, uid, sl, context))
+                thread.start()
                 
         return result
 

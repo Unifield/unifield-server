@@ -126,13 +126,26 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             cr, uid, period_date.strftime('%Y-%m-%d'))
         res['period_id'] = period_ids and period_ids[0] or False
         # Journal
-        journal_ids = journal_obj.search(
-            cr, uid, [('code', '=', 'REVAL')], context=context)
+        # UFTP-44: journal of instance and of type 'revaluation'
+        if cp:
+            domain = [
+                ('instance_id', '=', cp.instance_id.id),
+                ('type', '=', 'revaluation'),
+            ]
+            journal_ids = journal_obj.search(cr, uid, domain, context=context)
+        else:
+            journal_ids = False
         if not journal_ids:
             raise osv.except_osv(
                 _(u"Error"),
                 _(u"No revaluation journal found!"))
         res['journal_id'] = journal_ids and journal_ids[0] or False
+        # Book revaluation account check
+        revaluation_account = cp.revaluation_default_account
+        if not revaluation_account:
+            raise osv.except_osv(_('Settings Error!'), _('Revaluation account is not set in company settings'))
+        if not self.pool.get('res.company').check_revaluation_default_account_has_sup_destination(cr, uid, cp, context=context):
+            raise osv.except_osv(_('Settings Error!'),_('The default revaluation account must have a default destination SUP'))
         # Entry period
         res['result_period_id'] = False
         if res['fiscalyear_id']:
@@ -386,16 +399,13 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         account_ana_obj = self.pool.get('account.analytic.account')
         model_data_obj = self.pool.get('ir.model.data')
 
-        #revaluation_account_id = model_data_obj.get_object_reference(
-        #    cr, uid, 'msf_chart_of_account', '6940')[1]
-        # FIXME: Use a method to configure this via the web interface
-        revaluation_account_ids = account_obj.search(cr, uid, [('code', '=', '6940')])
-        if not revaluation_account_ids:
-            raise osv.except_osv(_('Settings Error!'), _('G/L account 6940 is missing, please create it'))
-
-        revaluation_account_id = revaluation_account_ids[0]
-        revaluation_account = account_obj.browse(
-            cr, uid, revaluation_account_id, context=context)
+        # revaluation_account
+        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+        if user and user[0] and user[0].company_id:
+            revaluation_account = user[0].company_id.revaluation_default_account
+            revaluation_account_id = revaluation_account.id
+        else:
+            raise osv.except_osv(_('Settings Error!'), _('Revaluation account is not set in company settings'))
 
         # Prepare the analytic distribution for the account revaluation entry
         # if the account has a 'expense' or 'income' type
@@ -518,20 +528,21 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         form.posting_date = form.result_period_id and form.result_period_id.date_stop
 
         # Search for accounts Balance Sheet or Liquidity to be eevaluated
+        """Determine accounts to be used in the revaluation based on the "included in reval" checkbox.
+        Liquidity revaluation will only concern accounts that have this checkbox set to True and the internal type Liquidity"
+        B/S revaluation will only concern accounts that have this checkbox set to True and the internal type is not Liquidity"""
         account_ids = []
         if form.revaluation_method in ['liquidity_month', 'liquidity_year']:
-            account_ids = account_obj.search(
-                cr, uid,
-                [('currency_revaluation', '=', True),
-                 ('type', '=', 'liquidity'),
-                 ('user_type_code', '=', 'cash')],
-                context=context)
+            account_ids_domain = [
+                ('currency_revaluation', '=', True),
+                ('type', '=', 'liquidity'),
+            ]
         elif form.revaluation_method == 'other_bs':
-            account_ids = account_obj.search(
-                cr, uid,
-                [('currency_revaluation', '=', True),
-                 ('user_type_code', 'in', ['receivables', 'payables', 'asset', 'stock'])],
-                context=context)
+            account_ids_domain = [
+                ('currency_revaluation', '=', True),
+                ('type', '!=', 'liquidity'),
+            ]
+        account_ids = account_obj.search(cr, uid, account_ids_domain, context=context)
         if not account_ids:
             raise osv.except_osv(
                 _('Settings Error!'),

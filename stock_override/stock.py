@@ -47,9 +47,6 @@ class procurement_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
-            logging.getLogger('init').info('PRO: set from yml test to True')
-            vals['from_yml_test'] = True
         return super(procurement_order, self).create(cr, uid, vals, context=context)
 
     def action_confirm(self, cr, uid, ids, context=None):
@@ -190,6 +187,38 @@ class stock_picking(osv.osv):
 
         return res
 
+    def _get_dpo_incoming(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the picking is an incoming and if one the stock move are linked to dpo_line
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for pick in self.browse(cr, uid, ids, context=context):
+            res[pick.id] = {'dpo_incoming': False,
+                            'dpo_out': False}
+            if pick.type == 'in':
+                for move in pick.move_lines:
+                    if move.sync_dpo or move.dpo_line_id:
+                        res[pick.id]['dpo_incoming'] = True
+                        break
+
+            if pick.type == 'out' and pick.subtype in ('standard', 'picking'):
+                for move in pick.move_lines:
+                    if move.sync_dpo or move.dpo_line_id:
+                        res[pick.id]['dpo_out'] = True
+                        break
+        return res
+
+    def _get_dpo_picking_ids(self, cr, uid, ids, context=None):
+        result = []
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.picking_id and obj.picking_id.id not in result:
+                result.append(obj.picking_id.id)
+
+        return result
+
     _columns = {
         'state': fields.selection([
             ('draft', 'Draft'),
@@ -222,6 +251,12 @@ class stock_picking(osv.osv):
         'move_lines': fields.one2many('stock.move', 'picking_id', 'Internal Moves', states={'done': [('readonly', True)], 'cancel': [('readonly', True)], 'import': [('readonly', True)]}),
         'state_before_import': fields.char(size=64, string='State before import', readonly=True),
         'is_esc': fields.function(_get_is_esc, method=True, string='ESC Partner ?', type='boolean', store=False),
+        'dpo_incoming': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Incoming', multi='dpo',
+                                        store={'stock.move': (_get_dpo_picking_ids, ['sync_dpo', 'dpo_line_id', 'picking_id'], 10,),
+                                               'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
+        'dpo_out': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Out', multi='dpo',
+                                        store={'stock.move': (_get_dpo_picking_ids, ['sync_dpo', 'dpo_line_id', 'picking_id'], 10,),
+                                               'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
@@ -291,10 +326,6 @@ class stock_picking(osv.osv):
         if context.get('not_workflow', False):
             vals['from_wkf'] = False
     
-        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
-            logging.getLogger('init').info('PICKING: set from yml test to True')
-            vals['from_yml_test'] = True
-            
         if not vals.get('partner_id2') and vals.get('address_id'):
             addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
             vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
@@ -1057,7 +1088,9 @@ class stock_move(osv.osv):
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
         'already_confirmed': fields.boolean(string='Already confirmed'),
         'dpo_id': fields.many2one('purchase.order', string='Direct PO', help='PO from where this stock move is sourced.'),
+        'dpo_line_id': fields.integer(string='Direct PO line', help='PO line from where this stock move is sourced (for sync. engine).'),
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
+        'sync_dpo': fields.boolean(string='Sync. DPO'),
         'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
         'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
         'processed_stock_move': fields.boolean(string='Processed Stock Move'),
@@ -1095,7 +1128,7 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if backmove_ids or move.product_qty == 0.00:
                 raise osv.except_osv(_('Error'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
-            if (move.sale_line_id and move.sale_line_id.order_id) or (move.purchase_line_id and move.purchase_line_id.order_id):
+            if (move.sale_line_id and move.sale_line_id.order_id) or (move.purchase_line_id and move.purchase_line_id.order_id and (move.purchase_line_id.order_id.po_from_ir or move.purchase_line_id.order_id.po_from_fo)):
                 wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, {'move_id': ids[0]}, context=context)
 
                 return {'type': 'ir.actions.act_window',
@@ -1244,6 +1277,21 @@ class stock_move(osv.osv):
         default.update({'already_confirmed':False})
         
         return super(stock_move, self).copy(cr, uid, id, default, context=context)
+
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        Remove the dpo_line_id link
+        '''
+        if default is None:
+            default = {}
+        
+        if not 'dpo_line_id' in default:
+            default['dpo_line_id'] = 0
+        
+        if not 'sync_dpo' in default:
+            default['sync_dpo'] = False
+
+        return super(stock_move, self).copy_data(cr, uid, id, default, context=context)
     
     def fefo_update(self, cr, uid, ids, context=None):
         """

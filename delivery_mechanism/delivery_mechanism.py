@@ -337,7 +337,10 @@ class stock_picking(osv.osv):
         defaults.update({'line_number': move.line_number})
         
         #UTP-972: Set the original total qty of the original move to the new partial move, for sync purpose only
-        defaults.update({'original_qty_partial': move.product_qty})
+        orig_qty = move.product_qty
+        if move.original_qty_partial and move.original_qty_partial != -1:
+            orig_qty = move.original_qty_partial
+        defaults.update({'original_qty_partial': orig_qty})
         
         return defaults
     
@@ -503,6 +506,9 @@ class stock_picking(osv.osv):
                 # average price computation, new values - should be the same for every partial
                 average_values = {}
 
+                orig_qty = move.product_qty
+                if move.original_qty_partial and move.original_qty_partial != -1:
+                    orig_qty = move.original_qty_partial
                 
                 # partial list
                 for partial in partial_datas[pick.id][move.id]:
@@ -514,13 +520,19 @@ class stock_picking(osv.osv):
                               'product_id': partial['product_id'],
                               'product_qty': partial['product_qty'],
                               'product_uos_qty': partial['product_qty'],
+                              'original_qty_partial': orig_qty,
                               'prodlot_id': partial['prodlot_id'],
                               'product_uom': partial['product_uom'],
                               'product_uos': partial['product_uom'],
+                              'sync_dpo': move.sync_dpo,
                               'asset_id': partial['asset_id'],
                               'change_reason': partial['change_reason'],
                               'direct_incoming': partial.get('direct_incoming'),
                               }
+
+                    if partial.get('dpo_line_id'):
+                        values['dpo_line_id'] = partial['dpo_line_id']
+                        values['sync_dpo'] = partial['dpo_line_id'] and True or False
 
                     # UTP-872: Don't change the quantity if the move is canceled
                     # If the quantity is changed to 0.00, a backorder is created
@@ -626,6 +638,9 @@ class stock_picking(osv.osv):
                         
                     
                     out_values = values.copy()
+                    # Remove sync. dpo fields
+                    out_values['dpo_line_id'] = 0
+                    out_values['sync_dpo'] = False
                     out_values.update({'state': 'confirmed'})
                     if out_values.get('location_dest_id', False):
                         out_values.pop('location_dest_id')
@@ -653,7 +668,7 @@ class stock_picking(osv.osv):
                                 vals.update({'in_out_updated': True})
                             new_move = move_obj.copy(cr, uid, out_move.id, vals, context=dict(context, keepLineNumber=True))
                             # Update the initial out move qty
-                            move_obj.write(cr, uid, [out_move.id], {'product_qty': out_move.product_qty - uom_partial_qty}, context=context)
+                            move_obj.write(cr, uid, [out_move.id], {'product_qty': out_move.product_qty - uom_partial_qty, 'original_qty_partial': orig_qty}, context=context)
                             backlinks.append((move.id, new_move))
                             partial_qty = 0.00
 #                            if not count_out:
@@ -698,9 +713,12 @@ class stock_picking(osv.osv):
                                 'asset_id': False,
                                 'product_qty': diff_qty,
                                 'product_uos_qty': diff_qty,
+                                'original_qty_partial': orig_qty,
                                 'picking_id': pick.id, # put in the current picking which will be the actual backorder (OpenERP logic)
                                 'prodlot_id': False,
                                 'state': 'assigned',
+                                'dpo_line_id': move.dpo_line_id,
+                                'sync_dpo': move.dpo_line_id and True or False,
                                 'move_dest_id': False,
                                 'price_unit': move.price_unit,
                                 'change_reason': False,
@@ -709,6 +727,7 @@ class stock_picking(osv.osv):
                     # average computation - empty if not average
                     defaults.update(average_values)
                     new_back_move = move_obj.copy(cr, uid, move.id, defaults, context=dict(context, keepLineNumber=True))
+                    move_obj.write(cr, uid, [move.id], {'dpo_line_id': 0}, context=context)
                     #move_obj.write(cr, uid, [out_move_id], {'product_qty': diff_qty}, context=context)
                     # if split happened
                     #if update_out:
