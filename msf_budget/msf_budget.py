@@ -31,16 +31,23 @@ class msf_budget(osv.osv):
     
     def _get_total_budget_amounts(self, cr, uid, ids, field_names=None, arg=None, context=None):
         res = {}
-        
-        for budget in self.browse(cr, uid, ids, context=context):
-            total_amounts = self.pool.get('msf.budget.line')._get_total_amounts(cr, uid, [x.id for x in budget.budget_line_ids], context=context)
-            
-            budget_amount = 0.0
-            for budget_line in budget.budget_line_ids:
-                if not budget_line.parent_id:
-                    res[budget.id] = total_amounts[budget_line.id]['budget_amount']
-                    break
-        
+        for b_id in ids:
+            res[b_id] = 0.0
+            sql = """
+                SELECT budget_values
+                FROM msf_budget_line AS l, account_account AS a, account_account_type AS t
+                WHERE budget_id = %s
+                AND l.account_id = a.id
+                AND a.user_type = t.id
+                AND t.code = 'expense'
+                AND a.type != 'view'
+                AND l.line_type = 'destination';"""
+            cr.execute(sql, (b_id,))
+            tmp_res = cr.fetchall()
+            for l in tmp_res:
+                if l and l[0]:
+                    res[b_id] += sum(eval(l[0])) or 0.0
+
         return res
 
     def _get_instance_type(self, cr, uid, ids, field_names=None, arg=None, context=None):
