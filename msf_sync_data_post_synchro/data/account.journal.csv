@@ -2,7 +2,7 @@ code,currency,default_credit_account_id,default_debit_account_id,name,type,analy
 ACC,,,,Accruals,accrual,Accruals
 HQ,,,,Headquarters,hq,Headquarters
 HR,,,,Human Resources,hr,Human Resources
-FXA,,6940,6940,FX adjustment,cur_adj,FX adjustment
+FXA,,67040,67040,FX adjustment,cur_adj,FX adjustment
 OD,,,,Corrections,correction,Corrections
 PUR,,,,Purchase,purchase,Purchase
 PUF,,,,Purchase Refund,purchase_refund,Purchase Refund
@@ -12,3 +12,4 @@ STO,,,,Stock,stock,
 IKD,,,,In-Kind Donation,inkind,In-Kind Donation
 INT,,,,Intermission,intermission,Intermission
 ODX,,,,Extra-Accounting corrections,extra,Extra-Accounting corrections
+REV,,,,Revaluation,revaluation,Revaluation

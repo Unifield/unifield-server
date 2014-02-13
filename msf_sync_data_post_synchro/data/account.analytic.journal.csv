@@ -15,3 +15,4 @@ TRUE,ODX,Extra-Accounting corrections,extra
 TRUE,BNK,Bank,cash
 TRUE,CAS,Cash,cash
 TRUE,CHK,Cheque,cash
+TRUE,REV,Revaluation,revaluation
