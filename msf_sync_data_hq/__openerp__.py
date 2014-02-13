@@ -34,10 +34,10 @@
         'data/account.analytic.account.csv',
         'data/msf.instance.csv',
         'data/account.account.csv',
+        'data/second/account.analytic.account.csv',
         'data/product.nomenclature.csv',
         'data/product.category.csv',
         'data/product.product.csv',
-        'data/account.destination.link.csv'
     ],
     'demo_xml': [],
     'test':[],
