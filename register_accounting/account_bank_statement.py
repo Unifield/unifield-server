@@ -1608,7 +1608,7 @@ class account_bank_statement_line(osv.osv):
 
         # Verification if st_line have some imported invoice lines
         if not st_line.imported_invoice_line_ids:
-            continue
+            return False
        
         total_amount = 0
         for invoice_move_line in st_line.imported_invoice_line_ids:
@@ -1692,7 +1692,7 @@ class account_bank_statement_line(osv.osv):
         move_line_obj = self.pool.get('account.move.line')
         # Verification if st_line have some imported invoice lines
         if not st_line.from_import_cheque_id:
-            continue
+            return False
         move_obj.post(cr, uid, [st_line.move_ids[0].id], context=context)
         # Search the line that would be reconcile after hard post
         move_line_id = move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', st_line.first_move_line_id.id)], 
