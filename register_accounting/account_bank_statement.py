@@ -1721,7 +1721,7 @@ class account_bank_statement_line(osv.osv):
                 # Hard post register line
                 self.pool.get('account.move').post(cr, uid, [stl.move_ids[0].id])
                 # Do reconciliation
-                self.pool.get('account.invoice').action_reconcile_direct_invoice(cr, uid, [stl.invoice_id.id], context=context)
+                self.pool.get('account.invoice').action_reconcile_direct_invoice(cr, uid, stl.invoice_id, context=context)
         return True
 
     def analytic_distribution_is_mandatory(self, cr, uid, line, context=None):
@@ -2023,7 +2023,7 @@ class account_bank_statement_line(osv.osv):
                     # invoice
                     self.pool.get('account.invoice').write(cr, uid, [absl.invoice_id.id], {'state':'paid'}, context=context)
                     # reconcile lines
-                    self.pool.get('account.invoice').action_reconcile_direct_invoice(cr, uid, [absl.invoice_id.id], context=context)
+                    self.pool.get('account.invoice').action_reconcile_direct_invoice(cr, uid, absl.invoice_id, context=context)
                     # move lines
                     acc_move_obj.write(cr, uid, [x.id for x in absl.move_ids], {'state':'posted'}, context=context)
                     acc_move_obj.write(cr, uid, [absl.invoice_id.move_id.id], {'state':'posted'}, context=context)
