@@ -873,7 +873,7 @@ class account_bank_statement_line(osv.osv):
         # Browse elements
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = False
-            if line.account_id and line.account_id.user_type and line.account_id.type_for_register == 'down_payment' and line.amount < 0.0:
+            if line.account_id and line.account_id.type_for_register and line.account_id.type_for_register == 'down_payment' and line.amount < 0.0:
                 res[line.id] = True
         return res
 
