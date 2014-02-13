@@ -1631,7 +1631,8 @@ class account_bank_statement_line(osv.osv):
                 # multi unpartial payment
                 total_payment = False
                 # Delete them
-                move_line_obj.unlink(cr, uid, move_lines, context=context)
+                #+ Optimization: As we post the move at the end of this method, no need to check lines after their deletion
+                move_line_obj.unlink(cr, uid, move_lines, context=context, check=False)
                 for invoice_move_line in sorted(st_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
                     if abs(invoice_move_line.amount_currency) <= amount:
                         amount_to_write = sign * abs(invoice_move_line.amount_currency)
@@ -1651,7 +1652,8 @@ class account_bank_statement_line(osv.osv):
                         'document_date': st_line.document_date,
                     }
                     process_invoice_move_line_ids.append(invoice_move_line.id)
-                    move_line_id = move_line_obj.create(cr, uid, aml_vals, context=context)
+                    # Optimization: As we post the move at the end of this method, no need to check creation
+                    move_line_id = move_line_obj.create(cr, uid, aml_vals, context=context, check=False)
                     res_ml_ids.append(move_line_id)
                     
                     amount -= abs(amount_to_write)
@@ -1780,7 +1782,7 @@ class account_bank_statement_line(osv.osv):
         if context is None:
             context = {}
         # Optimization: if only one field to change and that this field is not needed by some other, no impact on them and no change, so we can call the super method
-        if len(values) == 1 and values.keys()[0] in ['move_ids', 'first_move_line_id', 'from_cash_return', 'name', 'direct_state', 'sequence_for_reference']:
+        if len(values) == 1 and values.keys()[0] in ['move_ids', 'first_move_line_id', 'from_cash_return', 'name', 'direct_state', 'sequence_for_reference', 'imported_invoice_line_ids']:
             return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
         # Prepare some values
         state = self._get_state(cr, uid, ids, context=context).values()[0]
