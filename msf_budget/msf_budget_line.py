@@ -333,6 +333,73 @@ class msf_budget_line(osv.osv):
                 res[l_id] = sum(eval(tmp_res[l_id])) or 0.0
         return res
 
+    def _get_actual_amount(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        """
+        The actual amount is composed of the total of analytic lines corresponding to these criteria:
+          - cost center that is used on the budget
+          - fiscalyear used on the budget (date should be between date_start and date_stop from the fiscalyear)
+          - account_id on the budget line
+          - destination_id on the budget line
+        """
+        # Prepare some values
+        res = {}
+        ana_obj = self.pool.get('account.analytic.line')
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        cur_obj = self.pool.get('res.currency')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        new_ids = list(ids)
+        # Search all child because 'view' line must have all their children to be calculated
+        child_ids = self.search(cr, uid, [('parent_id', 'child_of', ids)])
+        if child_ids:
+            new_ids += child_ids
+            new_ids = list(set(new_ids))
+        # Create default values
+        for index in new_ids:
+            res.setdefault(index, 0.0)
+        # Now, only use 'destination' line to do process and complete parent one at the same time
+        sql = """
+            SELECT l.id, l.parent_id, l.account_id, l.destination_id, b.cost_center_id, b.currency_id, f.date_start, f.date_stop
+            FROM msf_budget_line AS l, msf_budget AS b, account_fiscalyear AS f
+            WHERE l.budget_id = b.id
+            AND b.fiscalyear_id = f.id
+            AND l.line_type = 'destination'
+            AND l.id IN %s
+            ORDER BY id;
+        """
+        cr.execute(sql, (tuple(new_ids),))
+        # Prepare SQL2 request that contains sum of amount of given analytic lines (in functional currency)
+        sql2 = """
+            SELECT SUM(amount)
+            FROM account_analytic_line
+            WHERE id in %s;"""
+        # Process destination lines
+        for line in cr.fetchall():
+            # fetch some values
+            line_id, parent_id, account_id, destination_id, cost_center_id, currency_id, date_start, date_stop = line
+            res.setdefault(line_id, 0.0)
+            ana_ids = ana_obj.search(cr, uid, [('general_account_id', '=', account_id), ('cost_center_id', '=', cost_center_id), ('destination_id', '=', destination_id), ('date', '>=', date_start), ('date', '<=', date_stop), ('journal_id.type', '!=', 'engagement')])
+            if ana_ids:
+                cr.execute(sql2, (tuple(ana_ids),))
+                mnt_result = cr.fetchall()
+                if mnt_result:
+                    # NB: No need to recompute the amount as budget are in functional currency and that analytic line have 'amount' in functional currency
+                    #amount = cur_obj.compute(cr, uid, company_currency, currency_id, mnt_result[0][0], round=False, context=context)
+                    res[line_id] += mnt_result[0][0]
+                    # Update parent until parent_id is False
+                    if parent_id:
+                        res[parent_id] += mnt_result[0][0]
+                        parent = self.read(cr, uid, parent_id, ['parent_id'])
+                        sup_parent_id = parent.get('parent_id', False)
+                        if sup_parent_id:
+                            res[sup_parent_id[0]] += res[parent_id]
+                        while sup_parent_id:
+                            parent = self.read(cr, uid, sup_parent_id[0], ['parent_id'])
+                            sup_parent_id = parent.get('parent_id', False)
+                            if sup_parent_id:
+                                res[sup_parent_id[0]] += res[parent_id]
+        return res
+
     _columns = {
         'budget_id': fields.many2one('msf.budget', 'Budget', ondelete='cascade'),
         'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type', '!=', 'view')]),
@@ -340,7 +407,7 @@ class msf_budget_line(osv.osv):
         'name': fields.function(_get_name, method=True, store=False, string="Name", type="char", readonly="True", size=512),
         'budget_values': fields.char('Budget Values (list of float to evaluate)', size=256),
         'budget_amount': fields.function(_get_budget_line_amount, method=True, store=False, string="Budget amount", type="float", readonly="True"),
-        'actual_amount': fields.function(_get_total_amounts, method=True, store=False, string="Actual amount", type="float", readonly="True", multi="all"),
+        'actual_amount': fields.function(_get_actual_amount, method=True, store=False, string="Actual amount", type="float", readonly="True"),
         'comm_amount': fields.function(_get_total_amounts, method=True, store=False, string="Commitments amount", type="float", readonly="True", multi="all"),
         'balance': fields.function(_get_total_amounts, method=True, store=False, string="Balance", type="float", readonly="True", multi="all"),
         'percentage': fields.function(_get_total_amounts, method=True, store=False, string="Percentage", type="float", readonly="True", multi="all"),
