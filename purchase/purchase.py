@@ -58,8 +58,8 @@ class purchase_order(osv.osv):
                val1 += line.price_subtotal
                for c in self.pool.get('account.tax').compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, order.partner_address_id.id, line.product_id.id, order.partner_id)['taxes']:
                     val += c.get('amount', 0.0)
-            res[order.id]['amount_tax']=cur_obj.round(cr, uid, cur, val)
-            res[order.id]['amount_untaxed']=cur_obj.round(cr, uid, cur, val1)
+            res[order.id]['amount_tax']=cur_obj.round(cr, uid, cur.rounding, val)
+            res[order.id]['amount_untaxed']=cur_obj.round(cr, uid, cur.rounding, val1)
             res[order.id]['amount_total']=res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
         return res
 
@@ -666,7 +666,7 @@ class purchase_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             taxes = tax_obj.compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty)
             cur = line.order_id.pricelist_id.currency_id
-            res[line.id] = cur_obj.round(cr, uid, cur, taxes['total'])
+            res[line.id] = cur_obj.round(cr, uid, cur.rounding, taxes['total'])
         return res
 
     _columns = {
