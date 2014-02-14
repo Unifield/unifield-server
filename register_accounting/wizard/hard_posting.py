@@ -39,15 +39,18 @@ class wizard_hard_posting(osv.osv_memory):
         if 'active_ids' in context:
             # Retrieve statement line ids
             st_line_ids = context.get('active_ids')
+            if isinstance(st_line_ids, (int, long)):
+                st_line_ids = [st_line_ids]
+            # Prepare some values
+            tochange = []
+            absl_obj = self.pool.get('account.bank.statement.line')
             # Browse statement lines
-            for st_line_id in st_line_ids:
+            for st_line in absl_obj.read(cr,uid, st_line_ids, ['statement_id', 'state']):
                 # Verify that the line isn't in hard state
-                st_line = self.pool.get('account.bank.statement.line').browse(cr, uid, [st_line_id])[0]
-                state = st_line.state
-                if state != 'hard':
-                    # If in the good state : temp posting !
-                    self.pool.get('account.bank.statement.line').button_hard_posting(cr, uid, [st_line_id], context=context)
-            return open_register_view(self, cr, uid, st_line.statement_id.id)
+                if st_line.get('state', False) != 'hard':
+                    tochange.append(st_line.get('id'))
+            absl_obj.posting(cr, uid, tochange, 'hard')
+            return open_register_view(self, cr, uid, st_line.get('statement_id')[0])
         else:
             raise osv.except_osv(_('Warning'), _('You have to select some lines before using this wizard.'))
 

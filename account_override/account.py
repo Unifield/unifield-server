@@ -203,15 +203,18 @@ class account_account(osv.osv):
             company_account_active = company.additional_allocation
         company_account = 7 # User for accounts that begins by "7"
         # Prepare result
-        for account in self.browse(cr, uid, ids, context=context):
-            res[account.id] = False
-            if account.user_type_code == 'expense':
-                res[account.id] = True
-            elif account.user_type_code == 'income':
+        for account in self.read(cr, uid, ids, ['user_type_code', 'code'], context=context):
+            account_id = account.get('id', False)
+            user_type = account.get('user_type_code', False)
+            code = account.get('code')
+            res[account_id] = False
+            if user_type == 'expense':
+                res[account_id] = True
+            elif user_type == 'income':
                 if not company_account_active:
-                    res[account.id] = True
-                elif company_account_active and account.code.startswith(str(company_account)):
-                    res[account.id] = True
+                    res[account_id] = True
+                elif company_account_active and code.startswith(str(company_account)):
+                    res[account_id] = True
         return res
 
     def _search_is_analytic_addicted(self, cr, uid, ids, field_name, args, context=None):

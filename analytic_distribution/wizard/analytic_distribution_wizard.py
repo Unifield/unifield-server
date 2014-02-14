@@ -1326,7 +1326,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                             self.pool.get('account.commitment').create_analytic_lines(cr, uid, [wizard.commitment_id.id], context=context)
             elif wizard.register_line_id and wizard.register_line_id.state == 'temp':
                 # Update analytic lines
-                self.pool.get('account.bank.statement.line').update_analytic_lines(cr, uid, [wizard.register_line_id.id], distrib=distrib.id)
+                self.pool.get('account.bank.statement.line').update_analytic_lines(cr, uid, [wizard.register_line_id], distrib=distrib.id)
         return True
 
 analytic_distribution_wizard()

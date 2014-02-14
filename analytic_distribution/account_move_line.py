@@ -55,9 +55,16 @@ class account_move_line(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
-        # Browse all given lines
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.move_id and line.move_id.analytic_distribution_id and line.move_id.analytic_distribution_id.id or False, line.account_id.id)
+        distrib_obj = self.pool.get('analytic.distribution')
+        sql = """
+            SELECT aml.id, aml.analytic_distribution_id AS distrib_id, m.analytic_distribution_id AS move_distrib_id, aml.account_id
+            FROM account_move_line AS aml, account_move AS m
+            WHERE aml.move_id = m.id
+            AND aml.id IN %s
+            ORDER BY aml.id;"""
+        cr.execute(sql, (tuple(ids),))
+        for line in cr.fetchall():
+            res[line[0]] = distrib_obj._get_distribution_state(cr, uid, line[1], line[2], line[3])
         return res
 
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
@@ -119,52 +126,77 @@ class account_move_line(osv.osv):
             context = {}
         acc_ana_line_obj = self.pool.get('account.analytic.line')
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        for obj_line in self.browse(cr, uid, ids, context=context):
+        obj_fields = [
+            'debit_currency',
+            'credit_currency',
+            'analytic_distribution_id',
+            'move_id',
+            'state',
+            'journal_id',
+            'source_date',
+            'date',
+            'document_date',
+            'name',
+            'ref',
+            'currency_id',
+            'corrected_line_id',
+            'is_write_off',
+            'account_id',
+        ]
+        for obj_line in self.read(cr, uid, ids, obj_fields, context=context):
             # Prepare some values
-            amount = obj_line.debit_currency - obj_line.credit_currency
-            line_distrib_id = obj_line.analytic_distribution_id and obj_line.analytic_distribution_id.id or obj_line.move_id and obj_line.move_id.analytic_distribution_id and obj_line.move_id.analytic_distribution_id.id or False
+            amount = obj_line.get('debit_currency', 0.0) - obj_line.get('credit_currency', 0.0)
+            journal = self.pool.get('account.journal').read(cr, uid, obj_line.get('journal_id', [False])[0], ['analytic_journal_id', 'name'], context=context)
+            move = self.pool.get('account.move').read(cr, uid, obj_line.get('move_id', [False])[0], ['analytic_distribution_id', 'status', 'line_id'], context=context)
+            account = self.pool.get('account.account').read(cr, uid, obj_line.get('account_id', [False])[0], ['is_analytic_addicted'], context=context)
+            line_distrib_id = (obj_line.get('analytic_distribution_id', False) and obj_line.get('analytic_distribution_id')[0]) or (move.get('analytic_distribution_id', False) and move.get('analytic_distribution_id')[0]) or False
             # When you create a journal entry manually, we should not have analytic lines if ONE line is invalid!
             other_lines_are_ok = True
-            if obj_line.move_id and obj_line.move_id.status and obj_line.move_id.status == 'manu':
-                if obj_line.state != 'valid':
-                    other_lines_are_ok = False
-                for other_line in obj_line.move_id.line_id:
-                    if other_line.state != 'valid':
-                        other_lines_are_ok = False
+            sql = """
+                SELECT COUNT(ml.id)
+                FROM account_move_line AS ml, account_move AS m
+                WHERE ml.move_id = m.id
+                AND m.id = %s
+                AND m.status = 'manu'
+                AND ml.state != 'valid';"""
+            cr.execute(sql, (move.get('id', 0),))
+            result = cr.fetchall()
+            if result and result > 0:
+                other_lines_are_ok = False
             # Check that line have analytic-a-holic account and have a distribution
-            if line_distrib_id and obj_line.account_id.is_analytic_addicted and other_lines_are_ok:
-                ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distrib_id, {}, obj_line.account_id.id)
+            if line_distrib_id and account.get('is_analytic_addicted', False) and other_lines_are_ok:
+                ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distrib_id, {}, account_id.get('id'))
                 # For manual journal entries, do not raise an error. But delete all analytic distribution linked to other_lines because if one line is invalid, all lines should not create analytic lines
-                if ana_state == 'invalid' and obj_line.move_id.status == 'manu':
-                    ana_line_ids = acc_ana_line_obj.search(cr, uid, [('move_id', 'in', [x.id for x in obj_line.move_id.line_id])])
+                if ana_state == 'invalid' and move.get('status', '') == 'manu':
+                    ana_line_ids = acc_ana_line_obj.search(cr, uid, [('move_id', 'in', move.get('line_id', []))])
                     acc_ana_line_obj.unlink(cr, uid, ana_line_ids)
                     continue
                 elif ana_state == 'invalid':
                     raise osv.except_osv(_('Warning'), _('Invalid analytic distribution.'))
-                if not obj_line.journal_id.analytic_journal_id:
-                    raise osv.except_osv(_('Warning'),_("No Analytic Journal! You have to define an analytic journal on the '%s' journal!") % (obj_line.journal_id.name, ))
+                if not journal.get('analytic_journal_id', False):
+                    raise osv.except_osv(_('Warning'),_("No Analytic Journal! You have to define an analytic journal on the '%s' journal!") % (journal.get('name', ''), ))
                 distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, line_distrib_id, context=context)
                 # create lines
                 for distrib_lines in [distrib_obj.funding_pool_lines, distrib_obj.free_1_lines, distrib_obj.free_2_lines]:
                     for distrib_line in distrib_lines:
-                        context.update({'date': obj_line.source_date or obj_line.date})
+                        context.update({'date': obj_line.get('source_date', False) or obj_line.get('date', False)})
                         anal_amount = distrib_line.percentage*amount/100
                         line_vals = {
-                                     'name': obj_line.name,
-                                     'date': obj_line.date,
-                                     'ref': obj_line.ref,
-                                     'journal_id': obj_line.journal_id.analytic_journal_id.id,
-                                     'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.currency_id.id, company_currency, 
+                                     'name': obj_line.get('name', ''),
+                                     'date': obj_line.get('date', False),
+                                     'ref': obj_line.get('ref', ''),
+                                     'journal_id': journal.get('analytic_journal_id', [False])[0],
+                                     'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency, 
                                         anal_amount, round=False, context=context),
                                      'amount_currency': -1 * anal_amount,
                                      'account_id': distrib_line.analytic_id.id,
-                                     'general_account_id': obj_line.account_id.id,
-                                     'move_id': obj_line.id,
+                                     'general_account_id': account.get('id'),
+                                     'move_id': obj_line.get('id'),
                                      'distribution_id': distrib_obj.id,
                                      'user_id': uid,
-                                     'currency_id': obj_line.currency_id.id,
+                                     'currency_id': obj_line.get('currency_id', [False])[0],
                                      'distrib_line_id': '%s,%s'%(distrib_line._name, distrib_line.id),
-                                     'document_date': obj_line.document_date,
+                                     'document_date': obj_line.get('document_date', False),
                         }
                         # Update values if we come from a funding pool
                         if distrib_line._name == 'funding.pool.distribution.line':
@@ -172,11 +204,11 @@ class account_move_line(osv.osv):
                             line_vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False,
                                 'destination_id': destination_id,})
                         # Update value if we come from a write-off
-                        if obj_line.is_write_off:
+                        if obj_line.get('is_write_off', False):
                             line_vals.update({'from_write_off': True,})
                         # Add source_date value for account_move_line that are a correction of another account_move_line
-                        if obj_line.corrected_line_id and obj_line.source_date:
-                            line_vals.update({'source_date': obj_line.source_date})
+                        if obj_line.get('corrected_line_id', False) and obj_line.get('source_date', False):
+                            line_vals.update({'source_date': obj_line.get('source_date', False)})
                         self.pool.get('account.analytic.line').create(cr, uid, line_vals, context=context)
         return True
 
@@ -187,11 +219,18 @@ class account_move_line(osv.osv):
         """
         if not context:
             context = {}
-        # Search moves
+        # Search manual moves to revalidate
         move_ids = []
-        for ml in self.browse(cr, uid, ids):
-            if ml.move_id and ml.move_id.state == 'manu':
-                move_ids.append(ml.move_id.id)
+        sql = """
+            SELECT m.id
+            FROM account_move_line AS ml, account_move AS m
+            WHERE ml.move_id = m.id
+            AND m.status = 'manu'
+            AND ml.id IN %s
+            GROUP BY m.id
+            ORDER BY m.id;"""
+        cr.execute(sql, (tuple(ids),))
+        move_ids += cr.fetchall()
         # Search analytic lines
         ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', ids)])
         self.pool.get('account.analytic.line').unlink(cr, uid, ana_ids)
