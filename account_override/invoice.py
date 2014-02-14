@@ -222,7 +222,8 @@ class account_invoice(osv.osv):
             default = {}
         default.update({
             'period_id': False,
-            'purchase_ids': False,  # UFTP-24: do not copy linked POs
+            'purchase_ids': False,  # UFTP-24 do not copy linked POs
+            'purchase_list': False,  # UFTP-24 do not copy linked: reset of potential purchase list flag (from a PO direct purchase)
         })
         return super(account_invoice, self).copy(cr, uid, id, default, context)
 
