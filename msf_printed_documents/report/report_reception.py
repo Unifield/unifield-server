@@ -87,11 +87,36 @@ class report_reception(report_sxw.rml_parse):
         return "{0:.2f}".format(val)
     
     def getQtyBO(self,line,o):
-        val = (line.purchase_line_id.product_qty - line.product_qty) if o.state == 'done' else 0
-        return "{0:.2f}".format(val)
+        #  val = getQtyPO(self,line) - getQtyIS(self,line,o)
+        
+        # get PO qty
+        qtyPO = line.purchase_line_id.product_qty if line.purchase_line_id else 0
+        
+        # get received qty
+        cr, uid = self.cr, self.uid
+        val = 0.00
+        stock_move_obj = self.pool.get('stock.move')
+        closed_move_ids = stock_move_obj.search(cr, uid, [('purchase_line_id','=',line.purchase_line_id.id),('state','=','done'),('type','=','in'),('id','!=',line.id)])
+        if closed_move_ids:
+            stock_moves = stock_move_obj.browse(cr, uid, closed_move_ids) 
+        if stock_moves:
+            for move in stock_moves:
+                val = val + move.product_qty
+                
+        qtyBO = qtyPO - val
+       
+        return "{0:.2f}".format(qtyBO)
     
     def getQtyIS(self,line,o):
-        val = line.product_qty if o.state == 'done' else 0
+        cr, uid = self.cr, self.uid
+        val = 0.00
+        stock_move_obj = self.pool.get('stock.move')
+        closed_move_ids = stock_move_obj.search(cr, uid, [('purchase_line_id','=',line.purchase_line_id.id),('state','=','done'),('type','=','in'),('id','!=',line.id)])
+        if closed_move_ids:
+            stock_moves = stock_move_obj.browse(cr, uid, closed_move_ids) 
+        if stock_moves:
+            for move in stock_moves:
+                val = val + move.product_qty
         return "{0:.2f}".format(val)
     
 
@@ -136,18 +161,18 @@ class report_reception(report_sxw.rml_parse):
         if opt == 'kc':
             if line.kc_check:
                 self.kc = True
-                return 'X'
-            return ''
+                return 'Y'
+            return 'N'
         elif opt == 'dg':
             if line.dg_check:
                 self.dg = True
-                return 'X'
-            return ''
+                return 'Y'
+            return 'N'
         elif opt == 'np':
             if line.np_check:
                 self.np = True
-                return 'X'
-            return ''
+                return 'Y'
+            return 'N'
 
     def getNbItem(self, ):
         self.item += 1
@@ -164,7 +189,7 @@ class report_reception(report_sxw.rml_parse):
 
     
     def getActualReceiptDate(self,o):
-        return time.strftime('%d/%m/%Y', time.strptime(o.date_done,'%Y-%m-%d %H:%M:%S'))
+        return time.strftime('%d/%m/%Y', time.strptime(o.date,'%Y-%m-%d %H:%M:%S'))
             
     def get_lines(self, o):
         return o.move_lines

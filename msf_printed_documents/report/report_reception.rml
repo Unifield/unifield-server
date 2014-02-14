@@ -275,7 +275,7 @@
 
         <blockTable colWidths="800.0" >
             <tr><td><para style="Standard">Expected Receipt Date : [[ getERD(objects[0]) ]]</para></td></tr>
-            <tr><td><para style="Standard">Actual Receipt Date   : [[ getERD(objects[0]) ]]</para></td></tr>
+            <tr><td><para style="Standard">Actual Receipt Date   : [[ getActualReceiptDate(objects[0]) ]]</para></td></tr>
         </blockTable>
 
         <blockTable colWidths="800.0" >
