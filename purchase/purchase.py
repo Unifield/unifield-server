@@ -510,6 +510,7 @@ class purchase_order(osv.osv):
             self.pool.get('stock.move').force_assign(cr, uid, todo_moves)
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
+        raise
         return picking_id
     
     def _hook_copy_name(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -677,7 +678,7 @@ class purchase_order_line(osv.osv):
         'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
         'product_id': fields.many2one('product.product', 'Product', domain=[('purchase_ok','=',True)], change_default=True),
         'move_ids': fields.one2many('stock.move', 'purchase_line_id', 'Reservation', readonly=True, ondelete='set null'),
-        'move_dest_id': fields.many2one('stock.move', 'Reservation Destination', ondelete='set null'),
+        'move_dest_id': fields.many2one('stock.move', 'Reservation Destination', ondelete='set null', select=True),
         'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Purchase Price')),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Purchase Price')),
         'notes': fields.text('Notes'),
