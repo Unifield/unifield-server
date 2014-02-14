@@ -944,13 +944,6 @@ class wizard_cash_return(osv.osv_memory):
         res = super(wizard_cash_return, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if 'cash_register_op_advance_po_id' in context:
             doc = etree.XML(res['arch'])
-                
-            # UFTP-24
-            # if cash return linked to a PO remove the purchase_list filter of invoice
-            # (POs of type regular, direct, purchase_list)
-            nodes = doc.xpath("//field[@name='invoice_id']")
-            for node in nodes:
-                node.set('domain', "[('type', '=', 'in_invoice'), ('state', '=', 'open'), ('currency_id', '=', currency_id)]")
             
             # UFTP-24
             # if cash return linked to a PO dynamically define confirm message
