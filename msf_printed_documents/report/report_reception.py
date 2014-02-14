@@ -83,20 +83,22 @@ class report_reception(report_sxw.rml_parse):
         return warn
 
     def getQtyPO(self,line):
+        # line amount from the PO, always the same on all INs for a given PO
         val = line.purchase_line_id.product_qty if line.purchase_line_id else 0
         return "{0:.2f}".format(val)
     
     def getQtyBO(self,line,o):
-        #  val = getQtyPO(self,line) - getQtyIS(self,line,o)
+        # Back Order amount = PO amount - all receipts
         
         # get PO qty
         qtyPO = line.purchase_line_id.product_qty if line.purchase_line_id else 0
         
-        # get received qty
+        # get received qty (current and previous INs)
         cr, uid = self.cr, self.uid
         val = 0.00
         stock_move_obj = self.pool.get('stock.move')
         closed_move_ids = stock_move_obj.search(cr, uid, [('purchase_line_id','=',line.purchase_line_id.id),('state','=','done'),('type','=','in'),('id','!=',line.id)])
+        closed_move_ids.append(line.id)    # append current line regardless of status
         if closed_move_ids:
             stock_moves = stock_move_obj.browse(cr, uid, closed_move_ids) 
         if stock_moves:
@@ -104,19 +106,14 @@ class report_reception(report_sxw.rml_parse):
                 val = val + move.product_qty
                 
         qtyBO = qtyPO - val
+        if qtyBO <= 0:
+            qtyBO = 0
        
         return "{0:.2f}".format(qtyBO)
     
     def getQtyIS(self,line,o):
-        cr, uid = self.cr, self.uid
-        val = 0.00
-        stock_move_obj = self.pool.get('stock.move')
-        closed_move_ids = stock_move_obj.search(cr, uid, [('purchase_line_id','=',line.purchase_line_id.id),('state','=','done'),('type','=','in'),('id','!=',line.id)])
-        if closed_move_ids:
-            stock_moves = stock_move_obj.browse(cr, uid, closed_move_ids) 
-        if stock_moves:
-            for move in stock_moves:
-                val = val + move.product_qty
+        # Amount received in this IN only
+        val = line.product_qty 
         return "{0:.2f}".format(val)
     
 
