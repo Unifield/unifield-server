@@ -393,23 +393,6 @@ class product_product(osv.osv):
     _inherit = "product.product"
     _description = "Product"
     
-    def create(self, cr, uid, vals, context=None):
-        if vals.get('type',False) == 'service':
-            vals.update({'type': 'service_recep'})
-            vals['procure_method'] = 'make_to_order'
-        '''
-        if a product is not of type product, it is set to single subtype
-        '''
-        # fetch the product
-        if 'type' in vals and vals['type'] != 'product':
-            vals.update(subtype='single')
-#        if 'type' in vals and vals['type'] == 'consu':
-# Remove these two lines to display the warning message of the constraint
-#        if vals.get('type') == 'consu':
-#            vals.update(procure_method='make_to_order')
-        # save the data to db
-        return super(product_product, self).create(cr, uid, vals, context=context)
-    
     def write(self, cr, uid, ids, vals, context=None):
         '''
         if a product is not of type product, it is set to single subtype
