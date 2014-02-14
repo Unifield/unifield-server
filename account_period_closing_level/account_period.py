@@ -56,6 +56,11 @@ class account_period(osv.osv):
         sub_obj = self.pool.get('account.subscription.line')
         curr_obj = self.pool.get('res.currency')
         curr_rate_obj = self.pool.get('res.currency.rate')
+        
+        # previous state of the period
+        ap_dict = self.read(cr, uid, ids)[0]
+        previous_state = ap_dict['state']
+
 
         # Ticket utp913 set state_sync_flag for conditional sync of state
         # 'none' : no update to the state field via a sync (data is still sent but not updated in target instance)
@@ -65,8 +70,6 @@ class account_period(osv.osv):
         if context.get('sync_update_execution') is None:
             user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
             level = user.company_id.instance_id.level
-            ap_dict = self.read(cr, uid, ids)[0]
-            previous_state = ap_dict['state']
 
             if level == 'section': # section = HQ
                 if previous_state == 'created' and context['state'] == 'draft':
@@ -157,6 +160,16 @@ class account_period(osv.osv):
             # / Check state consistency
             
             if period.state == 'draft':
+                # check if there are draft payroll entries in the period. Ticket uftp-89
+                if previous_state == 'draft' and context['state'] == 'field-closed':
+                    hr_payroll_msf_obj = self.pool.get('hr.payroll.msf')
+                    payroll_rows = hr_payroll_msf_obj.search(cr, uid, [('period_id','in', ids),('state','=','draft')])
+                    if payroll_rows:
+                        raise osv.except_osv(_('Error !'), _('There are outstanding payroll entries in this period; you must validate them to field-close this period.'))
+            
+                
+                
+                
                 # first verify that all existent registers for this period are closed
                 reg_ids = reg_obj.search(cr, uid, [('period_id', '=', period.id)], context=context)
                 for register in reg_obj.browse(cr, uid, reg_ids, context=context):
@@ -224,12 +237,7 @@ class account_period(osv.osv):
             if move_line.state != 'valid':
                 raise osv.except_osv(_('Error !'), _('You cannot close a period containing unbalanced move lines!'))
             
-        # check if there are draft payroll entries in the period. Ticket uftp-89
-        hr_payroll_msf_obj = self.pool.get('hr.payroll.msf')
-        payroll_rows = hr_payroll_msf_obj.search(cr, uid, [('period_id','in', ids),('state','=','draft')])
-        if payroll_rows:
-            raise osc.except_osv(_('Error !'), _('There are outstanding payroll entries in this period; you must validate them to field-close this period.'))
-            
+    
             
         # otherwise, change the period's and journal period's states
         if context['state']:
