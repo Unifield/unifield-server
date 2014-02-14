@@ -311,14 +311,35 @@ class msf_budget_line(osv.osv):
             name += account.name
             res[rs.id] = name
         return res
-    
+
+    def _get_budget_line_amount(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        """
+        Get the sum of budget_values content from a given budget line.
+        """
+        res = {}
+        sql = """
+        SELECT id, budget_values
+        FROM msf_budget_line
+        WHERE id IN %s;
+        """
+        cr.execute(sql, (tuple(ids),))
+        tmp_res = cr.fetchall()
+        if not tmp_res:
+            return res
+        tmp_res = dict(tmp_res)
+        for l_id in ids:
+            res.setdefault(l_id, 0.0)
+            if l_id in tmp_res:
+                res[l_id] = sum(eval(tmp_res[l_id])) or 0.0
+        return res
+
     _columns = {
         'budget_id': fields.many2one('msf.budget', 'Budget', ondelete='cascade'),
         'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type', '!=', 'view')]),
         'destination_id': fields.many2one('account.analytic.account', 'Destination', domain=[('category', '=', 'DEST')]),
         'name': fields.function(_get_name, method=True, store=False, string="Name", type="char", readonly="True", size=512),
         'budget_values': fields.char('Budget Values (list of float to evaluate)', size=256),
-        'budget_amount': fields.function(_get_total_amounts, method=True, store=False, string="Budget amount", type="float", readonly="True", multi="all"),
+        'budget_amount': fields.function(_get_budget_line_amount, method=True, store=False, string="Budget amount", type="float", readonly="True"),
         'actual_amount': fields.function(_get_total_amounts, method=True, store=False, string="Actual amount", type="float", readonly="True", multi="all"),
         'comm_amount': fields.function(_get_total_amounts, method=True, store=False, string="Commitments amount", type="float", readonly="True", multi="all"),
         'balance': fields.function(_get_total_amounts, method=True, store=False, string="Balance", type="float", readonly="True", multi="all"),
