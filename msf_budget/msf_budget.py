@@ -171,7 +171,7 @@ class msf_budget(osv.osv):
             'type': 'ir.actions.act_window',
             'res_model': 'msf.budget',
             'target': 'crush',
-            'view_mode': 'form',
+            'view_mode': 'form,tree',
             'view_type': 'form',
             'res_id': ids[0],
             'context': context,
