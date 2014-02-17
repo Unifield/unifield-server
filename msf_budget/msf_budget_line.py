@@ -349,23 +349,35 @@ class msf_budget_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         new_ids = list(ids)
-        # Search all child because 'view' line must have all their children to be calculated
-        child_ids = self.search(cr, uid, [('parent_id', 'child_of', ids)])
-        if child_ids:
-            new_ids += child_ids
-            new_ids = list(set(new_ids))
+### METHOD 2 ###
+#        # Search all child because 'view' line must have all their children to be calculated
+#        budget_lines = {}
+#        for line_id in ids:
+#            child_ids = self.search(cr, uid, [('parent_id', 'child_of', line_id)])
+#            if child_ids:
+#                for child_id in child_ids:
+#                    budget_lines.setdefault(child_id, [])
+#                    budget_lines[child_id].append(line_id)
+#                    new_ids += child_ids
+### ###
+
+### ALL METHODS ###
+#        child_ids = self.search(cr, uid, [('parent_id', 'child_of', ids)])
+#        if child_ids:
+#            new_ids += child_ids
+#            new_ids = list(set(new_ids))
+### ###
         # Create default values
         for index in new_ids:
             res.setdefault(index, 0.0)
         # Now, only use 'destination' line to do process and complete parent one at the same time
         sql = """
-            SELECT l.id, l.parent_id, l.account_id, l.destination_id, b.cost_center_id, b.currency_id, f.date_start, f.date_stop
+            SELECT l.id, l.parent_id, l.line_type, l.account_id, l.destination_id, b.cost_center_id, b.currency_id, f.date_start, f.date_stop
             FROM msf_budget_line AS l, msf_budget AS b, account_fiscalyear AS f
             WHERE l.budget_id = b.id
             AND b.fiscalyear_id = f.id
-            AND l.line_type = 'destination'
             AND l.id IN %s
-            ORDER BY id;
+            ORDER BY l.line_type, l.id;
         """
         cr.execute(sql, (tuple(new_ids),))
         # Prepare SQL2 request that contains sum of amount of given analytic lines (in functional currency)
@@ -376,29 +388,73 @@ class msf_budget_line(osv.osv):
         # Process destination lines
         for line in cr.fetchall():
             # fetch some values
-            line_id, parent_id, account_id, destination_id, cost_center_id, currency_id, date_start, date_stop = line
-            res.setdefault(line_id, 0.0)
-            ana_ids = ana_obj.search(cr, uid, [('general_account_id', '=', account_id), ('cost_center_id', '=', cost_center_id), ('destination_id', '=', destination_id), ('date', '>=', date_start), ('date', '<=', date_stop), ('journal_id.type', '!=', 'engagement')])
+            line_id, parent_id, line_type, account_id, destination_id, cost_center_id, currency_id, date_start, date_stop = line
+            criteria = [
+                ('cost_center_id', '=', cost_center_id),
+                ('date', '>=', date_start),
+                ('date', '<=', date_stop),
+                ('journal_id.type', '!=', 'engagement'),
+            ]
+            if line_type == 'destination':
+                criteria.append(('destination_id', '=', destination_id))
+            if line_type in ['destination', 'normal']:
+                criteria.append(('general_account_id', '=', account_id)),
+            else:
+                criteria.append(('general_account_id', 'child_of', account_id))
+            ana_ids = ana_obj.search(cr, uid, criteria)
             if ana_ids:
                 cr.execute(sql2, (tuple(ana_ids),))
                 mnt_result = cr.fetchall()
                 if mnt_result:
-                    # NB: No need to recompute the amount as budget are in functional currency and that analytic line have 'amount' in functional currency
-                    #amount = cur_obj.compute(cr, uid, company_currency, currency_id, mnt_result[0][0], round=False, context=context)
                     res[line_id] += mnt_result[0][0]
-                    # Update parent until parent_id is False
-                    if parent_id:
-                        res[parent_id] += mnt_result[0][0]
-                        parent = self.read(cr, uid, parent_id, ['parent_id'])
-                        sup_parent_id = parent.get('parent_id', False)
-                        if sup_parent_id:
-                            res[sup_parent_id[0]] += res[parent_id]
-                        while sup_parent_id:
-                            parent = self.read(cr, uid, sup_parent_id[0], ['parent_id'])
-                            sup_parent_id = parent.get('parent_id', False)
-                            if sup_parent_id:
-                                res[sup_parent_id[0]] += res[parent_id]
         return res
+
+### METHOD 2 ###
+#            ana_ids = ana_obj.search(cr, uid, [('general_account_id', '=', account_id), ('cost_center_id', '=', cost_center_id), ('destination_id', '=', destination_id), ('date', '>=', date_start), ('date', '<=', date_stop), ('journal_id.type', '!=', 'engagement')])
+#            if ana_ids:
+#                cr.execute(sql2, (tuple(ana_ids),))
+#                mnt_result = cr.fetchall()
+#                if mnt_result:
+#                    # NB: No need to recompute the amount as budget are in functional currency and that analytic line have 'amount' in functional currency
+#                    #amount = cur_obj.compute(cr, uid, company_currency, currency_id, mnt_result[0][0], round=False, context=context)
+#                    res[line_id] += mnt_result[0][0]
+#                    for parent in budget_lines[line_id]:
+#                        if parent != line_id:
+#                            res[parent] += mnt_result[0][0]
+#                    # Update parent until parent_id is False
+#                    if parent_id:
+#                        res[parent_id] += mnt_result[0][0]
+#                        parent_ids.append(parent_id)
+#                        parent = self.read(cr, uid, parent_id, ['parent_id'])
+#                        sup_parent_id = parent.get('parent_id', False)
+#                        if sup_parent_id:
+#                            res[sup_parent_id[0]] += res[parent_id]
+#                        while sup_parent_id:
+#                            parent = self.read(cr, uid, sup_parent_id[0], ['parent_id'])
+#                            sup_parent_id = parent.get('parent_id', False)
+#                            if sup_parent_id:
+#                                res[sup_parent_id[0]] += res[parent_id]
+### END OF METHOD 2 ###
+
+### METHOD 3 ###
+#        # Complete parents
+#        for budget_line in budget_lines:
+#            for child in budget_lines[budget_line][0]:
+#                print child
+#                res[budget_line] += res[child]
+
+#        if parent_ids:
+#            sql3 = """
+#                SELECT id, parent_id
+#                FROM msf_budget_line
+#                WHERE id IN %s"""
+#            cr.execute(sql3, (tuple(parent_ids),))
+#            result = cr.fetchall()
+#            for couple in result:
+#                l_id, parent_id = couple
+#                res[parent_id] += res[l_id]
+#        return res
+### END OF METHOD 3 ###
 
     _columns = {
         'budget_id': fields.many2one('msf.budget', 'Budget', ondelete='cascade'),
