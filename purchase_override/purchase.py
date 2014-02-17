@@ -1647,10 +1647,21 @@ stock moves which are already processed : '''
                 if reason_type_id:
                     move_values.update({'reason_type_id': reason_type_id})
                 
-                move = self.pool.get('stock.move').create(cr, uid, move_values, context=context)
+                ctx = context.copy()
+                ctx['bypass_store_function'] = [('stock.picking', ['dpo_incoming', 'dpo_out', 'overall_qty', 'line_state'])]
+                move = self.pool.get('stock.move').create(cr, uid, move_values, context=ctx)
                 if self._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context=context, order_line=order_line, move_id=move):
                     moves_to_update.append(order_line.move_dest_id.id)
                 todo_moves.append(move)
+            # compute function fields
+            if todo_moves:
+                compute_store = self.pool.get('stock.move')._store_get_values(cr, uid, todo_moves, None, context)
+                compute_store.sort()
+                done = []
+                for store_order, store_object, store_ids, store_fields2 in compute_store:
+                    if store_fields2 in ('dpo_incoming', 'dpo_out', 'overall_qty', 'line_state') and not (store_object, store_ids, store_fields2) in done:
+                        self.pool.get(store_object)._store_set_values(cr, uid, store_ids, store_fields2, context)
+                        done.append((store_object, store_ids, store_fields2))
             move_obj.write(cr, uid, moves_to_update, {'location_id':order.location_id.id})
             move_obj.action_confirm(cr, uid, todo_moves)
             move_obj.force_assign(cr, uid, todo_moves)
