@@ -138,6 +138,7 @@ ACCOUNT_RESTRICTED_AREA = {
     'account_move_lines': [
         ('type', 'not in', ['view', 'consolidation', 'closed']),
         '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
+        ('is_not_hq_correctible', '=', False),
     ],
     # FINANCING CONTRACT - REPORTING LINES
     'contract_reporting_lines': [
@@ -155,7 +156,7 @@ ACCOUNT_RESTRICTED_AREA = {
     'partner_payable': [
         ('type', '!=', 'view'),
         ('type', '=', 'payable'),
-        ('user_type_code', '=', 'payables'),
+        ('user_type_code', 'in', ['payables', 'tax']),
         ('type_for_register', '!=', 'donation'),
     ],
     # PARTNER - RECEIVABLE DEFAULT ACCOUNT
@@ -180,6 +181,11 @@ ACCOUNT_RESTRICTED_AREA = {
         ('type', '!=', 'view'),
         ('user_type_code', '=', 'cash'),
         ('type', '=', 'liquidity'),
+    ],
+    # CORRECTION WIZARD LINES
+    'correction_wizard': [
+        ('type', '!=', 'view'),
+        ('is_not_hq_correctible', '=', False), # Do not allow user to select accounts with "Not HQ correctible" set to True
     ],
 }
 
