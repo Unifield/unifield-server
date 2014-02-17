@@ -32,18 +32,20 @@ def _get_instance_level(self, cr, uid):
     Return instance level linked to this user.
     If section, return 'hq' string instead.
     """
-    sql = """
-        SELECT i.level
-        FROM res_users AS u, res_company AS c, msf_instance AS i
-        WHERE u.company_id = c.id
-        AND c.instance_id = i.id
-        AND u.id = %s;"""
-    cr.execute(sql, (uid,))
-    result = cr.fetchall()
-    if not result:
-        return False
-    if result == 'section':
-        return 'hq'
+    result = False
+    if self.pool.get('msf.instance'):
+        sql = """
+            SELECT i.level
+            FROM res_users AS u, res_company AS c, msf_instance AS i
+            WHERE u.company_id = c.id
+            AND c.instance_id = i.id
+            AND u.id = %s;"""
+        cr.execute(sql, (uid,))
+        result = cr.fetchall()
+        if not result:
+            return False
+        if result == 'section':
+            return 'hq'
     return result
 
 def _record_matches_domain(self, cr, record_id, domain):
