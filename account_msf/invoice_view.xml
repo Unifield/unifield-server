@@ -306,7 +306,7 @@
                                     <notebook>
                                         <page string="Line">
                                             <field name="name"/>
-                                            <field name="account_id" domain="[('type', '!=', 'view'),('user_type_code', '=', 'expense')]"/>
+                                            <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]"/>
                                             <field name="quantity"/>
                                             <field name="uos_id" string="UOM" invisible="1"/>
                                             <field name="price_unit"/>
