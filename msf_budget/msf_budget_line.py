@@ -23,9 +23,7 @@ from osv import fields, osv
 import datetime
 from dateutil.relativedelta import relativedelta
 
-# Overloading the one2many.get for budget lines
-# (used for filtering budget lines in the form view;
-# dirty as f*ck, but hey, it works)
+# Overloading the one2many.get for budget lines to filter regarding context.
 class one2many_budget_lines(fields.one2many):
     
     def get(self, cr, obj, ids, name, uid=None, offset=0, context=None, values=None):
@@ -35,23 +33,23 @@ class one2many_budget_lines(fields.one2many):
             values = {}
         res = {}
         display_type = {}
-        
-        for budget in obj.read(cr, uid, ids, ['display_type']):
-            res[budget['id']] = []
-            display_type[budget['id']] = budget['display_type']
-            # Override display_type if we come from a report
-            if context.get('report', False) and context.get('granularity', False):
-                display_type[budget['id']] = context.get('granularity')
 
-        budget_line_obj = obj.pool.get('msf.budget.line')
-        budget_line_ids = budget_line_obj.search(cr, uid, [('budget_id', 'in', ids)])
-        if budget_line_ids:
-            for budget_line in  budget_line_obj.read(cr, uid, budget_line_ids, ['line_type', 'budget_id'], context=context):
-                budget_id = budget_line['budget_id'][0]
-                if display_type[budget_id] == 'all' \
-                or (display_type[budget_id] == 'view' and budget_line['line_type'] == 'view') \
-                or (display_type[budget_id] == 'expense' and budget_line['line_type'] != 'destination'):
-                    res[budget_id].append(budget_line['id'])
+        domain = ['view', 'normal', 'destination']
+        tuples = {
+            'parent': ['view'],
+            'account': ['view', 'normal'],
+            'destination': domain,
+        }
+        line_obj = obj.pool.get('msf.budget.line')
+
+        if 'granularity' in context:
+            display_type = context.get('granularity', False)
+            if display_type and display_type in ['parent', 'account', 'destination']:
+                domain = tuples[display_type]
+
+        for budget_id in ids:
+            res[budget_id] = line_obj.search(cr, uid, [('budget_id', '=', budget_id), ('line_type', 'in', domain)])
+
         return res
 
 class msf_budget_line(osv.osv):
