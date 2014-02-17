@@ -147,11 +147,11 @@ class import_data(osv.osv_memory):
             if not hasattr(self, '_cache'):
                 self._cache = {}
             self._cache.setdefault(dbname, {})
-            
+
             if not hasattr(self.pool.get('product.nomenclature'), '_cache'):
                 self.pool.get('product.nomenclature')._cache = {}
             self.pool.get('product.nomenclature')._cache.setdefault(dbname, {})
-            
+
             # Clear the cache
             self._cache[dbname] = {'product.nomenclature': {'name': {}, 'complete_name': {}},
                                    'product.uom': {'name': {}},
@@ -169,27 +169,27 @@ class import_data(osv.osv_memory):
             # Product nomenclature complete name
             cr.execute('''SELECT id, name FROM
 (
-(SELECT 
-    n0.id, n0.name AS name 
-FROM product_nomenclature n0 
+(SELECT
+    n0.id, n0.name AS name
+FROM product_nomenclature n0
 WHERE n0.level = 0)
 UNION
-(SELECT n1.id, n0.name ||' | '|| n1.name AS name 
-FROM product_nomenclature n1 
-  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id 
+(SELECT n1.id, n0.name ||' | '|| n1.name AS name
+FROM product_nomenclature n1
+  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id
 WHERE n1.level = 1)
 UNION
-(SELECT n2.id, n0.name ||' | '|| n1.name ||' | '|| n2.name AS name 
-FROM product_nomenclature n1 
-  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id 
-  LEFT JOIN product_nomenclature n2 ON n2.parent_id = n1.id 
+(SELECT n2.id, n0.name ||' | '|| n1.name ||' | '|| n2.name AS name
+FROM product_nomenclature n1
+  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id
+  LEFT JOIN product_nomenclature n2 ON n2.parent_id = n1.id
 WHERE n2.level = 2)
 UNION
-(SELECT n3.id, n0.name ||' | '|| n1.name ||' | '|| n2.name ||' | '|| n3.name AS name 
-FROM product_nomenclature n1 
-  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id 
-  LEFT JOIN product_nomenclature n2 ON n2.parent_id = n1.id 
-  LEFT JOIN product_nomenclature n3 ON n3.parent_id = n2.id 
+(SELECT n3.id, n0.name ||' | '|| n1.name ||' | '|| n2.name ||' | '|| n3.name AS name
+FROM product_nomenclature n1
+  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id
+  LEFT JOIN product_nomenclature n2 ON n2.parent_id = n1.id
+  LEFT JOIN product_nomenclature n3 ON n3.parent_id = n2.id
 WHERE n3.level = 3)
 ) AS cn''')
             for cnv in cr.dictfetchall():
@@ -412,7 +412,7 @@ Find in attachment the rejected lines'''%(nb_error)
                 'res_id': req_id,
                 'datas': base64.encodestring(errorfile.read()),
             })
-            
+
         if impobj == 'product.product':
             # Clear the cache
             self._cache[dbname] = {}

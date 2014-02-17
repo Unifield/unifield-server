@@ -65,8 +65,8 @@ class analytic_distribution1(osv.osv):
         # Have an analytic distribution on another account than analytic-a-holic account make no sense. So their analytic distribution is valid
         logger = netsvc.Logger()
         if account_id:
-            account =  self.pool.get('account.account').browse(cr, uid, account_id)
-            if account and not account.is_analytic_addicted:
+            account =  self.pool.get('account.account').read(cr, uid, account_id, ['is_analytic_addicted'])
+            if account and not account.get('is_analytic_addicted', False):
                 return 'valid'
         if not id:
             if parent_id:
@@ -80,10 +80,10 @@ class analytic_distribution1(osv.osv):
             'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
-        account = self.pool.get('account.account').browse(cr, uid, account_id)
+        account = self.pool.get('account.account').read(cr, uid, account_id, ['destination_ids'])
         # Check Cost Center lines with destination/account link
         for cc_line in distrib.cost_center_lines:
-            if cc_line.destination_id.id not in [x.id for x in account.destination_ids]:
+            if cc_line.destination_id.id not in account.get('destination_ids', []):
                 logger.notifyChannel("analytic distribution", netsvc.LOG_WARNING, _("%s: Error, destination not compatible with G/L account in CC lines") % (id or ''))
                 return 'invalid'
         # Check Funding pool lines regarding:
@@ -91,7 +91,7 @@ class analytic_distribution1(osv.osv):
         # - If analytic account is MSF Private funds
         # - Cost center and funding pool compatibility
         for fp_line in distrib.funding_pool_lines:
-            if fp_line.destination_id.id not in [x.id for x in account.destination_ids]:
+            if fp_line.destination_id.id not in account.get('destination_ids', []):
                 logger.notifyChannel("analytic distribution", netsvc.LOG_WARNING, _("%s: Error, destination not compatible with G/L account for FP lines") % (id or ''))
                 return 'invalid'
             # If fp_line is MSF Private Fund, all is ok
@@ -276,11 +276,11 @@ class analytic_distribution(osv.osv):
             for dl_name in ['cost.center.distribution.line', 'funding.pool.distribution.line', 'free.1.distribution.line', 'free.2.distribution.line']:
                 dl_obj = self.pool.get(dl_name)
                 dl_ids = dl_obj.search(cr, uid, [('distribution_id', '=', distrib_id)], context=context)
-                for dl in dl_obj.browse(cr, uid, dl_ids, context=context):
+                for dl in dl_obj.read(cr, uid, dl_ids, ['percentage'], context=context):
                     dl_vals = {
-                        'amount': round(dl.percentage * amount) / 100.0,
+                        'amount': round(dl.get('percentage', False) * amount) / 100.0,
                     }
-                    dl_obj.write(cr, uid, [dl.id], dl_vals, context=context)
+                    dl_obj.write(cr, uid, [dl.get('id')], dl_vals, context=context)
         return True
 
     def update_distribution_line_account(self, cr, uid, line_ids, account_id, context=None):

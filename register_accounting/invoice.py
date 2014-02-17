@@ -161,28 +161,29 @@ class account_invoice(osv.osv):
         'is_direct_invoice': lambda *a: False,
     }
 
-    def action_reconcile_direct_invoice(self, cr, uid, ids, context=None):
+    def action_reconcile_direct_invoice(self, cr, uid, inv, context=None):
         """
         Reconcile move line if invoice is a Direct Invoice
         NB: In order to define that an invoice is a Direct Invoice, we need to have register_line_ids not null
         """
-        for inv in self.browse(cr, uid, ids):
-            # Verify that this invoice is linked to a register line and have a move
-            if inv.move_id and inv.register_line_ids:
-                ml_obj = self.pool.get('account.move.line')
-                # First search move line that becomes from invoice
-                res_ml_ids = ml_obj.search(cr, uid, [('move_id', '=', inv.move_id.id), ('account_id', '=', inv.account_id.id)])
-                if len(res_ml_ids) > 1:
-                    raise osv.except_osv(_('Error'), _('More than one journal items found for this invoice.'))
-                invoice_move_line_id = res_ml_ids[0]
-                # Then search move line that corresponds to the register line
-                reg_line = inv.register_line_ids[0]
-                reg_ml_ids = ml_obj.search(cr, uid, [('move_id', '=', reg_line.move_ids[0].id), ('account_id', '=', reg_line.account_id.id)])
-                if len(reg_ml_ids) > 1:
-                    raise osv.except_osv(_('Error'), _('More than one journal items found for this register line.'))
-                register_move_line_id = reg_ml_ids[0]
-                # Finally do reconciliation
-                ml_reconcile_id = ml_obj.reconcile_partial(cr, uid, [invoice_move_line_id, register_move_line_id])
+        # Verify that this invoice is linked to a register line and have a move
+        if not inv:
+            return False
+        if inv.move_id and inv.register_line_ids:
+            ml_obj = self.pool.get('account.move.line')
+            # First search move line that becomes from invoice
+            res_ml_ids = ml_obj.search(cr, uid, [('move_id', '=', inv.move_id.id), ('account_id', '=', inv.account_id.id)])
+            if len(res_ml_ids) > 1:
+                raise osv.except_osv(_('Error'), _('More than one journal items found for this invoice.'))
+            invoice_move_line_id = res_ml_ids[0]
+            # Then search move line that corresponds to the register line
+            reg_line = inv.register_line_ids[0]
+            reg_ml_ids = ml_obj.search(cr, uid, [('move_id', '=', reg_line.move_ids[0].id), ('account_id', '=', reg_line.account_id.id)])
+            if len(reg_ml_ids) > 1:
+                raise osv.except_osv(_('Error'), _('More than one journal items found for this register line.'))
+            register_move_line_id = reg_ml_ids[0]
+            # Finally do reconciliation
+            ml_reconcile_id = ml_obj.reconcile_partial(cr, uid, [invoice_move_line_id, register_move_line_id])
         return True
 
     def create_down_payments(self, cr, uid, ids, amount, context=None):
