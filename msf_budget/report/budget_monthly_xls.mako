@@ -214,7 +214,7 @@
       <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.month10 )|x}</Data></Cell>
       <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.month11 )|x}</Data></Cell>
       <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.month12 )|x}</Data></Cell>
-      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ss:Formula="=+RC[-12]+RC[-11]+RC[-10]+RC[-9]+RC[-8]+RC[-7]+RC[-6]+RC[-5]+RC[-4]+RC[-3]+RC[-2]+RC[-1]"><Data ss:Type="Number"></Data></Cell>
+      <Cell ss:StyleID="${"%s"%( isBold and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line.total )|x}</Data></Cell>
     </Row>
 % endfor
 

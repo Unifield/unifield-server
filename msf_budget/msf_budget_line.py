@@ -500,6 +500,25 @@ class msf_budget_line(osv.osv):
                     res[line_id].update({'percentage': percentage,})
         return res
 
+    def _get_total(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        """
+        Give the sum of all month for the given budget lines
+        """
+        # Some checks
+        if isinstance(ids,(int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        sql = """
+            SELECT id, month1 + month2 + month3 + month4 + month5 + month6 + month7 + month8 + month9 + month10 + month11 + month12
+            FROM msf_budget_line
+            WHERE id IN %s"""
+        cr.execute(sql, (tuple(ids),))
+        tmp_res = cr.fetchall()
+        if tmp_res:
+            res = dict(tmp_res)
+        return res
+
     _columns = {
         'budget_id': fields.many2one('msf.budget', 'Budget', ondelete='cascade'),
         'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type', '!=', 'view')]),
@@ -517,12 +536,13 @@ class msf_budget_line(osv.osv):
         'month10': fields.float("Month 10"),
         'month11': fields.float("Month 11"),
         'month12': fields.float("Month 12"),
+        'total': fields.function(_get_total, method=True, store=False, string="Total", type="float", readonly=True, help="Get all month total amount"),
         'budget_values': fields.char('Budget Values (list of float to evaluate)', size=256),
-        'budget_amount': fields.function(_get_amounts, method=True, store=False, string="Budget amount", type="float", readonly="True", multi="budget_amounts"),
-        'actual_amount': fields.function(_get_amounts, method=True, store=False, string="Actual amount", type="float", readonly="True", multi="budget_amounts"),
-        'comm_amount': fields.function(_get_amounts, method=True, store=False, string="Commitments amount", type="float", readonly="True", multi="budget_amounts"),
-        'balance': fields.function(_get_amounts, method=True, store=False, string="Balance", type="float", readonly="True", multi="budget_amounts"),
-        'percentage': fields.function(_get_amounts, method=True, store=False, string="Percentage", type="float", readonly="True", multi="budget_amounts"),
+        'budget_amount': fields.function(_get_amounts, method=True, store=False, string="Budget amount", type="float", readonly=True, multi="budget_amounts"),
+        'actual_amount': fields.function(_get_amounts, method=True, store=False, string="Actual amount", type="float", readonly=True, multi="budget_amounts"),
+        'comm_amount': fields.function(_get_amounts, method=True, store=False, string="Commitments amount", type="float", readonly=True, multi="budget_amounts"),
+        'balance': fields.function(_get_amounts, method=True, store=False, string="Balance", type="float", readonly=True, multi="budget_amounts"),
+        'percentage': fields.function(_get_amounts, method=True, store=False, string="Percentage", type="float", readonly=True, multi="budget_amounts"),
         'parent_id': fields.many2one('msf.budget.line', 'Parent Line'),
         'child_ids': fields.one2many('msf.budget.line', 'parent_id', 'Child Lines'),
         'line_type': fields.selection([('view','View'),
