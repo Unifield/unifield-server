@@ -31,23 +31,20 @@ class msf_budget(osv.osv):
     
     def _get_total_budget_amounts(self, cr, uid, ids, field_names=None, arg=None, context=None):
         res = {}
-        for b_id in ids:
-            res[b_id] = 0.0
-            sql = """
-                SELECT budget_values
-                FROM msf_budget_line AS l, account_account AS a, account_account_type AS t
-                WHERE budget_id = %s
-                AND l.account_id = a.id
-                AND a.user_type = t.id
-                AND t.code = 'expense'
-                AND a.type != 'view'
-                AND l.line_type = 'destination';"""
-            cr.execute(sql, (b_id,))
-            tmp_res = cr.fetchall()
-            for l in tmp_res:
-                if l and l[0]:
-                    res[b_id] += sum(eval(l[0])) or 0.0
-
+        sql = """
+            SELECT budget_id, SUM(COALESCE(month1 + month2 + month3 + month4 + month5 + month6 + month7 + month8 + month9 + month10 + month11 + month12, 0.0))
+            FROM msf_budget_line AS l, account_account AS a, account_account_type AS t
+            WHERE budget_id IN %s
+            AND l.account_id = a.id
+            AND a.user_type = t.id
+            AND t.code = 'expense'
+            AND a.type != 'view'
+            AND l.line_type = 'destination'
+            GROUP BY budget_id"""
+        cr.execute(sql, (tuple(ids),))
+        tmp_res = cr.fetchall()
+        if tmp_res:
+            res = dict(tmp_res)
         return res
 
     def _get_instance_type(self, cr, uid, ids, field_names=None, arg=None, context=None):
