@@ -140,9 +140,37 @@ class sale_order_sync(osv.osv):
         so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
         
         ref = self.browse(cr, uid, so_id).client_order_ref
-        client_order_ref = source + "." + po_info.name
         
-        if not ref or client_order_ref != ref: # only issue a write if the client_order_reference is not yet set!
+        
+        
+        
+        log_message = ""
+         # UF-1830: in case of backup and restore, and that the relevant FO has been lost, then
+        if not so_id and context.get('restore_flag'): 
+            # now search the new replacement of FO: check if the
+            log_message = "Restore Case: " 
+            if po_info.name and len(po_info.name) > 3:
+                if po_info.name[-2:] in ('-1', '-2', '-3'): # search only split FO, with prefix of -1,2,3
+                    # this is the split PO, --> search for either the FO with reference to this split PO or only to the original PO (POxxx-2, or just POxxx)
+                    # and the state must not be split
+                    ori_po_refs = (source + "." + po_info.name, source + "." + po_info.name[:-2])
+                    so_ids = self.search(cr, uid, [('client_order_ref', 'in', ori_po_refs), ('split_type_sale_order', '!=', 'original_sale_order')], context=context)
+                else: # not split case, FO before sourcing
+                    ori_po_refs = source + "." + po_info.name
+                    so_ids = self.search(cr, uid, [('client_order_ref', '=', ori_po_refs)], context=context)
+                    
+                if not so_ids:
+                    raise Exception, ("Restore case: not found the new replacement of FO for the reference PO: " + ori_po_refs)
+                so_id = so_ids[0]
+            else:
+                raise Exception, "Restore case: Invalid format of the PO: " + po_info.name
+             
+        so_split = self.browse(cr, uid, so_id, context)
+        
+        client_order_ref = source + "." + po_info.name
+
+        #UF-1830        
+        if not so_split.client_order_ref or client_order_ref != so_split.client_order_ref: # only issue a write if the client_order_reference is not yet set!
             res_id = self.write(cr, uid, so_id, {'client_order_ref': client_order_ref} , context=context)
         
         '''
@@ -155,9 +183,13 @@ class sale_order_sync(osv.osv):
             temp = self.browse(cr, uid, line).client_order_ref
             if not temp: # only issue a write if the client_order_reference is not yet set!
                 res_id = self.write(cr, uid, line, {'client_order_ref': client_order_ref} , context=context)
-            
-        return True
 
+        # UF-1830            
+        log_message += "The reference to the PO " + source + "." + po_info.name + " has been well updated to the FO " + so_split.name  
+        self._logger.info(log_message)
+        return log_message
+    
+    
     def on_create(self, cr, uid, id, values, context=None):
         if context is None \
            or not context.get('sync_message_execution') \

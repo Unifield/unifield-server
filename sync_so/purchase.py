@@ -137,7 +137,14 @@ class purchase_order_sync(osv.osv):
             text = "The given format of the split FO is not valid" + so_info.name
             self._logger.error(text)
             raise Exception, text
-        
+
+        # UF-1830: Check if the future FO split exists in the system, if it is the case, then the message is coming from a recovery from the partner!
+        check_exist = self.search(cr, uid, [('name', '=', header_result['name'])])
+        if check_exist:
+            # if it is the case, then just update the reference to the newly created FO-split at the partner side
+            self.write(cr, uid, check_exist, {'partner_ref': header_result['partner_ref']} , context=context)
+            return "The reference of the split PO has been updated due to recovery at " + source
+
         original_po = self.browse(cr, uid, po_id, context=context)
         # UTP-163: Get the 'source document' of the original PO, and add it into the split PO, if existed
         header_result['origin'] = original_po.origin
