@@ -36,14 +36,6 @@ class wkf_witm_trans(osv.osv):
             all_ids = self.search(cr, 1, [])
             self.get_sd_ref(cr, 1, all_ids)
         
-    def create(self, cr, uid, data, context=None):
-        """
-        Generate SD REF on creation
-        """
-        new_id = super(wkf_witm_trans, self).create(cr, uid, data, context=context)
-        self.get_sd_ref(cr, 1, [new_id])
-        return new_id
-
     def init(self, cr):
         """ 
         On server startup create sd refs for all existing records, and create (if doesn't exist already) 
