@@ -13,6 +13,6 @@
     'init_xml': [
         'data/rule_group_type.xml',
     ],
-    'depends': ['sync_client', 'sync_server'],
+    'depends': ['sync_client', 'sync_server', 'sync_remote_warehouse_common'],
     'installable': True,
 }

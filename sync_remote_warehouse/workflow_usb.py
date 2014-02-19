@@ -3,20 +3,13 @@ from workflow import workitem, instance, wkf_expr, wkf_logs
 import pooler
 import netsvc
 
-# trigger creation of SD ref automatically
-old_wkf_workitem_create = workitem.create
 
-def wkf_workitem_create(cr, act_datas, inst_id, ident, stack):
-    new_ids = old_wkf_workitem_create(cr, act_datas, inst_id, ident, stack)
-    pooler.get_pool(cr.dbname).get('workflow.workitem').get_sd_ref(cr, 1, new_ids)
-    return new_ids
- 
-workitem.create = wkf_workitem_create   
-
-# trigger creation of SD ref automatically
 old_wkf_instance_create = instance.create
 
 def wkf_instance_create(cr, ident, wkf_id):
+    """
+    Auto create SD REF on workflow.instance creation
+    """
     id_new = old_wkf_instance_create(cr, ident, wkf_id)
     pooler.get_pool(cr.dbname).get('workflow.instance').get_sd_ref(cr, 1, [id_new])
     return id_new
@@ -24,9 +17,23 @@ def wkf_instance_create(cr, ident, wkf_id):
 instance.create = wkf_instance_create
 
 
+old_wkf_workitem_create = workitem.create
+
+def wkf_workitem_create(cr, act_datas, inst_id, ident, stack):
+    """
+    Auto create SD REF on workflow.workitem creation
+    """
+    new_ids = old_wkf_workitem_create(cr, act_datas, inst_id, ident, stack)
+    pooler.get_pool(cr.dbname).get('workflow.workitem').get_sd_ref(cr, 1, new_ids)
+    return new_ids
+ 
+workitem.create = wkf_workitem_create   
+
+
 class wkf_instance(osv.osv):
     """
-    If synchronising, convert res_id from int to SD ref on export, and sd ref to int on import 
+    If exporting convert res_id from int to SD REF
+    If importing convert res_id from SD REF to int
     """
     
     _inherit = 'workflow.instance'
@@ -94,4 +101,3 @@ class wkf_instance(osv.osv):
         return super(wkf_instance, self).import_data(cr, uid, fields, datas, mode=mode, current_module=current_module, noupdate=noupdate, context=context, filename=filename)
     
 wkf_instance()
-
