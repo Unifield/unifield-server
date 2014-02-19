@@ -38,7 +38,7 @@ class stock_picking_processor(osv.osv):
     _rec_name = 'date'
 
     _columns = {
-        'date': fields.datetime('Date', required=True),
+        'date': fields.datetime(string='Date', required=True),
         'picking_id': fields.many2one(
             'stock.picking',
             string='Picking',
@@ -46,6 +46,11 @@ class stock_picking_processor(osv.osv):
             readonly=True,
             help="Picking (incoming, internal, outgoing, picking ticket, packing...) to process",
             ),
+        'move_ids': fields.one2many(
+            'stock.move.processor',
+            'wizard_id',
+            string='Moves',
+        ),
     }
 
     def default_get(self, cr, uid, fields_list=None, context=None):
@@ -87,27 +92,27 @@ class stock_move_processor(osv.osv):
 
         res = {}
 
-        for move in self.browse(cr, uid, ids, context=context):
+        for line in self.browse(cr, uid, ids, context=context):
             # Return an error if the move has no product defined
-            if not move.product_id:
+            if not line.move_id.product_id:
                 raise osv.except_osv(
                     _('Data Error'),
                     _('The move you are trying to process has no product defined - Please set a product on it before process it.')
                 )
 
             # Return an error if the move has no UoM
-            if not move.product_uom:
+            if not line.move_id.product_uom:
                 raise osv.except_osv(
                     _('Data Error'),
                     _('The move you are trying to process has no UoM defined - Please set an UoM on it before process it.')
                 )
 
-            res[move.id] = {
-                'ordered_product_id': move.product_id.id,
-                'ordered_quantity': move.product_qty,
-                'ordered_uom_id': move.product_uom.id,
-                'ordered_uom_category': move.product_uom.category_id.id,
-                'location_id': move.location_id.id,
+            res[line.id] = {
+                'ordered_product_id': line.move_id.product_id.id,
+                'ordered_quantity': line.move_id.product_qty,
+                'ordered_uom_id': line.move_id.product_uom.id,
+                'ordered_uom_category': line.move_id.product_uom.category_id.id,
+                'location_id': line.move_id.location_id.id,
             }
 
         return res
@@ -174,9 +179,9 @@ class stock_move_processor(osv.osv):
             # Validation is only needed if the line has been selected (qty > 0)
             if line.quantity > 0.00:
                 # Batch management check
-                res_value = self._batch_integrity(line, res_value)
+                # res_value = self._batch_integrity(line, res_value)
                 # Asset management check
-                res_value = self._asset_integrity(line, res_value)
+                # res_value = self._asset_integrity(line, res_value)
                 # For internal or simple out, cannot process more than specified in stock move
                 if line.wizard_id.picking_id.type in ['out', 'internal']:
                     proc_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line.quantity, line.ordered_uom_id.id)
@@ -215,10 +220,10 @@ class stock_move_processor(osv.osv):
 
             if line.product_id:
                 res[line.id] = {
-                    'lot_check': line.product_id.batch_mandatory,
+                    'lot_check': line.product_id.batch_management,
                     'exp_check': line.product_id.perishable,
                     'asset_check': line.product_id.type == 'product' and line.product_id.subtype == 'asset',
-                    'kit_check': line.product.id.type == 'product' and line.product_id.subtype == 'kit' and not line.product_id.perishable,
+                    'kit_check': line.product_id.type == 'product' and line.product_id.subtype == 'kit' and not line.product_id.perishable,
                     'kc_check': line.product_id.heat_sensitive_item,
                     'ssl_check': line.product_id.short_shelf_life,
                     'dg_check': line.product_id.dangerous_goods,
@@ -427,16 +432,16 @@ class stock_move_processor(osv.osv):
             string='Batch number',
         ),
         'expiry_date': fields.date(string='Expiry date'),
-        'asset_id': fields.many2one(
-            'product.asset',
-            string='Asset',
-        ),
-        'composition_list_id': fields.many2one(
-            'composition.kit',
-            string='Kit',
-        ),
+#        'asset_id': fields.many2one(
+#            'product.asset',
+#            string='Asset',
+#        ),
+#        'composition_list_id': fields.many2one(
+#            'composition.kit',
+#            string='Kit',
+#        ),
         'cost': fields.float(
-            'Cost',
+            string='Cost',
             digits_compute=dp.get_precision('Purchase Price Computation'),
             help="Unit Cost for this product line",
         ),
