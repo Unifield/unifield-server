@@ -309,64 +309,6 @@ class msf_budget_line(osv.osv):
             res[rs.id] = name
         return res
 
-    def _get_actual_amount(self, cr, uid, ids, field_names=None, arg=None, context=None):
-        """
-        The actual amount is composed of the total of analytic lines corresponding to these criteria:
-          - cost center that is used on the budget
-          - fiscalyear used on the budget (date should be between date_start and date_stop from the fiscalyear)
-          - account_id on the budget line
-          - destination_id on the budget line
-        """
-        # Prepare some values
-        res = {}
-        ana_obj = self.pool.get('account.analytic.line')
-        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        cur_obj = self.pool.get('res.currency')
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        new_ids = list(ids)
-        # Create default values
-        for index in new_ids:
-            res.setdefault(index, 0.0)
-        # Now, only use 'destination' line to do process and complete parent one at the same time
-        sql = """
-            SELECT l.id, l.line_type, l.account_id, l.destination_id, b.cost_center_id, b.currency_id, f.date_start, f.date_stop
-            FROM msf_budget_line AS l, msf_budget AS b, account_fiscalyear AS f
-            WHERE l.budget_id = b.id
-            AND b.fiscalyear_id = f.id
-            AND l.id IN %s
-            ORDER BY l.line_type, l.id;
-        """
-        cr.execute(sql, (tuple(new_ids),))
-        # Prepare SQL2 request that contains sum of amount of given analytic lines (in functional currency)
-        sql2 = """
-            SELECT SUM(amount)
-            FROM account_analytic_line
-            WHERE id in %s;"""
-        # Process destination lines
-        for line in cr.fetchall():
-            # fetch some values
-            line_id, line_type, account_id, destination_id, cost_center_id, currency_id, date_start, date_stop = line
-            criteria = [
-                ('cost_center_id', '=', cost_center_id),
-                ('date', '>=', date_start),
-                ('date', '<=', date_stop),
-                ('journal_id.type', '!=', 'engagement'),
-            ]
-            if line_type == 'destination':
-                criteria.append(('destination_id', '=', destination_id))
-            if line_type in ['destination', 'normal']:
-                criteria.append(('general_account_id', '=', account_id)),
-            else:
-                criteria.append(('general_account_id', 'child_of', account_id))
-            ana_ids = ana_obj.search(cr, uid, criteria)
-            if ana_ids:
-                cr.execute(sql2, (tuple(ana_ids),))
-                mnt_result = cr.fetchall()
-                if mnt_result:
-                    res[line_id] += mnt_result[0][0] * -1
-        return res
-
     def _get_amounts(self, cr, uid, ids, field_names=None, arg=None, context=None):
         """
         Those field can be asked for:
