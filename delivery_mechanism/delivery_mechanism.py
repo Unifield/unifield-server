@@ -219,14 +219,6 @@ class stock_move(osv.osv):
                 assert False, 'This method is not implemented for OUT or Internal moves'
                 
         return res
-
-    def hook__create_chained_picking(self, cr, uid, pick_values, picking):
-        res = super(stock_move, self).hook__create_chained_picking(cr, uid, pick_values, picking)
-
-        if picking:
-            res['auto_picking'] = picking.type == 'in' and picking.move_lines[0]['direct_incoming']
-
-        return res
         
 stock_move()
 

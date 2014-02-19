@@ -1777,7 +1777,95 @@ class stock_move(osv.osv):
         self.action_confirm(cr, uid, ids, context)
         self.action_assign(cr, uid, ids, context)
         return True
+        
+    # @@@override stock>stock.py>stock_move>_chain_compute
+    def _chain_compute(self, cr, uid, moves, context=None):
+        """ Finds whether the location has chained location type or not.
+        @param moves: Stock moves
+        @return: Dictionary containing destination location with chained location type.
+        """
+        result = {}
+        if context is None:
+            context = {}
+        
+        moves_by_location = {}
+        pick_by_journal = {}
+        
+        for m in moves:
+            partner_id = m.picking_id and m.picking_id.address_id and m.picking_id.address_id.partner_id or False
+            dest = self.pool.get('stock.location').chained_location_get(
+                cr,
+                uid,
+                m.location_dest_id,
+                partner_id,
+                m.product_id,
+                m.product_id.nomen_manda_0,
+                context
+            )
+            if dest and not m.not_chained:
+                if dest[1] == 'transparent' and context.get('action_confirm', False):
+                    newdate = (datetime.strptime(m.date, '%Y-%m-%d %H:%M:%S') + relativedelta(days=dest[2] or 0)).strftime('%Y-%m-%d')
+                    moves_by_location.setdefault(dest[0].id, {}).setdefault(newdate, [])
+                    moves_by_location[dest[0].id][newdate].append(m.id)
+                    
+                    journal_id = dest[3] or m.picking_id.stock_journal_id.id
+                    pick_by_journal.setdefault(journal_id, set())
+                    pick_by_journal[journal_id].add(m.picking_id.id)
+                elif not context.get('action_confirm', False):
+                    result.setdefault(m.picking_id, [])
+                    result[m.picking_id].append( (m, dest) )
 
+        for journal_id, pick_ids in pick_by_journal.iteritems():
+            self.pool.get('stock.picking').write(cr, uid, list(pick_ids), {'journal_id': journal_id}, context=context)
+        
+        new_moves = []
+        for location_id in moves_by_location.keys():
+            for newdate, move_ids in moves_by_location[location_id].iteritems():
+                self.write(cr, uid, move_ids, {'location_id': location_id,
+                                               'date': newdate}, context=context)
+                new_moves.extend(move_ids)
+        
+        res2 = self._chain_compute(cr, uid, new_moves, context=context)
+        for pick_id in res2.keys():
+            result.setdefault(pick_id, [])
+            result[pick_id] += res2[pick_id]
+                
+        return result
+    # @@@override end
+    
+    # @@@override stock>stock.py>stock_move>_create_chained_picking
+    def _create_chained_picking(self, cr, uid, pick_name, picking, ptype, move, context=None):
+        if context is None:
+            context = {}
+        
+        res_obj = self.pool.get('res.company')
+        picking_obj = self.pool.get('stock.picking')
+        data_obj =  self.pool.get('ir.model.data')
+        
+        context['from_chaining'] = True
+        
+        reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
+        
+        pick_values = {
+            'name': pick_name,
+            'origin': tools.ustr(picking.origin or ''),
+            'type': ptype,
+            'note': picking.note,
+            'move_type': picking.move_type,
+            'auto_picking': move[0][1][1] == 'auto',
+            'stock_journal_id': move[0][1][3],
+            'company_id': move[0][1][4] or res_obj._company_default_get(cr, uid, 'stock.company', context=context),
+            'address_id': picking.address_id.id,
+            'invoice_state': 'none',
+            'date': picking.date,
+            'sale_id': picking.sale_id and picking.sale_id.id or False,
+            'auto_picking': picking.type == 'in' and picking.move_lines[0]['direct_incoming'],
+            'reason_type_id': reason_type_id,
+        }
+        
+        return picking_obj.create(cr, uid, pick_values, context=context)
+    # @@@override end
+        
 stock_move()
 
 #-----------------------------------------
@@ -1918,24 +2006,31 @@ class stock_location(osv.osv):
         'virtual_location': fields.boolean(string='Virtual location'),
 
     }
-
-    #####
-    # Chained location on nomenclature level
-    #####
-    def _hook_chained_location_get(self, cr, uid, context=None, *args, **kwargs):
-        '''
-        Return the location according to nomenclature level
-        '''
-        location = kwargs['location']
-        product = kwargs['product']
-        result = kwargs['result']
-
-        if location.chained_location_type == 'nomenclature':
+    
+    # @@@override stock>stock.py>stock_move>chained_location_get
+    def chained_location_get(self, cr, uid, location, partner=None, product=None, nomenclature=None, context=None):
+        """ Finds chained location
+        @param location: Location id
+        @param partner: Partner id
+        @param product: Product id
+        @param nomen: Nomenclature of the product
+        @return: List of values
+        """
+        result = None
+        if location.chained_location_type == 'customer':
+            if partner:
+                result = partner.property_stock_customer
+        elif location.chained_location_type == 'fixed':
+            result = location.chained_location_id
+        elif location.chained_location_type == 'nomenclature':
+            nomen_id = nomenclature and nomenclature.id or (product and product.nomen_manda_0.id)
             for opt in location.chained_options_ids:
-                if opt.nomen_id.id == product.nomen_manda_0.id:
-                    return opt.dest_location_id
-
+                if opt.nomen_id.id == nomen_id:
+                    result = opt.dest_location_id
+        if result:
+            return result, location.chained_auto_packing, location.chained_delay, location.chained_journal_id and location.chained_journal_id.id or False, location.chained_company_id and location.chained_company_id.id or False, location.chained_picking_type
         return result
+    # @@@override end
 
     def _hook_proct_reserve(self, cr, uid, product_qty, result, amount, id, ids ):
         result.append((amount, id, True))
