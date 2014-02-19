@@ -32,7 +32,9 @@ class msf_budget(osv.osv):
     def _get_total_budget_amounts(self, cr, uid, ids, field_names=None, arg=None, context=None):
         res = {}
         sql = """
-            SELECT budget_id, SUM(COALESCE(month1 + month2 + month3 + month4 + month5 + month6 + month7 + month8 + month9 + month10 + month11 + month12, 0.0))
+        SELECT expense.budget_id, COALESCE(expense.total, 0.0) - COALESCE(income.total, 0.0) AS diff
+        FROM (
+            SELECT budget_id, SUM(COALESCE(month1 + month2 + month3 + month4 + month5 + month6 + month7 + month8 + month9 + month10 + month11 + month12, 0.0)) AS total
             FROM msf_budget_line AS l, account_account AS a, account_account_type AS t
             WHERE budget_id IN %s
             AND l.account_id = a.id
@@ -40,11 +42,26 @@ class msf_budget(osv.osv):
             AND t.code = 'expense'
             AND a.type != 'view'
             AND l.line_type = 'destination'
-            GROUP BY budget_id"""
-        cr.execute(sql, (tuple(ids),))
+            GROUP BY budget_id
+        ) AS expense 
+        LEFT JOIN (
+            SELECT budget_id, SUM(COALESCE(month1 + month2 + month3 + month4 + month5 + month6 + month7 + month8 + month9 + month10 + month11 + month12, 0.0)) AS total
+            FROM msf_budget_line AS l, account_account AS a, account_account_type AS t
+            WHERE budget_id IN %s
+            AND l.account_id = a.id
+            AND a.user_type = t.id
+            AND t.code = 'income'
+            AND a.type != 'view'
+            AND l.line_type = 'destination'
+            GROUP BY budget_id
+        ) AS income ON expense.budget_id = income.budget_id"""
+        cr.execute(sql, (tuple(ids),tuple(ids),))
         tmp_res = cr.fetchall()
-        if tmp_res:
-            res = dict(tmp_res)
+        if not tmp_res:
+            return res
+        for b_id in ids:
+            res.setdefault(b_id, 0.0)
+        res.update(dict(tmp_res))
         return res
 
     def _get_instance_type(self, cr, uid, ids, field_names=None, arg=None, context=None):
