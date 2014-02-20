@@ -1167,14 +1167,19 @@ class stock_picking(osv.osv):
         @return: True or False
         """
         ok = False
-        for pick in self.browse(cr, uid, ids, context=context):
-            if not pick.move_lines:
-                return True
-            for move in pick.move_lines:
-                if move.state not in ('cancel','done'):
-                    return False
-                if move.state=='done':
-                    ok = True
+        
+        move_obj = self.pool.get('stock.move')
+
+        moves = move_obj.search(cr, uid, [('picking_id', 'in', ids)])
+        if not moves:
+            return True
+
+        if move_obj.search(cr, uid, [('id', 'in', moves), ('state', 'not in', ['cancel', 'done'])]):
+            return False
+
+        if move_obj.search(cr, uid, [('id', 'in', moves), ('state', '=', 'done')], count=1) > 0:
+            ok = True
+
         return ok
 
     def test_cancel(self, cr, uid, ids, context=None):
