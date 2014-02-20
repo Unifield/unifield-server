@@ -1825,10 +1825,12 @@ class stock_move(osv.osv):
                                                'date': newdate}, context=context)
                 new_moves.extend(move_ids)
         
-        res2 = self._chain_compute(cr, uid, new_moves, context=context)
-        for pick_id in res2.keys():
-            result.setdefault(pick_id, [])
-            result[pick_id] += res2[pick_id]
+        if new_moves:
+            new_moves = self.browse(cr, uid, new_moves, context=context)
+            res2 = self._chain_compute(cr, uid, new_moves, context=context)
+            for pick_id in res2.keys():
+                result.setdefault(pick_id, [])
+                result[pick_id] += res2[pick_id]
                 
         return result
     # @@@override end
