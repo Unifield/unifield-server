@@ -107,12 +107,18 @@ class stock_move_processor(osv.osv):
                     _('The move you are trying to process has no UoM defined - Please set an UoM on it before process it.')
                 )
 
+            loc_supplier = line.move_id.location_id.usage == 'supplier'
+            loc_cust = line.move_id.location_dest_id.usage == 'customer'
+            valid_pt = line.move_id.picking_id.type == 'out' and line.move_id.picking_id.subtype == 'picking' and line.move_id.picking_id.state != 'draft'
+
             res[line.id] = {
                 'ordered_product_id': line.move_id.product_id.id,
                 'ordered_quantity': line.move_id.product_qty,
                 'ordered_uom_id': line.move_id.product_uom.id,
                 'ordered_uom_category': line.move_id.product_uom.category_id.id,
                 'location_id': line.move_id.location_id.id,
+                'type_check': line.move_id.picking_id.type,
+                'location_supplier_customer_mem_out': loc_supplier or loc_cust or valid_pt,
             }
 
         return res
@@ -210,7 +216,7 @@ class stock_move_processor(osv.osv):
             res[line.id] = {
                 'lot_check': False,
                 'exp_check': False,
-                'asset_check': False,
+#                'asset_check': False,
                 'kit_check': False,
                 'kc_check': False,
                 'ssl_check': False,
@@ -222,9 +228,9 @@ class stock_move_processor(osv.osv):
                 res[line.id] = {
                     'lot_check': line.product_id.batch_management,
                     'exp_check': line.product_id.perishable,
-                    'asset_check': line.product_id.type == 'product' and line.product_id.subtype == 'asset',
+#                    'asset_check': line.product_id.type == 'product' and line.product_id.subtype == 'asset',
                     'kit_check': line.product_id.type == 'product' and line.product_id.subtype == 'kit' and not line.product_id.perishable,
-                    'kc_check': line.product_id.heat_sensitive_item,
+                    'kc_check': line.product_id.heat_sensitive_item and True or False,
                     'ssl_check': line.product_id.short_shelf_life,
                     'dg_check': line.product_id.dangerous_goods,
                     'np_check': line.product_id.narcotic,
@@ -331,6 +337,18 @@ class stock_move_processor(osv.osv):
             help="Source location of the move",
             multi='move_info'
         ),
+        'location_supplier_customer_mem_out': fields.function(
+            _get_move_info,
+            method=True,
+            string='Location Supplier Customer',
+            type='boolean',
+            store={
+                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            multi='move_info',
+            help="",
+        ),
         'integrity_status': fields.function(
             _get_integrity_status,
             method=True,
@@ -347,12 +365,27 @@ class stock_move_processor(osv.osv):
             readonly=True,
             help="Integrity status (e.g: check if a batch is set for a line with a batch mandatory product...)",
         ),
+        'type_check': fields.function(
+            _get_move_info,
+            method=True,
+            string='Picking Type Check',
+            type='char',
+            size=32,
+            store={
+                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Return the type of the picking",
+            multi='move_info',
+        ),
         'lot_check': fields.function(
             _get_product_info,
             method=True,
             string='B.Num',
             type='boolean',
-            store=False,
+            store={
+                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
             readonly=True,
             multi='product_info',
             help="A batch number is required on this line",
@@ -362,7 +395,9 @@ class stock_move_processor(osv.osv):
             method=True,
             string='Exp.',
             type='boolean',
-            store=False,
+            store={
+                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
             readonly=True,
             multi='product_info',
             help="An expiry date is required on this line",
@@ -372,7 +407,9 @@ class stock_move_processor(osv.osv):
             method=True,
             string='Asset',
             type='boolean',
-            store=False,
+            store={
+                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
             readonly=True,
             multi='product_info',
             help="An asset is required on this line",
@@ -382,7 +419,9 @@ class stock_move_processor(osv.osv):
             method=True,
             string='Kit',
             type='boolean',
-            store=False,
+            store={
+                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
             readonly=True,
             multi='product_info',
             help="A kit is required on this line",
@@ -392,7 +431,9 @@ class stock_move_processor(osv.osv):
             method=True,
             string='KC',
             type='boolean',
-            store=False,
+            store={
+                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
             readonly=True,
             multi='product_info',
             help="Ticked if the product is a Heat Sensitive Item",
@@ -402,7 +443,9 @@ class stock_move_processor(osv.osv):
             method=True,
             string='SSL',
             type='boolean',
-            store=False,
+            store={
+                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
             readonly=True,
             multi='product_info',
             help="Ticked if the product is a Short Shelf Life product",
@@ -412,7 +455,9 @@ class stock_move_processor(osv.osv):
             method=True,
             string='DG',
             type='boolean',
-            store=False,
+            store={
+                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
             readonly=True,
             multi='product_info',
             help="Ticked if the product is a Dangerous Good",
@@ -422,7 +467,9 @@ class stock_move_processor(osv.osv):
             method=True,
             string='NP',
             type='boolean',
-            store=False,
+            store={
+                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
             readonly=True,
             multi='product_info',
             help="Ticked if the product is a Narcotic",
@@ -443,11 +490,13 @@ class stock_move_processor(osv.osv):
         'cost': fields.float(
             string='Cost',
             digits_compute=dp.get_precision('Purchase Price Computation'),
+            required=True,
             help="Unit Cost for this product line",
         ),
         'currency': fields.many2one(
             'res.currency',
             string='Currency',
+            readonly=True,
             help="Currency in which Unit cost is expressed",
         ),
         'change_reason': fields.char(size=256, string='Change reason'),
@@ -763,5 +812,114 @@ class stock_move_processor(osv.osv):
         }
 
 stock_move_processor()
+
+
+class stock_incoming_processor(osv.osv):
+    """
+    Incoming shipment processing wizard
+    """
+    _name = 'stock.incoming.processor'
+    _inherit = 'stock.picking.processor'
+    _description = 'Wizard to process an incoming shipment'
+    
+    _columns = {
+        'move_ids': fields.one2many(
+            'stock.move.in.processor',
+            'wizard_id',
+            string='Moves',
+        ),
+    }
+    
+    # Models methods
+    def _get_prodlot_from_expiry_date(self, cr, uid, expiry_date, product_id, context=None):
+        """
+        Search if an internal batch exists in the system with this expiry date.
+        If no, create the batch. 
+        """
+        # Objects
+        lot_obj = self.pool.get('stock.production.lot')
+        seq_obj = self.pool.get('ir.sequence')
+        
+        # Double check to find the corresponding batch
+        lot_ids = lot_obj.search(cr, uid, [
+                            ('life_date', '=', expiry_date),
+                            ('type', '=', 'internal'),
+                            ('product_id', '=', product_id),
+                            ], context=context)
+                            
+        # No batch found, create a new one
+        if not lot_ids:
+            vals = {
+                'product_id': product_id,
+                'life_date': expiry_date,
+                'name': seq_obj.get(cr, uid, 'stock.lot.serial'),
+                'type': 'internal',
+            }
+            lot_id = lot_obj.create(cr, uid, vals, context)
+        else:
+            lot_id = lot_ids[0]
+            
+        return lot_id
+        
+    def do_incoming_shipment(self, cr, uid, ids, context=None):
+        """
+        Made some integrity check on lines and run the do_incoming_shipment of stock.picking
+        """
+        # Objects
+        in_proc_obj = self.pool.get('stock.move.in.processor')
+        picking_obj = self.pool.get('stock.picking')
+        
+        process_data = {}
+        picking_ids = []
+        
+        for proc in self.browse(cr, uid, ids, context=context):
+            process_data.setdefault(proc.picking_id.id, [])
+            picking_ids.append(proc.picking_id.id)
+            total_qty = 0.00
+            
+            for line in proc.move_ids:
+                # if no quantity, don't process the move
+                if not line.quantity:
+                    continue
+                
+                total_qty += line.quantity
+                
+                if line.exp_check \
+                   and not line.lot_check \
+                   and not line.prodlot_id \
+                   and line.expiry_date:
+                    if line.check_type == 'in':
+                        prodlot_id = self._get_prodlot_from_expiry_date(cr, uid, line.expiry_date, context=context)
+                        in_proc_obj.write(cr, uid, [line.id], {'prodlot_id': prodlot_id}, context=context)
+                    else:
+                        # Should not be reached thanks to UI checks
+                        raise osv.except_osv(
+                            _('Error !'),
+                            _('No Batch Number with Expiry Date for Expiry Date Mandatory and not Incoming Shipment should not happen. Please hold...')
+                        )
+                
+                process_data[proc.picking_id.id].setdefault(line.move_id.id, [])
+                process_data[proc.picking_id.id][line.move_id.id].append(line.id)
+
+            if not total_qty:
+                raise osv.except_osv(
+                    _('Processing Error'),
+                    _("You have to enter the quantities you want to process before processing the move")
+                )
+            
+        return picking_obj.do_incoming_shipment(cr, uid, picking_ids, process_data, context=context)
+    
+stock_incoming_processor()
+
+
+class stock_move_in_processor(osv.osv):
+    """
+    Incoming moves processing wizard
+    """
+    _name = 'stock.move.in.processor'
+    _inherit = 'stock.move.processor'
+    _description = 'Wizard lines for incoming shipment processing'
+    
+stock_move_in_processor()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
