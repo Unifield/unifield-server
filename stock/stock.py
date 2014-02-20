@@ -910,14 +910,11 @@ class stock_picking(osv.osv):
         @return: True
         """
         move_obj = self.pool.get('stock.move')
-        for pick in self.browse(cr, uid, ids, context=context):
-            todo = []
-            for move in pick.move_lines:
-                if move.state == 'assigned':
-                    todo.append(move.id)
-            if len(todo):
-                move_obj.action_done(cr, uid, todo,
-                        context=context)
+        
+        todo = move_obj.search(cr, uid, [('picking_id', 'in', ids), ('state', '=', 'assigned')], context=context)
+        if len(todo):
+            move_obj.action_done(cr, uid, todo)
+        
         return True
 
     def get_currency_id(self, cr, uid, picking):
@@ -1166,7 +1163,8 @@ class stock_picking(osv.osv):
         """ Test whether the move lines are done or not.
         @return: True or False
         """
-        ok = False
+        ok = False        
+        
         for pick in self.browse(cr, uid, ids, context=context):
             if not pick.move_lines:
                 return True
@@ -2329,8 +2327,7 @@ class stock_move(osv.osv):
         @return:
         """
         partial_datas=''
-        picking_ids = []
-        move_ids = []
+        picking_ids = set()
         partial_obj=self.pool.get('stock.partial.picking')
         wf_service = netsvc.LocalService("workflow")
         partial_id=partial_obj.search(cr,uid,[])
@@ -2341,32 +2338,28 @@ class stock_move(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        todo = []
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.state=="draft":
-                todo.append(move.id)
+        todo = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context)
         if todo:
             self.action_confirm(cr, uid, todo, context=context)
             todo = []
 
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.state in ['done','cancel']:
-                continue
-            move_ids.append(move.id)
-
+        move_ids = self.search(cr, uid, [('id', 'in', ids), ('state', 'not in', ('cancel', 'done'))])
+        for move in self.browse(cr, uid, move_ids, context=context):
             if move.picking_id:
-                picking_ids.append(move.picking_id.id)
-            if self._hook_action_done_update_out_move_check(cr, uid, ids, context=context, move=move,):
-                self.write(cr, uid, [move.id], {'move_history_ids': [(4, move.move_dest_id.id)]})
-                #cr.execute('insert into stock_move_history_ids (parent_id,child_id) values (%s,%s)', (move.id, move.move_dest_id.id))
-                if move.move_dest_id.state in ('waiting', 'confirmed'):
-                    if move.prodlot_id.id and move.product_id.id == move.move_dest_id.product_id.id:
-                        self.write(cr, uid, [move.move_dest_id.id], {'prodlot_id':move.prodlot_id.id})
-                    self.force_assign(cr, uid, [move.move_dest_id.id], context=context)
-                    if move.move_dest_id.picking_id:
-                        wf_service.trg_write(uid, 'stock.picking', move.move_dest_id.picking_id.id, cr)
-                    if move.move_dest_id.auto_validate:
-                        self.action_done(cr, uid, [move.move_dest_id.id], context=context)
+                picking_ids.add(move.picking_id.id)
+### Block commented because the _hook_action_done_update_out_move_check on specific_locations module
+### return always False
+#             if self._hook_action_done_update_out_move_check(cr, uid, ids, context=context, move=move,):
+#                 self.write(cr, uid, [move.id], {'move_history_ids': [(4, move.move_dest_id.id)]})
+#                 #cr.execute('insert into stock_move_history_ids (parent_id,child_id) values (%s,%s)', (move.id, move.move_dest_id.id))
+#                 if move.move_dest_id.state in ('waiting', 'confirmed'):
+#                     if move.prodlot_id.id and move.product_id.id == move.move_dest_id.product_id.id:
+#                         self.write(cr, uid, [move.move_dest_id.id], {'prodlot_id':move.prodlot_id.id})
+#                     self.force_assign(cr, uid, [move.move_dest_id.id], context=context)
+#                     if move.move_dest_id.picking_id:
+#                         wf_service.trg_write(uid, 'stock.picking', move.move_dest_id.picking_id.id, cr)
+#                     if move.move_dest_id.auto_validate:
+#                         self.action_done(cr, uid, [move.move_dest_id.id], context=context)
 
             self._create_product_valuation_moves(cr, uid, move, context=context)
             prodlot_id = partial_datas and partial_datas.get('move%s_prodlot_id' % (move.id), False)
@@ -2377,17 +2370,17 @@ class stock_move(osv.osv):
 
         if todo:
             self.action_confirm(cr, uid, todo, context=context)
-
+        
         self.write(cr, uid, move_ids, {'state': 'done', 'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
-        for id in move_ids:
-             wf_service.trg_trigger(uid, 'stock.move', id, cr)
+
+        wf_service.trg_trigger(uid, 'stock.move', move_ids, cr)
 
         for pick_id in picking_ids:
             wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
-            
+        
         moves = self.browse(cr, uid, move_ids, context=context)
         self.create_chained_picking(cr, uid, moves, context)
-
+        
         return True
 
     def _create_account_move_line(self, cr, uid, move, src_account_id, dest_account_id, reference_amount, reference_currency_id, context=None):
