@@ -1890,12 +1890,6 @@ class stock_move(osv.osv):
             result['location_dest_id'] = loc_dest_id
         return {'value': result}
     
-    def _hook_dest(self, cr, uid, *args, **kwargs):
-        '''
-        UF-1239 : Not chained the moves coming from stock.inventory
-        '''
-        return kwargs.get('dest')
-
     def _chain_compute(self, cr, uid, moves, context=None):
         """ Finds whether the location has chained location type or not.
         @param moves: Stock moves
