@@ -51,7 +51,7 @@ class mrp_repair(osv.osv):
             for line in repair.fees_lines:
                 res[repair.id] += line.price_subtotal
             cur = repair.pricelist_id.currency_id
-            res[repair.id] = cur_obj.round(cr, uid, cur, res[repair.id])
+            res[repair.id] = cur_obj.round(cr, uid, cur.rounding, res[repair.id])
         return res
 
     def _amount_tax(self, cr, uid, ids, field_name, arg, context=None):
@@ -75,7 +75,7 @@ class mrp_repair(osv.osv):
                 if line.to_invoice:
                     for c in tax_obj.compute_all(cr, uid, line.tax_id, line.price_unit, line.product_uom_qty, repair.partner_invoice_id.id, line.product_id, repair.partner_id)['taxes']:
                         val += c['amount']
-            res[repair.id] = cur_obj.round(cr, uid, cur, val)
+            res[repair.id] = cur_obj.round(cr, uid, cur.rounding, val)
         return res
 
     def _amount_total(self, cr, uid, ids, field_name, arg, context=None):
@@ -91,7 +91,7 @@ class mrp_repair(osv.osv):
         for id in ids:
             repair = self.browse(cr, uid, id, context=context)
             cur = repair.pricelist_id.currency_id
-            res[id] = cur_obj.round(cr, uid, cur, untax.get(id, 0.0) + tax.get(id, 0.0))
+            res[id] = cur_obj.round(cr, uid, cur.rounding, untax.get(id, 0.0) + tax.get(id, 0.0))
         return res
 
     def _get_default_address(self, cr, uid, ids, field_name, arg, context=None):
@@ -650,7 +650,7 @@ class mrp_repair_line(osv.osv, ProductChangeMixin):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = line.to_invoice and line.price_unit * line.product_uom_qty or 0
             cur = line.repair_id.pricelist_id.currency_id
-            res[line.id] = cur_obj.round(cr, uid, cur, res[line.id])
+            res[line.id] = cur_obj.round(cr, uid, cur.rounding, res[line.id])
         return res
 
     _columns = {
@@ -740,7 +740,7 @@ class mrp_repair_fee(osv.osv, ProductChangeMixin):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = line.to_invoice and line.price_unit * line.product_uom_qty or 0
             cur = line.repair_id.pricelist_id.currency_id
-            res[line.id] = cur_obj.round(cr, uid, cur, res[line.id])
+            res[line.id] = cur_obj.round(cr, uid, cur.rounding, res[line.id])
         return res
 
     _columns = {

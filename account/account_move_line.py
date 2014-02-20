@@ -150,7 +150,7 @@ class account_move_line(osv.osv):
                     line_total_in_company_currency += (payment_line.debit - payment_line.credit)
 
             result = move_line_total
-            res[move_line.id]['amount_residual_currency'] =  sign * (move_line.currency_id and self.pool.get('res.currency').round(cr, uid, move_line.currency_id, result) or result)
+            res[move_line.id]['amount_residual_currency'] =  sign * (move_line.currency_id and self.pool.get('res.currency').round(cr, uid, move_line.currency_id.rounding, result) or result)
             res[move_line.id]['amount_residual'] = sign * line_total_in_company_currency
         return res
 
