@@ -138,11 +138,10 @@ class sale_order_sync(osv.osv):
         context['no_check_line'] = True
         so_po_common = self.pool.get('so.po.common')
         so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
+        if not so_id and context.get('restore_flag'):
+            return "Backup-Restore: the original FO " + po_info.partner_ref + " has been created after the backup and thus cannot be updated"
         
         ref = self.browse(cr, uid, so_id).client_order_ref
-        
-        
-        
         
         log_message = ""
          # UF-1830: in case of backup and restore, and that the relevant FO has been lost, then

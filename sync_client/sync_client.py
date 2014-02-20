@@ -745,6 +745,9 @@ class Entity(osv.osv):
         Call both pull_all_data and recover_message functions - used in manual sync wizard
         """
         self.pull_update(cr, uid, recover=True, context=context)
+        if not context:
+            context = {}
+        context['restore_flag'] = True
         self.pull_message(cr, uid, recover=True, context=context)
         return True
 

@@ -179,7 +179,7 @@ class message(osv.osv):
 
             @return : True or raise an error
         """
-        domain = [('sequence', '>', start_seq),'|',('destination', '=', entity.id), ('source', '=', entity.id)]
+        domain = [('sequence', '>', start_seq), ('destination', '=', entity.id), ('sent', '=', True)]
         ids = self.search(cr, uid, domain, context=context)        
         
         if ids:
@@ -187,7 +187,6 @@ class message(osv.osv):
             self._logger.debug("These ids will be recovered: %s" % str(ids))
         else:
             self._logger.debug("No ids to recover! domain=%s" % domain)        
-            self._logger.debug("No ids to be recover! domain=%s" % str([('sequence', '>=', start_seq), ('destination', '=', entity.id)]))
         return True
         
 message()
