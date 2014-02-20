@@ -1186,10 +1186,8 @@ class stock_picking(osv.osv):
         """ Test whether the move lines are canceled or not.
         @return: True or False
         """
-        for pick in self.browse(cr, uid, ids, context=context):
-            for move in pick.move_lines:
-                if move.state not in ('cancel',):
-                    return False
+        if self.pool.get('stock.move').search(cr, uid, [('picking_id', 'in', ids), ('state', '!=', 'cancel')], count=True):
+            return False
         return True
 
     def allow_cancel(self, cr, uid, ids, context=None):
