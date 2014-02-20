@@ -309,6 +309,26 @@ class msf_budget_line(osv.osv):
             res[rs.id] = name
         return res
 
+    def _get_domain(self, line_type, account_id, cost_center_ids, destination_id, date_start, date_stop):
+        """
+        Create a domain regarding budget line elements (to be used in a search()).
+        Return a list.
+        """
+        if isinstance(cost_center_ids, (int, long)):
+            cost_center_ids = [cost_center_ids]
+        res = [
+            ('cost_center_id', 'in', cost_center_ids),
+            ('date', '>=', date_start),
+            ('date', '<=', date_stop),
+        ]
+        if line_type == 'destination':
+            res.append(('destination_id', '=', destination_id))
+        if line_type in ['destination', 'normal']:
+            res.append(('general_account_id', '=', account_id)),
+        else:
+            res.append(('general_account_id', 'child_of', account_id))
+        return res
+
     def _get_amounts(self, cr, uid, ids, field_names=None, arg=None, context=None):
         """
         Those field can be asked for:
@@ -386,17 +406,7 @@ class msf_budget_line(osv.osv):
                 # fetch some values
                 line_id, line_type, account_id, destination_id, cost_center_id, currency_id, date_start, date_stop = line
                 cost_center_ids = ana_account_obj.search(cr, uid, [('parent_id', 'child_of', cost_center_id)])
-                criteria = [
-                    ('cost_center_id', 'in', cost_center_ids),
-                    ('date', '>=', date_start),
-                    ('date', '<=', date_stop),
-                ]
-                if line_type == 'destination':
-                    criteria.append(('destination_id', '=', destination_id))
-                if line_type in ['destination', 'normal']:
-                    criteria.append(('general_account_id', '=', account_id)),
-                else:
-                    criteria.append(('general_account_id', 'child_of', account_id))
+                criteria = self._get_domain(line_type, account_id, cost_center_ids, destination_id, date_start, date_stop)
                 # fill in ACTUAL AMOUNTS
                 if actual_ok:
                     actual_criteria = criteria + [('journal_id.type', '!=', 'engagement')]

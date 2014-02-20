@@ -31,7 +31,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(report_budget_actual_2, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
-            'getLines': self.getLines,
+            'getMonthAllocation': self.getMonthAllocation,
             'byMonth': self.byMonth,
             'isComm': self.isComm,
             'getBreak': self.getBreak,
@@ -39,17 +39,21 @@ class report_budget_actual_2(report_sxw.rml_parse):
             'getF1': self.getF1,
             'getF2': self.getF2,
             'getGranularity': self.getGranularity,
+            'getGranularityCode': self.getGranularityCode,
+            'getAllowedLines': self.getAllowedLines,
             'getEndMonth': self.getEndMonth,
+            'getDateStop': self.getDateStop,
+            'getCostCenters': self.getCostCenters,
         })
         return
 
     def getF2(self,line):
-        if int(line[1]) == 0:
+        if int(line.budget_amount) == 0:
             return ''
         return '=(+RC[-2])/RC[-3]'
 
     def getF1(self,line):
-        if int(line[1]) == 0:
+        if int(line.budget_amount) == 0:
             return ''
         return '=(RC[-3]+RC[-2])/RC[-4]'
 
@@ -90,6 +94,24 @@ class report_budget_actual_2(report_sxw.rml_parse):
                 res = _('Parent Accounts only')
         return res
 
+    def getGranularityCode(self,):
+        res = 'all'
+        parameters = self.localcontext.get('data', {}).get('form', {})
+        if 'granularity' in parameters and parameters['granularity']:
+            return parameters['granularity']
+        return res
+
+    def getAllowedLines(self,):
+        res = ['view', 'destination', 'normal']
+        parameters = self.localcontext.get('data', {}).get('form', {})
+        if 'granularity' in parameters and parameters['granularity']:
+            g = parameters['granularity']
+            if g == 'expense':
+                res = ['view', 'normal']
+            elif g == 'view':
+                res = ['view']
+        return res
+
     def getEndMonth(self, context=None):
         """
         Get number of last month. by default 12.
@@ -103,39 +125,121 @@ class report_budget_actual_2(report_sxw.rml_parse):
             res = datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').month
         return res
 
-    def getLines(self, obj, context=None):
+    def getDateStop(self, default):
         """
-        Get all needed lines in the right format to be used by the Report
+        Return the last date of given period in parameters. If no parameters, return 'default' value.
         """
-        # Prepare some values
+        res = default
         parameters = self.localcontext.get('data',{}).get('form',{})
-        if not context:
-            context = {}
-        context.update(parameters) # update context with params to fetch right values
-        context.update({'report': True}) # in order to get all needed lines from one2many_budget_lines
-        lines = self.pool.get('msf.budget').browse(self.cr, self.uid, [obj.id], context=context)[0].budget_line_ids
-        budget_line_ids = [x.id for x in lines]
-        result = []
-        # Column header
-        month_stop = self.getEndMonth()
-        header = ['Account']
-        # check if month detail is needed
-        if 'breakdown' in parameters and parameters['breakdown'] == 'month':
-            month_list = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-            for month in range(month_stop):
-                header.append(month_list[month] + ' (Budget)')
-                header.append(month_list[month] + ' (Actual)')
-        header += ['Total (Budget)', 'Total (Actual)']
-        result.append(header)
-        # Retrieve lines
-        formatted_monthly_amounts = []
-        monthly_amounts = self.pool.get('msf.budget.line')._get_monthly_amounts(self.cr,
-                                                                           self.uid,
-                                                                           budget_line_ids,
-                                                                           context=context)
+        if 'period_id' in parameters:
+            period_data = self.pool.get('account.period').read(self.cr, self.uid, parameters['period_id'], ['date_stop'])
+            date_stop = period_data.get('date_stop', False)
+            if date_stop:
+                res = date_stop
+        return res
 
-        result += monthly_amounts
-        return result[1:]
+    def getCostCenters(self, cost_center_id):
+        """
+        Get all child for the given cost center.
+        """
+        return self.pool.get('account.analytic.account').search(self.cr, self.uid, [('parent_id', 'child_of', cost_center_id)])
+
+    def getMonthAllocation(self, line, cost_center_ids, date_start, date_stop, end_month, add_commitment=False, context=None):
+        """
+        Get analytic allocation for the given budget_line 
+        """
+        # Some checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        line_type = line.line_type
+        res = []
+
+        ###################
+        #
+        # FIXME: check if currency_table_id is in context for changing amounts
+        #
+        ###################
+
+        # Construct conditions to fetch right analytic lines
+        sql_conditions = ""
+        sql_conditions_params = []
+        if line_type == 'destination':
+            sql_conditions += """ AND aal.destination_id = %s """
+            sql_conditions_params.append(line.destination_id.id)
+        if line_type in ['destination', 'normal']:
+            sql_conditions += """ AND aal.general_account_id = %s """
+            sql_conditions_params.append(line.account_id.id)
+        else:
+            sql_conditions += """ AND aal.general_account_id IN %s """
+            sql_conditions_params.append(tuple(self.pool.get('account.account').search(self.cr, self.uid, [('parent_id', 'child_of', line.account_id.id)]),))
+        # Prepare main SQL request
+        if add_commitment:
+            sql = """SELECT date_part('month', aal.date) AS month, CASE WHEN j.type != 'engagement' THEN 'other' ELSE j.type END AS type, ROUND(COALESCE(SUM(aal.amount), 0), 0)
+                FROM account_analytic_line AS aal, account_analytic_journal AS j
+                WHERE aal.journal_id = j.id
+                AND aal.cost_center_id IN %s
+                AND aal.date >= %s
+                AND aal.date <= %s
+            """
+            # PARAMS (sql): cost_center_ids, date_start, date_stop
+            sql_end = """ GROUP BY month, type ORDER BY month"""
+        else:
+            sql = """SELECT date_part('month', aal.date) AS month, ROUND(COALESCE(SUM(aal.amount), 0), 0)
+                FROM account_analytic_line AS aal, account_analytic_journal AS j
+                WHERE aal.journal_id = j.id
+                AND j.type != 'engagement'
+                AND aal.cost_center_id IN %s
+                AND aal.date >= %s
+                AND aal.date <= %s
+            """
+            # PARAMS (sql): cost_center_ids, date_start, date_stop
+            sql_end = """ GROUP BY month ORDER BY month"""
+        # Do sql request
+        request = sql + sql_conditions + sql_end
+        params = [tuple(cost_center_ids), '%s' % date_start, '%s' % date_stop] + sql_conditions_params
+        self.cr.execute(request, params) # Will return a list of tuple: (month_number, journal_type, value)
+        #+ If not add_commitment, we have a list of tuple as: (month_number, value)
+        analytics = self.cr.fetchall()
+        # Create a dict with analytics result
+        result = {}
+        for analytic in analytics:
+            if add_commitment:
+                month_nb, journal_type, month_amount = analytic
+            else:
+                journal_type = 'other' # because this information is not in result
+                month_nb, month_amount = analytic
+            if month_nb in result:
+                result[int(month_nb)].update({
+                    'commitment': journal_type == 'engagement' and month_amount or 0.0,
+                    'actual': journal_type != 'engagement' and month_amount*-1 or 0.0,
+                })
+            else:
+                result.update({
+                    int(month_nb): {
+                        'budget': getattr(line, 'month' + str(int(month_nb)), 0.0),
+                        'commitment': journal_type == 'engagement' and month_amount or 0.0,
+                        'actual': journal_type != 'engagement' and month_amount*-1 or 0.0,
+                    },
+                })
+        # Prepare month allocations by using previous analytics result and adding missing values
+        for x in xrange(1, end_month + 1, 1):
+            if x not in result:
+                result.update({
+                    x: {
+                        'budget': getattr(line, 'month' + str(x), 0.0),
+                        'commitment': 0.0,
+                        'actual': 0.0,
+                    }
+                })
+        # Transformation/conversion of 'result' to be a list (advantage: keep the sort/order)
+        for month in result.keys():
+            amounts = result[month]
+            budget = amounts.get('budget', 0.0)
+            commitment = amounts.get('commitment', 0.0)
+            actual = amounts.get('actual', 0.0)
+            res.append([budget, commitment, actual])
+        return res
 
 SpreadsheetReport('report.budget.criteria.2','msf.budget','addons/msf_budget/report/budget_criteria_xls.mako', parser=report_budget_actual_2)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
