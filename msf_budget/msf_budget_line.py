@@ -357,6 +357,7 @@ class msf_budget_line(osv.osv):
         if actual_ok or commitment_ok or percentage_ok or balance_ok:
             # COMPUTE ACTUAL/COMMITMENT
             ana_obj = self.pool.get('account.analytic.line')
+            ana_account_obj = self.pool.get('account.analytic.account')
             company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
             cur_obj = self.pool.get('res.currency')
             # Create default values
@@ -384,8 +385,9 @@ class msf_budget_line(osv.osv):
             for line in cr.fetchall():
                 # fetch some values
                 line_id, line_type, account_id, destination_id, cost_center_id, currency_id, date_start, date_stop = line
+                cost_center_ids = ana_account_obj.search(cr, uid, [('parent_id', 'child_of', cost_center_id)])
                 criteria = [
-                    ('cost_center_id', '=', cost_center_id),
+                    ('cost_center_id', 'in', cost_center_ids),
                     ('date', '>=', date_start),
                     ('date', '<=', date_stop),
                 ]
