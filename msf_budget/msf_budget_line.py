@@ -318,6 +318,18 @@ class msf_budget_line(osv.osv):
             res[rs.id] = name
         return res
 
+    def _get_month_names(self, number=12):
+        """
+        Return a list of all month field to be used from the first one to the given number (included).
+        """
+        res = []
+        # Do not permit to give a number superior to 12!
+        if number > 12:
+            number = 12
+        for x in xrange(1, number+1, 1):
+            res.append('month' + str(x))
+        return res
+
     def _get_domain(self, line_type, account_id, cost_center_ids, destination_id, date_start, date_stop):
         """
         Create a domain regarding budget line elements (to be used in a search()).
@@ -348,6 +360,8 @@ class msf_budget_line(osv.osv):
         With some depends:
           - percentage needs actual_amount, comm_amount, balance and budget_amount
           - balance needs actual_amount, comm_amount and budget_amount
+
+        NB: if 'period_id' in context, we change date_stop for SQL request to the date_stop of the given period to reduce computation.
         """
         # Some checks
         if context is None:
@@ -364,6 +378,15 @@ class msf_budget_line(osv.osv):
         budget_amounts = {}
         actual_amounts = {}
         comm_amounts = {}
+        # If period_id in context, use another date_stop element.
+        date_period_stop = False
+        month_number = 12
+        if 'period_id' in context:
+            period = self.pool.get('account.period').read(cr, uid, context.get('period_id', False), ['date_stop', 'number'], context=context)
+            if period and period.get('date_stop', False):
+                date_period_stop = period.get('date_stop')
+            if period and period.get('number', False):
+                month_number = period.get('number')
         # Check in which case we are regarding field names. Compute actual and commitment when we need balance and/or percentage.
         if 'budget_amount' in field_names:
             budget_ok = True
@@ -415,6 +438,8 @@ class msf_budget_line(osv.osv):
                 # fetch some values
                 line_id, line_type, account_id, destination_id, cost_center_id, currency_id, date_start, date_stop = line
                 cost_center_ids = ana_account_obj.search(cr, uid, [('parent_id', 'child_of', cost_center_id)])
+                if date_period_stop:
+                    date_stop = date_period_stop
                 criteria = self._get_domain(line_type, account_id, cost_center_ids, destination_id, date_start, date_stop)
                 # fill in ACTUAL AMOUNTS
                 if actual_ok:
@@ -437,8 +462,9 @@ class msf_budget_line(osv.osv):
 
         # Budget line amounts
         if budget_ok:
+            month_names = self._get_month_names(month_number)
             sql = """
-            SELECT id, COALESCE(month1 + month2 + month3 + month4 + month5 + month6 + month7 + month8 + month9 + month10 + month11 + month12, 0.0)
+            SELECT id, COALESCE(""" + '+'.join(month_names) + """, 0.0)
             FROM msf_budget_line
             WHERE id IN %s;
             """
@@ -465,15 +491,22 @@ class msf_budget_line(osv.osv):
 
     def _get_total(self, cr, uid, ids, field_names=None, arg=None, context=None):
         """
-        Give the sum of all month for the given budget lines
+        Give the sum of all month for the given budget lines.
+        If period_id in context, just display months from the first one to the given period month (included)
         """
         # Some checks
         if isinstance(ids,(int, long)):
             ids = [ids]
+        month_number = 12
+        if 'period_id' in context:
+            period = self.pool.get('account.period').read(cr, uid, context.get('period_id', False), ['number'])
+            if period and period.get('number', False):
+                month_number = period.get('number')
+        month_names = self._get_month_names(month_number)
         # Prepare some values
         res = {}
         sql = """
-            SELECT id, month1 + month2 + month3 + month4 + month5 + month6 + month7 + month8 + month9 + month10 + month11 + month12
+            SELECT id, COALESCE(""" + '+'.join(month_names) + """, 0.0)
             FROM msf_budget_line
             WHERE id IN %s"""
         cr.execute(sql, (tuple(ids),))
