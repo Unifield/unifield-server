@@ -435,7 +435,6 @@
 <% date_stop = getDateStop(o.fiscalyear_id.date_stop) %>
 <% granularity = getGranularity() %>
 <% granularityCode = getGranularityCode() %>
-<% allowed_lines_list = getAllowedLines() %>
 
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="0" ss:Width="100.5"/>
@@ -518,7 +517,6 @@
 </Row>
 
 % for line in o.budget_line_ids:
-% if line.line_type in allowed_lines_list:
 <Row>
   <Cell ss:StyleID="s76a"><Data ss:Type="String">${( line.account_code )|x}</Data></Cell>
 % if granularityCode == 'all':
@@ -547,7 +545,6 @@
   <Cell ss:StyleID="s41" ss:Formula="${( getF2(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
 % endif
 </Row>
-% endif
 
 <!-- End of 'for line in o.budget_line_ids' -->
 % endfor

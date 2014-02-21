@@ -27,6 +27,15 @@ from dateutil.relativedelta import relativedelta
 class one2many_budget_lines(fields.one2many):
     
     def get(self, cr, obj, ids, name, uid=None, offset=0, context=None, values=None):
+        """
+        Use 'granularity' value in context to filter budget lines.
+        If granularity is 'view', then display only budget line that have line_type = view
+        If 'expense', display budget lines that have line_type = view and normal
+        If 'all' display budget lines that are view, normal and destination line_type
+        Else, display view, normal and destination line_type ones.
+
+        NB: This context also permit "Budget vs. Actual" report to work and display right lines regarding a given granularity.
+        """
         if context is None:
             context = {}
         if values is None:
@@ -36,15 +45,15 @@ class one2many_budget_lines(fields.one2many):
 
         domain = ['view', 'normal', 'destination']
         tuples = {
-            'parent': ['view'],
-            'account': ['view', 'normal'],
-            'destination': domain,
+            'view': ['view'],
+            'expense': ['view', 'normal'],
+            'all': domain,
         }
         line_obj = obj.pool.get('msf.budget.line')
 
         if 'granularity' in context:
             display_type = context.get('granularity', False)
-            if display_type and display_type in ['parent', 'account', 'destination']:
+            if display_type and display_type in ['view', 'expense', 'all']:
                 domain = tuples[display_type]
 
         for budget_id in ids:

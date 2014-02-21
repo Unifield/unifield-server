@@ -40,7 +40,6 @@ class report_budget_actual_2(report_sxw.rml_parse):
             'getF2': self.getF2,
             'getGranularity': self.getGranularity,
             'getGranularityCode': self.getGranularityCode,
-            'getAllowedLines': self.getAllowedLines,
             'getEndMonth': self.getEndMonth,
             'getDateStop': self.getDateStop,
             'getCostCenters': self.getCostCenters,
@@ -90,7 +89,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
                 res = _('Accounts and Destinations')
             elif g == 'expense':
                 res = _('Accounts')
-            elif g == 'parent':
+            elif g == 'view':
                 res = _('Parent Accounts only')
         return res
 
@@ -99,17 +98,6 @@ class report_budget_actual_2(report_sxw.rml_parse):
         parameters = self.localcontext.get('data', {}).get('form', {})
         if 'granularity' in parameters and parameters['granularity']:
             return parameters['granularity']
-        return res
-
-    def getAllowedLines(self,):
-        res = ['view', 'destination', 'normal']
-        parameters = self.localcontext.get('data', {}).get('form', {})
-        if 'granularity' in parameters and parameters['granularity']:
-            g = parameters['granularity']
-            if g == 'expense':
-                res = ['view', 'normal']
-            elif g == 'view':
-                res = ['view']
         return res
 
     def getEndMonth(self, context=None):
