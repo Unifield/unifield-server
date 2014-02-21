@@ -219,14 +219,6 @@ class stock_move(osv.osv):
                 assert False, 'This method is not implemented for OUT or Internal moves'
                 
         return res
-
-    def hook__create_chained_picking(self, cr, uid, pick_values, picking):
-        res = super(stock_move, self).hook__create_chained_picking(cr, uid, pick_values, picking)
-
-        if picking:
-            res['auto_picking'] = picking.type == 'in' and picking.move_lines[0]['direct_incoming']
-
-        return res
         
 stock_move()
 
@@ -408,6 +400,7 @@ class stock_picking(osv.osv):
         move here the logic of validate picking
         available for picking loop
         '''
+        start = time.time()
         assert context, 'context is not defined'
         assert 'partial_datas' in context, 'partial datas not present in context'
         partial_datas = context['partial_datas']
@@ -808,6 +801,8 @@ class stock_picking(osv.osv):
             if so.state == 'shipping_except':
                 wf_service.trg_validate(uid, 'sale.order', so.id, 'ship_corrected', cr)
 
+        print time.time() - start
+        raise osv.except_osv('Error', 'Error')
         if context.get('from_simu_screen'):
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
             return {'type': 'ir.actions.act_window',
