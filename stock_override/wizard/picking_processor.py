@@ -69,6 +69,65 @@ class stock_picking_processor(osv.osv):
 
         return res
 
+    def copy_all(self, cr, uid, ids, context=None):
+        """
+        Fill all lines with the original quantity as quantity
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not ids:
+            raise osv.except_osv(
+                _('Error'),
+                _('No wizard found !'),
+            )
+
+        for wizard in self.browse(cr, uid, ids, context=context):
+            for move in wizard.move_ids:
+                self.pool.get(move._name).write(cr, uid, [move.id], {'quantity': move.ordered_quantity}, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Products to Process'),
+            'res_model': wizard._name,
+            'view_mode': 'form',
+            'view_type': 'form',
+            'target': 'new',
+            'res_id': ids[0],
+            'nodestroy': True,
+            'context': context,
+        }
+
+    def uncopy_all(self, cr, uid, ids, context=None):
+        """
+        Fill all lines with 0.00 as quantity
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not ids:
+            raise osv.except_osv(
+                _('Error'),
+                _('No wizard found !'),
+            )
+
+        for wizard in self.browse(cr, uid, ids, context=context):
+            move_obj = wizard.move_ids[0]._name
+            move_ids = [x.id for x in wizard.move_ids]
+            self.pool.get(move_obj).write(cr, uid, move_ids, {'quantity': 0.00}, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Products to Process'),
+            'res_model': wizard._name,
+            'view_mode': 'form',
+            'view_type': 'form',
+            'target': 'new',
+            'res_id': ids[0],
+            'nodestroy': True,
+            'context': context,
+        }
+
 stock_picking_processor()
 
 
@@ -120,6 +179,44 @@ class stock_move_processor(osv.osv):
                 'type_check': line.move_id.picking_id.type,
                 'location_supplier_customer_mem_out': loc_supplier or loc_cust or valid_pt,
             }
+
+        return res
+
+    def _get_product_info(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Ticked some checkboxes according to product parameters
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {
+                'lot_check': False,
+                'exp_check': False,
+#                'asset_check': False,
+                'kit_check': False,
+                'kc_check': False,
+                'ssl_check': False,
+                'dg_check': False,
+                'np_check': False,
+            }
+
+            if line.product_id:
+                res[line.id] = {
+                    'lot_check': line.product_id.batch_management,
+                    'exp_check': line.product_id.perishable,
+#                    'asset_check': line.product_id.type == 'product' and line.product_id.subtype == 'asset',
+                    'kit_check': line.product_id.type == 'product' and line.product_id.subtype == 'kit' and not line.product_id.perishable,
+                    'kc_check': line.product_id.heat_sensitive_item and True or False,
+                    'ssl_check': line.product_id.short_shelf_life,
+                    'dg_check': line.product_id.dangerous_goods,
+                    'np_check': line.product_id.narcotic,
+                }
 
         return res
 
@@ -190,7 +287,7 @@ class stock_move_processor(osv.osv):
                 # res_value = self._asset_integrity(line, res_value)
                 # For internal or simple out, cannot process more than specified in stock move
                 if line.wizard_id.picking_id.type in ['out', 'internal']:
-                    proc_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line.quantity, line.ordered_uom_id.id)
+                    proc_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.ordered_uom_id.id)
                     if proc_qty > line.ordered_quantity:
                         res_value = 'greater_than_available'
             elif line.quantity < 0.00:
@@ -198,44 +295,6 @@ class stock_move_processor(osv.osv):
                 res_value = 'must_be_greater_than_0'
 
             res[line.id] = res_value
-        return res
-
-    def _get_product_info(self, cr, uid, ids, field_name, args, context=None):
-        """
-        Ticked some checkboxes according to product parameters
-        """
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        res = {}
-
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = {
-                'lot_check': False,
-                'exp_check': False,
-#                'asset_check': False,
-                'kit_check': False,
-                'kc_check': False,
-                'ssl_check': False,
-                'dg_check': False,
-                'np_check': False,
-            }
-
-            if line.product_id:
-                res[line.id] = {
-                    'lot_check': line.product_id.batch_management,
-                    'exp_check': line.product_id.perishable,
-#                    'asset_check': line.product_id.type == 'product' and line.product_id.subtype == 'asset',
-                    'kit_check': line.product_id.type == 'product' and line.product_id.subtype == 'kit' and not line.product_id.perishable,
-                    'kc_check': line.product_id.heat_sensitive_item and True or False,
-                    'ssl_check': line.product_id.short_shelf_life,
-                    'dg_check': line.product_id.dangerous_goods,
-                    'np_check': line.product_id.narcotic,
-                }
-
         return res
 
     _columns = {
@@ -269,6 +328,7 @@ class stock_move_processor(osv.osv):
             relation='product.product',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Expected product to receive",
@@ -286,6 +346,7 @@ class stock_move_processor(osv.osv):
             type='float',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Expected quantity to receive",
@@ -306,6 +367,7 @@ class stock_move_processor(osv.osv):
             relation='product.uom',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Expected UoM to receive",
@@ -319,6 +381,7 @@ class stock_move_processor(osv.osv):
             relation='product.uom.categ',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Category of the expected UoM to receive",
@@ -332,6 +395,7 @@ class stock_move_processor(osv.osv):
             relation='stock.location',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Source location of the move",
@@ -344,6 +408,7 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             multi='move_info',
@@ -361,6 +426,11 @@ class stock_move_processor(osv.osv):
                     ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date'],
                     20
                 ),
+                'stock.move.in.processor': (
+                    lambda self, cr, uid, ids, c=None: ids,
+                    ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date'],
+                    20
+                ),
             },
             readonly=True,
             help="Integrity status (e.g: check if a batch is set for a line with a batch mandatory product...)",
@@ -373,6 +443,7 @@ class stock_move_processor(osv.osv):
             size=32,
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Return the type of the picking",
@@ -385,6 +456,7 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -397,6 +469,7 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -409,6 +482,7 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -421,6 +495,7 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -433,6 +508,7 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -445,6 +521,7 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -457,6 +534,7 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -469,6 +547,7 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -500,6 +579,10 @@ class stock_move_processor(osv.osv):
             help="Currency in which Unit cost is expressed",
         ),
         'change_reason': fields.char(size=256, string='Change reason'),
+    }
+
+    _defaults = {
+        'quantity': 0.00,
     }
 
     def _fill_expiry_date(self, cr, uid, prodlot_id=False, expiry_date=False, vals=None, context=None):
@@ -585,14 +668,14 @@ class stock_move_processor(osv.osv):
                 raise osv.except_osv(
                     _('Error'),
                     _('Selected quantity (%0.1f %s) exceeds the initial quantity (%0.1f %s)') %
-                    (new_qty, line.product_uom.name, line.quantity_ordered, line.product_uom.name),
+                    (new_qty, line.uom_id.name, line.quantity_ordered, line.uom_id.name),
                 )
             elif new_qty == line.quantity_ordered:
                 # Cannot select more than initial quantity
                 raise osv.except_osv(
                     _('Error'),
                     _('Selected quantity (%0.1f %s) cannot be equal to the initial quantity (%0.1f %s)') %
-                    (new_qty, line.product_uom.name, line.quantity_ordered, line.product_uom.name),
+                    (new_qty, line.uom_id.name, line.quantity_ordered, line.uom_id.name),
                 )
 
             update_qty = line.quantity_ordered - new_qty
@@ -673,7 +756,7 @@ class stock_move_processor(osv.osv):
         new_qty = uom_obj._change_round_up_qty(cr, uid, uom_id, quantity, 'quantity')
 
         for line in self.browse(cr, uid, ids):
-            cost = uom_obj._compute_price(cr, uid, line.product_uom.id, line.cost, to_uom_id=uom_id)
+            cost = uom_obj._compute_price(cr, uid, line.uom_id.id, line.cost, to_uom_id=uom_id)
             new_qty.setdefault('value', {}).setdefault('cost', cost)
 
         return new_qty
@@ -828,6 +911,30 @@ class stock_incoming_processor(osv.osv):
             'wizard_id',
             string='Moves',
         ),
+        'dest_type': fields.selection([
+            ('to_cross_docking', 'To Cross Docking'),
+            ('to_stock', 'To Stock'),
+            ('default', 'Other Types'),
+            ],
+            string='Destination Type',
+            readonly=False,
+            help="The default value is the one set on each stock move line.",
+        ),
+        'source_type': fields.selection([
+            ('from_cross_docking', 'From Cross Docking'),
+            ('from_stock', 'From stock'),
+            ('default', 'Default'),
+            ],
+            string='Source Type',
+            readonly=False,
+        ),
+        'direct_incoming': fields.boolean(
+            string='Direct to Stock ?',
+        ),
+    }
+
+    _defaults = {
+        'dest_type': 'default',
     }
     
     # Models methods
@@ -871,6 +978,7 @@ class stock_incoming_processor(osv.osv):
         
         process_data = {}
         picking_ids = []
+        to_unlink = []
         
         for proc in self.browse(cr, uid, ids, context=context):
             process_data.setdefault(proc.picking_id.id, [])
@@ -880,6 +988,7 @@ class stock_incoming_processor(osv.osv):
             for line in proc.move_ids:
                 # if no quantity, don't process the move
                 if not line.quantity:
+                    to_unlink.append(line.id)
                     continue
                 
                 total_qty += line.quantity
@@ -898,16 +1007,16 @@ class stock_incoming_processor(osv.osv):
                             _('No Batch Number with Expiry Date for Expiry Date Mandatory and not Incoming Shipment should not happen. Please hold...')
                         )
                 
-                process_data[proc.picking_id.id].setdefault(line.move_id.id, [])
-                process_data[proc.picking_id.id][line.move_id.id].append(line.id)
-
             if not total_qty:
                 raise osv.except_osv(
                     _('Processing Error'),
                     _("You have to enter the quantities you want to process before processing the move")
                 )
+
+        if to_unlink:
+            in_proc_obj.unlink(cr, uid, to_unlink, context=context)
             
-        return picking_obj.do_incoming_shipment(cr, uid, picking_ids, process_data, context=context)
+        return picking_obj.do_incoming_shipment_new(cr, uid, ids, context=context)
     
 stock_incoming_processor()
 
@@ -919,6 +1028,17 @@ class stock_move_in_processor(osv.osv):
     _name = 'stock.move.in.processor'
     _inherit = 'stock.move.processor'
     _description = 'Wizard lines for incoming shipment processing'
+
+    _columns = {
+        # Parent wizard
+        'wizard_id': fields.many2one(
+            'stock.incoming.processor',
+            string='Wizard',
+            required=True,
+            readonly=True,
+        ),
+        'state': fields.char(size=32, string='State', readonly=True),
+    }
     
 stock_move_in_processor()
 
