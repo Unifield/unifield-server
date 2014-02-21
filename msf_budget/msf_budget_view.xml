@@ -62,11 +62,13 @@
                     <field name="decision_moment_id" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
                     <field name="version" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
                     <field name="type" readonly="1" invisible="1"/>
-                    <group col="4" colspan="2">
-                        <button name="button_display_type" string="Change display type" type="object" icon="terp-stock_zoom" context="context" colspan="1"/>
-                        <field name="display_type" readonly="1" nolabel="1"/>
-                    </group>
+                    <label string="" colspan="2"/>
                     <field name="currency_id" readonly="1"/>
+                    <group col="3" colspan="4">
+                        <button name="button_display_type" string="Parent accounts only" type="object" icon="terp-stock_zoom" context="{'granularity': 'parent'}" colspan="1"/>
+                        <button name="button_display_type" string="Accounts only" type="object" icon="terp-stock_zoom" context="{'granularity': 'account'}" colspan="1"/>
+                        <button name="button_display_type" string="Accounts and destinations" type="object" icon="terp-stock_zoom" context="{'granularity': 'all'}" colspan="1"/>
+                    </group>
                     <field name="budget_line_ids" colspan="4" nolabel="1" readonly="1">
                         <tree string="Budget Lines" editable="top" colors="black:line_type in ('normal');blue:line_type in ('view')">
                             <field name="name"/>

@@ -147,39 +147,40 @@ class wizard_budget_import(osv.osv_memory):
                 if not account.is_analytic_addicted:
                     raise osv.except_osv(_('Warning !'), _("Account %s is not an analytic-a-holic account!") % (account_codes[0],))
                 # Only create "destination" budget lines
-                budget_line_vals.update({'account_id': account_ids[0],
-                                         'destination_id': destination_ids[0],
-                                         'line_type': 'destination'})
-                budget_values = []
-                for budget_value in import_line[1:13]:
+                budget_line_vals.update({
+                    'account_id': account_ids[0],
+                    'destination_id': destination_ids[0],
+                    'line_type': 'destination',
+                })
+                budget_values = {}
+                for i, budget_value in enumerate(import_line[1:13], 1):
                     if budget_value == "":
-                        budget_values.append(0)
+                        budget_values.update({'month'+str(i): 0.0})
                     else:
                         # try to parse as float
                         try:
                             float_value = round(float(budget_value), 2)
                         except:
                             raise osv.except_osv(_('Warning !'), _("The value '%s' is not an float!") % budget_value)
-                        budget_values.append(float_value)
+                        budget_values.update({'month'+str(i): float_value})
                 # Sometimes, the CSV has not all the needed columns. It's padded.
+                #+ We so complete values from budget_values length to 12. So len+1 to 12+1 (=13)
                 if len(budget_values) != 12:
-                    budget_values += [0]*(12-len(budget_values))
-                budget_line_vals.update({'budget_values': str(budget_values)})
+                    for x in xrange(len(budget_values)+1, 13, 1):
+                        budget_values.update({'month'+str(x): 0.0,})
+                budget_line_vals.update(budget_values)
                 # Update created lines dictionary
                 created_lines[destination_link_ids[0]] = True
                 result.append(budget_line_vals)
         # If analytic-a-holic accounts are not in the file, create those
         missing_lines = [x for x in created_lines if created_lines[x] == False]
-        budget_values = str([0]*12)
         for destination_link_id in missing_lines:
-            destination_link = self.pool.get('account.destination.link').browse(cr,
-                                                                                uid,
-                                                                                destination_link_id,
-                                                                                context=context)
-            result.append({'account_id': destination_link.account_id.id,
-                           'destination_id': destination_link.destination_id.id,
-                           'line_type': 'destination',
-                           'budget_values': budget_values})
+            destination_link = self.pool.get('account.destination.link').browse(cr, uid, destination_link_id, context=context)
+            result.append({
+                'account_id': destination_link.account_id.id,
+                'destination_id': destination_link.destination_id.id,
+                'line_type': 'destination',
+            })
         # sort them by name
         result = sorted(result)
         return result
@@ -261,7 +262,6 @@ class wizard_budget_import(osv.osv_memory):
                                 line_vals.update({'budget_id': created_budget_id})
                                 self.pool.get('msf.budget.line').create(cr, uid, vals=line_vals, context=context)
                             
-                    
         if len(budgets_to_be_approved) > 0:
             # we open a wizard
             budget_list = ""

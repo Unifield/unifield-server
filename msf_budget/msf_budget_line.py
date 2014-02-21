@@ -23,9 +23,7 @@ from osv import fields, osv
 import datetime
 from dateutil.relativedelta import relativedelta
 
-# Overloading the one2many.get for budget lines
-# (used for filtering budget lines in the form view;
-# dirty as f*ck, but hey, it works)
+# Overloading the one2many.get for budget lines to filter regarding context.
 class one2many_budget_lines(fields.one2many):
     
     def get(self, cr, obj, ids, name, uid=None, offset=0, context=None, values=None):
@@ -35,23 +33,23 @@ class one2many_budget_lines(fields.one2many):
             values = {}
         res = {}
         display_type = {}
-        
-        for budget in obj.read(cr, uid, ids, ['display_type']):
-            res[budget['id']] = []
-            display_type[budget['id']] = budget['display_type']
-            # Override display_type if we come from a report
-            if context.get('report', False) and context.get('granularity', False):
-                display_type[budget['id']] = context.get('granularity')
 
-        budget_line_obj = obj.pool.get('msf.budget.line')
-        budget_line_ids = budget_line_obj.search(cr, uid, [('budget_id', 'in', ids)])
-        if budget_line_ids:
-            for budget_line in  budget_line_obj.read(cr, uid, budget_line_ids, ['line_type', 'budget_id'], context=context):
-                budget_id = budget_line['budget_id'][0]
-                if display_type[budget_id] == 'all' \
-                or (display_type[budget_id] == 'view' and budget_line['line_type'] == 'view') \
-                or (display_type[budget_id] == 'expense' and budget_line['line_type'] != 'destination'):
-                    res[budget_id].append(budget_line['id'])
+        domain = ['view', 'normal', 'destination']
+        tuples = {
+            'parent': ['view'],
+            'account': ['view', 'normal'],
+            'destination': domain,
+        }
+        line_obj = obj.pool.get('msf.budget.line')
+
+        if 'granularity' in context:
+            display_type = context.get('granularity', False)
+            if display_type and display_type in ['parent', 'account', 'destination']:
+                domain = tuples[display_type]
+
+        for budget_id in ids:
+            res[budget_id] = line_obj.search(cr, uid, [('budget_id', '=', budget_id), ('line_type', 'in', domain)])
+
         return res
 
 class msf_budget_line(osv.osv):
@@ -196,7 +194,6 @@ class msf_budget_line(osv.osv):
         res = {}
         if context is None:
             context = {}
-        
         actual_amounts = self._get_actual_amounts(cr, uid, ids, context)
         budget_amounts = self._get_budget_amounts(cr, uid, ids, context)
         comm_amounts = self._get_comm_amounts(cr, uid, ids, context)
@@ -311,18 +308,241 @@ class msf_budget_line(osv.osv):
             name += account.name
             res[rs.id] = name
         return res
-    
+
+    def _get_actual_amount(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        """
+        The actual amount is composed of the total of analytic lines corresponding to these criteria:
+          - cost center that is used on the budget
+          - fiscalyear used on the budget (date should be between date_start and date_stop from the fiscalyear)
+          - account_id on the budget line
+          - destination_id on the budget line
+        """
+        # Prepare some values
+        res = {}
+        ana_obj = self.pool.get('account.analytic.line')
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        cur_obj = self.pool.get('res.currency')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        new_ids = list(ids)
+        # Create default values
+        for index in new_ids:
+            res.setdefault(index, 0.0)
+        # Now, only use 'destination' line to do process and complete parent one at the same time
+        sql = """
+            SELECT l.id, l.line_type, l.account_id, l.destination_id, b.cost_center_id, b.currency_id, f.date_start, f.date_stop
+            FROM msf_budget_line AS l, msf_budget AS b, account_fiscalyear AS f
+            WHERE l.budget_id = b.id
+            AND b.fiscalyear_id = f.id
+            AND l.id IN %s
+            ORDER BY l.line_type, l.id;
+        """
+        cr.execute(sql, (tuple(new_ids),))
+        # Prepare SQL2 request that contains sum of amount of given analytic lines (in functional currency)
+        sql2 = """
+            SELECT SUM(amount)
+            FROM account_analytic_line
+            WHERE id in %s;"""
+        # Process destination lines
+        for line in cr.fetchall():
+            # fetch some values
+            line_id, line_type, account_id, destination_id, cost_center_id, currency_id, date_start, date_stop = line
+            criteria = [
+                ('cost_center_id', '=', cost_center_id),
+                ('date', '>=', date_start),
+                ('date', '<=', date_stop),
+                ('journal_id.type', '!=', 'engagement'),
+            ]
+            if line_type == 'destination':
+                criteria.append(('destination_id', '=', destination_id))
+            if line_type in ['destination', 'normal']:
+                criteria.append(('general_account_id', '=', account_id)),
+            else:
+                criteria.append(('general_account_id', 'child_of', account_id))
+            ana_ids = ana_obj.search(cr, uid, criteria)
+            if ana_ids:
+                cr.execute(sql2, (tuple(ana_ids),))
+                mnt_result = cr.fetchall()
+                if mnt_result:
+                    res[line_id] += mnt_result[0][0] * -1
+        return res
+
+    def _get_amounts(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        """
+        Those field can be asked for:
+          - actual_amount
+          - comm_amount
+          - balance
+          - percentage
+        With some depends:
+          - percentage needs actual_amount, comm_amount, balance and budget_amount
+          - balance needs actual_amount, comm_amount and budget_amount
+        """
+        # Some checks
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        budget_ok = False
+        actual_ok = False
+        commitment_ok = False
+        percentage_ok = False
+        balance_ok = False
+        budget_amounts = {}
+        actual_amounts = {}
+        comm_amounts = {}
+        # Check in which case we are regarding field names. Compute actual and commitment when we need balance and/or percentage.
+        if 'budget_amount' in field_names:
+            budget_ok = True
+        if 'actual_amount' in field_names:
+            actual_ok = True
+        if 'comm_amount' in field_names:
+            actual_ok = True
+            commitment_ok = True
+        if 'percentage' in field_names:
+            budget_ok = True
+            actual_ok = True
+            commitment_ok = True
+            percentage_ok = True
+        if 'balance' in field_names:
+            budget_ok = True
+            actual_ok = True
+            commitment_ok = True
+            balance_ok = True
+        # Compute actual and/or commitments
+        if actual_ok or commitment_ok or percentage_ok or balance_ok:
+            # COMPUTE ACTUAL/COMMITMENT
+            ana_obj = self.pool.get('account.analytic.line')
+            company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+            cur_obj = self.pool.get('res.currency')
+            # Create default values
+            for index in ids:
+                if actual_ok:
+                    actual_amounts.setdefault(index, 0.0)
+                if commitment_ok:
+                    comm_amounts.setdefault(index, 0.0)
+            # Now, only use 'destination' line to do process and complete parent one at the same time
+            sql = """
+                SELECT l.id, l.line_type, l.account_id, l.destination_id, b.cost_center_id, b.currency_id, f.date_start, f.date_stop
+                FROM msf_budget_line AS l, msf_budget AS b, account_fiscalyear AS f
+                WHERE l.budget_id = b.id
+                AND b.fiscalyear_id = f.id
+                AND l.id IN %s
+                ORDER BY l.line_type, l.id;
+            """
+            cr.execute(sql, (tuple(ids),))
+            # Prepare SQL2 request that contains sum of amount of given analytic lines (in functional currency)
+            sql2 = """
+                SELECT SUM(amount)
+                FROM account_analytic_line
+                WHERE id in %s;"""
+            # Process destination lines
+            for line in cr.fetchall():
+                # fetch some values
+                line_id, line_type, account_id, destination_id, cost_center_id, currency_id, date_start, date_stop = line
+                criteria = [
+                    ('cost_center_id', '=', cost_center_id),
+                    ('date', '>=', date_start),
+                    ('date', '<=', date_stop),
+                ]
+                if line_type == 'destination':
+                    criteria.append(('destination_id', '=', destination_id))
+                if line_type in ['destination', 'normal']:
+                    criteria.append(('general_account_id', '=', account_id)),
+                else:
+                    criteria.append(('general_account_id', 'child_of', account_id))
+                # fill in ACTUAL AMOUNTS
+                if actual_ok:
+                    actual_criteria = criteria + [('journal_id.type', '!=', 'engagement')]
+                    ana_ids = ana_obj.search(cr, uid, actual_criteria)
+                    if ana_ids:
+                        cr.execute(sql2, (tuple(ana_ids),))
+                        mnt_result = cr.fetchall()
+                        if mnt_result:
+                                actual_amounts[line_id] += mnt_result[0][0] * -1
+                # fill in COMMITMENT AMOUNTS
+                if commitment_ok:
+                    commitment_criteria = criteria + [('journal_id.type', '=', 'engagement')]
+                    ana_ids = ana_obj.search(cr, uid, commitment_criteria)
+                    if ana_ids:
+                        cr.execute(sql2, (tuple(ana_ids),))
+                        mnt_result = cr.fetchall()
+                        if mnt_result:
+                            comm_amounts[line_id] += mnt_result[0][0] * -1
+
+        # Budget line amounts
+        if budget_ok:
+            sql = """
+            SELECT id, COALESCE(month1 + month2 + month3 + month4 + month5 + month6 + month7 + month8 + month9 + month10 + month11 + month12, 0.0)
+            FROM msf_budget_line
+            WHERE id IN %s;
+            """
+            cr.execute(sql, (tuple(ids),))
+            tmp_res = cr.fetchall()
+            if tmp_res:
+                budget_amounts = dict(tmp_res)
+        # Prepare result
+        for line_id in ids:
+            actual_amount = line_id in actual_amounts and actual_amounts[line_id] or 0.0
+            comm_amount = line_id in comm_amounts and comm_amounts[line_id] or 0.0
+            res[line_id] = {'actual_amount': actual_amount, 'comm_amount': comm_amount, 'balance': 0.0, 'percentage': 0.0, 'budget_amount': 0.0,}
+            if budget_ok:
+                budget_amount = line_id in budget_amounts and budget_amounts[line_id] or 0.0
+                res[line_id].update({'budget_amount': budget_amount,})
+            if balance_ok:
+                balance = budget_amount - actual_amount - comm_amount
+                res[line_id].update({'balance': balance,})
+            if percentage_ok:
+                if budget_amount != 0.0:
+                    percentage = round((actual_amount + comm_amount) / budget_amount * 100.0)
+                    res[line_id].update({'percentage': percentage,})
+        return res
+
+    def _get_total(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        """
+        Give the sum of all month for the given budget lines
+        """
+        # Some checks
+        if isinstance(ids,(int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        sql = """
+            SELECT id, month1 + month2 + month3 + month4 + month5 + month6 + month7 + month8 + month9 + month10 + month11 + month12
+            FROM msf_budget_line
+            WHERE id IN %s"""
+        cr.execute(sql, (tuple(ids),))
+        tmp_res = cr.fetchall()
+        if tmp_res:
+            res = dict(tmp_res)
+        return res
+
     _columns = {
         'budget_id': fields.many2one('msf.budget', 'Budget', ondelete='cascade'),
         'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type', '!=', 'view')]),
         'destination_id': fields.many2one('account.analytic.account', 'Destination', domain=[('category', '=', 'DEST')]),
         'name': fields.function(_get_name, method=True, store=False, string="Name", type="char", readonly="True", size=512),
+        'month1': fields.float("Month 01"),
+        'month2': fields.float("Month 02"),
+        'month3': fields.float("Month 03"),
+        'month4': fields.float("Month 04"),
+        'month5': fields.float("Month 05"),
+        'month6': fields.float("Month 06"),
+        'month7': fields.float("Month 07"),
+        'month8': fields.float("Month 08"),
+        'month9': fields.float("Month 09"),
+        'month10': fields.float("Month 10"),
+        'month11': fields.float("Month 11"),
+        'month12': fields.float("Month 12"),
+        'total': fields.function(_get_total, method=True, store=False, string="Total", type="float", readonly=True, help="Get all month total amount"),
         'budget_values': fields.char('Budget Values (list of float to evaluate)', size=256),
-        'budget_amount': fields.function(_get_total_amounts, method=True, store=False, string="Budget amount", type="float", readonly="True", multi="all"),
-        'actual_amount': fields.function(_get_total_amounts, method=True, store=False, string="Actual amount", type="float", readonly="True", multi="all"),
-        'comm_amount': fields.function(_get_total_amounts, method=True, store=False, string="Commitments amount", type="float", readonly="True", multi="all"),
-        'balance': fields.function(_get_total_amounts, method=True, store=False, string="Balance", type="float", readonly="True", multi="all"),
-        'percentage': fields.function(_get_total_amounts, method=True, store=False, string="Percentage", type="float", readonly="True", multi="all"),
+        'budget_amount': fields.function(_get_amounts, method=True, store=False, string="Budget amount", type="float", readonly=True, multi="budget_amounts"),
+        'actual_amount': fields.function(_get_amounts, method=True, store=False, string="Actual amount", type="float", readonly=True, multi="budget_amounts"),
+        'comm_amount': fields.function(_get_amounts, method=True, store=False, string="Commitments amount", type="float", readonly=True, multi="budget_amounts"),
+        'balance': fields.function(_get_amounts, method=True, store=False, string="Balance", type="float", readonly=True, multi="budget_amounts"),
+        'percentage': fields.function(_get_amounts, method=True, store=False, string="Percentage", type="float", readonly=True, multi="budget_amounts"),
         'parent_id': fields.many2one('msf.budget.line', 'Parent Line'),
         'child_ids': fields.one2many('msf.budget.line', 'parent_id', 'Child Lines'),
         'line_type': fields.selection([('view','View'),
@@ -334,16 +554,29 @@ class msf_budget_line(osv.osv):
     _order = 'account_code asc, line_type desc'
 
     _defaults = {
-        'line_type': 'normal',
+        'line_type': lambda *a: 'normal',
+        'month1': lambda *a: 0.0,
+        'month2': lambda *a: 0.0,
+        'month3': lambda *a: 0.0,
+        'month4': lambda *a: 0.0,
+        'month5': lambda *a: 0.0,
+        'month6': lambda *a: 0.0,
+        'month7': lambda *a: 0.0,
+        'month8': lambda *a: 0.0,
+        'month9': lambda *a: 0.0,
+        'month10': lambda *a: 0.0,
+        'month11': lambda *a: 0.0,
+        'month12': lambda *a: 0.0,
     }
     
     def get_parent_line(self, cr, uid, vals, context=None):
         # Method to check if the used account has a parent,
         # and retrieve or create the corresponding parent line.
-        # It also adds budget values to parent lines
+        # It also adds budget values to parent lines. FIXME: improve this to also impact parents that are more than 1 depth (using parent_left for an example)
         parent_account_id = False
         parent_line_ids = []
-        if 'account_id' in vals and 'budget_id' in vals:
+        parent_vals = {}
+        if vals.get('account_id', False) and vals.get('budget_id', False):
             if 'destination_id' in vals:
                 # Special case: the line has a destination, so the parent is a line
                 # with the same account and no destination
@@ -364,24 +597,34 @@ class msf_budget_line(osv.osv):
                                                             ('budget_id', '=', vals['budget_id'])], context=context)
             if len(parent_line_ids) > 0:
                 # Parent line exists
-                if 'budget_values' in vals:
-                    # we add the budget values to the parent one
-                    parent_line = self.browse(cr, uid, parent_line_ids[0], context=context)
-                    parent_budget_values = [sum(pair) for pair in zip(eval(parent_line.budget_values),
-                                                                      eval(vals['budget_values']))]
-                    # write parent
-                    super(msf_budget_line, self).write(cr,
-                                                       uid,
-                                                       parent_line_ids,
-                                                       {'budget_values': str(parent_budget_values)},
-                                                       context=context)
+                # check which month is given in vals
+                months = []
+                month_vals = {}
+                month_in_vals = False
+                for index in xrange(1, 13, 1):
+                    month = 'month'+str(index)
+                    if month in vals:
+                        month_in_vals = True
+                        months.append(month)
+                        # keep month values for parent account
+                        month_vals.update({month: vals[month],})
+                    else:
+                        month_vals.update({month: 0.0,})
+                # fetch these months from the parent line and update them with new ones
+                if month_in_vals:
+                    parent_data = self.read(cr, uid, parent_line_ids[0], months + ['account_id', 'budget_id'], context=context)
+                    parent_new_vals = {}
+                    for fieldname in parent_data:
+                        if fieldname.startswith('month'):
+                            parent_new_vals.update({fieldname: parent_data[fieldname] + vals[fieldname]})
+                    super(msf_budget_line, self).write(cr, uid, parent_line_ids[0], parent_new_vals, context=context)
                     # use method on parent with original budget values
-                    self.get_parent_line(cr,
-                                         uid,
-                                         {'account_id': parent_line.account_id.id,
-                                          'budget_id': parent_line.budget_id.id,
-                                          'budget_values': vals['budget_values']},
-                                         context=context)
+                    parent_vals = {
+                        'account_id': parent_data.get('account_id', [False])[0],
+                        'budget_id': parent_data.get('budget_id', [False])[0],
+                    }
+                    parent_vals.update(month_vals)
+                    self.get_parent_line(cr, uid, parent_vals, context=context)
                 # add parent id to vals
                 vals.update({'parent_id': parent_line_ids[0]})
             else:
@@ -393,21 +636,29 @@ class msf_budget_line(osv.osv):
                 else:
                     parent_vals['line_type'] = 'view'
                 # default parent budget values: the one from the (currently) only child
-                if 'budget_values' in vals:
-                    parent_vals.update({'budget_values': vals['budget_values']})
+                month_vals = {}
+                month_in_vals = False
+                for index in xrange(1, 13, 1):
+                    month = 'month'+str(index)
+                    if month in vals:
+                        month_in_vals = True
+                        month_vals.update({month: vals[month]})
+                    else:
+                        month_vals.update({month: 0.0})
+                if month_in_vals:
+                    parent_vals.update(month_vals)
                 parent_budget_line_id = self.create(cr, uid, parent_vals, context=context)
                 vals.update({'parent_id': parent_budget_line_id})
         return
-            
-    
+
     def create(self, cr, uid, vals, context=None):
         self.get_parent_line(cr, uid, vals, context=context)
         return super(msf_budget_line, self).create(cr, uid, vals, context=context)
-    
+
     def write(self, cr, uid, ids, vals, context=None):
         self.get_parent_line(cr, uid, vals, context=context)
         return super(msf_budget_line, self).write(cr, uid, ids, vals, context=context)
-    
+
 msf_budget_line()
 
 class msf_budget(osv.osv):
