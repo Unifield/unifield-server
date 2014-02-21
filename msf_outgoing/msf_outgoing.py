@@ -1881,10 +1881,13 @@ class stock_picking(osv.osv):
         '''
         Confirm all stock moves of the picking
         '''
+        moves_to_confirm = []
         for pick in self.browse(cr, uid, ids, context=context):
             for move in pick.move_lines:
                 if move.state == 'draft':
-                    self.pool.get('stock.move').action_confirm(cr, uid, [move.id], context=context)
+                    moves_to_confirm.append(move.id)
+
+        self.pool.get('stock.move').action_confirm(cr, uid, moves_to_confirm, context=context)
 
         return True
     

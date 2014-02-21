@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF
 #
@@ -15,16 +15,17 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
+import change_dest_location
+import picking_processor
+import stock_analyze_view
+import stock_card_wizard
+import stock_invoice_onshipping
 import stock_partial_move
 import stock_partial_picking
-import stock_analyze_view
-import stock_invoice_onshipping
-import change_dest_location
-import stock_card_wizard
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

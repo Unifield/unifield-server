@@ -580,19 +580,6 @@ class purchase_order(osv.osv):
             
         return res
     
-    def _hook_action_picking_create_stock_picking(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        modify data for stock move creation
-        - date is set to False
-        - date_expected is set to delivery_confirmed_date
-        '''
-        if context is None:
-            context = {}
-        move_values = super(purchase_order, self)._hook_action_picking_create_stock_picking(cr, uid, ids, context=context, *args, **kwargs)
-        order_line = kwargs['order_line']
-        move_values.update({'date': order_line.confirmed_delivery_date,'date_expected': order_line.confirmed_delivery_date,})
-        return move_values
-    
     _columns = {
                 'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
                 'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
