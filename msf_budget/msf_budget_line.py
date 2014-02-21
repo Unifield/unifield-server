@@ -340,6 +340,9 @@ class msf_budget_line(osv.osv):
             actual_ok = True
             commitment_ok = True
             balance_ok = True
+        # In some cases (reports) we don't want to display commitment values. But we have to include them into "balance" and percentage computation.
+        if 'commitment' in context:
+            commitment_ok = context.get('commitment', False)
         # Compute actual and/or commitments
         if actual_ok or commitment_ok or percentage_ok or balance_ok:
             # COMPUTE ACTUAL/COMMITMENT
@@ -378,7 +381,9 @@ class msf_budget_line(osv.osv):
                 criteria = self._get_domain(line_type, account_id, cost_center_ids, destination_id, date_start, date_stop)
                 # fill in ACTUAL AMOUNTS
                 if actual_ok:
-                    actual_criteria = criteria + [('journal_id.type', '!=', 'engagement')]
+                    actual_criteria = list(criteria)
+                    if commitment_ok:
+                        actual_criteria += [('journal_id.type', '!=', 'engagement')]
                     ana_ids = ana_obj.search(cr, uid, actual_criteria)
                     if ana_ids:
                         cr.execute(sql2, (tuple(ana_ids),))
@@ -387,7 +392,7 @@ class msf_budget_line(osv.osv):
                                 actual_amounts[line_id] += mnt_result[0][0] * -1
                 # fill in COMMITMENT AMOUNTS
                 if commitment_ok:
-                    commitment_criteria = criteria + [('journal_id.type', '=', 'engagement')]
+                    commitment_criteria = list(criteria) + [('journal_id.type', '=', 'engagement')]
                     ana_ids = ana_obj.search(cr, uid, commitment_criteria)
                     if ana_ids:
                         cr.execute(sql2, (tuple(ana_ids),))
