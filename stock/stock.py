@@ -1167,24 +1167,27 @@ class stock_picking(osv.osv):
         @return: True or False
         """
         ok = False
-        for pick in self.browse(cr, uid, ids, context=context):
-            if not pick.move_lines:
-                return True
-            for move in pick.move_lines:
-                if move.state not in ('cancel','done'):
-                    return False
-                if move.state=='done':
-                    ok = True
+        
+        move_obj = self.pool.get('stock.move')
+
+        moves = move_obj.search(cr, uid, [('picking_id', 'in', ids)])
+        if not moves:
+            return True
+
+        if move_obj.search(cr, uid, [('id', 'in', moves), ('state', 'not in', ['cancel', 'done'])]):
+            return False
+
+        if move_obj.search(cr, uid, [('id', 'in', moves), ('state', '=', 'done')], count=1) > 0:
+            ok = True
+
         return ok
 
     def test_cancel(self, cr, uid, ids, context=None):
         """ Test whether the move lines are canceled or not.
         @return: True or False
         """
-        for pick in self.browse(cr, uid, ids, context=context):
-            for move in pick.move_lines:
-                if move.state not in ('cancel',):
-                    return False
+        if self.pool.get('stock.move').search(cr, uid, [('picking_id', 'in', ids), ('state', '!=', 'cancel')], count=True):
+            return False
         return True
 
     def allow_cancel(self, cr, uid, ids, context=None):
@@ -1754,11 +1757,10 @@ class stock_move(osv.osv):
                     
         if uid != 1:
             frozen_fields = set(['product_qty', 'product_uom', 'product_uos_qty', 'product_uos', 'location_id', 'location_dest_id', 'product_id'])
-            for move in self.browse(cr, uid, ids, context=context):
-                if move.state == 'done':
-                    if frozen_fields.intersection(vals):
-                        raise osv.except_osv(_('Operation forbidden'),
-                                             _('Quantities, UoMs, Products and Locations cannot be modified on stock moves that have already been processed (except by the Administrator)'))
+            done_moves = self.search(cr, uid, [('picking_id', 'in', ids), ('state', '=', 'done')], count=True)
+            if done_moves and frozen_fields.intersection(vals):
+                raise osv.except_osv(_('Operation forbidden'),
+                        _('Quantities, UoMs, Products and Locations cannot be modified on stock moves that have already been processed (except by the Administrator)'))
         return  super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
     def copy(self, cr, uid, id, default=None, context=None):
@@ -2379,8 +2381,7 @@ class stock_move(osv.osv):
             self.action_confirm(cr, uid, todo, context=context)
 
         self.write(cr, uid, move_ids, {'state': 'done', 'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
-        for id in move_ids:
-             wf_service.trg_trigger(uid, 'stock.move', id, cr)
+        wf_service.trg_trigger(uid, 'stock.move', move_ids, cr)
 
         for pick_id in picking_ids:
             wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
