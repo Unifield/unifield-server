@@ -32,7 +32,8 @@
         rml="msf_budget/report/monthly_budget.rml"
         auto="False"
         menu="True"/>
-        
+
+        <!-- see 'report/report_pdf_budget_summary.py' for real filename -->
         <report id="pdf_budget_summary"
         string="Budget Summary"
         model="msf.budget"
