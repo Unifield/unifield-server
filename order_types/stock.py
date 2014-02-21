@@ -195,6 +195,31 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        for pick in self.browse(cr, uid, ids, context=context):
+            if pick.type == 'in':
+                proc_id = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': pick.id}, context=context)
+                for move in pick.move_lines:
+                    move_data = {
+                        'move_id': move.id,
+                        'wizard_id': proc_id,
+                        'line_number': move.line_number,
+                        'product_id': move.product_id.id,
+                        'uom_id': move.product_uom.id,
+                        'cost': move.price_unit,
+                        'currency': move.price_currency_id.id,
+                    }
+                    self.pool.get('stock.move.in.processor').create(cr, uid, move_data, context=context)
+                
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'stock.incoming.processor',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'res_id': proc_id,
+                    'context': context,
+                }
+
         if context.get('out',False):
             return {'type': 'ir.actions.act_window_close'}
 
