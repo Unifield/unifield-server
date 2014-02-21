@@ -2534,6 +2534,7 @@ class stock_picking(osv.osv):
         '''
         create the picking ticket from selected stock moves
         '''
+        start = time.time()
         if not context:
             context = {}
         assert context, 'context is not defined'
@@ -2606,6 +2607,8 @@ class stock_picking(osv.osv):
             view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
             view_id = view_id and view_id[1] or False
         context.update({'picking_type': 'picking_ticket', 'picking_screen': True})
+        print time.time() - start
+        raise osv.except_osv(_('Error'), _('Error'))
         return {'name':_("Picking Ticket"),
                 'view_mode': 'form,tree',
                 'view_id': [view_id],

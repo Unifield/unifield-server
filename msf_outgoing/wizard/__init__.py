@@ -19,6 +19,8 @@
 #
 ##############################################################################
 
+import picking_processor
+
 import create_picking
 import split_memory_move
 import stock_partial_move
