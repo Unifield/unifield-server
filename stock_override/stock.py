@@ -1821,7 +1821,7 @@ class stock_move(osv.osv):
         new_moves = []
         for location_id in moves_by_location.keys():
             for newdate, move_ids in moves_by_location[location_id].iteritems():
-                self.write(cr, uid, move_ids, {'location_id': location_id,
+                self.write(cr, uid, move_ids, {'location_dest_id': location_id,
                                                'date': newdate}, context=context)
                 new_moves.extend(move_ids)
         
