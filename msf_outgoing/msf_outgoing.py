@@ -2295,7 +2295,8 @@ class stock_picking(osv.osv):
                 if not bo.is_completed()[bo.id]:
                     pick_moves.setdefault(pick.id, {})
                     for m in bo.move_lines:
-                        pick_moves[pick.id].setdefault(m.backmove_id.id, True)
+                        if m.state not in ('done', 'cancel'):
+                            pick_moves[pick.id].setdefault(m.backmove_id.id, True)
 
         return pick_moves
 
@@ -2378,14 +2379,16 @@ class stock_picking(osv.osv):
 
                 if not new_pick_id:
                     move.write(vals, context=context)
-                    if move.product_qty == 0.00:
-                        move.action_done(context=context)
                     keep_backmove = move_obj.search(cr, uid, [('backmove_id', '=', move.backmove_id.id)], context=context)
                     if move.backmove_id and move.backmove_id.product_qty == 0.00:
                         keep_backmove = move_obj.search(cr, uid, [('backmove_id', '=', move.backmove_id.id), ('state', 'not in', ('done', 'cancel'))], context=context)
                         if not keep_backmove:
                             move_obj.write(cr, uid, [move.backmove_id.id], {'state': 'done'}, context=context)
                             move_obj.update_linked_documents(cr, uid, move.backmove_id.id, move.id, context=context)
+                    if move.product_qty == 0.00:
+                        move.write({'state': 'draft'})
+                        move.unlink()
+#                        move.action_done(context=context)
                 elif move.product_qty != 0.00:
                     vals.update({'picking_id': new_pick_id,
                                  'line_number': move.line_number,
@@ -2407,15 +2410,20 @@ class stock_picking(osv.osv):
                         move_obj.update_linked_documents(cr, uid, move.id, new_move_id, context=context)
 
                     # Set the stock move to done with 0.00 qty
+                    if move.id in keep_move and keep_move[move.id]:
+                        m_st = move.state
+                    else:
+                        m_st = 'done'
+                        moves_states[move.id] = 'done'
                     move_obj.write(cr, uid, [move.id], {'product_qty': 0.00,
-                                                        'state': move.id in keep_move and keep_move[move.id] and move.state or 'done'}, context=context)
+                                                        'state': m_st}, context=context)
 
                     new_lines.append(new_move_id)
 
             if pick_to_check:
                 for ptc_id in pick_to_check:
                     ptc = self.browse(cr, uid, ptc_id, context=context)
-                    if all(m.product_qty == 0.00 or m.state in ('done', 'cancel') for m in ptc.move_lines):
+                    if all(m.product_qty == 0.00 and m.state in ('done', 'cancel') for m in ptc.move_lines):
                         ptc.action_done(context=context)
 
             # trigger workflow (confirm picking)
