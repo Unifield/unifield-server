@@ -238,72 +238,7 @@ class msf_budget_line(osv.osv):
                                    'percentage': percentage}
         
         return res
-    
-    def _get_monthly_amounts(self, cr, uid, ids, context=None):
-        res = []
-        if context is None:
-            context = {}
-            
-        actual_amounts = self._get_actual_amounts(cr, uid, ids, context)
-        budget_amounts = self._get_budget_amounts(cr, uid, ids, context)
-        comm_amounts = self._get_comm_amounts(cr, uid, ids, context)
-        
-        # if period id, only retrieve a subset
-        month_stop = 0
-        if 'period_id' in context:
-            period = self.pool.get('account.period').browse(cr, uid, context['period_id'], context=context)
-            month_stop = datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').month
-        else:
-            month_stop = 12
-                
-        # Browse each line
-        for budget_line in self.browse(cr, uid, ids, context=context):
-            budget_line_destination_id = budget_line.destination_id and budget_line.destination_id.id or False
 
-            if budget_line.line_type == 'view' \
-                or ('granularity' in context and context['granularity'] == 'all') \
-                or ('granularity' in context and context['granularity'] == 'expense' and budget_line.line_type != 'destination'):
-                line_actual_amounts = [0] * 12
-                line_budget_amounts = [0] * 12
-                line_comm_amounts = [0] * 12
-                if (budget_line.account_id.id, budget_line_destination_id) in actual_amounts:
-                    line_actual_amounts = actual_amounts[budget_line.account_id.id, budget_line_destination_id]
-                if (budget_line.account_id.id, budget_line_destination_id) in budget_amounts:
-                    line_budget_amounts = budget_amounts[budget_line.account_id.id, budget_line_destination_id]
-                if (budget_line.account_id.id, budget_line_destination_id) in comm_amounts:
-                    line_comm_amounts = comm_amounts[budget_line.account_id.id, budget_line_destination_id]
-                
-
-                line_code = budget_line.account_id.code
-                line_destination = ''
-                if budget_line.destination_id:
-                    line_destination = budget_line.destination_id.code
-                line_name = budget_line.account_id.name
-                line_values = [(line_code,line_destination,line_name)]
-
-                if 'breakdown' in context and context['breakdown'] == 'month':
-                    # Need to add breakdown values
-                    for i in range(month_stop):
-                        line_values.append(line_budget_amounts[i])
-                        line_values.append(line_comm_amounts[i])
-                        line_values.append(line_actual_amounts[i])
-                
-                total_amounts = self._compute_total_amounts(cr,
-                                                           uid,
-                                                           line_budget_amounts,
-                                                           line_actual_amounts,
-                                                           line_comm_amounts,
-                                                           context=context)
-
-                line_values.append(total_amounts['budget_amount'])
-                line_values.append(total_amounts['comm_amount'])
-                line_values.append(total_amounts['actual_amount'])
-
-                # add to result
-                res.append(line_values)
-            
-        return res
-    
     def _get_name(self, cr, uid, ids, field_names=None, arg=None, context=None):
         result = self.browse(cr, uid, ids, context=context)
         res = {}
