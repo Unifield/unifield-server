@@ -654,7 +654,28 @@ class stock_picking(osv.osv):
             return 'Stock picking %s closed' % stock_picking.name
         else:
             return 'Could not find stock picking %s' % stock_picking.name
+        
+    def msg_create_invoice(self, cr, uid, source, stock_picking, context=None):
+        """
+        Create an invoice for a picking. This is used in the RW to CP rule for pickings
+        that are in 'done' state and '2binvoiced' invoice_state so invoices are created
+        at CP after synchronisation
+        """
+        # get stock pickings to process using name from message
+        stock_picking_ids = self.search(cr, uid, [('name','=',stock_picking.name)])
 
+        if stock_picking_ids:
+
+            picking_obj = self.pool.get('stock.picking')
+            picking = picking_obj.browse(cr, uid, stock_picking_ids[0])
+            
+            if picking.state == 'done' and picking.invoice_state == '2binvoiced':
+                self._create_invoice(cr, uid, picking)
+                return 'Invoice created for picking %s' % stock_picking.name
+        else:
+            return 'Picking %s state should be done and invoice_state should be 2binvoiced. Actual values were: %s and %s' \
+                    % (stock_picking.name, picking.state, picking.invoice_state)
+        
     def on_create(self, cr, uid, id, values, context=None):
         if context is None \
            or not context.get('sync_message_execution') \
