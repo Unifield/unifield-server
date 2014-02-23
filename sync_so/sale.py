@@ -60,6 +60,10 @@ class sale_order_sync(osv.osv):
         if not context:
             context = {}
             
+        if context.get('restore_flag'):
+            # UF-1830: TODO: Create a message to remove the reference of the PO on the partner instance!!!!! to make sure that the PO does not link to a wrong SO in this instance
+            return "Backup-Restore: The backup procedure cannot create the SO from a PO. Please inform the owner of the PO " + po_info.name + " to cancel it and to recreate a new process."
+
         context['no_check_line'] = True
         po_dict = po_info.to_dict()
         so_po_common = self.pool.get('so.po.common')
@@ -139,6 +143,7 @@ class sale_order_sync(osv.osv):
         so_po_common = self.pool.get('so.po.common')
         so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
         if not so_id and context.get('restore_flag'):
+            # UF-1830: TODO: Create a message to remove the reference of the PO on the partner instance!!!!! to make sure that the PO does not link to a wrong SO in this instance
             return "Backup-Restore: the original FO " + po_info.partner_ref + " has been created after the backup and thus cannot be updated"
         
         ref = self.browse(cr, uid, so_id).client_order_ref

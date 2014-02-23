@@ -92,6 +92,12 @@ class purchase_order_sync(osv.osv):
         context['no_check_line'] = True
         so_po_common = self.pool.get('so.po.common')
         po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
+        
+        if not po_id and context.get('restore_flag'):
+            # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
+            # use the so_info.name
+            return "Backup-Restore: the original PO " + so_info.name + " has been created after the backup and thus cannot be updated"
+        
         po_value = self.browse(cr, uid, po_id)
         
         ref = po_value.partner_ref
@@ -119,6 +125,13 @@ class purchase_order_sync(osv.osv):
         
         so_dict = so_info.to_dict()
         so_po_common = self.pool.get('so.po.common')
+        
+        
+        # UF-1830: TODO: DO NOT CREATE ANYTHING FROM A RESTORE CASE!
+        if context.get('restore_flag'):
+            # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
+            # use the so_info.name
+            return "Backup-Restore: The backup procedure cannot create the PO. Please inform the owner of the SO " + so_info.name + " to cancel it and to recreate a new process."
         
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
@@ -245,6 +258,11 @@ class purchase_order_sync(osv.osv):
         if partner_type == 'section':
             raise Exception, "Sorry, the push low is not available for intersection partner! " + source
         
+        # UF-1830: TODO: DO NOT CREATE ANYTHING FROM A RESTORE CASE!
+        if context.get('restore_flag'):
+            # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
+            return "Backup-Restore: The backup procedure cannot create the PO. Please inform the owner of the SO " + so_info.name + " to cancel it and to recreate a new process."
+        
         so_dict = so_info.to_dict()
         
         header_result = {}
@@ -329,6 +347,13 @@ class purchase_order_sync(osv.osv):
         
         so_dict = so_info.to_dict()
         po_id = self.check_update(cr, uid, source, so_dict)
+        
+        # UF-1830: TODO: if the PO does not exist in the system, just warn that the message is failed to be executed, and create a message to the partner 
+        if not po_id and context.get('restore_flag'):
+            # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
+            # use the so_info.name
+            return "Backup-Restore: the original PO " + so_info.name + " has been created after the backup and thus cannot be updated"
+        
         self.check_mandatory_fields(cr, uid, so_dict)
 
         so_po_common = self.pool.get('so.po.common')
@@ -374,6 +399,14 @@ class purchase_order_sync(osv.osv):
 
         so_po_common = self.pool.get('so.po.common')
         po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
+        
+        
+        # UF-1830: TODO: if the PO does not exist in the system, just warn that the message is failed to be executed, and create a message to the partner 
+        if not po_id and context.get('restore_flag'):
+            # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
+            # use the so_info.name
+            return "Backup-Restore: the original PO " + so_info.name + " has been created after the backup and thus cannot be updated"
+        
         so_dict = so_info.to_dict()
         
         header_result = {}
@@ -424,6 +457,14 @@ class purchase_order_sync(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         so_po_common = self.pool.get('so.po.common')
         po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
+        
+        # UF-1830: TODO: if the PO does not exist in the system, just warn that the message is failed to be executed, and create a message to the partner 
+        if not po_id and context.get('restore_flag'):
+            # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
+            # use the so_info.name
+            return "Backup-Restore: the original PO " + so_info.name + " has been created after the backup and thus cannot be updated"
+        
+        
         self.write(cr, uid, po_id, {'from_sync': True}, context)
         # Cancel the PO
         wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_cancel', cr)

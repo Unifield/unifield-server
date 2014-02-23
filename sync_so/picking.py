@@ -179,6 +179,14 @@ class stock_picking(osv.osv):
         # Look for the PO name, which has the reference to the FO on Coordo as source.out_info.origin
         so_ref = source + "." + pick_dict['origin']
         po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
+        
+        # UF-1830: Check if the PO exist, if not, and in restore mode, send a warning and create a message to remove the ref on the partner document 
+        if not po_id and context.get('restore_flag'):
+            # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
+            # use the so_info.name
+            return "Backup-Restore: the original PO " + so_info.name + " has been created after the backup and thus cannot be updated"
+        
+        
         po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
         
         # prepare the shipment/OUT reference to update to IN 
@@ -351,6 +359,13 @@ class stock_picking(osv.osv):
         # Look for the PO name, which has the reference to the FO on Coordo as source.out_info.origin
         so_ref = source + "." + pick_dict['origin']
         po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
+        
+        # UF-1830: TODO: if the PO does not exist in the system, just warn that the message is failed to be executed, and create a message to the partner 
+        if not po_id and context.get('restore_flag'):
+            # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
+            # use the so_info.name
+            return "Backup-Restore: the original PO " + so_info.name + " has been created after the backup and thus cannot be updated"
+        
         if po_id:
             # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
             in_id = so_po_common.get_in_id_from_po_id(cr, uid, po_id, context)
@@ -470,6 +485,9 @@ class stock_picking(osv.osv):
         if 'SHIP' in out_doc_name:
             shipment_obj = self.pool.get('shipment')
             ship_ids = shipment_obj.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'done')], context=context)
+            
+            # UF-1830: TODO: what to do with this ship in restore mode? 
+            
             if ship_ids:
                 # set the Shipment to become delivered
                 context['InShipOut'] = "" # ask the PACK object not to log (model stock.picking), because it is logged in SHIP
@@ -491,12 +509,15 @@ class stock_picking(osv.osv):
                 ship_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'delivered')], context=context)
                 if ship_ids:
                     message = "The OUTcoming " + out_doc_name + " has been MANUALLY confirmed as delivered." 
-
+                    
         if message:
             self._logger.info(message)
             return message
 
         message = "Something goes wrong with this message and no confirmation of delivery"
+        
+        # UF-1830: precise the error message for restore mode 
+        
         self._logger.info(message)
         raise Exception(message)
 
