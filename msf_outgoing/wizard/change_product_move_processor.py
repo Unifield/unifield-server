@@ -126,7 +126,8 @@ class change_product_move_processor(osv.osv_memory):
                     _('Error !'),
                     _('You must select a new product and specify a reason.'),
                 )
-                
+            
+            # Put the treatment at stock.move.processor side
             line_model.change_product(cr, uid, wiz.processor_line_id, wiz.change_reason, wiz.new_product_id.id, context=context)
         
         return self.return_to_wizard(cr, uid, ids, context=context)

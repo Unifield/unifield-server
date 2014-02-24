@@ -21,7 +21,7 @@
 
 import picking_processor
 import incoming_shipment
-import change_product
+import change_product_move_processor
 
 import create_picking
 import split_memory_move
