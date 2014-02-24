@@ -282,7 +282,8 @@ class analytic_line(osv.osv):
         # Default behaviour
         res = super(analytic_line, self).create(cr, uid, vals, context=context)
         # Check date
-        self._check_date(cr, uid, vals, context=context)
+        self._check_date(cr, uid, vals, context=context)     
+
         # Check soft/hard closed contract
         sql = """SELECT fcc.id
         FROM financing_contract_funding_pool_line fcfpl, account_analytic_account a, financing_contract_format fcf, financing_contract_contract fcc
