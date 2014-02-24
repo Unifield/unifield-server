@@ -950,13 +950,18 @@ class stock_move_processor(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        change_wiz_id = wiz_obj.create(cr, uid, {'move_id': ids[0]}, context=context)
+        change_wiz_id = wiz_obj.create(cr, uid, {
+            'processor_line_id': ids[0],
+            'processor_type': self._name,
+        }, context=context)
 
         return {
             'type': 'ir.actions.act_window',
             'res_model': wiz_obj._name,
             'view_type': 'form',
             'view_mode': 'form',
+            'nodestroy': True,
+            'target': 'new',
             'res_id': change_wiz_id,
             'context': context,
         }
@@ -966,18 +971,22 @@ class stock_move_processor(osv.osv):
         Open the split line wizard: the user can select the quantity for the new move
         """
         # Objects
-        wiz_obj = self.pool.get('split.memory.move')
+        wiz_obj = self.pool.get('split.move.processing')
 
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        split_wiz_id = wiz_obj.create(cr, uid, {'move_id': ids[0]}, context=context)
+        split_wiz_id = wiz_obj.create(cr, uid, {
+            'processor_line_id': ids[0],
+            'processor_type': self._name,
+        }, context=context)
 
         return {
             'type': 'ir.actions.act_window',
             'res_model': wiz_obj._name,
             'view_type': 'form',
             'view_mode': 'form',
+            'nodestroy': True,
             'target': 'new',
             'res_id': split_wiz_id,
             'context': context,
