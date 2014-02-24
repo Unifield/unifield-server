@@ -97,47 +97,5 @@
             </field>
         </record>
 
-        <record id="stock_incoming_processor_form_view" model="ir.ui.view">
-            <field name="name">stock.incoming.processor.form.view</field>
-            <field name="model">stock.incoming.processor</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock_picking_processor_form_view" />
-            <field name="arch" type="xml">
-                
-                <xpath expr="//button[@name='uncopy_all']" position="after">
-                    <field name="contains_dg" invisible="1" />
-                    <field name="contains_kc" invisible="1" />
-                    <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', False), ('contains_kc', '=', False)]}">
-                        <label string="You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure."
-                               colspan="4" />
-                    </group>
-                    <group colspan="4" attrs="{'invisible': ['|', ('contains_kc', '=', False), '&amp;', ('contains_kc', '=', True), ('contains_dg', '=', True)]}">
-                        <label string="You receive heat sensitive products, please refer to the appropriate procedure."
-                               colspan="4" />
-                    </group>
-                    <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', False), '&amp;', ('contains_dg', '=', True), ('contains_kc', '=', True)]}">
-                        <label string="You receive heat dangerous goods products, please refer to the appropriate procedure."
-                               colspan="4" />
-                    </group>
-                    <group name="import_file_lines" string="Import Lines" colspan="4">
-                        <button name="launch_simulation" string="Import IN" icon="gtk-execute" colspan="1" type="object" />
-                    </group>
-                </xpath>
-                
-                <xpath expr="/form/group[@name='actions']/label" position="replace">
-                    <field name="dest_type"
-                           on_change="onchange_dest_type(dest_type, picking_id)"
-                    />
-                    <field name="direct_incoming"
-                           attrs="{'invisible': [('dest_type', 'not in', ['default', 'to_stock'])]}"
-                    />
-                </xpath>
-                
-                <xpath expr="//button[@string='Process']" position="attributes">
-                    <attribute name="name">do_incoming_shipment</attribute>
-                </xpath>
-            </field>
-        </record>
-
     </data>
 </openerp>
