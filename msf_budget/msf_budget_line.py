@@ -158,12 +158,10 @@ class msf_budget_line(osv.osv):
         if 'percentage' in field_names:
             budget_ok = True
             actual_ok = True
-            commitment_ok = True
             percentage_ok = True
         if 'balance'in field_names:
             budget_ok = True
             actual_ok = True
-            commitment_ok = True
             balance_ok = True
         # In some cases (reports) we don't want to display commitment values. But we have to include them into "balance" and percentage computation.
         if 'commitment' in context:
@@ -206,9 +204,7 @@ class msf_budget_line(osv.osv):
                 criteria = self._get_domain(line_type, account_id, cost_center_ids, destination_id, date_start, date_stop)
                 # fill in ACTUAL AMOUNTS
                 if actual_ok:
-                    actual_criteria = list(criteria)
-                    if commitment_ok:
-                        actual_criteria += [('journal_id.type', '!=', 'engagement')]
+                    actual_criteria = list(criteria) + [('journal_id.type', '!=', 'engagement')]
                     ana_ids = ana_obj.search(cr, uid, actual_criteria)
                     if ana_ids:
                         cr.execute(sql2, (tuple(ana_ids),))
@@ -246,11 +242,16 @@ class msf_budget_line(osv.osv):
                 budget_amount = line_id in budget_amounts and budget_amounts[line_id] or 0.0
                 res[line_id].update({'budget_amount': budget_amount,})
             if balance_ok:
-                balance = budget_amount - actual_amount - comm_amount
+                balance = budget_amount - actual_amount
+                if commitment_ok:
+                    balance -= comm_amount
                 res[line_id].update({'balance': balance,})
             if percentage_ok:
                 if budget_amount != 0.0:
-                    percentage = round((actual_amount + comm_amount) / budget_amount * 100.0)
+                    base = actual_amount
+                    if commitment_ok:
+                        base += comm_amount
+                    percentage = round(base / budget_amount * 100.0)
                     res[line_id].update({'percentage': percentage,})
         return res
 
