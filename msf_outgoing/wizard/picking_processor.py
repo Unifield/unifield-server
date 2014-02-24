@@ -181,6 +181,28 @@ class stock_picking_processor(osv.osv):
             'context': context,
         }
 
+    def create_lines(self, cr, uid, ids, context=None):
+        """
+        For each moves in the linked stock picking, create
+        a line in the wizard
+        """
+        if context is None:
+            context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        for wizard in self.browse(cr, uid, ids, context=context):
+            line_obj = self.pool.get(wizard._columns['move_ids']._obj)
+            for move in wizard.picking_id.move_lines:
+                if move.state in ('done', 'cancel', 'confirmed') or  move.product_qty == 0.00 :
+                    continue
+                
+                line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
+                line_obj.create(cr, uid, line_data, context=context)
+        
+        return True
+
 stock_picking_processor()
 
 
@@ -384,7 +406,6 @@ class stock_move_processor(osv.osv):
             relation='product.product',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
-                #'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Expected product to receive",
@@ -402,7 +423,6 @@ class stock_move_processor(osv.osv):
             type='float',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
-                #'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Expected quantity to receive",
@@ -423,7 +443,6 @@ class stock_move_processor(osv.osv):
             relation='product.uom',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
-                #'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Expected UoM to receive",
@@ -437,7 +456,6 @@ class stock_move_processor(osv.osv):
             relation='product.uom.categ',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
-                #'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Category of the expected UoM to receive",
@@ -451,7 +469,6 @@ class stock_move_processor(osv.osv):
             relation='stock.location',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
-                #'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Source location of the move",
@@ -464,7 +481,6 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
-                #'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             multi='move_info',
@@ -482,11 +498,6 @@ class stock_move_processor(osv.osv):
                     ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date'],
                     20
                 ),
-                #'stock.move.in.processor': (
-                #    lambda self, cr, uid, ids, c=None: ids,
-                #    ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date'],
-                #    20
-                #),
             },
             readonly=True,
             help="Integrity status (e.g: check if a batch is set for a line with a batch mandatory product...)",
@@ -499,7 +510,6 @@ class stock_move_processor(osv.osv):
             size=32,
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
-                #'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Return the type of the picking",
@@ -512,7 +522,6 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
-                #'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -525,7 +534,6 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
-                #'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -538,7 +546,6 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
-                #'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -551,7 +558,6 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
-                #'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -564,7 +570,6 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
-                #'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -577,7 +582,6 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
-                #'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -590,7 +594,6 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
-                #'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -603,7 +606,6 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
-                #'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -695,6 +697,37 @@ class stock_move_processor(osv.osv):
         """
         vals = self._fill_expiry_date(cr, uid, vals.get('prodlot_id', False), vals.get('expiry_date', False), vals=vals, context=context)
         return super(stock_move_processor, self).write(cr, uid, ids, vals, context=context)
+        
+    def _get_line_data(self, cr, uid, wizard=False, move=False, context=None):
+        """
+        Return line data according to wizard, move and context
+        """
+        if not wizard:
+            raise osv.except_osv(
+                _('Error'),
+                _('No wizard found')
+            )
+            
+        if not move:
+            raise osv.except_osv(
+                _('Error'),
+                _('No move found')
+            )
+        
+        line_data = {
+            'wizard_id': wizard.id,
+            'move_id': move.id,
+            'product_id': move.product_id.id,
+            'uom_id': move.product_uom.id,
+            'line_number': move.line_number,
+            'asset_id': move.asset_id and move.asset_id.id,
+            'composition_list_id': move.composition_list_id and move.composition_list_id.id,
+            'prodlot_id': move.prodlot_id and move.prodlot_id.id,
+            'cost': move.price_unit,
+            'currency': move.price_currency_id.id,
+        }
+        
+        return line_data
 
     def split(self, cr, uid, ids, new_qty=0.00, uom_id=False, context=None):
         """
@@ -951,153 +984,5 @@ class stock_move_processor(osv.osv):
         }
 
 stock_move_processor()
-
-
-class stock_incoming_processor(osv.osv):
-    """
-    Incoming shipment processing wizard
-    """
-    _name = 'stock.incoming.processor'
-    _inherit = 'stock.picking.processor'
-    _description = 'Wizard to process an incoming shipment'
-    
-    _columns = {
-        'move_ids': fields.one2many(
-            'stock.move.in.processor',
-            'wizard_id',
-            string='Moves',
-        ),
-        'dest_type': fields.selection([
-            ('to_cross_docking', 'To Cross Docking'),
-            ('to_stock', 'To Stock'),
-            ('default', 'Other Types'),
-            ],
-            string='Destination Type',
-            readonly=False,
-            help="The default value is the one set on each stock move line.",
-        ),
-        'source_type': fields.selection([
-            ('from_cross_docking', 'From Cross Docking'),
-            ('from_stock', 'From stock'),
-            ('default', 'Default'),
-            ],
-            string='Source Type',
-            readonly=False,
-        ),
-        'direct_incoming': fields.boolean(
-            string='Direct to Stock ?',
-        ),
-    }
-
-    _defaults = {
-        'dest_type': 'default',
-    }
-    
-    # Models methods
-    def _get_prodlot_from_expiry_date(self, cr, uid, expiry_date, product_id, context=None):
-        """
-        Search if an internal batch exists in the system with this expiry date.
-        If no, create the batch. 
-        """
-        # Objects
-        lot_obj = self.pool.get('stock.production.lot')
-        seq_obj = self.pool.get('ir.sequence')
-        
-        # Double check to find the corresponding batch
-        lot_ids = lot_obj.search(cr, uid, [
-                            ('life_date', '=', expiry_date),
-                            ('type', '=', 'internal'),
-                            ('product_id', '=', product_id),
-                            ], context=context)
-                            
-        # No batch found, create a new one
-        if not lot_ids:
-            vals = {
-                'product_id': product_id,
-                'life_date': expiry_date,
-                'name': seq_obj.get(cr, uid, 'stock.lot.serial'),
-                'type': 'internal',
-            }
-            lot_id = lot_obj.create(cr, uid, vals, context)
-        else:
-            lot_id = lot_ids[0]
-            
-        return lot_id
-        
-    def do_incoming_shipment(self, cr, uid, ids, context=None):
-        """
-        Made some integrity check on lines and run the do_incoming_shipment of stock.picking
-        """
-        # Objects
-        in_proc_obj = self.pool.get('stock.move.in.processor')
-        picking_obj = self.pool.get('stock.picking')
-        
-        process_data = {}
-        picking_ids = []
-        to_unlink = []
-        
-        for proc in self.browse(cr, uid, ids, context=context):
-            process_data.setdefault(proc.picking_id.id, [])
-            picking_ids.append(proc.picking_id.id)
-            total_qty = 0.00
-            
-            for line in proc.move_ids:
-                # if no quantity, don't process the move
-                if not line.quantity:
-                    to_unlink.append(line.id)
-                    continue
-                
-                total_qty += line.quantity
-                
-                if line.exp_check \
-                   and not line.lot_check \
-                   and not line.prodlot_id \
-                   and line.expiry_date:
-                    if line.check_type == 'in':
-                        prodlot_id = self._get_prodlot_from_expiry_date(cr, uid, line.expiry_date, context=context)
-                        in_proc_obj.write(cr, uid, [line.id], {'prodlot_id': prodlot_id}, context=context)
-                    else:
-                        # Should not be reached thanks to UI checks
-                        raise osv.except_osv(
-                            _('Error !'),
-                            _('No Batch Number with Expiry Date for Expiry Date Mandatory and not Incoming Shipment should not happen. Please hold...')
-                        )
-                
-            if not total_qty:
-                raise osv.except_osv(
-                    _('Processing Error'),
-                    _("You have to enter the quantities you want to process before processing the move")
-                )
-
-        if to_unlink:
-            in_proc_obj.unlink(cr, uid, to_unlink, context=context)
-            
-        return picking_obj.do_incoming_shipment_new(cr, uid, ids, context=context)
-    
-stock_incoming_processor()
-
-
-class stock_move_in_processor(osv.osv):
-    """
-    Incoming moves processing wizard
-    """
-    _name = 'stock.move.in.processor'
-    _inherit = 'stock.move.processor'
-    _description = 'Wizard lines for incoming shipment processing'
-
-    _columns = {
-        # Parent wizard
-        'wizard_id': fields.many2one(
-            'stock.incoming.processor',
-            string='Wizard',
-            required=True,
-            readonly=True,
-            select=True,
-            ondelete='cascade',
-        ),
-        'state': fields.char(size=32, string='State', readonly=True),
-    }
-    
-stock_move_in_processor()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

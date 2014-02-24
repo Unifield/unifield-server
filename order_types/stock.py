@@ -191,17 +191,7 @@ class stock_picking(osv.osv):
         '''
         for pick in self.browse(cr, uid, ids, context=context):
             proc_id = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': pick.id})
-            for move in pick.move_lines:
-                move_data = {
-                    'wizard_id': proc_id,
-                    'move_id': move.id,
-                    'product_id': move.product_id.id,
-                    'uom_id': move.product_uom.id,
-                    'line_number': move.line_number,
-                    'cost': move.price_unit,
-                    'currency': move.price_currency_id.id,
-                }
-                self.pool.get('stock.move.in.processor').create(cr, uid, move_data)
+            self.pool.get('stock.incoming.processor').create_lines(cr, uid, proc_id, context=context)
             
             return {
                'type': 'ir.actions.act_window',

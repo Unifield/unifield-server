@@ -20,6 +20,7 @@
 ##############################################################################
 
 import picking_processor
+import incoming_shipment
 
 import create_picking
 import split_memory_move
