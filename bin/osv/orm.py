@@ -1630,6 +1630,11 @@ class orm_template(object):
         model = True
         sql_res = False
         parent_view_model = None
+        inherit_models = [self._name]
+        if hasattr(self, '_inherit'):
+            inherit_models.extend([x for x in self._inherit.split(',') if x not in inherit_models])
+        inherit_models = tuple(inherit_models)
+        apply_models = []
         while ok:
             view_ref = context.get(view_type + '_view_ref', False)
             if view_ref and not view_id:
@@ -1644,20 +1649,25 @@ class orm_template(object):
                 query = "SELECT arch,name,field_parent,id,type,inherit_id,model FROM ir_ui_view WHERE id=%s"
                 params = (view_id,)
                 if model:
-                    query += " AND model=%s"
+                    query += " AND model = %s"
                     params += (self._name,)
                 cr.execute(query, params)
+                sql_res = cr.fetchone()
             else:
-                cr.execute('''SELECT
-                        arch,name,field_parent,id,type,inherit_id,model
-                    FROM
-                        ir_ui_view
-                    WHERE
-                        model=%s AND
-                        type=%s AND
-                        inherit_id IS NULL
-                    ORDER BY priority''', (self._name, view_type))
-            sql_res = cr.fetchone()
+                for model in inherit_models:
+                    apply_models.append(model)
+                    cr.execute('''SELECT
+                            arch,name,field_parent,id,type,inherit_id,model
+                        FROM
+                            ir_ui_view
+                        WHERE
+                            model = %s AND
+                            type=%s AND
+                            inherit_id IS NULL
+                        ORDER BY priority''', (model, view_type))
+                    sql_res = cr.fetchone()
+                    if sql_res:
+                        break
 
             if not sql_res:
                 break
@@ -1673,13 +1683,16 @@ class orm_template(object):
             result['view_id'] = sql_res[3]
             result['arch'] = sql_res[0]
 
+            # Reverse the search on models to apply view inheritance in a good way
+            apply_models.reverse()
             def _inherit_apply_rec(result, inherit_id):
-                # get all views which inherit from (ie modify) this view
-                cr.execute('select arch,id from ir_ui_view where inherit_id=%s and model=%s order by priority', (inherit_id, self._name))
-                sql_inherit = cr.fetchall()
-                for (inherit, id) in sql_inherit:
-                    result = _inherit_apply(result, inherit, id)
-                    result = _inherit_apply_rec(result, id)
+                for model in apply_models:
+                    # get all views which inherit from (ie modify) this view
+                    cr.execute('select arch,id from ir_ui_view where inherit_id=%s and model IN %s order by priority', (inherit_id, inherit_models))
+                    sql_inherit = cr.fetchall()
+                    for (inherit, id) in sql_inherit:
+                        result = _inherit_apply(result, inherit, id)
+                        result = _inherit_apply_rec(result, id)
                 return result
 
             inherit_result = etree.fromstring(encode(result['arch']))
