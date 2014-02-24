@@ -3766,6 +3766,14 @@ class orm(orm_template):
 
         done = []
 
+        # Call the _store_get_values() for parent object
+        inherit_obj = []
+        if hasattr(self, '_inherit') and isinstance(self._inherit, str):
+            inherit_obj = [self._inherit]
+        for inherit in inherit_obj:
+            for r in self.pool.get(inherit)._store_get_values(cr, uid, ids, keys, context):
+                if r[1] == self._name:
+                    result.append(r)
         result += self._store_get_values(cr, uid, ids, keys, context)
         result.sort()
         for order, object, ids, fields2 in result:
@@ -3961,6 +3969,7 @@ class orm(orm_template):
         # e.g.: http://pastie.org/1222060
         result = {}
         fncts = self.pool._store_function.get(self._name, [])
+            
         for fnct in range(len(fncts)):
             if fncts[fnct][3]:
                 ok = False
