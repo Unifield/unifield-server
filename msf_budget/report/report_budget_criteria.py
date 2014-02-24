@@ -43,16 +43,18 @@ class report_budget_actual_2(report_sxw.rml_parse):
             'getEndMonth': self.getEndMonth,
             'getDateStop': self.getDateStop,
             'getCostCenters': self.getCostCenters,
+            'process': self.process,
+            'getAccountName': self.getAccountName,
         })
         return
 
     def getF2(self,line):
-        if int(line.budget_amount) == 0:
+        if int(line['budget_amount']) == 0:
             return ''
         return '=(+RC[-2])/RC[-3]'
 
     def getF1(self,line):
-        if int(line.budget_amount) == 0:
+        if int(line['budget_amount']) == 0:
             return ''
         return '=(RC[-3]+RC[-2])/RC[-4]'
 
@@ -140,7 +142,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
         if context is None:
             context = {}
         # Prepare some values
-        line_type = line.line_type
+        line_type = line.get('line_type', '')
         res = []
 
         ###################
@@ -152,15 +154,16 @@ class report_budget_actual_2(report_sxw.rml_parse):
         # Construct conditions to fetch right analytic lines
         sql_conditions = ""
         sql_conditions_params = []
+        account_id = line.get('account_id', [False])[0]
         if line_type == 'destination':
             sql_conditions += """ AND aal.destination_id = %s """
-            sql_conditions_params.append(line.destination_id.id)
+            sql_conditions_params.append(line.get('destination_id', [False])[0])
         if line_type in ['destination', 'normal']:
             sql_conditions += """ AND aal.general_account_id = %s """
-            sql_conditions_params.append(line.account_id.id)
+            sql_conditions_params.append(account_id)
         else:
             sql_conditions += """ AND aal.general_account_id IN %s """
-            sql_conditions_params.append(tuple(self.pool.get('account.account').search(self.cr, self.uid, [('parent_id', 'child_of', line.account_id.id)]),))
+            sql_conditions_params.append(tuple(self.pool.get('account.account').search(self.cr, self.uid, [('parent_id', 'child_of', account_id)]),))
         # Prepare main SQL request
         if add_commitment:
             sql = """SELECT date_part('month', aal.date) AS month, CASE WHEN j.type != 'engagement' THEN 'other' ELSE j.type END AS type, ROUND(COALESCE(SUM(aal.amount), 0), 0)
@@ -197,19 +200,19 @@ class report_budget_actual_2(report_sxw.rml_parse):
             else:
                 journal_type = 'other' # because this information is not in result
                 month_nb, month_amount = analytic
-            if month_nb in result:
+            # As we have either actual amount or commitment one, we change key regarding this
+            key = 'actual'
+            if journal_type == 'engagement':
+                key = 'commitment'
+            if int(month_nb) in result:
                 result[int(month_nb)].update({
-                    'commitment': journal_type == 'engagement' and month_amount or 0.0,
-                    'actual': journal_type != 'engagement' and month_amount*-1 or 0.0,
+                    key: month_amount*-1 or 0.0,
                 })
             else:
-                result.update({
-                    int(month_nb): {
+                result[int(month_nb)] = {
                         'budget': getattr(line, 'month' + str(int(month_nb)), 0.0),
-                        'commitment': journal_type == 'engagement' and month_amount or 0.0,
-                        'actual': journal_type != 'engagement' and month_amount*-1 or 0.0,
-                    },
-                })
+                        key: month_amount*-1 or 0.0,
+                    }
         # Prepare month allocations by using previous analytics result and adding missing values
         for x in xrange(1, end_month + 1, 1):
             if x not in result:
@@ -227,6 +230,48 @@ class report_budget_actual_2(report_sxw.rml_parse):
             commitment = amounts.get('commitment', 0.0)
             actual = amounts.get('actual', 0.0)
             res.append([budget, commitment, actual])
+        return res
+
+    def getAccountName(self, name):
+        """
+        Do a separation between accont code and account name
+        """
+        res = ''
+        if name:
+            split = name.split(' ')
+            if len(split) and len(split) > 1:
+                res = ' '.join(split[1:])
+        return res
+
+    def process(self, budget_line_ids, add_commitment=False):
+        """
+        Permit to process all lines in one transaction to improve report generation.
+        """
+        # Some checks
+        if not budget_line_ids:
+            return {}, {}
+        # Prepare some values
+        res = {}
+        context = {}
+        ids = [x.id for x in budget_line_ids]
+        fields = [
+            'account_code',
+            'name',
+            'account_id',
+            'destination_id',
+            'budget_amount',
+            'actual_amount',
+            'line_type',
+        ]
+        # Update fields with commitment amount if add_commitment is True
+        if add_commitment:
+            fields.append('comm_amount')
+            context.update({'commitment': True})
+        # Fetch line values
+        line_vals = self.pool.get('msf.budget.line').read(self.cr, self.uid, ids, fields, context=context)
+        if not line_vals:
+            return {}, {}
+        res = sorted(line_vals, key=lambda x: (x.get('account_code', ''), x.get('line_type', '')))
         return res
 
 SpreadsheetReport('report.budget.criteria.2','msf.budget','addons/msf_budget/report/budget_criteria_xls.mako', parser=report_budget_actual_2)

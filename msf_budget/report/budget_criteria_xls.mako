@@ -516,13 +516,13 @@
   <Cell ss:StyleID="s33"><Data ss:Type="String">${_('Total Percentage')}</Data></Cell>
 </Row>
 
-% for line in o.budget_line_ids:
+% for line in process(o.budget_line_ids, is_comm):
 <Row>
-  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( line.account_code )|x}</Data></Cell>
+  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( line['account_code'] )|x}</Data></Cell>
 % if granularityCode == 'all':
-  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( line.destination_id and line.destination_id.code )|x}</Data></Cell>
+  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( 'destination_id' in line and line['destination_id'] and line['destination_id'][1] or '' )|x}</Data></Cell>
 % endif
-  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( line.account_id.name )|x}</Data></Cell>
+  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( 'name' in line and getAccountName(line['name']) or '' )|x}</Data></Cell>
 % if by_month:
   % for monthAllocation in getMonthAllocation(line, cost_center_ids, date_start, date_stop, end_month, is_comm, context):
   <Cell ss:StyleID="s86"><Data ss:Type="Number">${( monthAllocation[0] )|x}</Data></Cell>
@@ -532,11 +532,11 @@
     <Cell ss:StyleID="s87"><Data ss:Type="Number">${( monthAllocation[2] )|x}</Data></Cell>
   % endfor
 % endif
-  <Cell ss:StyleID="s86"><Data ss:Type="Number">${( line.budget_amount )|x}</Data></Cell>
+  <Cell ss:StyleID="s86"><Data ss:Type="Number">${( line['budget_amount'] )|x}</Data></Cell>
 % if is_comm:
-  <Cell ss:StyleID="s68"><Data ss:Type="Number">${( line.comm_amount )|x}</Data></Cell>
+  <Cell ss:StyleID="s68"><Data ss:Type="Number">${( line['comm_amount'] )|x}</Data></Cell>
 % endif
-  <Cell ss:StyleID="s87"><Data ss:Type="Number">${( line.actual_amount )|x}</Data></Cell>
+  <Cell ss:StyleID="s87"><Data ss:Type="Number">${( line['actual_amount'] )|x}</Data></Cell>
 % if is_comm:
   <Cell ss:StyleID="s39" ss:Formula="=+RC[-3]-RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
   <Cell ss:StyleID="s41" ss:Formula="${( getF1(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
