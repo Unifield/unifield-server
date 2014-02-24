@@ -67,7 +67,7 @@
         string="Actuals by CC"
         model="msf.budget"
         name="msf.budget.actual"
-        target_filename="Actuals by CC_${code}_ %(year)s%(month)s%(day)s"
+        target_filename="Actuals by CC_${code}_%(year)s%(month)s%(day)s"
         report_type="txt"
         auto="False"
         menu="False"/>
