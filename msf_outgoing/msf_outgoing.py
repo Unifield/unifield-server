@@ -2513,6 +2513,15 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'create.picking.processor',
+            'res_id': ids[0],
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+        }
+        
         # data
         name = _("Create Picking Ticket")
         model = 'create.picking'

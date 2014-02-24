@@ -24,6 +24,49 @@ from tools.translate import _
 import time
 import netsvc
 
+
+class create_picking_processor(osv.osv):
+    """
+    Create picking processing wizard
+    """
+    _name = 'create.picking.processor'
+    _inherit = 'stock.picking.processor'
+    _description = 'Wizard to process the first step of the Pick/Pack/Ship'
+
+    _columns = {
+        'move_ids': fields.one2many(
+            'create.picking.move.processor',
+            'wizard_id',
+            string='Moves',
+        ),
+    }
+
+create_picking_processor()
+
+
+class create_picking_move_processor(osv.osv):
+    """
+    Create picking moves processing wizard
+    """
+    _name = 'create.picking.move.processor'
+    _inherit = 'stock.move.processor'
+    _description = 'Wizard lines for create picking processor'
+    
+    _columns = {
+        # Parent wizard
+        'wizard_id': fields.many2one(
+            'create.picking.processor',
+            string='Wizard',
+            required=True,
+            readonly=True,
+            select=True,
+            ondelete='cascade',
+        ),
+    }
+    
+create_picking_move_processor()
+
+
 class create_picking(osv.osv_memory):
     _name = "create.picking"
     _description = "Create Picking"

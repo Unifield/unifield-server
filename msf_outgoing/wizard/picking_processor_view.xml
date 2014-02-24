@@ -2,15 +2,14 @@
 <openerp>
     <data>
 
-        <record id="stock_incoming_processor_form_view" model="ir.ui.view">
-            <field name="name">stock.incoming.processor.form.view</field>
-            <field name="model">stock.incoming.processor</field>
+        <record id="stock_picking_processor_form_view" model="ir.ui.view">
+            <field name="name">stock.picking.processor.form.view</field>
+            <field name="model">stock.picking.processor</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Products to Process">
                     <field name="date" invisible="1" 
                         />
-                    <separator colspan="4" string="Update lines" />
                     <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all" />
                     <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all" />
                     <separator colspan="4" string="Move lines" />
@@ -19,15 +18,14 @@
                     <separator string="Actions" colspan="4" />
                     <label colspan="2"> </label>
                     <button special="cancel" string="Cancel" icon="gtk-cancel" />
-                    <button name="do_incoming_shipment" type="object" string="Process" icon="gtk-go-forward" />
+                    <button name="do_partial" type="object" string="Process" icon="gtk-go-forward" />
                 </form>
             </field>
         </record>
         
-        
-        <record id="stock_move_in_processor_tree_view" model="ir.ui.view">
-            <field name="name">stock.move.in.processor.tree.view</field>
-            <field name="model">stock.move.in.processor</field>
+        <record id="stock_move_processor_tree_view" model="ir.ui.view">
+            <field name="name">stock.move.processor.tree.view</field>
+            <field name="model">stock.move.processor</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Moves"
@@ -52,7 +50,6 @@
                             string="Change Product"
                             attrs="{'invisible': [('type_check', '!=', 'in')]}"
                             />
-                    <!--
                     <field name="asset_id"
                            domain="[('product_id', '=', product_id)]"
                            attrs="{'readonly': [('asset_check', '=', False)], 'required': [('location_supplier_customer_mem_out', '=', True), ('asset_check', '=', True)]}"
@@ -61,7 +58,6 @@
                            domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real')]"
                            attrs="{'readonly': [('kit_check', '=', False)]}"
                            />
-                    -->
                     <field name="ordered_quantity" />
                     <field name="ordered_uom_id" />
                     <field name="quantity"
@@ -96,6 +92,36 @@
                     <field name="currency" />
                     <field name="integrity_status" string="" />
                 </tree>
+            </field>
+        </record>
+
+        <record id="stock_incoming_processor_form_view" model="ir.ui.view">
+            <field name="name">stock.incoming.processor.form.view</field>
+            <field name="model">stock.incoming.processor</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock_picking_processor_form_view" />
+            <field name="arch" type="xml">
+                
+                <xpath expr="//button[@name='uncopy_all']" position="after">
+                    <field name="contains_dg" invisible="1" />
+                    <field name="contains_kc" invisible="1" />
+                    <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', False), ('contains_kc', '=', False)]}">
+                        <label string="You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure."
+                               colspan="4" />
+                    </group>
+                    <group colspan="4" attrs="{'invisible': ['|', ('contains_kc', '=', False), '&amp;', ('contains_kc', '=', True), ('contains_dg', '=', True)]}">
+                        <label string="You receive heat sensitive products, please refer to the appropriate procedure."
+                               colspan="4" />
+                    </group>
+                    <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', False), '&amp;', ('contains_dg', '=', True), ('contains_kc', '=', True)]}">
+                        <label string="You receive heat dangerous goods products, please refer to the appropriate procedure."
+                               colspan="4" />
+                    </group>
+                </xpath>
+                
+                <xpath expr="//button[@string='Process']" position="attributes">
+                    <attribute name="name">do_incoming_shipment</attribute>
+                </xpath>
             </field>
         </record>
 
