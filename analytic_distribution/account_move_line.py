@@ -152,15 +152,7 @@ class account_move_line(osv.osv):
             line_distrib_id = (obj_line.get('analytic_distribution_id', False) and obj_line.get('analytic_distribution_id')[0]) or (move.get('analytic_distribution_id', False) and move.get('analytic_distribution_id')[0]) or False
             # When you create a journal entry manually, we should not have analytic lines if ONE line is invalid!
             other_lines_are_ok = True
-            sql = """
-                SELECT COUNT(ml.id)
-                FROM account_move_line AS ml, account_move AS m
-                WHERE ml.move_id = m.id
-                AND m.id = %s
-                AND m.status = 'manu'
-                AND ml.state != 'valid';"""
-            cr.execute(sql, (move.get('id', 0),))
-            result = cr.fetchall()
+            result = self.search(cr, uid, [('move_id', '=', move.get('status', False)), ('move_id.status', '=', 'manu'), ('state', '!=', 'valid')], count=1)
             if result and result > 0 and move.get('status', False) == 'manu':
                 other_lines_are_ok = False
             # Check that line have analytic-a-holic account and have a distribution
