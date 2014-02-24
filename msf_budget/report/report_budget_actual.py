@@ -68,7 +68,7 @@ class report_budget_actual(report_sxw.report_sxw):
             actual_domain = [('journal_id', 'not in', engagement_journal_ids + accrual_journal_ids)]
             
             # Cost Center
-            cost_center_ids = pool.get('msf.budget.tools')._get_cost_center_ids(cost_center)
+            cost_center_ids = pool.get('msf.budget.tools')._get_cost_center_ids(cr, uid, cost_center)
             general_domain = [('cost_center_id', 'in', cost_center_ids)]
             # Dates
             general_domain.append(('date', '>=', fiscalyear.date_start))

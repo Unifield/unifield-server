@@ -75,8 +75,8 @@ class msf_budget_tools(osv.osv):
             actual_amounts[account_destination_tuple[0], False] = result
         return
 
-    def _get_cost_center_ids(self, browse_cost_center):
-        return self.pool.get('account.analytic.account').search(self.cr, self.uid, [('parent_id', 'child_of', browse_cost_center.id)])
+    def _get_cost_center_ids(self, cr, uid, browse_cost_center):
+        return self.pool.get('account.analytic.account').search(cr, uid, [('parent_id', 'child_of', browse_cost_center.id)])
 
     def _create_account_destination_domain(self, account_destination_list):
         if len(account_destination_list) == 0:
