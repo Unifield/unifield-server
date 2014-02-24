@@ -1688,7 +1688,7 @@ class orm_template(object):
             def _inherit_apply_rec(result, inherit_id):
                 for model in apply_models:
                     # get all views which inherit from (ie modify) this view
-                    cr.execute('select arch,id from ir_ui_view where inherit_id=%s and model IN %s order by priority', (inherit_id, inherit_models))
+                    cr.execute('select arch,id from ir_ui_view where inherit_id=%s and model = %s order by priority', (inherit_id, model))
                     sql_inherit = cr.fetchall()
                     for (inherit, id) in sql_inherit:
                         result = _inherit_apply(result, inherit, id)
