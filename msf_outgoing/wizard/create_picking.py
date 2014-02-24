@@ -82,16 +82,16 @@ class create_picking(osv.osv_memory):
         create = self.browse(cr, uid, ids[0], context=context)
         if create.product_moves_picking:
             for move in create.product_moves_picking:
-                self.pool.get('stock.move.memory.picking').write(cr, uid, [move.id], {'quantity': move.quantity_ordered})
+                self.pool.get('stock.move.memory.picking').write(cr, uid, [move.id], {'quantity': move.ordered_quantity})
         if create.product_moves_ppl:
             for move in create.product_moves_ppl:
-                self.pool.get('stock.move.memory.ppl').write(cr, uid, [move.id], {'quantity': move.quantity_ordered})
+                self.pool.get('stock.move.memory.ppl').write(cr, uid, [move.id], {'quantity': move.ordered_quantity})
         if create.product_moves_families:
             for move in create.product_moves_families:
-                self.pool.get('stock.move.memory.families').write(cr, uid, [move.id], {'quantity': move.quantity_ordered})
+                self.pool.get('stock.move.memory.families').write(cr, uid, [move.id], {'quantity': move.ordered_quantity})
         if create.product_moves_returnproducts:
             for move in create.product_moves_returnproducts:
-                self.pool.get('stock.move.memory.returnproducts').write(cr, uid, [move.id], {'quantity': move.quantity_ordered})
+                self.pool.get('stock.move.memory.returnproducts').write(cr, uid, [move.id], {'quantity': move.ordered_quantity})
         return self.pool.get('wizard').open_wizard(cr, uid, [ids[0]], type='update', context=context)
 
     def default_get(self, cr, uid, fields, context=None):
@@ -165,7 +165,7 @@ class create_picking(osv.osv_memory):
                 'product_id' : move.product_id.id,
                 'asset_id': move.asset_id.id, 
                 'composition_list_id': move.composition_list_id.id,
-                'quantity_ordered' : move.product_qty,
+                'ordered_quantity' : move.product_qty,
                 'uom_ordered': move.product_uom.id,
                 'product_uom' : move.product_uom.id, 
                 'prodlot_id' : move.prodlot_id.id, 
@@ -338,10 +338,10 @@ class create_picking(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids, context=context):
             for line in wiz.product_moves_picking:
                 # get the qty from the corresponding stock move
-                original_qty = line.quantity_ordered
+                original_qty = line.ordered_quantity
                 line.write({'quantity':original_qty,}, context=context)
             for line in wiz.product_moves_returnproducts:
-                line.write({'qty_to_return':line.quantity_ordered,}, context=context)
+                line.write({'qty_to_return':line.ordered_quantity,}, context=context)
         # update the current wizard
         return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
         
@@ -398,7 +398,7 @@ class create_picking(osv.osv_memory):
                     .setdefault(move.to_pack, {}) \
                     .setdefault(move.move_id.id, []).append({'memory_move_id': move.id,
                                                              'product_id': move.product_id.id,
-                                                             'product_qty': move.quantity_ordered,
+                                                             'product_qty': move.ordered_quantity,
                                                              'product_uom': move.product_uom.id,
                                                              'prodlot_id': move.prodlot_id.id,
                                                              'asset_id': move.asset_id.id,
@@ -823,7 +823,7 @@ class create_picking(osv.osv_memory):
                 if move.qty_to_return:
                     partial_datas[pick.id][move.move_id.id] = {'memory_move_id': move.id,
                                                                'product_id': move.product_id.id,
-                                                               'product_qty': move.quantity_ordered,
+                                                               'product_qty': move.ordered_quantity,
                                                                'product_uom': move.product_uom.id,
                                                                'prodlot_id': move.prodlot_id.id,
                                                                'asset_id': move.asset_id.id,

@@ -213,6 +213,7 @@ class stock_move_processor(osv.osv):
     _name = 'stock.move.processor'
     _description = 'Wizard line to process a move'
     _rec_name = 'line_number'
+    _order = 'line_number'
 
     def _get_move_info(self, cr, uid, ids, field_name, args, context=None):
         """
@@ -247,7 +248,6 @@ class stock_move_processor(osv.osv):
 
             res[line.id] = {
                 'ordered_product_id': line.move_id.product_id.id,
-                'ordered_quantity': line.move_id.product_qty,
                 'ordered_uom_id': line.move_id.product_uom.id,
                 'ordered_uom_category': line.move_id.product_uom.category_id.id,
                 'location_id': line.move_id.location_id.id,
@@ -416,17 +416,11 @@ class stock_move_processor(osv.osv):
             digits_compute=dp.get_precision('Product UoM'),
             required=True,
         ),
-        'ordered_quantity': fields.function(
-            _get_move_info,
-            method=True,
+        'ordered_quantity': fields.float(
             string='Ordered quantity',
-            type='float',
-            store={
-                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
-            },
-            readonly=True,
+            digits_compute=dp.get_precision('Product UoM'),
+            required=True,
             help="Expected quantity to receive",
-            multi='move_info',
         ),
         'uom_id': fields.many2one(
             'product.uom',
@@ -718,6 +712,7 @@ class stock_move_processor(osv.osv):
             'wizard_id': wizard.id,
             'move_id': move.id,
             'product_id': move.product_id.id,
+            'ordered_quantity': move.product_qty,
             'uom_id': move.product_uom.id,
             'line_number': move.line_number,
             'asset_id': move.asset_id and move.asset_id.id,
@@ -752,25 +747,25 @@ class stock_move_processor(osv.osv):
         pick_wiz_id = False
         for line in self.browse(cr, uid, ids, context=context):
             pick_wiz_id = line.wizard_id.id
-            if new_qty > line.quantity_ordered:
+            if new_qty > line.ordered_quantity:
                 # Cannot select more than initial quantity
                 raise osv.except_osv(
                     _('Error'),
                     _('Selected quantity (%0.1f %s) exceeds the initial quantity (%0.1f %s)') %
-                    (new_qty, line.uom_id.name, line.quantity_ordered, line.uom_id.name),
+                    (new_qty, line.uom_id.name, line.ordered_quantity, line.uom_id.name),
                 )
-            elif new_qty == line.quantity_ordered:
+            elif new_qty == line.ordered_quantity:
                 # Cannot select more than initial quantity
                 raise osv.except_osv(
                     _('Error'),
                     _('Selected quantity (%0.1f %s) cannot be equal to the initial quantity (%0.1f %s)') %
-                    (new_qty, line.uom_id.name, line.quantity_ordered, line.uom_id.name),
+                    (new_qty, line.uom_id.name, line.ordered_quantity, line.uom_id.name),
                 )
 
-            update_qty = line.quantity_ordered - new_qty
+            update_qty = line.ordered_quantity - new_qty
             wr_vals = {
                 'quantity': line.quantity > update_qty and update_qty or line.quantity,
-                'quantity_ordered': update_qty,
+                'ordered_quantity': update_qty,
             }
             self._update_split_wr_vals(vals=wr_vals)  # w/o overriding, just return wr_vals
             self.write(cr, uid, [line.id], wr_vals, context=context)
@@ -778,19 +773,12 @@ class stock_move_processor(osv.osv):
             # Create a copy of the move_processor with the new quantity
             cp_vals = {
                 'quantity': 0.00,
-                'quantity_ordered': new_qty,
+                'ordered_quantity': new_qty,
             }
             self._update_split_cp_vals(vals=cp_vals)  # w/o overriding, just return cp_vals
             self.copy(cr, uid, line.id, cp_vals, context=context)
 
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'stock.picking.processor',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_id': pick_wiz_id,
-            'context': context,
-        }
+        return pick_wiz_id
 
     def change_product(self, cr, uid, ids, change_reason='', product_id=False, context=None):
         """
@@ -820,14 +808,7 @@ class stock_move_processor(osv.osv):
 
         pick_wiz_id = self.read(cr, uid, ids[0], ['wizard_id'], context=context)['wizard_id']
 
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'stock.picking.processor',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_id': pick_wiz_id[0],
-            'context': context,
-        }
+        return pick_wiz_id
 
     """
     Controller methods
@@ -971,7 +952,7 @@ class stock_move_processor(osv.osv):
         Open the split line wizard: the user can select the quantity for the new move
         """
         # Objects
-        wiz_obj = self.pool.get('split.move.processing')
+        wiz_obj = self.pool.get('split.move.processor')
 
         if isinstance(ids, (int, long)):
             ids = [ids]

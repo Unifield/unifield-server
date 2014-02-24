@@ -23,19 +23,22 @@ from osv import fields
 from osv import osv
 from tools.translate import _
 
+import decimal_precision as dp
 
-class change_product_move_processor(osv.osv_memory):
-    _name = 'change.product.move.processor'
-    _description = 'Wizard to switch products on picking processor lines'
+
+class split_move_processor(osv.osv_memory):
+    _name = 'split.move.processor'
+    _description = 'Wizard to split processor lines'
     
     _columns = {
         'processor_line_id': fields.integer(string='ID of the processor line', required=True),
         'processor_type': fields.char(size=256, string='Model of the processor line', required=True),
-        'old_product_id': fields.many2one('product.product', string='Present Product', readonly=True),
-        'old_uom_id': fields.many2one('product.uom', 'Restricted UoM', readonly=True),
-        'old_uom_category_id': fields.many2one('product.uom.categ', 'Restricted UoM Category', readonly=True),
-        'new_product_id': fields.many2one('product.product', string='New Product'),
-        'change_reason': fields.char(string='Change Reason', size=1024),
+        'quantity': fields.float('Quantity',digits_compute=dp.get_precision('Product UOM')),
+        'uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
+    }
+    
+    _defaults = {
+        'quantity': 0.00,
     }
     
     """
@@ -47,15 +50,10 @@ class change_product_move_processor(osv.osv_memory):
         """
         if vals.get('processor_line_id', False) and vals.get('processor_type', False):
             line = self.pool.get(vals.get('processor_type')).browse(cr, uid, vals.get('processor_line_id'), context=context)
-            if not vals.get('old_product_id'):
-                vals['old_product_id'] = line.product_id.id
-            if not vals.get('old_uom_id'):
-                vals.update({
-                    'old_uom_id': line.uom_id.id,
-                    'old_uom_category_id': line.uom_id.category_id.id,
-                })
+            if not vals.get('uom_id'):
+                vals['uom_id'] = line.uom_id.id
 
-        return super(change_product_move_processor, self).create(cr, uid, vals, context=context)
+        return super(split_move_processor, self).create(cr, uid, vals, context=context)
     
     """
     Controller methods
@@ -98,7 +96,7 @@ class change_product_move_processor(osv.osv_memory):
         """
         return self.return_to_wizard(cr, uid, ids, context=context)
 
-    def change_product(self, cr, uid, ids, context=None):
+    def split(self, cr, uid, ids, context=None):
         """
         Switch from old product to new product or from old UoM to new UoM
         """
@@ -116,11 +114,17 @@ class change_product_move_processor(osv.osv_memory):
             line_model = self.pool.get(wiz.processor_type)
             
             # Put the treatment at stock.move.processor side
-            line_model.change_product(cr, uid, wiz.processor_line_id, wiz.change_reason, wiz.new_product_id.id, context=context)
+            line_model.split(cr, uid, wiz.processor_line_id, wiz.quantity, wiz.uom_id.id, context=context)
         
         return self.return_to_wizard(cr, uid, ids, context=context)
     
-change_product_move_processor()
+    def change_uom(self, cr, uid, ids, uom_id, qty):
+        '''
+        Check the round of the qty according to the UoM
+        '''
+        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'quantity')
+    
+split_move_processor()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

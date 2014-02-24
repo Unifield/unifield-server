@@ -58,6 +58,7 @@
         'wizard/picking_processor_view.xml',
         'wizard/incoming_shipment_view.xml',
         'wizard/change_product_move_processor_view.xml',
+        'wizard/split_move_processor_view.xml',
         'wizard/create_picking_view.xml',
         'msf_outgoing_report.xml',
         'msf_outgoing_workflow.xml',
