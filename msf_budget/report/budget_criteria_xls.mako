@@ -426,6 +426,8 @@
 <% is_comm = isComm() %>
 <% by_month = byMonth() %>
 <% end_month = getEndMonth() %>
+<% currency_table = currencyTable() %>
+<% company_currency = companyCurrency() %>
 
 % for o in objects:
 <ss:Worksheet ss:Name="${sheet_name(o.name and o.name.split('/')[-1])|x}">
@@ -434,7 +436,7 @@
 <% date_start = o.fiscalyear_id.date_start %>
 <% date_stop = getDateStop(o.fiscalyear_id.date_stop) %>
 <% granularity = getGranularity() %>
-<% granularityCode = getGranularityCode() %>
+<% granularity_code = getGranularityCode() %>
 
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="0" ss:Width="100.5"/>
@@ -492,7 +494,7 @@
 
 <Row ss:AutoFitHeight="0" ss:Height="24" ss:StyleID="s26">
   <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Account Code')}</Data></Cell>
-% if granularityCode == 'all':
+% if granularity_code == 'all':
   <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Destination')}</Data></Cell>
 % endif
   <Cell ss:StyleID="s75"><Data ss:Type="String">${_('Account Desc')}</Data></Cell>
@@ -516,15 +518,15 @@
   <Cell ss:StyleID="s33"><Data ss:Type="String">${_('Total Percentage')}</Data></Cell>
 </Row>
 
-% for line in process(o.budget_line_ids, is_comm):
+% for line in process(o.budget_line_ids, is_comm, currency_table):
 <Row>
   <Cell ss:StyleID="s76a"><Data ss:Type="String">${( line['account_code'] )|x}</Data></Cell>
-% if granularityCode == 'all':
+% if granularity_code == 'all':
   <Cell ss:StyleID="s76a"><Data ss:Type="String">${( 'destination_id' in line and line['destination_id'] and line['destination_id'][1] or '' )|x}</Data></Cell>
 % endif
   <Cell ss:StyleID="s76a"><Data ss:Type="String">${( 'name' in line and getAccountName(line['name']) or '' )|x}</Data></Cell>
 % if by_month:
-  % for monthAllocation in getMonthAllocation(line, cost_center_ids, date_start, date_stop, end_month, is_comm, context):
+  % for monthAllocation in getMonthAllocation(line, cost_center_ids, date_start, date_stop, end_month, company_currency, is_comm, currency_table, context):
   <Cell ss:StyleID="s86"><Data ss:Type="Number">${( monthAllocation[0] )|x}</Data></Cell>
     % if is_comm:
       <Cell ss:StyleID="s68"><Data ss:Type="Number">${( monthAllocation[1] )|x}</Data></Cell>
@@ -551,7 +553,7 @@
 
 <Row>
   <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-% if granularityCode == 'all':
+% if granularity_code == 'all':
   <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
 % endif
   <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>

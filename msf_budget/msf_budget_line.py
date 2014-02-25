@@ -20,7 +20,6 @@
 ##############################################################################
 
 from osv import fields, osv
-import datetime
 from dateutil.relativedelta import relativedelta
 
 # Overloading the one2many.get for budget lines to filter regarding context.
@@ -110,6 +109,29 @@ class msf_budget_line(osv.osv):
             res.append(('general_account_id', 'child_of', account_id))
         return res
 
+    def _get_sql_domain(self, cr, uid, request, params, line_type, account_id, destination_id):
+        """
+        Create a SQL domain regarding budget line elements (to be used in a SQL request).
+        Return a 2 params:
+          - SQL request
+          - SQL params (list)
+        """
+        if not request:
+            request = ""
+        if not params:
+            params = []
+        if line_type == 'destination':
+            request += """ AND destination_id = %s """
+            params.append(destination_id)
+        if line_type in ['destination', 'normal']:
+            request += """ AND general_account_id = %s """
+            params.append(account_id)
+        else:
+            request += """ AND general_account_id IN %s """
+            account_ids = self.pool.get('account.account').search(cr, uid, [('parent_id', 'child_of', account_id)])
+            params.append(tuple(account_ids))
+        return request, params
+
     def _get_amounts(self, cr, uid, ids, field_names=None, arg=None, context=None):
         """
         Those field can be asked for:
@@ -121,7 +143,9 @@ class msf_budget_line(osv.osv):
           - percentage needs actual_amount, comm_amount, balance and budget_amount
           - balance needs actual_amount, comm_amount and budget_amount
 
-        NB: if 'period_id' in context, we change date_stop for SQL request to the date_stop of the given period to reduce computation.
+        NB:
+          - if 'period_id' in context, we change date_stop for SQL request to the date_stop of the given period to reduce computation
+          - if 'currency_table_id' in context, we compute actual amounts (and commitment ones) currency by currency
         """
         # Some checks
         if context is None:
@@ -138,6 +162,7 @@ class msf_budget_line(osv.osv):
         budget_amounts = {}
         actual_amounts = {}
         comm_amounts = {}
+        cur_obj = self.pool.get('res.currency')
         # If period_id in context, use another date_stop element.
         date_period_stop = False
         month_number = 12
@@ -147,6 +172,13 @@ class msf_budget_line(osv.osv):
                 date_period_stop = period.get('date_stop')
             if period and period.get('number', False):
                 month_number = period.get('number')
+        # Check if we need to use another currency_table_id
+        other_currencies = False
+        date_context = {}
+        company_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        if context.get('currency_table_id', False):
+            other_currencies = True
+            date_context.update({'currency_table_id': context.get('currency_table_id')})
         # Check in which case we are regarding field names. Compute actual and commitment when we need balance and/or percentage.
         if 'budget_amount' in field_names:
             budget_ok = True
@@ -181,46 +213,93 @@ class msf_budget_line(osv.osv):
                     comm_amounts.setdefault(index, 0.0)
             # Now, only use 'destination' line to do process and complete parent one at the same time
             sql = """
-                SELECT l.id, l.line_type, l.account_id, l.destination_id, b.cost_center_id, b.currency_id, f.date_start, f.date_stop
+                SELECT l.id, l.line_type, l.account_id, l.destination_id, b.cost_center_id, f.date_start, f.date_stop
                 FROM msf_budget_line AS l, msf_budget AS b, account_fiscalyear AS f
                 WHERE l.budget_id = b.id
                 AND b.fiscalyear_id = f.id
                 AND l.id IN %s
-                ORDER BY l.line_type, l.id;
-            """
+                ORDER BY l.line_type, l.id"""
             cr.execute(sql, (tuple(ids),))
             # Prepare SQL2 request that contains sum of amount of given analytic lines (in functional currency)
             sql2 = """
                 SELECT SUM(amount)
                 FROM account_analytic_line
-                WHERE id in %s;"""
+                WHERE id in %s"""
+            # Prepare SQL3 request in case we have other currencies to compute
+            sql3 = """
+                SELECT l.currency_id, SUM(l.amount_currency)
+                FROM account_analytic_line AS l, account_analytic_journal AS j
+                WHERE l.journal_id = j.id
+                AND l.cost_center_id IN %s
+                AND l.date >= %s
+                AND l.date <= %s"""
+            sql3_end = """ GROUP BY l.currency_id"""
             # Process destination lines
             for line in cr.fetchall():
                 # fetch some values
-                line_id, line_type, account_id, destination_id, cost_center_id, currency_id, date_start, date_stop = line
+                line_id, line_type, account_id, destination_id, cost_center_id, date_start, date_stop = line
                 cost_center_ids = ana_account_obj.search(cr, uid, [('parent_id', 'child_of', cost_center_id)])
                 if date_period_stop:
                     date_stop = date_period_stop
                 criteria = self._get_domain(line_type, account_id, cost_center_ids, destination_id, date_start, date_stop)
-                # fill in ACTUAL AMOUNTS
-                if actual_ok:
-                    actual_criteria = list(criteria) + [('journal_id.type', '!=', 'engagement')]
-                    ana_ids = ana_obj.search(cr, uid, actual_criteria)
-                    if ana_ids:
-                        cr.execute(sql2, (tuple(ana_ids),))
-                        mnt_result = cr.fetchall()
-                        if mnt_result:
-                                actual_amounts[line_id] += mnt_result[0][0] * -1
-                # fill in COMMITMENT AMOUNTS
-                if commitment_ok:
-                    commitment_criteria = list(criteria) + [('journal_id.type', '=', 'engagement')]
-                    ana_ids = ana_obj.search(cr, uid, commitment_criteria)
-                    if ana_ids:
-                        cr.execute(sql2, (tuple(ana_ids),))
-                        mnt_result = cr.fetchall()
-                        if mnt_result:
-                            comm_amounts[line_id] += mnt_result[0][0] * -1
+                # TWO METHODS to display actual/commitments
+                # (1) Either we use functional amounts (no currency_table)
+                # (2) Or we use a currency table to change amounts to functional amounts at fiscalyear date_stop
+                if not other_currencies:
+                    # (1) Use functional amounts: NO conversion
+                    # fill in ACTUAL AMOUNTS
+                    if actual_ok:
+                        actual_criteria = list(criteria) + [('journal_id.type', '!=', 'engagement')]
+                        ana_ids = ana_obj.search(cr, uid, actual_criteria)
+                        if ana_ids:
+                            cr.execute(sql2, (tuple(ana_ids),))
+                            mnt_result = cr.fetchall()
+                            if mnt_result:
+                                    actual_amounts[line_id] += mnt_result[0][0] * -1
+                    # fill in COMMITMENT AMOUNTS
+                    if commitment_ok:
+                        commitment_criteria = list(criteria) + [('journal_id.type', '=', 'engagement')]
+                        ana_ids = ana_obj.search(cr, uid, commitment_criteria)
+                        if ana_ids:
+                            cr.execute(sql2, (tuple(ana_ids),))
+                            mnt_result = cr.fetchall()
+                            if mnt_result:
+                                comm_amounts[line_id] += mnt_result[0][0] * -1
+                else:
+                    # (2) OTHER CURRENCIES to compute
+                    # Note that to not compute each analytic lines we use the sum of each currency and convert it to the functional currency using the given currency_table_id in the context
+                    tmp_sql_params = [tuple(cost_center_ids), date_start, date_stop]
+                    tmp_sql, sql_params = self._get_sql_domain(cr, uid, sql3, tmp_sql_params, line_type, account_id, destination_id)
+                    # Use fiscalyear end date as date on which we do conversion
+                    date_context.update({'date': date_stop})
 
+                    def get_amounts_and_compute_total(local_request, local_params, local_end_request):
+                        """
+                        Use request.
+                        Finish it with local_end_request.
+                        Execute it.
+                        Fetch amounts.
+                        Compute them by currency.
+                        Return total result
+                        """
+                        total = 0.0
+                        if local_end_request:
+                            local_request += local_end_request
+                        cr.execute(local_request, tuple(local_params))
+                        if cr.rowcount:
+                            analytic_amounts = cr.fetchall()
+                            # Browse each currency amount and convert it to the functional currency (company one)
+                            for currency_id, amount in analytic_amounts:
+                                tmp_amount = cur_obj.compute(cr, uid, currency_id, company_currency_id, amount, round=False, context=date_context)
+                                total += (tmp_amount * -1) # As analytic amounts are negative, we should use the opposite to make budget with positive values
+                        return total
+
+                    if actual_ok:
+                        actual_sql = tmp_sql + """ AND j.type != 'engagement' """
+                        actual_amounts[line_id] += get_amounts_and_compute_total(actual_sql, sql_params, sql3_end)
+                    if commitment_ok:
+                        commitment_sql = tmp_sql + """ AND j.type = 'engagement' """
+                        comm_amounts[line_id] += get_amounts_and_compute_total(commitment_sql, sql_params, sql3_end)
         # Budget line amounts
         if budget_ok:
             month_names = self._get_month_names(month_number)

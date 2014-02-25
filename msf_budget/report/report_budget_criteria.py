@@ -43,8 +43,10 @@ class report_budget_actual_2(report_sxw.rml_parse):
             'getEndMonth': self.getEndMonth,
             'getDateStop': self.getDateStop,
             'getCostCenters': self.getCostCenters,
+            'companyCurrency': self.getCompanyCurrency,
             'process': self.process,
             'getAccountName': self.getAccountName,
+            'currencyTable': self.getCurrencyTable,
         })
         return
 
@@ -95,6 +97,11 @@ class report_budget_actual_2(report_sxw.rml_parse):
                 res = _('Parent Accounts only')
         return res
 
+    def getCurrencyTable(self,):
+        parameters = self.localcontext.get('data', {}).get('form', {})
+        res = parameters.get('currency_table_id', False)
+        return res
+
     def getGranularityCode(self,):
         res = 'all'
         parameters = self.localcontext.get('data', {}).get('form', {})
@@ -134,7 +141,13 @@ class report_budget_actual_2(report_sxw.rml_parse):
         """
         return self.pool.get('account.analytic.account').search(self.cr, self.uid, [('parent_id', 'child_of', cost_center_id)])
 
-    def getMonthAllocation(self, line, cost_center_ids, date_start, date_stop, end_month, add_commitment=False, context=None):
+    def getCompanyCurrency(self):
+        """
+        Fetch company currency
+        """
+        return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.currency_id.id
+
+    def getMonthAllocation(self, line, cost_center_ids, date_start, date_stop, end_month, company_currency, add_commitment=False, currency_table=False, context=None):
         """
         Get analytic allocation for the given budget_line 
         """
@@ -144,13 +157,8 @@ class report_budget_actual_2(report_sxw.rml_parse):
         # Prepare some values
         line_type = line.get('line_type', '')
         res = []
-
-        ###################
-        #
-        # FIXME: check if currency_table_id is in context for changing amounts
-        #
-        ###################
-
+        date_context = {'date': date_stop, 'currency_table_id': currency_table}
+        cur_obj = self.pool.get('res.currency')
         # Construct conditions to fetch right analytic lines
         sql_conditions = ""
         sql_conditions_params = []
@@ -166,7 +174,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
             sql_conditions_params.append(tuple(self.pool.get('account.account').search(self.cr, self.uid, [('parent_id', 'child_of', account_id)]),))
         # Prepare main SQL request
         if add_commitment:
-            sql = """SELECT date_part('month', aal.date) AS month, CASE WHEN j.type != 'engagement' THEN 'other' ELSE j.type END AS type, ROUND(COALESCE(SUM(aal.amount), 0), 0)
+            sql = """SELECT aal.currency_id, date_part('month', aal.date) AS month, CASE WHEN j.type != 'engagement' THEN 'other' ELSE j.type END AS type, ROUND(COALESCE(SUM(aal.amount), 0), 0), COALESCE(SUM(aal.amount_currency), 0)
                 FROM account_analytic_line AS aal, account_analytic_journal AS j
                 WHERE aal.journal_id = j.id
                 AND aal.cost_center_id IN %s
@@ -174,9 +182,9 @@ class report_budget_actual_2(report_sxw.rml_parse):
                 AND aal.date <= %s
             """
             # PARAMS (sql): cost_center_ids, date_start, date_stop
-            sql_end = """ GROUP BY month, type ORDER BY month"""
+            sql_end = """ GROUP BY aal.currency_id, month, type ORDER BY month"""
         else:
-            sql = """SELECT date_part('month', aal.date) AS month, ROUND(COALESCE(SUM(aal.amount), 0), 0)
+            sql = """SELECT aal.currency_id, date_part('month', aal.date) AS month, ROUND(COALESCE(SUM(aal.amount), 0), 0), COALESCE(SUM(aal.amount_currency), 0)
                 FROM account_analytic_line AS aal, account_analytic_journal AS j
                 WHERE aal.journal_id = j.id
                 AND j.type != 'engagement'
@@ -185,33 +193,40 @@ class report_budget_actual_2(report_sxw.rml_parse):
                 AND aal.date <= %s
             """
             # PARAMS (sql): cost_center_ids, date_start, date_stop
-            sql_end = """ GROUP BY month ORDER BY month"""
+            sql_end = """ GROUP BY aal.currency_id, month ORDER BY month"""
         # Do sql request
         request = sql + sql_conditions + sql_end
         params = [tuple(cost_center_ids), '%s' % date_start, '%s' % date_stop] + sql_conditions_params
-        self.cr.execute(request, params) # Will return a list of tuple: (month_number, journal_type, value)
-        #+ If not add_commitment, we have a list of tuple as: (month_number, value)
+        self.cr.execute(request, params) # Will return a list of tuple: (currency_id, month_number, journal_type, value, booking_value)
+        #+ If not add_commitment, we have a list of tuple as: (currency_id, month_number, value, booking_value)
         analytics = self.cr.fetchall()
         # Create a dict with analytics result
         result = {}
         for analytic in analytics:
             if add_commitment:
-                month_nb, journal_type, month_amount = analytic
+                currency_id, month_nb, journal_type, month_amount, booking_amount = analytic
             else:
                 journal_type = 'other' # because this information is not in result
-                month_nb, month_amount = analytic
+                currency_id, month_nb, month_amount, booking_amount = analytic
             # As we have either actual amount or commitment one, we change key regarding this
             key = 'actual'
             if journal_type == 'engagement':
                 key = 'commitment'
+            line_amount = month_amount*-1 or 0.0
+            # Compute amount regarding functional currency
+            if currency_table and currency_id != company_currency:
+                line_amount = cur_obj.compute(self.cr, self.uid, currency_id, company_currency, booking_amount*-1, round=False, context=date_context)
             if int(month_nb) in result:
+                # Use previous amount to increment it (and do not loose previous one)
+                if key in result[int(month_nb)]:
+                    line_amount += result[int(month_nb)][key]
                 result[int(month_nb)].update({
-                    key: month_amount*-1 or 0.0,
+                    key: line_amount or 0.0,
                 })
             else:
                 result[int(month_nb)] = {
                         'budget': getattr(line, 'month' + str(int(month_nb)), 0.0),
-                        key: month_amount*-1 or 0.0,
+                        key: line_amount or 0.0,
                     }
         # Prepare month allocations by using previous analytics result and adding missing values
         for x in xrange(1, end_month + 1, 1):
@@ -243,7 +258,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
                 res = ' '.join(split[1:])
         return res
 
-    def process(self, budget_line_ids, add_commitment=False):
+    def process(self, budget_line_ids, add_commitment=False, currency_table=False):
         """
         Permit to process all lines in one transaction to improve report generation.
         """
@@ -267,6 +282,8 @@ class report_budget_actual_2(report_sxw.rml_parse):
         if add_commitment:
             fields.append('comm_amount')
             context.update({'commitment': True})
+        if currency_table:
+            context.update({'currency_table_id': currency_table})
         # Fetch line values
         line_vals = self.pool.get('msf.budget.line').read(self.cr, self.uid, ids, fields, context=context)
         if not line_vals:
