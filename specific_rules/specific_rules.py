@@ -32,6 +32,7 @@ import time
 import logging
 
 from mx import DateTime
+import operator
 
 # warning messages
 SHORT_SHELF_LIFE_MESS = 'Product with Short Shelf Life, check the accuracy of the order quantity, frequency and mode of transport.'
@@ -1723,6 +1724,16 @@ class stock_inventory_line(osv.osv):
 
 stock_inventory_line()
 
+
+RSI_TOTAL_FILTER_OPERATOR = {
+    '<': 'lt',
+    '<=': 'le',
+    '=': 'eq',
+    '!=': 'ne',
+    '<>': 'ne',
+    '>': 'gt',
+    '>=': 'ge',
+}
 class report_stock_inventory(osv.osv):
     '''
     UF-565: add group by expired_date
@@ -1811,9 +1822,39 @@ CREATE OR REPLACE view report_stock_inventory AS (
         '''
         UF-1546: This method is to remove the lines that have quantity = 0 from the list view
         '''
+        
+        """UTP-582: we parse domain to get 'product_qty' in it
+        this filter must be applied in total and not in stock move line
+        so we do not inject it in read_group but post use it in res
+        (we remove it from domain even if not supported operators 'in', 'not in')
+        [('state', '=', 'done'), ('location_type', '=', 'internal'), (u'product_qty', u'<', 100)]
+        """
+        product_qty_tuple = False
+        if domain:
+            product_qty_found_tuple = False
+            for domain_tuple in domain:
+                if domain_tuple[0] == 'product_qty':
+                    # product qty filter found
+                    product_qty_found_tuple = domain_tuple
+                    product_qty_tuple = tuple(product_qty_found_tuple)
+            if product_qty_found_tuple:
+                domain.remove(product_qty_found_tuple)
+        
         res = super(report_stock_inventory, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
+        
+        # UTP-582: product qty filter (default with != 0.0)
+        if not product_qty_tuple:
+            product_qty_tuple = ('product_qty', '!=', 0.0)
+        product_qty_op_fct = False
+        if product_qty_tuple[1] in RSI_TOTAL_FILTER_OPERATOR:
+            # valid operator found
+            product_qty_op_fct = getattr(operator, RSI_TOTAL_FILTER_OPERATOR[product_qty_tuple[1]])
+        if not product_qty_op_fct:
+            product_qty_tuple = ('product_qty', '!=', 0.0)
+            product_qty_op_fct = getattr(operator, 'ne')
+        
         if self._name == 'report.stock.inventory' and res:
-             return [data for data in res if data.get('product_qty', 10) != 0.0]
+             return [data for data in res if product_qty_op_fct(data.get(product_qty_tuple[0], 10), product_qty_tuple[2])]
         return res
     
 report_stock_inventory()
