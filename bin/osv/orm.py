@@ -2490,7 +2490,14 @@ class orm(orm_template):
                 data2.append(d2)
                 
             data = data2
-                     
+        elif context.get('client_export_data') and context.get('group_by_no_leaf'):
+            # UTP-580-582-697 no 'FALSE' export grouped cell for a m2o with no rel
+            for d in data:
+                for f in d:
+                    if f in self._columns and \
+                        self._columns[f]._type == 'many2one' \
+                        and not d.get(f):
+                        d[f] = _('Undefined')
 
         for d in data:
             gb_list = []
