@@ -2507,123 +2507,146 @@ class stock_picking(osv.osv):
     
     def create_picking(self, cr, uid, ids, context=None):
         '''
-        open the wizard to create (partial) picking tickets
+        Open the wizard to create (partial) picking tickets
         '''
-        # we need the context for the wizard switch
-        if context is None:
-            context = {}
+        # Objects
+        proc_obj = self.pool.get('create.picking.processor')
+            
+        processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
+        proc_obj.create_lines(cr, uid, processor_id, context=context)
         
         return {
             'type': 'ir.actions.act_window',
-            'res_model': 'create.picking.processor',
-            'res_id': ids[0],
+            'res_model': proc_obj._name,
+            'res_id': processor_id,
             'view_type': 'form',
             'view_mode': 'form',
             'target': 'new',
         }
-        
-        # data
-        name = _("Create Picking Ticket")
-        model = 'create.picking'
-        step = 'create'
-        wiz_obj = self.pool.get('wizard')
-        # open the selected wizard
-        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
 
-    def do_create_picking_first_hook(self, cr, uid, ids, context, *args, **kwargs):
+    def do_create_picking(self, cr, uid, proc_ids, context=None):
         '''
-        hook to update new_move data. Originally: to complete msf_cross_docking module
+        Create the picking ticket from selected stock moves
         '''
-        values = kwargs.get('values')
-        assert values is not None, 'missing defaults'
-        
-        return values
-
-    def do_create_picking(self, cr, uid, ids, context=None):
-        '''
-        create the picking ticket from selected stock moves
-        '''
-        start = time.time()
-        if not context:
-            context = {}
-        assert context, 'context is not defined'
-        assert 'partial_datas' in context, 'partial datas not present in context'
-        partial_datas = context['partial_datas']
-        
-        # stock move object
+        # Objects
         move_obj = self.pool.get('stock.move')
         uom_obj = self.pool.get('product.uom')
+        cp_proc_obj = self.pool.get('create.picking.processor')
         
-        for pick in self.browse(cr, uid, ids, context=context):
-            # create the new picking object
-            # a sequence for each draft picking ticket is used for the picking ticket
-            sequence = pick.sequence_id
+        if context is None:
+            context = {}
+
+        if isinstance(proc_ids, (int, long)):
+            proc_ids = [proc_ids]
+            
+        if not proc_ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No Picking Ticket to process !')
+            )
+        
+        for wizard in cp_proc_obj.browse(cr, uid, proc_ids, context=context):
+            picking = wizard.picking_id
+
+            move_data = {}
+            
+            # Create the new picking object
+            # A sequence for each draft picking ticket is used for the picking ticket
+            sequence = picking.sequence_id
             ticket_number = sequence.get_id(code_or_id='id', context=context)
-            context['wkf_copy'] = True
-            new_pick_id = self.copy(cr, uid, pick.id, {'name': (pick.name or 'NoName/000') + '-' + ticket_number,
-                                                       'backorder_id': pick.id,
-                                                       'move_lines': []}, context=dict(context, allow_copy=True,))
-            # create stock moves corresponding to partial datas
+            
+            copy_data = {
+                'name': '%s-%s' % (picking.name or 'NoName/000', ticket_number),
+                'backorder_id': picking.id,
+                'move_lines': [],
+            }
+            
+            tmp_allow_copy = context.get('allow_copy')
+            context.update({
+                'wkf_copy': True,
+                'allow_copy': True,
+            })
+            
+            new_picking_id = self.copy(cr, uid, picking.id, copy_data, context=context)
+            context['allow_copy'] = tmp_allow_copy
+            
+            # Create stock moves corresponding to processing lines
             # for now, each new line from the wizard corresponds to a new stock.move
             # it could be interesting to regroup according to production lot/asset id
-            move_ids = partial_datas[pick.id].keys()
-            for move in move_obj.browse(cr, uid, move_ids, context=context):
-                # qty selected
-                count = 0
-                # initial qty
-                initial_qty = move.product_qty
-                for partial in partial_datas[pick.id][move.id]:
-                    # integrity check
-                    assert partial['product_id'] == move.product_id.id, 'product id is wrong, %s - %s'%(partial['product_id'], move.product_id.id)
-                    # UTP-289 : Remove the check of the consistency of UoM
-                    #assert partial['product_uom'] == move.product_uom.id, 'product uom is wrong, %s - %s'%(partial['product_uom'], move.product_uom.id)
-                    total_qty = uom_obj._compute_qty(cr, uid, partial['product_uom'], partial['product_qty'], move.product_uom.id)
-                    # the quantity
-                    count = count + total_qty
-                    # copy the stock move and set the quantity
-                    values = {'picking_id': new_pick_id,
-                              'product_qty': partial['product_qty'],
-                              'product_uom': partial['product_uom'],
-                              'product_uos_qty': partial['product_qty'],
-                              'product_uos': partial['product_uom'],
-                              'prodlot_id': partial['prodlot_id'],
-                              'asset_id': partial['asset_id'],
-                              'composition_list_id': partial['composition_list_id'],
-                              'pt_created': True,
-                              'backmove_id': move.id}
-                    #add hook
-                    values = self.do_create_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
-                    new_move = move_obj.copy(cr, uid, move.id, values, context=dict(context, keepLineNumber=True))
-                    
-                # decrement the initial move, cannot be less than zero and mark the stock move as processed - will not be updated by delivery_mech anymore
-                initial_qty = max(initial_qty - count, 0)
-                move_obj.write(cr, uid, [move.id], {'product_qty': initial_qty, 'product_uos_qty': initial_qty, 'processed_stock_move': True}, context=context)
+            for line in wizard.move_ids:
+                move_data.setdefault(line.move_id.id, {
+                    'initial_qty': line.move_id.product_qty,
+                    'processed_qty': 0.00,
+                })
                 
-            # confirm the new picking ticket
+                # We cannot change the product on create picking wizard
+                if line.product_id.id != line.move_id.product_id.id:
+                    raise osv.except_osv(
+                        _('Processing Error'),
+                        _('Line %s: The product is wrong - Should be the same as initial move') % line.line_number,
+                    )
+                    
+                if line.uom_id.id != line.move_id.product_uom.id:
+                    processed_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.move_id.product_uom.id)
+                else:
+                    processed_qty = line.quantity
+
+                move_data[line.move_id.id]['processed_qty'] += processed_qty
+                
+                # Copy the stock move and set the quantity
+                cp_values = {
+                    'picking_id': new_picking_id,
+                    'product_qty': line.quantity,
+                    'product_uom': line.uom_id.id,
+                    'product_uos_qty': line.quantity,
+                    'product_uos': line.uom_id.id,
+                    'prodlot_id': line.prodlot_id and line.prodlot_id.id,
+                    'asset_id': line.asset_id and line.asset_id.id,
+                    'composition_list_id': line.composition_list_id and line.composition_list_id.id,
+                    'pt_created': True,
+                    'backmove_id': line.move_id.id,
+                }
+                context['keepLineNumber'] = True
+                move_obj.copy(cr, uid, line.move_id.id, cp_values, context=context)
+                context['keepLineNumber'] = False
+                    
+                
+            # Update initial stock moves
+            for move_id, move_vals in move_data.iteritems():
+                initial_qty = max(move_vals['initial_qty'] - move_vals['processed_qty'], 0.00)
+                wr_vals = {
+                    'product_qty': initial_qty,
+                    'proudct_uos_qty': initial_qty,
+                    'processed_stock_move': True,
+                }
+                context['keepLineNumber'] = True
+                move_obj.write(cr, uid, [move_id], wr_vals, context=context)
+                context['keepLineNumber'] = False
+                                    
+                
+            # Confirm the new picking ticket
             wf_service = netsvc.LocalService("workflow")
-            wf_service.trg_validate(uid, 'stock.picking', new_pick_id, 'button_confirm', cr)
-            # we force availability
-            self.force_assign(cr, uid, [new_pick_id])
+            wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_confirm', cr)
+            # We force availability
+            self.force_assign(cr, uid, [new_picking_id])
         
         # Just to avoid an error on kit test because view_picking_ticket_form is not still loaded when test is ran
         msf_outgoing = self.pool.get('ir.module.module').search(cr, uid, [('name', '=', 'msf_outgoing'), ('state', '=', 'installed')], context=context)
         if not msf_outgoing:
             view_id = False
         else:
-            # TODO which behavior
-            #return {'type': 'ir.actions.act_window_close'}
             data_obj = self.pool.get('ir.model.data')
             view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
             view_id = view_id and view_id[1] or False
+            
         context.update({'picking_type': 'picking_ticket', 'picking_screen': True})
-        print time.time() - start
-        raise osv.except_osv(_('Error'), _('Error'))
+        
         return {'name':_("Picking Ticket"),
                 'view_mode': 'form,tree',
                 'view_id': [view_id],
                 'view_type': 'form',
                 'res_model': 'stock.picking',
-                'res_id': new_pick_id,
+                'res_id': new_picking_id,
                 'type': 'ir.actions.act_window',
                 'target': 'crush',
                 'context': context,
@@ -2631,19 +2654,22 @@ class stock_picking(osv.osv):
         
     def validate_picking(self, cr, uid, ids, context=None):
         '''
-        validate the picking ticket
+        Open the wizard to validate the picking ticket
         '''
-        # we need the context for the wizard switch
-        if context is None:
-            context = {}
+        # Objects
+        proc_obj = self.pool.get('validate.picking.processor')
             
-        # data
-        name = _("Validate Picking Ticket")
-        model = 'create.picking'
-        step = 'validate'
-        wiz_obj = self.pool.get('wizard')
-        # open the selected wizard
-        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+        processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
+        proc_obj.create_lines(cr, uid, processor_id, context=context)
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': proc_obj._name,
+            'res_id': processor_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+        }
 
     def do_validate_picking_first_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''

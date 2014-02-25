@@ -135,13 +135,9 @@ class stock_incoming_processor(osv.osv):
         in_proc_obj = self.pool.get('stock.move.in.processor')
         picking_obj = self.pool.get('stock.picking')
         
-        process_data = {}
-        picking_ids = []
         to_unlink = []
         
         for proc in self.browse(cr, uid, ids, context=context):
-            process_data.setdefault(proc.picking_id.id, [])
-            picking_ids.append(proc.picking_id.id)
             total_qty = 0.00
             
             for line in proc.move_ids:
