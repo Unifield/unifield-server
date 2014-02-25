@@ -355,16 +355,17 @@ class wizard_register_import(osv.osv_memory):
                         errors.append(_('Line %s. G/L account %s not found!') % (current_line_num, account_code,))
                         continue
                     r_account = account_ids[0]
-                    account = self.pool.get('account.account').browse(cr, uid, r_account, context)
+                    account = self.pool.get('account.account').read(cr, uid, r_account, ['type_for_register', 'is_analytic_addicted'], context)
+                    type_for_register = account.get('type_for_register', '')
                     # Check that Third party exists (if not empty)
                     tp_label = _('Partner')
                     partner_type = 'partner'
                     if line[cols['third_party']]:
-                        if account.type_for_register == 'advance':
+                        if type_for_register == 'advance':
                             tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['third_party']])])
                             tp_label = _('Employee')
                             partner_type = 'employee'
-                        elif account.type_for_register in ['transfer', 'transfer_same']:
+                        elif type_for_register in ['transfer', 'transfer_same']:
                             tp_ids = self.pool.get('account.bank.statement').search(cr, uid, [('name', '=', line[cols['third_party']])])
                             tp_label = _('Journal')
                             partner_type = 'journal'
@@ -382,7 +383,7 @@ class wizard_register_import(osv.osv_memory):
                                 continue
                         r_partner = tp_ids[0]
                     # Check analytic axis only if G/L account is an analytic-a-holic account
-                    if account.is_analytic_addicted:
+                    if account.get('is_analytic_addicted', False):
                         # Check Destination
                         try:
                             if line[cols['destination']]:
@@ -430,9 +431,9 @@ class wizard_register_import(osv.osv_memory):
                         'wizard_id': wiz.id,
                         'period_id': r_period or False,
                     }
-                    if account.type_for_register == 'advance':
+                    if type_for_register == 'advance':
                         vals.update({'employee_id': r_partner,})
-                    elif account.type_for_register in ['transfer', 'transfer_same']:
+                    elif type_for_register in ['transfer', 'transfer_same']:
                         vals.update({'transfer_journal_id': r_partner})
                     else:
                         if partner_type == 'partner':
