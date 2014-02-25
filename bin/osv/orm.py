@@ -736,8 +736,33 @@ class orm_template(object):
         warning = ''
         warning_fields = []
         datas = []
-        for row in self.browse(cr, uid, ids, context):
-            datas += self.__export_row(cr, uid, row, fields_to_export, context)
+        if not context.get('group_by_no_leaf'):
+            for row in self.browse(cr, uid, ids, context):
+                datas += self.__export_row(cr, uid, row, fields_to_export, context)
+        else:
+            f_to_export = []
+            f_group = []
+            
+            for x in fields_to_export:
+                f_to_export.append(x[0])
+                
+            for group_field in context.get('group_by', []):    
+                if group_field.startswith('group_'):
+                    f_name = group_field[6:]
+                else:
+                    f_name = group_field
+                    
+                if f_name not in f_group:
+                    f_group.append(f_name)
+                    
+                if f_name not in f_to_export:
+                    f_to_export.append(f_name)
+                    fields_to_export.append([f_name])
+                    
+                    
+            rows = self.read_group(cr, uid, context.get('domain', []), f_to_export, f_group, context=dict(context, m2o_name=True))
+            for row in rows:
+                datas += self.__export_row(cr, uid, row, fields_to_export, context)
         return {'datas': datas}
 
     def import_data(self, cr, uid, fields, datas, mode='init', current_module='', noupdate=False, context=None, filename=None):
@@ -2399,6 +2424,12 @@ class orm(orm_template):
                 raise except_orm(_('Invalid group_by'),
                                  _('Invalid group_by specification: "%s".\nA group_by specification must be a list of valid fields.')%(groupby,))
 
+        if context.get('m2o_name'):
+            for f in groupby_list:
+                if f not in ['id', 'sequence'] and f != groupby:
+                    if flist:
+                        flist += ', '
+                    flist += "%s AS %s" % (f, f)
 
         fields_pre = [f for f in float_int_fields if
                    f == self.CONCURRENCY_CHECK_FIELD
@@ -2410,9 +2441,16 @@ class orm(orm_template):
                     flist += ', '
                 qualified_field = '"%s"."%s"' % (self._table, f)
                 flist += "%s(%s) AS %s" % (group_operator, qualified_field, f)
-
+                
         gb = groupby and (' GROUP BY ' + qualified_groupby_field) or ''
-
+        
+        if context.get('m2o_name'):
+            for f in groupby_list:
+                if f != groupby:
+                    if gb:
+                        gb += ', '
+                    gb += '%s' % f
+        
         from_clause, where_clause, where_clause_params = query.get_sql()
         where_clause = where_clause and ' WHERE ' + where_clause
         limit_str = limit and ' limit %d' % limit or ''
@@ -2431,25 +2469,51 @@ class orm(orm_template):
         data_ids = self.search(cr, uid, [('id', 'in', alldata.keys())], order=orderby or groupby, context=context)
         # the IDS of records that have groupby field value = False or '' should be sorted too
         data_ids += filter(lambda x:x not in data_ids, alldata.keys())
-        data = self.read(cr, uid, data_ids, groupby and [groupby] or ['id'], context=context)
+        if context.get('m2o_name'):
+            data = self.read(cr, uid, data_ids, groupby_list and groupby_list or ['id'], context=context)
+        else:
+            data = self.read(cr, uid, data_ids, groupby and [groupby] or ['id'], context=context)
         # restore order of the search as read() uses the default _order (this is only for groups, so the size of data_read shoud be small):
         data.sort(lambda x,y: cmp(data_ids.index(x['id']), data_ids.index(y['id'])))
+        
+        if context.get('m2o_name'):
+            data2 = []
+            for d in data:
+                d2 = {}
+                for f in d:
+                    if d.get(f) and  f in self._columns and self._columns[f]._type == 'many2one':
+                        d2.update({f: d[f][1]})
+                    elif d.get(f):
+                        d2.update({f: d[f]})
+                    else:
+                        d2.update({f: _('Undefined')})
+                data2.append(d2)
+                
+            data = data2
+                     
 
         for d in data:
-            if groupby:
-                d['__domain'] = [(groupby, '=', alldata[d['id']][groupby] or False)] + domain
-                if not isinstance(groupby_list, (str, unicode)):
-                    if groupby or not context.get('group_by_no_leaf', False):
-                        d['__context'] = {'group_by': groupby_list[1:]}
-            if groupby and groupby in fget:
-                if d[groupby] and fget[groupby]['type'] in ('date', 'datetime'):
-                    dt = datetime.datetime.strptime(alldata[d['id']][groupby][:7], '%Y-%m')
-                    days = calendar.monthrange(dt.year, dt.month)[1]
-
-                    d[groupby] = datetime.datetime.strptime(d[groupby][:10], '%Y-%m-%d').strftime('%B %Y')
-                    d['__domain'] = [(groupby, '>=', alldata[d['id']][groupby] and datetime.datetime.strptime(alldata[d['id']][groupby][:7] + '-01', '%Y-%m-%d').strftime('%Y-%m-%d') or False),\
-                                     (groupby, '<=', alldata[d['id']][groupby] and datetime.datetime.strptime(alldata[d['id']][groupby][:7] + '-' + str(days), '%Y-%m-%d').strftime('%Y-%m-%d') or False)] + domain
-                del alldata[d['id']][groupby]
+            gb_list = []
+            if context.get('m2o_name'):
+                gb_list = groupby_list
+            else:
+                gb_list = [groupby]
+            
+            for groupby in gb_list:
+                if groupby:
+                    d['__domain'] = [(groupby, '=', alldata[d['id']][groupby] or False)] + domain
+                    if not isinstance(groupby_list, (str, unicode)):
+                        if groupby or not context.get('group_by_no_leaf', False):
+                            d['__context'] = {'group_by': groupby_list[1:]}
+                if groupby and groupby in fget:
+                    if d[groupby] and fget[groupby]['type'] in ('date', 'datetime'):
+                        dt = datetime.datetime.strptime(alldata[d['id']][groupby][:7], '%Y-%m')
+                        days = calendar.monthrange(dt.year, dt.month)[1]
+    
+                        d[groupby] = datetime.datetime.strptime(d[groupby][:10], '%Y-%m-%d').strftime('%B %Y')
+                        d['__domain'] = [(groupby, '>=', alldata[d['id']][groupby] and datetime.datetime.strptime(alldata[d['id']][groupby][:7] + '-01', '%Y-%m-%d').strftime('%Y-%m-%d') or False),\
+                                         (groupby, '<=', alldata[d['id']][groupby] and datetime.datetime.strptime(alldata[d['id']][groupby][:7] + '-' + str(days), '%Y-%m-%d').strftime('%Y-%m-%d') or False)] + domain
+                    del alldata[d['id']][groupby]
             d.update(alldata[d['id']])
             del d['id']
         return data
