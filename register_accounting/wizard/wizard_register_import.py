@@ -98,6 +98,8 @@ class wizard_register_import(osv.osv_memory):
             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         except ValueError:
             msf_fp_id = 0
+        # Prepare some values
+        absl_obj = self.pool.get('account.bank.statement.line')
         # Browse all wizards
         for w in self.read(cr, uid, ids, ['register_id']):
             w_id = w.get('id', False)
@@ -127,6 +129,7 @@ class wizard_register_import(osv.osv_memory):
             b_entries = self.pool.get('wizard.register.import.lines').read(cr, uid, entries, fields)
             current_percent = 100.0 - remaining_percent
             entries_number = len(b_entries)
+            to_check = []
             # Create a register line for each entry
             for nb, l in enumerate(b_entries):
                 # Prepare values
@@ -153,7 +156,7 @@ class wizard_register_import(osv.osv_memory):
                     'transfer_journal_id': transfer_journal_id,
                     'statement_id':        register_id,
                 }
-                absl_id = self.pool.get('account.bank.statement.line').create(cr, uid, vals, context)
+                absl_id = absl_obj.create(cr, uid, vals, context)
                 # Analytic distribution
                 distrib_id = False
                 # Create analytic distribution
@@ -172,19 +175,25 @@ class wizard_register_import(osv.osv_memory):
                     common_vals.update({'analytic_id': funding_pool_id or msf_fp_id, 'cost_center_id': cost_center_id,})
                     fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
                     # Check analytic distribution. Use SKIP_WRITE_CHECK to not do anything else that writing analytic distribution field
-                    self.pool.get('account.bank.statement.line').write(cr, uid, [absl_id], {'analytic_distribution_id': distrib_id,}, context={'skip_write_check': True})
-                    absl_data = self.pool.get('account.bank.statement.line').read(cr, uid, [absl_id], ['analytic_distribution_state'], context)
-                    # As explained in UF-1982 we disregard the analytic distribution if any problem on it
-                    delete_distribution = True
-                    if absl_data and absl_data[0]:
-                        if absl_data[0].get('analytic_distribution_state', False) == 'valid':
-                            delete_distribution = False
-                    if delete_distribution:
-                        self.pool.get('account.bank.statement.line').write(cr, uid, [absl_id], {'analytic_distribution_id': False}, context={'skip_write_check': True}) # do not do anythin else than changing analytic_distribution_id field content
-                        self.pool.get('analytic.distribution').unlink(cr, uid, [distrib_id], context)
+                    absl_obj.write(cr, uid, [absl_id], {'analytic_distribution_id': distrib_id,}, context={'skip_write_check': True})
+                    # Add this line to be check at the end of the process
+                    to_check.append(absl_id)
                 # Update wizard with current progression
                 progression = current_percent + (nb + 1.0) / entries_number * remaining_percent
                 self.write(cr, uid, [w_id], {'progression': progression})
+            # Check analytic distribution on lines.
+            #+ As explained in UF-1982 we disregard the analytic distribution if any problem on it
+            to_delete = []
+            to_delete_distrib = []
+            for absl_data in absl_obj.read(cr, uid, to_check, ['analytic_distribution_state', 'analytic_distribution_id'], context):
+                if absl_data.get('analytic_distribution_state', '') == 'valid':
+                    continue
+                to_delete.append(absl_data.get('id'))
+                to_delete_distrib.append(absl_data.get('analytic_distribution_id', [False])[0])
+            # Delete analytic distribution field on register lines
+            absl_obj.write(cr, uid, to_delete, {'analytic_distribution_id': False}, context={'skip_write_check': True}) # do not do anything else than changing analytic_distribution_id field content (thanks to SKIP_WRITE_CHECK)
+            # Delete analytic distribution
+            self.pool.get('analytic.distribution').unlink(cr, uid, to_delete_distrib, context)
         return True
 
     def _import(self, dbname, uid, ids, context=None):
