@@ -479,8 +479,9 @@ class ImpEx(SecuredController):
                 return self.export_html(params.fields2, result, view_name)
             return export_csv(params.fields2, result)
 
-        if not params.ids or all_records:
+        if not params.ids or all_records or ctx.get('group_by_no_leaf'):
             domain = params.search_domain or []
+            ctx.update({'domain': domain})
             if params.model == 'product.product':
                 ids = proxy.search(domain, 0, None, 0, ctx)
             else:
