@@ -101,9 +101,7 @@ class wizard_register_import(osv.osv_memory):
         # Browse all wizards
         for w in self.read(cr, uid, ids, ['register_id']):
             w_id = w.get('id', False)
-            register_id = w.get('register_id', [False])[0]
-            register = self.pool.get('account.bank.statement').read(cr, uid, register_id, ['currency_id'])
-            currency_id = register and register.get('currency_id', False) and register.get('currency_id')[0] or False
+            register_id = w.get('register_id', False)
             account_obj = self.pool.get('account.account')
             # Search lines
             entries = self.pool.get('wizard.register.import.lines').search(cr, uid, [('wizard_id', '=', w_id)])
@@ -122,7 +120,9 @@ class wizard_register_import(osv.osv_memory):
                 'transfer_journal_id',
                 'destination_id',
                 'funding_pool_id',
-                'cost_center_id'
+                'cost_center_id',
+                'date',
+                'currency_id'
             ]
             b_entries = self.pool.get('wizard.register.import.lines').read(cr, uid, entries, fields)
             current_percent = 100.0 - remaining_percent
@@ -138,6 +138,7 @@ class wizard_register_import(osv.osv_memory):
                 funding_pool_id = l.get('funding_pool_id', False) and l.get('funding_pool_id')[0] or False
                 cost_center_id = l.get('cost_center_id', False) and l.get('cost_center_id')[0] or False
                 date = l.get('date', False)
+                currency_id = l.get('currency_id', False) and l.get('currency_id')[0] or False
                 account = account_obj.read(cr, uid, account_id, ['is_analytic_addicted'])
 
                 vals = {
@@ -173,6 +174,7 @@ class wizard_register_import(osv.osv_memory):
                     # Check analytic distribution. Use SKIP_WRITE_CHECK to not do anything else that writing analytic distribution field
                     self.pool.get('account.bank.statement.line').write(cr, uid, [absl_id], {'analytic_distribution_id': distrib_id,}, context={'skip_write_check': True})
                     absl_data = self.pool.get('account.bank.statement.line').read(cr, uid, [absl_id], ['analytic_distribution_state'], context)
+                    # As explained in UF-1982 we disregard the analytic distribution if any problem on it
                     delete_distribution = True
                     if absl_data and absl_data[0]:
                         if absl_data[0].get('analytic_distribution_state', False) == 'valid':
@@ -285,7 +287,8 @@ class wizard_register_import(osv.osv_memory):
                 if not cur or not cur[0] or not cur[0].active:
                     raise osv.except_osv(_('Error'), _('Currency %s is not active!') % (cur.name))
                 # Check that currency is the same as register's one
-                if wiz.register_id.currency.id not in currency_ids:
+                register_currency = wiz.register_id.currency.id
+                if register_currency not in currency_ids:
                     raise osv.except_osv('', _("the import's currency is %s whereas the register's currency is %s") % (cur[0].name, wiz.register_id.currency.name))
                 # Search registers that correspond to this instance, journal's code and currency and check that our register is in the list
                 register_ids = self.pool.get('account.bank.statement').search(cr, uid, [('instance_id', 'in', instance_ids), ('journal_id', 'in', journal_ids), ('currency', 'in', currency_ids)])
@@ -311,7 +314,7 @@ class wizard_register_import(osv.osv_memory):
                     # Prepare some values
                     r_debit = 0
                     r_credit = 0
-                    r_currency = wiz.register_id.currency.id
+                    r_currency = register_currency
                     r_partner = False
                     r_account = False
                     r_destination = False
