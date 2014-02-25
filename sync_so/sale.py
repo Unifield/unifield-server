@@ -60,13 +60,14 @@ class sale_order_sync(osv.osv):
         if not context:
             context = {}
             
+        so_po_common = self.pool.get('so.po.common')
         if context.get('restore_flag'):
             # UF-1830: TODO: Create a message to remove the reference of the PO on the partner instance!!!!! to make sure that the PO does not link to a wrong SO in this instance
-            return "Backup-Restore: The backup procedure cannot create the SO from a PO. Please inform the owner of the PO " + po_info.name + " to cancel it and to recreate a new process."
-
+            so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, po_info.name, context)            
+            return "Recovery: The backup procedure cannot create the SO from a PO. Please inform the owner of the PO " + po_info.name + " to cancel it and to recreate a new process."
+        
         context['no_check_line'] = True
         po_dict = po_info.to_dict()
-        so_po_common = self.pool.get('so.po.common')
         
         header_result = {}
         so_po_common.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
@@ -144,7 +145,14 @@ class sale_order_sync(osv.osv):
         so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
         if not so_id and context.get('restore_flag'):
             # UF-1830: TODO: Create a message to remove the reference of the PO on the partner instance!!!!! to make sure that the PO does not link to a wrong SO in this instance
-            return "Backup-Restore: the original FO " + po_info.partner_ref + " has been created after the backup and thus cannot be updated"
+            
+            so_po_common = self.pool.get('so.po.common')
+            so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, po_info.name, context)            
+            
+            # TEMP TEMP
+#            raise Exception, ("Restore case: not found the new replacement of FO for the reference PO: " + ori_po_refs)
+
+            return "Recovery: the original FO " + po_info.partner_ref + " has been created after the backup and thus cannot be updated"
         
         ref = self.browse(cr, uid, so_id).client_order_ref
         
@@ -193,6 +201,56 @@ class sale_order_sync(osv.osv):
         self._logger.info(log_message)
         return log_message
     
+    # UF-1830: reset automatically the reference to the partner object to become void due to the recovery event
+    def reset_ref_by_recovery_mode(self, cr, uid, source, values, context=None):
+        self._logger.info("+++!!! Reset the reference in %s due to the recovery in %s"%(cr.dbname, source))
+        if not context:
+            context = {}
+        context.update({'active_test': False})
+        message = False
+        recovery = source + ".invalid_by_recovery"
+            
+        # Get the type of the object, in order to retrieve the right documents for resetting the reference
+        # If there is no document referred to the given, just ignore it 
+        name = values.name
+        if name:
+            if name.find("PO") >= 0:
+                object = self.pool.get('purchase.order')
+                ids = object.search(cr, uid, [('name', '=', name)], context=context)
+                if ids and ids[0]:
+                    cr.execute('update purchase_order set partner_ref=%s where id in %s', (recovery, tuple(ids)))
+                
+            elif name.find("FO") >= 0:
+                object = self.pool.get('sale.order')
+                ids = object.search(cr, uid, [('name', '=', name)], context=context)
+                if ids and ids[0]:
+                    cr.execute('update sale_order set client_order_ref=%s where id in %s', (recovery,tuple(ids)))
+                
+            elif name.find("OUT") >= 0: 
+                object = self.pool.get('stock.picking')
+                shipment_ref = source + "." + name
+                ids = object.search(cr, uid, [('name', '=', name)], context=context)
+                if ids and ids[0]:
+                    cr.execute('update stock_picking set in_ref=%s where id in %s', (recovery, tuple(ids)))
+            elif name.find("SHIP") >= 0: 
+                object = self.pool.get('shipment')
+                shipment_ref = source + "." + name
+                ids = object.search(cr, uid, [('name', '=', name)], context=context)
+                if ids and ids[0]:
+                    cr.execute('update shipment set in_ref=%s where id in %s', (recovery, tuple(ids)))
+            elif name.find("IN") >= 0: 
+                object = self.pool.get('stock.picking')
+                shipment_ref = source + "." + name
+                ids = object.search(cr, uid, [('shipment_ref', '=', shipment_ref)], context=context)
+                if ids and ids[0]:
+                    cr.execute('update stock_picking set shipment_ref=%s where id in %s', (recovery, tuple(ids)))
+            else:
+                message = "The reference object is not found in the current instance: " + name        
+        
+        if not message:        
+            message = "The reference to " + name + " in all documents becomes now VOID due to the recovery event at " + source
+        self._logger.info(message)
+        return message    
     
     def on_create(self, cr, uid, id, values, context=None):
         if context is None \

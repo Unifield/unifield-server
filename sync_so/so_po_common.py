@@ -96,9 +96,9 @@ class so_po_common(osv.osv_memory):
             ref = self.get_full_original_fo_ref(source, so_info.name)
             po_ids = po_object.search(cr, uid, [('partner_ref', '=', ref)], context=context)
             
-        if not po_ids:
-            raise Exception, "Cannot find the original PO with the given info: " + ref 
-        return po_ids[0]
+        if po_ids:
+            return po_ids[0]
+        return False 
 
     def get_po_id_by_so_ref(self, cr, uid, so_ref, context):
         # Get the Id of the original PO to update these info back 
@@ -108,9 +108,9 @@ class so_po_common(osv.osv_memory):
             context = {}
         context.update({'active_test': False})
         po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', so_ref)], context=context)
-        if not po_ids:
-            raise Exception, "The PO is not found for the given FO Ref: " + so_ref
-        return po_ids[0]
+        if po_ids and po_ids[0]:
+            return po_ids[0]
+        return False 
 
     def get_in_id_from_po_id(self, cr, uid, po_id, context):
         # Get the Id of the original PO to update these info back 
@@ -118,9 +118,9 @@ class so_po_common(osv.osv_memory):
             return False
 
         in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', '=', 'assigned')], 0, None, None, context)
-        if not in_ids:
-            return False
-        return in_ids[0]
+        if in_ids:
+            return in_ids[0]
+        return False
 
     def get_in_id_by_state(self, cr, uid, po_id, po_ref, states, context):
         # Get the Id of the original PO to update these info back 
@@ -487,6 +487,67 @@ class so_po_common(osv.osv_memory):
         if not warehouse_ids:
             raise Exception, "No valid warehouse location found for the PO! The PO cannot be created."
         return warehouse_obj.read(cr, uid, warehouse_ids, ['lot_input_id'])[0]['lot_input_id'][0]
+
+    def create_message_with_object_and_partner(self, cr, uid, rule_sequence, object_id, partner_name, context):
+
+        ##############################################################################
+        # This method creates a message and put into the sendbox, but the message is created for a given object, AND for a given partner
+        # Meaning that for the same object, but for different internal partners, the object could be sent many times to these partner
+        #
+        ##############################################################################
+        rule_obj = self.pool.get("sync.client.message_rule")
+        rule = rule_obj.get_rule_by_sequence(cr, uid, rule_sequence, context)
+
+        if not rule or not object_id:
+            return
+
+        model_obj = self.pool.get(rule.model)
+        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+
+        arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, context=context)
+
+        identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [object_id], rule.server_id, context=context)
+        if not identifiers:
+            return
+
+        xml_id = identifiers[object_id]
+        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id), ('destination_name', '=', partner_name)], context=context)
+        if existing_message_id: # if similar message does not exist in the system, then do nothing
+            return
+
+        # if not then create a new one --- FOR THE GIVEN Batch number AND Destination
+        data = {
+                'identifier' : xml_id,
+                'remote_call': rule.remote_call,
+                'arguments': arguments,
+                'destination_name': partner_name,
+                'sent' : False,
+                'generate_message' : True,
+        }
+        return msg_to_send_obj.create(cr, uid, data, context=context)
+
+    def create_invalid_recovery_message(self, cr, uid, rule_sequence, partner_name, name, context):
+        rule_obj = self.pool.get("sync.client.message_rule")
+        rule = rule_obj.get_rule_by_sequence(cr, uid, rule_sequence, context)
+        if not rule:
+            return
+        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+
+        xml_id = cr.dbname + "_recovery_" + partner_name + "_object_" + name
+        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id), ('destination_name', '=', partner_name)], context=context)
+        if existing_message_id: # if similar message does not exist in the system, then do nothing
+            return
+
+        # if not then create a new one --- FOR THE GIVEN Batch number AND Destination
+        data = {
+                'identifier' : xml_id,
+                'remote_call': rule.remote_call,
+                'arguments': [{'name': name}],
+                'destination_name': partner_name,
+                'sent' : False,
+                'generate_message' : True,
+        }
+        return msg_to_send_obj.create(cr, uid, data, context=context)
 
 so_po_common()
 
