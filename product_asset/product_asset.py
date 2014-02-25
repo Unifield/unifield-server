@@ -473,20 +473,6 @@ class stock_move(osv.osv):
                             raise osv.except_osv(_('Error!'),  _('You must assign an asset for the product %s.') % move.product_id.name)
         return True
     
-    def create(self, cr, uid, vals, context=None):
-        '''
-        override for adding subtype on creation if product is specified
-        '''
-        if context is None:
-            context = {}
-        if 'product_id' in vals:
-            prod = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
-            vals.update({'subtype': prod.product_tmpl_id.subtype})
-            
-        result = super(stock_move, self).create(cr, uid, vals, context=context)
-        
-        return result
-
     def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False,
                             loc_dest_id=False, address_id=False,parent_type=False,purchase_line_id=False,out=False):
         '''

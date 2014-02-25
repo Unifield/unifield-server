@@ -152,20 +152,12 @@ class account_move_line(osv.osv):
             line_distrib_id = (obj_line.get('analytic_distribution_id', False) and obj_line.get('analytic_distribution_id')[0]) or (move.get('analytic_distribution_id', False) and move.get('analytic_distribution_id')[0]) or False
             # When you create a journal entry manually, we should not have analytic lines if ONE line is invalid!
             other_lines_are_ok = True
-            sql = """
-                SELECT COUNT(ml.id)
-                FROM account_move_line AS ml, account_move AS m
-                WHERE ml.move_id = m.id
-                AND m.id = %s
-                AND m.status = 'manu'
-                AND ml.state != 'valid';"""
-            cr.execute(sql, (move.get('id', 0),))
-            result = cr.fetchall()
-            if result and result > 0:
+            result = self.search(cr, uid, [('move_id', '=', move.get('status', False)), ('move_id.status', '=', 'manu'), ('state', '!=', 'valid')], count=1)
+            if result and result > 0 and move.get('status', False) == 'manu':
                 other_lines_are_ok = False
             # Check that line have analytic-a-holic account and have a distribution
             if line_distrib_id and account.get('is_analytic_addicted', False) and other_lines_are_ok:
-                ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distrib_id, {}, account_id.get('id'))
+                ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distrib_id, {}, account.get('id'))
                 # For manual journal entries, do not raise an error. But delete all analytic distribution linked to other_lines because if one line is invalid, all lines should not create analytic lines
                 if ana_state == 'invalid' and move.get('status', '') == 'manu':
                     ana_line_ids = acc_ana_line_obj.search(cr, uid, [('move_id', 'in', move.get('line_id', []))])

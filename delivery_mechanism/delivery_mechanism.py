@@ -44,30 +44,6 @@ class stock_move(osv.osv):
                  'original_qty_partial': -1}
     _order = 'line_number, date_expected desc, id'
     
-    def create(self, cr, uid, vals, context=None):
-        '''
-        add the corresponding line number
-        
-        if a corresponding purchase order line or sale order line exist
-        we take the line number from there
-        '''
-        # objects
-        picking_obj = self.pool.get('stock.picking')
-        seq_pool = self.pool.get('ir.sequence')
-
-        # line number correspondance to be checked with Magali
-        if vals.get('picking_id', False):
-            if not vals.get('line_number', False):
-                # new number needed - gather the line number from the sequence
-                sequence_id = picking_obj.read(cr, uid, [vals['picking_id']], ['move_sequence_id'], context=context)[0]['move_sequence_id'][0]
-                line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
-                # update values with line value
-                vals.update({'line_number': line})
-        
-        # create the new object
-        result = super(stock_move, self).create(cr, uid, vals, context=context)
-        return result
-    
     def copy_data(self, cr, uid, id, defaults=None, context=None):
         '''
         If the line_number is not in the defaults, we set it to False.
@@ -242,14 +218,6 @@ class stock_move(osv.osv):
                 # we are looking for corresponding IN from on_order purchase order
                 assert False, 'This method is not implemented for OUT or Internal moves'
                 
-        return res
-
-    def hook__create_chained_picking(self, cr, uid, pick_values, picking):
-        res = super(stock_move, self).hook__create_chained_picking(cr, uid, pick_values, picking)
-
-        if picking:
-            res['auto_picking'] = picking.type == 'in' and picking.move_lines[0]['direct_incoming']
-
         return res
         
 stock_move()
@@ -935,27 +903,6 @@ class purchase_order_line(osv.osv):
     _defaults = {'procurement_id': False,}
     
 purchase_order_line()
-
-
-class purchase_order(osv.osv):
-    '''
-    hook to modify created In moves
-    '''
-    _inherit = 'purchase.order'
-    
-    def _hook_action_picking_create_stock_picking(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        modify data for stock move creation
-        - line number of stock move is taken from purchase order line
-        '''
-        if context is None:
-            context = {}
-        move_values = super(purchase_order, self)._hook_action_picking_create_stock_picking(cr, uid, ids, context=context, *args, **kwargs)
-        order_line = kwargs['order_line']
-        move_values.update({'line_number': order_line.line_number})
-        return move_values
-    
-purchase_order()
 
 
 class procurement_order(osv.osv):

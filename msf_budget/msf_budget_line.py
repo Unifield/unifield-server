@@ -191,7 +191,7 @@ class msf_budget_line(osv.osv):
             budget_ok = True
             actual_ok = True
             percentage_ok = True
-        if 'balance'in field_names:
+        if 'balance' in field_names:
             budget_ok = True
             actual_ok = True
             balance_ok = True
