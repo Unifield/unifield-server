@@ -99,47 +99,76 @@ class wizard_register_import(osv.osv_memory):
         except ValueError:
             msf_fp_id = 0
         # Browse all wizards
-        for w in self.browse(cr, uid, ids):
+        for w in self.read(cr, uid, ids, ['register_id']):
+            w_id = w.get('id', False)
+            register_id = w.get('register_id', [False])[0]
+            register = self.pool.get('account.bank.statement').read(cr, uid, register_id, ['currency_id'])
+            currency_id = register and register.get('currency_id', False) and register.get('currency_id')[0] or False
+            account_obj = self.pool.get('account.account')
             # Search lines
-            entries = self.pool.get('wizard.register.import.lines').search(cr, uid, [('wizard_id', '=', w.id)])
+            entries = self.pool.get('wizard.register.import.lines').search(cr, uid, [('wizard_id', '=', w_id)])
             if not entries:
                 raise osv.except_osv(_('Error'), _('No lines.'))
             # Browse result
-            b_entries = self.pool.get('wizard.register.import.lines').browse(cr, uid, entries)
+            fields = [
+                'description',
+                'ref',
+                'document_date',
+                'account_id',
+                'debit',
+                'credit',
+                'partner_id',
+                'employee_id',
+                'transfer_journal_id',
+                'destination_id',
+                'funding_pool_id',
+                'cost_center_id'
+            ]
+            b_entries = self.pool.get('wizard.register.import.lines').read(cr, uid, entries, fields)
             current_percent = 100.0 - remaining_percent
             entries_number = len(b_entries)
             # Create a register line for each entry
             for nb, l in enumerate(b_entries):
                 # Prepare values
+                account_id = l.get('account_id', False) and l.get('account_id')[0] or False
+                partner_id = l.get('partner_id', False) and l.get('partner_id')[0] or False
+                employee_id = l.get('employee_id', False) and l.get('employee_id')[0] or False
+                transfer_journal_id = l.get('transfer_journal_id', False) and l.get('transfer_journal_id')[0] or False
+                destination_id = l.get('destination_id', False) and l.get('destination_id')[0] or False
+                funding_pool_id = l.get('funding_pool_id', False) and l.get('funding_pool_id')[0] or False
+                cost_center_id = l.get('cost_center_id', False) and l.get('cost_center_id')[0] or False
+                date = l.get('date', False)
+                account = account_obj.read(cr, uid, account_id, ['is_analytic_addicted'])
+
                 vals = {
-                    'name':                l.description,
-                    'reference':           l.ref,
-                    'document_date':       l.document_date,
-                    'date':                l.date,
-                    'account_id':          l.account_id.id,
-                    'amount':              (l.debit or 0.0) - (l.credit or 0.0),
-                    'partner_id':          l.partner_id and l.partner_id.id or False,
-                    'employee_id':         l.employee_id and l.employee_id.id or False,
-                    'transfer_journal_id': l.transfer_journal_id and l.transfer_journal_id.id or False,
-                    'statement_id':        w.register_id.id,
+                    'name':                l.get('description', ''),
+                    'reference':           l.get('ref', ''),
+                    'document_date':       l.get('document_date', False),
+                    'date':                date,
+                    'account_id':          account_id,
+                    'amount':              l.get('debit', 0.0) - l.get('credit', 0.0),
+                    'partner_id':          partner_id,
+                    'employee_id':         employee_id,
+                    'transfer_journal_id': transfer_journal_id,
+                    'statement_id':        register_id,
                 }
                 absl_id = self.pool.get('account.bank.statement.line').create(cr, uid, vals, context)
                 # Analytic distribution
                 distrib_id = False
                 # Create analytic distribution
-                if l.account_id.is_analytic_addicted and l.destination_id and l.cost_center_id and l.funding_pool_id:
+                if account and account.get('is_analytic_addicted', False) and destination_id and cost_center_id and funding_pool_id:
                     distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
                     common_vals = {
                         'distribution_id': distrib_id,
-                        'currency_id': w.register_id.currency.id,
+                        'currency_id': currency_id,
                         'percentage': 100.0,
-                        'date': l.date,
-                        'source_date': l.date,
-                        'destination_id': l.destination_id.id,
+                        'date': date,
+                        'source_date': date,
+                        'destination_id': destination_id,
                     }
-                    common_vals.update({'analytic_id': l.cost_center_id.id,})
+                    common_vals.update({'analytic_id': cost_center_id,})
                     cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
-                    common_vals.update({'analytic_id': l.funding_pool_id and l.funding_pool_id.id or msf_fp_id, 'cost_center_id': l.cost_center_id.id,})
+                    common_vals.update({'analytic_id': funding_pool_id or msf_fp_id, 'cost_center_id': cost_center_id,})
                     fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
                     # Check analytic distribution
                     self.pool.get('account.bank.statement.line').write(cr, uid, [absl_id], {'analytic_distribution_id': distrib_id,})
@@ -153,7 +182,7 @@ class wizard_register_import(osv.osv_memory):
                         self.pool.get('analytic.distribution').unlink(cr, uid, [distrib_id], context)
                 # Update wizard with current progression
                 progression = current_percent + (nb + 1.0) / entries_number * remaining_percent
-                self.write(cr, uid, [w.id], {'progression': progression})
+                self.write(cr, uid, [w_id], {'progression': progression})
         return True
 
     def _import(self, dbname, uid, ids, context=None):
