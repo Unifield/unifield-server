@@ -1414,7 +1414,14 @@ class sale_order_line(osv.osv):
             proc = line.procurement_id and line.procurement_id.id
             # Delete the line and the procurement
             self.write(cr, uid, [line.id], {'state': 'cancel'}, context=context)
-            self.unlink(cr, uid, [line.id], context=context)
+            if not 'update_or_cancel_line_not_delete' in context \
+                or not context['update_or_cancel_line_not_delete']:
+                # UFTP-82:
+                # do not delete cancelled IR/FO line in PO 'Cancel Only'
+                # see purchase_override/purchase.py 
+                # - purchase_order_cancel_wizard.cancel_po()
+                # - purchase_order_line.cancel_sol()
+                self.unlink(cr, uid, [line.id], context=context)
 
             if proc:
                 proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)

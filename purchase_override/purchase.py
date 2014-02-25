@@ -2302,6 +2302,7 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         sol_to_update = {}
+        sol_not_to_delete_ids = []
         for line in self.browse(cr, uid, ids, context=context):
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
             for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
@@ -2310,10 +2311,14 @@ class purchase_order_line(osv.osv):
                 sol_to_update[sol.id] += diff_qty
                 if line.has_to_be_resourced:
                     sol_obj.add_resource_line(cr, uid, sol, False, diff_qty, context=context)
-
+                else:
+                    # UFTP-82: do not delete IR/FO line with a PO line
+                    # not ressourced (PO cancelled only)
+                    sol_not_to_delete_ids.append(sol.id)
         for sol in sol_to_update:
+            context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete_ids
             sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
-
+        del context['update_or_cancel_line_not_delete']
         return True
 
     def fake_unlink(self, cr, uid, ids, context=None):
