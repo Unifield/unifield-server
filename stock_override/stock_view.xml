@@ -816,6 +816,7 @@
                                 widget="selection"
                                 attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
                                 />
+                            <field name="in_ref"  readonly="True" />	
                        </group>
                    </group>
                     <notebook colspan="4">

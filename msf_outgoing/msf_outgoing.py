@@ -89,6 +89,7 @@ class shipment(osv.osv):
             context = {}
         # reset one2many fields
         default.update(pack_family_memory_ids=[])
+        default.update(in_ref=False)
         result = super(shipment, self).copy_data(cr, uid, id, default=default, context=context)
         
         return result
@@ -277,6 +278,7 @@ class shipment(osv.osv):
                 'parent_id': fields.many2one('shipment', string='Parent shipment'),
                 'invoice_id': fields.many2one('account.invoice', string='Related invoice'),
                 'additional_items_ids': fields.one2many('shipment.additionalitems', 'shipment_id', string='Additional Items'),
+                'in_ref': fields.char(string='IN Reference', size=1024),
                 }
    
     def _get_sequence(self, cr, uid, context=None):
@@ -286,6 +288,7 @@ class shipment(osv.osv):
     _defaults = {
         'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'sequence_id': _get_sequence,
+        'in_ref': False,
     } 
     
     _order = 'name desc'
@@ -1420,6 +1423,7 @@ class stock_picking(osv.osv):
         default.update(backorder_ids=[])
         default.update(previous_step_ids=[])
         default.update(pack_family_memory_ids=[])
+        default.update(in_ref=False)
         # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
         if context.get('from_button'):
             default.update(purchase_id=False)
@@ -1761,6 +1765,7 @@ class stock_picking(osv.osv):
                 'already_shipped': fields.boolean(string='The shipment is done'), #UF-1617: only for indicating the PPL that the relevant Ship has been closed
                 'has_draft_moves': fields.function(_get_draft_moves, method=True, type='boolean', string='Has draft moves ?', store=False),
                 'has_to_be_resourced': fields.boolean(string='Picking has to be resourced'),
+                'in_ref': fields.char(string='IN Reference', size=1024),
                 }
     _defaults = {'flow_type': 'full',
                  'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
@@ -1770,6 +1775,7 @@ class stock_picking(osv.osv):
                  'converted_to_standard': False,
                  'already_shipped': False,
                  'line_state': 'empty',
+                 'in_ref': False
                  }
     #_order = 'origin desc, name asc'
     _order = 'name desc'
