@@ -432,6 +432,8 @@ class ImpEx(SecuredController):
         view_name = ctx.get('_terp_view_name', '')
 
         if ctx.get('group_by_no_leaf'):
+            ctx['client_export_data'] = True  # UTP-580-582-697 client export flag
+            
             rpc_obj = rpc.RPCProxy(params.model)
             domain = params.search_domain or []
             to_group = ctx.get('group_by', [])
