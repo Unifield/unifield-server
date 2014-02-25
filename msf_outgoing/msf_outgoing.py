@@ -1762,6 +1762,7 @@ class stock_picking(osv.osv):
                 'has_draft_moves': fields.function(_get_draft_moves, method=True, type='boolean', string='Has draft moves ?', store=False),
                 'has_to_be_resourced': fields.boolean(string='Picking has to be resourced'),
                 }
+                
     _defaults = {'flow_type': 'full',
                  'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
                  'subtype': 'standard',
@@ -1771,7 +1772,7 @@ class stock_picking(osv.osv):
                  'already_shipped': False,
                  'line_state': 'empty',
                  }
-    #_order = 'origin desc, name asc'
+
     _order = 'name desc'
 
     def onchange_move(self, cr, uid, ids, context=None):
@@ -2542,7 +2543,7 @@ class stock_picking(osv.osv):
         if not proc_ids:
             raise osv.except_osv(
                 _('Processing Error'),
-                _('No Picking Ticket to process !')
+                _('No data to process !')
             )
         
         for wizard in cp_proc_obj.browse(cr, uid, proc_ids, context=context):
@@ -2578,13 +2579,6 @@ class stock_picking(osv.osv):
                     'initial_qty': line.move_id.product_qty,
                     'processed_qty': 0.00,
                 })
-                
-                # We cannot change the product on create picking wizard
-                if line.product_id.id != line.move_id.product_id.id:
-                    raise osv.except_osv(
-                        _('Processing Error'),
-                        _('Line %s: The product is wrong - Should be the same as initial move') % line.line_number,
-                    )
                     
                 if line.uom_id.id != line.move_id.product_uom.id:
                     processed_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.move_id.product_uom.id)
@@ -2671,144 +2665,156 @@ class stock_picking(osv.osv):
             'target': 'new',
         }
 
-    def do_validate_picking_first_hook(self, cr, uid, ids, context, *args, **kwargs):
+    def do_validate_picking(self, cr, uid, wizard_ids, context=None):
         '''
-        hook to update new_move data. Originally: to complete msf_cross_docking module
-        '''
-        values = kwargs.get('values')
-        assert values is not None, 'missing defaults'
+        Validate the picking ticket from selected stock moves
         
-        return values
-
-    def do_validate_picking(self, cr, uid, ids, context=None):
+        Move here the logic of validate picking
         '''
-        validate the picking ticket from selected stock moves
-        
-        move here the logic of validate picking
-        available for picking loop
-        '''
-        if not context:
-            context = {}
-        assert context, 'context is not defined'
-        assert 'partial_datas' in context, 'partial datas not present in context'
-        partial_datas = context['partial_datas']
-        
-        # objects
+        # Objects
         date_tools = self.pool.get('date.tools')
+        move_obj = self.pool.get('stock.move')
+        uom_obj = self.pool.get('product.uom')
+        proc_obj = self.pool.get('validate.picking.processor')
+        
+        if context is None:
+            context = {}
+            
+        if isinstance(wizard_ids, (int, long)):
+            wizard_ids = [wizard_ids]
+            
+        if not wizard_ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+            
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
         today = time.strftime(db_date_format)
         
-        # stock move object
-        move_obj = self.pool.get('stock.move')
-        uom_obj = self.pool.get('product.uom')
-        # create picking object
-        create_picking_obj = self.pool.get('create.picking')
+        zero_qty_move_ids = set()
         
-        new_ppl = False
-        for pick in self.browse(cr, uid, ids, context=context):
-            # create stock moves corresponding to partial datas
-            move_ids = partial_datas[pick.id].keys()
-            for move in move_obj.browse(cr, uid, move_ids, context=context):
-                # qty selected
-                count = 0
-                # flag to update the first move - if split was performed during the validation, new stock moves are created
-                first = True
-                # initial qty
-                initial_qty = move.product_qty
-                for partial in partial_datas[pick.id][move.id]:
-                    # integrity check
-                    assert partial['product_id'] == move.product_id.id, 'product id is wrong, %s - %s'%(partial['product_id'], move.product_id.id)
-                    # UTP-289 : Remove the check on UoM
-                    #assert partial['product_uom'] == move.product_uom.id, 'product uom is wrong, %s - %s'%(partial['product_uom'], move.product_uom.id)
-
-                    total_qty = uom_obj._compute_qty(cr, uid, partial['product_uom'], partial['product_qty'], move.product_uom.id)
-                    # the quantity
-                    count = count + total_qty
-                    orig_qty = move.product_qty
-                    if move.original_qty_partial and move.original_qty_partial != -1:
-                        orig_qty = move.original_qty_partial
-                    if first:
-                        first = False
-                        # update existing move
-                        values = {'product_qty': partial['product_qty'],
-                                  'product_uos_qty': partial['product_qty'],
-                                  'product_uom': partial['product_uom'],
-                                  'product_uos': partial['product_uom'],
-                                  'prodlot_id': partial['prodlot_id'],
-                                  'line_number': partial['line_number'],
-                                  'original_qty_partial': orig_qty,
-                                  'composition_list_id': partial['composition_list_id'],
-                                  'asset_id': partial['asset_id']}
-                        values = self.do_validate_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
-                        move_obj.write(cr, uid, [move.id], values, context=context)
-                    else:
-                        # split happend during the validation
-                        # copy the stock move and set the quantity
-                        values = {'state': 'assigned',
-                                  'product_qty': partial['product_qty'],
-                                  'product_uos_qty': partial['product_qty'],
-                                  'product_uom': partial['product_uom'],
-                                  'product_uos': partial['product_uom'],
-                                  'prodlot_id': partial['prodlot_id'],
-                                  'line_number': partial['line_number'],
-                                  'original_qty_partial': orig_qty,
-                                  'composition_list_id': partial['composition_list_id'],
-                                  'asset_id': partial['asset_id']}
-                        values = self.do_validate_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
-                        new_move = move_obj.copy(cr, uid, move.id, values, context=dict(context, keepLineNumber=True))
-                # decrement the initial move, cannot be less than zero
-                diff_qty = initial_qty - count
-                # the quantity after the validation does not correspond to the picking ticket quantity
-                # the difference is written back to draft picking ticket
-                # is positive if some qty was removed during the validation -> draft qty is increased
-                # is negative if some qty was added during the validation -> draft qty is decreased
-                if diff_qty != 0:
-                    # original move from the draft picking ticket which will be updated
-                    original_move = move.backmove_id
-                    original_vals = move_obj.read(cr, uid, [original_move.id], ['product_qty', 'product_uom'], context=context)[0]
-                    backorder_qty = original_vals['product_qty']
-                    original_uom = original_vals['product_uom'][0]
-                    diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, diff_qty, original_uom)
-                    backorder_qty = max(backorder_qty + diff_qty, 0)
-                    move_obj.write(cr, uid, [original_move.id], {'product_qty': backorder_qty}, context=context)
-
-            # create the new ppl object
-            ppl_number = pick.name.split("/")[1]
-            # we want the copy to keep the production lot reference from picking ticket to pre-packing list
-            new_ppl_id = self.copy(cr, uid, pick.id, {'name': 'PPL/' + ppl_number,
-                                                      'subtype': 'ppl',
-                                                      'previous_step_id': pick.id,
-                                                      'backorder_id': False}, context=dict(context, keep_prodlot=True, allow_copy=True, keepLineNumber=True))
+        for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
+            picking = wizard.picking_id
+            
+            move_data = {}
+            
+            # Create the new ppl object
+            ppl_number = picking.name.split("/")[1]
+            # We want the copy to keep the batch number reference from picking ticket to pre-packing list
+            cp_vals ={
+                'name': 'PPL/%s' % ppl_number,
+                'subtype': 'ppl',
+                'previous_step_id': picking.id,
+                'backorder_id': False,
+                'move_lines': [],
+            }
+            context.update({
+                'keep_prodlot': True,
+                'allow_copy': True,
+                'keepLineNumber': True,
+            })
+            new_ppl_id = self.copy(cr, uid, picking.id, cp_vals, context=context)
             new_ppl = self.browse(cr, uid, new_ppl_id, context=context)
-            # update locations of stock moves - if the move quantity is equal to zero, the stock move is removed
-            for move in new_ppl.move_lines:
-                if move.product_qty:
-                    move_obj.write(cr, uid, [move.id], {'initial_location': move.location_id.id,
-                                                        'location_id': move.location_dest_id.id,
-                                                        'location_dest_id': new_ppl.warehouse_id.lot_dispatch_id.id,
-                                                        'date': today,
-                                                        'date_expected': today,}, context=context)
+            context.update({
+                'keep_prodlot': False,
+                'allow_copy': False,
+                'keepLineNumber': False,
+            })
+
+            # For each processed lines, save the processed quantity to update the draft picking ticket
+            # and create a new line on PPL
+            for line in wizard.move_ids:
+                first = False
+                
+                orig_qty = line.move_id.product_qty
+                if line.move_id.original_qty_partial and line.move_id.original_qty_partial != -1:
+                    orig_qty = line.move_id.original_qty_partial
+                
+                if line.move_id.id not in move_data:
+                    move_data.setdefault(line.move_id.id, {
+                        'initial_qty': line.move_id.product_qty,
+                        'processed_qty': 0.00,
+                        'move': line.move_id,
+                    })
+                    first = True
+                    
+                if line.uom_id.id != line.move_id.product_uom.id:
+                    processed_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.move_id.product_uom.id)
                 else:
-                    move_obj.unlink(cr, uid, [move.id], context=dict(context, skipResequencing=True))
+                    processed_qty = line.quantity
+                
+                move_data[line.move_id.id]['processed_qty'] += processed_qty
+                    
+                values = {
+                    'product_qty': line.quantity,
+                    'product_uos_qty': line.quantity,
+                    'product_uom': line.uom_id.id,
+                    'product_uos': line.uom_id.id,
+                    'prodlot_id': line.prodlot_id and line.prodlot_id.id,
+                    'line_number': line.line_number,
+                    'asset_id': line.asset_id and line.asset_id.id,
+                    'composition_list_id': line.composition_list_id and line.composition_list_id.id,
+                    'original_qty_partial': orig_qty,
+                }
+                
+                # Update or create the validate picking ticket line
+                if first:
+                    move_obj.write(cr, uid, [line.move_id.id], values, context=context)
+                else:
+                    # Split happened during the validation
+                    # Copy the stock move and set the quantity
+                    values['state'] = 'assigned'
+                    context['keepLineNumber'] = True
+                    move_obj.copy(cr, uid, line.move_id.id, values, context=context)
+                    context['keepLineNumber'] = False
+                    
+                values.update({
+                    'picking_id': new_ppl_id,
+                    'initial_location': line.move_id.location_id.id,
+                    'location_id': line.move_id.location_dest_id.id,
+                    'location_dest_id': new_ppl.warehouse_id.lot_dispatch_id.id,
+                    'date': today,
+                    'date_expected': today,
+                })
+                move_obj.copy(cr, uid, line.move_id.id, values, context=context)
+                
+            
+            # For each move, check if there is remaining quantity
+            for move_id, move_vals in move_data.iteritems():
+                # The quantity after the validation does not correspond to the picking ticket quantity
+                # The difference is written back to draft picking ticket
+                # Is positive if some quantity was removed during the validation -> draft quantity is increased
+                # Is negative if some quantity was added during the validation -> draft quantity is decreased
+                diff_qty = move_vals['initial_qty'] - move_vals['processed_qty']
+                if diff_qty != 0.00:
+                    # Original move from the draft picking ticket which will be updated
+                    original_move_id = move_vals['move'].backmove_id.id
+                    original_vals = move_obj.browse(cr, uid, original_move_id, context=context)
+                    if original_vals.product_uom.id != move_vals['move'].product_uom.id:
+                        diff_qty = uom_obj._compute_qty(cr, uid, move_vals['move'].product_uom.id, diff_qty, original_vals.product_uom.id)
+                    backorder_qty = max(original_vals.product_qty + diff_qty, 0)
+                    if backorder_qty != 0.00:
+                        move_obj.write(cr, uid, [original_move_id], {'product_qty': backorder_qty}, context=context)
             
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'stock.picking', new_ppl_id, 'button_confirm', cr)
             # simulate check assign button, as stock move must be available
             self.force_assign(cr, uid, [new_ppl_id])
             # trigger standard workflow for validated picking ticket
-            self.action_move(cr, uid, [pick.id])
-            wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
+            self.action_move(cr, uid, [picking.id])
+            wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
             
             # if the flow type is in quick mode, we perform the ppl steps automatically
-            if pick.flow_type == 'quick':
-                create_picking_obj.quick_mode(cr, uid, new_ppl, context=context)
+            # TODO: Treat the quick mode
+            #if picking.flow_type == 'quick':
+            #    create_picking_obj.quick_mode(cr, uid, new_ppl, context=context)
 
-        # TODO which behavior
-        #return {'type': 'ir.actions.act_window_close'}
         data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')
         view_id = view_id and view_id[1] or False
         context.update({'picking_type': 'picking_ticket', 'ppl_screen': True})
+        
         return {'name':_("Pre-Packing List"),
                 'view_mode': 'form,tree',
                 'view_id': [view_id],

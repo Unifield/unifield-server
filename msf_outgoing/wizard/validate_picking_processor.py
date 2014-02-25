@@ -1,0 +1,173 @@
+# -*- coding: utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2014 TeMPO Consulting, MSF
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+from osv import fields
+from osv import osv
+
+
+class validate_picking_processor(osv.osv):
+    """
+    Wizard used to create a Packing List from a validate picking ticket
+    """
+    _name  = 'validate.picking.processor'
+    _inherit = 'stock.picking.processor'
+    _description = 'Wizard to process the second step of the P/P/S'
+
+    _columns = {
+        'move_ids': fields.one2many(
+            'validate.move.processor',
+            'wizard_id',
+            string='Moves to process',
+        ),
+    }
+    
+    """
+    Model methods
+    """
+    def do_validate_picking(self, cr, uid, ids, context=None):
+        """
+        Made some integrity checks and launch the do_validate_picking method
+        of the stock.picking object
+        """
+        # Objects
+        picking_obj = self.pool.get('stock.picking')
+        proc_line_obj = self.pool.get('validate.move.processor')
+                
+        if context is None:
+            context = {}
+        
+        to_unlink = []
+        
+        for proc in self.browse(cr, uid, ids, context=context):
+            total_qty = 0.00
+            
+            for line in proc.move_ids:
+                # if no quantity, don't process the move
+                if not line.quantity:
+                    to_unlink.append(line.id)
+                    continue
+                
+                if line.integrity_status != 'empty':
+                    raise osv.except_osv(
+                        _('Processing Error'),
+                        _('Line %s: %s') % (line.line_number, proc_line_obj.get_selection(self, cr, uid, line, 'integrity_status'))
+                    )
+                    
+                # We cannot change the product on create picking wizard
+                if line.product_id.id != line.move_id.product_id.id:
+                    raise osv.except_osv(
+                        _('Processing Error'),
+                        _('Line %s: The product is wrong - Should be the same as initial move') % line.line_number,
+                    )
+                
+                total_qty += line.quantity
+
+            if not total_qty:
+                raise osv.except_osv(
+                    _('Processing Error'),
+                    _('You have to enter the quantities you want to process before processing the move.'),
+                )
+
+        # Delete non-used lines
+        if to_unlink:
+            proc_line_obj.unlink(cr, uid, to_unlink, context=context)
+
+        self.integrity_check_prodlot(cr, uid, ids, context=context)
+        # call stock_picking method which returns action call
+            
+        return picking_obj.do_validate_picking(cr, uid, ids, context=context)
+        
+    def integrity_check_prodlot(self, cr, uid, ids, context=None):
+        """
+        Check if the processed quantities are not larger than the available quantities
+        """
+        # Objects
+        uom_obj = self.pool.get('product.uom')
+        lot_obj = self.pool.get('stock.production.lot')
+        
+        if context is None:
+            context = {}
+        
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        lot_integrity = {}
+        
+        for wizard in self.browse(cr, uid, ids, context=context):
+            for line in wizard.move_ids:
+                if line.prodlot_id:
+                    if line.location_id:
+                        context['location_id'] = line.location_id.id
+                    lot = lot_obj.browse(cr, uid, line.prodlot_id.id, context=context)
+                    
+                if line.location_id and line.prodlot_id:
+                    lot_integrity.setdefault(line.prodlot_id.id, {})
+                    lot_integrity[line.prodlot_id.id].setdefault(line.location_id.id, 0.00)
+                    
+                    product_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.prodlot_id.uom_id.id)
+                    lot_integrity[line.prodlot_id.id][line.location_id.id] += product_qty
+                    
+                    if lot.stock_available < product_qty:
+                        raise osv.except_osv(
+                            _('Processing Error'),
+                            _('Processing quantity %d %s for %s is larger than the available quantity in Batch Number %s (%d) !') \
+                            % (line.quantity, line.uom_id.name, line.product_id.name, lot.name, lot.stock_available)
+                        )
+
+        # Check batches quantity integrity
+        for lot in lot_integrity:
+            for location in lot_integrity[lot]:
+                tmp_lot = lot_obj.browse(cr, uid, lot, context={'location_id': location})
+                lot_qty = tmp_lot.stock_available
+                if lot_qty < lot_integrity[lot][location]:
+                    raise osv.except_osv(
+                        _('Processing Error'), \
+                        _('Processing quantity %d for %s is larger than the available quantity in Batch Number %s (%d) !')\
+                        %(lot_integrity[lot][location], tmp_lot.product_id.name, tmp_lot.name, lot_qty
+                    ))
+                    
+        return True
+
+validate_picking_processor()
+
+
+class validate_move_processor(osv.osv):
+    """
+    Wizard line used to create a Packing List from a validate picking ticket move
+    """
+    _name = 'validate.move.processor'
+    _inherit = 'stock.move.processor'
+    _description = 'Wizard lines for validate picking processor'
+    
+    _columns = {
+        'wizard_id': fields.many2one(
+            'validate.picking.processor',
+            string='Wizard ID',
+            required=True,
+            readonly=True,
+            select=True,
+            ondelete='cascade',
+        ),
+    }
+    
+validate_move_processor()
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -972,6 +972,19 @@ class stock_move_processor(osv.osv):
             'res_id': split_wiz_id,
             'context': context,
         }
+        
+    def get_selection(self, cr, uid, o, field):
+        """
+        Get the label of fields.selection
+        """
+        sel = self.pool.get(o._name).fields_get(cr, uid, [field])
+        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+        name = '%s,%s' % (o._name, field)
+        tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
+        if tr_ids:
+            return self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
+        else:
+            return res
 
 stock_move_processor()
 

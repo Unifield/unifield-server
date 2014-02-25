@@ -23,19 +23,6 @@ from osv import fields, osv
 from tools.translate import _
 import time
 
-def get_selection(self, cr, uid, o, field):
-    """
-    Get the label of fields.selection
-    """
-    sel = self.pool.get(o._name).fields_get(cr, uid, [field])
-    res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
-    name = '%s,%s' % (o._name, field)
-    tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
-    if tr_ids:
-        return self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
-    else:
-        return res
-
 class create_picking_processor(osv.osv):
     """
     Create picking processing wizard
@@ -61,6 +48,7 @@ class create_picking_processor(osv.osv):
         """
         # Objects
         picking_obj = self.pool.get('stock.picking')
+        proc_line_obj = self.pool.get('create.picking.move.processor')
         
         to_unlink = []
         
@@ -76,7 +64,14 @@ class create_picking_processor(osv.osv):
                 if line.integrity_status != 'empty':
                     raise osv.except_osv(
                         _('Processing Error'),
-                        _('Line %s: %s') % (line.line_number, get_selection(self, cr, uid, line, 'integrity_status'))
+                        _('Line %s: %s') % (line.line_number, proc_line_obj.get_selection(self, cr, uid, line, 'integrity_status'))
+                    )
+                    
+                # We cannot change the product on create picking wizard
+                if line.product_id.id != line.move_id.product_id.id:
+                    raise osv.except_osv(
+                        _('Processing Error'),
+                        _('Line %s: The product is wrong - Should be the same as initial move') % line.line_number,
                     )
                 
                 total_qty += line.quantity
@@ -86,6 +81,10 @@ class create_picking_processor(osv.osv):
                     _('Processing Error'),
                     _('You have to enter the quantities you want to process before processing the move.'),
                 )
+
+        # Remove non-used lines
+        if to_unlink:
+            proc_line_obj.unlink(cr, uid, to_unlink, context=context)
 
         self.integrity_check_prodlot(cr, uid, ids, context=context)
         # call stock_picking method which returns action call
@@ -128,7 +127,7 @@ class create_picking_processor(osv.osv):
                             % (line.quantity, line.uom_id.name, line.product_id.name, lot.name, lot.stock_available)
                         )
 
-        # Check prodlot qty integrity
+        # Check batches quantity integrity
         for lot in lot_integrity:
             for location in lot_integrity[lot]:
                 tmp_lot = lot_obj.browse(cr, uid, lot, context={'location_id': location})

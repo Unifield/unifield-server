@@ -24,6 +24,7 @@ import incoming_shipment
 import change_product_move_processor
 import split_move_processor
 import create_picking_processor
+import validate_picking_processor
 
 import split_memory_move
 import stock_partial_move
