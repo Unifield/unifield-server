@@ -170,15 +170,15 @@ class wizard_register_import(osv.osv_memory):
                     cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
                     common_vals.update({'analytic_id': funding_pool_id or msf_fp_id, 'cost_center_id': cost_center_id,})
                     fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
-                    # Check analytic distribution
-                    self.pool.get('account.bank.statement.line').write(cr, uid, [absl_id], {'analytic_distribution_id': distrib_id,})
+                    # Check analytic distribution. Use SKIP_WRITE_CHECK to not do anything else that writing analytic distribution field
+                    self.pool.get('account.bank.statement.line').write(cr, uid, [absl_id], {'analytic_distribution_id': distrib_id,}, context={'skip_write_check': True})
                     absl_data = self.pool.get('account.bank.statement.line').read(cr, uid, [absl_id], ['analytic_distribution_state'], context)
                     delete_distribution = True
                     if absl_data and absl_data[0]:
                         if absl_data[0].get('analytic_distribution_state', False) == 'valid':
                             delete_distribution = False
                     if delete_distribution:
-                        self.pool.get('account.bank.statement.line').write(cr, uid, [absl_id], {'analytic_distribution_id': False}, context)
+                        self.pool.get('account.bank.statement.line').write(cr, uid, [absl_id], {'analytic_distribution_id': False}, context={'skip_write_check': True}) # do not do anythin else than changing analytic_distribution_id field content
                         self.pool.get('analytic.distribution').unlink(cr, uid, [distrib_id], context)
                 # Update wizard with current progression
                 progression = current_percent + (nb + 1.0) / entries_number * remaining_percent
