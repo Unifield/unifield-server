@@ -59,11 +59,13 @@ class account_bank_statement_line(osv.osv):
         # Prepare some values
         res = {}
         # Browse all given lines
-        for line in self.browse(cr, uid, ids, context=context):
-            if not line.analytic_distribution_id:
-                res[line.id] = 'none'
+        for line in self.read(cr, uid, ids, ['analytic_distribution_id', 'account_id'], context=context):
+            if not line.get('analytic_distribution_id', False):
+                res[line.get('id')] = 'none'
                 continue
-            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, False, line.account_id.id)
+            distribution_id = line.get('analytic_distribution_id')[0]
+            account_id = line.get('account_id', [False])[0]
+            res[line.get('id')] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distribution_id, False, account_id)
         return res
 
     _columns = {
