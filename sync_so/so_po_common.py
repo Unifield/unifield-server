@@ -22,6 +22,9 @@
 from osv import osv, fields
 from sync_common import xmlid_to_sdref
 
+
+
+
 class so_po_common(osv.osv_memory):
     _name = "so.po.common"
     _description = "Common methods for SO - PO"
@@ -526,9 +529,9 @@ class so_po_common(osv.osv_memory):
         }
         return msg_to_send_obj.create(cr, uid, data, context=context)
 
-    def create_invalid_recovery_message(self, cr, uid, rule_sequence, partner_name, name, context):
+    def create_invalid_recovery_message(self, cr, uid, partner_name, name, context):
         rule_obj = self.pool.get("sync.client.message_rule")
-        rule = rule_obj.get_rule_by_sequence(cr, uid, rule_sequence, context)
+        rule = rule_obj.get_rule_by_sequence(cr, uid, 1003, context)
         if not rule:
             return
         msg_to_send_obj = self.pool.get("sync.client.message_to_send")

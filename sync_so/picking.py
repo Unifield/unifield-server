@@ -189,10 +189,9 @@ class stock_picking(osv.osv):
         if not po_id:
             # UF-1830: Check if the PO exist, if not, and in restore mode, send a warning and create a message to remove the ref on the partner document 
             if context.get('restore_flag'):
-                # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
-                # use the so_info.name
-                so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, shipment_ref, context)            
-                return "Recovery: the reference to " + shipment_ref + " on " + source + " will be set to void."
+                # UF-1830: Create a message to remove the invalid reference to the inexistent document
+                so_po_common.create_invalid_recovery_message(cr, uid, source, shipment_ref, context)            
+                return "Recovery: the reference to " + shipment_ref + " at " + source + " will be set to void."
 
             raise Exception, "The PO is not found for the given FO Ref: " + so_ref
         
@@ -379,10 +378,10 @@ class stock_picking(osv.osv):
                     self._logger.info(message)
                     return message
         elif context.get('restore_flag'):
-            # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
+            # UF-1830: Create a message to remove the invalid reference to the inexistent document
             shipment_ref = pick_dict['name']            
-            so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, shipment_ref, context)            
-            return "Recovery: the reference to " + shipment_ref + " on " + source + " will be set to void."
+            so_po_common.create_invalid_recovery_message(cr, uid, source, shipment_ref, context)            
+            return "Recovery: the reference to " + shipment_ref + " at " + source + " will be set to void."
 
         raise Exception("There is a problem (no PO or IN found) when cancel the IN at project")
 
@@ -426,14 +425,11 @@ class stock_picking(osv.osv):
                     self._logger.info(message)
                     return message
         elif context.get('restore_flag'):
-            # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
-            # use the so_info.name
+            # UF-1830: Create a message to remove the invalid reference to the inexistent document
             so_po_common = self.pool.get('so.po.common')
-            
-            ##### UF-1830: BUG BUG BUG Pass the correct ref
-            
-            so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, shipment_ref, context)            
-            return "Recovery: the reference to " + shipment + " on " + source + " will be set to void."
+            shipment_ref = pick_dict['name']
+            so_po_common.create_invalid_recovery_message(cr, uid, source, shipment_ref, context)            
+            return "Recovery: the reference to " + shipment_ref + " at " + source + " will be set to void."
 
         raise Exception("There is a problem (no PO or IN found) when cancel the IN at project")
 
@@ -481,7 +477,8 @@ class stock_picking(osv.osv):
         pick_dict = out_info.to_dict()
 
         shipment_ref = pick_dict.get('shipment_ref', False)
-        if not shipment_ref:
+        in_name = pick_dict.get('name', False)
+        if not shipment_ref or not in_name:
             raise Exception("The shipment reference is empty. The action cannot be executed.")
 
         ship_split = shipment_ref.split('.')
@@ -508,11 +505,10 @@ class stock_picking(osv.osv):
                 if ship_ids:
                     message = "The shipment " + out_doc_name + " has been MANUALLY confirmed as delivered."
                 elif context.get('restore_flag'):
-                    # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
-                    # use the so_info.name
+                    # UF-1830: Create a message to remove the invalid reference to the inexistent document
                     so_po_common = self.pool.get('so.po.common')
-                    so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, shipment_ref, context)            
-                    return "Recovery: the reference to " + shipment_ref + " on " + source + " will be set to void."                    
+                    so_po_common.create_invalid_recovery_message(cr, uid, source, in_name, context)            
+                    return "Recovery: the reference to " + in_name + " at " + source + " will be set to void."                    
                     
         elif 'OUT' in out_doc_name:
             ship_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'done')], context=context)
@@ -526,11 +522,10 @@ class stock_picking(osv.osv):
                 if ship_ids:
                     message = "The OUTcoming " + out_doc_name + " has been MANUALLY confirmed as delivered." 
                 elif context.get('restore_flag'):
-                    # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
-                    # use the so_info.name
+                    # UF-1830: Create a message to remove the invalid reference to the inexistent document
                     so_po_common = self.pool.get('so.po.common')
-                    so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, shipment_ref, context)            
-                    return "Recovery: the reference to " + out_doc_name + " on " + source + " will be set to void."                    
+                    so_po_common.create_invalid_recovery_message(cr, uid, source, in_name, context)            
+                    return "Recovery: the reference to " + in_name + " at " + source + " will be set to void."                    
         if message:
             self._logger.info(message)
             return message
@@ -578,8 +573,8 @@ class stock_picking(osv.osv):
             elif context.get('restore_flag'):
                 # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
                 so_po_common = self.pool.get('so.po.common')
-                so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, shipment_ref, context)            
-                message = "Recovery: the reference to " + in_name + " on " + source + " will be set to void."                    
+                so_po_common.create_invalid_recovery_message(cr, uid, source, in_name, context)            
+                message = "Recovery: the reference to " + in_name + " at " + source + " will be set to void."                    
         elif 'OUT' in out_doc_name:
             ids = self.search(cr, uid, [('name', '=', out_doc_name)], context=context)
             if ids:
@@ -590,8 +585,8 @@ class stock_picking(osv.osv):
             elif context.get('restore_flag'):
                 # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
                 so_po_common = self.pool.get('so.po.common')
-                so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, shipment_ref, context)            
-                message = "Recovery: the reference to " + in_name + " on " + source + " will be set to void."                    
+                so_po_common.create_invalid_recovery_message(cr, uid, source, in_name, context)            
+                message = "Recovery: the reference to " + in_name + " at " + source + " will be set to void."                    
 
         if message:
             self._logger.info(message)

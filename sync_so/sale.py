@@ -62,9 +62,9 @@ class sale_order_sync(osv.osv):
             
         so_po_common = self.pool.get('so.po.common')
         if context.get('restore_flag'):
-            # UF-1830: TODO: Create a message to remove the reference of the PO on the partner instance!!!!! to make sure that the PO does not link to a wrong SO in this instance
-            so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, po_info.name, context)            
-            return "Recovery: The backup procedure cannot create the SO from a PO. Please inform the owner of the PO " + po_info.name + " to cancel it and to recreate a new process."
+            # UF-1830: Cannot create an FO from a recovery message
+            so_po_common.create_invalid_recovery_message(cr, uid, source, po_info.name, context)            
+            return "Recovery: cannot create the SO from a PO. Please inform the owner of the PO " + po_info.name + " to cancel it and to recreate a new process."
         
         context['no_check_line'] = True
         po_dict = po_info.to_dict()
@@ -83,7 +83,6 @@ class sale_order_sync(osv.osv):
         default.update(header_result)
 
         so_id = self.create(cr, uid, default , context=context)
-
         if 'order_type' in header_result:
             if header_result['order_type'] == 'loan':
                 # UTP-392: Look for the PO of this loan, and update the reference of source document of that PO to this new FO
@@ -143,46 +142,18 @@ class sale_order_sync(osv.osv):
         context['no_check_line'] = True
         so_po_common = self.pool.get('so.po.common')
         so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
-        if not so_id and context.get('restore_flag'):
-            # UF-1830: TODO: Create a message to remove the reference of the PO on the partner instance!!!!! to make sure that the PO does not link to a wrong SO in this instance
-            
-            so_po_common = self.pool.get('so.po.common')
-            so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, po_info.name, context)            
-            
-            # TEMP TEMP
-#            raise Exception, ("Restore case: not found the new replacement of FO for the reference PO: " + ori_po_refs)
-
-            return "Recovery: the original FO " + po_info.partner_ref + " has been created after the backup and thus cannot be updated"
+        if not so_id:
+            if context.get('restore_flag'):
+                # UF-1830: Create a message to remove the invalid reference to the inexistent document
+                so_po_common = self.pool.get('so.po.common')
+                so_po_common.create_invalid_recovery_message(cr, uid, source, po_info.name, context)            
+                return "Recovery: the reference on " + po_info.name + " at " + source + " will be set to void."
+            raise Exception, "Cannot find the original FO with the given info."
         
         ref = self.browse(cr, uid, so_id).client_order_ref
-        
-        log_message = ""
-         # UF-1830: in case of backup and restore, and that the relevant FO has been lost, then
-        if not so_id and context.get('restore_flag'): 
-            # now search the new replacement of FO: check if the
-            log_message = "Restore Case: " 
-            if po_info.name and len(po_info.name) > 3:
-                if po_info.name[-2:] in ('-1', '-2', '-3'): # search only split FO, with prefix of -1,2,3
-                    # this is the split PO, --> search for either the FO with reference to this split PO or only to the original PO (POxxx-2, or just POxxx)
-                    # and the state must not be split
-                    ori_po_refs = (source + "." + po_info.name, source + "." + po_info.name[:-2])
-                    so_ids = self.search(cr, uid, [('client_order_ref', 'in', ori_po_refs), ('split_type_sale_order', '!=', 'original_sale_order')], context=context)
-                else: # not split case, FO before sourcing
-                    ori_po_refs = source + "." + po_info.name
-                    so_ids = self.search(cr, uid, [('client_order_ref', '=', ori_po_refs)], context=context)
-                    
-                if not so_ids:
-                    raise Exception, ("Restore case: not found the new replacement of FO for the reference PO: " + ori_po_refs)
-                so_id = so_ids[0]
-            else:
-                raise Exception, "Restore case: Invalid format of the PO: " + po_info.name
-             
-        so_split = self.browse(cr, uid, so_id, context)
-        
         client_order_ref = source + "." + po_info.name
-
-        #UF-1830        
-        if not so_split.client_order_ref or client_order_ref != so_split.client_order_ref: # only issue a write if the client_order_reference is not yet set!
+       
+        if not ref or client_order_ref != ref: # only issue a write if the client_order_reference is not yet set!
             res_id = self.write(cr, uid, so_id, {'client_order_ref': client_order_ref} , context=context)
         
         '''
@@ -195,11 +166,8 @@ class sale_order_sync(osv.osv):
             temp = self.browse(cr, uid, line).client_order_ref
             if not temp: # only issue a write if the client_order_reference is not yet set!
                 res_id = self.write(cr, uid, line, {'client_order_ref': client_order_ref} , context=context)
-
-        # UF-1830            
-        log_message += "The reference to the PO " + source + "." + po_info.name + " has been well updated to the FO " + so_split.name  
-        self._logger.info(log_message)
-        return log_message
+            
+        return True
     
     # UF-1830: reset automatically the reference to the partner object to become void due to the recovery event
     def reset_ref_by_recovery_mode(self, cr, uid, source, values, context=None):
@@ -211,7 +179,7 @@ class sale_order_sync(osv.osv):
         recovery = source + ".invalid_by_recovery"
             
         # Get the type of the object, in order to retrieve the right documents for resetting the reference
-        # If there is no document referred to the given, just ignore it 
+        # If there is no document referred to the given ref, just ignore it 
         name = values.name
         if name:
             if name.find("PO") >= 0:
@@ -228,20 +196,17 @@ class sale_order_sync(osv.osv):
                 
             elif name.find("OUT") >= 0: 
                 object = self.pool.get('stock.picking')
-                shipment_ref = source + "." + name
                 ids = object.search(cr, uid, [('name', '=', name)], context=context)
                 if ids and ids[0]:
                     cr.execute('update stock_picking set in_ref=%s where id in %s', (recovery, tuple(ids)))
             elif name.find("SHIP") >= 0: 
                 object = self.pool.get('shipment')
-                shipment_ref = source + "." + name
                 ids = object.search(cr, uid, [('name', '=', name)], context=context)
                 if ids and ids[0]:
                     cr.execute('update shipment set in_ref=%s where id in %s', (recovery, tuple(ids)))
             elif name.find("IN") >= 0: 
                 object = self.pool.get('stock.picking')
-                shipment_ref = source + "." + name
-                ids = object.search(cr, uid, [('shipment_ref', '=', shipment_ref)], context=context)
+                ids = object.search(cr, uid, [('name', '=', name)], context=context)
                 if ids and ids[0]:
                     cr.execute('update stock_picking set shipment_ref=%s where id in %s', (recovery, tuple(ids)))
             else:

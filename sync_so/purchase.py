@@ -95,14 +95,12 @@ class purchase_order_sync(osv.osv):
         
         if not po_id:
             if context.get('restore_flag'):
-                # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
-                # use the so_info.name
-                so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, so_info.name, context)            
+                # UF-1830: Create a message to remove the invalid reference to the inexistent document
+                so_po_common.create_invalid_recovery_message(cr, uid, source, so_info.name, context)            
                 return "Recovery: the original PO " + so_info.name + " has been created after the backup and thus cannot be updated"
             raise Exception, "Cannot find the original PO with the given info."
         
         po_value = self.browse(cr, uid, po_id)
-        
         ref = po_value.partner_ref
         partner_ref = source + "." + so_info.name
         
@@ -133,10 +131,9 @@ class purchase_order_sync(osv.osv):
         if not po_id:
             # UF-1830: TODO: DO NOT CREATE ANYTHING FROM A RESTORE CASE!
             if context.get('restore_flag'):
-                # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
-                # use the so_info.name
-                so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, so_info.name, context)            
-                return "Recovery: The backup procedure cannot create the PO. Please inform the owner of the SO " + so_info.name + " to cancel it and to recreate a new process."
+                # UF-1830: Cannot create PO from a recovery message
+                so_po_common.create_invalid_recovery_message(cr, uid, source, so_info.name, context)            
+                return "Recovery: cannot create the PO. Please inform the owner of the FO " + so_info.name + " to cancel it and to recreate a new process."
             raise Exception, "Cannot find the original PO with the given info."
 
         header_result = {}
@@ -266,9 +263,9 @@ class purchase_order_sync(osv.osv):
         
         # UF-1830: TODO: DO NOT CREATE ANYTHING FROM A RESTORE CASE!
         if context.get('restore_flag'):
-            # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
-            so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, so_info.name, context)            
-            return "Recovery: The backup procedure cannot create the PO. Please inform the owner of the SO " + so_info.name + " to cancel it and to recreate a new process."
+            # UF-1830: Cannot create a PO from a recovery message
+            so_po_common.create_invalid_recovery_message(cr, uid, source, so_info.name, context)            
+            return "Recovery: Cannot create the PO. Please inform the owner of the SO " + so_info.name + " to cancel it and to recreate a new process."
         
         so_dict = so_info.to_dict()
         
@@ -358,15 +355,13 @@ class purchase_order_sync(osv.osv):
         
         # UF-1830: TODO: if the PO does not exist in the system, just warn that the message is failed to be executed, and create a message to the partner 
         if not po_id:
-            # UF-1830: TODO: DO NOT CREATE ANYTHING FROM A RESTORE CASE!
             if context.get('restore_flag'):
-                # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
-                # use the so_info.name
-                so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, so_info.name, context)            
-                return "Recovery: The backup procedure cannot create the PO. Please inform the owner of the SO " + so_info.name + " to cancel it and to recreate a new process."
+                # UF-1830: Create a message to remove the invalid reference to the inexistent document
+                so_po_common.create_invalid_recovery_message(cr, uid, source, so_info.name, context)            
+                return "Recovery: the reference to " + so_info.name + " at " + source + " will be set to void."                    
+                
             raise Exception, "The split PO " + so_dict.get('name') + " not found!"
 
-        
         self.check_mandatory_fields(cr, uid, so_dict)
 
         header_result = {}
@@ -413,12 +408,10 @@ class purchase_order_sync(osv.osv):
         
         # UF-1830: TODO: if the PO does not exist in the system, just warn that the message is failed to be executed, and create a message to the partner 
         if not po_id:
-            # UF-1830: TODO: DO NOT CREATE ANYTHING FROM A RESTORE CASE!
             if context.get('restore_flag'):
-                # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
-                # use the so_info.name
-                so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, so_info.name, context)            
-                return "Recovery: The backup procedure cannot create the PO. Please inform the owner of the SO " + so_info.name + " to cancel it and to recreate a new process."
+                # UF-1830: Create a message to remove the invalid reference to the inexistent document
+                so_po_common.create_invalid_recovery_message(cr, uid, source, so_info.name, context)            
+                return "Recovery: the FO " + so_info.name + " does not exist any more due to recovery. The reference to it will be set to void"
             raise Exception, "Cannot find the original PO with the given info."
         
         so_dict = so_info.to_dict()
@@ -474,12 +467,10 @@ class purchase_order_sync(osv.osv):
         
         # UF-1830: TODO: if the PO does not exist in the system, just warn that the message is failed to be executed, and create a message to the partner 
         if not po_id:
-            # UF-1830: TODO: DO NOT CREATE ANYTHING FROM A RESTORE CASE!
             if context.get('restore_flag'):
-                # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
-                # use the so_info.name
-                so_po_common.create_invalid_recovery_message(cr, uid, 1003, source, so_info.name, context)            
-                return "Recovery: The backup procedure cannot create the PO. Please inform the owner of the SO " + so_info.name + " to cancel it and to recreate a new process."
+                # UF-1830: Create a message to remove the invalid reference to the inexistent document
+                so_po_common.create_invalid_recovery_message(cr, uid, source, so_info.name, context)            
+                return "Recovery: The PO " + so_info.name + " does not exist any more. The reference to it will be set to void."
             raise Exception, "Cannot find the original PO with the given info."
         
         self.write(cr, uid, po_id, {'from_sync': True}, context)
