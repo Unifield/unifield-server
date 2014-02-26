@@ -453,6 +453,7 @@ class stock_picking(osv.osv):
         ctx_avg = context.copy()
         ctx_avg['location'] = internal_loc_ids
         so_to_check = set()
+        proc_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'location_procurement')[1]
         for pick in self.browse(cr, uid, ids, context=context):
             # corresponding backorder object - not necessarily created
             backorder_id = None
@@ -728,6 +729,12 @@ class stock_picking(osv.osv):
                     defaults.update(average_values)
                     new_back_move = move_obj.copy(cr, uid, move.id, defaults, context=dict(context, keepLineNumber=True))
                     move_obj.write(cr, uid, [move.id], {'dpo_line_id': 0}, context=context)
+                elif move.state != 'cancel' and move.purchase_line_id and move.purchase_line_id.procurement_id:
+                    proc = move.purchase_line_id.procurement_id
+                    if proc.move_id.location_id.id == proc_loc_id:
+                        # Replace the stock move of the procurement order by the stock move of the PO line
+                        self.pool.get('procurement.order').write(cr, uid, [proc.id], {'move_id': move.id}, context=context)
+                        self.pool.get('stock.move').write(cr, uid, [proc.move_id.id], {'state': 'cancel'}, context=context)
                     #move_obj.write(cr, uid, [out_move_id], {'product_qty': diff_qty}, context=context)
                     # if split happened
                     #if update_out:
