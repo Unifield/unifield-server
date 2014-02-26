@@ -122,7 +122,11 @@ class validate_picking_processor(osv.osv):
                     lot_integrity.setdefault(line.prodlot_id.id, {})
                     lot_integrity[line.prodlot_id.id].setdefault(line.location_id.id, 0.00)
                     
-                    product_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.prodlot_id.uom_id.id)
+                    if line.uom_id.id != line.prodlot_id.product_id.uom_id.id:
+                        product_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.prodlot_id.uom_id.id)
+                    else:
+                        product_qty = line.quantity
+                        
                     lot_integrity[line.prodlot_id.id][line.location_id.id] += product_qty
                     
                     if lot.stock_available < product_qty:
