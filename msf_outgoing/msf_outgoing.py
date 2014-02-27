@@ -32,36 +32,66 @@ import time
 from os import path
 
 class stock_warehouse(osv.osv):
-    '''
-    add new packing, dispatch and distribution locations for input
-    '''
-    _inherit = "stock.warehouse"
+    """
+    Add new packing, dispatch and distribution locations for input
+    """
+    _inherit = 'stock.warehouse'
     _name = "stock.warehouse"
 
-    _columns = {'lot_packing_id': fields.many2one('stock.location', 'Location Packing', required=True, domain=[('usage', '<>', 'view')]),
-                'lot_dispatch_id': fields.many2one('stock.location', 'Location Dispatch', required=True, domain=[('usage', '<>', 'view')]),
-                'lot_distribution_id': fields.many2one('stock.location', 'Location Distribution', required=True, domain=[('usage', '<>', 'view')]),
-                }
+    _columns = {
+        'lot_packing_id': fields.many2one(
+            'stock.location',
+            string='Location Packing',
+            required=True,
+            domain=[('usage', '<>', 'view')]
+        ),
+        'lot_dispatch_id': fields.many2one(
+            'stock.location',
+            string='Location Dispatch',
+            required=True,
+            domain=[('usage', '<>', 'view')]
+        ),
+        'lot_distribution_id': fields.many2one(
+            'stock.location',
+            string='Location Distribution',
+            required=True,
+            domain=[('usage', '<>', 'view')]
+        ),
+    }
 
-    _defaults = {'lot_packing_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Packing'), ], context=c)) and obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Packing'), ], context=c)[0] or False,
-                 'lot_dispatch_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Dispatch'), ], context=c)) and obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Dispatch'), ], context=c)[0] or False,
-                 'lot_distribution_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Distribution'), ], context=c)) and obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Distribution'), ], context=c)[0] or False,
-                }
+    def default_get(self, cr, uid, fields_list, context=None):
+        """
+        Get the default locations
+        """
+        # Objects
+        data_get = self.pool.get('ir.model.data').get_object_reference
+
+        if context is None:
+            context = {}
+
+        res = super(stock_warehouse, self).default_get(cr, uid, fields_list, context=context)
+
+        res['lot_packing_id'] = data_get(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
+        res['lot_dispatch_id'] = data_get(cr, uid, 'msf_outgoing', 'stock_location_dispatch')[1]
+        res['lot_distribution_id'] = data_get(cr, uid, 'msf_outgoing', 'stock_location_distribution')[1]
+
+        return res
 
 stock_warehouse()
 
 
 class pack_type(osv.osv):
-    '''
-    pack type corresponding to a type of pack (name, length, width, height)
-    '''
+    """
+    Type of pack (name, length, width, height) like bag, box...
+    """
     _name = 'pack.type'
     _description = 'Pack Type'
-    _columns = {'name': fields.char(string='Name', size=1024),
-                'length': fields.float(digits=(16, 2), string='Length [cm]'),
-                'width': fields.float(digits=(16, 2), string='Width [cm]'),
-                'height': fields.float(digits=(16, 2), string='Height [cm]'),
-                }
+    _columns = {
+        'name': fields.char(string='Name', size=1024),
+        'length': fields.float(digits=(16, 2), string='Length [cm]'),
+        'width': fields.float(digits=(16, 2), string='Width [cm]'),
+        'height': fields.float(digits=(16, 2), string='Height [cm]'),
+    }
 
 pack_type()
 
