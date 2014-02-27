@@ -1087,108 +1087,6 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
             create_log_line(self, cr, uid, model, [vals])
         res = fct_src(self, *args, **kwargs)
         return res
-    else: # write
-        res_ids = []
-        res = True
-        fields = []
-        if args:
-            if isinstance(args[2], (long, int)):
-                res_ids = [args[2]]
-            else:
-                res_ids = list(args[2])
-            if len(args)>3 and type(args[3]) == dict:
-                fields.extend(list(set(args[3]) & set(fields_to_trace)))
-            # we take below the fields.function that were ignored
-            fields_obj = self.pool.get('ir.model.fields')
-            fields_to_trace_ids = fields_obj.search(cr, uid, [('name', 'in', fields_to_trace), ('model_id', '=', model_id)])
-            for fields_value in fields_obj.read(cr, uid, fields_to_trace_ids, ['is_function', 'name']):
-                if fields_value['is_function']:
-                    fields.append(fields_value['name'])
-                
-        model_id = model.id
-
-        # if no change on traced fields, variable fields is empty: so nothing to do.
-        if fields:
-            if parent_field_id:
-                parent_field = pool.get('ir.model.fields').browse(cr, uid, parent_field_id)
-                model_id = model_pool.search(cr, uid, [('model', '=', parent_field.relation)])
-                # If the parent object is not a valid object
-                if not model_id:
-                    return res
-                else:
-                    model_id = model_id[0]
-                    
-                if parent_field.name not in fields:
-                    fields.append(parent_field.name)
-                
-            fields.extend(_get_domain_fields(self, domain))
-            # Remove double entries
-            fields = list(set(fields))
-            if name_get_field not in fields:
-                fields.append(name_get_field)
-
-            if res_ids:
-                if domain:
-                    new_dom = ['&', ('id', 'in', res_ids)] + domain
-                    write_search = resource_pool.search(cr, 1, new_dom)
-                    res_ids = write_search
-            # Get old values
-            if res_ids:
-                for resource in resource_pool.read(cr, uid, res_ids, fields):
-                    if parent_field_id and not args[3].get(parent_field.name, resource[parent_field.name]):
-                        continue
-                    
-                    resource_id = resource['id']
-                    if 'id' in resource:
-                        del resource['id']
-                        
-                    old_value = resource.copy()
-#                for field in resource.keys():
-#                    old_value = resource.copy()
-                    
-                    old_values[resource_id] = {'value': old_value}
-
-        # Run the method on object
-        res = fct_src(self, *args, **kwargs)
-
-        # Get new values
-        if fields and res_ids:
-            for resource in resource_pool.read(cr, uid, res_ids, fields):
-                if parent_field_id and not args[3].get(parent_field.name, resource[parent_field.name]):
-                    continue
-                res_id = resource['id']
-                res_id2 = parent_field_id and resource[parent_field.name][0] or res_id
-                if 'id' in resource:
-                    del resource['id']
-
-                vals = {
-                    "method": method,
-                    "object_id": model_id,
-                    "user_id": uid_orig,
-                    "res_id": res_id2,
-                }
-                if 'name' in resource:
-                    vals.update({'name': resource['name']})
-
-                # Add the name of the created sub-object
-                if parent_field_id:
-                    vals.update({'sub_obj_name': resource[name_get_field],
-                                 'rule_id': rule_id,
-                                 'fct_object_id': model.id,
-                                 'fct_res_id': res_id})
-
-                lines = []
-                for field in resource.keys():
-                    line = vals.copy()
-                    line.update({
-                          'name': field,
-                          'new_value': resource[field],
-                          'old_value': old_values[res_id]['value'][field],
-                          })
-                    lines.append(line)
-
-                create_log_line(self, cr, uid, model, lines)
-        return res
     return True
 
 
@@ -1199,7 +1097,6 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
 #########################################################################
 
 _old_create = orm.orm.create
-_old_write = orm.orm.write
 _old_unlink = orm.orm.unlink
 
 def _audittrail_osv_method(self, old_method, method_name, cr, *args, **kwargs):
@@ -1248,16 +1145,11 @@ def _audittrail_create(self, *args, **kwargs):
     """ Wrapper to trace the osv.create method """
     return _audittrail_osv_method(self, _old_create, 'create', args[0], *args, **kwargs)
 
-def _audittrail_write(self, *args, **kwargs):
-    """ Wrapper to trace the osv.write method """
-    return _audittrail_osv_method(self, _old_write, 'write', args[0], *args, **kwargs)
-
 def _audittrail_unlink(self, *args, **kwargs):
     """ Wrapper to trace the osv.unlink method """
     return _audittrail_osv_method(self, _old_unlink, 'unlink', args[0], *args, **kwargs)
 
 orm.orm.create = _audittrail_create
-#orm.orm.write = _audittrail_write
 orm.orm.unlink = _audittrail_unlink
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
