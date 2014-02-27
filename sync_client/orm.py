@@ -451,12 +451,29 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
     @orm_method_overload
     def write(self, original_write, cr, uid, ids, values, context=None):
         if context is None: context = {}
-        previous_values = self.read(cr, uid, ids, values.keys(), context=context)
-        result = original_write(self, cr, uid, ids, values,context=context)
+        audit_obj = self.pool.get('audittrail.rule')
+        audit_rule_ids = False
+        funct_field = []
+        if audit_obj:
+            audit_rule_ids = audit_obj.to_trace(cr, uid, self, 'write')
+            if audit_rule_ids:
+                funct_field = audit_obj.get_functionnal_fields(cr, uid, audit_rule_ids)
+
         to_be_synchronized = (
             self._name not in MODELS_TO_IGNORE and
             (not context.get('sync_update_execution') and
              not context.get('sync_update_creation')))
+
+        if to_be_synchronized or hasattr(self, 'on_change') or audit_rule_ids:
+            # FIXME: add fields.function for track changes
+            previous_values = self.read(cr, uid, ids, values.keys()+funct_field, context=context)
+
+        result = original_write(self, cr, uid, ids, values,context=context)
+        current_values = dict((x['id'], x) for x in self.read(cr, uid, ids, values.keys()+funct_field, context=context))
+
+        if audit_rule_ids:
+            audit_obj.log_write(cr, uid, audit_rule_ids, self, ids, previous_values, current_values, context=context)
+
         if to_be_synchronized or hasattr(self, 'on_change'):
             changes = self.touch(cr, uid, ids, previous_values,
                 to_be_synchronized, context=context)
