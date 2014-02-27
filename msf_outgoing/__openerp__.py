@@ -62,6 +62,7 @@
         'wizard/create_picking_processor_view.xml',
         'wizard/validate_picking_processor_view.xml',
         'wizard/ppl_processor_view.xml',
+        'wizard/shipment_processor_view.xml',
         'msf_outgoing_report.xml',
         'msf_outgoing_workflow.xml',
     ],

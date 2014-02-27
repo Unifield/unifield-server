@@ -36,22 +36,22 @@ class stock_picking_processor(osv.osv):
     _name = 'stock.picking.processor'
     _description = 'Wizard to process a picking ticket'
     _rec_name = 'date'
-    
+
     def _get_moves_product_info(self, cr, uid, ids, field_name, args, context=None):
         """
         Returns True of False for each line if the line contains a dangerous or keep cool product
         """
         # Objects
         line_obj = self.pool.get(self._columns['move_ids']._obj)
-        
+
         if not context:
             context = {}
-        
+
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         res = {}
-        
+
         for wizard_id in ids:
             res[wizard_id] = {
                 'contains_kc': False,
@@ -65,7 +65,7 @@ class stock_picking_processor(osv.osv):
             dg_lines = line_obj.search(cr, uid, [('wizard_id', '=', wizard_id), ('dg_check', '=', True)], context=context)
             if dg_lines:
                 res[wizard_id]['contains_dg'] = True
-        
+
         return res
 
     _columns = {
@@ -188,19 +188,19 @@ class stock_picking_processor(osv.osv):
         """
         if context is None:
             context = {}
-            
+
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         for wizard in self.browse(cr, uid, ids, context=context):
             line_obj = self.pool.get(wizard._columns['move_ids']._obj)
             for move in wizard.picking_id.move_lines:
-                if move.state in ('done', 'cancel', 'confirmed') or  move.product_qty == 0.00 :
+                if move.state in ('draft', 'done', 'cancel', 'confirmed') or  move.product_qty == 0.00 :
                     continue
-                
+
                 line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
                 line_obj.create(cr, uid, line_data, context=context)
-        
+
         return True
 
 stock_picking_processor()
@@ -691,7 +691,7 @@ class stock_move_processor(osv.osv):
         """
         vals = self._fill_expiry_date(cr, uid, vals.get('prodlot_id', False), vals.get('expiry_date', False), vals=vals, context=context)
         return super(stock_move_processor, self).write(cr, uid, ids, vals, context=context)
-        
+
     def _get_line_data(self, cr, uid, wizard=False, move=False, context=None):
         """
         Return line data according to wizard, move and context
@@ -701,13 +701,13 @@ class stock_move_processor(osv.osv):
                 _('Error'),
                 _('No wizard found')
             )
-            
+
         if not move:
             raise osv.except_osv(
                 _('Error'),
                 _('No move found')
             )
-        
+
         line_data = {
             'wizard_id': wizard.id,
             'move_id': move.id,
@@ -721,7 +721,7 @@ class stock_move_processor(osv.osv):
             'cost': move.price_unit,
             'currency': move.price_currency_id.id,
         }
-        
+
         return line_data
 
     def split(self, cr, uid, ids, new_qty=0.00, uom_id=False, context=None):
@@ -972,15 +972,15 @@ class stock_move_processor(osv.osv):
             'res_id': split_wiz_id,
             'context': context,
         }
-        
+
     def get_selection(self, cr, uid, o, field):
         """
         Get the label of fields.selection
         """
         sel = self.pool.get(o._name).fields_get(cr, uid, [field])
-        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+        res = dict(sel[field]['selection']).get(getattr(o, field), getattr(o, field))
         name = '%s,%s' % (o._name, field)
-        tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
+        tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name), ('src', '=', res)])
         if tr_ids:
             return self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
         else:

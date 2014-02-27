@@ -28,10 +28,10 @@ class ppl_processor(osv.osv):
     """
     Wizard to process the Pre-Packing List
     """
-    _name  = 'ppl.processor'
+    _name = 'ppl.processor'
     _inherit = 'stock.picking.processor'
     _description = 'Wizard to process the third step of the P/P/S'
-            
+
     _columns = {
         'move_ids': fields.one2many(
             'ppl.move.processor',
@@ -46,7 +46,7 @@ class ppl_processor(osv.osv):
             help="Pack of products",
         ),
     }
-    
+
     def do_ppl_step1(self, cr, uid, ids, context=None):
         """
         Make some integrity checks and call the do_ppl_step1 method of the stock.picking object
@@ -54,62 +54,62 @@ class ppl_processor(osv.osv):
         # Objects
         picking_obj = self.pool.get('stock.picking')
         ppl_move_obj = self.pool.get('ppl.move.processor')
-        
+
         missing_ids = []
         to_smaller_ids = []
         overlap_ids = []
         gap_ids = []
-        
+
         for wizard in self.browse(cr, uid, ids, context=context):
             # List of sequences
             sequences = []
-            
+
             for line in wizard.move_ids:
                 sequences.append((line.from_pack, line.to_pack, line.id))
-                
+
             # If no data, we return False
             if not sequences:
                 return False
-            
+
             # Sort the sequence according to from value
             sequences = sorted(sequences, key=lambda seq: seq[0])
-            
+
             # Rule #1, the first from value must be equal o 1
             if sequences[0][0] != 1:
                 missing_ids.append(sequences[0][2])
-            
+
             # Go through the list of sequences applying the rules
             for i in range(len(sequences)):
                 seq = sequences[i]
                 # Rules #2-#3 applies from second element
                 if i > 0:
                     # Previous sequence
-                    seqb = sequences[i-1]
+                    seqb = sequences[i - 1]
                     # Rule #2: if from[i] == from[i-1] -> to[i] == to[i-1]
                     if (seq[0] == seqb[0]) and not (seq[1] == seqb[1]):
                         overlap_ids.append(seq[2])
                     # Rule #3: if from[i] != from[i-1] -> from[i] == to[i-1]+1
-                    if (seq[0] != seqb[0]) and not (seq[0] == seqb[1]+1):
-                        if seq[0] < seqb[1]+1:
+                    if (seq[0] != seqb[0]) and not (seq[0] == seqb[1] + 1):
+                        if seq[0] < seqb[1] + 1:
                             overlap_ids.append(seq[2])
-                        if seq[0] > seqb[1]+1:
+                        if seq[0] > seqb[1] + 1:
                             gap_ids.append(seq[2])
                 # rule #4: to[i] >= from[i]
                 if not (seq[1] >= seq[0]):
                     to_smaller_ids.append(seq[2])
-        
+
         if missing_ids:
             ppl_move_obj.write(cr, uid, missing_ids, {'integrity_status': 'missing_1'}, context=context)
-            
+
         if to_smaller_ids:
             ppl_move_obj.write(cr, uid, to_smaller_ids, {'integrity_status': 'to_smaller_than_from'}, context=context)
-            
+
         if overlap_ids:
             ppl_move_obj.write(cr, uid, overlap_ids, {'integrity_status': 'overlap'}, context=context)
-            
+
         if gap_ids:
             ppl_move_obj.write(cr, uid, gap_ids, {'integrity_status': 'gap'}, context=context)
-        
+
         if missing_ids or to_smaller_ids or overlap_ids or gap_ids:
             return {
                 'type': 'ir.actions.act_window',
@@ -120,10 +120,10 @@ class ppl_processor(osv.osv):
                 'res_id': ids[0],
                 'context': context,
             }
-        
+
         # Call stock_picking method which returns action call
         return picking_obj.do_ppl_step1(cr, uid, ids, context=context)
-        
+
     def do_ppl_step2(self, cr, uid, ids, context=None):
         """
         Make some integrity checks and call the method do_ppl_step2 of stock.picking document
@@ -132,37 +132,37 @@ class ppl_processor(osv.osv):
         picking_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
         family_obj = self.pool.get('ppl.family.processor')
-        
+
         family_no_weight = []
-        
+
         for wizard in self.browse(cr, uid, ids, context=context):
             nb_moves = 0
             for family in wizard.family_ids:
                 nb_moves += len(family.move_ids)
                 if family.weight <= 0.00:
                     family_no_weight.append(family.id)
-                    
+
                 # Integrity check on stock moves
                 for line in family.move_ids:
                     move = line.move_id
                     error_word = ''
-                    
+
                     if line.product_id.id != move.product_id.id:
                         error_word = 'product'
-                        
+
                     if line.uom_id.id != move.product_uom.id:
                         error_word = 'UoM'
-                        
+
                     if line.prodlot_id.id != move.prodlot_id.id:
                         error_word = 'Batch number'
-                    
+
                     if line.asset_id.id != move.asset_id.id:
                         error_word = 'asset'
-                    
+
                     if line.composition_list_id.id != move.composition_list_id.id:
                         error_word = 'kit composition list'
-                        
-                    
+
+
                     if error_word:
                         error_dict = {
                             'word': error_word,
@@ -172,23 +172,23 @@ class ppl_processor(osv.osv):
                             _('Processing Error'),
                             _('Line %(l_num)s: The processed %(word)s is not the same as the initial move %(word)s.') % error_dict,
                         )
-            
+
             nb_pick_moves = move_obj.search(cr, uid, [
                 ('picking_id', '=', wizard.picking_id.id),
                 ('state', 'in', ['confirmed', 'assigned']),
             ], count=True, context=context)
-            
+
             if nb_pick_moves != nb_moves:
                 raise osv.except_osv(
                     _('Processing Error'),
                     _('The number of treated moves (%s) are not compatible with the number of moves in PPL (%s).') % (nb_moves, nb_pick_moves),
                 )
-                    
+
         if family_no_weight:
             family_obj.write(cr, uid, family_no_weight, {'integrity_status': 'missing_weight'}, context=context)
             # Return to PPL - Step 2 wizard
             return picking_obj.ppl_step2(cr, uid, ids, context=context)
-        
+
         # Call the stock.picking method
         return picking_obj.do_ppl_step2(cr, uid, ids, context=context)
 
@@ -202,12 +202,13 @@ class ppl_family_processor(osv.osv):
     _name = 'ppl.family.processor'
     _description = 'PPL family'
     _rec_name = 'from_pack'
-    
+
     _columns = {
         'wizard_id': fields.many2one(
             'ppl.processor',
             string='Wizard',
             required=True,
+            ondelete='cascade',
             help="PPL processing wizard",
         ),
         'from_pack': fields.integer(string='From p.'),
@@ -216,10 +217,10 @@ class ppl_family_processor(osv.osv):
             'pack.type',
             string='Pack Type',
         ),
-        'length': fields.float(digits=(16,2), string='Length [cm]'),
-        'width': fields.float(digits=(16,2), string='Width [cm]'),
-        'height': fields.float(digits=(16,2), string='Height [cm]'),
-        'weight': fields.float(digits=(16,2), string='Weight p.p [kg]'),
+        'length': fields.float(digits=(16, 2), string='Length [cm]'),
+        'width': fields.float(digits=(16, 2), string='Width [cm]'),
+        'height': fields.float(digits=(16, 2), string='Height [cm]'),
+        'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
         'integrity_status': fields.selection(
             string='Integrity status',
             selection=[
@@ -234,11 +235,11 @@ class ppl_family_processor(osv.osv):
             string='Moves',
         ),
     }
-    
+
     _defaults = {
         'integrity_status': 'empty',
     }
-    
+
     """
     Controller methods
     """
@@ -248,16 +249,16 @@ class ppl_family_processor(osv.osv):
         """
         # Objects
         p_type_obj = self.pool.get('pack.type')
-        
+
         res = {}
 
         if pack_type :
             # if 'pack_type' is not a list, turn it into list
-            if isinstance(pack_type,(int,long)):
+            if isinstance(pack_type, (int, long)):
                 pack_type = [pack_type]
-            
+
             p_type = p_type_obj.browse(cr, uid, pack_type[0])
-            
+
             res.update({
                 'value': {
                     'length': p_type.length,
@@ -265,9 +266,9 @@ class ppl_family_processor(osv.osv):
                     'height': p_type.height,
                 },
             })
-            
+
         return res
-    
+
 ppl_family_processor()
 
 
@@ -278,37 +279,37 @@ class ppl_move_processor(osv.osv):
     _name = 'ppl.move.processor'
     _inherit = 'stock.move.processor'
     _description = 'Wizard to process a line on the third step of the P/P/S'
-    
+
     def _get_pack_info(self, cr, uid, ids, field_name, args, context=None):
         """
         Returns the number of packs
         """
         if context is None:
             context = {}
-            
+
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         res = {}
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {
                 'num_of_packs': 0,
                 'qty_per_pack': 0,
             }
-            
+
             num_packs = line.to_pack - line.from_pack + 1
             if num_packs:
                 qty_per_pack = line.quantity / num_packs
             else:
                 qty_per_pack = 0
-                
+
             res[line.id].update({
                 'num_of_packs': num_packs,
                 'qty_per_pack': qty_per_pack,
             })
-        
+
         return res
-    
+
     _columns = {
         'wizard_id': fields.many2one(
             'ppl.processor',
@@ -358,11 +359,11 @@ class ppl_move_processor(osv.osv):
             string='Pack',
         ),
     }
-    
+
     _defaults = {
         'integrity_status': 'empty',
     }
-    
+
     """
     Model methods
     """
@@ -374,28 +375,28 @@ class ppl_move_processor(osv.osv):
         """
         if context is None:
             context = {}
-        
+
         if not vals.get('qty_per_pack', False):
             vals['qty_per_pack'] = vals['ordered_quantity']
-        
+
         if not vals.get('from_pack', False):
             vals['from_pack'] = 1
-            
+
         if not vals.get('to_pack', False):
             vals['to_pack'] = 1
-        
+
         return super(ppl_move_processor, self).create(cr, uid, vals, context=context)
-        
+
     def _get_line_data(self, cr, uid, wizard=False, move=False, context=None):
         """
         Just put the stock move product quantity into the ppl.move.processor
         """
         res = super(ppl_move_processor, self)._get_line_data(cr, uid, wizard, move, context=context)
-        
+
         res['quantity'] = move.product_qty
-        
+
         return res
-    
+
 ppl_move_processor()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
