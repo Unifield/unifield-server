@@ -449,16 +449,21 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
                     context=context)
         return id
 
+    def check_audit(self, cr, uid, method):
+        audit_obj = self.pool.get('audittrail.rule')
+        if audit_obj:
+            return self.pool.get('audittrail.rule').to_trace(cr, uid, self, method)
+        return False
+
     @orm_method_overload
     def write(self, original_write, cr, uid, ids, values, context=None):
         if context is None: context = {}
+
+        audit_rule_ids = self.check_audit(cr, uid, 'write')
         audit_obj = self.pool.get('audittrail.rule')
-        audit_rule_ids = False
         funct_field = []
-        if audit_obj:
-            audit_rule_ids = audit_obj.to_trace(cr, uid, self, 'write')
-            if audit_rule_ids:
-                funct_field = audit_obj.get_functionnal_fields(cr, uid, audit_rule_ids)
+        if audit_rule_ids:
+            funct_field = audit_obj.get_functionnal_fields(cr, uid, audit_rule_ids)
 
         to_be_synchronized = (
             self._name not in MODELS_TO_IGNORE and
@@ -473,7 +478,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         current_values = dict((x['id'], x) for x in self.read(cr, uid, ids, values.keys()+funct_field, context=context))
 
         if audit_rule_ids:
-            audit_obj.log_write(cr, uid, audit_rule_ids, self, ids, previous_values, current_values, context=context)
+            audit_obj.log(cr, uid, audit_rule_ids, self, ids, 'write', previous_values, current_values, context=context)
 
         if to_be_synchronized or hasattr(self, 'on_change'):
             changes = self.touch(cr, uid, ids, previous_values,
@@ -524,6 +529,9 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if not ids: return True
         context = context or {}
 
+        audit_rule_ids = self.check_audit(cr, uid, 'unlink')
+        if audit_rule_ids:
+            self.pool.get('audittrail.rule').log(cr, uid, audit_rule_ids, self, ids, 'unlink', context=context)
         if context.get('sync_message_execution'):
             return original_unlink(self, cr, uid, ids, context=context)
 
