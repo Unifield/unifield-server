@@ -122,6 +122,7 @@ class msf_budget_tools(osv.osv):
         # Get budget line template from budget tools
         template = self.get_budget_line_template(cr, uid, context=context)
         # Browse each budget line and create needed values
+        to_proceed = []
         mapping_accounts = {}
         for budget_line in template:
             # Create budget line
@@ -154,12 +155,9 @@ class msf_budget_tools(osv.osv):
                 budget_line_vals.update({'parent_id': mapping_accounts[parent_id]})
             # Create line
             budget_line_id = budget_line_obj.create(cr, uid, budget_line_vals, context=context)
+            to_proceed.append(budget_line_id)
             mapping_accounts[line_id] = budget_line_id
             if line_type == 'normal':
-                if sequence:
-                    # Search all parent accounts from the given account
-                    parent_ids = a_obj._get_parent_of(cr, uid, [line_id], context=context)
-                    parent_account_ids = [x for x in parent_ids if x not in chart_of_account_ids]
                 # Update vals with the new line type
                 budget_line_vals.update({
                     'line_type': 'destination',
@@ -205,22 +203,19 @@ class msf_budget_tools(osv.osv):
                             })
                     # Create destination line
                     budget_destination_line_id = budget_line_obj.create(cr, uid, budget_line_vals, context=context)
-                    # Complete parents only if sequence is given
-                    if sequence:
-                        # Complete parents with this line amounts (not needed if no line in CSV file)
-                        if csv_line_ids:
-                            # Complete parents with this line amounts
-                            for parent_account_id in parent_account_ids:
-                                new_vals = {}
-                                parent_budget_line_id = mapping_accounts[parent_account_id]
-                                cr.execute(sql, (tuple([parent_budget_line_id, budget_destination_line_id]),))
-                                if not cr.rowcount:
-                                    continue
-                                sum_res = cr.fetchall()
-                                for x in xrange(1, 13, 1):
-                                    new_vals.update({'month'+str(x): sum_res[0][x - 1]})
-                                # Update parent line
-                                budget_line_obj.write(cr, uid, [parent_budget_line_id], new_vals, context=context)
+        # Fill in parent lines (only if sequence is given which means that we have probably some values in destination lines)
+        if sequence:
+            vals_headers = ['month1', 'month2', 'month3', 'month4', 'month5', 'month6', 'month6', 'month7', 'month8', 'month9', 'month10', 'month11', 'month12']
+            for budget_line_id in to_proceed:
+                # Search child_ids
+                child_ids = budget_line_obj.search(cr, uid, [('parent_id', 'child_of', budget_line_id)])
+                # Do the sum of them
+                cr.execute(sql, (tuple(child_ids),))
+                tmp_res = cr.fetchall()
+                # If result, write on the given budget line the result
+                if tmp_res:
+                    budget_line_vals = dict(zip(vals_headers, [x[0] for x in tmp_res]))
+                    budget_line_obj.write(cr, uid, budget_line_id, budget_line_vals, context=context)
         return True
 
     def _create_expense_account_line_amounts(self, cr, uid, account_ids, actual_amounts, context=None):
