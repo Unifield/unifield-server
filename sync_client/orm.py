@@ -217,7 +217,7 @@ SELECT res_id, touched
             for id, touched_fields
             in self.get_sd_ref(cr, uid, ids, field='touched', context=context).items())
 
-    def touch(self, cr, uid, ids, previous_values, synchronize,
+    def touch(self, cr, uid, ids, previous_values, synchronize, current_values=None,
             _previous_calls=None, context=None):
         """
         Touch the fields that has changed and/or mark the records to be
@@ -300,9 +300,10 @@ SELECT res_id, touched
             whole_fields.remove('id')
         except ValueError:
             pass
-        current_values = dict(
-            (d['id'], d)
-            for d in self.read(cr, uid, ids, whole_fields, context=context) )
+        if not current_values:
+            current_values = dict(
+                (d['id'], d)
+                for d in self.read(cr, uid, ids, whole_fields, context=context) )
 
         # touch things
         if previous_values is None:
@@ -476,7 +477,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
 
         if to_be_synchronized or hasattr(self, 'on_change'):
             changes = self.touch(cr, uid, ids, previous_values,
-                to_be_synchronized, context=context)
+                to_be_synchronized, current_values=current_values, context=context)
             if hasattr(self, 'on_change'):
                 self.on_change(cr, uid, changes, context=context)
         return result
