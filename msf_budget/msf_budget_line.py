@@ -408,106 +408,16 @@ class msf_budget_line(osv.osv):
         'month11': lambda *a: 0.0,
         'month12': lambda *a: 0.0,
     }
-    
-    def get_parent_line(self, cr, uid, vals, context=None):
-        # Method to check if the used account has a parent,
-        # and retrieve or create the corresponding parent line.
-        # It also adds budget values to parent lines. FIXME: improve this to also impact parents that are more than 1 depth (using parent_left for an example)
-        parent_account_id = False
-        parent_line_ids = []
-        parent_vals = {}
-        if vals.get('account_id', False) and vals.get('budget_id', False):
-            if 'destination_id' in vals:
-                # Special case: the line has a destination, so the parent is a line
-                # with the same account and no destination
-                parent_account_id = vals['account_id']
-                parent_line_ids = self.search(cr, uid, [('account_id', '=', vals['account_id']),
-                                                        ('budget_id', '=', vals['budget_id']),
-                                                        ('line_type', '=', 'normal')], context=context)
-            else:
-                # search for budget line
-                account = self.pool.get('account.account').browse(cr, uid, vals['account_id'], context=context)
-                chart_of_account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', 'MSF')], context=context)
-                if account.parent_id and account.parent_id.id in chart_of_account_ids:
-                    # no need to create the parent
-                    return
-                else:
-                    parent_account_id = account.parent_id.id
-                    parent_line_ids = self.search(cr, uid, [('account_id', '=', parent_account_id),
-                                                            ('budget_id', '=', vals['budget_id'])], context=context)
-            if len(parent_line_ids) > 0:
-                # Parent line exists
-                # check which month is given in vals
-                months = []
-                month_vals = {}
-                month_in_vals = False
-                for index in xrange(1, 13, 1):
-                    month = 'month'+str(index)
-                    if month in vals:
-                        month_in_vals = True
-                        months.append(month)
-                        # keep month values for parent account
-                        month_vals.update({month: vals[month],})
-                    else:
-                        month_vals.update({month: 0.0,})
-                # fetch these months from the parent line and update them with new ones
-                if month_in_vals:
-                    parent_data = self.read(cr, uid, parent_line_ids[0], months + ['account_id', 'budget_id'], context=context)
-                    parent_new_vals = {}
-                    for fieldname in parent_data:
-                        if fieldname.startswith('month'):
-                            parent_new_vals.update({fieldname: parent_data[fieldname] + vals[fieldname]})
-                    super(msf_budget_line, self).write(cr, uid, parent_line_ids[0], parent_new_vals, context=context)
-                    # use method on parent with original budget values
-                    parent_vals = {
-                        'account_id': parent_data.get('account_id', [False])[0],
-                        'budget_id': parent_data.get('budget_id', [False])[0],
-                    }
-                    parent_vals.update(month_vals)
-                    self.get_parent_line(cr, uid, parent_vals, context=context)
-                # add parent id to vals
-                vals.update({'parent_id': parent_line_ids[0]})
-            else:
-                # Create parent line and add it to vals, except if it's the main parent
-                parent_vals = {'budget_id': vals['budget_id'],
-                               'account_id': parent_account_id}
-                if 'line_type' in vals and vals['line_type'] == 'destination':
-                    parent_vals['line_type'] = 'normal'
-                else:
-                    parent_vals['line_type'] = 'view'
-                # default parent budget values: the one from the (currently) only child
-                month_vals = {}
-                month_in_vals = False
-                for index in xrange(1, 13, 1):
-                    month = 'month'+str(index)
-                    if month in vals:
-                        month_in_vals = True
-                        month_vals.update({month: vals[month]})
-                    else:
-                        month_vals.update({month: 0.0})
-                if month_in_vals:
-                    parent_vals.update(month_vals)
-                parent_budget_line_id = self.create(cr, uid, parent_vals, context=context)
-                vals.update({'parent_id': parent_budget_line_id})
-        return
-
-    def create(self, cr, uid, vals, context=None):
-        self.get_parent_line(cr, uid, vals, context=context)
-        return super(msf_budget_line, self).create(cr, uid, vals, context=context)
-
-    def write(self, cr, uid, ids, vals, context=None):
-        self.get_parent_line(cr, uid, vals, context=context)
-        return super(msf_budget_line, self).write(cr, uid, ids, vals, context=context)
 
 msf_budget_line()
 
 class msf_budget(osv.osv):
     _name = "msf.budget"
     _inherit = "msf.budget"
-    
+
     _columns = {
         'budget_line_ids': one2many_budget_lines('msf.budget.line', 'budget_id', 'Budget Lines'),
     }
-    
+
 msf_budget()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

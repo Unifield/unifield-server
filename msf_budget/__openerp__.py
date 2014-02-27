@@ -31,6 +31,7 @@
     'init_xml': [],
     'update_xml': [
         'security/ir.model.access.csv',
+        'msf_budget_sequence.xml',
         'msf_budget_report.xml',
         'msf_budget_view.xml',
         'msf_budget_workflow.xml',

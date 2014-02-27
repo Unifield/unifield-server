@@ -25,17 +25,12 @@ from dateutil.relativedelta import relativedelta
 
 class msf_budget_tools(osv.osv):
     _name = "msf.budget.tools"
-    
-    def _get_account_parent(self, browse_account, account_list, chart_of_account_ids):
-        if browse_account.parent_id and \
-           browse_account.parent_id.id and \
-           browse_account.parent_id.id not in chart_of_account_ids and \
-           browse_account.parent_id.id not in account_list:
-            account_list.append((browse_account.parent_id.id, False))
-            self._get_account_parent(browse_account.parent_id, account_list, chart_of_account_ids)
-        return
-    
-    def _get_expense_accounts(self, cr, uid, context=None):
+
+    def get_expense_accounts(self, cr, uid, context=None):
+        """
+        Get all "is_analytic_addicted" accounts except if context notify to only use expense ones.
+        By using this method you also retrieve ALL parents EXCEPT the first one: MSF account.
+        """
         # Checks
         if context is None:
             context = {}
@@ -43,36 +38,215 @@ class msf_budget_tools(osv.osv):
         res = []
         account_obj = self.pool.get('account.account')
         # get the last parent
-        chart_of_account_ids = account_obj.search(cr, uid, [('code', '=', 'MSF')], context=context)
+        top_ids = account_obj.search(cr, uid, [('code', '=', 'MSF')], context=context)
         # get normal analytic-a-holic accounts. UTP-944: only expenses ones if "only_expenses" in context. Do not include Extra-accounting accounts and incomes one.
         domain = [('type', '!=', 'view'), ('user_type_report_type', '!=', 'none')]
         if context.get('only_expenses', False) and context.get('only_expenses') is True:
             domain += [('user_type_code', '=', 'expense'), ('user_type_report_type', '=', 'expense')]
         else:
             domain += [('is_analytic_addicted', '=', True)]
-        general_account_ids = account_obj.search(cr, uid, domain, context=context)
-        expense_account_ids = [(account_id, False) for account_id in general_account_ids]
-        # go through parents
-        for account in account_obj.browse(cr, uid, general_account_ids, context=context):
-            self._get_account_parent(account, expense_account_ids, chart_of_account_ids)
-        return expense_account_ids
+        account_ids = account_obj.search(cr, uid, domain, context=context)
+        if account_ids:
+            parent_ids = account_obj._get_parent_of(cr, uid, account_ids, context=context)
+            if parent_ids:
+                res = [x for x in parent_ids if x not in top_ids]
+        return res
 
-    def _create_expense_account_line_amounts(self, cr, uid, account_destination_tuple, actual_amounts, context=None):
-        if account_destination_tuple not in actual_amounts:
-            account = self.pool.get('account.account').browse(cr, uid, account_destination_tuple[0], context=context)
-            result = [0] * 12
-            if account.type == 'view':
-                # children are accounts
-                for child_account in account.child_id:
-                    if (child_account.id, False) not in actual_amounts:
-                        self._create_expense_account_line_amounts(cr, uid, (child_account.id, False), actual_amounts, context=context)
-                    result = [sum(pair) for pair in zip(result, actual_amounts[child_account.id, False])]
-            else:
-                # children are account, destination tuples (already in actual_amounts)
-                # get all tuples starting with (account_id)
-                for account_destination in [tuple for tuple in actual_amounts.keys() if tuple[0] == account_destination_tuple[0] and tuple[1] is not False]:
-                    result = [sum(pair) for pair in zip(result, actual_amounts[account_destination])]
-            actual_amounts[account_destination_tuple[0], False] = result
+    def get_budget_line_template(self, cr, uid, context=None):
+        """
+        Create a template that contains all budget line main values for a new budget.
+        """
+        # Some checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = []
+        # Search all income/expense accounts (except if context contains "only_expenses" set to True)
+        account_ids = self.get_expense_accounts(cr, uid, context=context)
+        if not account_ids:
+            return []
+        # We use a SQL request to keep an order of accounts regarding their parents so that parents could be created before their childs.
+        sql = """
+            SELECT id, CASE WHEN type != 'view' THEN 'normal' ELSE 'view' END AS account_type, parent_id
+            FROM account_account
+            WHERE id IN %s
+            ORDER BY parent_id ASC"""
+        cr.execute(sql, (tuple(account_ids),))
+        if not cr.rowcount:
+            raise osv.except_osv(_('Error'), _('Unable to find needed info.'))
+        tmp_res = cr.fetchall()
+        # We take destination ids for a given account (and we make a dictionnary to be quickly used)
+        accounts = self.pool.get('account.account').read(cr, uid, account_ids, ['destination_ids'], context=context)
+        destinations = {}
+        for account in accounts:
+            destinations[account.get('id')] = account.get('destination_ids')
+        # We then create the final result with all needed elements
+        for line_id, line_type, parent_id in tmp_res:
+            line_vals = {
+                'id': line_id,
+                'type': line_type,
+                'parent_id': parent_id,
+                'destination_ids': []
+            }
+            if line_id in destinations:
+                line_vals.update({'destination_ids': destinations[line_id]})
+            res.append(line_vals)
+        return res
+
+    def create_budget_lines(self, cr, uid, budget_id, sequence=False, context=None):
+        """
+        Create budget lines for a given budget.
+        If no budget: do nothing.
+        If no sequence: only create budget lines without any specific amounts.
+
+        Creation synthesis:
+        1/ get the initial template
+        2/ for each line create its budget line
+        3/a) if sequence: fetch budget values and fill in destination lines, normal lines and parents
+        3/b) if NO sequence, just create destination lines, normal lines and parents.
+        """
+        # Some checks
+        if context is None:
+            context = {}
+        if not budget_id:
+            return False
+        # Prepare some values
+        a_obj = self.pool.get('account.account')
+        chart_of_account_ids = a_obj.search(cr, uid, [('code', '=', 'MSF')], context=context)
+        budget_line_obj = self.pool.get('msf.budget.line')
+        imported_obj = self.pool.get('imported.msf.budget.line')
+        sql = """
+            SELECT SUM(COALESCE(month1, 0.0)), SUM(COALESCE(month2, 0.0)), SUM(COALESCE(month3, 0.0)), SUM(COALESCE(month4, 0.0)), SUM(COALESCE(month5, 0.0)), SUM(COALESCE(month6, 0.0)), SUM(COALESCE(month7, 0.0)), SUM(COALESCE(month8, 0.0)), SUM(COALESCE(month9, 0.0)), SUM(COALESCE(month10, 0.0)), SUM(COALESCE(month11, 0.0)), SUM(COALESCE(month12, 0.0))
+            FROM msf_budget_line
+            WHERE id IN %s"""
+        # Get budget line template from budget tools
+        template = self.get_budget_line_template(cr, uid, context=context)
+        # Browse each budget line and create needed values
+        mapping_accounts = {}
+        for budget_line in template:
+            # Create budget line
+            line_id = budget_line.get('id')
+            line_type = budget_line.get('type')
+            parent_id = budget_line.get('parent_id', False)
+            # Do not use top parent account (those in chart_of_account_ids)
+            if parent_id in chart_of_account_ids:
+                parent_id = False
+            budget_line_vals = {
+                'budget_id': budget_id,
+                'account_id': line_id,
+                'line_type': line_type,
+                'month1': 0.0,
+                'month2': 0.0,
+                'month3': 0.0,
+                'month4': 0.0,
+                'month5': 0.0,
+                'month6': 0.0,
+                'month7': 0.0,
+                'month8': 0.0,
+                'month9': 0.0,
+                'month10': 0.0,
+                'month11': 0.0,
+                'month12': 0.0,
+            }
+            if parent_id:
+                if parent_id not in mapping_accounts:
+                    raise osv.except_osv(_('Error'), _('You did not create budget line in the right order. A parent does not exist!'))
+                budget_line_vals.update({'parent_id': mapping_accounts[parent_id]})
+            # Create line
+            budget_line_id = budget_line_obj.create(cr, uid, budget_line_vals, context=context)
+            mapping_accounts[line_id] = budget_line_id
+            if line_type == 'normal':
+                if sequence:
+                    # Search all parent accounts from the given account
+                    parent_ids = a_obj._get_parent_of(cr, uid, [line_id], context=context)
+                    parent_account_ids = [x for x in parent_ids if x not in chart_of_account_ids]
+                # Update vals with the new line type
+                budget_line_vals.update({
+                    'line_type': 'destination',
+                })
+                # Browse each destination to create its line
+                for destination_id in budget_line.get('destination_ids', []):
+                    budget_line_vals.update({
+                        'destination_id': destination_id,
+                        'month1': 0.0,
+                        'month2': 0.0,
+                        'month3': 0.0,
+                        'month4': 0.0,
+                        'month5': 0.0,
+                        'month6': 0.0,
+                        'month7': 0.0,
+                        'month8': 0.0,
+                        'month9': 0.0,
+                        'month10': 0.0,
+                        'month11': 0.0,
+                        'month12': 0.0,
+                        'parent_id': budget_line_id
+                    })
+                    # Fetch values if sequence is given (which permit to find some lines)
+                    if sequence:
+                        # Search if the CSV file have this kind of tuple account/destination and fetch values
+                        csv_line_ids = imported_obj.search(cr, uid, [('account_id', '=', line_id), ('destination_id', '=', destination_id)], context=context)
+                        # If yes, complete budget values from month1 to month12
+                        if csv_line_ids:
+                            csv_line = imported_obj.read(cr, uid, csv_line_ids[0], ['month1', 'month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9', 'month10', 'month11', 'month12'])
+                            budget_line_vals.update({
+                                'month1': csv_line.get('month1', 0.0),
+                                'month2': csv_line.get('month2', 0.0),
+                                'month3': csv_line.get('month3', 0.0),
+                                'month4': csv_line.get('month4', 0.0),
+                                'month5': csv_line.get('month5', 0.0),
+                                'month6': csv_line.get('month6', 0.0),
+                                'month7': csv_line.get('month7', 0.0),
+                                'month8': csv_line.get('month8', 0.0),
+                                'month9': csv_line.get('month9', 0.0),
+                                'month10': csv_line.get('month10', 0.0),
+                                'month11': csv_line.get('month11', 0.0),
+                                'month12': csv_line.get('month12', 0.0),
+                            })
+                    # Create destination line
+                    budget_destination_line_id = budget_line_obj.create(cr, uid, budget_line_vals, context=context)
+                    # Complete parents only if sequence is given
+                    if sequence:
+                        # Complete parents with this line amounts (not needed if no line in CSV file)
+                        if csv_line_ids:
+                            # Complete parents with this line amounts
+                            for parent_account_id in parent_account_ids:
+                                new_vals = {}
+                                parent_budget_line_id = mapping_accounts[parent_account_id]
+                                cr.execute(sql, (tuple([parent_budget_line_id, budget_destination_line_id]),))
+                                if not cr.rowcount:
+                                    continue
+                                sum_res = cr.fetchall()
+                                for x in xrange(1, 13, 1):
+                                    new_vals.update({'month'+str(x): sum_res[0][x - 1]})
+                                # Update parent line
+                                budget_line_obj.write(cr, uid, [parent_budget_line_id], new_vals, context=context)
+        return True
+
+    def _create_expense_account_line_amounts(self, cr, uid, account_ids, actual_amounts, context=None):
+        # Some checks
+        if context is None:
+            context = {}
+        if isinstance(account_ids, (int, long)):
+            account_ids = [account_ids]
+        a_obj = self.pool.get('account.account')
+        # Browse accounts
+        for account_id in account_ids:
+            if (account_id, False) not in actual_amounts:
+                account = a_obj.browse(cr, uid, account_id, context=context)
+                result = [0] * 12
+                if account.type == 'view':
+                    # children are accounts
+                    for child_account in account.child_id:
+                        if (child_account.id, False) not in actual_amounts:
+                            self._create_expense_account_line_amounts(cr, uid, child_account.id, actual_amounts, context=context)
+                        result = [sum(pair) for pair in zip(result, actual_amounts[child_account.id, False])]
+                else:
+                    # children are account, destination tuples (already in actual_amounts)
+                    # get all tuples starting with (account_id)
+                    for account_destination in [tuple for tuple in actual_amounts.keys() if tuple[0] == account_id and tuple[1] is not False]:
+                        result = [sum(pair) for pair in zip(result, actual_amounts[account_destination])]
+                actual_amounts[account_id, False] = result
         return
 
     def _get_cost_center_ids(self, cr, uid, browse_cost_center):
@@ -98,9 +272,9 @@ class msf_budget_tools(osv.osv):
             context = {}
         destination_obj = self.pool.get('account.destination.link')
         # list to store every existing destination link in the system
-        account_ids = self._get_expense_accounts(cr, uid, context=context)
+        account_ids = self.get_expense_accounts(cr, uid, context=context)
         
-        destination_link_ids = destination_obj.search(cr, uid, [('account_id', 'in',  [x[0] for x in account_ids])], context=context)
+        destination_link_ids = destination_obj.search(cr, uid, [('account_id', 'in',  account_ids)], context=context)
         account_destination_ids = [(dest.account_id.id, dest.destination_id.id)
                                    for dest
                                    in destination_obj.browse(cr, uid, destination_link_ids, context=context)]
@@ -140,8 +314,7 @@ class msf_budget_tools(osv.osv):
             res[line] = [-x for x in res[line]]
                 
         # do the view lines
-        for account_destination_tuple in account_ids:
-            self._create_expense_account_line_amounts(cr, uid, account_destination_tuple, res, context=context)
+        self._create_expense_account_line_amounts(cr, uid, account_ids, res, context=context)
         
         return res
     
