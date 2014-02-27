@@ -126,47 +126,56 @@ class msf_budget(osv.osv):
     }
 
     _order = 'decision_moment_order desc, version, code'
-    
+
+    def _check_parent(self, cr, uid, ids, context=None):
+        """
+        Check budget's parent to see if it exist.
+        Create it if we're on another instance that top cost center one.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        top_cost_center = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.top_cost_center_id
+        ana_obj = self.pool.get('account.analytic.account')
+        fy_obj = self.pool.get('account.fiscalyear')
+        tool_obj = self.pool.get('msf.budget.tools')
+        for budget in self.read(cr, uid, ids, ['cost_center_id', 'fiscalyear_id', 'decision_moment_id'], context=context):
+            cc_id = budget.get('cost_center_id', [False])[0]
+            cc = ana_obj.read(cr, uid, cc_id, ['parent_id'], context=context)
+            if top_cost_center and cc_id and cc_id != top_cost_center.id and cc.get('parent_id', False):
+                fy_id = budget.get('fiscalyear_id', [False])[0]
+                decision_moment_id = budget.get('decision_moment_id', [False])[0]
+                fy = fy_obj.read(cr, uid, fy_id, ['code'])
+                parent_id = cc.get('parent_id', [False])[0]
+                parent_cost_center = ana_obj.read(cr, uid, parent_id, ['code', 'name'], context=context)
+                have_parent_budget = self.search(cr, uid, [('fiscalyear_id', '=', fy_id), ('cost_center_id', '=', parent_id), ('decision_moment_id', '=', decision_moment_id)], count=1, context=context)
+                if have_parent_budget == 0:
+                    # Create budget's parent
+                    budget_vals = {
+                        'name': "Budget " + fy.get('code', '')[4:6] + " - " + parent_cost_center.get('name', ''),
+                        'code': "BU" + fy.get('code')[4:6] + " - " + parent_cost_center.get('code', ''),
+                        'fiscalyear_id': fy_id,
+                        'cost_center_id': parent_id,
+                        'decision_moment_id': decision_moment_id,
+                        'type': 'view'
+                    }
+                    parent_budget_id = self.create(cr, uid, budget_vals, context=context)
+                    # Create budget's line
+                    tool_obj.create_budget_lines(cr, uid, parent_budget_id, context=context)
+                    # Validate this parent
+                    self.write(cr, uid, [parent_budget_id], {'state': 'valid'}, context=context)
+        return True
+
     def create(self, cr, uid, vals, context=None):
+        """
+        Create a budget then check its parent.
+        """
         res = super(msf_budget, self).create(cr, uid, vals, context=context)
-        # If the "parent" budget does not exist and we're not on the proprietary instance level already, create it.
-        budget = self.browse(cr, uid, res, context=context)
-        prop_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        if prop_instance.top_cost_center_id and budget.cost_center_id and budget.cost_center_id.id != prop_instance.top_cost_center_id.id and budget.cost_center_id.parent_id:
-            parent_cost_center = budget.cost_center_id.parent_id
-            parent_budget_ids = self.search(cr,
-                                            uid,
-                                            [('fiscalyear_id','=',budget.fiscalyear_id.id),
-                                             ('cost_center_id','=',parent_cost_center.id),
-                                             ('decision_moment_id','=',budget.decision_moment_id.id)])
-            if len(parent_budget_ids) == 0:
-                parent_budget_id = self.create(cr,
-                                               uid,
-                                               {'name': "Budget " + budget.fiscalyear_id.code[4:6] + " - " + parent_cost_center.name,
-                                                'code': "BU" + budget.fiscalyear_id.code[4:6] + " - " + parent_cost_center.code,
-                                                'fiscalyear_id': budget.fiscalyear_id.id,
-                                                'cost_center_id': budget.cost_center_id.parent_id.id,
-                                                'decision_moment_id': budget.decision_moment_id.id,
-                                                'type': 'view'}, context=context)
-                # Create all lines for all accounts/destinations (no budget values, those are retrieved)
-                expense_account_ids = self.pool.get('account.account').search(cr, uid, [('is_analytic_addicted', '=', True),
-                                                                                        ('user_type_report_type', '!=', 'none'),
-                                                                                        ('type', '!=', 'view')], context=context)
-                destination_obj = self.pool.get('account.destination.link')
-                destination_link_ids = destination_obj.search(cr, uid, [('account_id', 'in',  expense_account_ids)], context=context)
-                account_destination_ids = [(dest.account_id.id, dest.destination_id.id)
-                                           for dest
-                                           in destination_obj.browse(cr, uid, destination_link_ids, context=context)]
-                for account_id, destination_id in account_destination_ids:
-                    budget_line_vals = {'budget_id': parent_budget_id,
-                                        'account_id': account_id,
-                                        'destination_id': destination_id,
-                                        'line_type': 'destination'}
-                    self.pool.get('msf.budget.line').create(cr, uid, budget_line_vals, context=context)
-                # validate this parent
-                self.write(cr, uid, [parent_budget_id], {'state': 'valid'}, context=context)
+        # Check parent budget
+        self._check_parent(cr, uid, res, context=context)
         return res
-    
+
     def button_display_type(self, cr, uid, ids, context=None, *args, **kwargs):
         """
         Just reset the budget view to give the context to the one2many_budget_lines object

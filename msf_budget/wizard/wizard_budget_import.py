@@ -232,6 +232,7 @@ class wizard_budget_import(osv.osv_memory):
             AND cost_center_id = %s
             AND decision_moment_id = %s
             ORDER BY version DESC LIMIT 1"""
+        # Browse each wizard, take it's file, read it, then process lines.
         for w in self.read(cr, uid, ids, ['import_file'], context=context):
             # First prepare some values
             wiz_file = w.get('import_file', False)
