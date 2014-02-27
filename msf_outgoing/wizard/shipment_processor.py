@@ -98,7 +98,7 @@ class shipment_processor(osv.osv):
         Select all button, write max number of packs in each pack family line
         """
         # Objects
-        family_obj = self.pool.get('shipment.family.processor')
+        family_obj = self.pool.get(self._columns['family_ids']._obj)  # Get the object of the o2m field because of heritage
 
         if context is None:
             context = {}
@@ -127,7 +127,7 @@ class shipment_processor(osv.osv):
         De-select all button, write 0 as number of packs in each pack family line
         """
         # Objects
-        line_obj = self.pool.get('shipment.family.processor')
+        family_obj = self.pool.get(self._columns['family_ids']._obj)  # Get the object of the o2m field because of heritage
         if context is None:
             context = {}
 
@@ -139,7 +139,7 @@ class shipment_processor(osv.osv):
             for family in wiz.family_ids:
                 family_ids.append(family.id)
 
-        line_obj.write(cr, uid, family_ids, {'selected_number': 0, }, context=context)
+        family_obj.write(cr, uid, family_ids, {'selected_number': 0, }, context=context)
 
         return {
                 'type': 'ir.actions.act_window',
@@ -158,8 +158,7 @@ class shipment_processor(osv.osv):
         Create the lines of the wizard
         """
         # Objects
-        family_obj = self.pool.get('shipment.family.processor')
-        picking_obj = self.pool.get('stock.picking')
+        family_obj = self.pool.get(self._columns['family_ids']._obj)  # Get the object of the o2m field because of heritage
 
         if context is None:
             context = {}

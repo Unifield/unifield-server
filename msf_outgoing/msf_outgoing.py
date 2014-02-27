@@ -483,156 +483,191 @@ class shipment(osv.osv):
         }
 
     def return_packs(self, cr, uid, ids, context=None):
-        '''
-        open the wizard to return packs from draft shipment
-        '''
-        # we need the context for the wizard switch
+        """
+        Open the wizard to return packs from draft shipment
+        """
+        # Objects
+        proc_obj = self.pool.get('return.shipment.processor')
+
         if context is None:
             context = {}
 
-        wiz_obj = self.pool.get('wizard')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
-        # data
-        name = _("Return Packs")
-        model = 'shipment.wizard'
-        step = 'returnpacks'
-        # open the selected wizard
-        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
 
-    def do_return_packs(self, cr, uid, ids, context=None):
-        '''
-        for each original draft picking:
-         - convert partial data to move related data
-         - update the draft_packing's moves, decrease quantity and update from/to info
-         - update initial packing object
-         - create a back move for each move with return quantity to initial location
-         - increase quantity of related draft_picking_ticket's moves
-        '''
-        # integrity check
-        assert context, 'no context, method call is wrong'
-        assert 'partial_datas' in context, 'partial_datas no defined in context'
+        processor_id = proc_obj.create(cr, uid, {'shipment_id': ids[0]}, context=context)
+        proc_obj.create_lines(cr, uid, processor_id, context=context)
 
-        pick_obj = self.pool.get('stock.picking')
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': proc_obj._name,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': processor_id,
+            'target': 'new',
+            'context': context,
+        }
+
+    def do_return_packs(self, cr, uid, wizard_ids, context=None):
+        """
+        Return the selected packs to the draft picking ticket
+
+        BE CAREFUL: the wizard_ids parameters is the IDs of the return.shipment.processor objects,
+        not those of shipment objects
+        """
+        # Objects
+        proc_obj = self.pool.get('return.shipment.processor')
+        picking_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
-        obj_data = self.pool.get('ir.model.data')
-
-        # data from wizard
-        partial_datas = context['partial_datas']
-        # shipment ids from ids must be equal to shipment ids from partial datas
-        assert set(ids) == set(partial_datas.keys()), 'shipment ids from ids and partial do not match'
-
-        draft_picking_id = False
-        for draft_shipment_id in partial_datas:
-            # log flag - log for draft shipment is displayed only one time for each draft shipment
-            log_flag = False
-            # for each draft packing
-            for draft_packing in pick_obj.browse(cr, uid, partial_datas[draft_shipment_id].keys(), context=context):
-                # corresponding draft picking ticket -> draft_packing - ppl - picking_ticket - draft_picking_ticket
-                draft_picking = draft_packing.previous_step_id.previous_step_id.backorder_id
-                draft_picking_id = draft_packing.previous_step_id.previous_step_id.backorder_id.id
-                # for each sequence
-                for from_pack in partial_datas[draft_shipment_id][draft_packing.id]:
-                    for to_pack in partial_datas[draft_shipment_id][draft_packing.id][from_pack]:
-                        # partial data for one sequence of one draft packing
-                        data = partial_datas[draft_shipment_id][draft_packing.id][from_pack][to_pack][0]
-                        # total number of packs
-                        total_num = to_pack - from_pack + 1
-                        # number of returned packs
-                        selected_number = data['selected_number']
-                        # we take the packs with the highest numbers
-                        # new moves
-                        selected_from_pack = to_pack - selected_number + 1
-                        selected_to_pack = to_pack
-                        # update initial moves
-                        if selected_number == total_num:
-                            # if all packs have been selected, from/to are set to 0
-                            initial_from_pack = 0
-                            initial_to_pack = 0
-                        else:
-                            initial_from_pack = from_pack
-                            initial_to_pack = to_pack - selected_number
-                        # find the concerned stock moves
-                        move_ids = move_obj.search(cr, uid, [('picking_id', '=', draft_packing.id),
-                                                             ('from_pack', '=', from_pack),
-                                                             ('to_pack', '=', to_pack)])
-                        # update the moves, decrease the quantities
-                        for move in move_obj.browse(cr, uid, move_ids, context=context):
-                            # stock move are not canceled as for ppl return process
-                            # because this represents a draft packing, meaning some shipment could be canceled and
-                            # returned to this stock move
-                            # initial quantity
-                            initial_qty = move.product_qty
-                            # quantity to return
-                            return_qty = selected_number * move.qty_per_pack
-                            # update initial quantity
-                            initial_qty = max(initial_qty - return_qty, 0)
-                            values = {'product_qty': initial_qty,
-                                      'from_pack': initial_from_pack,
-                                      'to_pack': initial_to_pack, }
-
-                            move_obj.write(cr, uid, [move.id], values, context=context)
-
-                            # create a back move with the quantity to return to the good location
-                            # the good location is stored in the 'initial_location' field
-                            move_obj.copy(cr, uid, move.id, {'product_qty': return_qty,
-                                                             'line_number': move.line_number,
-                                                             'location_dest_id': move.initial_location.id,
-                                                             'from_pack': selected_from_pack,
-                                                             'to_pack': selected_to_pack,
-                                                             'state': 'done'}, context=dict(context, non_stock_noupdate=True))
-                            # find the corresponding move in draft in the draft **picking**
-                            draft_move = move.backmove_id
-                            # increase the draft move with the move quantity
-                            draft_initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
-                            draft_initial_qty += return_qty
-                            move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty}, context=context)
-
-                # log the increase action - display the picking ticket view form - log message for each draft packing because each corresponds to a different draft picking
-                if not log_flag:
-                    draft_shipment_name = self.read(cr, uid, draft_shipment_id, ['name'], context=context)['name']
-                    self.log(cr, uid, draft_shipment_id, _("Packs from the draft Shipment (%s) have been returned to stock.") % (draft_shipment_name,))
-                    log_flag = True
-                res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-                context.update({'view_id': res, 'picking_type': 'picking.ticket'})
-                self.pool.get('stock.picking').log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.") % (draft_picking.name,), context=context)
-
-        # call complete_finished on the shipment object
-        # if everything is alright (all draft packing are finished) the shipment is done also
-        self.complete_finished(cr, uid, partial_datas.keys(), context=context)
-
-        # TODO which behavior
-        # return {'type': 'ir.actions.act_window_close'}
         data_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+
+        if isinstance(wizard_ids, (int, long)):
+            wizard_ids = [wizard_ids]
+
+        if not wizard_ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process'),
+            )
+
+        shipment_ids = []
+
+        for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
+            shipment = wizard.shipment_id
+            shipment_ids.append(shipment.id)
+            # log flag - res.log for draft shipment is displayed only one time for each draft shipment
+            log_flag = False
+
+            for family in wizard.family_ids:
+                picking = family.draft_packing_id
+
+                # Update initial move
+                if family.selected_number == int(family.num_of_packs):
+                    # If al packs have been selected, from/to are set to 0
+                    initial_from_pack = 0
+                    initial_to_pack = 0
+                else:
+                    initial_from_pack = family.from_pack
+                    initial_to_pack = family.to_pack - family.selected_number
+
+                # Find the concerned stock moves
+                move_ids = move_obj.search(cr, uid, [
+                    ('picking_id', '=', picking.id),
+                    ('from_pack', '=', family.from_pack),
+                    ('to_pack', '=', family.to_pack),
+                ], context=context)
+
+                # Update the moves, decrease the quantities
+                for move in move_obj.browse(cr, uid, move_ids, context=context):
+                    """
+                    Stock moves ar not canceled as for PPL return process
+                    because this represents a draft packing, meaning some shipment could be canceled and
+                    return to this stock move
+                    """
+                    return_qty = family.selected_number * move.qty_per_pack
+                    move_vals = {
+                        'product_qty': max(move.product_qty - return_qty, 0),
+                        'from_pack': initial_from_pack,
+                        'to_pack': initial_to_pack,
+                    }
+
+                    move_obj.write(cr, uid, [move.id], move_vals, context=context)
+
+                    """
+                    Create a back move with the quantity to return to the good location.
+                    The good location is store in the 'initial_location' field
+                    """
+                    cp_vals = {
+                        'product_qty': return_qty,
+                        'line_number': move.line_number,
+                        'location_dest_id': move.initial_location.id,
+                        'from_pack': family.to_pack - family.selected_number + 1,
+                        'to_pack': family.to_pack,
+                        'state': 'done',
+                    }
+                    context['non_stock_noupdate'] = True
+
+                    move_obj.copy(cr, uid, move.id, cp_vals, context=context)
+
+                    context['non_stock_noupdate'] = False
+
+                    # Find the corresponding move in draft in the draft picking ticket
+                    draft_move = move.backmove_id
+                    # Increase the draft move with the move quantity
+                    draft_initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
+                    draft_initial_qty += return_qty
+                    move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty}, context=context)
+
+            # log the increase action - display the picking ticket view form - log message for each draft packing because each corresponds to a different draft picking
+            if not log_flag:
+                draft_shipment_name = self.read(cr, uid, shipment.id, ['name'], context=context)['name']
+                self.log(cr, uid, shipment.id, _("Packs from the draft Shipment (%s) have been returned to stock.") % (draft_shipment_name,))
+                log_flag = True
+
+            res = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
+            context.update({
+                'view_id': res,
+                'picking_type': 'picking.ticket'
+            })
+            picking_obj.log(cr, uid, picking.id, _("The corresponding Draft Picking Ticket (%s) has been updated.") % (picking.name,), context=context)
+
+        # Call complete_finished on the shipment object
+        # If everything is allright (all draft packing are finished) the shipment is done also
+        self.complete_finished(cr, uid, shipment_ids, context=context)
+
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
-        view_id = view_id and view_id[1] or False
         return {
             'name':_("Picking Ticket"),
             'view_mode': 'form,tree',
-            'view_id': [view_id],
+            'view_id': [view_id and view_id[1] or False],
             'view_type': 'form',
             'res_model': 'stock.picking',
-            'res_id': draft_picking_id ,
+            'res_id': picking.id,
             'type': 'ir.actions.act_window',
             'target': 'crush',
             'context': context
         }
 
     def return_packs_from_shipment(self, cr, uid, ids, context=None):
-        '''
-        open the wizard to return packs from draft shipment
-        '''
-        # we need the context for the wizard switch
+        """
+        Open the wizard to return packs from draft shipment
+        """
+        # Objects
+        proc_obj = self.pool.get('return.shipment.processor')
+
         if context is None:
             context = {}
 
-        wiz_obj = self.pool.get('wizard')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
-        # data
-        name = _("Return Packs from Shipment")
-        model = 'shipment.wizard'
-        step = 'returnpacksfromshipment'
-        # open the selected wizard
-        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        processor_id = proc_obj.create(cr, uid, {'shipment_id': ids[0]}, context=context)
+        proc_obj.create_lines(cr, uid, processor_id, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': proc_obj._name,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': processor_id,
+            'target': 'new',
+            'context': context,
+        }
 
     def compute_sequences(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -3168,101 +3203,123 @@ class stock_picking(osv.osv):
                 'context': context,
                 }
 
-    def return_products(self, cr, uid, ids, context=None):
-        '''
-        open the return products wizard
-        '''
-        # we need the context
+    def ppl_return(self, cr, uid, ids, context=None):
+        """
+        Open wizard to return products from a PPL
+        """
+        # Objects
+        proc_obj = self.pool.get('return.ppl.processor')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
+        proc_obj.create_lines(cr, uid, processor_id, context=context)
+
+        return {
+            'name': _('Return products'),
+            'type': 'ir.actions.act_window',
+            'res_model': proc_obj._name,
+            'res_id': processor_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
+
+    def do_return_ppl(self, cr, uid, wizard_ids, context=None):
+        """
+        Returns products from PPL to the draft picking ticket
+
+        BE CAREFUL: the wizard_ids parameters is the IDs of the ppl.processor objects,
+        not those of stock.picking objects
+        """
+        # Objects
+        proc_obj = self.pool.get('return.ppl.processor')
+        move_obj = self.pool.get('stock.move')
+        data_obj = self.pool.get('ir.model.data')
+        wf_service = netsvc.LocalService("workflow")
+
         if context is None:
             context = {}
 
-        # data
-        name = _("Return Products")
-        model = 'create.picking'
-        step = 'returnproducts'
-        wiz_obj = self.pool.get('wizard')
-        # open the selected wizard
-        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+        if isinstance(wizard_ids, (int, long)):
+            wizard_ids = [wizard_ids]
 
-    def do_return_products(self, cr, uid, ids, context=None):
-        '''
-        - update the ppl
-        - update the draft picking ticket
-        - create the back move
-        '''
-        if not context:
-            context = {}
-        # integrity check
-        assert context, 'context not defined'
-        assert 'partial_datas' in context, 'partial_datas no defined in context'
-        partial_datas = context['partial_datas']
-
-        move_obj = self.pool.get('stock.move')
-        wf_service = netsvc.LocalService("workflow")
-
-        draft_picking_id = False
-        for picking in self.browse(cr, uid, ids, context=context):
-            # for each picking
-            # corresponding draft picking ticket
+        for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
+            picking = wizard.picking_id
             draft_picking_id = picking.previous_step_id.backorder_id.id
 
-            for move in move_obj.browse(cr, uid, partial_datas[picking.id].keys(), context=context):
-                # we browse the updated moves (return qty > 0 is checked during data generation)
-                # data from wizard
-                data = partial_datas[picking.id][move.id]
+            for line in wizard.move_ids:
+                return_qty = line.quantity
+                initial_qty = max(line.move_id.product_qty - return_qty, 0)
 
-                # qty to return
-                return_qty = data['qty_to_return']
-                # initial qty is decremented
-                initial_qty = move.product_qty
-                initial_qty = max(initial_qty - return_qty, 0)
-                values = {'product_qty': initial_qty}
+                move_values = {
+                    'product_qty': initial_qty,
+                }
 
                 if not initial_qty:
-                    # if all products are sent back to stock, the move state is cancel - done for now, ideologic question, wahouuu!
-                    # values.update({'state': 'cancel'})
-                    values.update({'state': 'done'})
-                move_obj.write(cr, uid, [move.id], values, context=context)
+                    """
+                    If all products of the move are sent back to draft picking ticket,
+                    the move state is done
+                    """
+                    move_values['state'] = 'done'
 
-                # create a back move with the quantity to return to the good location
-                # the good location is stored in the 'initial_location' field
-                move_obj.copy(cr, uid, move.id, {'product_qty': return_qty,
-                                                 'location_dest_id': move.initial_location.id,
-                                                 'state': 'done'}, context=dict(context, keepLineNumber=True))
+                move_obj.write(cr, uid, [line.move_id.id], move_values, context=context)
 
-                # increase the draft move with the move quantity
-                draft_move_id = move.backmove_id.id
+                """
+                Create a back move with the quantity to return to the good location.
+                Good location is stored in the 'initial_location' field
+                """
+                return_values = {
+                    'product_qty': return_qty,
+                    'location_dest_id': line.move_id.initial_location.id,
+                    'state': 'done',
+                }
+                context['keepLineNumber'] = True
+                move_obj.copy(cr, uid, line.move_id.id, return_values, context=context)
+                context['keepLineNumber'] = False
+
+                # Increase the draft move with the returned quantity
+                draft_move_id = line.move_id.backmove_id.id
                 draft_initial_qty = move_obj.read(cr, uid, [draft_move_id], ['product_qty'], context=context)[0]['product_qty']
                 draft_initial_qty += return_qty
                 move_obj.write(cr, uid, [draft_move_id], {'product_qty': draft_initial_qty}, context=context)
 
-            # log the increase action - display the picking ticket view form
-            # TODO refactoring needed
-            obj_data = self.pool.get('ir.model.data')
-            res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
-            self.log(cr, uid, picking.id, _("Products from Pre-Packing List (%s) have been returned to stock.") % (picking.name,), context={'view_id': res, })
-            res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-            context.update({'view_id': res, 'picking_type': 'picking_ticket'})
-            self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated.") % (picking.previous_step_id.backorder_id.name,), context=context)
-            # if all moves are done or canceled, the ppl is canceled
-            cancel_ppl = True
-            for move in picking.move_lines:
-                if move.state in ('assigned'):
-                    cancel_ppl = False
+
+
+            # Log message for PPL
+            ppl_view = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
+            context['view_id'] = ppl_view
+            log_message = _('Products from Pre-Packing List (%s) have been returned to stock.') % (picking.name,)
+            self.log(cr, uid, picking.id, log_message, context=context)
+
+            # Log message for draft picking ticket
+            pick_view = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
+            context.update({
+                'view_id': pick_view,
+                'picking_type': 'picking_ticket',
+            })
+            log_message = _('The corresponding Draft Picking Ticket (%s) has been updated.') % (picking.previous_step_id.backorder_id.name,)
+            self.log(cr, uid, draft_picking_id, log_message, context=context)
+
+            # If all moves are done or canceled, the PPL is canceled
+            cancel_ppl = move_obj.search(cr, uid, [('picking_id', '=', picking.id), ('state', '!=', 'assigned')], count=True, context=context)
 
             if cancel_ppl:
-                # we dont want the back move (done) to be canceled - so we dont use the original cancel workflow state because
-                # action_cancel() from stock_picking would be called, this would cancel the done stock_moves
-                # instead we move to the new return_cancel workflow state which simply set the stock_picking state to 'cancel'
-                # TODO THIS DOESNT WORK - still done state - replace with trigger for now
-                # wf_service.trg_validate(uid, 'stock.picking', picking.id, 'return_cancel', cr)
+                """
+                we dont want the back move (done) to be canceled - so we dont use the original cancel workflow state because
+                action_cancel() from stock_picking would be called, this would cancel the done stock_moves
+                instead we move to the new return_cancel workflow state which simply set the stock_picking state to 'cancel'
+                TODO THIS DOESNT WORK - still done state - replace with trigger for now
+                wf_service.trg_validate(uid, 'stock.picking', picking.id, 'return_cancel', cr)
+                """
                 wf_service.trg_write(uid, 'stock.picking', picking.id, cr)
 
-        # TODO which behavior
-        # return {'type': 'ir.actions.act_window_close'}
-        data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
         view_id = view_id and view_id[1] or False
+        context['picking_type'] = 'picking_ticket'
+
         context.update({'picking_type': 'picking_ticket'})
         return {
             'name':_("Picking Ticket"),

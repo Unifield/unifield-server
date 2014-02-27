@@ -27,6 +27,8 @@ import create_picking_processor
 import validate_picking_processor
 import ppl_processor
 import shipment_processor
+import return_ppl_processor
+import return_shipment_processor
 
 import split_memory_move
 import stock_partial_move

@@ -55,6 +55,18 @@ class ppl_processor(osv.osv):
         picking_obj = self.pool.get('stock.picking')
         ppl_move_obj = self.pool.get('ppl.move.processor')
 
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
         missing_ids = []
         to_smaller_ids = []
         overlap_ids = []
@@ -132,6 +144,18 @@ class ppl_processor(osv.osv):
         picking_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
         family_obj = self.pool.get('ppl.family.processor')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
 
         family_no_weight = []
 
