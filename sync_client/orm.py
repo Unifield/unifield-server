@@ -7,7 +7,18 @@ import functools
 import types
 
 from sync_common import MODELS_TO_IGNORE, xmlid_to_sdref
+import cProfile
+def profileit(func):
+    def wrapper(*args, **kwargs):
+        datafn = '/tmp/' + func.__name__ + ".profile" # Name the data file sensibly
+        prof = cProfile.Profile()
+        print "Dump"
+        retval = prof.runcall(func, *args, **kwargs)
+        prof.dump_stats(datafn)
+        print "Dump"
+        return retval
 
+    return wrapper
 
 ## Helpers ###################################################################
 
@@ -49,6 +60,13 @@ def orm_method_overload(fn):
     @functools.wraps(fn)
     def wrapper(self, *args, **kwargs):
         if self.pool.get(extended_orm._name) is not None:
+            datafn = '/tmp/' + self._name + fn.__name__ + ".profile" # Name the data file sensibly
+            prof = cProfile.Profile()
+            print "Dump"
+            retval = prof.runcall(fn, self, original_method, *args, **kwargs)
+            prof.dump_stats(datafn)
+            print "Dump"
+            return retval
             return fn(self, original_method, *args, **kwargs)
         else:
             return original_method(self, *args, **kwargs)
@@ -293,18 +311,21 @@ SELECT res_id, touched
                     if isinstance(self._all_columns[f].column, fields.one2many)]
 
         # read current values
-        whole_fields = [x for x in self._all_columns if not self._all_columns[x].column._properties or self._all_columns[x].column._classic_write] \
-            if previous_values is None \
-            else previous_values[0].keys()
+        if previous_values is not None:
+            whole_fields = previous_values[0].keys()
+        elif current_values is not None:
+            whole_fields = current_values.values()[0].keys()
+        else:
+            whole_fields = [x for x in self._all_columns if not self._all_columns[x].column._properties or self._all_columns[x].column._classic_write]
         try:
             whole_fields.remove('id')
         except ValueError:
             pass
+
         if not current_values:
             current_values = dict(
                 (d['id'], d)
                 for d in self.read(cr, uid, ids, whole_fields, context=context) )
-
         # touch things
         if previous_values is None:
             touch(
@@ -436,16 +457,30 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
     def create(self, original_create, cr, uid, values, context=None):
         if context is None: context = {}
         id = original_create(self, cr, uid, values, context=context)
+
+        audit_rule_ids = self.check_audit(cr, uid, 'create')
+        audit_obj = self.pool.get('audittrail.rule')
+        funct_field = []
+        if audit_rule_ids:
+            funct_field = audit_obj.get_functionnal_fields(cr, uid, audit_rule_ids)
+
         to_be_synchronized = (
             self._name not in MODELS_TO_IGNORE and
             (not context.get('sync_update_execution') and
              not context.get('sync_update_creation')))
+
+        if audit_rule_ids or to_be_synchronized or hasattr(self, 'on_create'):
+            current_values = dict((x['id'], x) for x in self.read(cr, uid, [id], values.keys()+funct_field, context=context))
+
+        if audit_rule_ids:
+            audit_obj.audit_log(cr, uid, audit_rule_ids, self, [id], 'create', current=current_values, context=context)
+
         if to_be_synchronized or hasattr(self, 'on_create'):
             self.touch(cr, uid, [id], None,
-                to_be_synchronized, context=context)
+                to_be_synchronized, current_values=current_values, context=context)
             if hasattr(self, 'on_create'):
                 self.on_create(cr, uid, id,
-                    self.read(cr, uid, [id], values.keys(), context=context)[0],
+                    current_values[id],
                     context=context)
         return id
 
@@ -478,7 +513,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         current_values = dict((x['id'], x) for x in self.read(cr, uid, ids, values.keys()+funct_field, context=context))
 
         if audit_rule_ids:
-            audit_obj.log(cr, uid, audit_rule_ids, self, ids, 'write', previous_values, current_values, context=context)
+            audit_obj.audit_log(cr, uid, audit_rule_ids, self, ids, 'write', previous_values, current_values, context=context)
 
         if to_be_synchronized or hasattr(self, 'on_change'):
             changes = self.touch(cr, uid, ids, previous_values,
@@ -531,7 +566,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
 
         audit_rule_ids = self.check_audit(cr, uid, 'unlink')
         if audit_rule_ids:
-            self.pool.get('audittrail.rule').log(cr, uid, audit_rule_ids, self, ids, 'unlink', context=context)
+            self.pool.get('audittrail.rule').audit_log(cr, uid, audit_rule_ids, self, ids, 'unlink', context=context)
         if context.get('sync_message_execution'):
             return original_unlink(self, cr, uid, ids, context=context)
 
