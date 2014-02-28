@@ -51,10 +51,8 @@ def orm_method_overload(fn):
         if self.pool.get(extended_orm._name) is not None:
             #datafn = '/tmp/' + self._name + fn.__name__ + ".profile" # Name the data file sensibly
             #prof = cProfile.Profile()
-            #print "Dump"
             #retval = prof.runcall(fn, self, original_method, *args, **kwargs)
             #prof.dump_stats(datafn)
-            #print "Dump"
             #return retval
             return fn(self, original_method, *args, **kwargs)
         else:
@@ -451,7 +449,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         audit_obj = self.pool.get('audittrail.rule')
         funct_field = []
         if audit_rule_ids:
-            funct_field = audit_obj.get_functionnal_fields(cr, uid, self._name, audit_rule_ids)
+            funct_field = audit_obj.get_functionnal_fields(cr, 1, self._name, audit_rule_ids)
 
         to_be_synchronized = (
             self._name not in MODELS_TO_IGNORE and
@@ -476,7 +474,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
     def check_audit(self, cr, uid, method):
         audit_obj = self.pool.get('audittrail.rule')
         if audit_obj:
-            return self.pool.get('audittrail.rule').to_trace(cr, uid, self._name, method)
+            return self.pool.get('audittrail.rule').to_trace(cr, 1, self._name, method)
         return False
 
     @orm_method_overload
@@ -487,7 +485,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         audit_obj = self.pool.get('audittrail.rule')
         funct_field = []
         if audit_rule_ids:
-            funct_field = audit_obj.get_functionnal_fields(cr, uid, self._name, audit_rule_ids)
+            funct_field = audit_obj.get_functionnal_fields(cr, 1, self._name, audit_rule_ids)
 
         to_be_synchronized = (
             self._name not in MODELS_TO_IGNORE and
