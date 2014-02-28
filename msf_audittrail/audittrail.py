@@ -283,10 +283,12 @@ class audittrail_rule(osv.osv):
     def write(self, cr, uid, ids, value, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-        #for rule in self.browse(cr, uid, ids):
-        #    self.get_functionnal_fields.clear_cache(cr.dbname, ids, rule.object_id.model)
-
-        #self.to_trace.clear_cache(cr.dbname, rule.object_id.model, )
+        for rule in self.browse(cr, uid, ids):
+            self.get_functionnal_fields.clear_cache(cr.dbname, objname=rule.object_id.model, ids=[rule.id])
+            for method in ['read', 'create', 'write', 'unlink']:
+                field_name = 'log_'+method
+                if getattr(rule, field_name):
+                    self.to_trace.clear_cache(cr.dbname, model=rule.object_id.model, method=method)
         return super(audittrail_rule, self).write(cr, uid, ids, value, context=context)
 
 
@@ -385,12 +387,12 @@ class audittrail_rule(osv.osv):
         return []
 
     @tools.cache(skiparg=3)
-    def to_trace(self, cr, uid, obj, method):
-        if not obj._trace:
+    def to_trace(self, cr, uid, model, method):
+        obj = self.pool.get(model)
+        if not obj or not obj._trace:
             return False
 
         model_pool = self.pool.get('ir.model')
-        model = obj._name
         log_field = 'log_' + method
         return self.search(cr, 1, [('object_id.model', '=', model), (log_field, '=', True), ('state', '=', 'subscribed')])
 
