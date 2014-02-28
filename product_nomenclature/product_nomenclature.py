@@ -44,7 +44,7 @@ class product_nomenclature(osv.osv):
         if context is None:
             context = {}
         # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
-        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
         if not context.get('yml_test', False):
             if lang_dict.get('context_lang'):
                 context['lang'] = lang_dict.get('context_lang')
@@ -84,11 +84,11 @@ class product_nomenclature(osv.osv):
         # default level is 1 if no parent it is a root
         result = 0
 
-        #test = self._columns.get('parent_id')
-        #test = self._columns['name']
+        # test = self._columns.get('parent_id')
+        # test = self._columns['name']
 
         # get the parent object's level + 1
-        #result = self.browse(cr, uid, self.parent_id, context).level + 1
+        # result = self.browse(cr, uid, self.parent_id, context).level + 1
 
         return result
 
@@ -284,7 +284,7 @@ class product_nomenclature(osv.osv):
         return ret
 
     def _get_childs(self, cr, uid, narg, ids):
-        ids_p = self.search(cr, uid, [('parent_id','in',ids)])
+        ids_p = self.search(cr, uid, [('parent_id', 'in', ids)])
         if ids_p:
             ids_p += self._get_childs(cr, uid, narg, ids_p)
         narg += ids_p
@@ -299,7 +299,7 @@ class product_nomenclature(osv.osv):
         for arg in args:
             ids_rech = self._get_childs(cr, uid, narg, [arg[2]])
         ids_rech += [arg[2]]
-        return [('id','in',ids_rech)]
+        return [('id', 'in', ids_rech)]
 
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         '''
@@ -308,7 +308,7 @@ class product_nomenclature(osv.osv):
         if context is None:
             context = {}
         # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
-        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
         if lang_dict.get('context_lang'):
             context['lang'] = lang_dict.get('context_lang')
 
@@ -346,7 +346,7 @@ class product_nomenclature(osv.osv):
         # loop through children nomenclature of mandatory type
         shownum = num or context.get('withnum') == 1
         if position < 3:
-            nomenids = nomenObj.search(cr, uid, [('active','in',['t','f']),('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
+            nomenids = nomenObj.search(cr, uid, [('active', 'in', ['t', 'f']), ('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
             if nomenids:
                 for n in nomenObj.read(cr, uid, nomenids, ['name'] + (shownum and ['number_of_products'] or []), context=context):
                     # get the name and product number
@@ -378,18 +378,18 @@ class product_nomenclature(osv.osv):
             return []
         narg = []
         for arg in args:
-            id_rech = self.search(cr,uid,[('parent_id','=',arg[2])])
+            id_rech = self.search(cr, uid, [('parent_id', '=', arg[2])])
             if arg[2] == 'mandatory':
-                narg += [('type','=',arg[2])]
+                narg += [('type', '=', arg[2])]
             else:
-                narg += [('type','=',arg[2] )]
+                narg += [('type', '=', arg[2])]
         return narg
 
     def _get_custom_name(self, cr, uid, ids, field_name, args, context=None):
         '''
         return false for each id
         '''
-        if isinstance(ids,(long, int)):
+        if isinstance(ids, (long, int)):
             ids = [ids]
         result = {}
         for id in ids:
@@ -438,12 +438,12 @@ class product_nomenclature(osv.osv):
         'nomen_manda_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Family', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_manda_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Root', fnct_search=_search_nomen_s, multi="nom_s"),
 
-        'nomen_type_s': fields.function(_get_fake, method=True, type='selection', selection=[('mandatory', 'Mandatory'),('optional', 'Optional')],  string='Nomenclature type', fnct_search=_search_nomen_type_s ),
+        'nomen_type_s': fields.function(_get_fake, method=True, type='selection', selection=[('mandatory', 'Mandatory'), ('optional', 'Optional')], string='Nomenclature type', fnct_search=_search_nomen_type_s),
 
     }
 
     _defaults = {
-                 'level' : _getDefaultLevel, # no access to actual new values, use onChange function instead
+                 'level' : _getDefaultLevel,  # no access to actual new values, use onChange function instead
                  'type' : lambda *a : 'mandatory',
                  'sub_level': lambda *a : '0',
                  'sequence': _getDefaultSequence,
@@ -562,7 +562,7 @@ class product_template(osv.osv):
 
         return narg
 
-    ### EXACT COPY-PASTE TO order_nomenclature
+    # ## EXACT COPY-PASTE TO order_nomenclature
     _columns = {
                 # mandatory nomenclature levels
                 'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', required=True, select=1),
@@ -602,22 +602,22 @@ the current product'),
 for the current product'),
                 'property_stock_procurement': fields.many2one('stock.location',
                                                               string='Procurement Location',
-                                                              domain=[('usage','like','procurement')],
-                                                              #FIXME
+                                                              domain=[('usage', 'like', 'procurement')],
+                                                              # FIXME
                                                               required=False,
                                                               help='For the current product, this stock location will be used, instead of the default one, \
 as the source location for stock moves generated by procurements'),
                 'property_stock_production': fields.many2one('stock.location',
                                                              string='Production Location',
-                                                             domain=[('usage','like','production')],
-                                                             #FIXME
+                                                             domain=[('usage', 'like', 'production')],
+                                                             # FIXME
                                                              required=False,
                                                              help='For the current product, this stock location will be used, instead of the default one, \
 as the source location for stock moves generated by production orders'),
                 'property_stock_inventory': fields.many2one('stock.location',
                                                             string='Inventory Location',
-                                                            domain=[('usage','like','inventory')],
-                                                            #FIXME
+                                                            domain=[('usage', 'like', 'inventory')],
+                                                            # FIXME
                                                             required=False,
                                                             help='For the current product, this stock location will be used, instead of the default one, \
 as the source location for stock moves generated when you do an inventory'),
@@ -630,7 +630,7 @@ stock moves will be posted in this account. If not set on the product, the one f
                                                                  help='When doing real-time inventory valuation, counterpart Journal Items for all outgoing \
 stock moves will be posted in this account. If not set on the product, the one from the product category is used.'),
     }
-    ### END OF COPY
+    # ## END OF COPY
 
     def _get_property_stock(self, cr, uid, location_xml_id, context=None):
         try:
@@ -643,9 +643,9 @@ stock moves will be posted in this account. If not set on the product, the one f
         return False
 
     _defaults = {
-        'property_stock_procurement': lambda self, cr, uid, c={}: self._get_property_stock(cr, uid, 'location_procurement', context=c),
-        'property_stock_production': lambda self, cr, uid, c={}: self._get_property_stock(cr, uid, 'location_production', context=c),
-        'property_stock_inventory': lambda self, cr, uid, c={}: self._get_property_stock(cr, uid, 'location_inventory', context=c),
+        'property_stock_procurement': lambda self, cr, uid, c = {}: self._get_property_stock(cr, uid, 'location_procurement', context=c),
+        'property_stock_production': lambda self, cr, uid, c = {}: self._get_property_stock(cr, uid, 'location_production', context=c),
+        'property_stock_inventory': lambda self, cr, uid, c = {}: self._get_property_stock(cr, uid, 'location_inventory', context=c),
         'property_account_income': False,
         'property_account_expense': False,
         'property_stock_account_input': False,
@@ -762,9 +762,9 @@ class product_product(osv.osv):
                 raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
             exist_dc_xc = self.search(cr, uid, ['|', ('default_code', '=', default_code),
                                                      ('xmlid_code', '=', default_code)], context=context)
-            if exist_dc_xc: # if any of the code exists, report error!,
+            if exist_dc_xc:  # if any of the code exists, report error!,
                 raise Exception, "Problem creating product: Duplicate xmlid_code/default_code found"
-        elif default_code: # cases 3, 4
+        elif default_code:  # cases 3, 4
             vals['xmlid_code'] = default_code
         else:
             # not default_code, as this is a mandatory field a default_value will be set later in the code
@@ -774,19 +774,19 @@ class product_product(osv.osv):
 
         res = super(product_product, self).create(cr, uid, vals, context=context)
 
-        prod_default_code = default_code or self.read(cr, uid, id, ['default_code'], context=context)
+        prod_default_code = default_code or self.read(cr, uid, res, ['default_code'], context=context)
         if to_overwrite:
-            self.write(cr, uid, id, {'xmlid_code': prod_default_code}, context=context)
+            self.write(cr, uid, res, {'xmlid_code': prod_default_code}, context=context)
 
         if prod_default_code != 'XXX':
             return res
 
         # if the default code is empty or XXX, then delete the relevant xmlid from the ir_model_data table
         model_data_obj = self.pool.get('ir.model.data')
-        sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','=',id),('module','=','sd')])
+        sdref_ids = model_data_obj.search(cr, uid, [('model', '=', self._name), ('res_id', '=', res), ('module', '=', 'sd')])
         if sdref_ids:
-            model_data_obj.unlink(cr, uid, sdref_ids,context=context)
-        return id
+            model_data_obj.unlink(cr, uid, sdref_ids, context=context)
+        return res
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -804,7 +804,7 @@ class product_product(osv.osv):
         if context is None:
             context = {}
         # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
-        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
         if lang_dict.get('context_lang'):
             context['lang'] = lang_dict.get('context_lang')
 
@@ -1013,7 +1013,7 @@ class product_product(osv.osv):
 
             elif newType == 'optional':
                 if fieldNumber != newSubLevel:
-                    ### NOTE adapt level to user level for warning message (+1)
+                    # ## NOTE adapt level to user level for warning message (+1)
                     result['warning'].update({'title': _('Error!'),
                                           'message': _("The selected nomenclature's level is '%s'. Must be '%s' (field's level).") % (newSubLevel + 1, fieldNumber + 1)
                                           })

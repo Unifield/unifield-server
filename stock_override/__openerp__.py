@@ -41,7 +41,6 @@
         "report/report_destruction_location_view.xml",
         "report/report_stock_move_view.xml",
         "wizard/stock_analyze_view_view.xml",
-        "wizard/picking_processor_view.xml",
         "security/ir.model.access.csv",
         "wizard/stock_partial_move_view.xml",
         "wizard/change_dest_location_view.xml",
