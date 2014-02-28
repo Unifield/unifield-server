@@ -281,8 +281,12 @@ class audittrail_rule(osv.osv):
 
 
     def write(self, cr, uid, ids, value, context=None):
-        self.get_functionnal_fields.clear_cache(cr.dbname, ids)
-        self.to_trace.clear_cache(cr.dbname, ids)
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        #for rule in self.browse(cr, uid, ids):
+        #    self.get_functionnal_fields.clear_cache(cr.dbname, ids, rule.object_id.model)
+
+        #self.to_trace.clear_cache(cr.dbname, rule.object_id.model, )
         return super(audittrail_rule, self).write(cr, uid, ids, value, context=context)
 
 
@@ -366,13 +370,18 @@ class audittrail_rule(osv.osv):
         return True
 
     @tools.cache(skiparg=3)
-    def get_functionnal_fields(self, cr, uid, ids):
+    def get_functionnal_fields(self, cr, uid, objname, ids):
         # no context to not disturb caching
         fields_obj = self.pool.get('ir.model.fields')
-        fields_ids = fields_obj.search(cr, uid, [('audittrail_rule_ids', 'in', ids), ('is_function', '=', True)])
+        fields_ids = fields_obj.search(cr, uid, [('audittrail_rule_ids', 'in', ids)])
         if fields_ids:
-            return [x['name'] for x in fields_obj.read(cr, uid, fields_ids, ['name'])]
-
+            ret = []
+            obj = self.pool.get(objname)
+            for field in fields_obj.read(cr, uid, fields_ids, ['name']):
+                col = obj._all_columns[field['name']].column
+                if col._properties and not col._classic_write:
+                    ret.append(field['name'])
+            return ret
         return []
 
     @tools.cache(skiparg=3)
@@ -416,12 +425,13 @@ class audittrail_rule(osv.osv):
                 res_ids = obj_ids[:]
                 obj_ids = []
 
-            # parent_field
+            model_name_tolog = rule.object_id.model
             parent_field = False
             if rule.parent_field_id:
                 parent_field_display = rule.name_get_field_id.name
                 parent_field = rule.parent_field_id.name
-
+                model_name_tolog = rule.parent_field_id.relation
+                model_parent_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name_tolog)])[0]
 
             if method in ('write', 'create'):
                 original_fields = current.values()[0].keys()
@@ -439,9 +449,11 @@ class audittrail_rule(osv.osv):
             if parent_field:
                 new_values_computed = dict((x['id'], x) for x in obj.read(cr, uid, res_ids, [parent_field, parent_field_display], context=context))
 
+
             for res_id in res_ids:
                 if parent_field:
                     parent_field = new_values_computed[res_id][parent_field][0]
+
                 vals = {
                     'name': rule.object_id.name,
                     'method': method,
@@ -454,25 +466,24 @@ class audittrail_rule(osv.osv):
                 if parent_field:
                     # get the parent model_id
                     # TODO: keep it on rule creation
-                    model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', rule.parent_field_id.relation)])[0]
                     vals.update({
                         'sub_obj_name': new_values_computed[res_id][parent_field_display],
                         'rule_id': rule.id,
                         'fct_object_id': rule.object_id.id,
-                        'object_id': model_id,
+                        'object_id': model_parent_id,
                         'fct_res_id': res_id
                     })
                 if method == 'unlink':
                     vals.update({
                         'field_description': rule.object_id.name,
-                        'log': self.get_sequence(cr, uid, rule.object_id.model, res_id, context=context),
+                        'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
                     })
                     log_line_obj.create(cr, uid, vals)
 
                 elif method in  ('write', 'create'):
                     if method == 'create':
                         vals.update({
-                            'log': self.get_sequence(cr, uid, rule.object_id.model, res_id, context=context),
+                            'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
                             'field_description': rule.object_id.name
                         })
                         log_line_obj.create(cr, uid, vals)
@@ -493,7 +504,7 @@ class audittrail_rule(osv.osv):
                             line.update({
                               'field_id': fields_to_trace[field].id,
                               'field_description': fields_to_trace[field].field_description,
-                              'log': self.get_sequence(cr, uid, rule.object_id.model, res_id, context=context),
+                              'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
                               'name': field,
                               'new_value': new_value,
                               'old_value': old_value,
