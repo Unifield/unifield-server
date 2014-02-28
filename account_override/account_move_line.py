@@ -263,6 +263,8 @@ class account_move_line(osv.osv):
         'is_reconciled': fields.function(_get_is_reconciled, fnct_search=_search_is_reconciled, type='boolean', method=True, string="Is reconciled", help="Is that line partially/totally reconciled?"),
         'balance_currency': fields.function(_balance_currency, fnct_search=_balance_currency_search, method=True, string='Balance Booking'),
         'line_number': fields.integer(string='Line Number'),
+        'invoice_partner_link': fields.many2one('account.invoice', string="Invoice partner link", readonly=True,
+            help="This link implies this line come from the total of an invoice, directly from partner account.", ondelete="cascade"),
     }
 
     _defaults = {
