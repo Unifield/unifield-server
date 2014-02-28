@@ -642,7 +642,7 @@ class shipment(osv.osv):
         Open the wizard to return packs from draft shipment
         """
         # Objects
-        proc_obj = self.pool.get('return.shipment.processor')
+        proc_obj = self.pool.get('return.pack.shipment.processor')
 
         if context is None:
             context = {}
@@ -722,148 +722,169 @@ class shipment(osv.osv):
         # return both values - return order is important
         return stay, back_to_draft
 
-    def do_return_packs_from_shipment(self, cr, uid, ids, context=None):
-        '''
-        return the packs to the corresponding draft packing object
+    def do_return_packs_from_shipment(self, cr, uid, wizard_ids, context=None):
+        """
+        Return the selected packs to the PPL
 
-        for each corresponding draft packing
-        -
-        '''
-        # integrity check
-        assert context, 'no context, method call is wrong'
-        assert 'partial_datas' in context, 'partial_datas no defined in context'
-
-        pick_obj = self.pool.get('stock.picking')
+        BE CAREFUL: the wizard_ids parameters is the IDs of the return.shipment.processor objects,
+        not those of shipment objects
+        """
+        # Objects
+        proc_obj = self.pool.get('return.pack.shipment.processor')
         move_obj = self.pool.get('stock.move')
+        data_obj = self.pool.get('ir.model.data')
 
-        # data from wizard
-        partial_datas = context['partial_datas']
-        # shipment ids from ids must be equal to shipment ids from partial datas
-        assert set(ids) == set(partial_datas.keys()), 'shipment ids from ids and partial do not match'
+        if context is None:
+            context = {}
 
-        dispatch_name = _('Dispatch')
+        if isinstance(wizard_ids, (int, long)):
+            wizard_ids = [wizard_ids]
 
-        # for each shipment
-        for shipment_id in partial_datas:
-            # for each packing
-            for packing in pick_obj.browse(cr, uid, partial_datas[shipment_id].keys(), context=context):
-                # corresponding draft packing -> backorder
-                draft_packing_id = packing.backorder_id.id
-                # corresponding draft shipment (all packing for a shipment belong to the same draft_shipment)
-                draft_shipment_id = packing.backorder_id.shipment_id.id
-                # for each sequence
-                for from_pack in partial_datas[shipment_id][packing.id]:
-                    for to_pack in partial_datas[shipment_id][packing.id][from_pack]:
-                        # partial datas for one sequence of one packing
-                        # could have multiple data multiple products in the same pack family
-                        datas = partial_datas[shipment_id][packing.id][from_pack][to_pack]
-                        # the corresponding moves
-                        move_ids = move_obj.search(cr, uid, [('picking_id', '=', packing.id),
-                                                             ('from_pack', '=', from_pack),
-                                                             ('to_pack', '=', to_pack)], context=context)
+        if not wizard_ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
 
-                        # compute the sequences to stay/to return to draft packing
-                        stay, back_to_draft = self.compute_sequences(cr, uid, ids, context=context,
-                                                                     datas=datas,
-                                                                     from_pack=from_pack,
-                                                                     to_pack=to_pack,)
+        shipment_ids = []
 
-                        # we have the information concerning movements to update the packing and the draft packing
+        for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
+            shipment = wizard.shipment_id
+            shipment_ids.append(shipment.id)
 
-                        # update the packing object, we update the existing move
-                        # if needed new moves are created
-                        updated = {}
-                        for move in move_obj.browse(cr, uid, move_ids, context=context):
-                            # update values
-                            updated[move.id] = {'initial': move.product_qty, 'partial_qty': 0}
-                            # loop through stay sequences
-                            for seq in stay:
-                                # corresponding number of packs
-                                selected_number = seq[1] - seq[0] + 1
-                                # quantity to return
-                                new_qty = selected_number * move.qty_per_pack
-                                # for both cases, we update the from/to and compute the corresponding quantity
-                                # if the move has been updated already, we copy/update
-                                values = {'from_pack': seq[0],
-                                          'to_pack': seq[1],
-                                          'product_qty': new_qty,
-                                          'line_number': move.line_number,
-                                          'state': 'assigned'}
+            for family in wizard.family_ids:
+                draft_packing = family.draft_packing_id.backorder_id
+                draft_shipment_id = draft_packing.shipment_id.id
 
-                                # the original move is never modified, but canceled
-                                updated[move.id]['partial_qty'] += new_qty
-                                move_obj.copy(cr, uid, move.id, values, context=context)
+                # Search the corresponding moves
+                move_ids = move_obj.search(cr, uid, [
+                    ('picking_id', '=', family.draft_packing_id.id),
+                    ('from_pack', '=', family.from_pack),
+                    ('to_pack', '=', family.to_pack),
+                ], context=context)
 
-#                            # nothing stays
-#                            if 'partial_qty' not in updated[move.id]:
-#                                updated[move.id]['partial_qty'] = 0
+                stay = [(family.from_pack, family.to_pack)]
+                if family.to_pack >= family.return_to:
+                    if family.return_from == family.from_pack:
+                        if family.return_to == family.to_pack:
+                            # all packs for this sequnce are sent back - simply remove it
+                            break
+                        else:
+                            stay.append((family.return_to + 1, family.to_pack))
+                            break
+                    elif family.return_to == family.to_pack:
+                        # Do not start at beginning, but same end
+                        stay.append((family.from_pack, family.return_from - 1))
+                        break
+                    else:
+                        # In the middle, two now tuple in stay
+                        stay.append((family.from_pack, family.return_from - 1))
+                        stay.append((family.return_to + 1, family.to_pack))
+                        break
 
-                            # loop through back_to_draft sequences
-                            for seq in back_to_draft:
-                                # for each sequence we add the corresponding stock move to draft packing
-                                # corresponding number of packs
-                                selected_number = seq[1] - seq[0] + 1
-                                # quantity to return
-                                new_qty = selected_number * move.qty_per_pack
-                                # values
-                                location_dispatch = move.picking_id.warehouse_id.lot_dispatch_id.id
-                                location_distrib = move.picking_id.warehouse_id.lot_distribution_id.id
-                                dispatch_name = move.picking_id.warehouse_id.lot_dispatch_id.name
-                                values = {'from_pack': seq[0],
-                                          'to_pack': seq[1],
-                                          'line_number': move.line_number,
-                                          'product_qty': new_qty,
-                                          'location_id': location_distrib,
-                                          'location_dest_id': location_dispatch,
-                                          'state': 'done'}
+                # Old one is always removed
+                stay.pop(-1)
 
-                                # create a back move in the packing object
-                                # distribution -> dispatch
-                                move_obj.copy(cr, uid, move.id, values, context=dict(context, non_stock_noupdate=True))
-                                updated[move.id]['partial_qty'] += new_qty
+                move_data = {}
+                for move in move_obj.browse(cr, uid, move_ids, context=context):
+                    move_data.setdefault(move.id, {
+                        'initial': move.product_qty,
+                        'partial_qty': 0,
+                    })
 
-                                # create the draft move
-                                # dispatch -> distribution
-                                # picking_id = draft_picking
-                                values.update(location_id=location_dispatch,
-                                              location_dest_id=location_distrib,
-                                              picking_id=draft_packing_id,
-                                              state='assigned')
-                                move_obj.copy(cr, uid, move.id, values, context=dict(context, non_stock_noupdate=True))
+                    for seq in stay:
+                        # Corresponding number of packs
+                        selected_number = seq[1] - seq[0] + 1
+                        # Quantity to return
+                        new_qty = selected_number * move.qty_per_pack
+                        # For both cases, we update the from/to and compute the corresponding quantity
+                        # if the move has been updated already, we copy/update
+                        move_values = {
+                            'from_pack': seq[0],
+                            'to_pack': seq[1],
+                            'product_qty': new_qty,
+                            'line_number': move.line_number,
+                            'state': 'assigned',
+                        }
+                        # The original move is never modified, but canceled
+                        move_data[move.id]['partial_qty'] += new_qty
 
-                            # quantities are right - stay + return qty = original qty
-                            assert all([round(updated[m]['initial'], 14) == round(updated[m]['partial_qty'], 14) for m in updated.keys()]), 'initial quantity is not equal to the sum of partial quantities (%s).' % (updated)
-                            # if packs are returned corresponding move is canceled
-                            # cancel move or 0 qty + done ?
-                            # move_obj.action_cancel(cr, uid, [move.id], context=context)
-                            move_obj.write(cr, uid, [move.id], {'product_qty': 0.0, 'state': 'done', 'from_pack': 0, 'to_pack': 0, }, context=context)
+                        move_obj.copy(cr, uid, move.id, move_values, context=context)
+
+                        # Get the back_to_draft sequences
+                        selected_number = family.return_to - family.return_from + 1
+                        # Quantity to return
+                        new_qty = selected_number * move.qty_per_pack
+                        # values
+                        move_values = {
+                            'from_pack': family.return_from,
+                            'to_pack': family.return_to,
+                            'line_number': family.line_number,
+                            'product_qty': new_qty,
+                            'location_id': move.picking_id.warehouse_id.lot_distribution_id.id,
+                            'location_dest_id': move.picking_id.warehouse_id.lot_dispatch_id.id,
+                            'state': 'done',
+                        }
+
+                        # Create a back move in the packing object
+                        # Distribution -> Dispatch
+                        context['non_stock_noupdate'] = True
+                        move_obj.copy(cr, uid, move.id, move_values, context=context)
+                        context['non_stock_noupdate'] = False
+
+                        move_data[move.id]['partial_qty'] += new_qty
+
+                        # Create the draft move
+                        # Dispatch -> Distribution
+                        # Picking_id = draft_picking
+                        move_values.update({
+                            'location_id': move.picking_id.warehouse_id.lot_dispatch_id.id,
+                            'location_dest_id': move.picking_id.warehouse_id.lot_distribution_id.id,
+                            'picking_id': draft_packing.id,
+                            'state': 'assigned',
+
+                        })
+                        context['non_stock_noupdate'] = True
+                        move_obj.copy(cr, uid, move.id, move_values, context=context)
+                        context['non_stock_noupdate'] = False
+
+                    for move_vals in move_data:
+                        if round(move_vals['initial'], 14) != round(move_vals['partial_qty'], 14):
+                            raise osv.except_osv(
+                                _('Processing Error'),
+                                _('The sum of the processed quantities is not equal to the sum of the initial quantities'),
+                            )
+
+                    move_values = {
+                        'product_qty': 0.00,
+                        'state': 'done',
+                        'from_pack': 0,
+                        'to_pack': 0,
+                    }
+                    move_obj.write(cr, uid, [move.id], move_values, context=context)
 
             # log corresponding action
-            shipment_name = self.read(cr, uid, shipment_id, ['name'], context=context)['name']
-            self.log(cr, uid, shipment_id, _("Packs from the shipped Shipment (%s) have been returned to %s location.") % (shipment_name, dispatch_name))
-            self.log(cr, uid, draft_shipment_id, _("The corresponding Draft Shipment (%s) has been updated.") % (packing.backorder_id.shipment_id.name,))
+            shipment_log_msg = _('Packs from the shipped Shipment (%s) have been returned to %s location.') % (shipment.name, _('Dispatch'))
+            self.log(cr, uid, shipment.id, shipment_log_msg)
+
+            draft_log_msg = _('The corresponding Draft Shipment (%s) has been updated.') % family.draft_packing_id.backorder_id.shipment_id.name
+            self.log(cr, uid, draft_shipment_id, draft_log_msg)
 
         # call complete_finished on the shipment object
         # if everything is allright (all draft packing are finished) the shipment is done also
-        self.complete_finished(cr, uid, partial_datas.keys(), context=context)
+        self.complete_finished(cr, uid, shipment_ids, context=context)
 
-        # TODO which behavior
-        # return {'type': 'ir.actions.act_window_close'}
-        data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
-        view_id = view_id and view_id[1] or False
         return {
             'name':_("Shipment"),
             'view_mode': 'form,tree',
-            'view_id': [view_id],
+            'view_id': [view_id and view_id[1] or False],
             'view_type': 'form',
             'res_model': 'shipment',
             'res_id': draft_shipment_id,
             'type': 'ir.actions.act_window',
             'target': 'crush',
         }
-
-        return {'type': 'ir.actions.act_window_close'}
 
     def action_cancel(self, cr, uid, ids, context=None):
         '''
