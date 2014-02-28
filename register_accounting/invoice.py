@@ -387,6 +387,19 @@ class account_invoice(osv.osv):
                     self.pool.get('account.bank.statement.line').unlink(cr, uid, [x.id for x in inv.register_line_ids], {'from_direct_invoice': True})
         return super(account_invoice, self).unlink(cr, uid, ids, context)
 
+    def copy(self, cr, uid, id, default=None, context=None):
+        """
+        Reset register_line_ids.
+        """
+        # Some checks
+        if context is None:
+            context = {}
+        if default is None:
+            default = {}
+        if 'register_line_ids' not in default:
+            default['register_line_ids'] = []
+        return super(account_invoice, self).copy(cr, uid, id, default, context=context)
+
 account_invoice()
 
 class account_invoice_line(osv.osv):

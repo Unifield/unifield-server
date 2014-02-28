@@ -214,14 +214,75 @@ class account_invoice(osv.osv):
                 el[2].update({'document_date': inv.document_date})
         return res
 
+    def button_split_invoice(self, cr, uid, ids, context=None):
+        """
+        Launch the split invoice wizard to split an invoice in two elements.
+        """
+        # Some verifications
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some value
+        wiz_lines_obj = self.pool.get('wizard.split.invoice.lines')
+        inv_lines_obj = self.pool.get('account.invoice.line')
+        # Creating wizard
+        wizard_id = self.pool.get('wizard.split.invoice').create(cr, uid, {'invoice_id': ids[0]}, context=context)
+        # Add invoices_lines into the wizard
+        invoice_line_ids = self.pool.get('account.invoice.line').search(cr, uid, [('invoice_id', '=', ids[0])], context=context)
+        # Some other verifications
+        if not len(invoice_line_ids):
+            raise osv.except_osv(_('Error'), _('No invoice line in this invoice or not enough elements'))
+        for invl in inv_lines_obj.browse(cr, uid, invoice_line_ids, context=context):
+            wiz_lines_obj.create(cr, uid, {'invoice_line_id': invl.id, 'product_id': invl.product_id.id, 'quantity': invl.quantity, 
+                'price_unit': invl.price_unit, 'description': invl.name, 'wizard_id': wizard_id}, context=context)
+        # Return wizard
+        if wizard_id:
+            return {
+                'name': "Split Invoice",
+                'type': 'ir.actions.act_window',
+                'res_model': 'wizard.split.invoice',
+                'target': 'new',
+                'view_mode': 'form,tree',
+                'view_type': 'form',
+                'res_id': [wizard_id],
+                'context':
+                {
+                    'active_id': ids[0],
+                    'active_ids': ids,
+                    'wizard_id': wizard_id,
+                }
+            }
+        return False
+
     def copy(self, cr, uid, id, default={}, context=None):
         """
-        Delete period_id from invoice
+        Delete period_id from invoice.
+        Check context for splitting invoice.
         """
+        # Some checks
+        if context is None:
+            context = {}
         if default is None:
             default = {}
         default.update({'period_id': False,})
-        return super(account_invoice, self).copy(cr, uid, id, default, context)
+        # Default behaviour
+        new_id = super(account_invoice, self).copy(cr, uid, id, default, context)
+        # Case where you split an invoice
+        if 'split_it' in context:
+            purchase_obj = self.pool.get('purchase.order')
+            sale_obj = self.pool.get('sale.order')
+            if purchase_obj:
+                # attach new invoice to PO
+                purchase_ids = purchase_obj.search(cr, uid, [('invoice_ids', 'in', [id])], context=context)
+                if purchase_ids:
+                    purchase_obj.write(cr, uid, purchase_ids, {'invoice_ids': [(4, new_id)]}, context=context)
+            if sale_obj:
+                # attach new invoice to SO
+                sale_ids = sale_obj.search(cr, uid, [('invoice_ids', 'in', [id])], context=context)
+                if sale_ids:
+                    sale_obj.write(cr, uid, sale_ids, {'invoice_ids': [(4, new_id)]}, context=context)
+        return new_id
 
     def __hook_lines_before_pay_and_reconcile(self, cr, uid, lines):
         """
@@ -249,6 +310,14 @@ account_invoice()
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
     _inherit = 'account.invoice.line'
+
+    def _uom_constraint(self, cr, uid, ids, context=None):
+        for obj in self.browse(cr, uid, ids, context=context):
+            if not self.pool.get('uom.tools').check_uom(cr, uid, obj.product_id.id, obj.uos_id.id, context):
+                raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
+        return True
+
+    _constraints = [(_uom_constraint, 'Constraint error on Uom', [])]
 
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
@@ -295,6 +364,33 @@ class account_invoice_line(osv.osv):
                     il_number = sequence.get_id(code_or_id='id', context=context)
                     vals.update({'line_number': il_number})
         return super(account_invoice_line, self).write(cr, uid, ids, vals, context)
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        """
+        Check context to see if we come from a split. If yes, we create the link between invoice and PO/FO.
+        """
+        if not context:
+            context = {}
+        if not default:
+            default = {}
+
+        new_id = super(account_invoice_line, self).copy(cr, uid, id, default, context)
+
+        if 'split_it' in context:
+            purchase_lines_obj = self.pool.get('purchase.order.line')
+            sale_lines_obj = self.pool.get('sale.order.line')
+
+            if purchase_lines_obj:
+                purchase_line_ids = purchase_lines_obj.search(cr, uid, [('invoice_lines', 'in', [id])])
+                if purchase_line_ids:
+                    purchase_lines_obj.write(cr, uid, purchase_line_ids, {'invoice_lines': [(4, new_id)]})
+
+            if sale_lines_obj:
+                sale_lines_ids =  sale_lines_obj.search(cr, uid, [('invoice_lines', 'in', [id])])
+                if sale_lines_ids:
+                    sale_lines_obj.write(cr, uid,  sale_lines_ids, {'invoice_lines': [(4, new_id)]})
+
+        return new_id
 
 account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

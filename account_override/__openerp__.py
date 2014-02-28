@@ -39,6 +39,7 @@
         'account_analytic_line_view.xml',
         'account_sequence.xml',
         'wizard/account_report_partner_balance_tree_view.xml',  # uf-1715
+        'wizard/split_invoice.xml',
     ],
     'test': [],
     'installable': True,
