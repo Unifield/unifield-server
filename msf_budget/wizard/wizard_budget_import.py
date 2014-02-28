@@ -273,8 +273,10 @@ class wizard_budget_import(osv.osv_memory):
                 # Add it to list of being approved if needed
                 if add_to_approval:
                     # add to approval list
-                    budget_to_approve = {'latest_budget_id': latest_budget_id,
-                                             'created_budget_id': created_budget_id}
+                    budget_to_approve = {
+                        'latest_budget_id': latest_budget_id,
+                        'created_budget_id': budget_id
+                    }
                     budgets_2be_approved[budget_vals['name']] = budget_to_approve
                 # Read each line. Lines are declared after the six first lines. Write content into a database with the given sequence.
                 self._read_and_write_budget_lines(cr, uid, budget_data[6:], seq, context=context)
