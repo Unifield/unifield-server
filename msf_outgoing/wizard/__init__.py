@@ -20,7 +20,8 @@
 ##############################################################################
 
 import picking_processor
-import incoming_shipment
+import incoming_shipment_processor
+# import outgoing_delivery_processor
 import change_product_move_processor
 import split_move_processor
 import create_picking_processor

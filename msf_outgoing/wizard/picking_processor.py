@@ -259,7 +259,7 @@ class stock_move_processor(osv.osv):
 
     def _get_product_info(self, cr, uid, ids, field_name, args, context=None):
         """
-        Ticked some checkboxes according to product parameters
+        Ticked some check boxes according to product parameters
         """
         if context is None:
             context = {}
