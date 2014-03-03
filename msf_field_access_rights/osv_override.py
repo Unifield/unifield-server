@@ -39,11 +39,12 @@ def _get_instance_level(self, cr, uid):
             FROM res_users AS u, res_company AS c, msf_instance AS i
             WHERE u.company_id = c.id
             AND c.instance_id = i.id
-            AND u.id = %s;"""
+            AND u.id = %s"""
         cr.execute(sql, (uid,))
         result = cr.fetchall()
-        if not result:
+        if not result or not result[0]:
             return False
+        result = result[0][0]
         if result == 'section':
             return 'hq'
     return result
