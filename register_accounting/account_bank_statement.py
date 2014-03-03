@@ -1756,8 +1756,13 @@ class account_bank_statement_line(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-        # Optimization: if only one field to change and that this field is not needed by some other, no impact on them and no change, so we can call the super method
-        if len(values) == 1 and values.keys()[0] in ['move_ids', 'first_move_line_id', 'from_cash_return', 'name', 'direct_state', 'sequence_for_reference', 'imported_invoice_line_ids']:
+        # Optimization: if only one field to change and that this field is not needed by some other, no impact on them and no change, so we can call the super method.
+        #+ We prepare some boolean to test what permit to skip some checks.
+        #+ SKIP_WRITE_CHECK is a param in context that permit to directly write thing without any check or changes. Use it with caution.
+        one_field = len(values) == 1
+        field_match = values.keys()[0] in ['move_ids', 'first_move_line_id', 'from_cash_return', 'name', 'direct_state', 'sequence_for_reference', 'imported_invoice_line_ids']
+        skip_check = context.get('skip_write_check', False) and context.get('skip_write_check') == True or False
+        if (one_field and field_match) or skip_check:
             return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
         # Prepare some values
         state = self._get_state(cr, uid, ids, context=context).values()[0]
