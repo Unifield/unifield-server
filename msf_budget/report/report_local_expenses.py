@@ -73,7 +73,7 @@ class report_local_expenses(WebKitParser):
             header_data.append(['Output currency:', output_currency.name])
             # Cost Center
             cost_center = pool.get('account.analytic.account').browse(cr, uid, data['form']['cost_center_id'], context=context)
-            cost_center_ids = pool.get('msf.budget.tools')._get_cost_center_ids(cost_center)
+            cost_center_ids = pool.get('msf.budget.tools')._get_cost_center_ids(cr, uid, cost_center)
             domain.append(('cost_center_id', 'in', cost_center_ids))
             # Add cost center to header
             header_data.append(['Cost center:', cost_center.name])

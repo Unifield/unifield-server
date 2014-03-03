@@ -31,16 +31,37 @@ class msf_budget(osv.osv):
     
     def _get_total_budget_amounts(self, cr, uid, ids, field_names=None, arg=None, context=None):
         res = {}
-        
-        for budget in self.browse(cr, uid, ids, context=context):
-            total_amounts = self.pool.get('msf.budget.line')._get_total_amounts(cr, uid, [x.id for x in budget.budget_line_ids], context=context)
-            
-            budget_amount = 0.0
-            for budget_line in budget.budget_line_ids:
-                if not budget_line.parent_id:
-                    res[budget.id] = total_amounts[budget_line.id]['budget_amount']
-                    break
-        
+        sql = """
+        SELECT expense.budget_id, COALESCE(expense.total, 0.0) - COALESCE(income.total, 0.0) AS diff
+        FROM (
+            SELECT budget_id, SUM(COALESCE(month1 + month2 + month3 + month4 + month5 + month6 + month7 + month8 + month9 + month10 + month11 + month12, 0.0)) AS total
+            FROM msf_budget_line AS l, account_account AS a, account_account_type AS t
+            WHERE budget_id IN %s
+            AND l.account_id = a.id
+            AND a.user_type = t.id
+            AND t.code = 'expense'
+            AND a.type != 'view'
+            AND l.line_type = 'destination'
+            GROUP BY budget_id
+        ) AS expense 
+        LEFT JOIN (
+            SELECT budget_id, SUM(COALESCE(month1 + month2 + month3 + month4 + month5 + month6 + month7 + month8 + month9 + month10 + month11 + month12, 0.0)) AS total
+            FROM msf_budget_line AS l, account_account AS a, account_account_type AS t
+            WHERE budget_id IN %s
+            AND l.account_id = a.id
+            AND a.user_type = t.id
+            AND t.code = 'income'
+            AND a.type != 'view'
+            AND l.line_type = 'destination'
+            GROUP BY budget_id
+        ) AS income ON expense.budget_id = income.budget_id"""
+        cr.execute(sql, (tuple(ids),tuple(ids),))
+        tmp_res = cr.fetchall()
+        if not tmp_res:
+            return res
+        for b_id in ids:
+            res.setdefault(b_id, 0.0)
+        res.update(dict(tmp_res))
         return res
 
     def _get_instance_type(self, cr, uid, ids, field_names=None, arg=None, context=None):
@@ -93,9 +114,6 @@ class msf_budget(osv.osv):
         'decision_moment_order': fields.related('decision_moment_id', 'order', string="Decision Moment Order", readonly=True, store=True, type="integer"),
         'version': fields.integer('Version'),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
-        'display_type': fields.selection([('all', 'Accounts and destinations'),
-                                          ('expense', 'Accounts only'),
-                                          ('view', 'Parent accounts only')], string="Display type"),
         'type': fields.selection([('normal', 'Normal'), ('view', 'View')], string="Budget type"),
         'total_budget_amount': fields.function(_get_total_budget_amounts, method=True, store=False, string="Total Budget Amount", type="float", readonly=True),
         'instance_type': fields.function(_get_instance_type, fnct_search=_search_instance_type, method=True, store=False, string='Instance type', type='selection', selection=[('section', 'HQ'), ('coordo', 'Coordo'), ('project', 'Project')], readonly=True),
@@ -104,7 +122,6 @@ class msf_budget(osv.osv):
     _defaults = {
         'currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'state': 'draft',
-        'display_type': 'all',
         'type': 'normal',
     }
 
@@ -150,27 +167,30 @@ class msf_budget(osv.osv):
                 self.write(cr, uid, [parent_budget_id], {'state': 'valid'}, context=context)
         return res
     
-    # Methods for display view lines (warning, dirty, but it works)
     def button_display_type(self, cr, uid, ids, context=None, *args, **kwargs):
         """
-        Change display type
+        Just reset the budget view to give the context to the one2many_budget_lines object
         """
-        display_types = {}
-        for budget in self.read(cr, uid, ids, ['display_type']):
-            display_types[budget['id']] = budget['display_type']
-            
-        for budget_id in ids:
-            result = 'all'
-            if display_types[budget_id] == 'all':
-                result = 'expense'
-            elif display_types[budget_id] == 'expense':
-                result = 'view'
-            elif display_types[budget_id] == 'view':
-                result = 'all'
-            self.write(cr, uid, [budget_id], {'display_type': result}, context=context)
-        return True
-    
-    
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # do not erase the previous context!
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        return {
+            'name': _('Budgets'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'msf.budget',
+            'target': 'crush',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'res_id': ids[0],
+            'context': context,
+        }
+
     def budget_summary_open_window(self, cr, uid, ids, context=None):
         parent_line_id = False
         fiscalyear_id = self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), True, context=context)
