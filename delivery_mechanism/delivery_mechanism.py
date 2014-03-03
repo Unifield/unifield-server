@@ -194,22 +194,27 @@ class stock_move(osv.osv):
                             move_ids = self.search(cr, uid, [('product_id', '=', data_back['product_id']), 
                                                              ('state', 'in', ('assigned', 'confirmed')), 
                                                              ('sale_line_id', '=', so_line_ids[0]),
-                                                             ('in_out_updated', '=', False)], order="state desc", context=context)
+                                                             ('in_out_updated', '=', False),
+                                                             ('picking_id.type', '=', 'out'),
+                                                             ('processed_stock_move', '=', False),
+                                                             ], order="state desc", context=context)
                             # list of matching out moves
                             integrity_check = []
                             for move in self.browse(cr, uid, move_ids, context=context):
                                 # move from draft picking or standard picking
-                                if (move.product_qty != 0.00 and not move.processed_stock_move and move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id and move.picking_id.state == 'draft') or (move.picking_id.subtype == 'standard') and move.picking_id.type == 'out':
+                                if (move.product_qty != 0.00 and move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id and move.picking_id.state == 'draft') or (move.picking_id.subtype == 'standard'):
                                     integrity_check.append(move)
                             # return the first one matching
                             if integrity_check:
                                 if all([not move.processed_stock_move for move in integrity_check]):
                                     # the out stock moves (draft picking or std out) have not yet been processed, we can therefore update them
-                                    res[obj.id]['move_id'] = integrity_check[0].id
-                                    res[obj.id]['moves'] = integrity_check
-                                    res[obj.id]['picking_id'] = integrity_check[0].picking_id.id
-                                    res[obj.id]['picking_version'] = integrity_check[0].picking_id.update_version_from_in_stock_picking
-                                    res[obj.id]['quantity'] = integrity_check[0].product_qty
+                                    res[obj.id].update({
+                                        'move_id': integrity_check[0].id,
+                                        'moves': integrity_check,
+                                        'picking_id': integrity_check[0].picking_id.id,
+                                        'picking_version': integrity_check[0].picking_id.update_version_from_in_stock_picking,
+                                        'quantity': integrity_check[0].product_qty,
+                                    })
                                 else:
                                     # the corresponding OUT move have been processed completely or partially,, we do not update the OUT
                                     self.log(cr, uid, integrity_check[0].id, _('The Stock Move %s from %s has already been processed and is therefore not updated.')%(integrity_check[0].name, integrity_check[0].picking_id.name))
@@ -218,6 +223,26 @@ class stock_move(osv.osv):
                 # we are looking for corresponding IN from on_order purchase order
                 assert False, 'This method is not implemented for OUT or Internal moves'
                 
+        return res
+
+    def create_data_back(self, move):
+        '''
+        build data_back dictionary
+        '''
+        res = {'id': move.id,
+               'name': move.product_id.partner_ref,
+               'product_id': move.product_id.id,
+               'product_uom': move.product_uom.id,
+               'product_qty': move.product_qty,
+               }
+        return res
+    
+    def hook__create_chained_picking(self, cr, uid, pick_values, picking):
+        res = super(stock_move, self).hook__create_chained_picking(cr, uid, pick_values, picking)
+
+        if picking:
+            res['auto_picking'] = picking.type == 'in' and picking.move_lines[0]['direct_incoming']
+
         return res
         
 stock_move()
@@ -312,18 +337,6 @@ class stock_picking(osv.osv):
         
         return defaults
     
-    def create_data_back(self, cr, uid, move, context=None):
-        '''
-        build data_back dictionary
-        '''
-        res = {'id': move.id,
-               'name': move.product_id.partner_ref,
-               'product_id': move.product_id.id,
-               'product_uom': move.product_uom.id,
-               'product_qty': move.product_qty,
-               }
-        return res
-    
     def _update_mirror_move(self, cr, uid, ids, data_back, diff_qty, out_move=False, context=None):
         '''
         update the mirror move with difference quantity diff_qty
@@ -392,7 +405,409 @@ class stock_picking(osv.osv):
         values = kwargs.get('values')
         assert values is not None, 'missing values'
         return values
+
+    def _get_db_data_dict(self, cr, uid):
+        """
+        Get some data from data.xml file (like stock locations, Unifield setup...)
+        """
+        # Objects
+        data_obj = self.pool.get('ir.model.data')
+        loc_obj = self.pool.get('stock.location')
+
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+
+        cd_loc = loc_obj.get_cross_docking_location(cr, uid)
+        service_loc = loc_obj.get_service_location(cr, uid)
+        non_stock = loc_obj.search(cr, uid, [('non_stockable_ok', '=', True)])
+        if non_stock:
+            non_stock = non_stock[0]
+        input_loc = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+
+        db_data = {
+            'setup': setup,
+            'cd_loc': cd_loc,
+            'service_loc': service_loc,
+            'non_stock': non_stock,
+            'input_loc': input_loc
+        }
+        
+        return db_data
+
+    def _compute_average_values(self, cr, uid, move, line, product_availability, context=None):
+        """
+        Compute the average price of the product according to processed quantities
+        """
+        # Objects
+        uom_obj = self.pool.get('product.uom')
+        currency_obj = self.pool.get('res.currency')
+        product_obj = self.pool.get('product.product')
+
+        if context is None:
+            context = {}
+
+        average_values = {}
+
+        move_currency_id = move.company_id.currency_id.id
+        context['currency_id'] = move_currency_id
+
+        qty = line.quantity
+        if line.uom_id.id != line.product_id.uom_id.id:
+            qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.product_id.uom_id.id)
+
+        product_availability.setdefault(line.product_id.id, line.product_id.qty_available)
+        product_availability[line.product_id.id] += qty
+
+        if qty > 0.00:
+            new_price = line.cost
+            # Recompute unit price if the currency used is not the functional currency
+            if line.currency.id != move_currency_id:
+                new_price = currency_obj.compute(cr, uid, line.currency.id, move_currency_id,
+                    new_price, round=False, context=context)
+
+            # Recompute unit price if the UoM received is not the default UoM of the product
+            if line.uom_id.id != line.product_id.uom_id.id:
+                new_price = uom_obj._compute_price(cr, uid, line.uom_id.id, new_price,
+                    line.product_id.uom_id.id)
+
+            new_std_price = 0.00
+            if line.product_id.qty_available <= 0.00:
+                new_std_price = new_price
+            else:
+                # Get the current price
+                current_price = product_obj.price_get(cr, uid, [line.product_id.id], ['standard_price'], context=context)[line.product_id.id]
+                # Check no division by zero
+                if product_availability[line.product_id.id]:
+                    new_std_price = ((current_price * product_availability[line.product_id.id])\
+                        + (new_price * qty))/(product_availability[line.product_id.id] + qty)
+
+            # Write the field according to price type field
+            product_obj.write(cr, uid, [line.product_id.id], {'standard_price': new_std_price})
+
+            # Record the values that were chosen in the wizard, so they can be
+            # used for inventory valuation of real-time valuation is enabled.
+            average_values = {
+              'price_unit': new_price,
+              'price_currency_id': line.currency_id.id,
+            }
+
+        return average_values
+
+    def _get_values_from_line(self, cr, uid, move, line, db_data, context=None):
+        """
+        Prepare the value for a processed move according to line values
+        """
+        # Objects
+        uom_obj = self.pool.get('product.uom')
+
+        if context is None:
+            context = {}
+
+        wizard = line.wizard_id
+
+        values = {
+            'name': line.product_id.partner_ref,
+            'product_id': line.product_id.id,
+            'original_qty_partial': move.product_qty,
+            'product_qty': line.quantity,
+            'product_uom': line.uom_id.id,
+            'product_uos_qty': line.quantity,
+            'product_uos': line.uom_id.id,
+            'prodlot_id': line.prodlot_id and line.prodlot_id.id or False,
+            #'asset_id': line.asset_id and line.asset_id.id or False,
+            'change_reason': line.change_reason,
+            # Values from incoming wizard
+            'direct_incoming': line.wizard_id.direct_incoming,
+            # Values for Direct Purchase Order
+            'sync_dpo': move.dpo_line_id and True or move.sync_dpo,
+            'dpo_line_id': move.dpo_line_id and move.dpo_line_id.id or False,
+        }
+
+        # UTP-872: Don't change the quantity if the move is canceled
+        # If the quantity is changed to 0.00, a backorder is created
+        # for canceled moves
+        if move.state == 'cancel':
+            values.update({
+                'product_qty': move.product_qty,
+                'product_uos_qty': move.product_uos_qty
+            })
+            
+        # UTP-872: Added also the state into the move line if the state comes from the sync
+        if line.state:
+            values['state'] = line.state
+            
+        if line.cost:
+            values['price_unit'] = line.cost
+        elif line.uom_id.id != move.product_uom.id:
+            new_price = uom_obj._compute_price(cr, uid, move.product_uom.id, move.price_unit, line.uom_id.id)
+            values['price_unit'] = new_price
+
+        # We check the dest_type for INCOMING shipment (and not the source_type which is reserved for OUTGOING shipment)
+        if wizard.dest_type == 'to_cross_docking':
+            if db_data.get('setup').allocation_setup == 'unallocated':
+                raise osv.except_osv(
+                        _('Error'),
+                        _('You cannot made moves from/to Cross-docking locations when the Allocated stocks configuration is set to \'Unallocated\'.')
+                )
+            # Below, "source_type" is only used for the outgoing shipment. We set it to "None" because by default it is
+            # "default" and we do not want that info on INCOMING shipment
+            wizard.source_type = None
+            values.update({
+                'location_dest_id': db_data.get('cd_loc'),
+                'cd_from_bo': True,
+            })
+        elif wizard.dest_type == 'to_stock':
+            # Below, "source_type" is only used for the outgoing shipment. We set it to "None because by default it is
+            # "default" and we do not want that info on INCOMING shipment
+            if line.product_id.product_type == 'consu':
+                values['location_dest_id'] = db_data.get('non_stock')
+            elif line.product_id.product_type == 'service_recep':
+                values['location_dest_id'] = db_data.get('service_loc')
+            else:
+                # treat moves towards STOCK if NOT SERVICE
+                values['location_dest_id'] = db_data.get('input_loc')
+
+            values['cd_from_bo'] = False
+
+        if wizard.dest_type != 'to_cross_docking':
+            values['direct_incoming'] = wizard.direct_incoming
+
+        return values
+
+    def do_incoming_shipment_new(self, cr, uid, wizard_ids, context=None):
+        """
+        Take the data in wizard_ids and lines of stock.incoming.processor and
+        do the split of stock.move according to the data.
+        """
+        start = time.time()
+        # Objects
+        inc_proc_obj = self.pool.get('stock.incoming.processor')
+        move_proc_obj = self.pool.get('stock.move.in.processor')
+        loc_obj = self.pool.get('stock.location')
+        uom_obj = self.pool.get('product.uom')
+        move_obj = self.pool.get('stock.move')
+        sequence_obj = self.pool.get('ir.sequence')
+        wf_service = netsvc.LocalService("workflow")
+
+        if context is None:
+            context = {}
+
+        if isinstance(wizard_ids, (int, long)):
+            wizard_ids = [wizard_ids]
+
+        db_data_dict = self._get_db_data_dict(cr, uid)
+
+        # UF-1617: Get the sync_message case
+        sync_in = context.get('sync_message_execution', False)
+
+        internal_loc = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('cross_docking_location_ok', '=', False)])
+        context['location'] = internal_loc
+
+        product_availability = {}
+
+        for wizard in inc_proc_obj.browse(cr, uid, wizard_ids, context=context):
+            picking = wizard.picking_id
+            backordered_moves = [] # Moves that need to be put in a backorder
+            done_moves = [] # Moves that are completed
+            out_picks = set()
+
+            for move in picking.move_lines:
+                # Get all processed lines that processed this stock move
+                proc_ids = move_proc_obj.search(cr, uid, [('wizard_id', '=', wizard.id), ('move_id', '=', move.id)], context=context)
+                # The processed quantity
+                count = 0
+                need_split = False
+
+                data_back = move_obj.create_data_back(move)
+                mirror_data = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
+                out_moves = mirror_data['moves']
+                processed_out_moves = []
+                average_values = {}
+
+                for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
+                    values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
+                    
+                    # Check if we must re-compute the price of the product
+                    compute_average = False
+                    if values.get('location_dest_id', False):
+                        dest_loc = loc_obj.browse(cr, uid, values['location_dest_id'], context=context)
+                        compute_average = picking.type == 'in' and line.product_id.cost_method == 'average' and dest_loc.cross_docking_location_ok
+
+                    if compute_average:
+                        average_values = self._compute_average_values(cr, uid, move, line, product_availability, context=context)
+                        values.update(average_values)
+
+                    # The quantity
+                    if line.uom_id.id != move.product_uom.id:
+                        count += uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, move.product_uom.id)
+                    else:
+                        count += line.quantity
+
+                    values['processed_stock_move'] = True
+                    if not need_split:
+                        need_split = True
+                        # Mark the done IN stock move as processed
+                        move_obj.write(cr, uid, [move.id], values, context=context)
+                        done_moves.append(move.id)
+                    else:
+                        values['state'] = 'assigned'
+                        context['keepLineNumber'] = True
+                        new_move_id = move_obj.copy(cr, uid, values, context=context)
+                        context['keepLineNumber'] = False
+                        done_moves.append(new_move_id)
+
+                    values['processed_stock_move'] = False
+
+                    out_values = values.copy()
+                    # Remove sync. DPO fields
+                    out_values.update({
+                        'dpo_line_id': 0,
+                        'sync_dpo': False,
+                        'state': 'confirmed',
+                        'location_dest_id': False,
+                    })
+
+                    remaining_out_qty = line.quantity
+                    out_move = None
+                    for out_move in out_moves:
+                        out_move = move_obj.browse(cr, uid, out_move.id, context=context)                       
+
+                        # List the Picking Ticket that need to be created from the Draft Picking Ticket
+                        if out_move.picking_id.type == 'out' \
+                           and out_move.picking_id.subtype == 'picking' \
+                           and out_move.picking_id.state == 'draft':
+                               out_picks.add(out_move.picking_id.id)
+
+                        if line.uom_id.id != out_move.product_uom.id:
+                            uom_partial_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, remaining_out_qty, out_move.product_uom.id)
+                        else:
+                            uom_partial_qty = remaining_out_qty
+
+                        if uom_partial_qty < out_move.product_qty:
+                            # Splt the out move
+                            out_values.update({
+                                'product_qty': remaining_out_qty,
+                                'product_uom': line.uom_id.id,
+                                'in_out_updated': sync_in and False or True,
+                            })
+                            context['keepLineNumber'] = True
+                            move_obj.copy(cr, uid, out_move.id, out_values, context=context)
+                            context['keepLineNumber'] = False
+                            remaining_out_qty = 0.00
+                        elif uom_partial_qty == out_move.product_qty:
+                            out_values.update({
+                                'product_qty': remaining_out_qty,
+                                'product_uom': line.uom_id.id,
+                                'in_out_updated': sync_in and False or True,
+                            })
+                            move_obj.write(cr, uid, [out_move.id], out_values, context=context)
+                            processed_out_moves.append(out_move.id)
+                        else:
+                            # Just update the data of the initial out move
+                            out_values.update({
+                                'product_qty': out_move.product_qty,
+                                'product_uom': line.uom_id.id,
+                                'in_out_updated': sync_in and False or True
+                            })
+                            move_obj.write(cr, uid, [out_move.id], out_values, context=context)
+                            processed_out_moves.append(out_move.id)
+
+                # Decrement the inital move, cannot be less than zero
+                diff_qty = move.product_qty - count
+                # If there is remaining quantity for the move, put the ID of the move
+                # and the remaining quantity to list of moves to put in backorder
+                if diff_qty > 0.00 and move.state != 'cancel':
+                    backordered_moves.append((move, diff_qty, average_values))
+
+            # Create the backorder if needed
+            if backordered_moves:
+                backorder_id = self.copy(cr, uid, picking.id, {
+                    'name': sequence_obj.get(cr, uid, 'stock.picking.%s'%(picking.type)),
+                    'move_lines': [],
+                    'state': 'draft',
+                }, context=context)
+                
+                for bo_move, bo_qty, av_values in backordered_moves:
+                    # Create the corresponding move in the backorder - reset batch - reset asset_id
+                    bo_values = {
+                        'asset_id': False,
+                        'product_qty': bo_qty,
+                        'product_uos_qty': bo_qty,
+                        'prodlot_id': False,
+                        'state': 'assigned',
+                        'move_dest_id': False,
+                        'change_reason': False,
+                        'processed_stock_move': True,
+                    }
+                    bo_values.update(av_values)
+                    context['keepLineNumber'] = True
+                    move_obj.copy(cr, uid, move.id, bo_values, context=context)
+                    context['keepLineNumber'] = False
+
+                # Put the done moves in this new picking
+                move_obj.write(cr, uid, done_moves, {
+                    'picking_id': backorder_id,
+                    'dpo_line_id': 0,
+                }, context=context)
+
+
+                if sync_in:
+                    # UF-1617: When it is from the sync., then just send the IN to shipped, then return the backorder_id
+                    wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_shipped', cr)
+                    return backorder_id
+
+                
+                wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
+                # Then we finish the good picking
+                self.write(cr, uid, [picking.id], {
+                    'backorder_id': backorder_id, 
+                    'cd_from_bo': values.get('cd_from_bo', False),
+                }, context=context)
+                self.action_move(cr, uid, [backorder_id])
+                wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
+                wf_service.trg_write(uid, 'stock.picking', picking.id, cr)
+            else:
+                if sync_in: # If it's from sync, then we just send the pick to become Available Shippde, not completely close!
+                    self.write(cr, uid, [picking.id], {'state': 'shipped'}, context=context)
+                    return picking.id
+                else:
+                    self.action_move(cr, uid, [picking.id], context=context)
+                    wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
+
+        # Create the first picking ticket if we are on a draft picking ticket
+        for picking in self.browse(cr, uid, list(out_picks), context=context):
+            wiz = self.create_picking(cr, uid, [picking.id], context=context)
+            wiz_obj = self.pool.get(wiz['res_model'])
+            moves_picking = wiz_obj.browse(cr, uid, wiz['res_id'], context=wiz['context']).product_moves_picking
+            nb_lines = len(moves_picking)
+            # We delete the lines which is not from the IN
+#            for line in moves_picking:
+#                if line.move_id.id not in pick_moves:
+#                    self.pool.get('stock.move.memeroy.picking').unlink(cr, uid, [line.id], context=context)
+#                    nb_lines -= 1
+
+            if nb_lines:
+                # We copy all data in lines
+                wiz_obj.copy_all(cr, uid, [wiz['res_id']], context=wiz['context'])
+                # We process the creation of the picking
+                wiz_obj.do_create_picking(cr, uid, [wiz['res_id']], context=wiz['context'])
+
+        print time.time() - start
+        raise osv.except_osv('Error', 'Error')
     
+        if context.get('from_simu_screen'):
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'stock.picking',
+                'res_id': picking.id,
+                'view_id': [view_id],
+                'view_mode': 'form, tree',
+                'view_type': 'form',
+                'target': 'crush',
+                'context': context}
+
+        return {'type': 'ir.actions.act_window_close'}
+
     def do_incoming_shipment(self, cr, uid, ids, context=None):
         '''
         validate the picking ticket from selected stock moves
@@ -400,6 +815,7 @@ class stock_picking(osv.osv):
         move here the logic of validate picking
         available for picking loop
         '''
+        start = time.time()
         assert context, 'context is not defined'
         assert 'partial_datas' in context, 'partial datas not present in context'
         partial_datas = context['partial_datas']
@@ -413,8 +829,6 @@ class stock_picking(osv.osv):
         product_obj = self.pool.get('product.product')
         currency_obj = self.pool.get('res.currency')
         uom_obj = self.pool.get('product.uom')
-        # create picking object
-        create_picking_obj = self.pool.get('create.picking')
         # workflow
         wf_service = netsvc.LocalService("workflow")
         internal_loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage','=','internal'), ('cross_docking_location_ok', '=', False)])
@@ -426,13 +840,8 @@ class stock_picking(osv.osv):
             backorder_id = None
             # treat moves
             move_ids = partial_datas[pick.id].keys()
-            # all moves
-            all_move_ids = [move.id for move in pick.move_lines]
             # related moves - swap if a backorder is created - openERP logic
             done_moves = []
-            # OUT moves to assign
-            to_assign_moves = []
-            second_assign_moves = []
             
             # Link between IN and OUT moves
             backlinks = []
@@ -452,20 +861,17 @@ class stock_picking(osv.osv):
                 if move.sale_line_id and move.sale_line_id.order_id:
                     so_to_check.add(move.sale_line_id.order_id.id)
                 # keep data for back order creation
-                data_back = self.create_data_back(cr, uid, move, context=context)
+                data_back = self.create_data_back(move)
                 # qty selected
                 count = 0
                 # flag to update the first move - if split was performed during the validation, new stock moves are created
                 first = True
-                # force complete flag = validate all partial for the same move have the same force complete value
-                force_complete = False
                 # initial qty
                 initial_qty = move.product_qty
                 # initial uom
                 initial_uom = move.product_uom.id
                 # corresponding out move
                 mirror_data = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
-                out_move_id = mirror_data['move_id']
                 out_moves = mirror_data['moves']
                 processed_moves = []
                 # update out flag
@@ -499,8 +905,10 @@ class stock_picking(osv.osv):
                               }
 
                     if partial.get('dpo_line_id'):
-                        values['dpo_line_id'] = partial['dpo_line_id']
-                        values['sync_dpo'] = partial['dpo_line_id'] and True or False
+                        values.update({
+                            'dpo_line_id': partial['dpo_line_id'],
+                            'sync_dpo': partial['dpo_line_id'] and True or False,
+                        })
 
                     # UTP-872: Don't change the quantity if the move is canceled
                     # If the quantity is changed to 0.00, a backorder is created
@@ -510,12 +918,12 @@ class stock_picking(osv.osv):
                                        'product_uos_qty': move.product_uos_qty})
 
                     if 'state' in partial: # UTP-872: Added also the state into the move line if the state comes from the sync
-                        values.update({'state': partial['state']})
+                        values['state'] = partial['state']
                     if 'product_price' in partial:
-                        values.update({'price_unit': partial['product_price']})
+                        values['price_unit'] = partial['product_price']
                     elif 'product_uom' in partial and partial['product_uom'] != move.product_uom.id:
                         new_price = self.pool.get('product.uom')._compute_price(cr, uid, move.product_uom.id, move.price_unit, partial['product_uom'])
-                        values.update({'price_unit': new_price})
+                        values['price_unit'] = new_price
                     values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
                     compute_average = pick.type == 'in' and product.cost_method == 'average' and not move.location_dest_id.cross_docking_location_ok
                     if values.get('location_dest_id'):
@@ -541,10 +949,13 @@ class stock_picking(osv.osv):
                             product_avail[product.id] = product.qty_available
     
                         if qty > 0:
-                            new_price = currency_obj.compute(cr, uid, product_currency,
-                                    move_currency_id, product_price, round=False, context=context)
-                            new_price = uom_obj._compute_price(cr, uid, product_uom, new_price,
-                                    product.uom_id.id)
+                            new_price = product_price
+                            if product_currency != move_currency_id:
+                                new_price = currency_obj.compute(cr, uid, product_currency,
+                                        move_currency_id, product_price, round=False, context=context)
+                            if product_uom != product.uom_id.id:
+                                new_price = uom_obj._compute_price(cr, uid, product_uom, new_price,
+                                        product.uom_id.id)
                             if product.qty_available <= 0:
                                 new_std_price = new_price
                             else:
@@ -566,7 +977,10 @@ class stock_picking(osv.osv):
                                               'price_currency_id': product_currency}
                                         
                     # the quantity
-                    count = count + uom_obj._compute_qty(cr, uid, partial['product_uom'], partial['product_qty'], initial_uom)
+                    if partial['product_uom'] != initial_uom:
+                        count = count + uom_obj._compute_qty(cr, uid, partial['product_uom'], partial['product_qty'], initial_uom)
+                    else:
+                        count = count + partial['product_qty']
                     count_partial -= 1
                     if first:
                         first = False
@@ -588,7 +1002,7 @@ class stock_picking(osv.osv):
 #                                # we force update flag - out will be updated if qty is missing - possibly with the creation of a new move
 #                                update_out = True
                         # we update the values with the _do_incoming_shipment_first_hook only if we are on an 'IN'
-                        values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
+#                        values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
                         # mark the done IN stock as processed
                         move_obj.write(cr, uid, [move.id], dict(values, processed_stock_move=True), context=context)
                         done_moves.append(move.id)
@@ -597,7 +1011,7 @@ class stock_picking(osv.osv):
                         # split happened during the validation
                         # copy the stock move and set the quantity
                         # we keep original line number
-                        values.update({'state': 'assigned'})
+                        values['state'] = 'assigned'
                         # average computation - empty if not average
                         values.update(average_values)
                         # mark the done IN stock as processed
@@ -628,7 +1042,11 @@ class stock_picking(osv.osv):
                         out_move = move_obj.browse(cr, uid, out_move.id, context=context)
                         count_out -= 1
                         
-                        uom_partial_qty = self.pool.get('product.uom')._compute_qty(cr, uid, partial['product_uom'], partial_qty, out_move.product_uom.id)
+                        if partial['product_uom'] != out_move.product_uom.id:
+                            uom_partial_qty = self.pool.get('product.uom')._compute_qty(cr, uid, partial['product_uom'], partial_qty, out_move.product_uom.id)
+                        else:
+                            uom_partial_qty = partial_qty
+
                         if count_partial or uom_partial_qty < out_move.product_qty:
                             # Split the out move
                             vals = dict(out_values, product_qty=partial_qty, product_uom=partial['product_uom'])
@@ -800,6 +1218,8 @@ class stock_picking(osv.osv):
             if so.state == 'shipping_except':
                 wf_service.trg_validate(uid, 'sale.order', so.id, 'ship_corrected', cr)
 
+        print time.time() - start
+        raise osv.except_osv('Error', 'Error')
         if context.get('from_simu_screen'):
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
             return {'type': 'ir.actions.act_window',
@@ -847,7 +1267,7 @@ class stock_picking(osv.osv):
             # corresponding sale ids to be manually corrected after purchase workflow trigger
             sale_ids = []
             for move in obj.move_lines:
-                data_back = self.create_data_back(cr, uid, move, context=context)
+                data_back = self.create_data_back(move)
                 diff_qty = -data_back['product_qty']
                 # update corresponding out move - no move created, no need to handle line sequencing policy
                 out_move_id = self._update_mirror_move(cr, uid, ids, data_back, diff_qty, out_move=False, context=context)
