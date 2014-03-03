@@ -245,7 +245,7 @@ class stock_picking(osv.osv):
                     'target': 'new',
                     }
 
-        return super(stock_picking, self).action_process(self, cr, uid, ids, context=context)
+        return super(stock_picking, self).action_process(cr, uid, ids, context=context)
 
 stock_picking()
 
