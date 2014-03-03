@@ -2648,6 +2648,148 @@ class stock_picking(osv.osv):
                 'target': 'crush',
                 'context': context}
 
+    def do_partial_out(self, cr, uid, wizard_ids, context=None):
+        """
+        Process the stock picking from selected stock moves
+
+        BE CAREFUL: the wizard_ids parameters is the IDs of the outgoing.delivery.processor objects,
+        not those of stock.picking objects
+        """
+        return self.do_partial(cr, uid, wizard_ids, 'outgoing.delivery.processor', context)
+
+    def do_partial(self, cr, uid, wizard_ids, proc_model=False, context=None):
+        """
+        Process the stock picking from selected stock moves
+
+        BE CAREFUL: the wizard_ids parameters is the IDs of the internal.picking.processor objects,
+        not those of stock.picking objects
+        """
+        # Objects
+        proc_obj = self.pool.get('internal.picking.processor')
+        picking_obj = self.pool.get('stock.picking')
+        sequence_obj = self.pool.get('ir.sequence')
+        uom_obj = self.pool.get('product.uom')
+        move_obj = self.pool.get('stock.move')
+        wf_service = netsvc.LocalService("workflow")
+
+        res = {}
+
+        if proc_model:
+            proc_obj = self.pool.get(proc_model)
+
+        if context is None:
+            context = {}
+
+        if isinstance(wizard_ids, (int, long)):
+            wizard_ids = [wizard_ids]
+
+        for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
+            picking = wizard.picking_id
+            new_picking_id = False
+            processed_moves = []
+            move_data = {}
+
+            for line in wizard.move_ids:
+                move = line.move_id
+
+                move_data.setdefault(move.id, {
+                    'original_qty': move.product_qty,
+                    'processed_qty': 0.00,
+                })
+
+                if line.quantity <= 0.00:
+                    continue
+
+                orig_qty = move.product_qty
+                if move.original_qty_partial and move.original_qty_partial != -1:
+                    orig_qty = move.original_qty_partial
+
+                if line.uom_id.id != move.product_uom.id:
+                    quantity = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, move.product_uom.id)
+                else:
+                    quantity = line.quantity
+
+                move_data[move.id]['processed_qty'] += quantity
+
+                values = {
+                    'line_number': move.line_number,
+                    'product_qty': line.quantity,
+                    'product_uos_qty': line.quantity,
+                    'state': 'assigned',
+                    'move_dest_id': False,
+                    'price_unit': move.price_unit,
+                    'processed_stock_move': True,
+                    'prodlot_id': line.prodlot_id and line.prodlot_id.id or False,
+                    'asset_id': line.asset_id and line.asset_id.id or False,
+                    'composition_list_id': line.composition_list_id and line.composition_list_id.id or False,
+                    'original_qty_partial': orig_qty,
+                    'location_id': line.location_id and line.location_id.id or False,
+                }
+
+                if quantity < move.product_qty:
+                    # Create a new move
+                    new_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
+                    processed_moves.append(new_move_id)
+                    # Update the original move
+                    wr_vals = {
+                        'product_qty': move.product_qty - quantity,
+                        'product_uos_qty': move.product_qty - quantity,
+                    }
+                    move_obj.write(cr, uid, [move.id], wr_vals, context=context)
+                else:
+                    # Update the original move
+                    move_obj.write(cr, uid, [move.id], values, context=context)
+                    processed_moves.append(move.id)
+
+            need_new_picking = False
+            for move_vals in move_data.values():
+                if move_vals['original_qty'] != move_vals['processed_qty']:
+                    need_new_picking = True
+                    break
+
+            if need_new_picking:
+                cp_vals = {
+                    'name': sequence_obj.get(cr, uid, 'stock.picking.%s' % (picking.type)),
+                    'move_lines' : [],
+                    'state':'draft',
+                }
+                new_picking_id = picking_obj.copy(cr, uid, picking.id, cp_vals, context=context)
+                move_obj.write(cr, uid, processed_moves, {'picking_id': new_picking_id}, context=context)
+
+            # At first we confirm the new picking (if necessary)
+            if new_picking_id:
+                self.write(cr, uid, [picking.id], {'backorder_id': new_picking_id}, context=context)
+                # Claim specific code
+                self._claim_registration(cr, uid, wizard, new_picking_id, context=context)
+                # We confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
+                wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_confirm', cr)
+                # Then we finish the good picking
+                if wizard.register_a_claim and wizard.claim_type != 'return':
+                    self.action_move(cr, uid, [new_picking_id])
+                    wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_done', cr)
+                    # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
+                    self._hook_create_sync_messages(cr, uid, new_picking_id, context)
+
+                wf_service.trg_write(uid, 'stock.picking', picking.id, cr)
+                delivered_pack_id = new_picking_id
+            else:
+                # Claim specific code
+                self._claim_registration(cr, uid, wizard, new_picking_id, context=context)
+                if wizard.register_a_claim and wizard.claim_type != 'return':
+                    self.action_move(cr, uid, [picking.id])
+                    wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
+                    # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
+                    self._hook_create_sync_messages(cr, uid, [picking.id], context)
+
+                delivered_pack_id = picking.id
+
+            # UF-1617: set the delivered_pack_id (new or original) to become already_shipped
+            self.write(cr, uid, [delivered_pack_id], {'already_shipped': True})
+
+            delivered_pack = self.browse(cr, uid, delivered_pack_id, context=context)
+            res[picking.id] = {'delivered_picking': delivered_pack.id or False}
+
+        return res
 
     def create_picking(self, cr, uid, ids, context=None):
         '''
@@ -2960,8 +3102,8 @@ class stock_picking(osv.osv):
 
             # if the flow type is in quick mode, we perform the ppl steps automatically
             # TODO: Treat the quick mode
-            # if picking.flow_type == 'quick':
-            #    create_picking_obj.quick_mode(cr, uid, new_ppl, context=context)
+            if picking.flow_type == 'quick':
+                proc_obj.quick_mode(cr, uid, new_ppl, context=context)
 
         data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')

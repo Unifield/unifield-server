@@ -551,7 +551,7 @@ class stock_picking(osv.osv):
         return True
 
     # @@@override stock>stock.py>stock_picking>do_partial
-    def do_partial(self, cr, uid, ids, partial_datas, context=None):
+    def do_partial_deprecated(self, cr, uid, ids, partial_datas, context=None):
         """ Makes partial picking and moves done.
         @param partial_datas : Dictionary containing details of partial picking
                           like partner_id, address_id, delivery_date,

@@ -118,7 +118,7 @@ class stock_picking_processor(osv.osv):
 
         res = super(stock_picking_processor, self).default_get(cr, uid, fields_list=fields_list, context=context)
 
-        res['date'] = time.strftime('%Y-%m-%d %H:%M:%S')
+        res['date'] = time.strftime('%Y-%m-%d %H:%M:%S'),
 
         return res
 
@@ -420,13 +420,13 @@ class stock_move_processor(osv.osv):
             string='Ordered quantity',
             digits_compute=dp.get_precision('Product UoM'),
             required=True,
+            readonly=True,
             help="Expected quantity to receive",
         ),
         'uom_id': fields.many2one(
             'product.uom',
             string='UoM',
             required=True,
-            readonly=True,
             help="Received UoM",
         ),
         'ordered_uom_id': fields.function(

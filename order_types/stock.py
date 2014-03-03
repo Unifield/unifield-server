@@ -228,10 +228,12 @@ class stock_picking(osv.osv):
                 wizard_obj = self.pool.get('stock.picking.processor')
                 if pick.type == 'in':
                     wizard_obj = self.pool.get('stock.incoming.processor')
+#                 else:
+#                     continue
+                elif pick.type == 'out':
+                    wizard_obj = self.pool.get('outgoing.delivery.processor')
                 else:
-                    continue
-                # elif pick.type == 'out':
-                #    wizard_obj = self.pool.get('outgoing.delivery.processor')
+                    wizard_obj = self.pool.get('internal.picking.processor')
 
                 proc_id = wizard_obj.create(cr, uid, {'picking_id': pick.id})
                 wizard_obj.create_lines(cr, uid, proc_id, context=context)
@@ -245,7 +247,7 @@ class stock_picking(osv.osv):
                     'target': 'new',
                     }
 
-        return super(stock_picking, self).action_process(self, cr, uid, ids, context=context)
+        return super(stock_picking, self).action_process(cr, uid, ids, context=context)
 
 stock_picking()
 
