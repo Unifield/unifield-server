@@ -99,8 +99,7 @@ class stock_picking(osv.osv):
                   'asset_id': asset_id,
                   'change_reason': data['change_reason'] or None,
                   'name': data['name'],
-                  'product_qty': data['product_qty'] or 0.0,
-                  'product_uos_qty': data['product_qty'] or 0.0,
+                  'quantity': data['product_qty'] or 0.0,
                   'note': data['note'],
                   }
         return result
@@ -157,7 +156,7 @@ class stock_picking(osv.osv):
         ' In partial shipment/OUT, when the last shipment/OUT is made, the original IN will become Available Shipped, no new IN will
         ' be created, as the whole quantiy of the IN is delivered (but not yet received at Project side)
         '''
-
+        move_proc = self.pool.get('stock.move.in.processor')
         if context is None:
             context = {}
         self._logger.info("+++ Call to update partial shipment/OUT from supplier %s to INcoming Shipment of PO at %s"%(source, cr.dbname))
@@ -191,6 +190,7 @@ class stock_picking(osv.osv):
         # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
         in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned'], context)
         if in_id:
+            in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
             partial_datas = {}
             partial_datas[in_id] = {}
             line_numbers = {}
@@ -242,7 +242,11 @@ class stock_picking(osv.osv):
                         # Search the best matching move
                         best_diff = False
                         for move in move_obj.read(cr, uid, move_ids, ['product_qty'], context=context):
-                            if not partial_datas[in_id].get(move['id']):
+                            line_proc_ids = move_proc.search(cr, uid, [
+                                ('wizard_id', '=', in_processor),
+                                ('move_id', '=', move['id']),
+                            ], context=context)
+                            if not line_proc_ids:
                                 diff = move['product_qty'] - orig_qty
                                 if diff >= 0 and (not best_diff or diff < best_diff):
                                     best_diff = diff
@@ -257,19 +261,27 @@ class stock_picking(osv.osv):
                     # pack 2 and 3 not available and pack 4 to 10 available) but splitted into
                     # two moves (one move for all products available and one move for all
                     # products not available in IN)
-                    if not partial_datas[in_id].get(move_id):
-                        partial_datas[in_id].setdefault(move_id, []).append(data)
+                    line_proc_ids = move_proc.search(cr, uid, [
+                        ('wizard_id', '=', in_processor),
+                        ('move_id', '=', move['id']),
+                    ], context=context)
+                    data['move_id'] = move_id
+                    if not line_proc_ids:
+                        self.pool.get('stock.move.in.processor').create(cr, uid, data, context=context)
                     else:
-                        for x in partial_datas[in_id][move_id]:
-                            if x.get('product_id') == data.get('product_id') and x.get('product_uom') == data.get('product_uom') and x.get('prodlot_id') == data.get('prodlot_id') and x.get('asset_id') == data.get('asset_id'):
-                                x['product_qty'] += data.get('product_qty')
-                                x['product_uos_qty'] += data.get('product_uos_qty')
-                                break
+                        for line in move_proc.browse(cr, uid, line_proc_ids, context=context):
+                            if line.product_id.id == data.get('product_id') and \
+                               line.uom_id.id == data.get('uom_id') and \
+                               (line.prodlot_id and line.prdolot_id.id == data.get('prodlot_id')) or (not line.prodlot_id and not data.get('prodlot_id')) and \
+                               (line.asset_id and line.asset_id.id == data.get('asset_id')) or (not line.asset_id and not data.get('asset_id')):
+                                   data['quantity'] += line.quantity
+                                   move_proc.write(cr, uid, [line.id], {'quantity': data['quantity']}, context=context)
+                                   break
                         else:
-                            partial_datas[in_id][move_id].append(data)
+                            move_proc.create(cr, uid, data, context=context)
 
             # for the last Shipment of an FO, no new INcoming shipment will be created --> same value as in_id
-            new_picking = self.do_incoming_shipment_sync(cr, uid, in_id, partial_datas, context)
+            new_picking = self.do_incoming_shipment(cr, uid, in_id, in_processor, context)
 
             # Set the backorder reference to the IN !!!! THIS NEEDS TO BE CHECKED WITH SUPPLY PM!
             if new_picking != in_id:
@@ -296,7 +308,7 @@ class stock_picking(osv.osv):
             return message
             
 
-    def do_incoming_shipment_sync(self, cr, uid, in_id, partial_datas, context=None):
+    def do_incoming_shipment_sync(self, cr, uid, in_id, in_processor, context=None):
         '''
         ' Modify the original method do_incoming_shipment in delivery_mechanism/wizard/stock_partial_picking.py to perform similarly as a
         ' partial incoming shipment for the sync case, as partial shipment/OUT has been made.
