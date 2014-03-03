@@ -1807,8 +1807,7 @@ class stock_move(osv.osv):
                     newdate = (datetime.strptime(m.date, '%Y-%m-%d %H:%M:%S') + relativedelta(days=dest[2] or 0)).strftime('%Y-%m-%d')
                     moves_by_location.setdefault(dest[0].id, {}).setdefault(newdate, [])
                     moves_by_location[dest[0].id][newdate].append(m.id)
-
-                    journal_id = dest[3] or m.picking_id.stock_journal_id.id
+                    journal_id = dest[3] or (m.picking_id and m.picking_id.stock_journal_id and m.picking_id.stock_journal_id.id) or False
                     pick_by_journal.setdefault(journal_id, set())
                     pick_by_journal[journal_id].add(m.picking_id.id)
                 elif not context.get('action_confirm', False):
@@ -1816,8 +1815,8 @@ class stock_move(osv.osv):
                     result[m.picking_id].append((m, dest))
 
         for journal_id, pick_ids in pick_by_journal.iteritems():
-            self.pool.get('stock.picking').write(cr, uid, list(pick_ids), {'journal_id': journal_id}, context=context)
-
+            if journal_id:
+                self.pool.get('stock.picking').write(cr, uid, list(pick_ids), {'journal_id': journal_id}, context=context)
         new_moves = []
         for location_id in moves_by_location.keys():
             for newdate, move_ids in moves_by_location[location_id].iteritems():
