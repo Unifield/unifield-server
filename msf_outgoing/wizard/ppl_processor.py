@@ -54,6 +54,7 @@ class ppl_processor(osv.osv):
         # Objects
         picking_obj = self.pool.get('stock.picking')
         ppl_move_obj = self.pool.get('ppl.move.processor')
+        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
@@ -123,11 +124,13 @@ class ppl_processor(osv.osv):
             ppl_move_obj.write(cr, uid, gap_ids, {'integrity_status': 'gap'}, context=context)
 
         if missing_ids or to_smaller_ids or overlap_ids or gap_ids:
+            view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': self._name,
                 'view_mode': 'form',
                 'view_type': 'form',
+                'view_id': [view_id],
                 'target': 'new',
                 'res_id': ids[0],
                 'context': context,
@@ -221,16 +224,20 @@ class ppl_processor(osv.osv):
         Return to the first of the PPL processing
         """
         # Objects
+        data_obj = self.pool.get('ir.model.data')
         family_obj = self.pool.get('ppl.family.processor')
 
         family_to_unlink = family_obj.search(cr, uid, [('wizard_id', 'in', ids)], context=context)
         family_obj.unlink(cr, uid, family_to_unlink, context=context)
+
+        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
 
         return {
             'type': 'ir.actions.act_window',
             'res_model': self._name,
             'view_type': 'form',
             'view_mode': 'form',
+            'view_id': [view_id],
             'res_id': ids[0],
             'target': 'new',
             'context': context,

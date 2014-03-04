@@ -477,7 +477,8 @@ class stock_move_processor(osv.osv):
             type='many2one',
             relation='product.uom.categ',
             store={
-                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20), 'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
                 'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
                 'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
                 'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
