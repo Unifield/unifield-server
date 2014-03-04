@@ -9,23 +9,26 @@
             <field name="inherit_id" ref="msf_outgoing.stock_picking_processor_form_view" />
             <field name="arch" type="xml">
                 <xpath expr="//group[@name='actions']" position="before">
-                    <separator string="Register a Claim to the Supplier for selected products." colspan="4" />
-                    <notebook colspan="4">
-                        <page string="Claim">
-                            <field name="register_a_claim"/>
-                            <field name="claim_in_has_partner_id" invisible="True" />
-                            <field name="claim_partner_id" 
-                                   attrs="{'readonly': ['|', ('register_a_claim', '=', False), ('claim_in_has_partner_id', '=', True)]}"
-                                   context="{'search_default_supplier': True}"/>
-                            <field name="claim_type" 
-                                   attrs="{'readonly': [('register_a_claim', '=', False)]}"/>
-                            <field name="claim_replacement_picking_expected" 
-                                   attrs="{'invisible': [('claim_type', '!=', 'return')]}"/>
-                        </page>
-                        <page string="Claim Description">
-                            <field name="claim_description" colspan="4" nolabel="True"/>
-                        </page>
-                    </notebook>
+                    <field name="chained_from_in_stock_picking" invisible="1" />
+                    <group colspan="4" col="4" name="claim" attrs="{'invisible': [('chained_from_in_stock_picking', '=', False)]}">
+                        <separator string="Register a Claim to the Supplier for selected products." colspan="4" />
+                        <notebook colspan="4">
+                            <page string="Claim">
+                                <field name="register_a_claim"/>
+                                <field name="claim_in_has_partner_id" invisible="True" />
+                                <field name="claim_partner_id" 
+                                       attrs="{'readonly': ['|', ('register_a_claim', '=', False), ('claim_in_has_partner_id', '=', True)]}"
+                                       context="{'search_default_supplier': True}"/>
+                                <field name="claim_type" 
+                                       attrs="{'readonly': [('register_a_claim', '=', False)]}"/>
+                                <field name="claim_replacement_picking_expected" 
+                                       attrs="{'invisible': [('claim_type', '!=', 'return')]}"/>
+                            </page>
+                            <page string="Claim Description">
+                                <field name="claim_description" colspan="4" nolabel="True"/>
+                            </page>
+                        </notebook>
+                    </group>
                 </xpath>
             </field>
         </record>
