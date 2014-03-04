@@ -2,7 +2,7 @@
 #-*- encoding:utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
+#    OpenERP, Open Source Management Solution
 #    Copyright (C) TeMPO Consulting (<http://www.tempo-consulting.fr/>), MSF.
 #    All Rigts Reserved
 #    Developer: Olivier DOSSMANN
@@ -51,7 +51,7 @@ class wizard_advance_line(osv.osv_memory):
     A register line simulation.
     """
     _name = 'wizard.advance.line'
-    
+
     def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
         """
         Get state of distribution:
@@ -143,10 +143,10 @@ class wizard_advance_line(osv.osv_memory):
         'have_analytic_distribution_from_header': fields.function(
             _have_analytic_distribution_from_header, method=True, type='boolean',
             string='Header Distrib.?'),
-        'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True, 
+        'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True,
             help="This informs system that we can display or not an analytic button", store=False),
     }
-    
+
     _defaults = {
         'display_analytic_button': lambda *a: True,
         'analytic_distribution_state_recap': lambda *a: '',
@@ -181,14 +181,14 @@ class wizard_advance_line(osv.osv_memory):
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
-        
-        # set some values to the context to indicate the caller of the distr. wizard    
+
+        # set some values to the context to indicate the caller of the distr. wizard
         context['cash_return_id'] = False
         context.update({'from_cash_return_analytic_dist': True,
-                        'from': 'wizard.cash.return', 
-                        'wiz_id': absl.wizard_id.id or False, 
+                        'from': 'wizard.cash.return',
+                        'wiz_id': absl.wizard_id.id or False,
                         'cash_return_line_id': ids[0]})
-        
+
         # Create the wizard
         wiz_obj = self.pool.get('analytic.distribution.wizard')
         wiz_id = wiz_obj.create(cr, uid, vals, context=context)
@@ -233,15 +233,17 @@ class wizard_cash_return(osv.osv_memory):
         return {'value': {'total_amount': total_amount}}
 
     def _get_ok_with_confirm(self, cr, uid, ids, fieldname, args, context=None):
-        """UFTP-24 display confirm message at wizard validation when linked to a PO and no invoices selected"""
+        """UFTP-24 display confirm message at wizard validation when linked
+        to a PO and no invoices selected (or advance lines added)"""
         res = {}
         if not ids:
             return res
         if isinstance(ids, (int, long)):
             ids = [ids]
-        fields = ['advance_linked_po_auto_invoice', 'invoice_line_ids']
+        fields = ['advance_linked_po_auto_invoice', 'invoice_line_ids', 'advance_line_ids']
         for r in self.read(cr, uid, ids, fields, context=context):
-            res[r['id']] = r['advance_linked_po_auto_invoice'] and not r['invoice_line_ids']
+            res[r['id']] = r['advance_linked_po_auto_invoice'] and \
+                            (not r['invoice_line_ids'] or r['advance_line_ids'])
         return res
 
     _columns = {
@@ -289,7 +291,7 @@ class wizard_cash_return(osv.osv_memory):
                 currency_id = st_line.statement_id.currency.id # currency is a mandatory field on statement/register
                 res.update({'initial_amount': abs(amount), 'advance_st_line_id': context.get('statement_line_id'), 'currency_id': currency_id})
         return res
-        
+
     def create(self, cr, uid, values, context=None):
         id = super(wizard_cash_return, self).create(cr, uid, values, context=context)
         if context and 'statement_line_id' in context:
@@ -312,18 +314,17 @@ class wizard_cash_return(osv.osv_memory):
                             invoice_numbers.append(invoice.number)
                             context['po_op_advance_auto_add_invoice_id'] = invoice.id
                             self.action_add_invoice(cr, uid, [id], context=context)
+                    msg = "This operational advance is linked to PO %s." % (st_line.cash_register_op_advance_po_id.name,)
                     if invoice_numbers:
-                        msg = "This operational advance is linked to a PO." \
-                            " Corresponding invoice lines have automatically been added:" \
-                            "\nInvoice(s) number: "
-                        msg += ", ".join(invoice_numbers) + "."
+                        msg += " Corresponding invoice lines have automatically been added:"
+                        msg += "\nInvoice(s) number: " + ", ".join(invoice_numbers) + "."
                         msg += "\nYou can change selection by clicking on 'Clean invoices' then selecting invoice manually." \
                             " Entering a 100% cash return (advance return amount = initial advance amount) you will be able to close this advance without linking it to an invoice."
-                        values = {
-                            'advance_linked_po_auto_invoice': True,
-                            'comment': msg,
-                        }
-                        self.write(cr, uid, [id], values, context=context)
+                    values = {
+                        'advance_linked_po_auto_invoice': True,
+                        'comment': msg,
+                    }
+                    self.write(cr, uid, [id], values, context=context)
         return id
 
     def onchange_returned_amount(self, cr, uid, ids, amount=0.0, invoices=None, advances=None, display_invoice=None, initial_amount=0.0, advance_linked_po_auto_invoice=False, context=None):
@@ -487,11 +488,11 @@ class wizard_cash_return(osv.osv_memory):
         st_line_id = absl_obj.create(cr, uid, vals, context=context)
         # Make a link between the statement line and the move line
         absl_obj.write(cr, uid, [st_line_id], {'move_ids': [(4, move_id, False)]}, context=context)
-        
+
         # hard post for this account line
 #        if move_line.account_id.is_analytic_addicted:
 #            absl_obj.posting(cr, uid, [move_line.id], 'hard', context=context)
-         
+
         return True
 
     def action_add_invoice(self, cr, uid, ids, context=None):
@@ -566,7 +567,7 @@ class wizard_cash_return(osv.osv_memory):
                 to_write['invoice_id'] = False
                 # write changes in the wizard
                 self.write(cr, uid, ids, to_write, context=context)
-        
+
         if not auto_add:
             return {
                 'type': 'ir.actions.act_window',
@@ -588,7 +589,7 @@ class wizard_cash_return(osv.osv_memory):
             display_invoice = True
         else:
             display_invoice = False
-        
+
         # Delete links to invoice_line_ids and inform wizard of that
         self.write(cr, uid, ids, {'display_invoice': display_invoice, 'invoice_line_ids': [(5,)]}, context=context)
         # Update total amount
@@ -759,7 +760,7 @@ class wizard_cash_return(osv.osv_memory):
                 adv_id = self.create_move_line(cr, uid, ids, wizard.date, adv_date, adv_name, journal, register, partner_id, False, account_id, \
                     debit, credit, wizard.reference, move_id, distrib_id, context=context)
                 adv_move_line_ids.append(adv_id)
-                
+
         # create the advance closing line
         adv_closing_acc_id = wizard.advance_st_line_id.account_id.id
         adv_closing_date = wizard.date
@@ -844,7 +845,7 @@ class wizard_cash_return(osv.osv_memory):
                             raise osv.except_osv(_('Error'), _('An error has occured: The journal entries cannot be posted.'))
                         # Do reconciliation
                         supp_reconcile_id = move_line_obj.reconcile_partial(cr, uid, [supp_move_line_debit_id, supp_move_line_credit_id])
-        
+
         # reconcile advance and advance return lines
         original_move_id = wizard.advance_st_line_id.move_ids[0]
         criteria = [('statement_id', '=', wizard.advance_st_line_id.statement_id.id), ('account_id', '=', adv_closing_acc_id), ('move_id', '=', original_move_id.id)]
@@ -852,22 +853,22 @@ class wizard_cash_return(osv.osv_memory):
         if not ml_ids or len(ml_ids) > 1:
             raise osv.except_osv(_('Error'), _('An error occured on the automatic reconciliation in advance return.'))
         move_line_obj.reconcile_partial(cr, uid, [ml_ids[0], adv_closing_id])
-                    
+
 
         # create the statement line for the advance closing
         adv_closing_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, adv_closing_id, context=context)
-        
+
         # Disable the return function on the statement line origin (on which we launch the wizard)
         absl_obj.write(cr, uid, [wizard.advance_st_line_id.id], {'from_cash_return': True}, context=context)
 
         # Close Wizard
         return { 'type': 'ir.actions.act_window_close', }
-        
+
     def action_confirm_cash_return2(self, cr, uid, ids, context=None):
         """UFTP-24 same action handler as action_confirm_cash_return
         for a button with a confirm attribute"""
         return self.action_confirm_cash_return(cr, uid, ids, context=context)
-        
+
     def _is_advance_settled_100_cash_return(self, wizard):
         if wizard and wizard.advance_linked_po_auto_invoice \
             and wizard.initial_amount and wizard.returned_amount \
@@ -939,12 +940,12 @@ class wizard_cash_return(osv.osv_memory):
             'res_id': [wiz_id],
             'context': context,
         }
-    
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         res = super(wizard_cash_return, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if 'cash_register_op_advance_po_id' in context:
             doc = etree.XML(res['arch'])
-            
+
             # UFTP-24
             # if cash return linked to a PO dynamically define confirm message
             # of the 'ok button with confirm' variant
@@ -955,10 +956,10 @@ class wizard_cash_return(osv.osv_memory):
                 nodes = doc.xpath("//button[@name='action_confirm_cash_return2']")
                 for node in nodes:
                     node.set('confirm', msg)
-            
+
             res['arch'] = etree.tostring(doc)
         return res
-    
+
 wizard_cash_return()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
