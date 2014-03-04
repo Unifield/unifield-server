@@ -350,6 +350,10 @@ class shipment_family_processor(osv.osv):
         ),
     }
 
+    _defaults = {
+        'integrity_status': 'empty',
+    }
+
 shipment_family_processor()
 
 

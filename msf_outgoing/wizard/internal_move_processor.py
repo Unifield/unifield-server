@@ -290,7 +290,7 @@ class internal_picking_processor(osv.osv):
                 if line.integrity_status != 'empty':
                     raise osv.except_osv(
                         _('Processing Error'),
-                        _('Line %s: %s') % (line.line_number, proc_line_obj.get_selection(self, cr, uid, line, 'integrity_status'))
+                        _('Line %s: %s') % (line.line_number, proc_line_obj.get_selection(cr, uid, line, 'integrity_status'))
                     )
 
                 # We cannot change the product on create picking wizard
@@ -338,7 +338,7 @@ class internal_move_processor(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        res = super(internal_picking_move_processor, self)._get_integrity_status(cr, uid, ids, field_name, args, context=context)
+        res = super(internal_move_processor, self)._get_integrity_status(cr, uid, ids, field_name, args, context=context)
 
         for line in self.browse(cr, uid, ids, context=context):
             res_value = res[line.id]

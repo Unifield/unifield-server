@@ -487,7 +487,7 @@ class stock_picking(osv.osv):
             # used for inventory valuation of real-time valuation is enabled.
             average_values = {
               'price_unit': new_price,
-              'price_currency_id': line.currency_id.id,
+              'price_currency_id': line.currency.id,
             }
 
         return average_values
@@ -608,6 +608,7 @@ class stock_picking(osv.osv):
             backordered_moves = []  # Moves that need to be put in a backorder
             done_moves = []  # Moves that are completed
             out_picks = set()
+            processed_out_moves = []
 
             for move in picking.move_lines:
                 # Get all processed lines that processed this stock move
@@ -619,7 +620,6 @@ class stock_picking(osv.osv):
                 data_back = move_obj.create_data_back(move)
                 mirror_data = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
                 out_moves = mirror_data['moves']
-                processed_out_moves = []
                 average_values = {}
 
                 for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
@@ -662,8 +662,9 @@ class stock_picking(osv.osv):
                         'dpo_line_id': 0,
                         'sync_dpo': False,
                         'state': 'confirmed',
-                        'location_dest_id': False,
                     })
+                    if out_values.get('location_dest_id', False):
+                        out_values.pop('location_dest_id')
 
                     remaining_out_qty = line.quantity
                     out_move = None
@@ -689,9 +690,10 @@ class stock_picking(osv.osv):
                                 'in_out_updated': sync_in and False or True,
                             })
                             context['keepLineNumber'] = True
-                            move_obj.copy(cr, uid, out_move.id, out_values, context=context)
+                            new_out_move_id = move_obj.copy(cr, uid, out_move.id, out_values, context=context)
                             context['keepLineNumber'] = False
                             remaining_out_qty = 0.00
+                            processed_out_moves.append(new_out_move_id)
                         elif uom_partial_qty == out_move.product_qty:
                             out_values.update({
                                 'product_qty': remaining_out_qty,
@@ -772,11 +774,16 @@ class stock_picking(osv.osv):
                     self.action_move(cr, uid, [picking.id], context=context)
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
 
+            if not sync_in:
+                move_obj.action_assign(cr, uid, processed_out_moves)
+
+
         # Create the first picking ticket if we are on a draft picking ticket
         for picking in self.browse(cr, uid, list(out_picks), context=context):
             wiz = self.create_picking(cr, uid, [picking.id], context=context)
             wiz_obj = self.pool.get(wiz['res_model'])
-            moves_picking = wiz_obj.browse(cr, uid, wiz['res_id'], context=wiz['context']).product_moves_picking
+            wiz_context = wiz.get('context', {})
+            moves_picking = wiz_obj.browse(cr, uid, wiz['res_id'], context=wiz_context).move_ids
             nb_lines = len(moves_picking)
             # We delete the lines which is not from the IN
 #            for line in moves_picking:
@@ -786,9 +793,9 @@ class stock_picking(osv.osv):
 
             if nb_lines:
                 # We copy all data in lines
-                wiz_obj.copy_all(cr, uid, [wiz['res_id']], context=wiz['context'])
+                wiz_obj.copy_all(cr, uid, [wiz['res_id']], context=wiz_context)
                 # We process the creation of the picking
-                wiz_obj.do_create_picking(cr, uid, [wiz['res_id']], context=wiz['context'])
+                wiz_obj.do_create_picking(cr, uid, [wiz['res_id']], context=wiz_context)
 
         if context.get('from_simu_screen'):
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]

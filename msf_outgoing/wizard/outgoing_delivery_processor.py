@@ -120,7 +120,7 @@ class outgoing_delivery_move_processor(osv.osv):
     """
     Outgoing delivery moves processing wizard
     """
-    _name = 'create.picking.move.processor'
+    _name = 'outgoing.delivery.move.processor'
     _inherit = 'internal.move.processor'
     _description = 'Wizard lines for outgoing delivery processor'
 

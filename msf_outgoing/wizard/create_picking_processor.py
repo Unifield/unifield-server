@@ -29,7 +29,7 @@ class create_picking_processor(osv.osv):
     Create picking processing wizard
     """
     _name = 'create.picking.processor'
-    _inherit = 'outgoing.delivery.processor'
+    _inherit = 'internal.picking.processor'
     _description = 'Wizard to process the first step of the Pick/Pack/Ship'
 
     _columns = {

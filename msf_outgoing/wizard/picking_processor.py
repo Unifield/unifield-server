@@ -259,11 +259,7 @@ class stock_move_processor(osv.osv):
 
     def _get_product_info(self, cr, uid, ids, field_name, args, context=None):
         """
-<<<<<<< TREE
         Ticked some check boxes according to product parameters
-=======
-        Ticked some checkboxes according to product parameters
->>>>>>> MERGE-SOURCE
         """
         if context is None:
             context = {}
@@ -277,11 +273,7 @@ class stock_move_processor(osv.osv):
             res[line.id] = {
                 'lot_check': False,
                 'exp_check': False,
-<<<<<<< TREE
                 'asset_check': False,
-=======
-#                'asset_check': False,
->>>>>>> MERGE-SOURCE
                 'kit_check': False,
                 'kc_check': False,
                 'ssl_check': False,
@@ -293,11 +285,7 @@ class stock_move_processor(osv.osv):
                 res[line.id] = {
                     'lot_check': line.product_id.batch_management,
                     'exp_check': line.product_id.perishable,
-<<<<<<< TREE
                     'asset_check': line.product_id.type == 'product' and line.product_id.subtype == 'asset',
-=======
-#                    'asset_check': line.product_id.type == 'product' and line.product_id.subtype == 'asset',
->>>>>>> MERGE-SOURCE
                     'kit_check': line.product_id.type == 'product' and line.product_id.subtype == 'kit' and not line.product_id.perishable,
                     'kc_check': line.product_id.heat_sensitive_item and True or False,
                     'ssl_check': line.product_id.short_shelf_life,
@@ -321,13 +309,16 @@ class stock_move_processor(osv.osv):
             elif line.prodlot_id.type != 'standard':
                 # Batch defined by type is not good
                 res = 'wrong_lot_type_need_standard'
-            elif perishable:
-                # Expiry date mandatory
-                if not line.expiry_date:
-                    # No expiry date defined
-                    res = 'missing_date'
-            elif line.prodlot_id:
-                res = 'no_lot_needed'
+        elif perishable:
+            # Expiry date mandatory
+            if not line.expiry_date:
+                # No expiry date defined
+                res = 'missing_date'
+            elif line.prodlot_id.type == 'standard':
+                # Batch defined by type is not good
+                res = 'wrong_lot_type_need_internal'
+        elif line.prodlot_id:
+            res = 'no_lot_needed'
 
         return res
 
@@ -431,16 +422,13 @@ class stock_move_processor(osv.osv):
         ),
         'ordered_quantity': fields.float(
             string='Ordered quantity',
-<<<<<<< TREE
             digits_compute=dp.get_precision('Product UoM'),
             required=True,
-=======
             type='float',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
                 'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
->>>>>>> MERGE-SOURCE
             readonly=True,
             help="Expected quantity to receive",
         ),
@@ -674,6 +662,7 @@ class stock_move_processor(osv.osv):
 
     _defaults = {
         'quantity': 0.00,
+        'integrity_status': 'empty',
     }
 
     def _fill_expiry_date(self, cr, uid, prodlot_id=False, expiry_date=False, vals=None, context=None):
@@ -791,22 +780,14 @@ class stock_move_processor(osv.osv):
                 raise osv.except_osv(
                     _('Error'),
                     _('Selected quantity (%0.1f %s) exceeds the initial quantity (%0.1f %s)') %
-<<<<<<< TREE
-                    (new_qty, line.uom_id.name, line.ordered_quantity, line.uom_id.name),
-=======
                     (new_qty, line.uom_id.name, line.quantity_ordered, line.uom_id.name),
->>>>>>> MERGE-SOURCE
                 )
             elif new_qty == line.ordered_quantity:
                 # Cannot select more than initial quantity
                 raise osv.except_osv(
                     _('Error'),
                     _('Selected quantity (%0.1f %s) cannot be equal to the initial quantity (%0.1f %s)') %
-<<<<<<< TREE
                     (new_qty, line.uom_id.name, line.ordered_quantity, line.uom_id.name),
-=======
-                    (new_qty, line.uom_id.name, line.quantity_ordered, line.uom_id.name),
->>>>>>> MERGE-SOURCE
                 )
 
             update_qty = line.ordered_quantity - new_qty
@@ -930,7 +911,8 @@ class stock_move_processor(osv.osv):
         lot_obj = self.pool.get('stock.production.lot')
 
         res = {
-            'value': {}
+            'value': {},
+            'warning': {},
         }
 
         if expiry_date and product_id:
@@ -1035,153 +1017,4 @@ class stock_move_processor(osv.osv):
 
 stock_move_processor()
 
-<<<<<<< TREE
-=======
-
-class stock_incoming_processor(osv.osv):
-    """
-    Incoming shipment processing wizard
-    """
-    _name = 'stock.incoming.processor'
-    _inherit = 'stock.picking.processor'
-    _description = 'Wizard to process an incoming shipment'
-    
-    _columns = {
-        'move_ids': fields.one2many(
-            'stock.move.in.processor',
-            'wizard_id',
-            string='Moves',
-        ),
-        'dest_type': fields.selection([
-            ('to_cross_docking', 'To Cross Docking'),
-            ('to_stock', 'To Stock'),
-            ('default', 'Other Types'),
-            ],
-            string='Destination Type',
-            readonly=False,
-            help="The default value is the one set on each stock move line.",
-        ),
-        'source_type': fields.selection([
-            ('from_cross_docking', 'From Cross Docking'),
-            ('from_stock', 'From stock'),
-            ('default', 'Default'),
-            ],
-            string='Source Type',
-            readonly=False,
-        ),
-        'direct_incoming': fields.boolean(
-            string='Direct to Stock ?',
-        ),
-    }
-
-    _defaults = {
-        'dest_type': 'default',
-    }
-    
-    # Models methods
-    def _get_prodlot_from_expiry_date(self, cr, uid, expiry_date, product_id, context=None):
-        """
-        Search if an internal batch exists in the system with this expiry date.
-        If no, create the batch. 
-        """
-        # Objects
-        lot_obj = self.pool.get('stock.production.lot')
-        seq_obj = self.pool.get('ir.sequence')
-        
-        # Double check to find the corresponding batch
-        lot_ids = lot_obj.search(cr, uid, [
-                            ('life_date', '=', expiry_date),
-                            ('type', '=', 'internal'),
-                            ('product_id', '=', product_id),
-                            ], context=context)
-                            
-        # No batch found, create a new one
-        if not lot_ids:
-            vals = {
-                'product_id': product_id,
-                'life_date': expiry_date,
-                'name': seq_obj.get(cr, uid, 'stock.lot.serial'),
-                'type': 'internal',
-            }
-            lot_id = lot_obj.create(cr, uid, vals, context)
-        else:
-            lot_id = lot_ids[0]
-            
-        return lot_id
-        
-    def do_incoming_shipment(self, cr, uid, ids, context=None):
-        """
-        Made some integrity check on lines and run the do_incoming_shipment of stock.picking
-        """
-        # Objects
-        in_proc_obj = self.pool.get('stock.move.in.processor')
-        picking_obj = self.pool.get('stock.picking')
-        
-        process_data = {}
-        picking_ids = []
-        to_unlink = []
-        
-        for proc in self.browse(cr, uid, ids, context=context):
-            process_data.setdefault(proc.picking_id.id, [])
-            picking_ids.append(proc.picking_id.id)
-            total_qty = 0.00
-            
-            for line in proc.move_ids:
-                # if no quantity, don't process the move
-                if not line.quantity:
-                    to_unlink.append(line.id)
-                    continue
-                
-                total_qty += line.quantity
-                
-                if line.exp_check \
-                   and not line.lot_check \
-                   and not line.prodlot_id \
-                   and line.expiry_date:
-                    if line.check_type == 'in':
-                        prodlot_id = self._get_prodlot_from_expiry_date(cr, uid, line.expiry_date, context=context)
-                        in_proc_obj.write(cr, uid, [line.id], {'prodlot_id': prodlot_id}, context=context)
-                    else:
-                        # Should not be reached thanks to UI checks
-                        raise osv.except_osv(
-                            _('Error !'),
-                            _('No Batch Number with Expiry Date for Expiry Date Mandatory and not Incoming Shipment should not happen. Please hold...')
-                        )
-                
-            if not total_qty:
-                raise osv.except_osv(
-                    _('Processing Error'),
-                    _("You have to enter the quantities you want to process before processing the move")
-                )
-
-        if to_unlink:
-            in_proc_obj.unlink(cr, uid, to_unlink, context=context)
-            
-        return picking_obj.do_incoming_shipment_new(cr, uid, ids, context=context)
-    
-stock_incoming_processor()
-
-
-class stock_move_in_processor(osv.osv):
-    """
-    Incoming moves processing wizard
-    """
-    _name = 'stock.move.in.processor'
-    _inherit = 'stock.move.processor'
-    _description = 'Wizard lines for incoming shipment processing'
-
-    _columns = {
-        # Parent wizard
-        'wizard_id': fields.many2one(
-            'stock.incoming.processor',
-            string='Wizard',
-            required=True,
-            readonly=True,
-        ),
-        'state': fields.char(size=32, string='State', readonly=True),
-    }
-    
-stock_move_in_processor()
-
->>>>>>> MERGE-SOURCE
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

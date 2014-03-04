@@ -16,7 +16,7 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 
 from osv import osv, fields
@@ -32,7 +32,7 @@ import tools
 class stock_reason_type(osv.osv):
     _name = 'stock.reason.type'
     _description = 'Reason Types Moves'
-    
+
     def init(self, cr):
         """
         Load reason_type_data.xml brefore product
@@ -51,45 +51,45 @@ class stock_reason_type(osv.osv):
             pathname = path.join('reason_types_moves', 'reason_type_data.xml')
             file = tools.file_open(pathname)
             tools.convert_xml_import(cr, 'reason_types_moves', file, {}, mode='init', noupdate=False)
-    
+
     def return_level(self, cr, uid, type, level=0):
         if type.parent_id:
             level += 1
             self.return_level(cr, uid, type.parent_id, level)
-        
+
         return level
-    
+
     def _get_level(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns the level of the reason type
         '''
         res = {}
-        
+
         for type in self.browse(cr, uid, ids, context=context):
             res[type.id] = self.return_level(cr, uid, type)
-        
+
         return res
-    
+
     def _get_inventory(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns if the type will be present in inventory line
         '''
         res = {}
-        
+
         for type in self.browse(cr, uid, ids, context=context):
             tmp_type = type
             while tmp_type.parent_id:
                 tmp_type = tmp_type.parent_id
             res[type.id] = tmp_type.inventory_ok
-            
+
         return res
-    
+
     def _search_inventory(self, cr, uid, obj, name, args, context=None):
         '''
         Returns the ids of all reason type which are displayed in inventory line
         '''
         res = []
-        
+
         for arg in args:
             if arg[0] == 'is_inventory' and arg[1] == '=' and arg[2] in (True, 1, 'True', 'true', '1'):
                 inv_ids = self.search(cr, uid, [('inventory_ok', '=', True)], context=context)
@@ -97,11 +97,11 @@ class stock_reason_type(osv.osv):
                 while inv_ids:
                     inv_ids = self.search(cr, uid, [('parent_id', 'in', inv_ids)], context=context)
                     res_ids.extend(inv_ids)
-                res = [('id', 'in', res_ids)] 
-                    
+                res = [('id', 'in', res_ids)]
+
         return res
-                
-    
+
+
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
             return []
@@ -127,14 +127,14 @@ class stock_reason_type(osv.osv):
         'parent_id': fields.many2one('stock.reason.type', string='Parent reason'),
         'level': fields.function(_get_level, method=True, type='integer', string='Level', readonly=True),
         'inventory_ok': fields.boolean(string='Inventory type', help='If checked, this reason type will be available in inventory line'),
-        'is_inventory': fields.function(_get_inventory, fnct_search=_search_inventory, 
-                                        method=True, type='boolean', string='Inventory type', 
+        'is_inventory': fields.function(_get_inventory, fnct_search=_search_inventory,
+                                        method=True, type='boolean', string='Inventory type',
                                         readonly=True, help='If checked, this reason type will be available in inventory line'),
         'incoming_ok': fields.boolean(string='Available for incoming shipment ?'),
         'internal_ok': fields.boolean(string='Available for internal picking ?'),
         'outgoing_ok': fields.boolean(string='Available for outgoing movements ?'),
     }
-    
+
     def unlink(self, cr, uid, ids, context=None):
         '''
         Prevent the deletion of standard reason types
@@ -142,10 +142,10 @@ class stock_reason_type(osv.osv):
         data_ids = self.pool.get('ir.model.data').search(cr, uid, [('model', '=', 'stock.reason.type'), ('res_id', 'in', ids)])
         if data_ids:
             raise osv.except_osv(_('Error'), _('You cannot delete a standard reason type move'))
-        
+
         return super(stock_reason_type, self).unlink(cr, uid, ids, context=context)
-            
-    
+
+
 stock_reason_type()
 
 class stock_inventory_line(osv.osv):
@@ -156,7 +156,7 @@ class stock_inventory_line(osv.osv):
         'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type', required=True),
         'comment': fields.char(size=128, string='Comment'),
     }
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         Set default values for datas.xml and tests.yml
@@ -187,7 +187,7 @@ class stock_inventory(osv.osv):
             'not_chained': True,
         })
 
-        return super(stock_inventory, self)._inventory_line_hook(cr, uid, inventory_line, move_vals) 
+        return super(stock_inventory, self)._inventory_line_hook(cr, uid, inventory_line, move_vals)
         # @@@end
 
 stock_inventory()
@@ -196,11 +196,11 @@ stock_inventory()
 class stock_fill_inventory(osv.osv_memory):
     _name = 'stock.fill.inventory'
     _inherit = 'stock.fill.inventory'
-    
+
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True, domain=[('is_inventory', '=', True)]),
     }
-    
+
     def _hook_fill_datas(self, cr, uid, *args, **kwargs):
         '''
         Hook to add data values in fill inventory line data
@@ -210,15 +210,15 @@ class stock_fill_inventory(osv.osv_memory):
             res.update({'reason_type_id': kwargs['fill_inventory'].reason_type_id.id})
 
         return res
-    
-stock_fill_inventory() 
+
+stock_fill_inventory()
 
 
 
 class stock_picking(osv.osv):
     _name = 'stock.picking'
     _inherit = 'stock.picking'
-        
+
     def _get_default_reason(self, cr, uid, context=None):
         res = {}
         toget = [('reason_type_id', 'reason_type_external_supply')]
@@ -227,7 +227,7 @@ class stock_picking(osv.osv):
             nom = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', xml_id)
             res[field] = nom[1]
         return res
-    
+
     def onchange_move(self, cr, uid, ids, context=None):
         res = {}
         if ids:
@@ -255,7 +255,7 @@ class stock_picking(osv.osv):
             new_args.append(new_arg)
 
         return super(stock_picking, self).search(cr, uid, new_args, offset=offset, limit=limit, order=order, context=context, count=False)
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         Set default values for datas.xml and tests.yml
@@ -270,9 +270,9 @@ class stock_picking(osv.osv):
         '''
         if not context:
             context = {}
-            
+
         res = super(stock_picking, self).default_get(cr, uid, fields, context=context)
-        
+
         if 'picking_type' in context:
             if context.get('picking_type') == 'incoming_shipment':
                 res['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
@@ -280,7 +280,7 @@ class stock_picking(osv.osv):
                 res['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
             elif context.get('picking_type') in ('delivery_order', 'picking_ticket'):
                 res['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
-        
+
         return res
 
     def _check_reason_type(self, cr, uid, ids, context=None):
@@ -314,7 +314,7 @@ class stock_picking(osv.osv):
     }
 
     _constraints = [
-        (_check_reason_type, "Wrong reason type for an OUT created from scratch.", ['reason_type_id',]),
+        (_check_reason_type, "Wrong reason type for an OUT created from scratch.", ['reason_type_id', ]),
     ]
 
 stock_picking()
@@ -323,7 +323,7 @@ stock_picking()
 class stock_move(osv.osv):
     _name = 'stock.move'
     _inherit = 'stock.move'
-    
+
     def _get_default_reason(self, cr, uid, context=None):
         res = {}
         toget = [('reason_type_id', 'reason_type_external_supply')]
@@ -332,7 +332,7 @@ class stock_move(osv.osv):
             nom = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', xml_id)
             res[field] = nom[1]
         return res
-    
+
     def copy(self, cr, uid, ids, default, context=None):
         '''
         If the picking is in default value, copy the reason type of the picking to the new moves
@@ -340,15 +340,15 @@ class stock_move(osv.osv):
         if default.get('picking_id') and 'reason_type_id' not in default:
             pick = self.pool.get('stock.picking').browse(cr, uid, default.get('picking_id'), context=context)
             default['reason_type_id'] = pick.reason_type_id.id
-            
+
         return super(stock_move, self).copy(cr, uid, ids, default, context=context)
-        
-    
+
+
     def write(self, cr, uid, ids, vals, context=None):
         '''
         Set default values if the reason type has changed
         '''
-        if 'location_dest_id' in vals:
+        if vals.get('location_dest_id'):
             dest_id = self.pool.get('stock.location').browse(cr, uid, vals['location_dest_id'], context=context)
             if dest_id.usage == 'inventory' and not dest_id.virtual_location:
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
@@ -383,15 +383,15 @@ class stock_move(osv.osv):
             new_args.append(new_arg)
 
         return super(stock_move, self).search(cr, uid, new_args, offset=offset, limit=limit, order=order, context=context, count=count)
-    
+
     def _get_product_type(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-        
+
         for move in self.browse(cr, uid, ids, context=context):
             res[move.id] = move.product_id.type
-        
+
         return res
-    
+
     def _get_product_type_selection(self, cr, uid, context=None):
         return self.pool.get('product.template').PRODUCT_TYPE
 
@@ -415,7 +415,7 @@ class stock_move(osv.osv):
         except ValueError:
             rt_return_unit_id = 0
 
-         
+
         for sm in self.read(cr, uid, ids, ['reason_type_id', 'picking_id']):
             if sm['reason_type_id'] and sm['picking_id']:
                 if sm['reason_type_id'][0] in [rt_return_id, rt_replacement_id, rt_return_unit_id]:
@@ -427,18 +427,18 @@ class stock_move(osv.osv):
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
         'comment': fields.char(size=128, string='Comment'),
-        'product_type': fields.function(_get_product_type, method=True, type='selection', selection=_get_product_type_selection, string='Product type', 
-                                        store={'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['product_id'], 20),}),
+        'product_type': fields.function(_get_product_type, method=True, type='selection', selection=_get_product_type_selection, string='Product type',
+                                        store={'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['product_id'], 20), }),
         'not_chained': fields.boolean(string='Not chained', help='If checked, the chaining move will not be run.'),
     }
-    
+
     _defaults = {
-        'reason_type_id': lambda obj, cr, uid, context={}: context.get('reason_type_id', False) and context.get('reason_type_id') or False,
+        'reason_type_id': lambda obj, cr, uid, context = {}: context.get('reason_type_id', False) and context.get('reason_type_id') or False,
         'not_chained': lambda *a: False,
     }
 
     _constraints = [
-        (_check_reason_type, "Wrong reason type for an OUT created from scratch.", ['reason_type_id',]),
+        (_check_reason_type, "Wrong reason type for an OUT created from scratch.", ['reason_type_id', ]),
     ]
 
     def location_src_change(self, cr, uid, ids, location_id, context=None):
@@ -446,12 +446,12 @@ class stock_move(osv.osv):
         Tries to define a reason type for the move according to the source location
         '''
         vals = {}
-        
+
         if location_id:
             loc_id = self.pool.get('stock.location').browse(cr, uid, location_id, context=context)
             if loc_id.usage == 'inventory':
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
-                
+
         return {'value': vals}
 
     def location_dest_change(self, cr, uid, ids, location_dest_id, location_id, product_id=False, context=None):
@@ -470,7 +470,7 @@ class stock_move(osv.osv):
         # if the source and the destination locations are the same the state is done
         # By QT : Comment the below lines because, with this code, the state is change to 'Done' but the destination
         #         location becomes not editable and it's not passed to the create/write method
-        #if location_dest_id and location_id:
+        # if location_dest_id and location_id:
         #    if location_dest_id == location_id:
         #        vals['state'] = 'done'
             if product_id:
@@ -480,7 +480,7 @@ class stock_move(osv.osv):
                     return  vals
 
         return {'value': vals}
-    
+
 stock_move()
 
 
@@ -488,7 +488,7 @@ class stock_return_picking(osv.osv_memory):
     _name = 'stock.return.picking'
     _inherit = 'stock.return.picking'
 
-    def _hook_default_return_data(self, cr, uid, ids, context=None, 
+    def _hook_default_return_data(self, cr, uid, ids, context=None,
                                   *args, **kwargs):
         '''
         Hook to allow user to modify the value for the stock move copy method
@@ -496,12 +496,12 @@ class stock_return_picking(osv.osv_memory):
         if context is None:
             context = {}
         default_value = super(stock_return_picking, self).\
-                        _hook_default_return_data(cr, uid, ids, 
-                                      context=context, 
+                        _hook_default_return_data(cr, uid, ids,
+                                      context=context,
                                       default_value=kwargs['default_value'])
 
         reason_type_id = self.pool.get('ir.model.data').\
-                         get_object_reference(cr, uid, 'reason_types_moves', 
+                         get_object_reference(cr, uid, 'reason_types_moves',
                                           'reason_type_return_from_unit')[1]
 
         default_value.update({'reason_type_id': reason_type_id})
@@ -513,7 +513,7 @@ stock_return_picking()
 class stock_location(osv.osv):
     _name = 'stock.location'
     _inherit = 'stock.location'
-    
+
     def _get_replenishment(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         for loc in ids:
@@ -525,7 +525,7 @@ class stock_location(osv.osv):
         for id in ids:
             res[id] = False
         return res
-    
+
     def _src_replenishment(self, cr, uid, obj, name, args, context=None):
         res = []
         for arg in args:
@@ -539,7 +539,7 @@ class stock_location(osv.osv):
                     res.append(('location_category', '=', 'stock'))
                     res.append(('quarantine_location', '=', False))
         return res
-        
+
     def _src_st_out(self, cr, uid, obj, name, args, context=None):
         '''
         Returns location allowed for Standard out
@@ -553,7 +553,7 @@ class stock_location(osv.osv):
                 if arg[2] == 'dest':
                     customer_loc_ids = loc_obj.search(cr, uid, [('usage', '=', 'customer')], context=context)
                     output_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
-                    
+
                     loc_ids = []
                     loc_ids.extend(customer_loc_ids)
                     loc_ids.append(output_loc_id)
@@ -567,27 +567,27 @@ class stock_location(osv.osv):
                     for w in self.pool.get('stock.warehouse').browse(cr, uid, warehouse_ids, context=context):
                         output_ids.append(w.lot_output_id.id)
                         input_ids.append(w.lot_input_id.id)
-                        
+
                     for loc_id in output_ids:
                         output_loc_ids.extend(self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', loc_id)], context=context))
                     for loc_id in input_ids:
                         input_loc_ids.extend(self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', loc_id)], context=context))
-                    
+
                     res.append(('quarantine_location', '=', False))
                     res.append(('usage', '=', 'internal'))
                     res.append(('cross_docking_location_ok', '=', False))
                     res.append(('id', 'not in', output_loc_ids))
                     res.append(('id', 'not in', input_loc_ids))
-                    
+
         return res
-                    
+
     _columns = {
         'is_replenishment': fields.function(_get_replenishment, fnct_search=_src_replenishment, type='boolean',
                                             method=True, string='Is replenishment ?', store=False,
                                             help='Is True, the location could be used in replenishment rules'),
         'standard_out_ok': fields.function(_get_st_out, fnct_search=_src_st_out, method=True, type='boolean', string='St. Out', store=False),
     }
-    
+
 stock_location()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
