@@ -17,7 +17,7 @@
                                 <field name="register_a_claim"/>
                                 <field name="claim_in_has_partner_id" invisible="True" />
                                 <field name="claim_partner_id" 
-                                       attrs="{'readonly': ['|', ('register_a_claim', '=', False), ('claim_in_has_partner_id', '=', True)]}"
+                                       attrs="{'readonly': ['|', ('register_a_claim', '=', False), ('claim_in_has_partner_id', '=', True)], 'required': [('register_a_claim', '=', True)]}"
                                        context="{'search_default_supplier': True}"/>
                                 <field name="claim_type" 
                                        attrs="{'readonly': [('register_a_claim', '=', False)]}"/>

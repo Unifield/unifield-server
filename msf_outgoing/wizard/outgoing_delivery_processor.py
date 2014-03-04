@@ -66,7 +66,7 @@ class outgoing_delivery_processor(osv.osv):
         self.integrity_check_quantity(cr, uid, wizard_brw_list, context)
         self.integrity_check_prodlot(cr, uid, wizard_brw_list, context=context)
         # call stock_picking method which returns action call
-        res = picking_obj.do_partial(cr, uid, ids, context=context)
+        res = picking_obj.do_partial_out(cr, uid, ids, context=context)
         return self.return_hook_do_partial(cr, uid, ids, context=context, res=res)
 
     def return_hook_do_partial(self, cr, uid, ids, context=None, *args, **kwargs):

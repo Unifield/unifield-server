@@ -31,6 +31,23 @@ class internal_picking_processor(osv.osv):
     _inherit = 'stock.picking.processor'
     _description = 'Wizard to process Internal move'
 
+    def _get_chained_picking(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Get the value of the field 'chained_from_in_stock_picking' of the stock.picking
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for pick in self.browse(cr, uid, ids, context=context):
+            res[pick.id] = pick.picking_id.chained_from_in_stock_picking
+
+        return res
+
     _columns = {
         'move_ids': fields.one2many(
             'internal.move.processor',
@@ -47,7 +64,7 @@ class internal_picking_processor(osv.osv):
         'claim_partner_id': fields.many2one(
             'res.partner',
             string='Supplier',
-            required=True,
+            required=False,
         ),
         'claim_type': fields.selection(
             lambda s, cr, uid, c: s.pool.get('return.claim').get_claim_event_type(),
@@ -60,49 +77,14 @@ class internal_picking_processor(osv.osv):
         'claim_description': fields.text(
             string='Claim Description',
         ),
-        'chained_from_in_stock_picking': fields.related(
-            'picking_id',
-            'chained_from_in_stock_picking',
+        'chained_from_in_stock_picking': fields.function(
+            _get_chained_picking,
+            method=True,
             string='Chained Internal Picking from IN',
             type='boolean',
             readonly=True,
         ),
     }
-
-    def _get_default_supplier(self, cr, uid, context=None):
-        '''
-        try to find the supplier of corresponding IN for chained picking
-        '''
-        # objects
-        pick_obj = self.pool.get('stock.picking')
-
-        if not context.get('active_ids'):
-            return False
-
-        picking_ids = context['active_ids']
-        for obj in pick_obj.browse(cr, uid, picking_ids, context=context):
-            if obj.chained_from_in_stock_picking:
-                return obj.corresponding_in_picking_stock_picking.partner_id2.id
-
-        return False
-
-    def _get_has_supplier(self, cr, uid, context=None):
-        '''
-        try to find the supplier of corresponding IN for chained picking
-        '''
-        # objects
-        pick_obj = self.pool.get('stock.picking')
-
-        if not context.get('active_ids'):
-            return False
-
-        picking_ids = context['active_ids']
-        for obj in pick_obj.browse(cr, uid, picking_ids, context=context):
-            if obj.chained_from_in_stock_picking:
-                if obj.corresponding_in_picking_stock_picking.partner_id2:
-                    return True
-
-        return False
 
     def default_get(self, cr, uid, fields_list=None, context=None):
         """
@@ -118,8 +100,6 @@ class internal_picking_processor(osv.osv):
 
         res.update({
             'register_a_claim': False,
-            'claim_partner_id': self._get_default_supplier(cr, uid, context=context),
-            'claim_in_has_partner_id': self._get_has_supplier(cr, uid, context=context),
             'claim_replacement_picking_expected': False,
         })
 
@@ -128,6 +108,27 @@ class internal_picking_processor(osv.osv):
     """
     Model methods
     """
+    def create(self, cr, uid, vals, context=None):
+        """
+        Add default values
+        """
+        # Objects
+        pick_obj = self.pool.get('stock.picking')
+
+        vals['claim_in_has_partner_id'] = False
+
+        if vals.get('picking_id', False):
+            picking = pick_obj.browse(cr, uid, vals.get('picking_id'), context=context)
+            if not vals.get('claim_partner_id', False):
+                if picking.chained_from_in_stock_picking:
+                    vals['claim_partner_id'] = picking.corresponding_in_picking_stock_picking.partner_id2.id
+
+            if not vals.get('claim_in_has_partner_id', False):
+                if picking.chained_from_in_stock_picking:
+                    vals['claim_in_has_partner_id'] = picking.corresponding_in_picking_stock_picking.partner_id2 and True or False
+
+        return super(internal_picking_processor, self).create(cr, uid, vals, context=context)
+
     def do_partial(self, cr, uid, ids, context=None):
         """
         Made some integrity check on lines and run the do_incoming_shipment of stock.picking

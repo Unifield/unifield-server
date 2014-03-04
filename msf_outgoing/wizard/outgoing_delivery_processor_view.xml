@@ -2,9 +2,9 @@
 <openerp>
     <data>
 
-        <record id="create_picking_processor_form_view" model="ir.ui.view">
-            <field name="name">create.picking.processor.form.view</field>
-            <field name="model">create.picking.processor</field>
+        <record id="outgoing_delivery_processor_form_view" model="ir.ui.view">
+            <field name="name">outgoing.delivery.processor.form.view</field>
+            <field name="model">outgoing.delivery.processor</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Products to Process">
@@ -19,15 +19,15 @@
                         <separator string="Actions" colspan="6" />
                         <label colspan="4"> </label>
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
-                        <button name="do_create_picking" type="object" string="Create Picking" icon="gtk-go-forward" />
+                        <button name="do_partial" type="object" string="Process" icon="gtk-go-forward" />
                     </group>
                 </form>
             </field>
         </record>
         
-        <record id="create_picking_move_processor_tree_view" model="ir.ui.view">
-            <field name="name">create.picking.move.processor.tree.view</field>
-            <field name="model">create.picking.move.processor</field>
+        <record id="outgoing_delivery_move_processor_tree_view" model="ir.ui.view">
+            <field name="name">outgoing.delivery.move.processor.tree.view</field>
+            <field name="model">outgoing.delivery.move.processor</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Moves"
@@ -90,12 +90,13 @@
                     <field name="kc_check" />
                     <field name="dg_check" />
                     <field name="np_check" />
-                    <field name="cost" invisible="1" />
-                    <field name="currency" invisible="1" />
+                    <field name="cost" />
+                    <field name="currency" />
                     <field name="integrity_status" string="" />
                 </tree>
             </field>
         </record>
-
+        
     </data>
 </openerp>
+

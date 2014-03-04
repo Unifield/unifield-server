@@ -2699,11 +2699,14 @@ class stock_picking(osv.osv):
 
             for line in wizard.move_ids:
                 move = line.move_id
+                first = False
 
-                move_data.setdefault(move.id, {
-                    'original_qty': move.product_qty,
-                    'processed_qty': 0.00,
-                })
+                if move.id not in move_data:
+                    move_data.setdefault(move.id, {
+                        'original_qty': move.product_qty,
+                        'processed_qty': 0.00,
+                        })
+                    first = True
 
                 if line.quantity <= 0.00:
                     continue
@@ -2733,7 +2736,7 @@ class stock_picking(osv.osv):
                     'original_qty_partial': orig_qty,
                 }
 
-                if quantity < move.product_qty:
+                if quantity < move.product_qty and move_data[move.id]['original_qty'] > move_data[move.id]['processed_qty']:
                     # Create a new move
                     new_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
                     processed_moves.append(new_move_id)

@@ -474,7 +474,7 @@ class stock_picking(osv.osv):
                 new_std_price = new_price
             else:
                 # Get the current price
-                current_price = product_obj.price_get(cr, uid, [line.product_id.id], ['standard_price'], context=context)[line.product_id.id]
+                current_price = product_obj.price_get(cr, uid, [line.product_id.id], 'standard_price', context=context)[line.product_id.id]
                 # Check no division by zero
                 if product_availability[line.product_id.id]:
                     new_std_price = ((current_price * product_availability[line.product_id.id])\
@@ -650,7 +650,7 @@ class stock_picking(osv.osv):
                     else:
                         values['state'] = 'assigned'
                         context['keepLineNumber'] = True
-                        new_move_id = move_obj.copy(cr, uid, values, context=context)
+                        new_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
                         context['keepLineNumber'] = False
                         done_moves.append(new_move_id)
 
