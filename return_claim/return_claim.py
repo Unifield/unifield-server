@@ -32,7 +32,6 @@ import decimal_precision as dp
 from order_types import ORDER_CATEGORY
 # integrity
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
-from bin.osv.orm import browse_record
 # claim type
 CLAIM_TYPE = [('supplier', 'Supplier'),
               ('customer', 'Customer'),
