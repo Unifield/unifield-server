@@ -3766,15 +3766,7 @@ class orm(orm_template):
 
         done = []
 
-        # Call the _store_get_values() for parent object
-        inherit_obj = []
-        if hasattr(self, '_inherit') and isinstance(self._inherit, str):
-            inherit_obj = [self._inherit]
-        for inherit in inherit_obj:
-            for r in self.pool.get(inherit)._store_get_values(cr, uid, ids, keys, context):
-                if r[1] == self._name:
-                    result.append(r)
-        result += self._store_get_values(cr, uid, ids, keys, context)
+        result = self._store_get_values(cr, uid, ids, keys, context)
         result.sort()
         for order, object, ids, fields2 in result:
             if bypass and context.get('bypass_store_function') and (object, fields2) in context['bypass_store_function']:
@@ -3969,6 +3961,12 @@ class orm(orm_template):
         # e.g.: http://pastie.org/1222060
         result = {}
         fncts = self.pool._store_function.get(self._name, [])
+
+        new_fncts = [x for x in fncts if x[0] == self._name]
+        treated_fields = [x[1] for x in fncts if x[0] == self._name]
+        new_fncts.extend([x for x in fncts if x[1] not in treated_fields])
+        
+        fncts = new_fncts
             
         for fnct in range(len(fncts)):
             if fncts[fnct][3]:
