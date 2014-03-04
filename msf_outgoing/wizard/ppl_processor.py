@@ -216,6 +216,26 @@ class ppl_processor(osv.osv):
         # Call the stock.picking method
         return picking_obj.do_ppl_step2(cr, uid, ids, context=context)
 
+    def do_ppl_back(self, cr, uid, ids, context=None):
+        """
+        Return to the first of the PPL processing
+        """
+        # Objects
+        family_obj = self.pool.get('ppl.family.processor')
+
+        family_to_unlink = family_obj.search(cr, uid, [('wizard_id', 'in', ids)], context=context)
+        family_obj.unlink(cr, uid, family_to_unlink, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': ids[0],
+            'target': 'new',
+            'context': context,
+        }
+
 ppl_processor()
 
 

@@ -2731,7 +2731,6 @@ class stock_picking(osv.osv):
                     'asset_id': line.asset_id and line.asset_id.id or False,
                     'composition_list_id': line.composition_list_id and line.composition_list_id.id or False,
                     'original_qty_partial': orig_qty,
-                    'location_id': line.location_id and line.location_id.id or False,
                 }
 
                 if quantity < move.product_qty:
@@ -2772,7 +2771,7 @@ class stock_picking(osv.osv):
                 # We confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
                 wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_confirm', cr)
                 # Then we finish the good picking
-                if wizard.register_a_claim and wizard.claim_type != 'return':
+                if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type != 'return'):
                     self.action_move(cr, uid, [new_picking_id])
                     wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_done', cr)
                     # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
@@ -2782,8 +2781,8 @@ class stock_picking(osv.osv):
                 delivered_pack_id = new_picking_id
             else:
                 # Claim specific code
-                self._claim_registration(cr, uid, wizard, new_picking_id, context=context)
-                if wizard.register_a_claim and wizard.claim_type != 'return':
+                self._claim_registration(cr, uid, wizard, picking.id, context=context)
+                if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type != 'return'):
                     self.action_move(cr, uid, [picking.id])
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
                     # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done

@@ -558,9 +558,9 @@ class stock_picking(osv.osv):
         elif wizard.dest_type == 'to_stock':
             # Below, "source_type" is only used for the outgoing shipment. We set it to "None because by default it is
             # "default" and we do not want that info on INCOMING shipment
-            if line.product_id.product_type == 'consu':
+            if line.product_id.type == 'consu':
                 values['location_dest_id'] = db_data.get('non_stock')
-            elif line.product_id.product_type == 'service_recep':
+            elif line.product_id.type == 'service_recep':
                 values['location_dest_id'] = db_data.get('service_loc')
             else:
                 # treat moves towards STOCK if NOT SERVICE

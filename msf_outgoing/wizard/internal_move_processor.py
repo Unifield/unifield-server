@@ -47,6 +47,7 @@ class internal_picking_processor(osv.osv):
         'claim_partner_id': fields.many2one(
             'res.partner',
             string='Supplier',
+            required=True,
         ),
         'claim_type': fields.selection(
             lambda s, cr, uid, c: s.pool.get('return.claim').get_claim_event_type(),
@@ -58,6 +59,13 @@ class internal_picking_processor(osv.osv):
         ),
         'claim_description': fields.text(
             string='Claim Description',
+        ),
+        'chained_from_in_stock_picking': fields.related(
+            'picking_id',
+            'chained_from_in_stock_picking',
+            string='Chained Internal Picking from IN',
+            type='boolean',
+            readonly=True,
         ),
     }
 
