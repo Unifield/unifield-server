@@ -22,7 +22,6 @@
 from osv import fields, osv
 from tools.translate import _
 import time
-from bin.osv.orm import browse_record
 
 class create_picking_processor(osv.osv):
     """

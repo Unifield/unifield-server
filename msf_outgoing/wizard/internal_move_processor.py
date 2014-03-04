@@ -21,7 +21,6 @@
 
 from osv import fields, osv
 from tools.translate import _
-from bin.osv.orm import browse_record
 
 class internal_picking_processor(osv.osv):
     """
@@ -213,7 +212,7 @@ class internal_picking_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(wizards, browse_record):
+        if not isinstance(wizards, list):
             wizards = [wizards]
 
         if not wizards:
@@ -276,7 +275,7 @@ class internal_picking_processor(osv.osv):
         if context is None:
             context = {}
 
-        if isinstance(wizards, browse_record):
+        if not isinstance(wizards, list):
             wizards = [wizards]
 
         if not wizards:
