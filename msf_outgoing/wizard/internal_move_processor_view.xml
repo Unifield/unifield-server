@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="internal_picking_processor_form_view" model="ir.ui.view">
+            <field name="name">internal.picking.processor.form.view</field>
+            <field name="model">internal.picking.processor</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="msf_outgoing.stock_picking_processor_form_view" />
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='actions']" position="before">
+                    <separator string="Register a Claim to the Supplier for selected products." colspan="4" />
+                    <notebook colspan="4">
+                        <page string="Claim">
+                            <field name="register_a_claim"/>
+                            <field name="claim_in_has_partner_id" invisible="True" />
+                            <field name="claim_partner_id" 
+                                   attrs="{'readonly': ['|', ('register_a_claim', '=', False), ('claim_in_has_partner_id', '=', True)]}"
+                                   context="{'search_default_supplier': True}"/>
+                            <field name="claim_type" 
+                                   attrs="{'readonly': [('register_a_claim', '=', False)]}"/>
+                            <field name="claim_replacement_picking_expected" 
+                                   attrs="{'invisible': [('claim_type', '!=', 'return')]}"/>
+                        </page>
+                        <page string="Claim Description">
+                            <field name="claim_description" colspan="4" nolabel="True"/>
+                        </page>
+                    </notebook>
+                </xpath>
+            </field>
+        </record>
+        
+    </data>
+</openerp>
