@@ -28,7 +28,7 @@ class create_picking_processor(osv.osv):
     Create picking processing wizard
     """
     _name = 'create.picking.processor'
-    _inherit = 'stock.picking.processor'
+    _inherit = 'internal.picking.processor'
     _description = 'Wizard to process the first step of the Pick/Pack/Ship'
 
     _columns = {
@@ -48,102 +48,13 @@ class create_picking_processor(osv.osv):
         """
         # Objects
         picking_obj = self.pool.get('stock.picking')
-        proc_line_obj = self.pool.get(picking_obj._columns['move_ids']._obj)
 
-        to_unlink = []
+        wizard_brw_list = self.browse(cr, uid, ids, context=context)
 
-        for proc in self.browse(cr, uid, ids, context=context):
-            total_qty = 0.00
-
-            for line in proc.move_ids:
-                # if no quantity, don't process the move
-                if not line.quantity:
-                    to_unlink.append(line.id)
-                    continue
-
-                if line.integrity_status != 'empty':
-                    raise osv.except_osv(
-                        _('Processing Error'),
-                        _('Line %s: %s') % (line.line_number, proc_line_obj.get_selection(self, cr, uid, line, 'integrity_status'))
-                    )
-
-                # We cannot change the product on create picking wizard
-                if line.product_id.id != line.move_id.product_id.id:
-                    raise osv.except_osv(
-                        _('Processing Error'),
-                        _('Line %s: The product is wrong - Should be the same as initial move') % line.line_number,
-                    )
-
-                total_qty += line.quantity
-
-            if not total_qty:
-                raise osv.except_osv(
-                    _('Processing Error'),
-                    _('You have to enter the quantities you want to process before processing the move.'),
-                )
-
-        # Remove non-used lines
-        if to_unlink:
-            proc_line_obj.unlink(cr, uid, to_unlink, context=context)
-
-        self.integrity_check_prodlot(cr, uid, ids, context=context)
+        self.integrity_check_quantity(cr, uid, wizard_brw_list, context=context)
+        self.integrity_check_prodlot(cr, uid, wizard_brw_list, context=context)
         # call stock_picking method which returns action call
         return picking_obj.do_create_picking(cr, uid, ids, context=context)
-
-    def integrity_check_prodlot(self, cr, uid, ids, context=None):
-        """
-        Check if the processed quantities are not larger than the available quantities
-        """
-        # Objects
-        uom_obj = self.pool.get('product.uom')
-        lot_obj = self.pool.get('stock.production.lot')
-
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        lot_integrity = {}
-
-        for wizard in self.browse(cr, uid, ids, context=context):
-            for line in wizard.move_ids:
-                if line.prodlot_id:
-                    if line.location_id:
-                        context['location_id'] = line.location_id.id
-                    lot = lot_obj.browse(cr, uid, line.prodlot_id.id, context=context)
-
-                if line.location_id and line.prodlot_id:
-                    lot_integrity.setdefault(line.prodlot_id.id, {})
-                    lot_integrity[line.prodlot_id.id].setdefault(line.location_id.id, 0.00)
-
-                    if line.uom_id.id != line.prodlot_id.product_id.uom_id.id:
-                        product_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.prodlot_id.product_id.uom_id.id)
-                    else:
-                        product_qty = line.quantity
-
-                    lot_integrity[line.prodlot_id.id][line.location_id.id] += product_qty
-
-                    if lot.stock_available < product_qty:
-                        raise osv.except_osv(
-                            _('Processing Error'),
-                            _('Processing quantity %d %s for %s is larger than the available quantity in Batch Number %s (%d) !') \
-                            % (line.quantity, line.uom_id.name, line.product_id.name, lot.name, lot.stock_available)
-                        )
-
-        # Check batches quantity integrity
-        for lot in lot_integrity:
-            for location in lot_integrity[lot]:
-                tmp_lot = lot_obj.browse(cr, uid, lot, context={'location_id': location})
-                lot_qty = tmp_lot.stock_available
-                if lot_qty < lot_integrity[lot][location]:
-                    raise osv.except_osv(
-                        _('Processing Error'), \
-                        _('Processing quantity %d for %s is larger than the available quantity in Batch Number %s (%d) !')\
-                        % (lot_integrity[lot][location], tmp_lot.product_id.name, tmp_lot.name, lot_qty
-                    ))
-
-        return True
 
 create_picking_processor()
 
@@ -153,7 +64,7 @@ class create_picking_move_processor(osv.osv):
     Create picking moves processing wizard
     """
     _name = 'create.picking.move.processor'
-    _inherit = 'stock.move.processor'
+    _inherit = 'internal.move.processor'
     _description = 'Wizard lines for create picking processor'
 
     _columns = {

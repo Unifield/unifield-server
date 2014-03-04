@@ -65,8 +65,8 @@
                     <label string="" colspan="2"/>
                     <field name="currency_id" readonly="1"/>
                     <group col="3" colspan="4">
-                        <button name="button_display_type" string="Parent accounts only" type="object" icon="terp-stock_zoom" context="{'granularity': 'parent'}" colspan="1"/>
-                        <button name="button_display_type" string="Accounts only" type="object" icon="terp-stock_zoom" context="{'granularity': 'account'}" colspan="1"/>
+                        <button name="button_display_type" string="Parent accounts only" type="object" icon="terp-stock_zoom" context="{'granularity': 'view'}" colspan="1"/>
+                        <button name="button_display_type" string="Accounts only" type="object" icon="terp-stock_zoom" context="{'granularity': 'expense'}" colspan="1"/>
                         <button name="button_display_type" string="Accounts and destinations" type="object" icon="terp-stock_zoom" context="{'granularity': 'all'}" colspan="1"/>
                     </group>
                     <field name="budget_line_ids" colspan="4" nolabel="1" readonly="1">

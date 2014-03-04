@@ -74,25 +74,10 @@ class msf_budget_tools(osv.osv):
                     result = [sum(pair) for pair in zip(result, actual_amounts[account_destination])]
             actual_amounts[account_destination_tuple[0], False] = result
         return
-    
-    def _get_cc_children(self, browse_cost_center, cost_center_list):
-        for child in browse_cost_center.child_ids:
-            if child.type == 'view':
-                self._get_cc_children(child, cost_center_list)
-            else:
-                cost_center_list.append(child.id)
-        return
-    
-    def _get_cost_center_ids(self, browse_cost_center):
-        if browse_cost_center.type == 'normal':
-            # Normal budget, just return a 1-item list
-            return [browse_cost_center.id]
-        else:
-            # View budget: return all non-view cost centers below this one
-            cost_center_list = []
-            self._get_cc_children(browse_cost_center, cost_center_list)
-            return cost_center_list
-    
+
+    def _get_cost_center_ids(self, cr, uid, browse_cost_center):
+        return self.pool.get('account.analytic.account').search(cr, uid, [('parent_id', 'child_of', browse_cost_center.id)])
+
     def _create_account_destination_domain(self, account_destination_list):
         if len(account_destination_list) == 0:
             return ['&',

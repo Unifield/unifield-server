@@ -176,14 +176,14 @@
           <para style="P2a">Percentage</para>
         </td>
       </tr>
-      <tr style="trNotBold">[[ setTag('tr', 'tr', {'style': isBold(line) and 'trBold' or 'trNotBold'}) ]]
+      <tr style="trNotBold">[[ setTag('tr', 'tr', {'style': line.get('line_type', '') == 'view' and 'trBold' or 'trNotBold'}) ]]
           <para style="P20">[[ repeatIn(process(o.budget_line_ids),'line') ]]</para>
 
-              <td><para>[[ setTag('para', 'para', {'style': isBold(line) and 'P3gaucheB' or 'P3gauche'})]] [[ line[0] ]][[ line[0] ]]</para></td>
-              <td>[[ line[1] and formatLang(line[1], digits=0, grouping=True ) or '0' ]]</td>
-              <td>[[ line[2] and formatLang(line[2], digits=0, grouping=True ) or '0' ]]</td>
-              <td>[[ line[3] and formatLang(line[3], digits=0, grouping=True ) or '0' ]]</td>
-              <td>[[ line[4] and formatLang(line[4], digits=0, grouping=True ) or '0' ]]</td>
+              <td><para>[[ setTag('para', 'para', {'style': line.get('line_type', '') == 'view' and 'P3gaucheB' or 'P3gauche'})]] [[ line.get('name', '') ]]</para></td>
+              <td>[[ formatLang(line.get('budget_amount', 0.0), digits=0, grouping=True ) or '0' ]]</td>
+              <td>[[ formatLang(line.get('actual_amount', 0.0), digits=0, grouping=True ) or '0' ]]</td>
+              <td>[[ formatLang(line.get('balance', 0.0), digits=0, grouping=True ) or '0' ]]</td>
+              <td>[[ formatLang(line.get('percentage', 0.0), digits=0, grouping=True ) or '0' ]]</td>
 
       </tr>
     </blockTable>
