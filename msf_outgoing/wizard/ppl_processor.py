@@ -166,15 +166,15 @@ class ppl_processor(osv.osv):
         family_no_weight = []
 
         for wizard in self.browse(cr, uid, ids, context=context):
-            nb_moves = 0
+            treated_moves = []
             for family in wizard.family_ids:
-                nb_moves += len(family.move_ids)
                 if family.weight <= 0.00:
                     family_no_weight.append(family.id)
 
                 # Integrity check on stock moves
                 for line in family.move_ids:
                     move = line.move_id
+                    treated_moves.append(move.id)
                     error_word = ''
 
                     if line.product_id.id != move.product_id.id:
@@ -208,10 +208,10 @@ class ppl_processor(osv.osv):
                 ('state', 'in', ['confirmed', 'assigned']),
             ], count=True, context=context)
 
-            if nb_pick_moves != nb_moves:
+            if nb_pick_moves != len(set(treated_moves)):
                 raise osv.except_osv(
                     _('Processing Error'),
-                    _('The number of treated moves (%s) are not compatible with the number of moves in PPL (%s).') % (nb_moves, nb_pick_moves),
+                    _('The number of treated moves (%s) are not compatible with the number of moves in PPL (%s).') % (len(set(treated_moves)), nb_pick_moves),
                 )
 
         if family_no_weight:
