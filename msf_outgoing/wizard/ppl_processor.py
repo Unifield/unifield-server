@@ -431,17 +431,6 @@ class ppl_move_processor(osv.osv):
             help="Expected product to receive",
             multi='move_info',
         ),
-        'ordered_quantity': fields.float(
-            string='Ordered quantity',
-            digits_compute=dp.get_precision('Product UoM'),
-            required=True,
-            type='float',
-            store={
-                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
-            },
-            readonly=True,
-            help="Expected quantity to receive",
-        ),
         'ordered_uom_id': fields.function(
             _get_move_info,
             method=True,
@@ -637,9 +626,70 @@ class ppl_move_processor(osv.osv):
         """
         res = super(ppl_move_processor, self)._get_line_data(cr, uid, wizard, move, context=context)
 
-        res['quantity'] = move.product_qty
+        res.update({
+            'quantity': move.product_qty,
+            'ordered_quantity': move.product_qty,
+        })
 
         return res
+
+    def split(self, cr, uid, ids, new_qty=0.00, uom_id=False, context=None):
+        """
+        Split the line according to new parameters
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not ids:
+            raise osv.except_osv(
+                _('Error'),
+                _('No line to split !'),
+            )
+
+        # New quantity must be greater than 0.00
+        if new_qty <= 0.00:
+            raise osv.except_osv(
+                _('Error'),
+                _('Selected quantity must be greater than 0.00 !'),
+            )
+
+        pick_wiz_id = False
+        for line in self.browse(cr, uid, ids, context=context):
+            pick_wiz_id = line.wizard_id.id
+            if new_qty > line.ordered_quantity:
+                # Cannot select more than initial quantity
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Selected quantity (%0.1f %s) exceeds the initial quantity (%0.1f %s)') %
+                    (new_qty, line.uom_id.name, line.quantity_ordered, line.uom_id.name),
+                )
+            elif new_qty == line.ordered_quantity:
+                # Cannot select more than initial quantity
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Selected quantity (%0.1f %s) cannot be equal to the initial quantity (%0.1f %s)') %
+                    (new_qty, line.uom_id.name, line.ordered_quantity, line.uom_id.name),
+                )
+
+            update_qty = line.ordered_quantity - new_qty
+            wr_vals = {
+                'qty_per_pack': line.quantity > update_qty and update_qty or line.quantity,
+                'ordered_quantity': update_qty,
+                'quantity': update_qty,
+            }
+            self._update_split_wr_vals(vals=wr_vals)  # w/o overriding, just return wr_vals
+            self.write(cr, uid, [line.id], wr_vals, context=context)
+
+            # Create a copy of the move_processor with the new quantity
+            cp_vals = {
+                'qty_per_pack': 0.00,
+                'ordered_quantity': new_qty,
+                'quantity': new_qty,
+            }
+            self._update_split_cp_vals(vals=cp_vals)  # w/o overriding, just return cp_vals
+            self.copy(cr, uid, line.id, cp_vals, context=context)
+
+        return pick_wiz_id
 
 ppl_move_processor()
 

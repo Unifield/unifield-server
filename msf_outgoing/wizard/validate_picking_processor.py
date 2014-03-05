@@ -194,17 +194,6 @@ class validate_move_processor(osv.osv):
             help="Expected product to receive",
             multi='move_info',
         ),
-        'ordered_quantity': fields.float(
-            string='Ordered quantity',
-            digits_compute=dp.get_precision('Product UoM'),
-            required=True,
-            type='float',
-            store={
-                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
-            },
-            readonly=True,
-            help="Expected quantity to receive",
-        ),
         'ordered_uom_id': fields.function(
             _get_move_info,
             method=True,

@@ -423,10 +423,6 @@ class stock_move_processor(osv.osv):
             string='Ordered quantity',
             digits_compute=dp.get_precision('Product UoM'),
             required=True,
-            type='float',
-            store={
-                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
-            },
             readonly=True,
             help="Expected quantity to receive",
         ),
