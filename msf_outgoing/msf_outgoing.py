@@ -3111,9 +3111,8 @@ class stock_picking(osv.osv):
             wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
 
             # if the flow type is in quick mode, we perform the ppl steps automatically
-            # TODO: Treat the quick mode
-            if picking.flow_type == 'quick':
-                proc_obj.quick_mode(cr, uid, new_ppl, context=context)
+            if picking.flow_type == 'quick' and new_ppl:
+                return self.quick_mode(cr, uid, new_ppl.id, context=context)
 
         data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')
@@ -3130,6 +3129,30 @@ class stock_picking(osv.osv):
                 'target': 'crush',
                 'context': context,
                 }
+
+    def quick_mode(self, cr, uid, ids, context=None):
+        """
+        Perform the PPL steps automatically
+
+        """
+        # Objects
+        proc_obj = self.pool.get('ppl.processor')
+
+        if context is None:
+            context = {}
+
+        if not isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        wizard_id = self.ppl(cr, uid, ids, context=context)['res_id']
+        proc_obj.do_ppl_step1(cr, uid, wizard_id, context=context)
+        return proc_obj.do_ppl_step2(cr, uid, wizard_id, context=context)
 
     def ppl(self, cr, uid, ids, context=None):
         """
