@@ -57,7 +57,6 @@
         'wizard/shipment_view.xml',
         'wizard/picking_processor_view.xml',
         'wizard/incoming_shipment_processor_view.xml',
-        'wizard/change_product_move_processor_view.xml',
         'wizard/split_move_processor_view.xml',
         'wizard/create_picking_processor_view.xml',
         'wizard/validate_picking_processor_view.xml',
