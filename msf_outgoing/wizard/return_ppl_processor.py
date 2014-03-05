@@ -24,6 +24,7 @@ from osv import osv
 
 import decimal_precision as dp
 
+from tools.translate import _
 
 class return_ppl_processor(osv.osv):
     """

@@ -22,6 +22,7 @@
 from osv import fields
 from osv import osv
 
+from tools.translate import _
 
 class return_shipment_processor(osv.osv):
     """

@@ -22,6 +22,8 @@
 from osv import fields
 from osv import osv
 
+from tools.translate import _
+
 import decimal_precision as dp
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
 
