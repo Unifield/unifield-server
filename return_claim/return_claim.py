@@ -1492,7 +1492,7 @@ class stock_picking(osv.osv):
                     'category_return_claim': category,
                     'description_return_claim': wizard.claim_description,
                     'follow_up_return_claim': False,
-                    'partner_id_return_claim': partner_id,
+                    'partner_id_return_claim': partner_id.id,
                     'picking_id_return_claim': picking_id,
                     'product_line_ids_return_claim': [(0, 0, {
                                   'qty_claim_product_line': x.product_qty,

@@ -69,7 +69,7 @@ class internal_picking_processor(osv.osv):
             required=False,
         ),
         'claim_type': fields.selection(
-            lambda s, cr, uid, c: s.pool.get('return.claim').get_claim_event_type(),
+            lambda s, cr, uid, context={}: s.pool.get('return.claim').get_claim_event_type(),
             string='Claim Type',
         ),
         'claim_replacement_picking_expected': fields.boolean(
