@@ -2304,6 +2304,9 @@ class stock_picking(osv.osv):
                 shipment_id = context['shipment_id']
 
                 for family in ship_proc.family_ids:
+                    if family.selected_number == 0.00:
+                        continue
+
                     selected_from_pack = family.to_pack - family.selected_number + 1
 
                     if family.selected_number == int(family.num_of_packs):
