@@ -83,13 +83,13 @@ class sale_order_sync(osv.osv):
         default.update(header_result)
 
         so_id = self.create(cr, uid, default , context=context)
+        name = self.browse(cr, uid, so_id, context).name
         if 'order_type' in header_result:
             if header_result['order_type'] == 'loan':
                 # UTP-392: Look for the PO of this loan, and update the reference of source document of that PO to this new FO
                 # First, search the original PO via the client_order_ref stored in the FO
                 ref = po_info.origin
                 if ref:
-                    name = self.browse(cr, uid, so_id, context).name
                     ref = source + "." + ref
                     po_object = self.pool.get('purchase.order')
                     po_ids = po_object.search(cr, uid, [('partner_ref', '=', ref)], context=context)
@@ -103,15 +103,19 @@ class sale_order_sync(osv.osv):
                         self.write(cr, uid, [so_id], {'origin': ref, 'fo_created_by_po_sync': True} , context=context)
                 
         # reset confirmed_delivery_date to all lines
-        so_line_obj = self.pool.get('sale.order.line')
+#        so_line_obj = self.pool.get('sale.order.line')
         
         # [utp-360] we set the confirmed_delivery_date to False directly in creation and not in modification
 #        for order in self.browse(cr, uid, [so_id], context=context):
 #            for line in order.order_line:
 #                so_line_obj.write(cr, uid, [line.id], {'confirmed_delivery_date': False})
         
-        so_po_common.update_next_line_number_fo_po(cr, uid, so_id, self, 'sale_order_line', context)        
-        return True
+        so_po_common.update_next_line_number_fo_po(cr, uid, so_id, self, 'sale_order_line', context)
+
+        # Just to print the result message when the sync message got executed          
+        message = "The FO " + name + " created successfully, linked to the PO " + po_info.name + " at " + source
+        self._logger.info(message)
+        return message
 
     def validated_po_update_validated_so(self, cr, uid, source, po_info, context=None):
         self._logger.info("+++ Update the validated FO at %s when the relevant PO got validated at %s"%(cr.dbname, source))
@@ -132,7 +136,12 @@ class sale_order_sync(osv.osv):
         default.update(header_result)
 
         res_id = self.write(cr, uid, so_id, default , context=context)
-        return True
+        
+        # Just to print the result message when the sync message got executed
+        name = self.browse(cr, uid, so_id, context).name
+        message = "The FO " + name + " updated successfully, as its PO partner got updated " + po_info.name + " at " + source
+        self._logger.info(message)
+        return message
 
     def update_sub_so_ref(self, cr, uid, source, po_info, context=None):
         self._logger.info("+++ Update the PO references from %s to the FO, including its sub-FOs at %s"%(source, cr.dbname))
@@ -150,10 +159,10 @@ class sale_order_sync(osv.osv):
                 return "Recovery: the reference on " + po_info.name + " at " + source + " will be set to void."
             raise Exception, "Cannot find the original FO with the given info."
         
-        ref = self.browse(cr, uid, so_id).client_order_ref
+        so_value = self.browse(cr, uid, so_id)
         client_order_ref = source + "." + po_info.name
        
-        if not ref or client_order_ref != ref: # only issue a write if the client_order_reference is not yet set!
+        if not so_value.client_order_ref or client_order_ref != so_value.client_order_ref: # only issue a write if the client_order_reference is not yet set!
             res_id = self.write(cr, uid, so_id, {'client_order_ref': client_order_ref} , context=context)
         
         '''
@@ -167,7 +176,10 @@ class sale_order_sync(osv.osv):
             if not temp: # only issue a write if the client_order_reference is not yet set!
                 res_id = self.write(cr, uid, line, {'client_order_ref': client_order_ref} , context=context)
             
-        return True
+        # Just to print the result message when the sync message got executed
+        message = "The FO " + so_value.name + " updated successfully, as the partner PO " + po_info.name + " got updated at " + source
+        self._logger.info(message)
+        return message
     
     # UF-1830: reset automatically the reference to the partner object to become void due to the recovery event
     def reset_ref_by_recovery_mode(self, cr, uid, source, values, context=None):

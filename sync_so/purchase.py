@@ -108,7 +108,7 @@ class purchase_order_sync(osv.osv):
             # Sorry: This trick is to avoid creating new useless message to the synchronisation engine!
             cr.execute('update purchase_order set partner_ref=%s where id=%s', (partner_ref, po_id))
         
-        message = "The partner reference of the PO " + po_value.name + " got updated successfully"
+        message = "The PO " + po_value.name + " is now linked to " + so_info.name + " at " + source
         self._logger.info(message)
         return message
 
@@ -126,17 +126,33 @@ class purchase_order_sync(osv.osv):
         
         so_dict = so_info.to_dict()
         so_po_common = self.pool.get('so.po.common')
+        header_result = {}
         
-        po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
+        po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context) # This should be the original PO, not the split one of POx-2/3
         if not po_id:
             # UF-1830: TODO: DO NOT CREATE ANYTHING FROM A RESTORE CASE!
             if context.get('restore_flag'):
                 # UF-1830: Cannot create PO from a recovery message
                 so_po_common.create_invalid_recovery_message(cr, uid, source, so_info.name, context)            
-                return "Recovery: cannot create the PO. Please inform the owner of the FO " + so_info.name + " to cancel it and to recreate a new process."
-            raise Exception, "Cannot find the original PO with the given info."
+                return "Recovery: cannot create the PO. Please inform the owner of the FO " + so_info.name + " at " + source + " to cancel it and to recreate a new process."
+            raise Exception, "Cannot find the original PO that links to " + so_info.name + " at " + source
+        
+        # UF-1830: if the PO exists, double check if this PO is really a normal PO, and not a split PO with suffix of -1,2,3!
+        # if yes, then just return without continuing
+        original_po = self.browse(cr, uid, po_id, context=context)
+        if original_po.name[-2] == '-' and original_po.name[-1] in ['1', '2', '3']:
+            message = "The PO split " + original_po.name + " exists already in the system, linked to " + so_info.name + " at " + source + ". The message is ignored."
+            self._logger.info(message)
+            return message
+            
+        # Name the new split PO to stick with the name of FO (FOxxxx-1, FOxxxx-2 or FOxxxx-3)
+        if so_info.name[-2] == '-' and so_info.name[-1] in ['1', '2', '3']:
+            header_result['name'] = original_po.name + so_info.name[-2:]
+        else:
+            text = "The given format of the split FO is not valid" + so_info.name
+            self._logger.error(text)
+            raise Exception, text
 
-        header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
         
         header_result['order_line'] = so_po_common.get_lines(cr, uid, source, so_info, False, False, False, False, context)
@@ -145,23 +161,16 @@ class purchase_order_sync(osv.osv):
         if so_info.state == 'sourced':
             header_result['state'] = 'sourced'
 
-        # Name the new split PO to stick with the name of FO (FOxxxx-1, FOxxxx-2 or FOxxxx-3)
-        if so_info.name[-2] == '-' and so_info.name[-1] in ['1', '2', '3']:
-            po_name = self.browse(cr, uid, po_id, context=context)['name']
-            header_result['name'] = po_name + so_info.name[-2:]
-        else:
-            text = "The given format of the split FO is not valid" + so_info.name
-            self._logger.error(text)
-            raise Exception, text
-
         # UF-1830: Check if the future FO split exists in the system, if it is the case, then the message is coming from a recovery from the partner!
         check_exist = self.search(cr, uid, [('name', '=', header_result['name'])])
         if check_exist:
             # if it is the case, then just update the reference to the newly created FO-split at the partner side
             self.write(cr, uid, check_exist, {'partner_ref': header_result['partner_ref']} , context=context)
-            return "The reference of the split PO has been updated due to recovery at " + source
+            message = "The PO split " + original_po.name + " is re-updated to " + so_info.name + " due to the recovery event at " + source
+            self._logger.info(message)
+            return message
+        
 
-        original_po = self.browse(cr, uid, po_id, context=context)
         # UTP-163: Get the 'source document' of the original PO, and add it into the split PO, if existed
         header_result['origin'] = original_po.origin
         
@@ -246,8 +255,10 @@ class purchase_order_sync(osv.osv):
                     name = so_object.browse(cr, uid, so_ids[0], context).name
                     self.write(cr, uid, [res_id], {'origin': name}, context=context)
                     so_object.write(cr, uid, so_ids, {'origin': False} , context=context) # reset this origin value of the FO counterpart back to null
-        
-        return res_id
+
+        message = "The split PO " + order.name + " is created by sync and linked to the split PO " + so_info.name + " at " + source
+        self._logger.info(message)
+        return message
 
 
     # UTP-953: This case is not allowed for the intersection partner due to the missing of Analytic Distribution!!!!! 
@@ -311,7 +322,11 @@ class purchase_order_sync(osv.osv):
         # update the next line number for the PO if needed        
         so_po_common.update_next_line_number_fo_po(cr, uid, po_id, self, 'purchase_order_line', context)        
 
-        return True
+
+        name = self.browse(cr, uid, po_id, context=context).name
+        message = "The PO " + name + " is created by sync and linked to the FO " + so_info.name + " by Push Flow at " + source
+        self._logger.info(message)
+        return message
 
     def check_existing_po(self, cr, uid, source, so_dict):
         if not source:
@@ -339,10 +354,10 @@ class purchase_order_sync(osv.osv):
 
     def check_mandatory_fields(self, cr, uid, so_dict):
         if not so_dict.get('delivery_confirmed_date'):
-            raise Exception, "The delivery confirmed date is missing - please check at the message rule!"
+            raise Exception, "The delivery confirmed date is missing - please verify the values of the sync message!"
 
         if not so_dict.get('state'):
-            raise Exception, "The state of the split FO is missing - please check at the message rule!"
+            raise Exception, "The state of the split FO is missing - please verify the values of the sync message!"
     
     def update_split_po(self, cr, uid, source, so_info, context=None):
         if not context:
@@ -359,8 +374,14 @@ class purchase_order_sync(osv.osv):
                 # UF-1830: Create a message to remove the invalid reference to the inexistent document
                 so_po_common.create_invalid_recovery_message(cr, uid, source, so_info.name, context)            
                 return "Recovery: the reference to " + so_info.name + " at " + source + " will be set to void."                    
-                
-            raise Exception, "The split PO " + so_dict.get('name') + " not found!"
+            raise Exception, "The split PO linked to " + so_info.name + "at " + source + " not found!"
+
+        # UF-1830: Check if the PO needs to be updated, if it is confirmed/closed or split, then no need to update, just ignore
+        original_po = self.browse(cr, uid, po_id, context=context)
+        if original_po.state in ('approved', 'done', 'split'):
+            message = "Nothing to update for the split PO " + original_po.name + " as its state is already in (Confirmed, Closed, Split)"
+            self._logger.info(message)
+            return message
 
         self.check_mandatory_fields(cr, uid, so_dict)
 
@@ -374,7 +395,6 @@ class purchase_order_sync(osv.osv):
         if partner_type in ['section', 'intermission']:
             del header_result['analytic_distribution_id']
 
-        original_po = self.browse(cr, uid, po_id, context=context)
         # UTP-661: Get the 'Cross Docking' value of the original PO, and add it into the split PO
         header_result['cross_docking_ok'] = original_po['cross_docking_ok']
         header_result['location_id'] = original_po.location_id.id
@@ -391,7 +411,10 @@ class purchase_order_sync(osv.osv):
             else:
                 ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
                 res = self.purchase_approve(cr, uid, [po_id], context=context) # UTP-972: Use a proper workflow to confirm a PO
-        return True
+                
+        message = "The split PO " + original_po.name + " is updated by sync as its partner FO " + so_info.name + " got updated at " + source
+        self._logger.info(message)
+        return message
 
     # UTP-872: If the PO is a split one, then still allow it to be confirmed without po_line 
     def _hook_check_po_no_line(self, po, context):
@@ -438,7 +461,10 @@ class purchase_order_sync(osv.osv):
         default.update(header_result)
 
         res_id = self.write(cr, uid, po_id, default, context=context)
-        return True
+        
+        message = "The PO " + original_po.name + " is updated by sync as its partner FO " + so_info.name + " got updated at " + source
+        self._logger.info(message)
+        return message
     
     def msg_close_filter(self, cr, uid, rule, context=None):
         """
@@ -476,7 +502,11 @@ class purchase_order_sync(osv.osv):
         self.write(cr, uid, po_id, {'from_sync': True}, context)
         # Cancel the PO
         wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_cancel', cr)
-        return True
+        
+        name = self.browse(cr, uid, po_id, context).name
+        message = "The PO " + name + " is canceled by sync as its partner FO " + so_info.name + " got canceled at " + source
+        self._logger.info(message)
+        return message
 
     def on_create(self, cr, uid, id, values, context=None):
         if context is None \

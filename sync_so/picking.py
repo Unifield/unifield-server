@@ -368,7 +368,11 @@ class stock_picking(osv.osv):
             if in_id:
                 # Cancel the IN object
                 wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_cancel', cr)
-                return True
+                
+                name = self.browse(cr, uid, in_id, context).name
+                message = "The IN " + name + " is canceled by sync as its partner " + out_info.name + " got canceled at " + source
+                self._logger.info(message)
+                return message                
             else:
                 # UTP-872: If there is no IN corresponding to the give OUT/SHIP/PICK, then check if the PO has any line
                 # if it has no line, then no need to raise error, because PO without line does not generate any IN
@@ -408,7 +412,11 @@ class stock_picking(osv.osv):
                 # Cancel the IN object to have all lines cancelled, but the IN object remained as closed, so the update of state is done right after
                 wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_cancel', cr)
                 self.write(cr, uid, in_id, {'state': 'done'}, context) # UTP-872: reset state of the IN to become closed
-                return True
+                
+                name = self.browse(cr, uid, in_id, context).name
+                message = "The IN " + name + " is canceled by sync as its partner " + out_info.name + " got canceled at " + source
+                self._logger.info(message)
+                return message                
             else:
                 po = po_obj.browse(cr, uid, [po_id], context=context)[0]
                 if len(po.order_line) == 0:
@@ -498,7 +506,7 @@ class stock_picking(osv.osv):
                 # set the Shipment to become delivered
                 context['InShipOut'] = "" # ask the PACK object not to log (model stock.picking), because it is logged in SHIP
                 shipment_obj.set_delivered(cr, uid, ship_ids, context=context)
-                message = "The shipment " + out_doc_name + " has been well delivered to its partner."
+                message = "The shipment " + out_doc_name + " has been well delivered to its partner " + source + ": " + out_info.name
                 shipment_obj.write(cr, uid, ship_ids, {'state': 'delivered',}, context=context) # trigger an on_change in SHIP 
             else:
                 ship_ids = shipment_obj.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'delivered')], context=context)
@@ -516,7 +524,7 @@ class stock_picking(osv.osv):
                 # set the Shipment to become delivered
                 context['InShipOut'] = "OUT" # asking OUT object to be logged (model stock.picking)
                 self.set_delivered(cr, uid, ship_ids, context=context)
-                message = "The OUTcoming " + out_doc_name + " has been well delivered to its partner."
+                message = "The OUTcoming " + out_doc_name + " has been well delivered to its partner " + source + ": " + out_info.name 
             else:
                 ship_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'delivered')], context=context)
                 if ship_ids:
