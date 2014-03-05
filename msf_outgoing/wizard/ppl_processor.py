@@ -24,6 +24,9 @@ from osv import osv
 
 from tools.translate import _
 
+import decimal_precision as dp
+
+
 class ppl_processor(osv.osv):
     """
     Wizard to process the Pre-Packing List
@@ -361,6 +364,12 @@ class ppl_move_processor(osv.osv):
 
         return res
 
+    def _get_move_info(self, cr, uid, ids, field_name, args, context=None):
+        return super(ppl_move_processor, self)._get_move_info(cr, uid, ids, field_name, args, context=context)
+
+    def _get_product_info(self, cr, uid, ids, field_name, args, context=None):
+        return super(ppl_move_processor, self)._get_product_info(cr, uid, ids, field_name, args, context=context)
+
     _columns = {
         'wizard_id': fields.many2one(
             'ppl.processor',
@@ -408,6 +417,190 @@ class ppl_move_processor(osv.osv):
         'pack_id': fields.many2one(
             'ppl.family.processor',
             string='Pack',
+        ),
+        'ordered_product_id': fields.function(
+            _get_move_info,
+            method=True,
+            string='Ordered product',
+            type='many2one',
+            relation='product.product',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Expected product to receive",
+            multi='move_info',
+        ),
+        'ordered_quantity': fields.float(
+            string='Ordered quantity',
+            digits_compute=dp.get_precision('Product UoM'),
+            required=True,
+            type='float',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Expected quantity to receive",
+        ),
+        'ordered_uom_id': fields.function(
+            _get_move_info,
+            method=True,
+            string='Ordered UoM',
+            type='many2one',
+            relation='product.uom',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Expected UoM to receive",
+            multi='move_info',
+        ),
+        'ordered_uom_category': fields.function(
+            _get_move_info,
+            method=True,
+            string='Ordered UoM category',
+            type='many2one',
+            relation='product.uom.categ',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Category of the expected UoM to receive",
+            multi='move_info'
+        ),
+        'location_id': fields.function(
+            _get_move_info,
+            method=True,
+            string='Location',
+            type='many2one',
+            relation='stock.location',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Source location of the move",
+            multi='move_info'
+        ),
+        'location_supplier_customer_mem_out': fields.function(
+            _get_move_info,
+            method=True,
+            string='Location Supplier Customer',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            multi='move_info',
+            help="",
+        ),
+        'type_check': fields.function(
+            _get_move_info,
+            method=True,
+            string='Picking Type Check',
+            type='char',
+            size=32,
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Return the type of the picking",
+            multi='move_info',
+        ),
+        'lot_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='B.Num',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="A batch number is required on this line",
+        ),
+        'exp_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='Exp.',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="An expiry date is required on this line",
+        ),
+        'asset_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='Asset',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="An asset is required on this line",
+        ),
+        'kit_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='Kit',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="A kit is required on this line",
+        ),
+        'kc_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='KC',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="Ticked if the product is a Heat Sensitive Item",
+        ),
+        'ssl_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='SSL',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="Ticked if the product is a Short Shelf Life product",
+        ),
+        'dg_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='DG',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="Ticked if the product is a Dangerous Good",
+        ),
+        'np_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='NP',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="Ticked if the product is a Narcotic",
         ),
     }
 

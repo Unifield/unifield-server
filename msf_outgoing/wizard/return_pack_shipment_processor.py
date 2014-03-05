@@ -22,6 +22,7 @@
 from osv import fields
 from osv import osv
 
+from tools.translate import _
 
 class return_pack_shipment_processor(osv.osv):
     """
@@ -79,12 +80,6 @@ class return_pack_shipment_processor(osv.osv):
                     if not (seq[0] > seqb[1]):
                         overlap_ids.append(seq[2])
 
-            if not sequences:
-                raise osv.except_osv(
-                    _('Processing Erro'),
-                    _('You must enter the number of packs you want to return before performing the return.'),
-                )
-
             if overlap_ids:
                 family_obj.write(cr, uid, overlap_ids, {'integrity_status': 'overlap'}, context=context)
 
@@ -92,7 +87,7 @@ class return_pack_shipment_processor(osv.osv):
                 family_obj.write(cr, uid, to_smaller_ids, {'integrity_status': 'to_smaller_than_from'}, context=context)
 
             if out_of_range_ids:
-                family_obj.write(cr, uid, to_smaller_ids, {'integrity_status': 'seq_out_of_range'}, context=context)
+                family_obj.write(cr, uid, out_of_range_ids, {'integrity_status': 'seq_out_of_range'}, context=context)
 
             if overlap_ids or to_smaller_ids or out_of_range_ids:
                 return {
@@ -105,7 +100,13 @@ class return_pack_shipment_processor(osv.osv):
                     'context': context,
                 }
 
-        return shipment_obj.do_return_pack_from_shipment(cr, uid, ids, context=context)
+            if not sequences:
+                raise osv.except_osv(
+                    _('Processing Error'),
+                    _('You must enter the number of packs you want to return before performing the return.'),
+                )
+
+        return shipment_obj.do_return_packs_from_shipment(cr, uid, ids, context=context)
 
 return_pack_shipment_processor()
 
@@ -118,6 +119,28 @@ class return_pack_shipment_family_processor(osv.osv):
     _inherit = 'shipment.family.processor'
     _description = 'Family to be returned from shipment'
 
+    def _get_pack_info(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Set information on line with pack information
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            num_of_packs = line.return_to - line.return_from + 1
+            res[line.id] = {
+                'volume': (line.length * line.width * line.height * float(num_of_packs)) / 100.0,
+                'num_of_packs': num_of_packs,
+                'selected_weight': line.weight * line.selected_number,
+            }
+
+        return res
+
     _columns = {
         'wizard_id': fields.many2one(
             'return.pack.shipment.processor',
@@ -129,6 +152,44 @@ class return_pack_shipment_family_processor(osv.osv):
         ),
         'return_from': fields.integer(string='Return from'),
         'return_to': fields.integer(string='Return to'),
+        'volume': fields.function(
+            _get_pack_info,
+            method=True,
+            string='Volume [dm³]',
+            type='float',
+            store=False,
+            readonly=True,
+            multi='pack_info',
+        ),
+        'num_of_packs': fields.function(
+            _get_pack_info,
+            method=True,
+            string='# Packs',
+            type='integer',
+            store=False,
+            readonly=True,
+            multi='pack_info',
+        ),
+        'selected_weight': fields.function(
+            _get_pack_info,
+            method=True,
+            string='Selected Weight',
+            type='float',
+            store=False,
+            readonly=True,
+            multi='pack_info',
+        ),
+        'integrity_status': fields.selection(
+            string=' ',
+            selection=[
+                ('empty', ''),
+                ('ok', 'Ok'),
+                ('to_smaller_than_from', 'To value must be greater or equal to From value'),
+                ('overlap', 'The sequence overlaps previous one'),
+                ('seq_out_of_range', 'Selected Sequence is out of range'),
+            ],
+            readonly=True,
+        ),
     }
 
 return_pack_shipment_family_processor()

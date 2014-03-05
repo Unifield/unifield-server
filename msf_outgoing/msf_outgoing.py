@@ -764,23 +764,18 @@ class shipment(osv.osv):
                 ], context=context)
 
                 stay = [(family.from_pack, family.to_pack)]
+
                 if family.to_pack >= family.return_to:
                     if family.return_from == family.from_pack:
-                        if family.return_to == family.to_pack:
-                            # all packs for this sequnce are sent back - simply remove it
-                            break
-                        else:
+                        if family.return_to != family.to_pack:
                             stay.append((family.return_to + 1, family.to_pack))
-                            break
                     elif family.return_to == family.to_pack:
                         # Do not start at beginning, but same end
                         stay.append((family.from_pack, family.return_from - 1))
-                        break
                     else:
                         # In the middle, two now tuple in stay
                         stay.append((family.from_pack, family.return_from - 1))
                         stay.append((family.return_to + 1, family.to_pack))
-                        break
 
                 # Old one is always removed
                 stay.pop(-1)
@@ -811,57 +806,57 @@ class shipment(osv.osv):
 
                         move_obj.copy(cr, uid, move.id, move_values, context=context)
 
-                        # Get the back_to_draft sequences
-                        selected_number = family.return_to - family.return_from + 1
-                        # Quantity to return
-                        new_qty = selected_number * move.qty_per_pack
-                        # values
-                        move_values = {
-                            'from_pack': family.return_from,
-                            'to_pack': family.return_to,
-                            'line_number': family.line_number,
-                            'product_qty': new_qty,
-                            'location_id': move.picking_id.warehouse_id.lot_distribution_id.id,
-                            'location_dest_id': move.picking_id.warehouse_id.lot_dispatch_id.id,
-                            'state': 'done',
-                        }
-
-                        # Create a back move in the packing object
-                        # Distribution -> Dispatch
-                        context['non_stock_noupdate'] = True
-                        move_obj.copy(cr, uid, move.id, move_values, context=context)
-                        context['non_stock_noupdate'] = False
-
-                        move_data[move.id]['partial_qty'] += new_qty
-
-                        # Create the draft move
-                        # Dispatch -> Distribution
-                        # Picking_id = draft_picking
-                        move_values.update({
-                            'location_id': move.picking_id.warehouse_id.lot_dispatch_id.id,
-                            'location_dest_id': move.picking_id.warehouse_id.lot_distribution_id.id,
-                            'picking_id': draft_packing.id,
-                            'state': 'assigned',
-
-                        })
-                        context['non_stock_noupdate'] = True
-                        move_obj.copy(cr, uid, move.id, move_values, context=context)
-                        context['non_stock_noupdate'] = False
-
-                    for move_vals in move_data:
-                        if round(move_vals['initial'], 14) != round(move_vals['partial_qty'], 14):
-                            raise osv.except_osv(
-                                _('Processing Error'),
-                                _('The sum of the processed quantities is not equal to the sum of the initial quantities'),
-                            )
-
+                    # Get the back_to_draft sequences
+                    selected_number = family.return_to - family.return_from + 1
+                    # Quantity to return
+                    new_qty = selected_number * move.qty_per_pack
+                    # values
                     move_values = {
-                        'product_qty': 0.00,
+                        'from_pack': family.return_from,
+                        'to_pack': family.return_to,
+                        'line_number': move.line_number,
+                        'product_qty': new_qty,
+                        'location_id': move.picking_id.warehouse_id.lot_distribution_id.id,
+                        'location_dest_id': move.picking_id.warehouse_id.lot_dispatch_id.id,
                         'state': 'done',
-                        'from_pack': 0,
-                        'to_pack': 0,
                     }
-                    move_obj.write(cr, uid, [move.id], move_values, context=context)
+
+                    # Create a back move in the packing object
+                    # Distribution -> Dispatch
+                    context['non_stock_noupdate'] = True
+                    move_obj.copy(cr, uid, move.id, move_values, context=context)
+                    context['non_stock_noupdate'] = False
+
+                    move_data[move.id]['partial_qty'] += new_qty
+
+                    # Create the draft move
+                    # Dispatch -> Distribution
+                    # Picking_id = draft_picking
+                    move_values.update({
+                        'location_id': move.picking_id.warehouse_id.lot_dispatch_id.id,
+                        'location_dest_id': move.picking_id.warehouse_id.lot_distribution_id.id,
+                        'picking_id': draft_packing.id,
+                        'state': 'assigned',
+                    })
+
+                    context['non_stock_noupdate'] = True
+                    move_obj.copy(cr, uid, move.id, move_values, context=context)
+                    context['non_stock_noupdate'] = False
+
+                for move_vals in move_data.values():
+                    if round(move_vals['initial'], 14) != round(move_vals['partial_qty'], 14):
+                        raise osv.except_osv(
+                            _('Processing Error'),
+                            _('The sum of the processed quantities is not equal to the sum of the initial quantities'),
+                        )
+
+                move_values = {
+                    'product_qty': 0.00,
+                    'state': 'done',
+                    'from_pack': 0,
+                    'to_pack': 0,
+                }
+                move_obj.write(cr, uid, [move.id], move_values, context=context)
 
             # log corresponding action
             shipment_log_msg = _('Packs from the shipped Shipment (%s) have been returned to %s location.') % (shipment.name, _('Dispatch'))

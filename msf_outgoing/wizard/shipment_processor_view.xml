@@ -53,7 +53,7 @@
         
         <record id="shipment_additional_line_processor_tree_view" model="ir.ui.view">
             <field name="name">shipment.additional.line.processor.tree.view</field>
-            <field name="model">shipment.addition.line.processor</field>
+            <field name="model">shipment.additional.line.processor</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                     <tree 
