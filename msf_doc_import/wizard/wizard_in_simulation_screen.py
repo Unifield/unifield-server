@@ -812,13 +812,13 @@ class wizard_import_in_simulation_screen(osv.osv):
 
         context['active_id'] = simu_id.picking_id.id
         context['active_ids'] = [simu_id.picking_id.id]
-        partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, {'date': simu_id.picking_id.date}, context=context)
+        partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': simu_id.picking_id.id, 'date': simu_id.picking_id.date}, context=context)
         line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('del', 'error', 'new')), ('type_change', '=', False)], context=context)
 
         mem_move_ids, move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, context=context)
 
         # delete extra lines
-        del_lines = mem_move_obj.search(cr, uid, [('wizard_pick_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)], context=context)
+        del_lines = mem_move_obj.search(cr, uid, [('wizard_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)], context=context)
         mem_move_obj.unlink(cr, uid, del_lines, context=context)
 
         self.pool.get('stock.picking').write(cr, uid, [simu_id.picking_id.id], {'last_imported_filename': simu_id.filename,
@@ -826,7 +826,7 @@ class wizard_import_in_simulation_screen(osv.osv):
 
         context['from_simu_screen'] = True
         return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.partial.picking',
+                'res_model': 'stock.incoming.processor',
                 'res_id': partial_id,
                 'view_type': 'form',
                 'view_mode': 'form',
@@ -1212,9 +1212,10 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'move_id': move.id,
                     'prodlot_id': line.imp_batch_id.id,
                     'product_id': line.imp_product_id.id,
-                    'product_uom': line.imp_uom_id.id,
+                    'uom_id': line.imp_uom_id.id,
+                    'ordered_quantity': move.product_qty,
                     'quantity': line.imp_product_qty,
-                    'wizard_pick_id': partial_id}
+                    'wizard_id': partial_id}
 
             mem_move_ids.append(move_obj.create(cr, uid, vals, context=context))
             if move:
