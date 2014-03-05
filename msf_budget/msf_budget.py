@@ -182,6 +182,21 @@ class msf_budget(osv.osv):
         self._check_parent(cr, uid, vals, context=context)
         return res
 
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Goal is to update parent budget regarding these criteria:
+          - context is synchronization
+          - state is in vals
+          - state is different from draft (validated or done)
+        """
+        if context is None:
+            context = {}
+        res = super(msf_budget, self).write(cr, uid, ids, vals, context=context)
+        if context.get('sync_update_execution', False) and vals.get('state', False) and vals.get('state') != 'draft':
+            # Update parent budget
+            self.update_parent_budgets(cr, uid, ids, context=context)
+        return res
+
     def update(self, cr, uid, ids, context=None):
         """
         Update given budget. But only update view one.
