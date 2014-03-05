@@ -1630,11 +1630,6 @@ class orm_template(object):
         model = True
         sql_res = False
         parent_view_model = None
-        inherit_models = [self._name]
-        if hasattr(self, '_inherit'):
-            inherit_models.extend([x for x in self._inherit.split(',') if x not in inherit_models])
-        inherit_models = tuple(inherit_models)
-        apply_models = []
         while ok:
             view_ref = context.get(view_type + '_view_ref', False)
             if view_ref and not view_id:
@@ -1652,22 +1647,18 @@ class orm_template(object):
                     query += " AND model = %s"
                     params += (self._name,)
                 cr.execute(query, params)
-                sql_res = cr.fetchone()
             else:
-                for model in inherit_models:
-                    apply_models.append(model)
-                    cr.execute('''SELECT
-                            arch,name,field_parent,id,type,inherit_id,model
-                        FROM
-                            ir_ui_view
-                        WHERE
-                            model = %s AND
-                            type=%s AND
-                            inherit_id IS NULL
-                        ORDER BY priority''', (model, view_type))
-                    sql_res = cr.fetchone()
-                    if sql_res:
-                        break
+                cr.execute('''SELECT
+                        arch,name,field_parent,id,type,inherit_id,model
+                    FROM
+                        ir_ui_view
+                    WHERE
+                        model = %s AND
+                        type=%s AND
+                        inherit_id IS NULL
+                    ORDER BY priority''', (self._name, view_type))
+
+            sql_res = cr.fetchone()
 
             if not sql_res:
                 break
@@ -1684,15 +1675,13 @@ class orm_template(object):
             result['arch'] = sql_res[0]
 
             # Reverse the search on models to apply view inheritance in a good way
-            apply_models.reverse()
             def _inherit_apply_rec(result, inherit_id):
-                for model in apply_models:
-                    # get all views which inherit from (ie modify) this view
-                    cr.execute('select arch,id from ir_ui_view where inherit_id=%s and model = %s order by priority', (inherit_id, model))
-                    sql_inherit = cr.fetchall()
-                    for (inherit, id) in sql_inherit:
-                        result = _inherit_apply(result, inherit, id)
-                        result = _inherit_apply_rec(result, id)
+                # get all views which inherit from (ie modify) this view
+                cr.execute('select arch,id from ir_ui_view where inherit_id=%s and model = %s order by priority', (inherit_id, self._name))
+                sql_inherit = cr.fetchall()
+                for (inherit, id) in sql_inherit:
+                    result = _inherit_apply(result, inherit, id)
+                    result = _inherit_apply_rec(result, id)
                 return result
 
             inherit_result = etree.fromstring(encode(result['arch']))
@@ -3766,15 +3755,7 @@ class orm(orm_template):
 
         done = []
 
-        # Call the _store_get_values() for parent object
-        inherit_obj = []
-        if hasattr(self, '_inherit') and isinstance(self._inherit, str):
-            inherit_obj = [self._inherit]
-        for inherit in inherit_obj:
-            for r in self.pool.get(inherit)._store_get_values(cr, uid, ids, keys, context):
-                if r[1] == self._name:
-                    result.append(r)
-        result += self._store_get_values(cr, uid, ids, keys, context)
+        result = self._store_get_values(cr, uid, ids, keys, context)
         result.sort()
         for order, object, ids, fields2 in result:
             if bypass and context.get('bypass_store_function') and (object, fields2) in context['bypass_store_function']:
@@ -3969,7 +3950,7 @@ class orm(orm_template):
         # e.g.: http://pastie.org/1222060
         result = {}
         fncts = self.pool._store_function.get(self._name, [])
-            
+
         for fnct in range(len(fncts)):
             if fncts[fnct][3]:
                 ok = False
