@@ -23,6 +23,8 @@ from osv import fields
 from osv import osv
 from tools.translate import _
 
+from msf_outgoing import INTEGRITY_STATUS_SELECTION
+
 
 class stock_incoming_processor(osv.osv):
     """
@@ -287,6 +289,15 @@ class stock_move_in_processor(osv.osv):
     _inherit = 'stock.move.processor'
     _description = 'Wizard lines for incoming shipment processing'
 
+    def _get_move_info(self, cr, uid, ids, field_name, args, context=None):
+        return super(stock_move_in_processor, self)._get_move_info(cr, uid, ids, field_name, args, context=context)
+
+    def _get_product_info(self, cr, uid, ids, field_name, args, context=None):
+        return super(stock_move_in_processor, self)._get_product_info(cr, uid, ids, field_name, args, context=context)
+
+    def _get_integrity_status(self, cr, uid, ids, field_name, args, context=None):
+        return super(stock_move_in_processor, self)._get_integrity_status(cr, uid, ids, field_name, args, context=context)
+
     _columns = {
         # Parent wizard
         'wizard_id': fields.many2one(
@@ -298,11 +309,220 @@ class stock_move_in_processor(osv.osv):
             ondelete='cascade',
         ),
         'state': fields.char(size=32, string='State', readonly=True),
+        'ordered_product_id': fields.function(
+            _get_move_info,
+            method=True,
+            string='Ordered product',
+            type='many2one',
+            relation='product.product',
+            store={
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Expected product to receive",
+            multi='move_info',
+        ),
+        'ordered_uom_id': fields.function(
+            _get_move_info,
+            method=True,
+            string='Ordered UoM',
+            type='many2one',
+            relation='product.uom',
+            store={
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Expected UoM to receive",
+            multi='move_info',
+        ),
+        'ordered_uom_category': fields.function(
+            _get_move_info,
+            method=True,
+            string='Ordered UoM category',
+            type='many2one',
+            relation='product.uom.categ',
+            store={
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Category of the expected UoM to receive",
+            multi='move_info'
+        ),
+        'location_id': fields.function(
+            _get_move_info,
+            method=True,
+            string='Location',
+            type='many2one',
+            relation='stock.location',
+            store={
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Source location of the move",
+            multi='move_info'
+        ),
+        'location_supplier_customer_mem_out': fields.function(
+            _get_move_info,
+            method=True,
+            string='Location Supplier Customer',
+            type='boolean',
+            store={
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            multi='move_info',
+            help="",
+        ),
+        'integrity_status': fields.function(
+            _get_integrity_status,
+            method=True,
+            string='',
+            type='selection',
+            selection=INTEGRITY_STATUS_SELECTION,
+            store={
+                'stock.move.in.processor': (
+                    lambda self, cr, uid, ids, c=None: ids,
+                    ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date'],
+                    20
+                ),
+            },
+            readonly=True,
+            help="Integrity status (e.g: check if a batch is set for a line with a batch mandatory product...)",
+        ),
+        'type_check': fields.function(
+            _get_move_info,
+            method=True,
+            string='Picking Type Check',
+            type='char',
+            size=32,
+            store={
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Return the type of the picking",
+            multi='move_info',
+        ),
+        'lot_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='B.Num',
+            type='boolean',
+            store={
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="A batch number is required on this line",
+        ),
+        'exp_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='Exp.',
+            type='boolean',
+            store={
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="An expiry date is required on this line",
+        ),
+        'asset_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='Asset',
+            type='boolean',
+            store={
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="An asset is required on this line",
+        ),
+        'kit_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='Kit',
+            type='boolean',
+            store={
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="A kit is required on this line",
+        ),
+        'kc_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='KC',
+            type='boolean',
+            store={
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="Ticked if the product is a Heat Sensitive Item",
+        ),
+        'ssl_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='SSL',
+            type='boolean',
+            store={
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="Ticked if the product is a Short Shelf Life product",
+        ),
+        'dg_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='DG',
+            type='boolean',
+            store={
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="Ticked if the product is a Dangerous Good",
+        ),
+        'np_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='NP',
+            type='boolean',
+            store={
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="Ticked if the product is a Narcotic",
+        ),
     }
 
     """
     Model methods
     """
+    def create(self, cr, uid, vals, context=None):
+        """
+        Add default values for cost and currency if not set in vals
+        """
+        # Objects
+        product_obj = self.pool.get('product.product')
+        user_obj = self.pool.get('res.users')
+
+        if context is None:
+            context = {}
+
+        if vals.get('product_id', False):
+            if not vals.get('cost', False):
+                price = product_obj.browse(cr, uid, vals['product_id'], context=context).standard_price
+                vals['cost'] = price
+            if not vals.get('currency', False):
+                vals['currency'] = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
+
+        return super(stock_move_in_processor, self).create(cr, uid, vals, context=context)
+
     def _get_line_data(self, cr, uid, wizard=False, move=False, context=None):
         """
         Update the unit price and the currency of the move line wizard if the

@@ -507,6 +507,7 @@ class shipment(osv.osv):
         return {
             'type': 'ir.actions.act_window',
             'res_model': proc_obj._name,
+            'name': _('Return Packs'),
             'view_type': 'form',
             'view_mode': 'form',
             'res_id': processor_id,
@@ -542,6 +543,7 @@ class shipment(osv.osv):
         shipment_ids = []
 
         for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
+            draft_picking = None
             shipment = wizard.shipment_id
             shipment_ids.append(shipment.id)
             # log flag - res.log for draft shipment is displayed only one time for each draft shipment
@@ -549,6 +551,7 @@ class shipment(osv.osv):
 
             for family in wizard.family_ids:
                 picking = family.draft_packing_id
+                draft_picking = family.ppl_id and family.ppl_id.previous_step_id and family.ppl_id.previous_step_id.backorder_id or False
 
                 # Update initial move
                 if family.selected_number == int(family.num_of_packs):
@@ -569,7 +572,7 @@ class shipment(osv.osv):
                 # Update the moves, decrease the quantities
                 for move in move_obj.browse(cr, uid, move_ids, context=context):
                     """
-                    Stock moves ar not canceled as for PPL return process
+                    Stock moves are not canceled as for PPL return process
                     because this represents a draft packing, meaning some shipment could be canceled and
                     return to this stock move
                     """
@@ -618,7 +621,8 @@ class shipment(osv.osv):
                 'view_id': res,
                 'picking_type': 'picking.ticket'
             })
-            picking_obj.log(cr, uid, picking.id, _("The corresponding Draft Picking Ticket (%s) has been updated.") % (picking.name,), context=context)
+            if draft_picking:
+                picking_obj.log(cr, uid, draft_picking.id, _("The corresponding Draft Picking Ticket (%s) has been updated.") % (draft_picking.name,), context=context)
 
         # Call complete_finished on the shipment object
         # If everything is allright (all draft packing are finished) the shipment is done also
@@ -631,7 +635,7 @@ class shipment(osv.osv):
             'view_id': [view_id and view_id[1] or False],
             'view_type': 'form',
             'res_model': 'stock.picking',
-            'res_id': picking.id,
+            'res_id': draft_picking.id,
             'type': 'ir.actions.act_window',
             'target': 'crush',
             'context': context
@@ -662,6 +666,7 @@ class shipment(osv.osv):
         return {
             'type': 'ir.actions.act_window',
             'res_model': proc_obj._name,
+            'name': _('Return Packs from Shipment'),
             'view_type': 'form',
             'view_mode': 'form',
             'res_id': processor_id,
@@ -764,23 +769,18 @@ class shipment(osv.osv):
                 ], context=context)
 
                 stay = [(family.from_pack, family.to_pack)]
+
                 if family.to_pack >= family.return_to:
                     if family.return_from == family.from_pack:
-                        if family.return_to == family.to_pack:
-                            # all packs for this sequnce are sent back - simply remove it
-                            break
-                        else:
+                        if family.return_to != family.to_pack:
                             stay.append((family.return_to + 1, family.to_pack))
-                            break
                     elif family.return_to == family.to_pack:
                         # Do not start at beginning, but same end
                         stay.append((family.from_pack, family.return_from - 1))
-                        break
                     else:
                         # In the middle, two now tuple in stay
                         stay.append((family.from_pack, family.return_from - 1))
                         stay.append((family.return_to + 1, family.to_pack))
-                        break
 
                 # Old one is always removed
                 stay.pop(-1)
@@ -811,57 +811,57 @@ class shipment(osv.osv):
 
                         move_obj.copy(cr, uid, move.id, move_values, context=context)
 
-                        # Get the back_to_draft sequences
-                        selected_number = family.return_to - family.return_from + 1
-                        # Quantity to return
-                        new_qty = selected_number * move.qty_per_pack
-                        # values
-                        move_values = {
-                            'from_pack': family.return_from,
-                            'to_pack': family.return_to,
-                            'line_number': family.line_number,
-                            'product_qty': new_qty,
-                            'location_id': move.picking_id.warehouse_id.lot_distribution_id.id,
-                            'location_dest_id': move.picking_id.warehouse_id.lot_dispatch_id.id,
-                            'state': 'done',
-                        }
-
-                        # Create a back move in the packing object
-                        # Distribution -> Dispatch
-                        context['non_stock_noupdate'] = True
-                        move_obj.copy(cr, uid, move.id, move_values, context=context)
-                        context['non_stock_noupdate'] = False
-
-                        move_data[move.id]['partial_qty'] += new_qty
-
-                        # Create the draft move
-                        # Dispatch -> Distribution
-                        # Picking_id = draft_picking
-                        move_values.update({
-                            'location_id': move.picking_id.warehouse_id.lot_dispatch_id.id,
-                            'location_dest_id': move.picking_id.warehouse_id.lot_distribution_id.id,
-                            'picking_id': draft_packing.id,
-                            'state': 'assigned',
-
-                        })
-                        context['non_stock_noupdate'] = True
-                        move_obj.copy(cr, uid, move.id, move_values, context=context)
-                        context['non_stock_noupdate'] = False
-
-                    for move_vals in move_data:
-                        if round(move_vals['initial'], 14) != round(move_vals['partial_qty'], 14):
-                            raise osv.except_osv(
-                                _('Processing Error'),
-                                _('The sum of the processed quantities is not equal to the sum of the initial quantities'),
-                            )
-
+                    # Get the back_to_draft sequences
+                    selected_number = family.return_to - family.return_from + 1
+                    # Quantity to return
+                    new_qty = selected_number * move.qty_per_pack
+                    # values
                     move_values = {
-                        'product_qty': 0.00,
+                        'from_pack': family.return_from,
+                        'to_pack': family.return_to,
+                        'line_number': move.line_number,
+                        'product_qty': new_qty,
+                        'location_id': move.picking_id.warehouse_id.lot_distribution_id.id,
+                        'location_dest_id': move.picking_id.warehouse_id.lot_dispatch_id.id,
                         'state': 'done',
-                        'from_pack': 0,
-                        'to_pack': 0,
                     }
-                    move_obj.write(cr, uid, [move.id], move_values, context=context)
+
+                    # Create a back move in the packing object
+                    # Distribution -> Dispatch
+                    context['non_stock_noupdate'] = True
+                    move_obj.copy(cr, uid, move.id, move_values, context=context)
+                    context['non_stock_noupdate'] = False
+
+                    move_data[move.id]['partial_qty'] += new_qty
+
+                    # Create the draft move
+                    # Dispatch -> Distribution
+                    # Picking_id = draft_picking
+                    move_values.update({
+                        'location_id': move.picking_id.warehouse_id.lot_dispatch_id.id,
+                        'location_dest_id': move.picking_id.warehouse_id.lot_distribution_id.id,
+                        'picking_id': draft_packing.id,
+                        'state': 'assigned',
+                    })
+
+                    context['non_stock_noupdate'] = True
+                    move_obj.copy(cr, uid, move.id, move_values, context=context)
+                    context['non_stock_noupdate'] = False
+
+                for move_vals in move_data.values():
+                    if round(move_vals['initial'], 14) != round(move_vals['partial_qty'], 14):
+                        raise osv.except_osv(
+                            _('Processing Error'),
+                            _('The sum of the processed quantities is not equal to the sum of the initial quantities'),
+                        )
+
+                move_values = {
+                    'product_qty': 0.00,
+                    'state': 'done',
+                    'from_pack': 0,
+                    'to_pack': 0,
+                }
+                move_obj.write(cr, uid, [move.id], move_values, context=context)
 
             # log corresponding action
             shipment_log_msg = _('Packs from the shipped Shipment (%s) have been returned to %s location.') % (shipment.name, _('Dispatch'))
@@ -2301,6 +2301,9 @@ class stock_picking(osv.osv):
                 shipment_id = context['shipment_id']
 
                 for family in ship_proc.family_ids:
+                    if family.selected_number == 0.00:
+                        continue
+
                     selected_from_pack = family.to_pack - family.selected_number + 1
 
                     if family.selected_number == int(family.num_of_packs):
@@ -3111,9 +3114,8 @@ class stock_picking(osv.osv):
             wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
 
             # if the flow type is in quick mode, we perform the ppl steps automatically
-            # TODO: Treat the quick mode
-            if picking.flow_type == 'quick':
-                proc_obj.quick_mode(cr, uid, new_ppl, context=context)
+            if picking.flow_type == 'quick' and new_ppl:
+                return self.quick_mode(cr, uid, new_ppl.id, context=context)
 
         data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')
@@ -3130,6 +3132,30 @@ class stock_picking(osv.osv):
                 'target': 'crush',
                 'context': context,
                 }
+
+    def quick_mode(self, cr, uid, ids, context=None):
+        """
+        Perform the PPL steps automatically
+
+        """
+        # Objects
+        proc_obj = self.pool.get('ppl.processor')
+
+        if context is None:
+            context = {}
+
+        if not isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        wizard_id = self.ppl(cr, uid, ids, context=context)['res_id']
+        proc_obj.do_ppl_step1(cr, uid, wizard_id, context=context)
+        return proc_obj.do_ppl_step2(cr, uid, wizard_id, context=context)
 
     def ppl(self, cr, uid, ids, context=None):
         """
