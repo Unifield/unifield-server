@@ -80,9 +80,10 @@
                     <field name="qty_per_pack" />
                     <field name="from_pack" />
                     <field name="to_pack" />
-                    <button name="split"
+                    <button name="open_split_wizard"
                             type="object"
                             icon="terp-stock_effects-object-colorize"
+                            string="Split"
                             />
                     <field name="lot_check" />
                     <field name="exp_check" />

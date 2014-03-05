@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2014 TeMPO Consulting, MSF
+#    Copyright (C) Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,92 +19,38 @@
 #
 ##############################################################################
 
-from osv import fields
-from osv import osv
+from osv import fields, osv
+from tools.translate import _
+import time
 
 import decimal_precision as dp
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
 
-
-class validate_picking_processor(osv.osv):
+class outgoing_delivery_processor(osv.osv):
     """
-    Wizard used to create a Packing List from a validate picking ticket
+    Outgoing delivery processing wizard
     """
-    _name = 'validate.picking.processor'
-    _inherit = 'stock.picking.processor'
-    _description = 'Wizard to process the second step of the P/P/S'
+    _name = 'outgoing.delivery.processor'
+    _inherit = 'internal.picking.processor'
+    _description = 'Wizard to process Outgoing Delivery'
 
     _columns = {
         'move_ids': fields.one2many(
-            'validate.move.processor',
+            'outgoing.delivery.move.processor',
             'wizard_id',
-            string='Moves to process',
+            string='Moves',
         ),
     }
 
     """
     Model methods
     """
-    def do_validate_picking(self, cr, uid, ids, context=None):
+    def do_partial(self, cr, uid, ids, context=None):
         """
-        Made some integrity checks and launch the do_validate_picking method
-        of the stock.picking object
+        Made some integrity check on lines and run the do_incoming_shipment of stock.picking
         """
         # Objects
         picking_obj = self.pool.get('stock.picking')
-        proc_line_obj = self.pool.get('validate.move.processor')
-
-        if context is None:
-            context = {}
-
-        to_unlink = []
-
-        for proc in self.browse(cr, uid, ids, context=context):
-            total_qty = 0.00
-
-            for line in proc.move_ids:
-                # if no quantity, don't process the move
-                if not line.quantity:
-                    to_unlink.append(line.id)
-                    continue
-
-                if line.integrity_status != 'empty':
-                    raise osv.except_osv(
-                        _('Processing Error'),
-                        _('Line %s: %s') % (line.line_number, proc_line_obj.get_selection(cr, uid, line, 'integrity_status'))
-                    )
-
-                # We cannot change the product on create picking wizard
-                if line.product_id.id != line.move_id.product_id.id:
-                    raise osv.except_osv(
-                        _('Processing Error'),
-                        _('Line %s: The product is wrong - Should be the same as initial move') % line.line_number,
-                    )
-
-                total_qty += line.quantity
-
-            if not total_qty:
-                raise osv.except_osv(
-                    _('Processing Error'),
-                    _('You have to enter the quantities you want to process before processing the move.'),
-                )
-
-        # Delete non-used lines
-        if to_unlink:
-            proc_line_obj.unlink(cr, uid, to_unlink, context=context)
-
-        self.integrity_check_prodlot(cr, uid, ids, context=context)
-        # call stock_picking method which returns action call
-
-        return picking_obj.do_validate_picking(cr, uid, ids, context=context)
-
-    def integrity_check_prodlot(self, cr, uid, ids, context=None):
-        """
-        Check if the processed quantities are not larger than the available quantities
-        """
-        # Objects
-        uom_obj = self.pool.get('product.uom')
-        lot_obj = self.pool.get('stock.production.lot')
 
         if context is None:
             context = {}
@@ -112,71 +58,120 @@ class validate_picking_processor(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        lot_integrity = {}
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        wizard_brw_list = self.browse(cr, uid, ids, context=context)
+
+        self.integrity_check_quantity(cr, uid, wizard_brw_list, context)
+        self.integrity_check_prodlot(cr, uid, wizard_brw_list, context=context)
+        # call stock_picking method which returns action call
+        res = picking_obj.do_partial_out(cr, uid, ids, context=context)
+        return self.return_hook_do_partial(cr, uid, ids, context=context, res=res)
+
+    def return_hook_do_partial(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the do_partial method from stock_override>wizard>stock_partial_picking.py>stock_partial_picking
+
+        - allow to modify returned value from button method
+        '''
+        # Objects
+        data_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        # Res
+        res = kwargs['res']
 
         for wizard in self.browse(cr, uid, ids, context=context):
-            for line in wizard.move_ids:
-                if line.prodlot_id:
-                    if line.location_id:
-                        context['location_id'] = line.location_id.id
-                    lot = lot_obj.browse(cr, uid, line.prodlot_id.id, context=context)
+            if wizard.register_a_claim:
+                view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
+                view_id = view_id and view_id[1] or False
+                # id of treated picking (can change according to backorder or not)
+                pick_id = res.values()[0]['delivered_picking']
+                return {'name': _('Delivery Orders'),
+                        'view_mode': 'form,tree',
+                        'view_id': [view_id],
+                        'view_type': 'form',
+                        'res_model': 'stock.picking',
+                        'res_id': pick_id,
+                        'type': 'ir.actions.act_window',
+                        'target': 'crash',
+                        'domain': '[]',
+                        'context': context}
 
-                if line.location_id and line.prodlot_id:
-                    lot_integrity.setdefault(line.prodlot_id.id, {})
-                    lot_integrity[line.prodlot_id.id].setdefault(line.location_id.id, 0.00)
+        return {'type': 'ir.actions.act_window_close'}
 
-                    if line.uom_id.id != line.prodlot_id.product_id.uom_id.id:
-                        product_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.prodlot_id.uom_id.id)
-                    else:
-                        product_qty = line.quantity
-
-                    lot_integrity[line.prodlot_id.id][line.location_id.id] += product_qty
-
-                    if lot.stock_available < product_qty:
-                        raise osv.except_osv(
-                            _('Processing Error'),
-                            _('Processing quantity %d %s for %s is larger than the available quantity in Batch Number %s (%d) !') \
-                            % (line.quantity, line.uom_id.name, line.product_id.name, lot.name, lot.stock_available)
-                        )
-
-        # Check batches quantity integrity
-        for lot in lot_integrity:
-            for location in lot_integrity[lot]:
-                tmp_lot = lot_obj.browse(cr, uid, lot, context={'location_id': location})
-                lot_qty = tmp_lot.stock_available
-                if lot_qty < lot_integrity[lot][location]:
-                    raise osv.except_osv(
-                        _('Processing Error'), \
-                        _('Processing quantity %d for %s is larger than the available quantity in Batch Number %s (%d) !')\
-                        % (lot_integrity[lot][location], tmp_lot.product_id.name, tmp_lot.name, lot_qty
-                    ))
-
-        return True
-
-validate_picking_processor()
+outgoing_delivery_processor()
 
 
-class validate_move_processor(osv.osv):
+class outgoing_delivery_move_processor(osv.osv):
     """
-    Wizard line used to create a Packing List from a validate picking ticket move
+    Outgoing delivery moves processing wizard
     """
-    _name = 'validate.move.processor'
-    _inherit = 'stock.move.processor'
-    _description = 'Wizard lines for validate picking processor'
-
-    def _get_move_info(self, cr, uid, ids, field_name, args, context=None):
-        return super(validate_move_processor, self)._get_move_info(cr, uid, ids, field_name, args, context=context)
-
-    def _get_product_info(self, cr, uid, ids, field_name, args, context=None):
-        return super(validate_move_processor, self)._get_product_info(cr, uid, ids, field_name, args, context=context)
+    _name = 'outgoing.delivery.move.processor'
+    _inherit = 'internal.move.processor'
+    _description = 'Wizard lines for outgoing delivery processor'
 
     def _get_integrity_status(self, cr, uid, ids, field_name, args, context=None):
-        return super(validate_move_processor, self)._get_integrity_status(cr, uid, ids, field_name, args, context=context)
+        """
+        Check the integrity of the processed move according to entered data
+        """
+        # Objects
+        uom_obj = self.pool.get('product.uom')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = super(outgoing_delivery_move_processor, self)._get_integrity_status(cr, uid, ids, field_name, args, context=context)
+
+        for line in self.browse(cr, uid, ids, context=context):
+            res_value = res[line.id]
+            move = line.move_id
+
+            if line.quantity <= 0.00:
+                continue
+
+            if line.uom_id.id != move.product_uom.id:
+                quantity = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.ordered_uom_id.id)
+            else:
+                quantity = line.quantity
+
+            if quantity > move.product_qty:
+                res_value = 'too_many'
+
+            res[line.id] = res_value
+
+        return res
+
+    def _get_move_info(self, cr, uid, ids, field_name, args, context=None):
+        return super(outgoing_delivery_move_processor, self)._get_move_info(cr, uid, ids, field_name, args, context=context)
+
+    def _get_product_info(self, cr, uid, ids, field_name, args, context=None):
+        return super(outgoing_delivery_move_processor, self)._get_product_info(cr, uid, ids, field_name, args, context=context)
 
     _columns = {
+        # Parent wizard
         'wizard_id': fields.many2one(
-            'validate.picking.processor',
-            string='Wizard ID',
+            'outgoing.delivery.processor',
+            string='Wizard',
             required=True,
             readonly=True,
             select=True,
@@ -189,7 +184,7 @@ class validate_move_processor(osv.osv):
             type='many2one',
             relation='product.product',
             store={
-                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Expected product to receive",
@@ -202,7 +197,7 @@ class validate_move_processor(osv.osv):
             type='many2one',
             relation='product.uom',
             store={
-                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Expected UoM to receive",
@@ -215,7 +210,7 @@ class validate_move_processor(osv.osv):
             type='many2one',
             relation='product.uom.categ',
             store={
-                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Category of the expected UoM to receive",
@@ -228,7 +223,7 @@ class validate_move_processor(osv.osv):
             type='many2one',
             relation='stock.location',
             store={
-                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Source location of the move",
@@ -240,7 +235,7 @@ class validate_move_processor(osv.osv):
             string='Location Supplier Customer',
             type='boolean',
             store={
-                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             multi='move_info',
@@ -253,7 +248,7 @@ class validate_move_processor(osv.osv):
             type='selection',
             selection=INTEGRITY_STATUS_SELECTION,
             store={
-                'validate.move.processor': (
+                'outgoing.delivery.move.processor': (
                     lambda self, cr, uid, ids, c=None: ids,
                     ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date'],
                     20
@@ -269,7 +264,7 @@ class validate_move_processor(osv.osv):
             type='char',
             size=32,
             store={
-                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Return the type of the picking",
@@ -281,7 +276,7 @@ class validate_move_processor(osv.osv):
             string='B.Num',
             type='boolean',
             store={
-                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -293,7 +288,7 @@ class validate_move_processor(osv.osv):
             string='Exp.',
             type='boolean',
             store={
-                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -305,7 +300,7 @@ class validate_move_processor(osv.osv):
             string='Asset',
             type='boolean',
             store={
-                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -317,7 +312,7 @@ class validate_move_processor(osv.osv):
             string='Kit',
             type='boolean',
             store={
-                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -329,7 +324,7 @@ class validate_move_processor(osv.osv):
             string='KC',
             type='boolean',
             store={
-                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -341,7 +336,7 @@ class validate_move_processor(osv.osv):
             string='SSL',
             type='boolean',
             store={
-                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -353,7 +348,7 @@ class validate_move_processor(osv.osv):
             string='DG',
             type='boolean',
             store={
-                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -365,7 +360,7 @@ class validate_move_processor(osv.osv):
             string='NP',
             type='boolean',
             store={
-                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -373,6 +368,5 @@ class validate_move_processor(osv.osv):
         ),
     }
 
-validate_move_processor()
+outgoing_delivery_move_processor()
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

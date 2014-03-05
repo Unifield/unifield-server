@@ -166,10 +166,10 @@ class wizard_import_in_simulation_screen(osv.osv):
         if context is None:
             context = {}
 
-        buttons = ['return_to_in', 
-                   'go_to_simulation', 
-                   'print_simulation_report', 
-                   'launch_import', 
+        buttons = ['return_to_in',
+                   'go_to_simulation',
+                   'print_simulation_report',
+                   'launch_import',
                    'simulate']
         if context.get('button') in buttons:
             return True
@@ -269,7 +269,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                 root = ET.fromstring(xml_file)
                 if root.tag != 'data':
                     raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
-                
+
             self.write(cr, uid, ids, {'state': 'simu_progress'}, context=context)
             cr.commit()
             new_thread = threading.Thread(target=self.simulate, args=(cr.dbname, uid, ids, context))
@@ -370,7 +370,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         Import the file and fill data in the simulation screen
         '''
         cr = pooler.get_db(dbname).cursor()
-        #cr = dbname
+        # cr = dbname
         try:
             wl_obj = self.pool.get('wizard.import.in.line.simulation.screen')
             prod_obj = self.pool.get('product.product')
@@ -434,7 +434,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                     SIMU_LINES[wiz.id][l_num][l_prod][l_uom][line.move_product_qty].append(line.id)
 
                 # Variables
-                lines_to_ignored = [] # Bad formatting lines
+                lines_to_ignored = []  # Bad formatting lines
                 file_format_errors = []
                 values_header_errors = []
                 values_line_errors = []
@@ -455,7 +455,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                 '''
                 # Check number of columns on lines
 
-                for x in xrange(1, NB_OF_HEADER_LINES+1):
+                for x in xrange(1, NB_OF_HEADER_LINES + 1):
                     if len(values.get(x, [])) != 2:
                         lines_to_ignored.append(x)
                         error_msg = _('Line %s of the imported file: The header \
@@ -463,13 +463,13 @@ class wizard_import_in_simulation_screen(osv.osv):
      B for value.') % x
                         file_format_errors.append(error_msg)
 
-                if len(values.get(NB_OF_HEADER_LINES+1, [])) != NB_LINES_COLUMNS:
+                if len(values.get(NB_OF_HEADER_LINES + 1, [])) != NB_LINES_COLUMNS:
                     error_msg = _('Line 8 of the Excel file: This line is \
     mandatory and must have %s columns. The values on this line must be the name \
     of the field for IN lines.') % NB_LINES_COLUMNS
                     file_format_errors.append(error_msg)
 
-                for x in xrange(NB_OF_HEADER_LINES+2, len(values)+1):
+                for x in xrange(NB_OF_HEADER_LINES + 2, len(values) + 1):
                     if len(values.get(x, [])) != NB_LINES_COLUMNS:
                         lines_to_ignored.append(x)
                         error_msg = _('Line %s of the imported file: The line \
@@ -536,7 +536,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                 header_values['message_esc'] = esc_message
 
                 '''
-                The header values have been imported, start the importation of 
+                The header values have been imported, start the importation of
                 lines
                 '''
                 file_lines = {}
@@ -544,7 +544,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                 new_in_lines = []
                 not_ok_file_lines = {}
                 # Loop on lines
-                for x in xrange(NB_OF_HEADER_LINES+2, len(values)+1):
+                for x in xrange(NB_OF_HEADER_LINES + 2, len(values) + 1):
                     # Check mandatory fields
                     not_ok = False
                     file_line_error = []
@@ -800,7 +800,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         Create memeory moves and return to the standard incoming processing wizard
         '''
         line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
-        mem_move_obj = self.pool.get('stock.move.memory.in')
+        mem_move_obj = self.pool.get('stock.move.in.processor')
 
         if context is None:
             context = {}
@@ -812,13 +812,13 @@ class wizard_import_in_simulation_screen(osv.osv):
 
         context['active_id'] = simu_id.picking_id.id
         context['active_ids'] = [simu_id.picking_id.id]
-        partial_id = self.pool.get('stock.partial.picking').create(cr, uid, {'date': simu_id.picking_id.date}, context=context)
+        partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': simu_id.picking_id.id, 'date': simu_id.picking_id.date}, context=context)
         line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('del', 'error', 'new')), ('type_change', '=', False)], context=context)
 
         mem_move_ids, move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, context=context)
 
         # delete extra lines
-        del_lines = mem_move_obj.search(cr, uid, [('wizard_pick_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)], context=context)
+        del_lines = mem_move_obj.search(cr, uid, [('wizard_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)], context=context)
         mem_move_obj.unlink(cr, uid, del_lines, context=context)
 
         self.pool.get('stock.picking').write(cr, uid, [simu_id.picking_id.id], {'last_imported_filename': simu_id.filename,
@@ -826,7 +826,7 @@ class wizard_import_in_simulation_screen(osv.osv):
 
         context['from_simu_screen'] = True
         return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.partial.picking',
+                'res_model': 'stock.incoming.processor',
                 'res_id': partial_id,
                 'view_type': 'form',
                 'view_mode': 'form',
@@ -874,7 +874,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                             'dg_check': product.dangerous_goods,
                             'np_check': product.narcotic,
                             'move_price_unit': price_unit,
-                            'move_currency_id': curr_id,}
+                            'move_currency_id': curr_id, }
 
         return res
 
@@ -917,10 +917,10 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         # Values from move line
         'move_id': fields.many2one('stock.move', string='Move', readonly=True),
         'move_product_id': fields.many2one('product.product', string='Product', readonly=True),
-        'move_product_qty': fields.float(digits=(16,2), string='Ordered Qty', readonly=True),
+        'move_product_qty': fields.float(digits=(16, 2), string='Ordered Qty', readonly=True),
         'move_uom_id': fields.many2one('product.uom', string='Ordered UoM', readonly=True),
         'move_price_unit': fields.function(_get_values, method=True, type='float', string='Price Unit',
-                                           digits=(16,2), store=True, readonly=True, multi='computed'),
+                                           digits=(16, 2), store=True, readonly=True, multi='computed'),
         'move_currency_id': fields.function(_get_values, method=True, type='many2one', relation='res.currency',
                                             string='Curr.', store=True, readonly=True, multi='computed'),
         # Values for the simu line
@@ -941,13 +941,13 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         # Values after import
         'imp_product_id': fields.many2one('product.product', string='Product', readonly=True),
         'imp_asset_id': fields.many2one('product.asset', string='Asset', readonly=True),
-        'imp_product_qty': fields.float(digits=(16,2), string='Qty to Process', readonly=True),
+        'imp_product_qty': fields.float(digits=(16, 2), string='Qty to Process', readonly=True),
         'imp_uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
-        'imp_price_unit': fields.float(digits=(16,2), string='Price Unit', readonly=True),
+        'imp_price_unit': fields.float(digits=(16, 2), string='Price Unit', readonly=True),
         'imp_cost': fields.function(_get_imported_values, method=True, type='float', multi='imported',
-                                    digits=(16,2), string='Cost', readonly=True, store=False),
+                                    digits=(16, 2), string='Cost', readonly=True, store=False),
         'discrepancy': fields.function(_get_imported_values, method=True, type='float', multi='imported',
-                                       digits=(16,2), string='Discre.', readonly=True, store=False),
+                                       digits=(16, 2), string='Discre.', readonly=True, store=False),
         'imp_currency_id': fields.many2one('res.currency', string='Curr.', readonly=True),
         'imp_batch_id': fields.many2one('stock.production.lot', string='Batch Number', readonly=True),
         'imp_exp_date': fields.date(string='Expiry date', readonly=True),
@@ -999,7 +999,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     prod_id = PRODUCT_CODE_ID.get(values[1])
 
                 if not prod_id and values[1]:
-                    prod_ids = prod_obj.search(cr, uid, [('default_code', '=', values[1]),], context=context)
+                    prod_ids = prod_obj.search(cr, uid, [('default_code', '=', values[1]), ], context=context)
                     if not prod_ids:
                         errors.append(_('Product not found in database'))
                     else:
@@ -1187,7 +1187,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         '''
         Create a stock.move.memory.in for each lines
         '''
-        move_obj = self.pool.get('stock.move.memory.in')
+        move_obj = self.pool.get('stock.move.in.processor')
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -1212,11 +1212,10 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'move_id': move.id,
                     'prodlot_id': line.imp_batch_id.id,
                     'product_id': line.imp_product_id.id,
-                    'product_uom': line.imp_uom_id.id,
+                    'uom_id': line.imp_uom_id.id,
+                    'ordered_quantity': move.product_qty,
                     'quantity': line.imp_product_qty,
-                    'quantity_ordered': line.type_change != 'split' and move.product_qty or 0.00,
-                    'uom_ordered': move.product_uom.id,
-                    'wizard_pick_id': partial_id}
+                    'wizard_id': partial_id}
 
             mem_move_ids.append(move_obj.create(cr, uid, vals, context=context))
             if move:

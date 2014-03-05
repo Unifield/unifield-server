@@ -118,7 +118,7 @@ class stock_picking_processor(osv.osv):
 
         res = super(stock_picking_processor, self).default_get(cr, uid, fields_list=fields_list, context=context)
 
-        res['date'] = time.strftime('%Y-%m-%d %H:%M:%S')
+        res['date'] = time.strftime('%Y-%m-%d %H:%M:%S'),
 
         return res
 
@@ -251,8 +251,8 @@ class stock_move_processor(osv.osv):
                 'ordered_uom_id': line.move_id.product_uom.id,
                 'ordered_uom_category': line.move_id.product_uom.category_id.id,
                 'location_id': line.move_id.location_id.id,
-                'type_check': line.move_id.picking_id.type,
                 'location_supplier_customer_mem_out': loc_supplier or loc_cust or valid_pt,
+                'type_check': line.move_id.picking_id.type,
             }
 
         return res
@@ -309,13 +309,16 @@ class stock_move_processor(osv.osv):
             elif line.prodlot_id.type != 'standard':
                 # Batch defined by type is not good
                 res = 'wrong_lot_type_need_standard'
-            elif perishable:
-                # Expiry date mandatory
-                if not line.expiry_date:
-                    # No expiry date defined
-                    res = 'missing_date'
-            elif line.prodlot_id:
-                res = 'no_lot_needed'
+        elif perishable:
+            # Expiry date mandatory
+            if not line.expiry_date:
+                # No expiry date defined
+                res = 'missing_date'
+            elif line.prodlot_id.type == 'standard':
+                # Batch defined by type is not good
+                res = 'wrong_lot_type_need_internal'
+        elif line.prodlot_id:
+            res = 'no_lot_needed'
 
         return res
 
@@ -406,6 +409,13 @@ class stock_move_processor(osv.osv):
             relation='product.product',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'return.ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Expected product to receive",
@@ -420,13 +430,13 @@ class stock_move_processor(osv.osv):
             string='Ordered quantity',
             digits_compute=dp.get_precision('Product UoM'),
             required=True,
+            readonly=True,
             help="Expected quantity to receive",
         ),
         'uom_id': fields.many2one(
             'product.uom',
             string='UoM',
             required=True,
-            readonly=True,
             help="Received UoM",
         ),
         'ordered_uom_id': fields.function(
@@ -437,6 +447,13 @@ class stock_move_processor(osv.osv):
             relation='product.uom',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'return.ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Expected UoM to receive",
@@ -450,6 +467,13 @@ class stock_move_processor(osv.osv):
             relation='product.uom.categ',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'return.ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Category of the expected UoM to receive",
@@ -463,6 +487,13 @@ class stock_move_processor(osv.osv):
             relation='stock.location',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'return.ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Source location of the move",
@@ -475,6 +506,13 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'return.ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             multi='move_info',
@@ -492,6 +530,32 @@ class stock_move_processor(osv.osv):
                     ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date'],
                     20
                 ),
+
+                'stock.move.in.processor': (
+                    lambda self, cr, uid, ids, c=None: ids,
+                    ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date'],
+                    20
+                ),
+                'create.picking.move.processor': (
+                    lambda self, cr, uid, ids, c=None: ids,
+                    ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date'],
+                    20
+                ),
+                'internal.move.processor': (
+                    lambda self, cr, uid, ids, c=None: ids,
+                    ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date'],
+                    20
+                ),
+                'outgoing.delivery.move.processor': (
+                    lambda self, cr, uid, ids, c=None: ids,
+                    ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date'],
+                    20
+                ),
+                'validate.move.processor': (
+                    lambda self, cr, uid, ids, c=None: ids,
+                    ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date'],
+                    20
+                ),
             },
             readonly=True,
             help="Integrity status (e.g: check if a batch is set for a line with a batch mandatory product...)",
@@ -504,6 +568,13 @@ class stock_move_processor(osv.osv):
             size=32,
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'return.ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
             },
             readonly=True,
             help="Return the type of the picking",
@@ -516,6 +587,13 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'return.ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -528,6 +606,14 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'return.ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+
             },
             readonly=True,
             multi='product_info',
@@ -540,6 +626,13 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'return.ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -552,6 +645,13 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'return.ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -564,6 +664,13 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'return.ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -576,6 +683,13 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'return.ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -588,6 +702,13 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'return.ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -600,6 +721,13 @@ class stock_move_processor(osv.osv):
             type='boolean',
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'internal.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'return.ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
@@ -635,6 +763,7 @@ class stock_move_processor(osv.osv):
 
     _defaults = {
         'quantity': 0.00,
+        'integrity_status': 'empty',
     }
 
     def _fill_expiry_date(self, cr, uid, prodlot_id=False, expiry_date=False, vals=None, context=None):
@@ -752,7 +881,7 @@ class stock_move_processor(osv.osv):
                 raise osv.except_osv(
                     _('Error'),
                     _('Selected quantity (%0.1f %s) exceeds the initial quantity (%0.1f %s)') %
-                    (new_qty, line.uom_id.name, line.ordered_quantity, line.uom_id.name),
+                    (new_qty, line.uom_id.name, line.quantity_ordered, line.uom_id.name),
                 )
             elif new_qty == line.ordered_quantity:
                 # Cannot select more than initial quantity
@@ -883,7 +1012,8 @@ class stock_move_processor(osv.osv):
         lot_obj = self.pool.get('stock.production.lot')
 
         res = {
-            'value': {}
+            'value': {},
+            'warning': {},
         }
 
         if expiry_date and product_id:

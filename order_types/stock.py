@@ -115,7 +115,7 @@ class stock_picking(osv.osv):
             certif = False
             if pick.type == 'out':
                 for move in pick.move_lines:
-                   if move.order_type in ['donation_exp', 'donation_st', 'in_kind']:
+                    if move.order_type in ['donation_exp', 'donation_st', 'in_kind']:
                         certif = True
                         break
 
@@ -144,8 +144,8 @@ class stock_picking(osv.osv):
                                                                              'picking_id': ids[0]})
 
         for picking in self.browse(cr, uid, ids):
-           for move in picking.move_lines:
-               self.pool.get('stock.certificate.valuation').create(cr, uid, {'picking_id': picking.id,
+            for move in picking.move_lines:
+                self.pool.get('stock.certificate.valuation').create(cr, uid, {'picking_id': picking.id,
                                                                              'product_id': move.product_id.id,
                                                                              'qty': move.product_qty,
                                                                              'print_id': print_id,
@@ -228,10 +228,10 @@ class stock_picking(osv.osv):
                 wizard_obj = self.pool.get('stock.picking.processor')
                 if pick.type == 'in':
                     wizard_obj = self.pool.get('stock.incoming.processor')
+                elif pick.type == 'out':
+                    wizard_obj = self.pool.get('outgoing.delivery.processor')
                 else:
-                    continue
-                # elif pick.type == 'out':
-                #    wizard_obj = self.pool.get('outgoing.delivery.processor')
+                    wizard_obj = self.pool.get('internal.picking.processor')
 
                 proc_id = wizard_obj.create(cr, uid, {'picking_id': pick.id})
                 wizard_obj.create_lines(cr, uid, proc_id, context=context)

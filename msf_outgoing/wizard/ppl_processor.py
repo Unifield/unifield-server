@@ -24,6 +24,9 @@ from osv import osv
 
 from tools.translate import _
 
+import decimal_precision as dp
+
+
 class ppl_processor(osv.osv):
     """
     Wizard to process the Pre-Packing List
@@ -54,6 +57,7 @@ class ppl_processor(osv.osv):
         # Objects
         picking_obj = self.pool.get('stock.picking')
         ppl_move_obj = self.pool.get('ppl.move.processor')
+        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
@@ -123,11 +127,13 @@ class ppl_processor(osv.osv):
             ppl_move_obj.write(cr, uid, gap_ids, {'integrity_status': 'gap'}, context=context)
 
         if missing_ids or to_smaller_ids or overlap_ids or gap_ids:
+            view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': self._name,
                 'view_mode': 'form',
                 'view_type': 'form',
+                'view_id': [view_id],
                 'target': 'new',
                 'res_id': ids[0],
                 'context': context,
@@ -160,15 +166,15 @@ class ppl_processor(osv.osv):
         family_no_weight = []
 
         for wizard in self.browse(cr, uid, ids, context=context):
-            nb_moves = 0
+            treated_moves = []
             for family in wizard.family_ids:
-                nb_moves += len(family.move_ids)
                 if family.weight <= 0.00:
                     family_no_weight.append(family.id)
 
                 # Integrity check on stock moves
                 for line in family.move_ids:
                     move = line.move_id
+                    treated_moves.append(move.id)
                     error_word = ''
 
                     if line.product_id.id != move.product_id.id:
@@ -202,10 +208,10 @@ class ppl_processor(osv.osv):
                 ('state', 'in', ['confirmed', 'assigned']),
             ], count=True, context=context)
 
-            if nb_pick_moves != nb_moves:
+            if nb_pick_moves != len(set(treated_moves)):
                 raise osv.except_osv(
                     _('Processing Error'),
-                    _('The number of treated moves (%s) are not compatible with the number of moves in PPL (%s).') % (nb_moves, nb_pick_moves),
+                    _('The number of treated moves (%s) are not compatible with the number of moves in PPL (%s).') % (len(set(treated_moves)), nb_pick_moves),
                 )
 
         if family_no_weight:
@@ -215,6 +221,30 @@ class ppl_processor(osv.osv):
 
         # Call the stock.picking method
         return picking_obj.do_ppl_step2(cr, uid, ids, context=context)
+
+    def do_ppl_back(self, cr, uid, ids, context=None):
+        """
+        Return to the first of the PPL processing
+        """
+        # Objects
+        data_obj = self.pool.get('ir.model.data')
+        family_obj = self.pool.get('ppl.family.processor')
+
+        family_to_unlink = family_obj.search(cr, uid, [('wizard_id', 'in', ids)], context=context)
+        family_obj.unlink(cr, uid, family_to_unlink, context=context)
+
+        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': [view_id],
+            'res_id': ids[0],
+            'target': 'new',
+            'context': context,
+        }
 
 ppl_processor()
 
@@ -334,6 +364,12 @@ class ppl_move_processor(osv.osv):
 
         return res
 
+    def _get_move_info(self, cr, uid, ids, field_name, args, context=None):
+        return super(ppl_move_processor, self)._get_move_info(cr, uid, ids, field_name, args, context=context)
+
+    def _get_product_info(self, cr, uid, ids, field_name, args, context=None):
+        return super(ppl_move_processor, self)._get_product_info(cr, uid, ids, field_name, args, context=context)
+
     _columns = {
         'wizard_id': fields.many2one(
             'ppl.processor',
@@ -382,6 +418,179 @@ class ppl_move_processor(osv.osv):
             'ppl.family.processor',
             string='Pack',
         ),
+        'ordered_product_id': fields.function(
+            _get_move_info,
+            method=True,
+            string='Ordered product',
+            type='many2one',
+            relation='product.product',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Expected product to receive",
+            multi='move_info',
+        ),
+        'ordered_uom_id': fields.function(
+            _get_move_info,
+            method=True,
+            string='Ordered UoM',
+            type='many2one',
+            relation='product.uom',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Expected UoM to receive",
+            multi='move_info',
+        ),
+        'ordered_uom_category': fields.function(
+            _get_move_info,
+            method=True,
+            string='Ordered UoM category',
+            type='many2one',
+            relation='product.uom.categ',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Category of the expected UoM to receive",
+            multi='move_info'
+        ),
+        'location_id': fields.function(
+            _get_move_info,
+            method=True,
+            string='Location',
+            type='many2one',
+            relation='stock.location',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Source location of the move",
+            multi='move_info'
+        ),
+        'location_supplier_customer_mem_out': fields.function(
+            _get_move_info,
+            method=True,
+            string='Location Supplier Customer',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            multi='move_info',
+            help="",
+        ),
+        'type_check': fields.function(
+            _get_move_info,
+            method=True,
+            string='Picking Type Check',
+            type='char',
+            size=32,
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Return the type of the picking",
+            multi='move_info',
+        ),
+        'lot_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='B.Num',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="A batch number is required on this line",
+        ),
+        'exp_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='Exp.',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="An expiry date is required on this line",
+        ),
+        'asset_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='Asset',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="An asset is required on this line",
+        ),
+        'kit_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='Kit',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="A kit is required on this line",
+        ),
+        'kc_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='KC',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="Ticked if the product is a Heat Sensitive Item",
+        ),
+        'ssl_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='SSL',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="Ticked if the product is a Short Shelf Life product",
+        ),
+        'dg_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='DG',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="Ticked if the product is a Dangerous Good",
+        ),
+        'np_check': fields.function(
+            _get_product_info,
+            method=True,
+            string='NP',
+            type='boolean',
+            store={
+                'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
+            },
+            readonly=True,
+            multi='product_info',
+            help="Ticked if the product is a Narcotic",
+        ),
     }
 
     _defaults = {
@@ -417,9 +626,70 @@ class ppl_move_processor(osv.osv):
         """
         res = super(ppl_move_processor, self)._get_line_data(cr, uid, wizard, move, context=context)
 
-        res['quantity'] = move.product_qty
+        res.update({
+            'quantity': move.product_qty,
+            'ordered_quantity': move.product_qty,
+        })
 
         return res
+
+    def split(self, cr, uid, ids, new_qty=0.00, uom_id=False, context=None):
+        """
+        Split the line according to new parameters
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not ids:
+            raise osv.except_osv(
+                _('Error'),
+                _('No line to split !'),
+            )
+
+        # New quantity must be greater than 0.00
+        if new_qty <= 0.00:
+            raise osv.except_osv(
+                _('Error'),
+                _('Selected quantity must be greater than 0.00 !'),
+            )
+
+        pick_wiz_id = False
+        for line in self.browse(cr, uid, ids, context=context):
+            pick_wiz_id = line.wizard_id.id
+            if new_qty > line.ordered_quantity:
+                # Cannot select more than initial quantity
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Selected quantity (%0.1f %s) exceeds the initial quantity (%0.1f %s)') %
+                    (new_qty, line.uom_id.name, line.quantity_ordered, line.uom_id.name),
+                )
+            elif new_qty == line.ordered_quantity:
+                # Cannot select more than initial quantity
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Selected quantity (%0.1f %s) cannot be equal to the initial quantity (%0.1f %s)') %
+                    (new_qty, line.uom_id.name, line.ordered_quantity, line.uom_id.name),
+                )
+
+            update_qty = line.ordered_quantity - new_qty
+            wr_vals = {
+                'qty_per_pack': line.quantity > update_qty and update_qty or line.quantity,
+                'ordered_quantity': update_qty,
+                'quantity': update_qty,
+            }
+            self._update_split_wr_vals(vals=wr_vals)  # w/o overriding, just return wr_vals
+            self.write(cr, uid, [line.id], wr_vals, context=context)
+
+            # Create a copy of the move_processor with the new quantity
+            cp_vals = {
+                'qty_per_pack': 0.00,
+                'ordered_quantity': new_qty,
+                'quantity': new_qty,
+            }
+            self._update_split_cp_vals(vals=cp_vals)  # w/o overriding, just return cp_vals
+            self.copy(cr, uid, line.id, cp_vals, context=context)
+
+        return pick_wiz_id
 
 ppl_move_processor()
 

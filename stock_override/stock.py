@@ -551,7 +551,7 @@ class stock_picking(osv.osv):
         return True
 
     # @@@override stock>stock.py>stock_picking>do_partial
-    def do_partial(self, cr, uid, ids, partial_datas, context=None):
+    def do_partial_deprecated(self, cr, uid, ids, partial_datas, context=None):
         """ Makes partial picking and moves done.
         @param partial_datas : Dictionary containing details of partial picking
                           like partner_id, address_id, delivery_date,
@@ -1817,6 +1817,7 @@ class stock_move(osv.osv):
         for journal_id, pick_ids in pick_by_journal.iteritems():
             if journal_id:
                 self.pool.get('stock.picking').write(cr, uid, list(pick_ids), {'journal_id': journal_id}, context=context)
+
         new_moves = []
         for location_id in moves_by_location.keys():
             for newdate, move_ids in moves_by_location[location_id].iteritems():

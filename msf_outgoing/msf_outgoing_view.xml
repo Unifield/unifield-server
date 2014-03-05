@@ -1159,7 +1159,7 @@
 			<field name="view_mode">calendar</field>
 			<field name="act_window_id" ref="action_packing"/>
 		</record>
-		<menuitem action="action_packing" id="menu_action_packing" parent="stock.menu_stock_warehouse_mgmt" sequence="6"/>
+		<!--<menuitem action="action_packing" id="menu_action_packing" parent="stock.menu_stock_warehouse_mgmt" sequence="6"/>-->
 
 		<!-- Shipment -->
 		<record id="view_shipment_tree" model="ir.ui.view">
