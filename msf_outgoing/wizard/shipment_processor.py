@@ -242,7 +242,13 @@ class shipment_processor(osv.osv):
             if too_much_family_ids:
                 family_obj.write(cr, uid, too_much_family_ids, {'integrity_status': 'return_qty_too_much'}, context=context)
 
-            if total_qty == 0.00 or negative_family_ids or too_much_family_ids:
+            if total_qty == 0.00:
+                raise osv.except_osv(
+                    _('Processing Error'),
+                    _('You have to select a number to ship before processing the creation of shipment.'),
+                )
+
+            if negative_family_ids or too_much_family_ids:
                 return {
                     'name': _('Create shipment'),
                     'type': 'ir.actions.act_window',
