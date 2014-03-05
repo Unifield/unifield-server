@@ -25,6 +25,8 @@ from tools.translate import _
 
 import decimal_precision as dp
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
+from analytic_distribution_supply.stock import stock_move
+from gdata.finance import Price
 
 class stock_incoming_processor(osv.osv):
     """
@@ -514,6 +516,26 @@ class stock_move_in_processor(osv.osv):
     """
     Model methods
     """
+    def create(self, cr, uid, vals, context=None):
+        """
+        Add default values for cost and currency if not set in vals
+        """
+        # Objects
+        product_obj = self.pool.get('product.product')
+        user_obj = self.pool.get('res.users')
+
+        if context is None:
+            context = {}
+
+        if vals.get('product_id', False):
+            if not vals.get('cost', False):
+                price = product_obj.browse(cr, uid, vals['product_id'], context=context).standard_price
+                vals['cost'] = price
+            if not vals.get('currency', False):
+                vals['currency'] = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
+
+        return super(stock_move_in_processor, self).create(cr, uid, vals, context=context)
+
     def _get_line_data(self, cr, uid, wizard=False, move=False, context=None):
         """
         Update the unit price and the currency of the move line wizard if the
