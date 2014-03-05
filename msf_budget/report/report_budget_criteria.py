@@ -19,10 +19,6 @@
 #
 ##############################################################################
 from report import report_sxw
-import csv
-import StringIO
-import pooler
-import locale
 import datetime
 from tools.translate import _
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
@@ -149,7 +145,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
 
     def getMonthAllocation(self, line, cost_center_ids, date_start, date_stop, end_month, company_currency, add_commitment=False, currency_table=False, context=None):
         """
-        Get analytic allocation for the given budget_line 
+        Get analytic allocation for the given budget_line
         """
         # Some checks
         if context is None:
@@ -266,7 +262,6 @@ class report_budget_actual_2(report_sxw.rml_parse):
         if not budget_line_ids:
             return {}, {}
         # Prepare some values
-        res = {}
         context = {}
         ids = [x.id for x in budget_line_ids]
         fields = [

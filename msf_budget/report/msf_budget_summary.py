@@ -19,19 +19,18 @@
 #
 ##############################################################################
 from osv import fields, osv
-from tools.translate import _
 
 class msf_budget_summary(osv.osv_memory):
     _name = "msf.budget.summary"
-    
+
     def _get_analytic_domain(self, cr, uid, summary_id, context=None):
         summary_line = self.browse(cr, uid, summary_id, context=context)
         cost_center_ids = self.pool.get('msf.budget.tools')._get_cost_center_ids(cr, uid, summary_line.budget_id.cost_center_id)
-            
+
         return [('cost_center_id', 'in', cost_center_ids),
                 ('date', '>=', summary_line.budget_id.fiscalyear_id.date_start),
                 ('date', '<=', summary_line.budget_id.fiscalyear_id.date_stop)]
-    
+
     def _get_amounts(self, cr, uid, ids, field_names=None, arg=None, context=None):
         """
         Fetch total budget amount from the linked budget
@@ -73,7 +72,7 @@ class msf_budget_summary(osv.osv_memory):
                 'balance_amount': budget_amount - actual_amount,  # utp-857
             }
         return res
-    
+
     _columns = {
         'budget_id': fields.many2one('msf.budget', 'Budget', required=True),
         'name': fields.related('budget_id', 'name', type="char", string="Budget Name", store=False),
@@ -84,11 +83,11 @@ class msf_budget_summary(osv.osv_memory):
         'parent_id': fields.many2one('msf.budget.summary', 'Parent'),
         'child_ids': fields.one2many('msf.budget.summary', 'parent_id', 'Children'),
     }
-    
+
     _defaults = {
         'parent_id': lambda *a: False
     }
-    
+
     def create(self, cr, uid, vals, context=None):
         """
         Create a summary line for each child of the cost center used by the budget given in vals
@@ -116,7 +115,7 @@ class msf_budget_summary(osv.osv_memory):
                     cr.execute(sql, (budget.get('fiscalyear_id', [False])[0], child_id, budget.get('decision_moment_id', [False])[0]))
                     if cr.rowcount:
                         child_budget_id = cr.fetchall()[0][0]
-                        child_line_id = self.create(cr, uid, {'budget_id': child_budget_id, 'parent_id': res}, context=context)
+                        self.create(cr, uid, {'budget_id': child_budget_id, 'parent_id': res}, context=context)
         return res
 
 msf_budget_summary()

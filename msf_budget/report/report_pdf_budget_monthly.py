@@ -19,9 +19,6 @@
 #
 ##############################################################################
 from report import report_sxw
-import locale
-import pooler
-from tools.translate import _
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class monthly_budget(report_sxw.rml_parse):

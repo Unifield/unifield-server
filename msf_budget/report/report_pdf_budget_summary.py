@@ -19,8 +19,6 @@
 #
 ##############################################################################
 from report import report_sxw
-import locale
-import pooler
 
 class report_pdf_budget_summary(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -35,7 +33,6 @@ class report_pdf_budget_summary(report_sxw.rml_parse):
         Fetch all needed values for given lines at the same time to not do multiple calls.
         """
         result = []
-        pool = pooler.get_pool(self.cr.dbname)
         # Read budget lines to fetch values.
         #+ Use 'commitment' in context to include commitment in actual amount
         lines = self.pool.get('msf.budget.line').read(self.cr, self.uid, [x.id for x in budget_lines], ['line_type', 'name', 'budget_amount', 'actual_amount', 'balance', 'percentage'], context={'commitment': False})

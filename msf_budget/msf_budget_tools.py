@@ -19,9 +19,8 @@
 #
 ##############################################################################
 
-from osv import fields, osv
+from osv import osv
 import datetime
-from dateutil.relativedelta import relativedelta
 
 class msf_budget_tools(osv.osv):
     _name = "msf.budget.tools"
@@ -202,7 +201,7 @@ class msf_budget_tools(osv.osv):
                                 'month12': csv_line.get('month12', 0.0),
                             })
                     # Create destination line
-                    budget_destination_line_id = budget_line_obj.create(cr, uid, budget_line_vals, context=context)
+                    budget_line_obj.create(cr, uid, budget_line_vals, context=context)
         # Fill in parent lines (only if sequence is given which means that we have probably some values in destination lines)
         if sequence:
             vals_headers = ['month1', 'month2', 'month3', 'month4', 'month5', 'month6', 'month6', 'month7', 'month8', 'month9', 'month10', 'month11', 'month12']
@@ -239,7 +238,7 @@ class msf_budget_tools(osv.osv):
                 else:
                     # children are account, destination tuples (already in actual_amounts)
                     # get all tuples starting with (account_id)
-                    for account_destination in [tuple for tuple in actual_amounts.keys() if tuple[0] == account_id and tuple[1] is not False]:
+                    for account_destination in [tuple_acc_dest for tuple_acc_dest in actual_amounts.keys() if tuple_acc_dest[0] == account_id and tuple_acc_dest[1] is not False]:
                         result = [sum(pair) for pair in zip(result, actual_amounts[account_destination])]
                 actual_amounts[account_id, False] = result
         return
@@ -258,7 +257,7 @@ class msf_budget_tools(osv.osv):
                     ('destination_id', '=', account_destination_list[0][1])]
         else:
             return ['|'] + self._create_account_destination_domain([account_destination_list[0]]) + self._create_account_destination_domain(account_destination_list[1:])
-    
+
     def _get_actual_amounts(self, cr, uid, output_currency_id, domain=[], context=None):
         # Input: domain for the selection of analytic lines (cost center, date, etc...)
         # Output: a dict of list {(general_account_id, destination_id): [jan_actual, feb_actual,...]}
@@ -268,19 +267,19 @@ class msf_budget_tools(osv.osv):
         destination_obj = self.pool.get('account.destination.link')
         # list to store every existing destination link in the system
         account_ids = self.get_expense_accounts(cr, uid, context=context)
-        
+
         destination_link_ids = destination_obj.search(cr, uid, [('account_id', 'in',  account_ids)], context=context)
         account_destination_ids = [(dest.account_id.id, dest.destination_id.id)
                                    for dest
                                    in destination_obj.browse(cr, uid, destination_link_ids, context=context)]
-        
+
         # Fill all general accounts
         for account_id, destination_id in account_destination_ids:
             res[account_id, destination_id] = [0] * 12
-                    
+
         # fill search domain (one search for all analytic lines)
         domain += self._create_account_destination_domain(account_destination_ids)
-        
+
         # Analytic domain is now done; lines are retrieved and added
         analytic_line_obj = self.pool.get('account.analytic.line')
         analytic_lines = analytic_line_obj.search(cr, uid, domain, context=context)
@@ -288,7 +287,7 @@ class msf_budget_tools(osv.osv):
         currency_table = None
         if 'currency_table_id' in context:
             currency_table = context['currency_table_id']
-        
+
         # parse each line and add it to the right array
         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
             date_context = {'date': analytic_line.source_date or analytic_line.date,
@@ -296,22 +295,22 @@ class msf_budget_tools(osv.osv):
             actual_amount = self.pool.get('res.currency').compute(cr,
                                                                   uid,
                                                                   analytic_line.currency_id.id,
-                                                                  output_currency_id, 
+                                                                  output_currency_id,
                                                                   analytic_line.amount_currency or 0.0,
                                                                   round=True,
                                                                   context=date_context)
             # add the amount to correct month
             month = datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').month
             res[analytic_line.general_account_id.id, analytic_line.destination_id.id][month - 1] += round(actual_amount, 2)
-            
+
         # after all lines are parsed, absolute of every column
         for line in res.keys():
             res[line] = [-x for x in res[line]]
-                
+
         # do the view lines
         self._create_expense_account_line_amounts(cr, uid, account_ids, res, context=context)
-        
+
         return res
-    
+
 msf_budget_tools()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
