@@ -172,33 +172,40 @@ class msf_budget(osv.osv):
     
     
     def budget_summary_open_window(self, cr, uid, ids, context=None):
-        parent_line_id = False
-        fiscalyear_id = self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), True, context=context)
-        prop_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        if prop_instance.top_cost_center_id:
-            cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
-                                                    AND cost_center_id = %s \
-                                                    AND state != 'draft' \
-                                                    ORDER BY decision_moment_order DESC, version DESC LIMIT 1",
-                                                    (fiscalyear_id,
-                                                     prop_instance.top_cost_center_id.id))
-            if cr.rowcount:
-                # A budget was found
-                budget_id = cr.fetchall()[0][0]
-                parent_line_id = self.pool.get('msf.budget.summary').create(cr,
-                                                                            uid,
-                                                                            {'budget_id': budget_id},
-                                                                            context=context)
-        context.update({'display_fp': True})
-        return {
-               'type': 'ir.actions.act_window',
-               'res_model': 'msf.budget.summary',
-               'view_type': 'tree',
-               'view_mode': 'tree',
-               'target': 'current',
-               'domain': [('id', '=', parent_line_id)],
-               'context': context
-        }
+        budget_id = False
+        if not ids:
+            fiscalyear_id = self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), True, context=context)
+            prop_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+            if prop_instance.top_cost_center_id:
+                cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
+                            AND cost_center_id = %s \
+                            AND state != 'draft' \
+                            ORDER BY decision_moment_order DESC, version DESC LIMIT 1",
+                            (fiscalyear_id,
+                             prop_instance.top_cost_center_id.id))
+                if cr.rowcount:
+                    # A budget was found
+                    budget_id = cr.fetchall()[0][0]
+        else:
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            budget_id = ids[0]
+            
+        if budget_id:
+            parent_line_id = self.pool.get('msf.budget.summary').create(cr,
+                uid, {'budget_id': budget_id}, context=context)
+            if parent_line_id:
+                context.update({'display_fp': True})
+                return {
+                       'type': 'ir.actions.act_window',
+                       'res_model': 'msf.budget.summary',
+                       'view_type': 'tree',
+                       'view_mode': 'tree',
+                       'target': 'current',
+                       'domain': [('id', '=', parent_line_id)],
+                       'context': context
+                }
+        return {}
         
 msf_budget()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
