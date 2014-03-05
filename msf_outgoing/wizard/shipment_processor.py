@@ -176,6 +176,9 @@ class shipment_processor(osv.osv):
             shipment = wizard.shipment_id
 
             for family in shipment.pack_family_memory_ids:
+                if family.state == 'done':
+                    continue
+
                 family_vals = {
                     'wizard_id': wizard.id,
                     'sale_order_id': family.sale_order_id and family.sale_order_id.id or False,

@@ -507,6 +507,7 @@ class shipment(osv.osv):
         return {
             'type': 'ir.actions.act_window',
             'res_model': proc_obj._name,
+            'name': _('Return Packs'),
             'view_type': 'form',
             'view_mode': 'form',
             'res_id': processor_id,
@@ -542,6 +543,7 @@ class shipment(osv.osv):
         shipment_ids = []
 
         for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
+            draft_picking = None
             shipment = wizard.shipment_id
             shipment_ids.append(shipment.id)
             # log flag - res.log for draft shipment is displayed only one time for each draft shipment
@@ -549,6 +551,7 @@ class shipment(osv.osv):
 
             for family in wizard.family_ids:
                 picking = family.draft_packing_id
+                draft_picking = family.ppl_id and family.ppl_id.previous_step_id and family.ppl_id.previous_step_id.backorder_id or False
 
                 # Update initial move
                 if family.selected_number == int(family.num_of_packs):
@@ -569,7 +572,7 @@ class shipment(osv.osv):
                 # Update the moves, decrease the quantities
                 for move in move_obj.browse(cr, uid, move_ids, context=context):
                     """
-                    Stock moves ar not canceled as for PPL return process
+                    Stock moves are not canceled as for PPL return process
                     because this represents a draft packing, meaning some shipment could be canceled and
                     return to this stock move
                     """
@@ -618,7 +621,8 @@ class shipment(osv.osv):
                 'view_id': res,
                 'picking_type': 'picking.ticket'
             })
-            picking_obj.log(cr, uid, picking.id, _("The corresponding Draft Picking Ticket (%s) has been updated.") % (picking.name,), context=context)
+            if draft_picking:
+                picking_obj.log(cr, uid, draft_picking.id, _("The corresponding Draft Picking Ticket (%s) has been updated.") % (draft_picking.name,), context=context)
 
         # Call complete_finished on the shipment object
         # If everything is allright (all draft packing are finished) the shipment is done also
@@ -631,7 +635,7 @@ class shipment(osv.osv):
             'view_id': [view_id and view_id[1] or False],
             'view_type': 'form',
             'res_model': 'stock.picking',
-            'res_id': picking.id,
+            'res_id': draft_picking.id,
             'type': 'ir.actions.act_window',
             'target': 'crush',
             'context': context
@@ -662,6 +666,7 @@ class shipment(osv.osv):
         return {
             'type': 'ir.actions.act_window',
             'res_model': proc_obj._name,
+            'name': _('Return Packs from Shipment'),
             'view_type': 'form',
             'view_mode': 'form',
             'res_id': processor_id,

@@ -40,6 +40,72 @@ class return_pack_shipment_processor(osv.osv):
         ),
     }
 
+    def select_all(self, cr, uid, ids, context=None):
+        """
+        Select all button, write max number of packs in each pack family line
+        """
+        # Objects
+        family_obj = self.pool.get(self._columns['family_ids']._obj)  # Get the object of the o2m field because of heritage
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            for family in wiz.family_ids:
+                family_obj.write(cr, uid, [family.id], {
+                    'return_from': family.from_pack,
+                    'return_to': family.to_pack,
+                }, context=context)
+
+        return {
+                'type': 'ir.actions.act_window',
+                'name': _('Returns Packs from Shipment'),
+                'res_model': self._name,
+                'view_mode': 'form',
+                'view_type': 'form',
+                'res_id': ids[0],
+                'nodestroy': True,
+                'target': 'new',
+                'context': context,
+                }
+
+    def deselect_all(self, cr, uid, ids, context=None):
+        """
+        De-select all button, write 0 as number of packs in each pack family line
+        """
+        # Objects
+        family_obj = self.pool.get(self._columns['family_ids']._obj)  # Get the object of the o2m field because of heritage
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        family_ids = []
+        for wiz in self.browse(cr, uid, ids, context=context):
+            for family in wiz.family_ids:
+                family_ids.append(family.id)
+
+        family_obj.write(cr, uid, family_ids, {
+            'return_from': 0,
+            'return_to': 0,
+        }, context=context)
+
+        return {
+                'type': 'ir.actions.act_window',
+                'name': _('Returns Packs from Shipment'),
+                'res_model': self._name,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'nodestroy': True,
+                'target': 'new',
+                'context': context,
+                }
+
     def do_return_pack_from_shipment(self, cr, uid, ids, context=None):
         """
         Make some integrity checks and call the do_return_pack_from_shipment method of shipment object
