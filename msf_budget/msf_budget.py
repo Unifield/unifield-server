@@ -28,7 +28,7 @@ class msf_budget(osv.osv):
     _name = "msf.budget"
     _description = 'MSF Budget'
     _trace = True
-    
+
     def _get_total_budget_amounts(self, cr, uid, ids, field_names=None, arg=None, context=None):
         res = {}
         sql = """
@@ -43,7 +43,7 @@ class msf_budget(osv.osv):
             AND a.type != 'view'
             AND l.line_type = 'destination'
             GROUP BY budget_id
-        ) AS expense 
+        ) AS expense
         LEFT JOIN (
             SELECT budget_id, SUM(COALESCE(month1 + month2 + month3 + month4 + month5 + month6 + month7 + month8 + month9 + month10 + month11 + month12, 0.0)) AS total
             FROM msf_budget_line AS l, account_account AS a, account_account_type AS t
@@ -118,7 +118,7 @@ class msf_budget(osv.osv):
         'total_budget_amount': fields.function(_get_total_budget_amounts, method=True, store=False, string="Total Budget Amount", type="float", readonly=True),
         'instance_type': fields.function(_get_instance_type, fnct_search=_search_instance_type, method=True, store=False, string='Instance type', type='selection', selection=[('section', 'HQ'), ('coordo', 'Coordo'), ('project', 'Project')], readonly=True),
     }
-    
+
     _defaults = {
         'currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'state': 'draft',
@@ -221,7 +221,13 @@ class msf_budget(osv.osv):
             budget_ids = []
             # For each CC, search the last budget
             for cc_id in child_cc_ids:
-                corresponding_budget_ids = self.search(cr, uid, [('cost_center_id', '=', cc_id), ('type', '!=', 'view'), ('state', '!=', 'draft')], limit=1, order='version DESC')
+                cc_args = [
+                    ('cost_center_id', '=', cc_id),
+                    ('type', '!=', 'view'),
+                    ('state', '!=', 'draft'),
+                    ('decision_moment_id', '=', budget.decision_moment_id.id)
+                ]
+                corresponding_budget_ids = self.search(cr, uid, cc_args, limit=1, order='version DESC')
                 if corresponding_budget_ids:
                     budget_ids.append(corresponding_budget_ids)
             # Browse each budget line to update it
