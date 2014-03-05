@@ -1368,7 +1368,7 @@ class account_move(osv.osv):
         cr.execute('SELECT SUM(%s) FROM account_move_line WHERE move_id=%%s AND id!=%%s' % (mode,), (move.id, line_id2))
         result = cr.fetchone()[0] or 0.0
         cr.execute('update account_move_line set '+mode2+'=%s where id=%s', (result, line_id))
-        
+
         #adjust also the amount in currency if needed
         cr.execute("select currency_id, sum(amount_currency) as amount_currency from account_move_line where move_id = %s and currency_id is not null group by currency_id", (move.id,))
         for row in cr.dictfetchall():
@@ -1727,7 +1727,7 @@ class account_tax(osv.osv):
             # modify the initial function so we can gather other customized fields
             if kwargs.get('computation', False):
                 return pooler.get_pool(cr.dbname).get('decimal.precision').computation_get(cr, 1, 'Account')
-            
+
             res = pooler.get_pool(cr.dbname).get('decimal.precision').precision_get(cr, 1, 'Account')
             return (16, res+2)
         return change_digit_tax
@@ -2268,6 +2268,13 @@ class account_subscription(osv.osv):
 
     def compute(self, cr, uid, ids, context=None):
         for sub in self.browse(cr, uid, ids, context=context):
+            if sub.model_id and sub.model_id.has_any_bad_ad_line_exp_in:
+                # UFTP-103: block compute if recurring model has line with
+                # expense/income accounts with invalid AD
+                raise osv.except_osv(
+                    _('Warning !'),
+                    _("Compute cancelled. There is lines with expense or income accounts with invalid analytic distribution or using header AD that is not defined or not compatible.")
+                )
             ds = sub.date_start
             for i in range(sub.period_total):
                 self.pool.get('account.subscription.line').create(cr, uid, {
