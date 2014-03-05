@@ -823,7 +823,10 @@ class shipment(osv.osv):
                         'product_qty': new_qty,
                         'location_id': move.picking_id.warehouse_id.lot_distribution_id.id,
                         'location_dest_id': move.picking_id.warehouse_id.lot_dispatch_id.id,
+                        'product_qty': 0.00,
                         'state': 'done',
+                        'from_pack': 0,
+                        'to_pack': 0,
                     }
 
                     # Create a back move in the packing object
