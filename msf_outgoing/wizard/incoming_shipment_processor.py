@@ -23,10 +23,7 @@ from osv import fields
 from osv import osv
 from tools.translate import _
 
-import decimal_precision as dp
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
-from analytic_distribution_supply.stock import stock_move
-from gdata.finance import Price
 
 class stock_incoming_processor(osv.osv):
     """
