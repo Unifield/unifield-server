@@ -693,6 +693,10 @@ class stock_picking(osv.osv):
                             new_out_move_id = move_obj.copy(cr, uid, out_move.id, out_values, context=context)
                             context['keepLineNumber'] = False
                             remaining_out_qty = 0.00
+                            move_obj.write(cr, uid, [out_move.id], {
+                                'product_qty': out_move.product_qty - uom_partial_qty,
+                                'product_uos_qty': out_move.product_qty - uom_partial_qty,
+                            }, context=context)
                             processed_out_moves.append(new_out_move_id)
                         elif uom_partial_qty == out_move.product_qty:
                             out_values.update({
