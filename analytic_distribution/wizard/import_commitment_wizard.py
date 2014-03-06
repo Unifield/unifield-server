@@ -42,7 +42,7 @@ class import_commitment_wizard(osv.osv_memory):
         journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENGI')], context=context)
         to_be_deleted_ids = analytic_obj.search(cr, uid, [('imported_commitment', '=', True)], context=context)
         functional_currency_obj = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id
-        
+
         if len(journal_ids) > 0:
             # read file
             for wizard in self.browse(cr, uid, ids, context=context):
@@ -51,21 +51,21 @@ class import_commitment_wizard(osv.osv_memory):
                 import_file = base64.decodestring(wizard.import_file)
                 import_string = StringIO.StringIO(import_file)
                 import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
-                
+
                 sequence_number = 1
                 for line in import_data[1:]:
                     vals = {'imported_commitment': True,
                             'instance_id': instance_id,
                             'journal_id': journal_ids[0],
                             'imported_entry_sequence': 'ENGI-' + str(sequence_number).zfill(6)}
-                    
+
                     # retrieve values
                     try:
                         description, reference, document_date, date, account_code, destination, \
                         cost_center, funding_pool, third_party,  booking_amount, booking_currency = line
                     except ValueError, e:
                         raise osv.except_osv(_('Error'), _('Unknown format.'))
-                    
+
                     # Dates
                     if not date or not document_date:
                         raise osv.except_osv(_('Warning'), _('A date is missing!'))
@@ -76,7 +76,6 @@ class import_commitment_wizard(osv.osv_memory):
                     period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
                     if not period_ids:
                         raise osv.except_osv(_('Warning'), _('No open period found for given date: %s') % (date,))
-                    period_id = period_ids[0]
                     try:
                         line_document_date = time.strftime('%Y-%m-%d', time.strptime(document_date, '%d/%m/%Y'))
                         vals.update({'document_date': line_document_date})
@@ -146,26 +145,28 @@ class import_commitment_wizard(osv.osv_memory):
                                 # lookup id for code
                                 line_currency_id = self.pool.get('res.currency').search(cr,uid,[('name','=',booking_currency)])[0]
                                 date_context = {'date': line_date }
-                                converted_amount = self.pool.get('res.currency').compute(cr,
-                                                                                         uid,
-                                                                                         line_currency_id,
-                                                                                         functional_currency_obj.id,
-                                                                                         -float(booking_amount),
-                                                                                         round=True,
-                                                                                         context=date_context)
-                                vals.update({'amount': converted_amount}) 
+                                converted_amount = self.pool.get('res.currency').compute(
+                                    cr,
+                                    uid,
+                                    line_currency_id,
+                                    functional_currency_obj.id,
+                                    -float(booking_amount),
+                                    round=True,
+                                    context=date_context
+                                )
+                                vals.update({'amount': converted_amount})
                     else:
-                        raise osv.exaccount.analytic.journalcept_osv(_('Error'), _('No booking currency found!'))
+                        raise osv.except_osv(_('Error'), _('No booking currency found!'))
                     # Fetch amount
                     if booking_amount:
                         vals.update({'amount_currency': -float(booking_amount)})
                     else:
                         raise osv.except_osv(_('Error'), _('No booking amount found!'))
-                    
+
                     analytic_obj.create(cr, uid, vals, context=context)
                     sequence_number += 1
-                
-        else: 
+
+        else:
             raise osv.except_osv(_('Error'), _('Analytic Journal ENGI doesn\'t exist!'))
 
         analytic_obj.unlink(cr, uid, to_be_deleted_ids, context=context)
