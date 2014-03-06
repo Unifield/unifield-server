@@ -51,9 +51,7 @@ class account_move_line(osv.osv):
         return res
 
     _columns = {
-        'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line origin", readonly=True, 
-            help="Invoice line which have produced this line.", ondelete="cascade"),
-        'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean", 
+        'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean",
             method=True, string="Can be imported as invoice in register?",),
     }
 

@@ -48,7 +48,7 @@ class account_move_line(osv.osv):
         """
         Add string @ begining of text like that:
             mystring1 - mysupertext
-        
+
         If mystring1 already exist, increment 1:
             mystring1 - mysupertext
         give:
@@ -165,7 +165,7 @@ class account_move_line(osv.osv):
                 for p in line.reconcile_partial_id.line_partial_ids:
                     res.append(p.id)
         return res
-    
+
     def _balance_currency(self, cr, uid, ids, name, arg, context=None):
         # UTP-31
         if context is None:
@@ -185,7 +185,7 @@ class account_move_line(osv.osv):
         for id in ids:
             result.setdefault(id, 0.0)
         return result
-        
+
     def _balance_currency_search(self, cursor, user, obj, name, args, domain=None, context=None):
         # UTP-31
         if context is None:
@@ -229,7 +229,7 @@ class account_move_line(osv.osv):
 
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
-        'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Unposted'), ('posted', 'Posted')], 
+        'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Unposted'), ('posted', 'Posted')],
             help="This indicates the state of the Journal Entry."),
         'is_addendum_line': fields.boolean('Is an addendum line?', readonly=True,
             help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
@@ -244,7 +244,7 @@ class account_move_line(osv.osv):
                 store = {
                     'account.move': (_get_move_lines, ['date'], 20)
                 }, readonly=True),
-        'is_write_off': fields.boolean('Is a write-off line?', readonly=True, 
+        'is_write_off': fields.boolean('Is a write-off line?', readonly=True,
             help="This inform that no correction is possible for a line that come from a write-off!"),
         'reference': fields.char(string='Reference', size=64),
         'ref': fields.function(_get_reference, fnct_inv=_set_fake_reference, fnct_search=_search_reference, string='Reference', method=True, type='char', size=64, store=True, readonly=True),
@@ -265,6 +265,8 @@ class account_move_line(osv.osv):
         'line_number': fields.integer(string='Line Number'),
         'invoice_partner_link': fields.many2one('account.invoice', string="Invoice partner link", readonly=True,
             help="This link implies this line come from the total of an invoice, directly from partner account.", ondelete="cascade"),
+        'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line origin", readonly=True,
+            help="Invoice line which have produced this line.", ondelete="cascade"),
     }
 
     _defaults = {
