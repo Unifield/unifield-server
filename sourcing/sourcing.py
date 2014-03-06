@@ -590,9 +590,9 @@ class sourcing_line(osv.osv):
 
         return res
 
-    def onChangeType(self, cr, uid, line_id, type, location_id=False, context=None):
+    def onChangeType(self, cr, uid, line_id, l_type, location_id=False, context=None):
         '''
-        if type == make to stock, change pocft to False
+        if l_type == make to stock, change pocft to False
         '''
         if not context:
             context = {}
@@ -601,13 +601,13 @@ class sourcing_line(osv.osv):
         message = {}
         if line_id:
             line = self.browse(cr, uid, line_id, context=context)[0]
-            if line.product_id.type in ('consu', 'service', 'service_recep') and type == 'make_to_stock':
+            if line.product_id.type in ('consu', 'service', 'service_recep') and l_type == 'make_to_stock':
                 product_type = line.product_id.type == 'consu' and 'non stockable' or 'service'
-                value.update({'type': 'make_to_order'})
+                value.update({'l_type': 'make_to_order'})
                 message.update({'title': _('Warning'),
                                 'message': _('You cannot choose \'from stock\' as method to source a %s product !') % product_type})
 
-        if type == 'make_to_stock':
+        if l_type == 'make_to_stock':
             if not location_id:
                 wh_obj = self.pool.get('stock.warehouse')
                 wh_ids = wh_obj.search(cr, uid, [], context=context)
@@ -624,7 +624,7 @@ class sourcing_line(osv.osv):
                 line = self.browse(cr, uid, line_id, context=context)
                 check_fnct = self.pool.get('product.product')._on_change_restriction_error
                 if line.product_id:
-                    res, error = self._check_product_constraints(cr, uid, type, line.po_cft, line.product_id.id, False, check_fnct, field_name='type', values=res, vals={'constraints': ['storage']}, context=context)
+                    res, error = self._check_product_constraints(cr, uid, l_type, line.po_cft, line.product_id.id, False, check_fnct, field_name='l_type', values=res, vals={'constraints': ['storage']}, context=context)
                     if error:
                         return res
 
