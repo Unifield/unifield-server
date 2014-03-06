@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 MSF, TeMPO Consulting
 #
@@ -15,7 +15,7 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
@@ -26,7 +26,7 @@ from tools.translate import _
 
 _SELECTION_TYPE = [
     ('make_to_stock', 'from stock'),
-    ('make_to_order', 'on order'),]
+    ('make_to_order', 'on order'), ]
 
 _SELECTION_PO_CFT = [
     ('po', 'Purchase Order'),
@@ -50,9 +50,9 @@ class multiple_sourcing_wizard(osv.osv_memory):
     }
 
     def default_get(self, cr, uid, fields, context=None):
-        '''
+        """
         Set lines with the selected lines to source
-        '''
+        """
         if not context:
             context = {}
 
@@ -78,7 +78,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('No non-sourced lines are selected. Please select non-sourced lines'))
 
         res['company_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
-        
+
         return res
 
     def save_lines(self, cr, uid, ids, context=None):
@@ -105,13 +105,13 @@ class multiple_sourcing_wizard(osv.osv_memory):
                     errors[err_msg].append((line.id, '%s of %s' % (line.line_number, line.sale_order_id.name)))
                 else:
                     try:
-                        line_obj.write(cr, uid, [line.id], {'type': wiz.type, 
-                                                            'po_cft': wiz.po_cft, 
+                        line_obj.write(cr, uid, [line.id], {'type': wiz.type,
+                                                            'po_cft': wiz.po_cft,
                                                             'supplier': wiz.supplier and wiz.supplier.id or False}, context=context)
                     except osv.except_osv, e:
                         errors.setdefault(e.value, [])
                         errors[e.value].append((line.id, '%s of %s' % (line.line_number, line.sale_order_id.name)))
-                        
+
             if errors:
                 error_msg = ''
                 for e in errors:
