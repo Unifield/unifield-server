@@ -319,6 +319,21 @@ class sourcing_line(osv.osv):
              'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
 
+    def _check_procurement_for_service_with_recep(self, cr, uid, ids, context=None):
+        """
+        You cannot select Service Location as Source Location.
+        """
+        if context is None:
+            context = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.product_id.type == 'service_recep' and obj.type != 'make_to_order':
+                raise osv.except_osv(_('Error'), _('You must select on order procurement method for Service with Reception products.'))
+        return True
+
+    _constraints = [
+        (_check_procurement_for_service_with_recep, 'You must select on order procurement method for Service with Reception products.', []),
+    ]
+
     def default_get(self, cr, uid, fields, context=None):
         '''
         Set the location_id with the stock location of the warehouse of the order of the line
