@@ -138,12 +138,12 @@ class report_budget_actual(report_sxw.report_sxw):
             export_data += line_data
             export_data += [[''], ['']]
 
-        buffer = StringIO.StringIO()
-        writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
+        output = StringIO.StringIO()
+        writer = csv.writer(output, quoting=csv.QUOTE_ALL)
         for line in export_data:
             writer.writerow(map(self._enc,line))
-        out = buffer.getvalue()
-        buffer.close()
+        out = output.getvalue()
+        output.close()
         return (out, 'csv')
 
 report_budget_actual('report.msf.budget.actual', 'msf.budget', False, parser=False)
