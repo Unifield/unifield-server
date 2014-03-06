@@ -282,6 +282,42 @@ class account_period(osv.osv):
         'state_sync_flag': lambda *a: 'none',
     }
 
+    def action_reopen_field(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context['state'] = 'draft'
+        return self.action_set_state(cr, uid, ids, context)
+
+    def action_reopen_mission(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context['state'] = 'field-closed'
+        return self.action_set_state(cr, uid, ids, context)
+
+    def action_open_period(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context['state'] = 'draft'
+        return self.action_set_state(cr, uid, ids, context)
+
+    def action_close_field(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context['state'] = 'field-closed'
+        return self.action_set_state(cr, uid, ids, context)
+
+    def action_close_mission(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context['state'] = 'mission-closed'
+        return self.action_set_state(cr, uid, ids, context)
+
+    def action_close_hq(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context['state'] = 'done'
+        return self.action_set_state(cr, uid, ids, context)
+
     def button_overdue_invoice(self, cr, uid, ids, context=None):
         """
         Open a view that display overdue invoices for this period

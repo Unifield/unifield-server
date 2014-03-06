@@ -353,6 +353,50 @@ class account_account(osv.osv):
             res.append((record['id'], name))
         return res
 
+    def _get_parent_of(self, cr, uid, ids, limit=10, context=None):
+        """
+        Get all parents from the given accounts.
+        To avoid problem of recursion, set a limit from 1 to 10.
+        """
+        # Some checks
+        if context is None:
+            context = {}
+        if not ids:
+            return []
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if limit < 1 or limit > 10:
+            raise osv.except_osv(_('Error'), _("You're only allowed to use a limit between 1 and 10."))
+        # Prepare some values
+        account_ids = list(ids)
+        sql = """
+            SELECT parent_id
+            FROM account_account
+            WHERE id IN %s
+            GROUP BY parent_id"""
+        cr.execute(sql, (tuple(ids),))
+        if not cr.rowcount:
+            return account_ids
+        parent_ids = [x[0] for x in cr.fetchall()]
+        account_ids += parent_ids
+        stop = 1
+        while parent_ids:
+            # Stop the search if we reach limit
+            if stop >= limit:
+                break
+            stop += 1
+            cr.execute(sql, (tuple(parent_ids),))
+            if not cr.rowcount:
+                parent_ids = False
+            tmp_res = cr.fetchall()
+            tmp_ids = [x[0] for x in tmp_res]
+            if None in tmp_ids:
+                parent_ids = False
+            else:
+                parent_ids = list(tmp_ids)
+                account_ids += tmp_ids
+        return account_ids
+
 account_account()
 
 class account_journal(osv.osv):

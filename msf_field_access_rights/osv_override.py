@@ -420,11 +420,12 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                                     if attrs.get('readonly', False):
                                         # concatenate domain with existing domains
                                         if isinstance(attrs.get('readonly'), (tuple, list)):
-                                            attrs['readonly'].insert(0, domain_value_or)
+                                            new_dom = domain_value_or + attrs['readonly']
+                                            attrs['readonly'] = new_dom
                                         else:
-                                            attrs['readonly'] = str(domain_value)
+                                            attrs['readonly'] = domain_value
                                     else:
-                                        attrs['readonly'] = str( domain_value )
+                                        attrs['readonly'] = domain_value
 
                                     field.set('attrs', str(attrs))
                                 else:
