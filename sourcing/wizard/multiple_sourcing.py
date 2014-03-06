@@ -159,11 +159,11 @@ class multiple_sourcing_wizard(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 
-    def change_type(self, cr, uid, ids, type, context=None):
+    def change_type(self, cr, uid, ids, l_type, context=None):
         '''
         Unset the other fields if the type is 'from stock'
         '''
-        if type == 'make_to_stock':
+        if l_type == 'make_to_stock':
             return {'value': {'po_cft': False, 'supplier': False}}
 
         return {}
@@ -193,8 +193,8 @@ class res_partner(osv.osv):
 
     def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-        for id in ids:
-            res[id] = True
+        for l_id in ids:
+            res[l_id] = True
 
         return res
 

@@ -630,7 +630,7 @@ class sourcing_line(osv.osv):
 
         return {'value': value, 'warning': message}
 
-    def onChangeSupplier(self, cr, uid, id, supplier, context=None):
+    def onChangeSupplier(self, cr, uid, line_id, supplier, context=None):
         '''
         supplier changes, we update 'estimated_delivery_date' with corresponding delivery lead time
         we add a domain for the IR line on the supplier
@@ -638,14 +638,14 @@ class sourcing_line(osv.osv):
         result = {'value':{}, 'domain':{}}
 
         if not supplier:
-            for sl in self.browse(cr, uid, id, context):
+            for sl in self.browse(cr, uid, line_id, context):
                 if not sl.product_id and sl.sale_order_id.procurement_request and sl.type == 'make_to_order':
                     result['domain'].update({'supplier': [('partner_type', 'in', ['internal', 'section', 'intermission'])]})
             return result
 
         partner = self.pool.get('res.partner').browse(cr, uid, supplier, context)
         # if the selected partner belongs to product->suppliers, we take that delay (from supplierinfo)
-        delay = self.check_supplierinfo(cr, uid, id, partner.id, context=context)
+        delay = self.check_supplierinfo(cr, uid, line_id, partner.id, context=context)
         # otherwise we take the default value from product form
         if delay < 0:
             delay = partner.default_delay
@@ -656,13 +656,13 @@ class sourcing_line(osv.osv):
 
         result['value'].update({'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d')})
 
-        if id and isinstance(id, list):
-            id = id[0]
+        if line_id and isinstance(line_id, list):
+            line_id = line_id[0]
 
-        line = self.browse(cr, uid, id, context=context)
+        line = self.browse(cr, uid, line_id, context=context)
         value = result['value']
         partner_id = 'supplier' in value and value['supplier'] or supplier
-        if id and partner_id and line.product_id:
+        if line_id and partner_id and line.product_id:
             check_fnct = self.pool.get('product.product')._on_change_restriction_error
             result, error = self._check_product_constraints(cr, uid, line.type, value.get('po_cft', line.po_cft), line.product_id.id, partner_id, check_fnct, field_name='supplier', values=result, vals={'partner_id': partner_id}, context=context)
             if error:
@@ -670,11 +670,11 @@ class sourcing_line(osv.osv):
 
         return result
 
-    def copy(self, cr, uid, id, default=None, context=None):
+    def copy(self, cr, uid, line_id, default=None, context=None):
         '''
         copy method from sourcing_line
         '''
-        result = super(sourcing_line, self).copy(cr, uid, id, default, context)
+        result = super(sourcing_line, self).copy(cr, uid, line_id, default, context)
         return result
 
     def create(self, cr, uid, vals, context=None):
@@ -685,7 +685,7 @@ class sourcing_line(osv.osv):
         self._check_line_conditions(cr, uid, res, context)
         return res
 
-    def copy_data(self, cr, uid, id, default=None, context=None):
+    def copy_data(self, cr, uid, line_id, default=None, context=None):
         '''
         copy_data method for soucring_line
         '''
@@ -701,7 +701,7 @@ class sourcing_line(osv.osv):
 #            soId = context['__copy_data_seen']['sale.order'][0]
 #            default.update({'sale_order_id': soId,})
 
-        return super(sourcing_line, self).copy_data(cr, uid, id, default, context=context)
+        return super(sourcing_line, self).copy_data(cr, uid, line_id, default, context=context)
 
     def confirmLine(self, cr, uid, ids, context=None):
         '''
@@ -709,7 +709,6 @@ class sourcing_line(osv.osv):
         if all lines are 'confirmed', the sale order is confirmed
         '''
         context = context or {}
-        wf_service = netsvc.LocalService("workflow")
         result = []
         for sl in self.browse(cr, uid, ids, context):
             # check if the line has a product for a Field Order (and not for an Internal Request)
@@ -799,7 +798,6 @@ class sourcing_line(osv.osv):
         set the sale order line state to 'draft'
         '''
         line_obj = self.pool.get('sale.order.line')
-        wf_service = netsvc.LocalService("workflow")
         result = []
         for sl in self.browse(cr, uid, ids, context):
             result.append((sl.id, line_obj.write(cr, uid, sl.sale_order_line_id.id, {'state':'draft'}, context)))
@@ -877,7 +875,7 @@ class sale_order(osv.osv):
         return super(sale_order, self).write(cr, uid, ids, vals, context)
 
 
-    def copy(self, cr, uid, id, default=None, context=None):
+    def copy(self, cr, uid, order_id, default=None, context=None):
         '''
         copy from sale_order
 
@@ -890,7 +888,7 @@ class sale_order(osv.osv):
         default['sourcing_trace'] = ''
         default['sourcing_trace_ok'] = False
 
-        return super(sale_order, self).copy(cr, uid, id, default, context)
+        return super(sale_order, self).copy(cr, uid, order_id, default, context)
 
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -935,7 +933,6 @@ class sale_order(osv.osv):
         - allow to modify the data for procurement order creation
         '''
         result = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
-        proc_data = kwargs['proc_data']
         line = kwargs['line']
 
         # new field representing selected partner from sourcing tool
@@ -1138,17 +1135,17 @@ class sale_order_line(osv.osv):
 
         return result
 
-    def copy(self, cr, uid, id, default=None, context=None):
+    def copy(self, cr, uid, l_id, default=None, context=None):
         '''
         copy from sale order line
         '''
         if not context:
             context = {}
 
-        result = super(sale_order_line, self).copy(cr, uid, id, default, context)
+        result = super(sale_order_line, self).copy(cr, uid, l_id, default, context)
         return result
 
-    def copy_data(self, cr, uid, id, default=None, context=None):
+    def copy_data(self, cr, uid, l_id, default=None, context=None):
         '''
         copy_data from sale order line
 
@@ -1158,7 +1155,7 @@ class sale_order_line(osv.osv):
             default = {}
         default.update({'sourcing_line_ids': []})
 
-        return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
+        return super(sale_order_line, self).copy_data(cr, uid, l_id, default, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -1291,13 +1288,13 @@ class sale_order_line(osv.osv):
         # add supplier
         sellerId = False
         po_cft = False
-        type = 'type' in result['value'] and result['value']['type']
+        l_type = 'type' in result['value'] and result['value']['type']
         if product and type:
             productObj = self.pool.get('product.product').browse(cr, uid, product)
             seller = productObj.seller_id
             sellerId = (seller and seller.id) or False
 
-            if type == 'make_to_order':
+            if l_type == 'make_to_order':
                 po_cft = 'po'
 
             result['value'].update({'supplier': sellerId, 'po_cft': po_cft})
@@ -1727,8 +1724,8 @@ class product_supplierinfo(osv.osv):
             ids = [ids]
 
         result = {}
-        for id in ids:
-            result[id] = []
+        for l_id in ids:
+            result[l_id] = []
         return result
 
     def _get_product_ids(self, cr, uid, obj, name, args, context=None):
@@ -1820,8 +1817,8 @@ class res_partner(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         result = {}
-        for id in ids:
-            result[id] = False
+        for l_id in ids:
+            result[l_id] = False
         return result
 
     def _check_partner_type(self, cr, uid, obj, name, args, context=None):
@@ -1895,20 +1892,13 @@ class res_partner(osv.osv):
         if not args:
             return []
         newargs = []
-        partner_obj = self.pool.get('res.partner')
-        local_market = None
-        # Search the local market partner id
-        data_obj = self.pool.get('ir.model.data')
-        data_id = data_obj.search(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'), ('name', '=', 'res_partner_local_market')])
-        if data_id:
-            local_market = data_obj.read(cr, uid, data_id, ['res_id'])[0]['res_id']
+
         for arg in args:
             if arg[0] == 'check_partner_po':
                 if arg[1] != '=' \
                 or arg[2]['order_type'] not in ['regular', 'donation_exp', 'donation_st', 'loan', 'in_kind', 'purchase_list', 'direct']\
                 or not isinstance(arg[2]['partner_id'], (int, long)):
                     raise osv.except_osv(_('Error'), _('Filter check_partner_po different than (arg[0], =, %s) not implemented.') % arg[2])
-                partner_id = arg[2]['partner_id']
                 order_type = arg[2]['order_type']
                 # Added by UF-1660 to filter partners
                 # do nothing on partner_type for loan
@@ -1926,11 +1916,6 @@ class res_partner(osv.osv):
                     pass
                 if p_list:
                     newargs.append(('partner_type', 'in', p_list))
-                # Useless code because if we enter in direct case, we do not enter in this one
-#                elif partner_id and partner_id != local_market:
-#                    partner = partner_obj.browse(cr, uid, partner_id)
-#                    if partner.partner_type not in ('external', 'esc') and order_type == 'direct':
-#                        newargs.append(('partner_type', 'in', ['esc', 'external']))
             else:
                 newargs.append(args)
         return newargs
