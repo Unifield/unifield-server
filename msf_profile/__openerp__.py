@@ -71,7 +71,6 @@
         "object_query",
         "stock_forecast",
         "partner_modification",
-        "account_invoice_split",
         "specific_locations",
         "reason_types_moves",
         "specific_rules",
