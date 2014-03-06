@@ -18,10 +18,9 @@
 #
 ##############################################################################
 
-from datetime import datetime, timedelta, date
-from dateutil.relativedelta import relativedelta, relativedelta
+from datetime import date
+from dateutil.relativedelta import relativedelta
 from osv import osv, fields
-from osv.orm import browse_record, browse_null
 from tools.translate import _
 from tools import misc
 
@@ -30,7 +29,6 @@ import threading
 import netsvc
 import pooler
 import time
-import re
 
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from sale_override import SALE_ORDER_STATE_SELECTION
@@ -217,8 +215,8 @@ class sourcing_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         result = {}
-        for id in ids:
-            result[id] = False
+        for line_id in ids:
+            result[line_id] = False
         return result
 
     def _search_need_sourcing(self, cr, uid, obj, name, args, context=None):
@@ -469,13 +467,13 @@ class sourcing_line(osv.osv):
 
                 # type
                 if 'type' in values:
-                    type = values['type']
-                    vals.update({'type': type})
+                    l_type = values['type']
+                    vals.update({'type': l_type})
                 else:
-                    type = sourcingLine.type
-                    vals.update({'type': type})
+                    l_type = sourcingLine.type
+                    vals.update({'type': l_type})
                 # pocft: if type == make_to_stock, pocft = False, otherwise modified value or saved value
-                if type == 'make_to_order':
+                if l_type == 'make_to_order':
                     if 'po_cft' in values:
                         pocft = values['po_cft']
                         vals.update({'po_cft': pocft})
@@ -560,7 +558,7 @@ class sourcing_line(osv.osv):
         return res
 
 
-    def onChangePoCft(self, cr, uid, id, po_cft, order_id=False, partner_id=False, context=None):
+    def onChangePoCft(self, cr, uid, line_id, po_cft, order_id=False, partner_id=False, context=None):
         '''
         '''
         warning = {}
@@ -577,14 +575,14 @@ class sourcing_line(osv.osv):
                 value = {'supplier': False}
 
 
-        if id and isinstance(id, list):
-            id = id[0]
+        if line_id and isinstance(line_id, list):
+            line_id = line_id[0]
 
         res = {'value': value, 'warning': warning}
 
-        line = self.browse(cr, uid, id, context=context)
+        line = self.browse(cr, uid, line_id, context=context)
         partner_id = 'supplier' in value and value['supplier'] or partner_id
-        if id and partner_id and line.product_id:
+        if line_id and partner_id and line.product_id:
             check_fnct = self.pool.get('product.product')._on_change_restriction_error
             res, error = self._check_product_constraints(cr, uid, line.type, value.get('po_cft', line.po_cft), line.product_id.id, partner_id, check_fnct, field_name='po_cft', values=res, vals={'partner_id': partner_id}, context=context)
             if error:
@@ -592,7 +590,7 @@ class sourcing_line(osv.osv):
 
         return res
 
-    def onChangeType(self, cr, uid, id, type, location_id=False, context=None):
+    def onChangeType(self, cr, uid, line_id, type, location_id=False, context=None):
         '''
         if type == make to stock, change pocft to False
         '''
@@ -601,8 +599,8 @@ class sourcing_line(osv.osv):
 
         value = {}
         message = {}
-        if id:
-            line = self.browse(cr, uid, id, context=context)[0]
+        if line_id:
+            line = self.browse(cr, uid, line_id, context=context)[0]
             if line.product_id.type in ('consu', 'service', 'service_recep') and type == 'make_to_stock':
                 product_type = line.product_id.type == 'consu' and 'non stockable' or 'service'
                 value.update({'type': 'make_to_order'})
@@ -618,12 +616,12 @@ class sourcing_line(osv.osv):
 
             value.update({'po_cft': False})
 
-            if id and isinstance(id, list):
-                id = id[0]
+            if line_id and isinstance(line_id, list):
+                line_id = line_id[0]
 
             res = {'value': value, 'warning': message}
-            if id:
-                line = self.browse(cr, uid, id, context=context)
+            if line_id:
+                line = self.browse(cr, uid, line_id, context=context)
                 check_fnct = self.pool.get('product.product')._on_change_restriction_error
                 if line.product_id:
                     res, error = self._check_product_constraints(cr, uid, type, line.po_cft, line.product_id.id, False, check_fnct, field_name='type', values=res, vals={'constraints': ['storage']}, context=context)
