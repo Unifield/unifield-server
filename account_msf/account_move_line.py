@@ -33,8 +33,8 @@ class account_move_line(osv.osv):
         Fake method for 'ready_for_import_in_register' field
         """
         res = {}
-        for id in ids:
-            res[id] = False
+        for i in ids:
+            res[i] = False
         return res
 
     def _search_ready_for_import_in_register(self, cr, uid, obj, name, args, context=None):

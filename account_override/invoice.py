@@ -26,8 +26,8 @@ from osv import osv
 from osv import fields
 from time import strftime
 from tools.translate import _
-import logging
-import datetime
+from lxml import etree
+import re
 
 import decimal_precision as dp
 
@@ -50,7 +50,7 @@ class account_invoice(osv.osv):
             prefix = 'CR_'
         elif inv.type == 'in_refund': # Supplier refund
             prefix = 'SR_'
-        elif inv.type == 'out_invoice': 
+        elif inv.type == 'out_invoice':
             # Stock transfer voucher
             prefix = 'STV_'
             # Debit note
@@ -99,8 +99,8 @@ class account_invoice(osv.osv):
         Fake method for 'ready_for_import_in_debit_note' field
         """
         res = {}
-        for id in ids:
-            res[id] = False
+        for i in ids:
+            res[i] = False
         return res
 
     def _search_ready_for_import_in_debit_note(self, cr, uid, obj, name, args, context=None):
@@ -112,9 +112,9 @@ class account_invoice(osv.osv):
             raise osv.except_osv(_('Error'), _('No default account for import invoice on Debit Note!'))
         dom1 = [
             ('account_id','=',account_id),
-            ('reconciled','=',False), 
-            ('state', '=', 'open'), 
-            ('type', '=', 'out_invoice'), 
+            ('reconciled','=',False),
+            ('state', '=', 'open'),
+            ('type', '=', 'out_invoice'),
             ('journal_id.type', 'in', ['sale']),
             ('partner_id.partner_type', '=', 'section'),
         ]
@@ -175,14 +175,14 @@ class account_invoice(osv.osv):
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
             help="This field contains the information related to the numbering of the lines of this order."),
-        'date_invoice': fields.date('Posting Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 
+        'date_invoice': fields.date('Posting Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)],
             'close':[('readonly',True)]}, select=True),
-        'document_date': fields.date('Document Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 
+        'document_date': fields.date('Document Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)],
             'close':[('readonly',True)]}, select=True),
         'is_debit_note': fields.boolean(string="Is a Debit Note?"),
         'is_inkind_donation': fields.boolean(string="Is an In-kind Donation?"),
         'is_intermission': fields.boolean(string="Is an Intermission Voucher?"),
-        'ready_for_import_in_debit_note': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_debit_note, type="boolean", 
+        'ready_for_import_in_debit_note': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_debit_note, type="boolean",
             method=True, string="Can be imported as invoice in a debit note?",),
         'imported_invoices': fields.one2many('account.invoice.line', 'import_invoice_id', string="Imported invoices", readonly=True),
         'partner_move_line': fields.one2many('account.move.line', 'invoice_partner_link', string="Partner move line", readonly=True),
@@ -218,14 +218,14 @@ class account_invoice(osv.osv):
             res['arch'] = etree.tostring(doc)
         return res
 
-    def copy_data(self, cr, uid, id, default=None, context=None):
+    def copy_data(self, cr, uid, inv_id, default=None, context=None):
         """
         Copy an invoice line without its move lines
         """
         if default is None:
             default = {}
         default.update({'move_lines': False,})
-        return super(account_invoice_line, self).copy_data(cr, uid, id, default, context)
+        return super(account_invoice_line, self).copy_data(cr, uid, inv_id, default, context)
 
     def default_get(self, cr, uid, fields, context=None):
         """
@@ -283,7 +283,7 @@ class account_invoice(osv.osv):
         }
         return seq_pool.create(cr, uid, seq)
 
-    def log(self, cr, uid, id, message, secondary=False, context=None):
+    def log(self, cr, uid, inv_id, message, secondary=False, context=None):
         """
         Change first "Invoice" word from message into "Debit Note" if this invoice is a debit note.
         Change it to "In-kind donation" if this invoice is an In-kind donation.
@@ -300,7 +300,7 @@ class account_invoice(osv.osv):
             supplier_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_supplier_form')
             customer_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_form')
         except ValueError:
-            return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
+            return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, context)
         debit_view_id = debit_res and debit_res[1] or False
         debit_note_ctx = {'view_id': debit_view_id, 'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}
         # Search donation view and return it
@@ -314,14 +314,14 @@ class account_invoice(osv.osv):
         message_changed = False
         pattern = re.compile('^(Invoice)')
         for el in [('is_debit_note', 'Debit Note', debit_note_ctx), ('is_inkind_donation', 'In-kind Donation', inkind_ctx), ('is_intermission', 'Intermission Voucher', intermission_ctx)]:
-            if self.read(cr, uid, id, [el[0]]).get(el[0], False) is True:
+            if self.read(cr, uid, inv_id, [el[0]]).get(el[0], False) is True:
                 m = re.match(pattern, message)
                 if m and m.groups():
                     message = re.sub(pattern, el[1], message, 1)
                     message_changed = True
                 context.update(el[2])
         # UF-1112: Give all customer invoices a name as "Stock Transfer Voucher".
-        if not message_changed and self.read(cr, uid, id, ['type']).get('type', False) == 'out_invoice':
+        if not message_changed and self.read(cr, uid, inv_id, ['type']).get('type', False) == 'out_invoice':
             message = re.sub(pattern, 'Stock Transfer Voucher', message, 1)
 
             context.update(customer_ctx)
@@ -332,7 +332,7 @@ class account_invoice(osv.osv):
             supplier_view_id = supplier_invoice_res and supplier_invoice_res[1] or False
             context.update({'journal_type': 'purchase',
                             'view_id': supplier_view_id})
-        return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
+        return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, context)
 
     def onchange_partner_id(self, cr, uid, ids, type, partner_id,\
         date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False, is_intermission=False):
@@ -503,7 +503,7 @@ class account_invoice(osv.osv):
             return False
         # NB: there is some period state. So we define that we choose only open period (so not draft and not done)
         res = self.pool.get('account.period').search(cr, uid, [('date_start','<=',inv.date_invoice or strftime('%Y-%m-%d')),
-            ('date_stop','>=',inv.date_invoice or strftime('%Y-%m-%d')), ('state', 'not in', ['created', 'done']), 
+            ('date_stop','>=',inv.date_invoice or strftime('%Y-%m-%d')), ('state', 'not in', ['created', 'done']),
             ('company_id', '=', inv.company_id.id), ('special', '=', False)], context=context, order="date_start ASC, name ASC")
         return res
 
@@ -556,7 +556,7 @@ class account_invoice(osv.osv):
         for inv in self.browse(cr, uid, ids):
             if inv.type != 'out_invoice' or inv.is_debit_note == False:
                 raise osv.except_osv(_('Error'), _('You can only do import invoice on a Debit Note!'))
-            w_id = self.pool.get('debit.note.import.invoice').create(cr, uid, {'invoice_id': inv.id, 'currency_id': inv.currency_id.id, 
+            w_id = self.pool.get('debit.note.import.invoice').create(cr, uid, {'invoice_id': inv.id, 'currency_id': inv.currency_id.id,
                 'partner_id': inv.partner_id.id}, context=context)
             context.update({
                 'active_id': inv.id,
@@ -593,7 +593,7 @@ class account_invoice(osv.osv):
         if not len(invoice_line_ids):
             raise osv.except_osv(_('Error'), _('No invoice line in this invoice or not enough elements'))
         for invl in inv_lines_obj.browse(cr, uid, invoice_line_ids, context=context):
-            wiz_lines_obj.create(cr, uid, {'invoice_line_id': invl.id, 'product_id': invl.product_id.id, 'quantity': invl.quantity, 
+            wiz_lines_obj.create(cr, uid, {'invoice_line_id': invl.id, 'product_id': invl.product_id.id, 'quantity': invl.quantity,
                 'price_unit': invl.price_unit, 'description': invl.name, 'wizard_id': wizard_id}, context=context)
         # Return wizard
         if wizard_id:

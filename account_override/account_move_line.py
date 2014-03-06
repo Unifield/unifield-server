@@ -25,8 +25,6 @@ from osv import osv
 from osv import fields
 import re
 import decimal_precision as dp
-from time import strftime
-import logging
 from tools.translate import _
 from time import strftime
 
@@ -98,13 +96,13 @@ class account_move_line(osv.osv):
                 continue
         return res
 
-    def _set_fake_reference(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context=None):
+    def _set_fake_reference(self, cr, uid, aml_id, name=None, value=None, fnct_inv_arg=None, context=None):
         """
         Just used to not break default OpenERP behaviour
         """
         if name and value:
             sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"
-            cr.execute(sql, (value, id))
+            cr.execute(sql, (value, aml_id))
         return True
 
     def _search_reference(self, cr, uid, obj, name, args, context):
@@ -182,8 +180,8 @@ class account_move_line(osv.osv):
 
         cr.execute(sql, [tuple(ids)])
         result = dict(cr.fetchall())
-        for id in ids:
-            result.setdefault(id, 0.0)
+        for i in ids:
+            result.setdefault(i, 0.0)
         return result
 
     def _balance_currency_search(self, cursor, user, obj, name, args, domain=None, context=None):

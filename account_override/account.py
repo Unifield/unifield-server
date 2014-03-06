@@ -174,13 +174,13 @@ class account_account(osv.osv):
         res = {}
         null_result = dict((fn, 0.0) for fn in field_names)
         company_currency = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
-        for id in ids:
-            res[id] = sums.get(id, null_result)
+        for i in ids:
+            res[i] = sums.get(i, null_result)
             # If output_currency_id in context, we change computation
             for f_name in ('debit', 'credit', 'balance'):
-                if context.get('output_currency_id', False) and res[id].get(f_name, False):
-                    new_amount = currency_obj.compute(cr, uid, context.get('output_currency_id'), company_currency, res[id].get(f_name), context=context)
-                    res[id][f_name] = new_amount
+                if context.get('output_currency_id', False) and res[i].get(f_name, False):
+                    new_amount = currency_obj.compute(cr, uid, context.get('output_currency_id'), company_currency, res[i].get(f_name), context=context)
+                    res[i][f_name] = new_amount
         return res
     #@@@end
 
@@ -190,7 +190,7 @@ class account_account(osv.osv):
         - the account is expense (user_type_code == 'expense')
 
         Some exclusive cases can be add in the system if you configure your company:
-        - either you also take all income account (user_type_code == 'income') 
+        - either you also take all income account (user_type_code == 'income')
         - or you take accounts that are income + 7xx (account code begins with 7)
         """
         # Some checks
@@ -235,7 +235,7 @@ class account_account(osv.osv):
                 arg.append(('|'))
                 arg.append(('user_type.code', '=', 'expense'))
                 if company_account_active:
-                     arg.append(('&'))
+                    arg.append(('&'))
                 arg.append(('user_type.code', '=', 'income'))
                 if company_account_active:
                     arg.append(('code', '=like', '%s%%' % company_account))
@@ -316,10 +316,10 @@ class account_account(osv.osv):
 
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
-        'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'), 
+        'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'),
             ('advance', 'Operational Advance'), ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')], string="Type for specific treatment", required=True,
-            help="""This permit to give a type to this account that impact registers. In fact this will link an account with a type of element 
-            that could be attached. For an example make the account to be a transfer type will display only registers to the user in the Cash Register 
+            help="""This permit to give a type to this account that impact registers. In fact this will link an account with a type of element
+            that could be attached. For an example make the account to be a transfer type will display only registers to the user in the Cash Register
             when he add a new register line.
             """),
         'shrink_entries_for_hq': fields.boolean("Shrink entries for HQ export", help="Check this attribute if you want to consolidate entries on this account before they are exported to the HQ system."),
@@ -425,7 +425,7 @@ class account_journal(osv.osv):
             'number_increment': 1
         }
         return seq_pool.create(cr, uid, seq)
-    
+
 account_journal()
 
 class account_move(osv.osv):
@@ -439,7 +439,7 @@ class account_move(osv.osv):
 
     _columns = {
         'name': fields.char('Entry Sequence', size=64, required=True),
-        'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id', 
+        'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id',
             string="Statement lines", help="This field give all statement lines linked to this move."),
         'ref': fields.char('Reference', size=64, readonly=True, states={'draft':[('readonly',False)]}),
         'status': fields.selection([('sys', 'system'), ('manu', 'manual')], string="Status", required=True),
@@ -550,7 +550,7 @@ class account_move(osv.osv):
 
         if context.get('seqnums',False):
             # utp913 - reuse sequence numbers if in the context
-            vals['name'] = context['seqnums'][journal.id]  
+            vals['name'] = context['seqnums'][journal.id]
         else:
             # Create sequence for move lines
             period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, vals['date'])
@@ -630,8 +630,8 @@ class account_move(osv.osv):
         """
         if not context:
             context = {}
-        for id in ids:
-            ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', '=', id)])
+        for i in ids:
+            ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', '=', i)])
             if not ml_ids:
                 raise osv.except_osv(_('Warning'), _('No line found. Please add some lines before Journal Entry validation!'))
         if context.get('from_web_menu', False):
@@ -647,18 +647,24 @@ class account_move(osv.osv):
                         raise osv.except_osv(_('Warning'), _('You cannot have two different currencies for the same Journal Entry!'))
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
 
-    def copy(self, cr, uid, id, default={}, context=None):
+    def copy(self, cr, uid, a_id, default={}, context=None):
         """
         Copy a manual journal entry
         """
         if not context:
             context = {}
-        res = id
         context.update({'omit_analytic_distribution': False})
-        je = self.browse(cr, uid, [id], context=context)[0]
+        je = self.browse(cr, uid, [a_id], context=context)[0]
         if je.status == 'sys' or (je.journal_id and je.journal_id.type == 'migration'):
             raise osv.except_osv(_('Error'), _("You can only duplicate manual journal entries."))
-        res = super(account_move, self).copy(cr, uid, id, {'line_id': [], 'state': 'draft', 'document_date': je.document_date, 'date': je.date, 'name': ''}, context=context)
+        vals = {
+            'line_id': [],
+            'state': 'draft',
+            'document_date': je.document_date,
+            'date': je.date,
+            'name': ''
+        }
+        res = super(account_move, self).copy(cr, uid, id, vals, context=context)
         for line in je.line_id:
             self.pool.get('account.move.line').copy(cr, uid, line.id, {'move_id': res, 'document_date': je.document_date, 'date': je.date, 'period_id': je.period_id and je.period_id.id or False}, context)
         self.validate(cr, uid, [res], context=context)
@@ -711,7 +717,7 @@ account_move()
 
 class account_move_reconcile(osv.osv):
     _inherit = 'account.move.reconcile'
-    
+
     def get_name(self, cr, uid, context=None):
         instance = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id
         sequence_number = self.pool.get('ir.sequence').get(cr, uid, 'account.move.reconcile')
@@ -722,7 +728,7 @@ class account_move_reconcile(osv.osv):
 
     _columns = {
         'name': fields.char('Entry Sequence', size=64, required=True),
-        'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id', 
+        'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id',
             string="Statement lines", help="This field give all statement lines linked to this move."),
     }
     _defaults = {

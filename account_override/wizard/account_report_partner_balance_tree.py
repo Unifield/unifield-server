@@ -22,7 +22,6 @@
 from osv import fields, osv
 from tools.translate import _
 import decimal_precision as dp
-import time
 import datetime
 from datetime import timedelta
 
@@ -39,21 +38,21 @@ class account_partner_balance_tree(osv.osv):
             'Account type'),
         'partner_id': fields.many2one('res.partner', 'Partner', invisible=True),
         'name': fields.char('Partner', size=168),  # partner name
-        'partner_ref': fields.char('Partner Ref', size=64 ),  
+        'partner_ref': fields.char('Partner Ref', size=64 ),
         'debit': fields.float('Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Credit', digits_compute=dp.get_precision('Account')),
         'balance': fields.float('Balance', digits_compute=dp.get_precision('Account')),
     }
-    
+
     _order = "account_type, partner_id"
-    
+
     def _execute_query_partners(self, cr, uid, data):
         """
         return res, account_type, move_state
         """
         obj_move = self.pool.get('account.move.line')
         where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
-         
+
         result_selection = data['form'].get('result_selection', '')
         if (result_selection == 'customer'):
             account_type = "('receivable')"
@@ -61,19 +60,19 @@ class account_partner_balance_tree(osv.osv):
             account_type = "('payable')"
         else:
             account_type = "('payable', 'receivable')"
-        
+
         move_state = "('draft','posted')"
         if data['form'].get('target_move', 'all') == 'posted':
             move_state = "('posted')"
-            
+
         # proprietary instances filter
-        instance_ids = data['form']['instance_ids'] 
+        instance_ids = data['form']['instance_ids']
         if instance_ids:
             # we add instance filter in 'where'
             if where:
                 where += " AND "
             where += "l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
-    
+
         # inspired from account_report_balance.py report query
         # but group only per 'account type'/'partner'
         query = "SELECT ac.type as account_type," \
@@ -96,15 +95,15 @@ class account_partner_balance_tree(osv.osv):
         else:
             res2 = [r for r in res]
         return res2, account_type, move_state
-        
+
     def _execute_query_selected_partner_move_line_ids(self, cr, uid, account_type, partner_id, data):
         obj_move = self.pool.get('account.move.line')
         where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
-        
+
         move_state = "('draft','posted')"
         if data['form'].get('target_move', 'all') == 'posted':
             move_state = "('posted')"
-    
+
         query = "SELECT l.id FROM account_move_line l" \
         " JOIN account_account ac ON (l.account_id = ac.id)" \
         " JOIN account_move am ON (am.id = l.move_id) WHERE "
@@ -116,7 +115,7 @@ class account_partner_balance_tree(osv.osv):
             query += "ac.type = '" + account_type + "'" \
             " AND am.state IN " + move_state + ""
         if where:
-            query += " AND " + where + ""   
+            query += " AND " + where + ""
         cr.execute(query)
         res = cr.fetchall()
         if res:
@@ -126,7 +125,7 @@ class account_partner_balance_tree(osv.osv):
             return res2
         else:
             return False
-    
+
     def _delete_previous_data(self, cr, uid, context=None):
         """ delete older user request than 15 days"""
         dt = datetime.datetime.now() - timedelta(days=15)
@@ -140,7 +139,7 @@ class account_partner_balance_tree(osv.osv):
             if isinstance(ids, (int, long)):
                 ids = [ids]
             self.unlink(cr, uid, ids, context=context)
-    
+
     def build_data(self, cr, uid, data, context=None):
         """
         data
@@ -164,16 +163,16 @@ class account_partner_balance_tree(osv.osv):
             context = {}
         context['data'] = data
         self._delete_previous_data(cr, uid, context=context)
-        
+
         comp_currency_id = self._get_company_currency(cr, uid, context=context)
         output_currency_id = data['form'].get('output_currency', comp_currency_id)
 
-        res, account_type, move_state = self._execute_query_partners(cr, uid, data)
-        
+        res = self._execute_query_partners(cr, uid, data)
+
         for r in res:
             if not r.get('partner_name', False):
                 r.update({'partner_name': _('Unknown Partner')})
- 
+
             vals = {
                 'uid': uid,
                 'build_ts': data['build_ts'],
@@ -186,7 +185,7 @@ class account_partner_balance_tree(osv.osv):
                 'balance': self._currency_conv(cr, uid, r['debit'] - r['credit'], comp_currency_id, output_currency_id),
             }
             self.create(cr, uid, vals, context=context)
-            
+
     def open_journal_items(self, cr, uid, ids, context=None):
         # get related partner
         res = {}
@@ -231,7 +230,7 @@ class account_partner_balance_tree(osv.osv):
                         res['view_id'] = [view_id]
                 return res
         return res
-            
+
     def _get_company_currency(self, cr, uid, context=None):
         res = False
         user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
@@ -240,7 +239,7 @@ class account_partner_balance_tree(osv.osv):
         if not res:
             raise osv.except_osv(_('Error !'), _('Company has no default currency'))
         return res
-            
+
     def _currency_conv(self, cr, uid, amount,
                        comp_currency_id, output_currency_id,
                        date=False):
@@ -262,7 +261,7 @@ class account_partner_balance_tree(osv.osv):
         if not amount:
             amount = 0.
         return amount
-           
+
     def get_partner_data(self, cr, uid, account_types, data, context=None):
         """ browse with account_type filter 'payable' or 'receivable'"""
         domain = [
@@ -277,7 +276,7 @@ class account_partner_balance_tree(osv.osv):
                 ids = [ids]
             return self.browse(cr, uid, ids, context=context)
         return []
-        
+
     def get_partner_account_move_lines_data(self, cr, uid, account_type, partner_id, data, context=None):
         ids = self._execute_query_selected_partner_move_line_ids(cr, uid,
                                                         account_type,
@@ -289,7 +288,7 @@ class account_partner_balance_tree(osv.osv):
             res = self.pool.get('account.move.line').browse(cr, uid, ids, context=context)
             return res
         return []
-        
+
     def get_partners_total_debit_credit_balance_by_account_type(self, cr, uid, account_type, data):
         """Compute all partners total debit/credit from self data
         for given account_types (tuple) payable/receivable or both
@@ -333,7 +332,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'result_selection': 'supplier',
         'journal_ids': _get_journals,
     }
-       
+
     def default_get(self, cr, uid, fields, context=None):
         res = super(wizard_account_partner_balance_tree, self).default_get(cr, uid, fields, context=context)
         # get company default currency
@@ -341,12 +340,12 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         if user and user[0] and user[0].company_id:
             res['output_currency'] = user[0].company_id.currency_id.id
         return res
-        
+
     def _get_data(self, cr, uid, ids, context=None):
-        """return data, account_type (tuple)""" 
+        """return data, account_type (tuple)"""
         if context is None:
             context = {}
-        
+
         data = {}
         data['ids'] = context.get('active_ids', [])
         data['model'] = context.get('active_model', 'ir.ui.menu')
@@ -360,9 +359,9 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         used_context = self._build_contexts(cr, uid, ids, data, context=context)
         data['form']['periods'] = used_context.get('periods', False) and used_context['periods'] or []
         data['form']['used_context'] = used_context
-        
+
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        
+
         result_selection = data['form'].get('result_selection', '')
         if (result_selection == 'customer'):
             account_type = 'Receivable'
@@ -371,7 +370,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         else:
             account_type = 'Receivable and Payable'
         return data, account_type
-    
+
     def show(self, cr, uid, ids, context=None):
         data, account_type = self._get_data(cr, uid, ids, context=context)
         self.pool.get('account.partner.balance.tree').build_data(cr,
@@ -390,21 +389,21 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             ],
             'context': context,
         }
-        
+
     def print_pdf(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        data, account_type = self._get_data(cr, uid, ids, context=context)
+        data = self._get_data(cr, uid, ids, context=context)
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.partner.balance',
             'datas': data,
         }
-       
+
     def print_xls(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        data, account_type = self._get_data(cr, uid, ids, context=context)
+        data = self._get_data(cr, uid, ids, context=context)
         self.pool.get('account.partner.balance.tree').build_data(cr,
                                                         uid, data,
                                                         context=context)
@@ -413,7 +412,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             'report_name': 'account.partner.balance.tree_xls',
             'datas': data,
         }
-            
+
     def remove_journals(self, cr, uid, ids, context=None):
         if ids:
             self.write(cr, uid, ids, { 'journal_ids': [(6, 0, [])] },
