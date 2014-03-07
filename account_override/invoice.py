@@ -681,17 +681,42 @@ class account_invoice_line(osv.osv):
 
     _constraints = [(_uom_constraint, 'Constraint error on Uom', [])]
 
+    def _have_been_corrected(self, cr, uid, ids, name, args, context=None):
+        """
+        Return True if ALL elements are OK:
+         - a journal items is linked to this invoice line
+         - the journal items is linked to an analytic line that have been reallocated
+        """
+        if context is None:
+            context = {}
+        res = {}
+
+        def has_ana_reallocated(move):
+            for ml in move.move_lines or []:
+                for al in ml.analytic_lines or []:
+                    if al.is_reallocated:
+                        return True
+            return False
+
+        for il in self.browse(cr, uid, ids, context=context):
+            res[il.id] = has_ana_reallocated(il)
+        return res
+
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'line_number': fields.integer(string='Line Number'),
         'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Account Computation')),
         'import_invoice_id': fields.many2one('account.invoice', string="From an import invoice", readonly=True),
-        'move_lines': fields.one2many('account.move.line', 'invoice_line_id', string="Journal Item", readonly=True),
+        'move_lines':fields.one2many('account.move.line', 'invoice_line_id', string="Journal Item", readonly=True),
+        'is_corrected': fields.function(_have_been_corrected, method=True, string="Have been corrected?", type='boolean',
+            readonly=True, help="This informs system if this item have been corrected in analytic lines. Criteria: the invoice line is linked to a journal items that have analytic item which is reallocated.",
+            store=False),
     }
 
     _defaults = {
         'price_unit': lambda *a: 0.00,
         'from_yml_test': lambda *a: False,
+        'is_corrected': lambda *a: False,
     }
 
     _order = 'line_number'
@@ -768,6 +793,26 @@ class account_invoice_line(osv.osv):
         res = super(account_invoice_line, self).move_line_get_item(cr, uid, line, context=context)
         res.update({'invoice_line_id': line.id})
         return res
+
+    def button_open_analytic_lines(self, cr, uid, ids, context=None):
+        """
+        Return analytic lines linked to this invoice line.
+        First we takes all journal items that are linked to this invoice line.
+        Then for all journal items, we take all analytic journal items.
+        Finally we display the result for "button_open_analytic_corrections" of analytic lines
+        """
+        # Some checks
+        if not context:
+            context = {}
+        # Prepare some values
+        al_ids = []
+        # Browse give invoice lines
+        for il in self.browse(cr, uid, ids, context=context):
+            if il.move_lines:
+                for ml in il.move_lines:
+                    if ml.analytic_lines:
+                        al_ids += [x.id for x in ml.analytic_lines]
+        return self.pool.get('account.analytic.line').button_open_analytic_corrections(cr, uid, al_ids, context=context)
 
 account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
