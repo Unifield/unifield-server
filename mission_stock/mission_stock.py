@@ -57,7 +57,8 @@ class stock_mission_report(osv.osv):
         
         for report in self.read(cr, uid, ids, ['instance_id'], context=context):
             res[report['id']] = False
-            if report['instance_id'] == local_instance_id:
+            if report['instance_id'] \
+                and report['instance_id'][0] == local_instance_id:
                 res[report['id']] = True
                 
         return res
@@ -188,7 +189,7 @@ class stock_mission_report(osv.osv):
 
 
         # Check in each report if new products are in the database and not in the report
-        for report in self.read(cr, uid, report_ids, ['local_report', 'fullview'], context=context):
+        for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
             #self.write(cr, uid, [report.id], {'export_ok': False}, context=context)
             # Create one line by product
             cr.execute('''SELECT id FROM product_product
