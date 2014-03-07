@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -25,14 +25,10 @@ from product._common import rounding
 from tools.translate import _
 import netsvc
 
-from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
-import base64
-
-
 class split_purchase_order_line_wizard(osv.osv_memory):
     _name = 'split.purchase.order.line.wizard'
     _description = 'Split purchase order lines'
-    
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
@@ -42,10 +38,10 @@ class split_purchase_order_line_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         # objects
         sol_obj = self.pool.get('sale.order.line')
-        
+
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
@@ -101,7 +97,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         context.update({'split_line': True})
         context.update({'keepDateAndDistrib': True})
 
@@ -119,7 +115,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 # Change the qty of the old line
                 po_line_obj.write(cr, uid, [split.purchase_line_id.id], {'product_qty': split.original_qty - split.new_line_qty,
                                                                          'price_unit': split.purchase_line_id.price_unit,}, context=context)
-                
+
                 # we treat two different cases
                 # 1) the check box impact corresponding Fo is checked
                 #    we create a Fo line by copying related Fo line. we then execute procurement creation function, and process the procurement
@@ -165,7 +161,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                         else:
                             # No update of OUT when IN is received to avoid more qty than expected
                             move_obj.write(cr, uid, [move.id], {'processed_stock_move': True}, context=context)
-    
+
                         move_obj.write(cr, uid, proc_move_id, {'state': 'draft'}, context=context)
                         proc_obj.write(cr, uid, [new_proc_id], {'close_move': False, 'move_id': new_move_id}, context=context)
                         move_obj.unlink(cr, uid, proc_move_id, context=context)
