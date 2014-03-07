@@ -27,10 +27,10 @@ import datetime
 
 class report_budget_actual(report_sxw.report_sxw):
     _name = 'report.budget.actual'
-    
+
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
-    
+
     def _get_lines(self, cr, uid, cost_center_id, parameters, context=None):
         if context is None:
             context = {}
@@ -43,7 +43,7 @@ class report_budget_actual(report_sxw.report_sxw):
             fiscalyear = pool.get('account.fiscalyear').browse(cr, uid, fiscalyear_id, context=context)
             cost_center = pool.get('account.analytic.account').browse(cr, uid, cost_center_id, context=context)
             functional_currency_id = pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-            
+
             result =  [['Fiscal year:', fiscalyear.name],
                        ['Cost center name:', cost_center.name],
                        ['Cost center code:', cost_center.code]]
@@ -55,18 +55,18 @@ class report_budget_actual(report_sxw.report_sxw):
                 result.append(['Currency table:', currency_table.name])
             result.append(['Report date:', datetime.datetime.now().strftime("%d/%b/%Y %H:%M")])
             result.append([''])
-            
+
             # Column header
             header = ['Account','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Total actual', 'Total engagement', 'Total accrual', 'Total']
             result.append(header)
-            
+
             # journal domains
             engagement_journal_ids = pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement')], context=context)
             accrual_journal_ids = pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'AC')], context=context)
             engagement_domain = [('journal_id', 'in', engagement_journal_ids)]
             accrual_domain = [('journal_id', 'in', accrual_journal_ids)]
             actual_domain = [('journal_id', 'not in', engagement_journal_ids + accrual_journal_ids)]
-            
+
             # Cost Center
             cost_center_ids = pool.get('msf.budget.tools')._get_cost_center_ids(cr, uid, cost_center)
             general_domain = [('cost_center_id', 'in', cost_center_ids)]
@@ -83,7 +83,7 @@ class report_budget_actual(report_sxw.report_sxw):
                                                                                context=context)
             # and only keep the main accounts, not the destinations (new key: account id only)
             actual_expenses = dict([(item[0], actual_expenses[item] + [sum(actual_expenses[item])]) for item in actual_expenses.keys() if item[1] is False])
-            
+
             # Get engagement expenses
             engagement_expenses = pool.get('msf.budget.tools')._get_actual_amounts(cr,
                                                                                    uid,
@@ -92,7 +92,7 @@ class report_budget_actual(report_sxw.report_sxw):
                                                                                    context=context)
             # and only keep the main accounts and the sum, not the destinations (new key: account id only)
             engagement_expenses = dict([(item[0], sum(engagement_expenses[item])) for item in engagement_expenses.keys() if item[1] is False])
-            
+
             # Get accrual expenses
             accrual_expenses = pool.get('msf.budget.tools')._get_actual_amounts(cr,
                                                                                 uid,
@@ -101,8 +101,8 @@ class report_budget_actual(report_sxw.report_sxw):
                                                                                 context=context)
             # and only keep the main accounts and the sum, not the destinations (new key: account id only)
             accrual_expenses = dict([(item[0], sum(accrual_expenses[item])) for item in accrual_expenses.keys() if item[1] is False])
-                
-                
+
+
             for expense_account in pool.get('account.account').browse(cr, uid, actual_expenses.keys(), context=context):
                 rounded_values = map(int, map(round, actual_expenses[expense_account.id]))
                 # add line to result (code, name)...
@@ -117,7 +117,7 @@ class report_budget_actual(report_sxw.report_sxw):
                 line += [int(round(actual_expenses[expense_account.id][-1] + engagement_expenses[expense_account.id] + accrual_expenses[expense_account.id]))]
                 # append to result
                 temp_result.append(line)
-            
+
             formatted_monthly_amounts = []
             for amount_line in temp_result:
                 formatted_amount_line = [amount_line[0]]
@@ -125,28 +125,27 @@ class report_budget_actual(report_sxw.report_sxw):
                 formatted_monthly_amounts.append(formatted_amount_line)
             result += formatted_monthly_amounts
         return result
-    
+
     def _enc(self, st):
         if isinstance(st, unicode):
             return st.encode('utf8')
         return st
-    
+
     def create(self, cr, uid, ids, data, context=None):
-        pool = pooler.get_pool(cr.dbname)
         export_data = []
         for cost_center_id in data['form']['cost_center_ids']:
             line_data = self._get_lines(cr, uid, cost_center_id, data['form'], context)
             export_data += line_data
             export_data += [[''], ['']]
-        
-        buffer = StringIO.StringIO()
-        writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
+
+        output = StringIO.StringIO()
+        writer = csv.writer(output, quoting=csv.QUOTE_ALL)
         for line in export_data:
             writer.writerow(map(self._enc,line))
-        out = buffer.getvalue()
-        buffer.close()
+        out = output.getvalue()
+        output.close()
         return (out, 'csv')
-    
+
 report_budget_actual('report.msf.budget.actual', 'msf.budget', False, parser=False)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

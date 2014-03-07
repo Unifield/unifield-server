@@ -18,7 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from osv import osv, fields
+from osv import osv
 
 class wizard_budget_import_finish(osv.osv_memory):
     _name = 'wizard.budget.import.finish'

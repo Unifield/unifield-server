@@ -20,11 +20,10 @@
 ##############################################################################
 
 from osv import fields, osv
-from dateutil.relativedelta import relativedelta
 
 # Overloading the one2many.get for budget lines to filter regarding context.
 class one2many_budget_lines(fields.one2many):
-    
+
     def get(self, cr, obj, ids, name, uid=None, offset=0, context=None, values=None):
         """
         Use 'granularity' value in context to filter budget lines.
@@ -68,7 +67,7 @@ class msf_budget_line(osv.osv):
         res = {}
         for rs in result:
             account = rs.account_id
-            name = account.code 
+            name = account.code
             if rs.destination_id:
                 name += " "
                 name += rs.destination_id.code
@@ -203,7 +202,6 @@ class msf_budget_line(osv.osv):
             # COMPUTE ACTUAL/COMMITMENT
             ana_obj = self.pool.get('account.analytic.line')
             ana_account_obj = self.pool.get('account.analytic.account')
-            company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
             cur_obj = self.pool.get('res.currency')
             # Create default values
             for index in ids:

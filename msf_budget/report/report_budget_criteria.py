@@ -19,10 +19,6 @@
 #
 ##############################################################################
 from report import report_sxw
-import csv
-import StringIO
-import pooler
-import locale
 import datetime
 from tools.translate import _
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
@@ -149,7 +145,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
 
     def getMonthAllocation(self, line, cost_center_ids, date_start, date_stop, end_month, company_currency, add_commitment=False, currency_table=False, context=None):
         """
-        Get analytic allocation for the given budget_line 
+        Get analytic allocation for the given budget_line
         """
         # Some checks
         if context is None:
@@ -202,6 +198,16 @@ class report_budget_actual_2(report_sxw.rml_parse):
         analytics = self.cr.fetchall()
         # Create a dict with analytics result
         result = {}
+        # Prepare default values
+        for x in xrange(1, end_month + 1, 1):
+            result.update({
+                x: {
+                    'budget': line.get('month' + str(x), 0.0),
+                    'commitment': 0.0,
+                    'actual': 0.0,
+                }
+            })
+        # Browse analytic result
         for analytic in analytics:
             if add_commitment:
                 currency_id, month_nb, journal_type, month_amount, booking_amount = analytic
@@ -221,23 +227,12 @@ class report_budget_actual_2(report_sxw.rml_parse):
                 if key in result[int(month_nb)]:
                     line_amount += result[int(month_nb)][key]
                 result[int(month_nb)].update({
-                    key: line_amount or 0.0,
+                    key: line_amount or 0.0
                 })
             else:
                 result[int(month_nb)] = {
-                        'budget': getattr(line, 'month' + str(int(month_nb)), 0.0),
-                        key: line_amount or 0.0,
+                        key: line_amount or 0.0
                     }
-        # Prepare month allocations by using previous analytics result and adding missing values
-        for x in xrange(1, end_month + 1, 1):
-            if x not in result:
-                result.update({
-                    x: {
-                        'budget': getattr(line, 'month' + str(x), 0.0),
-                        'commitment': 0.0,
-                        'actual': 0.0,
-                    }
-                })
         # Transformation/conversion of 'result' to be a list (advantage: keep the sort/order)
         for month in result.keys():
             amounts = result[month]
@@ -266,7 +261,6 @@ class report_budget_actual_2(report_sxw.rml_parse):
         if not budget_line_ids:
             return {}, {}
         # Prepare some values
-        res = {}
         context = {}
         ids = [x.id for x in budget_line_ids]
         fields = [
@@ -277,6 +271,18 @@ class report_budget_actual_2(report_sxw.rml_parse):
             'budget_amount',
             'actual_amount',
             'line_type',
+            'month1',
+            'month2',
+            'month3',
+            'month4',
+            'month5',
+            'month6',
+            'month7',
+            'month8',
+            'month9',
+            'month10',
+            'month11',
+            'month12'
         ]
         # Update fields with commitment amount if add_commitment is True
         if add_commitment:

@@ -28,7 +28,7 @@ class msf_budget(osv.osv):
     _name = "msf.budget"
     _description = 'MSF Budget'
     _trace = True
-    
+
     def _get_total_budget_amounts(self, cr, uid, ids, field_names=None, arg=None, context=None):
         res = {}
         sql = """
@@ -43,7 +43,7 @@ class msf_budget(osv.osv):
             AND a.type != 'view'
             AND l.line_type = 'destination'
             GROUP BY budget_id
-        ) AS expense 
+        ) AS expense
         LEFT JOIN (
             SELECT budget_id, SUM(COALESCE(month1 + month2 + month3 + month4 + month5 + month6 + month7 + month8 + month9 + month10 + month11 + month12, 0.0)) AS total
             FROM msf_budget_line AS l, account_account AS a, account_account_type AS t
@@ -118,7 +118,7 @@ class msf_budget(osv.osv):
         'total_budget_amount': fields.function(_get_total_budget_amounts, method=True, store=False, string="Total Budget Amount", type="float", readonly=True),
         'instance_type': fields.function(_get_instance_type, fnct_search=_search_instance_type, method=True, store=False, string='Instance type', type='selection', selection=[('section', 'HQ'), ('coordo', 'Coordo'), ('project', 'Project')], readonly=True),
     }
-    
+
     _defaults = {
         'currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'state': 'draft',
@@ -182,6 +182,125 @@ class msf_budget(osv.osv):
         self._check_parent(cr, uid, vals, context=context)
         return res
 
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Goal is to update parent budget regarding these criteria:
+          - context is synchronization
+          - state is in vals
+          - state is different from draft (validated or done)
+        """
+        if context is None:
+            context = {}
+        res = super(msf_budget, self).write(cr, uid, ids, vals, context=context)
+        if context.get('sync_update_execution', False) and vals.get('state', False) and vals.get('state') != 'draft':
+            # Update parent budget
+            self.update_parent_budgets(cr, uid, ids, context=context)
+        return res
+
+    def update(self, cr, uid, ids, context=None):
+        """
+        Update given budget. But only update view one.
+        """
+        # Some checks
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        ana_obj = self.pool.get('account.analytic.account')
+        line_obj = self.pool.get('msf.budget.line')
+        sql = """
+            SELECT
+                SUM(COALESCE(month1, 0)),
+                SUM(COALESCE(month2, 0)),
+                SUM(COALESCE(month3, 0)),
+                SUM(COALESCE(month4, 0)),
+                SUM(COALESCE(month5, 0)),
+                SUM(COALESCE(month6, 0)),
+                SUM(COALESCE(month7, 0)),
+                SUM(COALESCE(month8, 0)),
+                SUM(COALESCE(month9, 0)),
+                SUM(COALESCE(month10, 0)),
+                SUM(COALESCE(month11, 0)),
+                SUM(COALESCE(month12, 0))
+            FROM msf_budget_line
+            WHERE id IN %s"""
+        # Filter budget to only update those that are view one
+        to_update = self.search(cr, uid, [('id', 'in', ids), ('type', '=', 'view')])
+        # Then update budget, one by one, line by line...
+        for budget in self.browse(cr, uid, to_update, context=context):
+            cost_center_id = budget.cost_center_id and budget.cost_center_id.id or False
+            if not cost_center_id:
+                raise osv.except_osv(_('Error'), _('Problem while reading Cost Center for the given budget: %s') % (budget.get('name', ''),))
+            child_cc_ids = ana_obj.search(cr, uid, [('parent_id', 'child_of', cost_center_id)])
+            budget_ids = []
+            # For each CC, search the last budget
+            for cc_id in child_cc_ids:
+                cc_args = [
+                    ('cost_center_id', '=', cc_id),
+                    ('type', '!=', 'view'),
+                    ('state', '!=', 'draft'),
+                    ('decision_moment_id', '=', budget.decision_moment_id.id)
+                ]
+                corresponding_budget_ids = self.search(cr, uid, cc_args, limit=1, order='version DESC')
+                if corresponding_budget_ids:
+                    budget_ids.append(corresponding_budget_ids)
+            # Browse each budget line to update it
+            for budget_line in budget.budget_line_ids:
+                line_vals = {
+                    'month1': 0.0,
+                    'month2': 0.0,
+                    'month3': 0.0,
+                    'month4': 0.0,
+                    'month5': 0.0,
+                    'month6': 0.0,
+                    'month7': 0.0,
+                    'month8': 0.0,
+                    'month9': 0.0,
+                    'month10': 0.0,
+                    'month11': 0.0,
+                    'month12': 0.0
+                }
+                # search all linked budget lines
+                args = [('budget_id', 'in', budget_ids), ('account_id', '=', budget_line.account_id.id)]
+                if budget_line.destination_id:
+                    args.append(('destination_id', '=', budget_line.destination_id.id))
+                child_line_ids = line_obj.search(cr, uid, args, context=context)
+                if child_line_ids:
+                    cr.execute(sql, (tuple(child_line_ids),))
+                    if cr.rowcount:
+                        tmp_res = cr.fetchall()
+                        res = tmp_res and tmp_res[0]
+                        if res:
+                            for x in xrange(1, 13, 1):
+                                try:
+                                    line_vals.update({'month'+str(x): res[x - 1]})
+                                except IndexError, i:
+                                    continue
+                line_obj.write(cr, uid, [budget_line.id], line_vals)
+        return True
+
+    def update_parent_budgets(self, cr, uid, ids, context=None):
+        """
+        Search all parent budget and update them.
+        """
+        # Some checks
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # We only need to update parent budgets.
+        # So we search all parent cost center (but only them, so we don't care about cost center that are linked to given budgets)
+        # Then we use these parent cost center to find budget to update (only budget lines)
+        budgets = self.read(cr, uid, ids, ['cost_center_id'])
+        cost_center_ids = [x.get('cost_center_id', False) and x.get('cost_center_id')[0] or 0 for x in budgets]
+        cc_parent_ids = self.pool.get('account.analytic.account')._get_parent_of(cr, uid, cost_center_ids, context=context)
+        parent_ids = [x for x in cc_parent_ids if x not in cost_center_ids]
+        to_update = self.search(cr, uid, [('cost_center_id', 'in', parent_ids)])
+        # Update budgets
+        self.update(cr, uid, to_update, context=context)
+        return True
+
     def button_display_type(self, cr, uid, ids, context=None, *args, **kwargs):
         """
         Just reset the budget view to give the context to the one2many_budget_lines object
@@ -225,7 +344,7 @@ class msf_budget(osv.osv):
             if isinstance(ids, (int, long)):
                 ids = [ids]
             budget_id = ids[0]
-            
+
         if budget_id:
             parent_line_id = self.pool.get('msf.budget.summary').create(cr,
                 uid, {'budget_id': budget_id}, context=context)
@@ -241,6 +360,27 @@ class msf_budget(osv.osv):
                        'context': context
                 }
         return {}
-        
+
+    def action_confirmed(self, cr, uid, ids, context=None):
+        """
+        At budget validation we should update all parent budgets.
+        To do this, each parent need to take all its validated children budget at the last version.
+        """
+        # Some checks
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Only validate budget that are draft!
+        to_validate = []
+        for budget in self.read(cr, uid, ids, ['state']):
+            if budget.get('state', '') and budget.get('state') == 'draft':
+                to_validate.append(budget.get('id', 0))
+        # Change budget statuses. Important in order to include given budgets in their parents!
+        self.write(cr, uid, to_validate, {'state': 'valid'}, context=context)
+        # Update parent budget
+        self.update_parent_budgets(cr, uid, to_validate, context=context)
+        return True
+
 msf_budget()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
