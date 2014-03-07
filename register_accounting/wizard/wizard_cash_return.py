@@ -825,7 +825,7 @@ class wizard_cash_return(osv.osv_memory):
                 if not ml_ids or len(ml_ids) > 1:
                     raise osv.except_osv(_('Error'), _('An error occurred on invoice reconciliation: Invoice line not found.'))
                 # reconcile invoice line (from cash return) with specified invoice line (from invoice)
-                move_line_obj.reconcile_partial(cr, uid, [inv_ml[0], inv_move_line_data[0]])
+                move_line_obj.reconcile_partial(cr, uid, [ml_ids[0], inv_move_line_data[0]])
         else:
             for adv_move_line_id in adv_move_line_ids:
                 adv_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, adv_move_line_id, context=context)
