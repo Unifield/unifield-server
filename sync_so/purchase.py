@@ -50,7 +50,8 @@ class purchase_order_sync(osv.osv):
         sync_msg_obj = self.pool.get('sync.client.message_to_send')
         for po in self.browse(cr, uid, ids, context=context):
             res[po.id] = False
-            if po.state == 'confirmed':
+            if po.state == 'confirmed' \
+                and po.partner_id and po.partner_id.partner_type != 'esc':  # uftp-88 PO for ESC partner are never to synchronised, no warning msg in PO form
                 po_identifier = self.get_sd_ref(cr, uid, po.id, context=context)
                 sync_msg_ids = sync_msg_obj.search(
                     cr, uid,
