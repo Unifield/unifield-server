@@ -477,7 +477,7 @@ class audittrail_rule(osv.osv):
                     })
                 if method == 'unlink':
                     vals.update({
-                        'field_description': rule.object_id.name,
+                        'field_description': get_field_description(rule.object_id),
                         'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
                     })
                     log_line_obj.create(cr, uid, vals)
@@ -486,7 +486,7 @@ class audittrail_rule(osv.osv):
                     if method == 'create':
                         vals.update({
                             'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
-                            'field_description': rule.object_id.name
+                            'field_description': get_field_description(rule.object_id),
                         })
                         log_line_obj.create(cr, uid, vals)
                     if method == 'write':
@@ -503,9 +503,13 @@ class audittrail_rule(osv.osv):
                             if fields_to_trace[field].ttype == 'datetime' and old_value and new_value and old_value[:10] == new_value[:10]:
                                 continue
                             line = vals.copy()
+                            description = fields_to_trace[field].field_description
+                            # UTP-360
+                            if description == 'Pricelist':
+                                description = 'Currency'
                             line.update({
                               'field_id': fields_to_trace[field].id,
-                              'field_description': fields_to_trace[field].field_description,
+                              'field_description': description,
                               'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
                               'name': field,
                               'new_value': new_value,
@@ -865,14 +869,8 @@ def get_field_description(model):
     """
     Redefine the field_description for sale order and sale order line
     """
-    if model.model == 'sale.order':
-        field_description = 'Field Order'
-    elif model.model == 'sale.order.line':
-        field_description = 'Field Order Line'
-    elif model.model== 'stock.picking':
-        field_description = 'Incoming Shipment'
-    else:
-        field_description = model.name
-    return field_description
+    if model.model== 'stock.picking':
+        return 'Incoming Shipment'
+    return model.name
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
