@@ -23,7 +23,8 @@
     "version": "1.1",
     "author" : "MSF, TeMPO Consulting",
     "category" : "Generic Modules/Projects & Services",
-    "depends" : ["analytic", "account", "account_override"],
+    # As account_override depends on analytic and account_tools (that depends on account), no need for analytic and account dependances
+    "depends" : ["account_override"],
     "description": """Module for defining analytic accounting object and commitment voucher.
     """,
     "init_xml" : [
