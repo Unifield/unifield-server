@@ -41,12 +41,14 @@ class purchase_order(osv.osv):
 
 purchase_order()
 
+
 class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
     _trace = True
 
 purchase_order_line()
+
 
 class sale_order(osv.osv):
     _name = 'sale.order'
@@ -55,6 +57,7 @@ class sale_order(osv.osv):
 
 sale_order()
 
+
 class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
@@ -62,12 +65,14 @@ class sale_order_line(osv.osv):
 
 sale_order_line()
 
+
 class stock_picking(osv.osv):
     _name = 'stock.picking'
     _inherit = 'stock.picking'
     _trace = True
 
 stock_picking()
+
 
 class stock_move(osv.osv):
     _name = 'stock.move'
@@ -81,12 +86,14 @@ class stock_move(osv.osv):
 
 stock_move()
 
+
 class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
     _trace = True
 
 account_invoice()
+
 
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
@@ -95,12 +102,14 @@ class account_invoice_line(osv.osv):
 
 account_invoice_line()
 
+
 class account_bank_statement(osv.osv):
     _name = 'account.bank.statement'
     _inherit = 'account.bank.statement'
     _trace = True
 
 account_bank_statement()
+
 
 class account_bank_statement_line(osv.osv):
     _name = 'account.bank.statement.line'
@@ -143,6 +152,7 @@ class account_analytic_account(osv.osv):
 
 account_analytic_account()
 
+
 class account_period(osv.osv):
     _name = 'account.period'
     _inherit = 'account.period'
@@ -161,7 +171,7 @@ class ir_module(osv.osv):
         res = super(ir_module, self).update_translations(cr, uid, ids, filter_lang=None, context=context)
 
         msf_profile_id = self.search(cr, uid, [('name', '=', 'msf_profile')], context=context)
-        
+
         if not msf_profile_id or msf_profile_id[0] not in ids:
             return res
 
@@ -218,6 +228,7 @@ class audittrail_log_sequence(osv.osv):
 
 audittrail_log_sequence()
 
+
 class audittrail_rule(osv.osv):
     """
     For Auddittrail Rule
@@ -259,13 +270,13 @@ class audittrail_rule(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-        
+
         for rule in self.browse(cr, uid, ids, context=context):
             domain = eval(rule.domain_filter)
             for d in tuple(domain):
                 if len(d[0].split('.')) > 2:
                     return False
-        
+
         return True
 
 
@@ -302,10 +313,10 @@ class audittrail_rule(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         obj_action = self.pool.get('ir.actions.act_window')
         obj_model = self.pool.get('ir.model.data')
-        #start Loop
+
         for thisrule in self.browse(cr, uid, ids):
             obj = self.pool.get(thisrule.object_id.model)
             if not obj:
@@ -331,7 +342,7 @@ class audittrail_rule(osv.osv):
             value = 'ir.actions.act_window,' + str(action_id)
             obj_model.ir_set(cr, uid, 'action', keyword, 'View_log_' + thisrule.object_id.model, [thisrule.object_id.model], value, replace=True, isobject=True, xml_id=False)
             #End Loop
-        
+
         # Check if an export model already exist for audittrail.rule
         export_ids = self.pool.get('ir.exports').search(cr, uid, [('name', '=', 'Log Lines'), ('resource', '=', 'audittrail.log.line')])
         if not export_ids:
@@ -518,8 +529,6 @@ class audittrail_rule(osv.osv):
                             })
                             log_line_obj.create(cr, uid, line)
 
-
-
     def get_sequence(self, cr, uid, obj_name, res_id, context=None):
         log_seq_obj = self.pool.get('audittrail.log.sequence')
         log_sequence = log_seq_obj.search(cr, uid, [('model', '=', obj_name), ('res_id', '=', res_id)])
@@ -557,61 +566,12 @@ class audittrail_log_line(osv.osv):
     _description = "Log Line"
     _order = 'timestamp asc'
 
-    def _get_name_line(self, cr, uid, ids, field_name, args, context=None):
-        '''
-        Return the value of the field set in the rule
-        '''
-        res = {}
-
-        for line in self.browse(cr, uid, ids, context=context):
-            if not line.rule_id or not line.fct_res_id or not line.fct_object_id:
-                res[line.id] = False
-            else:
-                field = line.rule_id.name_get_field_id.name
-                res_id = line.fct_res_id
-                object_id = self.pool.get(line.fct_object_id.model)
-                try:
-                    res[line.id] = object_id.read(cr, uid, res_id, [field], context=context)[field]
-                except TypeError:
-                    res[line.id] = False
-
-        return res
-
-    ####
-    # TODO : To validate
-    ####
-    def _search_name_line(self, cr, uid, obj, name, args, context=None):
-        '''
-        Returns all lines corresponding to the args
-        '''
-        ids = []
-
-        if not context:
-            return []
-
-        for arg in args:
-            if not arg[2]:
-                return []
-            if arg[0] == 'sub_obj_name' and arg[1] == 'ilike' and arg[2]:
-                line_ids = self.browse(cr, uid, context.get('active_ids'), context=context)
-                for line in line_ids:
-                    if line.rule_id and line.fct_res_id and line.fct_object_id:
-                        field = line.rule_id.name_get_field_id.name
-                        res_id = line.fct_res_id
-                        object_id = self.pool.get(line.fct_object_id.model)
-                        if str(object_id.read(cr, uid, res_id, [field], context=context)[field]) == arg[2]:
-                            ids.append(line.id)
-                
-                return [('id', 'in', ids)]
-
-        return []
-    
     def _get_values(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Return the value of the field according to his type
         '''
         res = {}
-        
+
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'old_value_fct': False, 'new_value_fct': False}
             if not line.old_value_text:
@@ -622,14 +582,14 @@ class audittrail_log_line(osv.osv):
                 res[line.id]['new_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.new_value, line.fct_object_id or line.object_id, context=context)
             else:
                 res[line.id]['new_value_fct'] = line.new_value_text
-                
+
             if not line.old_value_text and not line.new_value_text:
                 self.write(cr, uid, [line.id], {'old_value_text': res[line.id]['old_value_fct'], 'new_value_text': res[line.id]['new_value_fct']})
             elif not line.old_value_text:
                 self.write(cr, uid, [line.id], {'old_value_text': res[line.id]['old_value_fct'],})
             elif not line.new_value_text:
                 self.write(cr, uid, [line.id], {'new_value_text': res[line.id]['new_value_fct'],})
-        
+
         return res
 
     def _get_field_name(self, cr, uid, ids, field_name, arg, context=None):
@@ -721,26 +681,11 @@ class audittrail_log_line(osv.osv):
           'field_description': fields.char('Field Description', size=64),
           'trans_field_description': fields.function(_get_field_name, fnct_search=_src_field_name, method=True, type='char', size=64, string='Field Description', store=False),
           'sub_obj_name': fields.char(size=64, string='Order line'),
-#          'sub_obj_name': fields.function(fnct=_get_name_line, fnct_search=_search_name_line, method=True, type='char', string='Order line', store=False),
           # These 3 fields allows the computation of the name of the subobject (sub_obj_name)
           'rule_id': fields.many2one('audittrail.rule', string='Rule'),
           'fct_res_id': fields.integer(string='Res. Id'),
           'fct_object_id': fields.many2one('ir.model', string='Fct. Object'),
         }
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        '''
-        Display the name of the resource on the tree view
-        '''
-        res = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        # TODO: Waiting OEB-86 
-#        if view_type == 'tree' and context.get('active_ids') and context.get('active_model'):
-#            element_name = self.pool.get(context.get('active_model')).name_get(cr, uid, context.get('active_ids'), context=context)[0][1]
-#            xml_view = etree.fromstring(res['arch'])
-#            for element in xml_view.iter("tree"):
-#                element.set('string', element_name)
-#            res['arch'] = etree.tostring(xml_view)
-        return res
 
     def _get_report_name(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
@@ -830,7 +775,6 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             if values:
                 # Display only the date on log line (Comment the next line and uncomment the next one if you want display the time)
                 date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
-                #date_format = self.pool.get('date.tools').get_datetime_format(cr, uid, context=context)
                 try:
                     res = datetime.strptime(values, '%Y-%m-%d %H:%M:%S')
                 except ValueError:
@@ -852,18 +796,6 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             return res
 
     return values
-
-
-def _get_domain_fields(self, domain=[]):
-    '''
-    Returns fields to read from the domain
-    '''    
-    ret_f = []
-    for d in domain:
-        ret_f.append(d[0])
-       
-    return ret_f
-
 
 def get_field_description(model):
     """
