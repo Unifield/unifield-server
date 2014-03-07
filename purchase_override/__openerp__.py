@@ -16,7 +16,7 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 {
     "name" : "Purchase override",
@@ -28,8 +28,8 @@
     """,
     "website": "http://unifield.msf.org",
     "init_xml": [],
+    # As account_override depends on purchase, purchase is a useless dependancy for this module
     "depends" : [
-        "purchase",
         "account_override",
         "stock_override",
         "stock",

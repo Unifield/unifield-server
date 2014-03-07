@@ -2926,17 +2926,6 @@ class product_product(osv.osv):
 
 product_product()
 
-class account_invoice(osv.osv):
-    _name = 'account.invoice'
-    _inherit = 'account.invoice'
-
-    _columns = {
-        'purchase_list': fields.boolean(string='Purchase List ?', help='Check this box if the invoice comes from a purchase list', readonly=True, states={'draft':[('readonly',False)]}),
-    }
-
-account_invoice()
-
-
 class purchase_order_line_unlink_wizard(osv.osv_memory):
     _name = 'purchase.order.line.unlink.wizard'
 
