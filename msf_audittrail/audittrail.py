@@ -522,7 +522,6 @@ class audittrail_rule(osv.osv):
                               'name': field,
                               'new_value': new_value,
                               'old_value': old_value,
-                              'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
                             })
                             log_line_obj.create(cr, uid, line)
 
@@ -684,6 +683,9 @@ class audittrail_log_line(osv.osv):
           'fct_object_id': fields.many2one('ir.model', string='Fct. Object'),
         }
 
+    _defaults = {
+        'timestamp': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+    }
     def _get_report_name(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
