@@ -23,8 +23,6 @@
 
 from osv import osv
 from osv import fields
-from tools.translate import _
-from time import strftime
 
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
@@ -52,8 +50,8 @@ class account_invoice_line(osv.osv):
         return res
 
     _columns = {
-        'is_corrected': fields.function(_have_been_corrected, method=True, string="Have been corrected?", type='boolean', 
-            readonly=True, help="This informs system if this item have been corrected in analytic lines. Criteria: the invoice line is linked to a journal items that have analytic item which is reallocated.", 
+        'is_corrected': fields.function(_have_been_corrected, method=True, string="Have been corrected?", type='boolean',
+            readonly=True, help="This informs system if this item have been corrected in analytic lines. Criteria: the invoice line is linked to a journal items that have analytic item which is reallocated.",
             store=False),
     }
 
