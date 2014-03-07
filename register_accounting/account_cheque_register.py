@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
+#    OpenERP, Open Source Management Solution
 #    Copyright (C) Tempo Consulting (<http://www.tempo-consulting.fr/>), MSF.
 #    All Rigts Reserved
 #    Developer: Olivier DOSSMANN
@@ -24,7 +24,6 @@
 
 from osv import osv
 from osv import fields
-from register_tools import previous_register_is_closed
 
 class one2many_register(fields.one2many):
     def get(self, cr, obj, ids, name, uid=None, offset=0, context=None, values=None):

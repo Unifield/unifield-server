@@ -52,7 +52,7 @@ class register_creation_lines(osv.osv_memory):
         'currency_id': fields.many2one("res.currency", string="Currency", required=True, readonly=True),
         'journal_id': fields.many2one('account.journal', string="Journal", required=True, readonly=True),
         'register_type': fields.selection([('cash', 'Cash Register'), ('bank', 'Bank Statement'), ('cheque', 'Cheque Register')], string="Type", readonly=True),
-        'prev_reg_id':  fields.function(_get_previous_register_id, method=True, type="many2one", relation="account.bank.statement", 
+        'prev_reg_id':  fields.function(_get_previous_register_id, method=True, type="many2one", relation="account.bank.statement",
             required=False, readonly=True, string="Previous register", store=False),
         'wizard_id': fields.many2one("wizard.register.creation", string="Wizard"),
     }
@@ -66,7 +66,7 @@ class register_creation(osv.osv_memory):
     _columns = {
         'period_id': fields.many2one("account.period", string="Period", required=True, readonly=False),
         'new_register_ids': fields.one2many("wizard.register.creation.lines", 'wizard_id', string="", required=True, readonly=False),
-        'state': fields.selection([('draft', 'Draft'), ('open', 'Open')], string="State", 
+        'state': fields.selection([('draft', 'Draft'), ('open', 'Open')], string="State",
             help="Permits to display Create Register button and list of registers to be created when state is open.")
     }
 
@@ -105,15 +105,14 @@ class register_creation(osv.osv_memory):
         wizard = self.browse(cr, uid, ids[0], context=context)
         if not wizard.period_id:
             raise osv.except_osv(_('Error'), _('No period filled in.'))
-        
+
         # Prepare some values
         abs_obj = self.pool.get('account.bank.statement')
-        curr_obj = self.pool.get('res.currency')
         reg_to_create_obj = self.pool.get('wizard.register.creation.lines')
         period_id = wizard.period_id.id
         prev_period_id = previous_period_id(self, cr, uid, period_id, context=context)
         reg_type = ['bank', 'cheque', 'cash']
-        
+
         for rtype in reg_type:
             # Search all register from previous period
             abs_ids = abs_obj.search(cr, uid, [('journal_id.type', '=', rtype), ('period_id', '=', prev_period_id)], context=context)
@@ -125,8 +124,8 @@ class register_creation(osv.osv_memory):
                     currency_id = register.journal_id.currency.id
                     journal_id = register.journal_id and register.journal_id.id or False
                     # verify that this register is not present in our wizard
-                    if not reg_to_create_obj.search(cr, uid, [('period_id', '=', period_id), ('journal_id', '=', journal_id), 
-                        ('wizard_id', '=', wizard.id)], context=context) and not abs_obj.search(cr, uid, [('period_id', '=', period_id), 
+                    if not reg_to_create_obj.search(cr, uid, [('period_id', '=', period_id), ('journal_id', '=', journal_id),
+                        ('wizard_id', '=', wizard.id)], context=context) and not abs_obj.search(cr, uid, [('period_id', '=', period_id),
                         ('journal_id', '=', journal_id)]):
                         vals = {
                             'period_id': period_id,
@@ -136,14 +135,14 @@ class register_creation(osv.osv_memory):
                             'wizard_id': wizard.id,
                         }
                         reg_id = reg_to_create_obj.create(cr, uid, vals, context=context)
-                        reg = reg_to_create_obj.browse(cr, uid, [reg_id], context=context)[0]
-        
+                        reg_to_create_obj.browse(cr, uid, [reg_id], context=context)[0]
+
         # Delete lines that have no previous_register_id
         line_to_create_ids = reg_to_create_obj.search(cr, uid, [('wizard_id', '=', wizard.id)], context=context)
         for line in reg_to_create_obj.browse(cr, uid, line_to_create_ids, context=context):
             if not line.prev_reg_id:
                 reg_to_create_obj.unlink(cr, uid, [line.id], context=context)
-        
+
         # Verify that there is some lines to treat
         remaining_lines = reg_to_create_obj.search(cr, uid, [('wizard_id', '=', wizard.id)], context=context)
         if not len(remaining_lines):
@@ -175,7 +174,6 @@ class register_creation(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('There is no lines to create! Please choose another period.'))
         registers =  []
         curr_time = strftime('%Y-%m-%d')
-        j_obj = self.pool.get('account.journal')
         abs_obj = self.pool.get('account.bank.statement')
         wiz_register_lines_obj = self.pool.get('wizard.register.creation.lines')
         for new_reg in wizard.new_register_ids:

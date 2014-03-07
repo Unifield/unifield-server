@@ -44,7 +44,7 @@ class account_invoice(osv.osv):
         """
         res = {}
         for inv in self.browse(cr, uid, ids, context=context):
-            res[inv.id] = {'virtual_currency_id': inv.currency_id.id or False, 'virtual_account_id': inv.account_id.id or False, 
+            res[inv.id] = {'virtual_currency_id': inv.currency_id.id or False, 'virtual_account_id': inv.account_id.id or False,
             'virtual_partner_id': inv.partner_id.id or False}
         return res
 
@@ -143,9 +143,9 @@ class account_invoice(osv.osv):
 
     _columns = {
         'register_line_ids': fields.one2many('account.bank.statement.line', 'invoice_id', string="Register Lines"),
-        'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False, 
+        'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False,
             states={'draft':[('readonly',False)]}),
-        'virtual_currency_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Currency", 
+        'virtual_currency_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Currency",
             type='many2one', relation="res.currency", readonly=True),
         'virtual_account_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Account",
             type='many2one', relation="account.account", readonly=True),
@@ -183,7 +183,7 @@ class account_invoice(osv.osv):
                 raise osv.except_osv(_('Error'), _('More than one journal items found for this register line.'))
             register_move_line_id = reg_ml_ids[0]
             # Finally do reconciliation
-            ml_reconcile_id = ml_obj.reconcile_partial(cr, uid, [invoice_move_line_id, register_move_line_id])
+            ml_obj.reconcile_partial(cr, uid, [invoice_move_line_id, register_move_line_id])
         return True
 
     def create_down_payments(self, cr, uid, ids, amount, context=None):
@@ -205,7 +205,7 @@ class account_invoice(osv.osv):
             # prepare some values
             total = 0.0
             to_use = [] # should contains tuple with: down payment line id, amount
-            
+
             # Create down payment until given amount is reached
             # browse all invoice purchase, then all down payment attached to purchases
             for po in inv.purchase_ids:
@@ -326,7 +326,7 @@ class account_invoice(osv.osv):
         if not context:
             context = {}
 
-            
+
         # Prepare workflow object
         wf_service = netsvc.LocalService("workflow")
         for inv in self.browse(cr, uid, ids):
@@ -353,7 +353,7 @@ class account_invoice(osv.osv):
                     'view_type': 'form',
                     'res_id': wiz_id,
                     }
-            
+
             wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
         return True
 
@@ -387,7 +387,7 @@ class account_invoice(osv.osv):
                     self.pool.get('account.bank.statement.line').unlink(cr, uid, [x.id for x in inv.register_line_ids], {'from_direct_invoice': True})
         return super(account_invoice, self).unlink(cr, uid, ids, context)
 
-    def copy(self, cr, uid, id, default=None, context=None):
+    def copy(self, cr, uid, inv_id, default=None, context=None):
         """
         Reset register_line_ids.
         """
@@ -398,7 +398,7 @@ class account_invoice(osv.osv):
             default = {}
         if 'register_line_ids' not in default:
             default['register_line_ids'] = []
-        return super(account_invoice, self).copy(cr, uid, id, default, context=context)
+        return super(account_invoice, self).copy(cr, uid, inv_id, default, context=context)
 
 account_invoice()
 
@@ -460,9 +460,9 @@ class account_invoice_line(osv.osv):
                 self.pool.get('account.invoice').write(cr, uid, [invl.invoice_id.id], {'check_total': amount}, context)
                 self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invl.invoice_id.register_line_ids], {'amount': -1 * amount}, context)
         return res
-    
- 
-        
+
+
+
 
     def unlink(self, cr, uid, ids, context=None):
         """
@@ -484,8 +484,8 @@ class account_invoice_line(osv.osv):
                 absl_ids = abst_obj.search(cr, uid, [('invoice_id','=',invl.invoice_id.id)])
                 if absl_ids:
                     abst_obj.unlink_moves(cr, uid, absl_ids, context)
-      
-        
+
+
         # Normal behaviour
         res = super(account_invoice_line, self).unlink(cr, uid, ids, context)
         # See all direct invoice
