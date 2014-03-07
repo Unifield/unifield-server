@@ -32,6 +32,7 @@ import time
 
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from sale_override import SALE_ORDER_STATE_SELECTION
+from osv.orm import browse_record
 
 _SELECTION_PO_CFT = [
                      ('po', 'Purchase Order'),
@@ -47,13 +48,13 @@ class sourcing_line(osv.osv):
     Sourcing lines are generated when a Sale Order is created
     (overriding of create method of sale_order)
     '''
-
+    # TODO: TO REFACTORE
     def get_sale_order_states(self, cr, uid, context=None):
         '''
         Returns all states values for a sale.order object
         '''
         return self.pool.get('sale.order')._columns['state'].selection
-
+    # TODO: TO REFACTORE
     def get_sale_order_line_states(self, cr, uid, context=None):
         '''
         Returns all states values for a sale.order.line object
@@ -69,7 +70,7 @@ class sourcing_line(osv.osv):
     _SELECTION_SALE_ORDER_STATE = get_sale_order_states
 
     _SELECTION_SALE_ORDER_LINE_STATE = get_sale_order_line_states
-
+    # TODO: TO REFACTORE
     def unlink(self, cr, uid, ids, context=None):
         '''
         if unlink does not result of a call from sale_order_line, raise an exception
@@ -80,7 +81,7 @@ class sourcing_line(osv.osv):
             raise osv.except_osv(_('Invalid action !'), _('Cannot delete Sale Order Line(s) from the sourcing tool !'))
         # delete the sourcing line
         return super(sourcing_line, self).unlink(cr, uid, ids, context)
-
+    # TODO: TO REFACTORE
     def _getAvailableStock(self, cr, uid, ids, field_names=None, arg=False, context=None):
         '''
         get available stock for the product of the corresponding sourcing line
@@ -104,7 +105,7 @@ class sourcing_line(osv.osv):
             result[sl.id] = res
 
         return result
-
+    # TODO: TO REFACTORE
     def _getVirtualStock(self, cr, uid, ids, field_names=None, arg=False, context=None):
         '''
         get virtual stock (virtual_available) for the product of the corresponding sourcing line
@@ -141,7 +142,7 @@ class sourcing_line(osv.osv):
 
     _name = 'sourcing.line'
     _description = 'Sourcing Line'
-
+    # TODO: TO REFACTORE
     def _get_sourcing_vals(self, cr, uid, ids, fields, arg, context=None):
         '''
         returns the value from the sale.order
@@ -171,7 +172,7 @@ class sourcing_line(osv.osv):
                     result[obj.id]['sale_order_state'] = 'split_so'
 
         return result
-
+    # TODO: TO REFACTORE
     def _get_sale_order_ids(self, cr, uid, ids, context=None):
         '''
         self represents sale.order
@@ -185,7 +186,7 @@ class sourcing_line(osv.osv):
         result = self.pool.get('sourcing.line').search(cr, uid, [('sale_order_id', 'in', ids)], context=context)
         return result
 
-
+    # TODO: TO REFACTORE
     def _get_sale_order_line_ids(self, cr, uid, ids, context=None):
         '''
         self represents sale.order.line
@@ -197,7 +198,7 @@ class sourcing_line(osv.osv):
             ids = [ids]
         # list of sourcing lines having sale_order_line_id within ids
         return self.pool.get('sourcing.line').search(cr, uid, [('sale_order_line_id', 'in', ids)], context=context)
-
+    # TODO: TO REFACTORE
     def _get_souring_lines_ids(self, cr, uid, ids, context=None):
         '''
         self represents sourcing.line
@@ -210,7 +211,7 @@ class sourcing_line(osv.osv):
 
         result = ids
         return result
-
+    # TODO: TO REFACTORE
     def _get_fake(self, cr, uid, ids, fields, arg, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -218,7 +219,7 @@ class sourcing_line(osv.osv):
         for line_id in ids:
             result[line_id] = False
         return result
-
+    # TODO: TO REFACTORE
     def _search_need_sourcing(self, cr, uid, obj, name, args, context=None):
         if not args:
             return []
@@ -227,7 +228,7 @@ class sourcing_line(osv.osv):
             raise osv.except_osv(_('Error !'), _('Filter not implemented'))
 
         return [('state', '=', 'draft'), ('sale_order_state', '=', 'validated')]
-
+    # TODO: TO REFACTORE
     def _search_sale_order_state(self, cr, uid, obj, name, args, context=None):
         if not args:
             return []
@@ -242,7 +243,7 @@ class sourcing_line(osv.osv):
             else:
                 newargs.append(('sale_order_state', arg[1], arg[2]))
         return newargs
-
+    # TODO: TO REFACTORE
     def _get_date(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
@@ -260,7 +261,7 @@ class sourcing_line(osv.osv):
             res[line.id]['rts'] = line.sale_order_id.ready_to_ship_date
 
         return res
-
+    # TODO: TO REFACTORE
     _columns = {
         # sequence number
         'name': fields.char('Name', size=128),
@@ -316,7 +317,7 @@ class sourcing_line(osv.osv):
              'name': lambda self, cr, uid, context = None: self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),
              'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
-
+    # TODO: TO REFACTORE
     def _check_procurement_for_service_with_recep(self, cr, uid, ids, context=None):
         """
         You cannot select Service Location as Source Location.
@@ -331,7 +332,7 @@ class sourcing_line(osv.osv):
     _constraints = [
         (_check_procurement_for_service_with_recep, 'You must select on order procurement method for Service with Reception products.', []),
     ]
-
+    # TODO: TO REFACTORE
     def default_get(self, cr, uid, fields, context=None):
         '''
         Set the location_id with the stock location of the warehouse of the order of the line
@@ -349,7 +350,7 @@ class sourcing_line(osv.osv):
             res['location_id'] = warehouse_obj.browse(cr, uid, warehouse[0], context=context).lot_stock_id.id
 
         return res
-
+    # TODO: TO REFACTORE
     def _check_line_conditions(self, cr, uid, ids, context=None):
         '''
         Check if the line have good values
@@ -400,7 +401,7 @@ class sourcing_line(osv.osv):
 
         return True
 
-
+    # TODO: TO REFACTORE
     def _check_product_constraints(self, cr, uid, line_type='make_to_order', po_cft='po', product_id=False, partner_id=False, check_fnct=False, *args, **kwargs):
         '''
         Check product constraints (no extenal supply, no storage...)
@@ -421,14 +422,14 @@ class sourcing_line(osv.osv):
             return check_fnct(cr, uid, product_id, vals, *args, **kwargs)
 
         return '', False
-
+    # TODO: TO REFACTORE
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
         Open the split line wizard
         '''
         line = self.browse(cr, uid, ids[0], context=context)
         return self.pool.get('sale.order.line').open_split_wizard(cr, uid, [line.sale_order_line_id.id], context=context)
-
+    # TODO: TO REFACTORE
     def check_supplierinfo(self, cr, uid, ids, partner_id, context=None):
         '''
         return the value of delay if the corresponding supplier is in supplier info the product
@@ -438,7 +439,7 @@ class sourcing_line(osv.osv):
         for sourcing_line in self.browse(cr, uid, ids, context=context):
             delay = -1
             return sourcing_line.supplier and sourcing_line.supplier.supplier_lt or delay
-
+    # TODO: TO REFACTORE
     def write(self, cr, uid, ids, values, context=None):
         '''
         _name = 'sourcing.line'
@@ -523,7 +524,7 @@ class sourcing_line(osv.osv):
         res = super(sourcing_line, self).write(cr, uid, ids, values, context=context)
         self._check_line_conditions(cr, uid, ids, context)
         return res
-
+    # TODO: TO REFACTORE
     def onChangeLocation(self, cr, uid, ids, location_id, product_id, rts, sale_order_id):
         '''
         Compute the stock values according to parameters
@@ -557,7 +558,7 @@ class sourcing_line(osv.osv):
 
         return res
 
-
+    # TODO: TO REFACTORE
     def onChangePoCft(self, cr, uid, line_id, po_cft, order_id=False, partner_id=False, context=None):
         '''
         '''
@@ -589,7 +590,7 @@ class sourcing_line(osv.osv):
                 return res
 
         return res
-
+    # TODO: TO REFACTORE
     def onChangeType(self, cr, uid, line_id, l_type, location_id=False, context=None):
         '''
         if l_type == make to stock, change pocft to False
@@ -629,7 +630,7 @@ class sourcing_line(osv.osv):
                         return res
 
         return {'value': value, 'warning': message}
-
+    # TODO: TO REFACTORE
     def onChangeSupplier(self, cr, uid, line_id, supplier, context=None):
         '''
         supplier changes, we update 'estimated_delivery_date' with corresponding delivery lead time
@@ -669,14 +670,14 @@ class sourcing_line(osv.osv):
                 return result
 
         return result
-
+    # TODO: TO REFACTORE
     def copy(self, cr, uid, line_id, default=None, context=None):
         '''
         copy method from sourcing_line
         '''
         result = super(sourcing_line, self).copy(cr, uid, line_id, default, context)
         return result
-
+    # TODO: TO REFACTORE
     def create(self, cr, uid, vals, context=None):
         '''
         create method from sourcing_line
@@ -685,6 +686,7 @@ class sourcing_line(osv.osv):
         self._check_line_conditions(cr, uid, res, context)
         return res
 
+    # TODO: TO REFACTORE
     def copy_data(self, cr, uid, line_id, default=None, context=None):
         '''
         copy_data method for soucring_line
@@ -703,6 +705,7 @@ class sourcing_line(osv.osv):
 
         return super(sourcing_line, self).copy_data(cr, uid, line_id, default, context=context)
 
+    # TODO: TO REFACTORE
     def confirmLine(self, cr, uid, ids, context=None):
         '''
         set the corresponding line's state to 'confirmed'
@@ -755,6 +758,7 @@ class sourcing_line(osv.osv):
 
         return result
 
+    # TODO: TO REFACTORE
     def confirmOrder(self, cr, uid, sourcingLine, context=None, new_cursor=True):
         '''
         Confirm the Order in a Thread
@@ -792,7 +796,7 @@ class sourcing_line(osv.osv):
 
         return True
 
-
+    # TODO: TO REFACTORE
     def unconfirmLine(self, cr, uid, ids, context=None):
         '''
         set the sale order line state to 'draft'
@@ -811,17 +815,13 @@ class sale_order(osv.osv):
 
     _inherit = 'sale.order'
     _description = 'Sales Order'
-    _columns = {'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_id', 'Sourcing Lines'),
+    # TODO: TO REFACTORE
+    _columns = {
                 'sourcing_trace_ok': fields.boolean(string='Display sourcing logs'),
                 'sourcing_trace': fields.text(string='Sourcing logs', readonly=True),
                 }
 
-    def create(self, cr, uid, vals, context=None):
-        '''
-        create from sale_order
-        '''
-        return super(sale_order, self).create(cr, uid, vals, context)
-
+    # TODO: TO REFACTORE
     def write(self, cr, uid, ids, vals, context=None):
         '''
         _inherit = 'sale.order'
@@ -863,18 +863,9 @@ class sale_order(osv.osv):
                 if vals.get('partner_id') and vals.get('partner_id') != so.partner_id.id:
                     sourcing_values.update({'customer': so.partner_id.id})
 
-                sourcing_ids = []
-                # for each sale order line
-                for sol in so.order_line:
-                    # update the sourcing line
-                    for sl in sol.sourcing_line_ids:
-                        sourcing_ids.append(sl.id)
-
-                self.pool.get('sourcing.line').write(cr, uid, sourcing_ids, sourcing_values, context)
-
         return super(sale_order, self).write(cr, uid, ids, vals, context)
 
-
+    # TODO: TO REFACTORE
     def copy(self, cr, uid, order_id, default=None, context=None):
         '''
         copy from sale_order
@@ -884,36 +875,12 @@ class sale_order(osv.osv):
         if not default:
             default = {}
 
-        default['sourcing_line_ids'] = []
         default['sourcing_trace'] = ''
         default['sourcing_trace_ok'] = False
 
         return super(sale_order, self).copy(cr, uid, order_id, default, context)
 
-    def unlink(self, cr, uid, ids, context=None):
-        '''
-        _inherit = 'sale.order'
-
-
-        override because of Bug #604347
-
-        on_delete constraints are not generated
-
-        remove manually all linked sourcing_line
-        '''
-        if not context:
-            context = {}
-        context.update({'fromSaleOrder': True})
-        idsToDelete = []
-        for order in self.browse(cr, uid, ids, context):
-            for orderLine in order.order_line:
-                for sourcingLine in orderLine.sourcing_line_ids:
-                    idsToDelete.append(sourcingLine.id)
-
-        self.pool.get('sourcing.line').unlink(cr, uid, idsToDelete, context)
-
-        return super(sale_order, self).unlink(cr, uid, ids, context)
-
+    # TODO: TO REFACTORE
     def action_cancel(self, cr, uid, ids, context=None):
         '''
         Don't check line integrity
@@ -925,6 +892,7 @@ class sale_order(osv.osv):
 
         return super(sale_order, self).action_cancel(cr, uid, ids, context=context)
 
+    # TODO: TO REFACTORE
     def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
@@ -947,6 +915,7 @@ class sale_order(osv.osv):
 
         return result
 
+    # TODO: TO REFACTORE
     def _hook_procurement_create_line_condition(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
@@ -960,6 +929,7 @@ class sale_order(osv.osv):
         # if make_to_stock and procurement_request, no procurement is created
         return result and not(line.type == 'make_to_stock' and line.order_id.procurement_request)
 
+    # TODO: TO REFACTORE
     def do_order_confirm_method(self, cr, uid, ids, context=None):
         '''
         trigger the workflow
@@ -998,165 +968,408 @@ sale_order()
 
 
 class sale_order_line(osv.osv):
-    '''
+    """
     override of sale_order_line class
     creation/update/copy of sourcing_line
-    '''
+    """
     _inherit = 'sale.order.line'
     _description = 'Sales Order Line'
-    _columns = {
-                'po_cft': fields.selection(_SELECTION_PO_CFT, string="PO/CFT"),
-                'supplier': fields.many2one('res.partner', 'Supplier'),
-                'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_line_id', 'Sourcing Lines'),
-                'location_id': fields.many2one('stock.location', string='Location'),
-                }
 
-    def create(self, cr, uid, vals, context=None):
-        '''
-        _inherit = 'sale.order.line'
+    """
+    Generic methods
+    """
+    def _check_browse_param(self, param, method):
+        """
+        Returns an error message if the parameter is not a
+        browse_record instance
 
-        override create method, create corresponding sourcing.line objects
+        :param param: The parameter to test
+        :param method: Name of the method that call the _check_browse_param()
 
-        vals > dict: {
-        'property_ids': [(6, 0, [])],
-        'product_uos_qty': 1.0,
-        'name': '[PC1] Basic PC',
-        'product_uom': 1,
-        'order_id': 14,
-        'notes': False,
-        'product_uom_qty': 1.0,
-        'delay': 2.0,
-        'discount': 0.0,
-        'product_id': 3,
-        'th_weight': 0.0,
-        'product_uos': False,
-        'product_packaging': False,
-        'tax_id': [(6, 0, [])],
-        'type': 'make_to_stock',
-        'price_unit': 450.0,
-        'address_allotment_id': False,
-        'customer': partner_id,
-        }
-        '''
-        if not context:
+        :return True
+        """
+        if not isinstance(param, browse_record):
+            raise osv.except_osv(
+                _('Bad parameter'),
+                _("""Exception when call the method '%s' of the object '%s' :
+The parameter '%s' should be an browse_record instance !""") % (method, self._name, param)
+            )
+
+        return True
+
+    """
+    Methods to get fields.function values
+    """
+    def _get_fake(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for i in ids:
+            res[i] = False
+
+        return res
+
+    def _get_sale_order_state(self, cr, uid, order=False, context=None):
+        """
+        Compute the state of the field order.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param line: browse_record of the sale.order
+        :param context: Context of the call
+
+        :return The state of the sale order or False
+        :rtype string
+        """
+        if context is None:
             context = {}
-        # if a product has been selected, get supplier default value
-        sellerId = vals.get('supplier')
-        deliveryDate = False
 
-        if vals.get('order_id'):
-            # If the line is created after the validation of the FO, and if the FO is a loan
-            # Force the sourcing type 'from stock'
-            order = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context)
-            if order.order_type == 'loan' and order.state == 'validated':
-                vals['type'] = 'make_to_stock'
-                vals['po_cft'] = False
-                vals['supplier'] = False
-                sellerId = False
+        self._check_browse_param(order, method='_get_sale_order_state')
 
-        if vals.get('type') == 'make_to_order' and vals.get('product_id'):
-            ctx = context.copy()
-            if sellerId:
-                ctx['delay_supplier_id'] = sellerId
+        if order and order.state == 'done' and order.split_type_sale_order == 'original_sale_order':
+            return 'split_so'
+        elif order:
+            return order.state
 
-            product = self.pool.get('product.product').browse(cr, uid, vals['product_id'], ctx)
+        return False
 
-            if not sellerId:
-                seller = product.seller_id
-                sellerId = (seller and seller.id) or False
+    def _get_date(self, cr, uid, line, context=None):
+        """
+        Compute the estimated delivery date of the line according
+        to values already on line.
 
-                if sellerId:
-                    deliveryDate = int(product.seller_delay)
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param line: browse_record of the sale.order.line
+        :param context: Context of the call
+
+        :return The estimated delivery date or False
+        :rtype string
+        """
+        if context is None:
+            context = {}
+
+        self._check_browse_param(line, method='_get_date')
+
+        res = False
+
+        if line.cf_estimated_delivery_date and line.state in ('done', 'confirmed'):
+            res = line.cf_estimated_delivery_date
+        elif line.supplier:
+            get_delay = self.onChangeSupplier(cr,
+                                              uid,
+                                              [line.id],
+                                              line.supplier.id,
+                                              context=context)
+            res = get_delay.get('value', {}).get('estimated_delivery_date', False)
+
+        return res
+
+    def _get_line_values(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Get some values from the field order line.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param ids: List of ID of field order lines to re-compute
+        :param field_name: A field or a list of fields to be computed
+        :param args: Some other arguments
+        :param context: Context of the call
+
+        :return A dictionnary with field order line id as keys and associated
+                 computed values
+        :rtype dict
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            values = {
+                'priority': line.order_id.priority,
+                'categ': line.order_id.categ,
+                'rts': line.order_id.ready_to_ship_date,
+                'procurement_request': line.order_id.procurement_request,
+                'loan_type': line.order_id.order_type == 'loan',
+                'estimated_delivery_date': self._get_date(cr, uid, line, context=context),
+                'display_confirm_button': line.state == 'draft' and line.order_id.state == 'validated',
+                'sale_order_in_progress': line.order_id.sourcing_trace_ok,
+                'sale_order_state': self._get_sale_order_state(cr, uid, line, context=context),
+            }
+            res[line.id] = values
+
+        return res
+
+    # TODO: To refactore
+    def _getAvailableStock(self, cr, uid, ids, field_names=None, arg=False, context=None):
+        """
+        Get the available stock for each line
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param ids: List of ID of field order lines to re-compute
+        :param field_name: A field or a list of fields to be computed
+        :param args: Some other arguments
+        :param context: Context of the call
+
+        :return A dictionnary with field order line id as keys and associated
+                 available stock
+        :rtype dict
+        """
+        result = {}
+        productObj = self.pool.get('product.product')
+        # for each sourcing line
+        for sl in self.browse(cr, uid, ids, context):
+            product_context = context
+            if sl.product_id:
+                real_stock = sl.real_stock
+                product_context = context
+                product_context.update({'states': ('assigned',), 'what': ('out',)})
+                if sl.type == 'make_to_stock' and sl.location_id:
+                    product_context.update({'location': sl.location_id.id})
+                productId = productObj.get_product_available(cr, uid, [sl.product_id.id], context=product_context)
+                res = real_stock + productId.get(sl.product_id.id, 0.00)
             else:
-                deliveryDate = product.delay_for_supplier
+                res = 0.00
 
-        # if type is missing, set to make_to_stock and po_cft to False
-        if not vals.get('type'):
-            vals['type'] = 'make_to_stock'
-            vals['po_cft'] = False
+            result[sl.id] = res
 
+        return result
+
+    # TODO: To refactore
+    def _getVirtualStock(self, cr, uid, ids, field_names=None, arg=False, context=None):
+        '''
+        get virtual stock (virtual_available) for the product of the corresponding sourcing line
+        where date of stock.move is smaller than or equal to rts
+        '''
+        result = {}
+        productObj = self.pool.get('product.product')
+
+        # UF-1411 : Compute the virtual stock on Stock + Input locations
+        location_ids = []
+        wids = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)
+        for w in self.pool.get('stock.warehouse').browse(cr, uid, wids, context=context):
+            location_ids.append(w.lot_stock_id.id)
+            location_ids.append(w.lot_input_id.id)
+
+        # for each sourcing line
+        for sl in self.browse(cr, uid, ids, context):
+            product_context = context
+            rts = sl.rts < time.strftime('%Y-%m-%d') and time.strftime('%Y-%m-%d') or sl.rts
+            if sl.type == 'make_to_stock' and sl.location_id:
+                location_ids = sl.location_id.id
+            product_context.update({'location': location_ids, 'to_date': '%s 23:59:59' % rts})
+            if sl.product_id:
+                product_virtual = productObj.browse(cr, uid, sl.product_id.id, context=product_context)
+                res = {'real_stock': product_virtual.qty_available,
+                       'virtual_stock': product_virtual.virtual_available}
+            else:
+                res = {'real_stock': 0.00,
+                       'virtual_stock': 0.00}
+
+            result[sl.id] = res
+
+        return result
+
+    """
+    Methods to search values for fields.function
+    """
+    def _src_order_state(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns all field order lines that match with the order state domain
+        given in args.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param obj: Object on which the search is
+        :param field_name: Name of the field on which the search is
+        :param args: The domain
+        :param context: Context of the call
+
+        :return A list of tuples that allows the system to return the list
+                 of matching field order lines
+        :rtype list
+        """
+        if context is None:
+            context = {}
+
+        if not args:
+            return []
+
+        res = []
+        for arg in args:
+            if arg[0] == 'sale_order_state':
+                res = [('order_id.state', arg[1], arg[2])]
+
+        return res
+
+    def _search_need_sourcing(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+
+        if args[0][1] != '=' or not args[0][2]:
+            raise osv.except_osv(_('Error !'), _('Filter not implemented'))
+
+        return [('state', '=', 'draft'), ('sale_order_state', '=', 'validated')]
+
+    _columns = {
+        'customer': fields.related(
+            'order_id',
+            'partner_id',
+            string='Customer',
+            readonly=True,
+        ),
+        'po_cft': fields.selection(
+            _SELECTION_PO_CFT,
+            string="PO/CFT",
+        ),
+        'supplier': fields.many2one(
+            'res.partner',
+            'Supplier',
+        ),
+        'location_id': fields.many2one(
+            'stock.location',
+            string='Location',
+        ),
+        'priority': fields.function(
+            _get_line_values,
+            method=True,
+            selection=ORDER_PRIORITY,
+            type='selection',
+            string='Priority',
+            readonly=True,
+            store=False,
+            multi='line_info',
+        ),
+        'categ': fields.function(
+            _get_line_values,
+            method=True,
+            selection=ORDER_CATEGORY,
+            type='selection',
+            string='Category',
+            readonly=True,
+            store=False,
+            multi='line_info',
+        ),
+        'sale_order_state': fields.function(
+            _get_line_values,
+            fnct_search=_src_order_state,
+            method=True,
+            selection=SALE_ORDER_STATE_SELECTION,
+            type='selection',
+            string='Order State',
+            readonly=True,
+            store=False,
+            multi='line_info',
+        ),
+        'rts': fields.function(
+            _get_line_values,
+            method=True,
+            string='RTS',
+            type='date',
+            readonly=True,
+            store=False,
+            multi='line_info',
+        ),
+        'stock_uom_id': fields.related(
+            'product_id',
+            'uom_id',
+            string='UoM',
+            type='many2one',
+            relation='product.uom',
+            readonly=True,
+        ),
+        'cf_estimated_delivery_date': fields.date(
+            string='Confirmed Estimated DD',
+            readonly=True,
+        ),
+        'estimated_delivery_date': fields.function(
+            _get_line_values,
+            method=True,
+            type='date',
+            string='Estimated DD',
+            store=False,
+            readonly=True,
+            multi='line_info',
+        ),
+        # TODO: To refactore
+        'display_confirm_button': fields.function(_get_line_values, method=True, type='boolean', string='Display Button', multi='line_info',),
+        # TODO: To refactore
+        'need_sourcing': fields.function(_get_fake, method=True, type='boolean', string='Only for filtering', fnct_search=_search_need_sourcing),
+        # TODO: To refactore
+        # UTP-392: if the FO is loan type, then the procurement method is only Make to Stock allowed
+        'loan_type': fields.function(_get_line_values, method=True, type='boolean', multi='line_info',),
+        # TODO: To refactore
+        'sale_order_in_progress': fields.function(_get_line_values, method=True, type='boolean', multi='line_info'),
+        # UTP-965 : Select a source stock location for line in make to stock
+        # TODO: To refactore
+        'real_stock': fields.function(_getVirtualStock, method=True, type='float', string='Real Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True, multi='stock_qty'),
+        # TODO: To refactore
+        'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True, multi='stock_qty'),
+        # TODO: To refactore
+        'available_stock': fields.function(_getAvailableStock, method=True, type='float', string='Available Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+    }
+
+    def create(self, cr, uid, vals=None, context=None):
+        """
+        Update some values according to Field order values
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param vals: A dictionary with values of the new line to create
+        :param context: Context of the call
+
+        :return The ID of the new line
+        :rtype integer
+        """
+        # Objects
+        order_obj = self.pool.get('sale.order')
+        product_obj = self.pool.get('product.product')
+
+        if context is None:
+            context = {}
+
+        if vals is None:
+            vals = {}
+
+        product = False
         if vals.get('product_id', False):
-            bropro = self.pool.get('product.product').browse(cr, uid, vals['product_id'])
-            if bropro.type in ('consu', 'service', 'service_recep'):
-                vals['type'] = 'make_to_order'
+            product = product_obj.browse(cr, uid, vals['product_id'], context=context)
 
-        # fill po/cft : by default, if mto -> po and po_cft is not specified in data, if mts -> False
+        if vals.get('order_id', False):
+            order = order_obj.browse(cr, uid, vals['order_id'], context=context)
+            if order.order_type == 'loan' and order.state == 'validated':
+                vals.update({
+                    'type': 'make_to_stock',
+                    'po_cft': False,
+                    'supplier': False,
+                })
+
+        if product and vals.get('type', False) == 'make_to_order' and not vals.get('supplier', False):
+            vals['supplier'] = product.seller_id and product.seller_id.id or False
+
+        if product and product.type in ('consu', 'service', 'service_recep'):
+            vals['type'] = 'make_to_order'
+
+        # If type is missing, set to make_to_stock and po_cft to False
+        if not vals.get('type', False):
+            vals.update({
+                'type': 'make_to_stock',
+                'po_cft': False,
+            })
+
+        # Fill PO/CfT : by default, if MtO -> PO and PO/Cft is not specified in data, if MtS -> False
         if not vals.get('po_cft', False) and vals.get('type', False) == 'make_to_order':
             vals['po_cft'] = 'po'
         elif vals.get('type', False) == 'make_to_stock':
             vals['po_cft'] = False
 
-        # fill the supplier
-        vals.update({'supplier': sellerId})
+        # Create the new sale order line
+        return super(sale_order_line, self).create(cr, uid, vals, context=context)
 
-        # create the new sale order line
-        result = super(sale_order_line, self).create(cr, uid, vals, context=context)
-
-        # delivery date : supplier lead-time and 2 days for administrative treatment
-        estDeliveryDate = False
-        if deliveryDate:
-            daysToAdd = deliveryDate
-            estDeliveryDate = date.today()
-            estDeliveryDate = estDeliveryDate + relativedelta(days=int(daysToAdd))
-            estDeliveryDate = estDeliveryDate.strftime('%Y-%m-%d')
-
-        # order state
-        order = self.pool.get('sale.order').browse(cr, uid, vals['order_id'], context)
-        orderState = order.state_hidden_sale_order
-        orderPriority = order.priority
-        orderCategory = order.categ
-        customer_id = order.partner_id.id
-
-        if sellerId:
-            seller = self.pool.get('res.partner').browse(cr, uid, sellerId)
-            if seller.partner_type and not order.procurement_request and not seller.partner_type in ['external', 'esc']:
-                sellerId = False
-
-        values = {
-                  'sale_order_id': vals['order_id'],
-                  'sale_order_line_id': result,
-                  'customer_id': customer_id,
-                  'supplier': sellerId,
-                  'po_cft': vals['po_cft'],
-                  'estimated_delivery_date': estDeliveryDate,
-                  'rts': time.strftime('%Y-%m-%d'),
-                  'type': vals['type'],
-                  'line_number': vals['line_number'],
-                  'product_id': vals.get('product_id', False),
-                  'priority': orderPriority,
-                  'categ': orderCategory,
-                  'sale_order_state': orderState,
-                  'state': self.browse(cr, uid, result, context=context).state
-                  }
-
-        sourcing_line_id = self.pool.get('sourcing.line').create(cr, uid, values, context=context)
-        # update sourcing line - trigger update of fields.function values -- OPENERP BUG ? with empty values
-        self.pool.get('sourcing.line').write(cr, uid, [sourcing_line_id], {}, context=context)
-
-        return result
-
-    def copy(self, cr, uid, l_id, default=None, context=None):
-        '''
-        copy from sale order line
-        '''
-        if not context:
-            context = {}
-
-        result = super(sale_order_line, self).copy(cr, uid, l_id, default, context)
-        return result
-
-    def copy_data(self, cr, uid, l_id, default=None, context=None):
-        '''
-        copy_data from sale order line
-
-        dont copy sourcing lines, they are generated at sale order lines creation
-        '''
-        if not default:
-            default = {}
-        default.update({'sourcing_line_ids': []})
-
-        return super(sale_order_line, self).copy_data(cr, uid, l_id, default, context=context)
-
+    # TODO: TO REFACTORE
     def write(self, cr, uid, ids, vals, context=None):
         '''
         _inherit = 'sale.order.line'
@@ -1245,33 +1458,7 @@ class sale_order_line(osv.osv):
 
         return result
 
-    def unlink(self, cr, uid, ids, context=None):
-        '''
-        _inherit = 'sale.order.line'
-
-
-        override because of Bug #604347
-
-        on_delete constraints are not generated
-
-        remove manually all linked sourcing_line
-        '''
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        context.update({'fromSaleOrderLine': True})
-        idsToDelete = []
-        for orderLine in self.browse(cr, uid, ids, context):
-            for sourcingLine in orderLine.sourcing_line_ids:
-                idsToDelete.append(sourcingLine.id)
-        # delete sourcing lines
-        self.pool.get('sourcing.line').unlink(cr, uid, idsToDelete, context)
-
-        return super(sale_order_line, self).unlink(cr, uid, ids, context)
-
+    # TODO: TO REFACTORE
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
         uom=False, qty_uos=0, uos=False, name='', partner_id=False,
         lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
