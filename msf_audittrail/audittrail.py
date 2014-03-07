@@ -24,14 +24,13 @@ from osv.osv import osv_pool, object_proxy
 from osv.orm import orm_template
 from tools.translate import _
 from lxml import etree
-from datetime import *
+from datetime import datetime
 import ir
 import pooler
 import time
 import tools
 import logging
 from tools.safe_eval import safe_eval as eval
-import logging
 
 
 class purchase_order(osv.osv):
@@ -177,7 +176,6 @@ class ir_module(osv.osv):
 
         tr_obj = self.pool.get('ir.translation')
         act_obj = self.pool.get('ir.actions.act_window')
-        language_obj = self.browse(cr, uid, ids)[0]
         src = 'Track changes'
         if not filter_lang:
             pool = pooler.get_pool(cr.dbname)
@@ -323,7 +321,7 @@ class audittrail_rule(osv.osv):
                 raise osv.except_osv(
                         _('WARNING: audittrail is not part of the pool'),
                         _('Change audittrail depends -- Setting rule as DRAFT'))
-                self.write(cr, uid, [thisrule.id], {"state": "draft"})
+
             search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_audittrail', 'view_audittrail_log_line_search')
             val = {
                  "name": _('Track changes'),
@@ -403,7 +401,6 @@ class audittrail_rule(osv.osv):
         if not obj or not obj._trace:
             return False
 
-        model_pool = self.pool.get('ir.model')
         log_field = 'log_' + method
         return self.search(cr, 1, [('object_id.model', '=', model), (log_field, '=', True), ('state', '=', 'subscribed')])
 
@@ -478,7 +475,6 @@ class audittrail_rule(osv.osv):
                 # Add the name of the created sub-object
                 if parent_field:
                     # get the parent model_id
-                    # TODO: keep it on rule creation
                     vals.update({
                         'sub_obj_name': new_values_computed[res_id][parent_field_display],
                         'rule_id': rule.id,
@@ -507,7 +503,6 @@ class audittrail_rule(osv.osv):
                         record = {}
 
                     for field in fields_to_trace.keys():
-                        # TODO: compare time
                         old_value = record.get(field, False)
                         new_value = current[res_id].get(field, False)
                         if old_value != new_value:
