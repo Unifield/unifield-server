@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 MSF, TeMPO Consulting
 #
@@ -15,11 +15,26 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import sourcing
+
+import procurement_order
+import product_supplierinfo
+import product_template
+import purchase_order
+import res_partner
+import sale_order
+import sale_order_line
+
 import wizard
+
+_SELECTION_PO_CFT = [
+    ('po', 'Purchase Order'),
+    ('dpo', 'Direct Purchase Order'),
+    ('cft', 'Tender'),
+    ('rfq', 'Request for Quotation'),
+]
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
