@@ -224,7 +224,7 @@ class account_invoice(osv.osv):
                                         amount = -1 * self.pool.get('res.currency').compute(cr, uid, inv.currency_id.id, company_currency,
                                             anal_amount, round=False, context=context)
                                         # write new amount to corresponding engagement line
-                                        eng_res = self.pool.get('account.analytic.line').write(cr, uid, [eng_line.id],
+                                        self.pool.get('account.analytic.line').write(cr, uid, [eng_line.id],
                                             {'amount': amount, 'amount_currency': -1 * anal_amount}, context=context)
                                         # delete processed engagement lines
                                         engagement_lines[i] = None

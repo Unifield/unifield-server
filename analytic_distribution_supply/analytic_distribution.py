@@ -36,7 +36,7 @@ class analytic_distribution(osv.osv):
         'partner_type': fields.text(string='Partner Type of FO/PO', required=False, readonly=True),#UF-2138: added the ref to partner type of FO/PO
     }
 
-    def copy(self, cr, uid, id, default=None, context=None):
+    def copy(self, cr, uid, d_id, default=None, context=None):
         """
         Delete one2many fields
         """
@@ -52,7 +52,7 @@ class analytic_distribution(osv.osv):
             'sale_order_ids': False,
             'sale_order_line_ids': False,
         })
-        return super(analytic_distribution, self).copy(cr, uid, id, default, context)
+        return super(analytic_distribution, self).copy(cr, uid, d_id, default, context)
 
 analytic_distribution()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
