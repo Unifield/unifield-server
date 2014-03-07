@@ -310,13 +310,11 @@ class wizard_cash_return(osv.osv_memory):
                         }
                         self.write(cr, uid, [id], values, context=context)
         return id
-    
-    
+
     def onchange_addl_amount(self, cr, uid, returned_amount, context=None):
         if returned_amount <> 0:
-            return { 'value': {'returned_amount': 0},}
-        return None
-    
+            return {'value': {'returned_amount': 0}}
+        return {}
 
     def onchange_returned_amount(self, cr, uid, ids, amount=0.0, invoices=None, advances=None, display_invoice=None, initial_amount=0.0, advance_linked_po_auto_invoice=False, additional_amount=0.0, context=None):
         """
@@ -710,7 +708,8 @@ class wizard_cash_return(osv.osv_memory):
         move_id = move_obj.create(cr, uid, move_vals, context=context)
         # Prepare the closing advance name
         adv_closing_name = "closing" + "-" + wizard.advance_st_line_id.name
-        
+
+        addl_dr_move_line_id = False
         # create new balanced entries if an additional amount has been added 
         if wizard.additional_amount > 0:
             # credit journal credit account
@@ -769,7 +768,7 @@ class wizard_cash_return(osv.osv_memory):
                 account_id = advance.account_id.id
                 distrib_id = (advance.analytic_distribution_id and advance.analytic_distribution_id.id) or \
                     (advance.wizard_id.analytic_distribution_id and advance.wizard_id.analytic_distribution_id.id) or False
-                line_ref = (advance.reference and advance.reference) or (wizard.reference and wizard.reference) or False
+                line_ref = advance.reference or wizard.reference
 
                 adv_id = self.create_move_line(cr, uid, ids, wizard.date, adv_date, adv_name, journal, register, partner_id, False, account_id, \
                     debit, credit, line_ref, move_id, distrib_id, context=context)
@@ -780,9 +779,8 @@ class wizard_cash_return(osv.osv_memory):
         adv_closing_date = wizard.date
         employee_id = wizard.advance_st_line_id.employee_id.id
         analytic_account_id =  wizard.advance_st_line_id.analytic_account_id
-        reference = wizard.reference and wizard.reference or False
         adv_closing_id = self.create_move_line(cr, uid, ids, adv_closing_date, wizard.date, adv_closing_name, journal, register, False, employee_id, adv_closing_acc_id, \
-            0.0, (wizard.initial_amount + wizard.additional_amount), reference, move_id, False, partner_mandatory=True, context=context)
+            0.0, (wizard.initial_amount + wizard.additional_amount), wizard.reference, move_id, False, partner_mandatory=True, context=context)
         # Verify that the balance of the move is null
         st_currency = wizard.advance_st_line_id.statement_id.journal_id.currency.id
         if st_currency and st_currency != wizard.advance_st_line_id.statement_id.company_id.currency_id.id:
@@ -808,9 +806,8 @@ class wizard_cash_return(osv.osv_memory):
                     ml_ids = move_line_obj.search(cr, uid, [('move_id', '=', invoice_move_id[0]), ('account_id', '=', inv_move_line_account_id[0])], context=context)
                 if not ml_ids or len(ml_ids) > 1:
                     raise osv.except_osv(_('Error'), _('An error occurred on invoice reconciliation: Invoice line not found.'))
-                inv_ml = move_line_obj.browse(cr, uid, ml_ids, context=context)[0]
-                # reconcile invoice line (from cash return) with specified invoice line (from invoice)   
-                move_line_obj.reconcile_partial(cr, uid, [inv_ml.id, inv_move_line_data[0]]) 
+                # reconcile invoice line (from cash return) with specified invoice line (from invoice)
+                move_line_obj.reconcile_partial(cr, uid, [inv_ml[0], inv_move_line_data[0]])
         else:
             for adv_move_line_id in adv_move_line_ids:
                 adv_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, adv_move_line_id, context=context)
@@ -867,10 +864,11 @@ class wizard_cash_return(osv.osv_memory):
         ml_ids = move_line_obj.search(cr, uid, criteria, context=context)
         if not ml_ids or len(ml_ids) > 1:
             raise osv.except_osv(_('Error'), _('An error occurred on the automatic reconciliation in advance return.'))
-        if 'addl_dr_move_line_id' in locals():
-            rec_targets = [ml_ids[0], addl_dr_move_line_id, adv_closing_id]
-        else:
-            rec_targets = [ml_ids[0], adv_closing_id]
+
+        rec_targets = [ml_ids[0], adv_closing_id]
+        if addl_dr_move_line_id:
+            rec_targets.append(addl_dr_move_line_id)
+
         move_line_obj.reconcile_partial(cr, uid, rec_targets)
         # create the statement line for the advance closing
         adv_closing_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, adv_closing_id, context=context)
