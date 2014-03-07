@@ -22,8 +22,6 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from tools.misc import flatten
-from collections import defaultdict
 from time import strftime
 from lxml import etree
 
@@ -36,8 +34,8 @@ class analytic_line(osv.osv):
         Fake method for 'is_fp_compat_with' field
         """
         res = {}
-        for id in ids:
-            res[id] = ''
+        for i in ids:
+            res[i] = ''
         return res
 
     def _search_is_fp_compat_with(self, cr, uid, obj, name, args, context=None):
@@ -147,7 +145,7 @@ class analytic_line(osv.osv):
                 if isinstance(periods, (int, long)):
                     periods = [periods]
                 if len(periods) > 1:
-                    for i in range(len(periods) - 1):
+                    for _ in range(len(periods) - 1):
                         new_args.append('|')
                 for p_id in periods:
                     period = period_obj.browse(cr, uid, [p_id])[0]
@@ -347,7 +345,7 @@ class analytic_line(osv.osv):
                 # if period is not closed, so override line.
                 if period and period.state not in ['done', 'mission-closed']:
                     # Update account # Date: UTP-943 speak about original date for non closed periods
-                    self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': aline.date, 
+                    self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': aline.date,
                         'source_date': aline.source_date or aline.date}, context=context)
                 # else reverse line before recreating them with right values
                 else:
@@ -390,7 +388,7 @@ class analytic_line(osv.osv):
         if not account_type:
             return res
         try:
-            msf_private_fund = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+            msf_private_fund = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
             'analytic_account_msf_private_funds')[1]
         except ValueError:
             msf_private_fund = 0
@@ -445,12 +443,12 @@ class analytic_line(osv.osv):
                     res.append(aline.id)
         else:
             # Case of FREE1 and FREE2 lines
-            for id in ids:
-                res.append(id)
+            for i in ids:
+                res.append(i)
         # Delete elements that are in expired_date_ids
-        for id in expired_date_ids:
-            if id in res:
-                res.remove(id)
+        for e in expired_date_ids:
+            if e in res:
+                res.remove(e)
         return res
 
 analytic_line()

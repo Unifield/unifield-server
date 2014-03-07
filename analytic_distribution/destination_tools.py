@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from osv import fields, osv
+from osv import fields
 import warnings
 import pooler
 
@@ -16,8 +16,8 @@ class many2many_sorted(fields.many2many):
         res = {}
         if not ids:
             return res
-        for id in ids:
-            res[id] = []
+        for i in ids:
+            res[i] = []
         if offset:
             warnings.warn("Specifying offset at a many2many.get() may produce unpredictable results.",
                       DeprecationWarning, stacklevel=2)
@@ -95,7 +95,7 @@ class many2many_notlazy(many2many_sorted):
                     args.append((0,))
                 else:
                     args.append(tuple(act[2]))
-                    
+
                 # JIRA UTP-334
                 if self._rel == 'account_destination_link':
                     cr.execute('select id from '+self._rel+' where '+self._id1+'=%s AND '+self._id2+' IN (SELECT '+self._rel+'.'+self._id2+' FROM '+self._rel+', '+','.join(tables)+' WHERE '+self._rel+'.'+self._id1+'=%s AND '+self._rel+'.'+self._id2+' = '+obj._table+'.id '+ d1 +' and '+self._rel+'.'+self._id2+' not in %s)', args)
@@ -104,7 +104,7 @@ class many2many_notlazy(many2many_sorted):
                         unlink_obj.unlink(cr, user, unlinked_id[0])
                 else:
                     cr.execute('delete from '+self._rel+' where '+self._id1+'=%s AND '+self._id2+' IN (SELECT '+self._rel+'.'+self._id2+' FROM '+self._rel+', '+','.join(tables)+' WHERE '+self._rel+'.'+self._id1+'=%s AND '+self._rel+'.'+self._id2+' = '+obj._table+'.id '+ d1 +' and '+self._rel+'.'+self._id2+' not in %s)', args)
-                
+
 
                 cr.execute('select '+self._id2+' from '+self._rel+' where '+self._id1+'=%s', [id, ])
                 existing = [x[0] for x in cr.fetchall()]
@@ -116,7 +116,7 @@ class many2many_notlazy(many2many_sorted):
                             link_obj.create(cr, user, {self._id1: id, self._id2: act_nbr})
                         else:
                             cr.execute('insert into '+self._rel+' ('+self._id1+','+self._id2+') values (%s, %s)', (id, act_nbr))
-                        
+
             else:
                 newargs.append(act)
         if newargs:

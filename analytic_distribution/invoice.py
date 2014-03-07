@@ -39,9 +39,9 @@ class account_invoice(osv.osv):
         if not context:
             context = {}
         st_line_id = self.read(cr, uid, context['active_id'], ['register_line_ids'])
-        context['from_direct_inv'] = st_line_id.get('register_line_ids') and st_line_id['register_line_ids'][0] 
+        context['from_direct_inv'] = st_line_id.get('register_line_ids') and st_line_id['register_line_ids'][0]
         return self.button_analytic_distribution(cr, uid, ids, context)
-    
+
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
@@ -104,7 +104,7 @@ class account_invoice_line(osv.osv):
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
     }
-    
+
     def button_analytic_distribution_from_direct_inv_line(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -125,7 +125,6 @@ class account_invoice_line(osv.osv):
             raise osv.except_osv(_('Error'), _('No invoice line given. Please save your invoice line before.'))
         # Prepare some values
         invoice_line = self.browse(cr, uid, ids[0], context=context)
-        distrib_id = False
         negative_inv = False
         amount = invoice_line.price_subtotal or 0.0
         # Search elements for currency
