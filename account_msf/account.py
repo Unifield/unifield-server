@@ -63,7 +63,7 @@ class account_account(osv.osv):
         for x in args:
             if x[0] == 'is_intermission_counterpart' and x[2] is True:
                 if intermission_id:
-                  arg.append(('id', '=', intermission_id))
+                    arg.append(('id', '=', intermission_id))
             elif x[0] != 'is_intermission_counterpart':
                 arg.append(x)
             else:

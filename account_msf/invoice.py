@@ -23,10 +23,6 @@
 
 from osv import osv
 from osv import fields
-from tools.translate import _
-import re
-from lxml import etree
-from time import strftime
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'

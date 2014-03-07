@@ -22,7 +22,6 @@
 ##############################################################################
 
 from osv import osv
-from tools.translate import _
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
@@ -36,7 +35,7 @@ class purchase_order(osv.osv):
             context = {}
         res = super(purchase_order, self).create(cr, uid, vals, context)
         if vals.get('order_type', False) and vals.get('order_type') == 'in_kind':
-          vals.update({'invoice_method': 'picking'})
+            vals.update({'invoice_method': 'picking'})
 
         return res
 
@@ -48,7 +47,7 @@ class purchase_order(osv.osv):
             context = {}
         res = super(purchase_order, self).write(cr, uid, ids, vals, context)
         if vals.get('order_type', False) and vals.get('order_type') == 'in_kind':
-          cr.execute("UPDATE purchase_order SET invoice_method = 'picking' WHERE id in %s", (tuple(ids),))
+            cr.execute("UPDATE purchase_order SET invoice_method = 'picking' WHERE id in %s", (tuple(ids),))
         return res
 
     def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, categ, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
