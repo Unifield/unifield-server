@@ -10,9 +10,9 @@
                     <label string="Cash Return Wizard will help you book advances return." colspan="4"/>
                     <separator string="Necessary Information" colspan="4"/>
                     <field name="initial_amount"/>
-                    <newline />
+                    <field name="additional_amount" on_change="onchange_addl_amount(returned_amount)"/>
                     <field name='returned_amount'
-                        on_change="onchange_returned_amount(returned_amount, invoice_line_ids, advance_line_ids, display_invoice, initial_amount, advance_linked_po_auto_invoice)"/>
+                        on_change="onchange_returned_amount(returned_amount, invoice_line_ids, advance_line_ids, display_invoice, initial_amount, advance_linked_po_auto_invoice, additional_amount)"/>
                     <newline />
                     <field name='date'/>
                     <field name='reference' />
@@ -41,7 +41,7 @@
                         <button string="Clean invoices" name="clean_invoices" type="object" icon="gtk-clear" attrs="{'invisible':[('display_invoice', '!=', True)]}" />
                     </group>
                     <newline />
-                    <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" nolabel="1" colspan="4" on_change="changeline(advance_line_ids, returned_amount, date, reference)"/>
+                    <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" nolabel="1" colspan="4" on_change="changeline(advance_line_ids, returned_amount, date, reference, additional_amount)"/>
                     <newline />
                     <field name="total_amount"/>
                     <newline />
@@ -103,6 +103,7 @@
                     colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')">
                     <field name="document_date" />
                     <field name="description" />
+                    <field name="reference" />
                     <field name="account_id" domain="[('restricted_area', '=', 'cash_return')]"/>
                     <field name="partner_id" domain="[('supplier', '=', 'True')]"/>
                     
@@ -130,6 +131,7 @@
                 <form string="Advance Lines">
                     <field name="document_date" />
                     <field name="description" />
+                    <field name="reference" />
                     <field name="account_id" />
                     <field name="partner_id" />
                     <field name="amount" />
