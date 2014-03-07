@@ -147,12 +147,12 @@ class account_invoice(osv.osv):
                 res[i.id] = getattr(i, name, False) and getattr(getattr(i, name, False), 'id', False) or False
         return res
 
-    def onchange_company_id(self, cr, uid, ids, company_id, part_id, type, invoice_line, currency_id):
+    def onchange_company_id(self, cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id):
         """
         This is a method to redefine the journal_id domain with the current_instance taken into account
         """
-        res = super(account_invoice, self).onchange_company_id(cr, uid, ids, company_id, part_id, type, invoice_line, currency_id)
-        if company_id and type:
+        res = super(account_invoice, self).onchange_company_id(cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id)
+        if company_id and ctype:
             res.setdefault('domain', {})
             res.setdefault('value', {})
             ass = {
@@ -162,7 +162,7 @@ class account_invoice(osv.osv):
                 'in_refund': 'purchase_refund',
             }
             journal_ids = self.pool.get('account.journal').search(cr, uid, [
-                ('company_id','=',company_id), ('type', '=', ass.get(type, 'purchase')), ('is_current_instance', '=', True)
+                ('company_id','=',company_id), ('type', '=', ass.get(ctype, 'purchase')), ('is_current_instance', '=', True)
             ])
             if not journal_ids:
                 raise osv.except_osv(_('Configuration Error !'), _('Can\'t find any account journal of %s type for this company.\n\nYou can create one in the menu: \nConfiguration\Financial Accounting\Accounts\Journals.') % (ass.get(type, 'purchase'), ))
@@ -334,7 +334,7 @@ class account_invoice(osv.osv):
                             'view_id': supplier_view_id})
         return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, context)
 
-    def onchange_partner_id(self, cr, uid, ids, type, partner_id,\
+    def onchange_partner_id(self, cr, uid, ids, ctype, partner_id,\
         date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False, is_intermission=False):
         """
         Update fake_account_id field regarding account_id result.
@@ -343,7 +343,7 @@ class account_invoice(osv.osv):
         Get default currency from partner if this one is linked to a pricelist.
         Ticket utp917 - added code to avoid currency cd change if a direct invoice
         """
-        res = super(account_invoice, self).onchange_partner_id(cr, uid, ids, type, partner_id, date_invoice, payment_term, partner_bank_id, company_id)
+        res = super(account_invoice, self).onchange_partner_id(cr, uid, ids, ctype, partner_id, date_invoice, payment_term, partner_bank_id, company_id)
         if is_inkind_donation and partner_id:
             partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
             account_id = partner and partner.donation_payable_account and partner.donation_payable_account.id or False
@@ -356,15 +356,15 @@ class account_invoice(osv.osv):
             res['value']['account_id'] = account_id
         if res.get('value', False) and 'account_id' in res['value']:
             res['value'].update({'fake_account_id': res['value'].get('account_id')})
-        if partner_id and type:
+        if partner_id and ctype:
             p = self.pool.get('res.partner').browse(cr, uid, partner_id)
             if ids: #utp917
                 ai = self.browse(cr, uid, ids)[0]
             if p:
                 c_id = False
-                if type in ['in_invoice', 'out_refund'] and p.property_product_pricelist_purchase:
+                if ctype in ['in_invoice', 'out_refund'] and p.property_product_pricelist_purchase:
                     c_id = p.property_product_pricelist_purchase.currency_id.id
-                elif type in ['out_invoice', 'in_refund'] and p.property_product_pricelist:
+                elif ctype in ['out_invoice', 'in_refund'] and p.property_product_pricelist:
                     c_id = p.property_product_pricelist.currency_id.id
                 if ids:
                     if c_id and not ai.is_direct_invoice:   #utp917
@@ -410,7 +410,6 @@ class account_invoice(osv.osv):
             if isinstance(partner_id, (str)):
                 partner_id = int(partner_id)
             partner = self.pool.get('res.partner').browse(cr, uid, [partner_id])
-            active = True
             if partner and partner[0] and not partner[0].active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
         return super(account_invoice, self).create(cr, uid, vals, context)
@@ -488,7 +487,7 @@ class account_invoice(osv.osv):
         if not self.action_number(cr, uid, ids, context):
             return False
         if not self.action_reconcile_imported_invoice(cr, uid, ids, context):
-            res = False
+            return False
         return True
 
     def _hook_period_id(self, cr, uid, inv, context=None):
@@ -614,7 +613,7 @@ class account_invoice(osv.osv):
             }
         return False
 
-    def copy(self, cr, uid, id, default={}, context=None):
+    def copy(self, cr, uid, inv_id, default={}, context=None):
         """
         Delete period_id from invoice.
         Check context for splitting invoice.
@@ -630,19 +629,19 @@ class account_invoice(osv.osv):
             'imported_invoices': False
         })
         # Default behaviour
-        new_id = super(account_invoice, self).copy(cr, uid, id, default, context)
+        new_id = super(account_invoice, self).copy(cr, uid, inv_id, default, context)
         # Case where you split an invoice
         if 'split_it' in context:
             purchase_obj = self.pool.get('purchase.order')
             sale_obj = self.pool.get('sale.order')
             if purchase_obj:
                 # attach new invoice to PO
-                purchase_ids = purchase_obj.search(cr, uid, [('invoice_ids', 'in', [id])], context=context)
+                purchase_ids = purchase_obj.search(cr, uid, [('invoice_ids', 'in', [inv_id])], context=context)
                 if purchase_ids:
                     purchase_obj.write(cr, uid, purchase_ids, {'invoice_ids': [(4, new_id)]}, context=context)
             if sale_obj:
                 # attach new invoice to SO
-                sale_ids = sale_obj.search(cr, uid, [('invoice_ids', 'in', [id])], context=context)
+                sale_ids = sale_obj.search(cr, uid, [('invoice_ids', 'in', [inv_id])], context=context)
                 if sale_ids:
                     sale_obj.write(cr, uid, sale_ids, {'invoice_ids': [(4, new_id)]}, context=context)
         return new_id
@@ -731,7 +730,7 @@ class account_invoice_line(osv.osv):
                     vals.update({'line_number': il_number})
         return super(account_invoice_line, self).write(cr, uid, ids, vals, context)
 
-    def copy(self, cr, uid, id, default=None, context=None):
+    def copy(self, cr, uid, inv_id, default=None, context=None):
         """
         Check context to see if we come from a split. If yes, we create the link between invoice and PO/FO.
         """
@@ -740,19 +739,19 @@ class account_invoice_line(osv.osv):
         if not default:
             default = {}
 
-        new_id = super(account_invoice_line, self).copy(cr, uid, id, default, context)
+        new_id = super(account_invoice_line, self).copy(cr, uid, inv_id, default, context)
 
         if 'split_it' in context:
             purchase_lines_obj = self.pool.get('purchase.order.line')
             sale_lines_obj = self.pool.get('sale.order.line')
 
             if purchase_lines_obj:
-                purchase_line_ids = purchase_lines_obj.search(cr, uid, [('invoice_lines', 'in', [id])])
+                purchase_line_ids = purchase_lines_obj.search(cr, uid, [('invoice_lines', 'in', [inv_id])])
                 if purchase_line_ids:
                     purchase_lines_obj.write(cr, uid, purchase_line_ids, {'invoice_lines': [(4, new_id)]})
 
             if sale_lines_obj:
-                sale_lines_ids =  sale_lines_obj.search(cr, uid, [('invoice_lines', 'in', [id])])
+                sale_lines_ids =  sale_lines_obj.search(cr, uid, [('invoice_lines', 'in', [inv_id])])
                 if sale_lines_ids:
                     sale_lines_obj.write(cr, uid,  sale_lines_ids, {'invoice_lines': [(4, new_id)]})
 
