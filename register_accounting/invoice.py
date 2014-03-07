@@ -245,6 +245,30 @@ class account_invoice(osv.osv):
                 self.create_down_payments(cr, uid, inv.id, inv.amount_total)
         return True
 
+    def _direct_invoice_updated(self, cr, uid, ids, context=None):
+        """
+        User has updated the direct invoice. The (parent) statement line needs to be updated, and then
+        the move lines deleted and re-created. Ticket utp917. Sheer madness.
+        """
+        # get object handles
+        account_bank_statement_line = self.pool.get('account.bank.statement.line')  #absl
+        direct_invoice = self.browse(cr, uid, ids, context=context)[0]
+        # get statement line id
+        absl = direct_invoice.register_line_ids[0]
+        if (direct_invoice.document_date != absl.document_date) or (direct_invoice.partner_id != absl.partner_id):
+            account_bank_statement_line.write(cr, uid, [absl.id], {'document_date': direct_invoice.document_date, \
+                                                                   'partner_id': direct_invoice.partner_id.id },     \
+                                                                   context=context)
+        # Delete moves
+        # existing seqnums are saved into context here. utp917
+        account_bank_statement_line.unlink_moves(cr, uid, [absl.id], context=context)
+        # Re-create moves and temp post them.
+        # account_bank_statement_line.write(cr, uid, [absl.id], {'state': 'draft'}, context=context)
+        account_bank_statement_line.button_temp_posting(cr, uid, [absl.id], context=context)
+        # remove seqnums from context
+        context.pop("seqnums",None)
+        return True
+
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """
         Add down payment check after others verifications
@@ -254,6 +278,9 @@ class account_invoice(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # Browse invoice and all invoice lines to detect a non-valid line
+        self._check_analytic_distribution_state(cr, uid, ids)
+        # Default behaviour
         res = super(account_invoice, self).action_open_invoice(cr, uid, ids, context)
         to_check = []
         for inv in self.read(cr, uid, ids, ['purchase_ids']):
@@ -262,6 +289,21 @@ class account_invoice(osv.osv):
                 to_check.append(inv.id)
         self.check_down_payments(cr, uid, to_check)
         return res
+
+    def button_close_direct_invoice(self, cr, uid, ids, context=None):
+        """
+        Check analytic distribution before closing pop-up
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        self._check_analytic_distribution_state(cr, uid, ids, context)
+        self._direct_invoice_updated(cr, uid, ids, context)
+
+        if context.get('from_register', False):
+            return {'type': 'ir.actions.act_window_close'}
+        return True
 
 account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
