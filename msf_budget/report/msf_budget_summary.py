@@ -19,22 +19,25 @@
 #
 ##############################################################################
 from osv import fields, osv
-from tools.translate import _
 
 class msf_budget_summary(osv.osv_memory):
     _name = "msf.budget.summary"
-    
+
     def _get_analytic_domain(self, cr, uid, summary_id, context=None):
         summary_line = self.browse(cr, uid, summary_id, context=context)
-        cost_center_ids = self.pool.get('msf.budget.tools')._get_cost_center_ids(summary_line.budget_id.cost_center_id)
-            
+        cost_center_ids = self.pool.get('msf.budget.tools')._get_cost_center_ids(cr, uid, summary_line.budget_id.cost_center_id)
+
         return [('cost_center_id', 'in', cost_center_ids),
                 ('date', '>=', summary_line.budget_id.fiscalyear_id.date_start),
                 ('date', '<=', summary_line.budget_id.fiscalyear_id.date_stop)]
-    
+
     def _get_amounts(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        """
+        Fetch total budget amount from the linked budget
+        Fetch actual amount (all analytic lines) for the given budgets and its childs.
+        """
+        # Prepare some values
         res = {}
-        
         for summary_line in self.browse(cr, uid, ids, context=context):
             actual_amount = 0.0
             budget_amount = 0.0
@@ -44,17 +47,24 @@ class msf_budget_summary(osv.osv_memory):
                     actual_amount += child_amounts[child_line.id]['actual_amount']
                     budget_amount += child_amounts[child_line.id]['budget_amount']
             else:
-                #  Budget Amount, normal budget
+                #  Budget Amount (use total budget amount field)
                 budget_amount = summary_line.budget_id.total_budget_amount
-                # Actual amount, normal budget
-                actual_domain = [('cost_center_id', '=', summary_line.budget_id.cost_center_id.id)]
-                actual_domain.append(('date', '>=', summary_line.budget_id.fiscalyear_id.date_start))
-                actual_domain.append(('date', '<=', summary_line.budget_id.fiscalyear_id.date_stop))
-                analytic_line_obj = self.pool.get('account.analytic.line')
-                analytic_lines = analytic_line_obj.search(cr, uid, actual_domain ,context=context)
-                for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-                    actual_amount += analytic_line.amount
-            
+                # Actual amount is the sum of amount of all analytic lines that correspond to the budget elements (commitments included)
+                sql = """
+                    SELECT SUM(amount)
+                    FROM account_analytic_line
+                    WHERE cost_center_id = %s
+                    AND date >= %s
+                    AND date <= %s
+                """
+                cc_id = summary_line.budget_id.cost_center_id.id
+                date_start = summary_line.budget_id.fiscalyear_id.date_start
+                date_stop = summary_line.budget_id.fiscalyear_id.date_stop
+                # REF-25 Improvement: Use a SQL request instead of browse
+                cr.execute(sql, (cc_id, date_start, date_stop))
+                if cr.rowcount:
+                    actual_amount += cr.fetchall()[0][0]
+
             actual_amount = abs(actual_amount)
             res[summary_line.id] = {
                 'actual_amount': actual_amount,
@@ -62,7 +72,7 @@ class msf_budget_summary(osv.osv_memory):
                 'balance_amount': budget_amount - actual_amount,  # utp-857
             }
         return res
-    
+
     _columns = {
         'budget_id': fields.many2one('msf.budget', 'Budget', required=True),
         'name': fields.related('budget_id', 'name', type="char", string="Budget Name", store=False),
@@ -73,31 +83,39 @@ class msf_budget_summary(osv.osv_memory):
         'parent_id': fields.many2one('msf.budget.summary', 'Parent'),
         'child_ids': fields.one2many('msf.budget.summary', 'parent_id', 'Children'),
     }
-    
+
     _defaults = {
         'parent_id': lambda *a: False
     }
-    
+
     def create(self, cr, uid, vals, context=None):
+        """
+        Create a summary line for each child of the cost center used by the budget given in vals
+        """
+        # Some checks
         if context is None:
             context = {}
+        # Prepare some values
+        sql = """
+            SELECT id
+            FROM msf_budget
+            WHERE fiscalyear_id = %s
+            AND cost_center_id = %s
+            AND decision_moment_id = %s
+            AND state != 'draft'
+            ORDER BY version DESC
+            LIMIT 1"""
         res = super(msf_budget_summary, self).create(cr, uid, vals, context=context)
         if 'budget_id' in vals:
-            budget = self.pool.get('msf.budget').browse(cr, uid, vals['budget_id'], context=context)
-            if budget.cost_center_id:
-                for child_cc in budget.cost_center_id.child_ids:
-                    cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
-                                                            AND cost_center_id = %s \
-                                                            AND decision_moment_id = %s \
-                                                            AND state != 'draft' \
-                                                            ORDER BY version DESC LIMIT 1",
-                                                           (budget.fiscalyear_id.id,
-                                                            child_cc.id,
-                                                            budget.decision_moment_id.id))
+            budget = self.pool.get('msf.budget').read(cr, uid, vals['budget_id'], ['fiscalyear_id', 'decision_moment_id', 'cost_center_id'], context=context)
+            if budget.get('cost_center_id', False):
+                itself = budget.get('cost_center_id')[0]
+                cost_center = self.pool.get('account.analytic.account').read(cr, uid, itself, ['child_ids'])
+                for child_id in cost_center.get('child_ids', []):
+                    cr.execute(sql, (budget.get('fiscalyear_id', [False])[0], child_id, budget.get('decision_moment_id', [False])[0]))
                     if cr.rowcount:
                         child_budget_id = cr.fetchall()[0][0]
-                        child_line_id = self.create(cr, uid, {'budget_id': child_budget_id,
-                                                              'parent_id': res}, context=context)
+                        self.create(cr, uid, {'budget_id': child_budget_id, 'parent_id': res}, context=context)
         return res
 
 msf_budget_summary()

@@ -35,7 +35,6 @@ from msf_doc_import import GENERIC_MESSAGE
 from check_line import *
 from msf_doc_import import MAX_LINES_NB
 from msf_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration, PO_COLUMNS_HEADER_FOR_INTEGRATION, NEW_COLUMNS_HEADER
-from msf_doc_import import check_line
 
 from lxml import etree
 
@@ -97,7 +96,7 @@ class purchase_order(osv.osv):
 
         if inactive_lines:
             plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')          
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
             raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
             return False
         return True
@@ -128,7 +127,7 @@ class purchase_order(osv.osv):
             export_line_obj.create(cr, uid, {'po_line_id': l.id,
                                              'in_line_number': l.line_number,
                                              'simu_id': export_id}, context=context)
-        
+
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.po.simulation.screen',
                 'res_id': export_id,
@@ -216,8 +215,8 @@ class purchase_order(osv.osv):
                                                                             'filename_template': 'template.xls',
                                                                             'filename': 'Lines_Not_Imported.xls',
                                                                             'po_id': ids[0],
-                                                                            'message': """%s %s"""  % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_po_line_import]), ),
-                                                                            'state': 'draft',},
+                                                                            'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_po_line_import]),),
+                                                                            'state': 'draft', },
                                                                    context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.po.line',
@@ -235,13 +234,13 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         message = ''
-        plural= ''
+        plural = ''
         obj_data = self.pool.get('ir.model.data')
 
         for var in self.browse(cr, uid, ids, context=context):
             # we check the supplier and the address
-            if var.partner_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import','supplier_tbd')[1] \
-            or var.partner_address_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import','address_tbd')[1]:
+            if var.partner_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'supplier_tbd')[1] \
+            or var.partner_address_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'address_tbd')[1]:
                 raise osv.except_osv(_('Warning !'), _("\n You can't have a supplier or an address 'To Be Defined', please select a consistent supplier."))
             # we check the lines that need to be fixed
             if var.order_line:
@@ -262,7 +261,7 @@ class purchase_order(osv.osv):
             ids = [ids]
         for var in self.browse(cr, uid, ids, context=context):
             if not var.from_sync and var.partner_type != 'external':
-                raise osv.except_osv(_('Warning !'), _("""You can\'t cancel the PO because it may have already been synchronized, 
+                raise osv.except_osv(_('Warning !'), _("""You can\'t cancel the PO because it may have already been synchronized,
                 the cancellation should then come from the supplier instance (and synchronize down to the requestor instance)."""))
         return True
 
@@ -446,7 +445,7 @@ class wizard_export_po_validated(osv.osv_memory):
             ids = [ids]
 
         wiz = self.browse(cr, uid, ids[0], context=context)
-        
+
         if wiz.file_type == 'xml':
             return order_obj.export_xml_po_integration(cr, uid, wiz.order_id.id, context=context)
         else:

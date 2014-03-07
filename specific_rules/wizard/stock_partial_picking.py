@@ -92,9 +92,9 @@ class stock_partial_picking(osv.osv_memory):
         partial = self.browse(cr, uid, ids[0], context=context)
 
         for move in partial.product_moves_out:
-            self.pool.get('stock.move.memory.out').write(cr,uid, [move.id], { 'quantity' : move.quantity_ordered } )
+            self.pool.get('stock.move.memory.out').write(cr,uid, [move.id], { 'quantity' : move.ordered_quantity } )
         for move in partial.product_moves_in:
-            self.pool.get('stock.move.memory.in').write(cr,uid, [move.id], { 'quantity' : move.quantity_ordered } )
+            self.pool.get('stock.move.memory.in').write(cr,uid, [move.id], { 'quantity' : move.ordered_quantity } )
         return {
             'name': context.get('wizard_name'),
             'view_mode': 'form',
@@ -150,7 +150,7 @@ class stock_partial_picking(osv.osv_memory):
         move_memory = super(stock_partial_picking, self).__create_partial_picking_memory(move, pick_type)
         assert move_memory is not None
         
-        move_memory.update({'expiry_date': move.expired_date, 'quantity_ordered': move.product_qty, 'quantity': 0.0, 'uom_ordered': move.product_uom.id })
+        move_memory.update({'expiry_date': move.expired_date, 'ordered_quantity': move.product_qty, 'quantity': 0.0, 'uom_ordered': move.product_uom.id })
         
         return move_memory
     

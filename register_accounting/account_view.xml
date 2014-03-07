@@ -243,7 +243,7 @@
                                         <field name="reconciled"/>
                                         <!-- UTP-482 operational advance linked confirmed PO -->
                                         <field name="cash_register_op_advance_po_id"
-                                            domain="[('state', 'in', ['approved']), ('currency_id', '=', parent.currency_id)]" />
+                                            domain="[('state', 'in', ['approved']), ('currency_id', '=', parent.currency), ('order_type', 'in', ('regular','purchase_list','direct'))]" />
                                         <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr"
                                             attrs="{'invisible': [('direct_invoice', '=', True)]}"
                                             context="context"/>
@@ -367,11 +367,12 @@
                 <tree string="Register Lines" editable="bottom" noteditable="state=='hard' or direct_invoice is True" hide_new_button="1">
                     <button name="button_advance" states="hard" string="Advance return" type="object" 
                         icon="terp-stock_effects-object-colorize" context="context"
-                        attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0), 
-                            ('employee_id', '=', False)]}"/>
+                        attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0),'|', 
+                            ('employee_id', '=', False),('type_for_register','!=','advance')]}"/>
                     <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
                     <field name="from_cash_return" invisible="1"/>
                     <field name="amount" invisible="1"/>
+                    <field name="type_for_register" invisible="1"/>
                     <field name="document_date"/>
                     <field name="date"/>
                     <field name="sequence_for_reference"/>

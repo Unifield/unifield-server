@@ -34,7 +34,7 @@ class wizard_budget_criteria_export(osv.osv_memory):
                                          ('expense','By expense'),
                                          ('view','By parent account')], 'Granularity', select=1, required=True),
     }
-    
+
     _defaults = {
             'commitment': lambda *a: True,
         'breakdown': lambda *a: 'year',
@@ -42,8 +42,14 @@ class wizard_budget_criteria_export(osv.osv_memory):
         'period_id': lambda *a: False,
     }
 
-
     def button_create_budget_2(self, cr, uid, ids, context=None):
+        """
+        Take all criteria from wizard to the report.
+        Pay attention to have these criteria in context to display right lines:
+          - period_id
+          - currency_table_id
+          - granularity
+        """
         wizard = self.browse(cr, uid, ids[0], context=context)
         data = {}
         data['ids'] = context.get('active_ids', [])
@@ -60,9 +66,11 @@ class wizard_budget_criteria_export(osv.osv_memory):
                 data['form'].update({'currency_table_id': wizard.currency_table_id.id})
             if wizard.period_id:
                 data['form'].update({'period_id': wizard.period_id.id})
+        if not 'context' in data:
+            data['context']= {}
+        data['context'].update(data['form'])
 
         return {'type': 'ir.actions.report.xml', 'report_name': 'budget.criteria.2', 'datas': data}
-
 
 wizard_budget_criteria_export()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
