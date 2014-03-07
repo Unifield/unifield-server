@@ -26,7 +26,7 @@
     "author" : "MSF, TeMPO Consulting",
     "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "sale_override","order_types","order_line_number", "msf_order_date", "partner_modification", "procurement_request", "kit"],
+    "depends" : ["sale", "purchase", "sale_override", "order_types", "order_line_number", "msf_order_date", "partner_modification", "procurement_request", "kit"],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """
@@ -40,7 +40,6 @@
              ],
     'update_xml': [
         'security/ir.model.access.csv',
-        'sourcing_sequence.xml',
         'sourcing_view.xml',
         'wizard/multiple_sourcing_view.xml',
     ],

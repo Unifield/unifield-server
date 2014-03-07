@@ -40,7 +40,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
     _name = 'multiple.sourcing.wizard'
 
     _columns = {
-        'line_ids': fields.many2many('sourcing.line', 'source_sourcing_line_rel', 'line_id', 'wizard_id',
+        'line_ids': fields.many2many('sale.order.line', 'source_sourcing_line_rel', 'line_id', 'wizard_id',
                                      string='Sourcing lines'),
         'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', required=True),
         'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT'),
@@ -68,7 +68,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         # Ignore all lines which have already been sourced, if there are some alredy sourced lines, a message
         # will be displayed at the top of the wizard
-        for line in self.pool.get('sourcing.line').browse(cr, uid, context.get('active_ids'), context=context):
+        for line in self.pool.get('sale.order.line').browse(cr, uid, context.get('active_ids'), context=context):
             if line.state == 'draft' and line.sale_order_state == 'validated':
                 res['line_ids'].append(line.id)
             else:
@@ -88,7 +88,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if not context:
             context = {}
 
-        line_obj = self.pool.get('sourcing.line')
+        line_obj = self.pool.get('sale.order.line')
 
         for wiz in self.browse(cr, uid, ids, context=context):
             if wiz.type == 'make_to_order':
@@ -136,7 +136,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if not context:
             context = {}
 
-        line_obj = self.pool.get('sourcing.line')
+        line_obj = self.pool.get('sale.order.line')
 
         for wiz in self.browse(cr, uid, ids, context=context):
             for line in wiz.line_ids:
@@ -203,7 +203,7 @@ class res_partner(osv.osv):
         for arg in args:
             if arg[0] == 'line_contains_fo':
                 if type(arg[2]) == type(list()):
-                    for line in self.pool.get('sourcing.line').browse(cr, uid, arg[2][0][2], context=context):
+                    for line in self.pool.get('sale.order.line').browse(cr, uid, arg[2][0][2], context=context):
                         if not line.sale_order_id.procurement_request:
                             res.append(('partner_type', 'in', ['external', 'esc']))
 

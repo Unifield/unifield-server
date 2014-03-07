@@ -46,7 +46,7 @@
 
         <act_window name="Source lines"
                     res_model="multiple.sourcing.wizard"
-                    src_model="sourcing.line"
+                    src_model="sale.order.line"
                     view_mode="form"
                     target="new"
                     key2="client_action_multi"
