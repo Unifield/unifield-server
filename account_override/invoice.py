@@ -160,30 +160,6 @@ class account_invoice(osv.osv):
                     res[i.id] = True
         return res
 
-    def onchange_company_id(self, cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id):
-        """
-        This is a method to redefine the journal_id domain with the current_instance taken into account
-        """
-        res = super(account_invoice, self).onchange_company_id(cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id)
-        if company_id and ctype:
-            res.setdefault('domain', {})
-            res.setdefault('value', {})
-            ass = {
-                'out_invoice': 'sale',
-                'in_invoice': 'purchase',
-                'out_refund': 'sale_refund',
-                'in_refund': 'purchase_refund',
-            }
-            journal_ids = self.pool.get('account.journal').search(cr, uid, [
-                ('company_id','=',company_id), ('type', '=', ass.get(ctype, 'purchase')), ('is_current_instance', '=', True)
-            ])
-            if not journal_ids:
-                raise osv.except_osv(_('Configuration Error !'), _('Can\'t find any account journal of %s type for this company.\n\nYou can create one in the menu: \nConfiguration\Financial Accounting\Accounts\Journals.') % (ass.get(type, 'purchase'), ))
-            res['value']['journal_id'] = journal_ids[0]
-            # TODO: it's very bad to set a domain by onchange method, no time to rewrite UniField !
-            res['domain']['journal_id'] = [('id', 'in', journal_ids)]
-        return res
-
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
@@ -215,6 +191,70 @@ class account_invoice(osv.osv):
         'is_intermission': lambda obj, cr, uid, c: c.get('is_intermission', False),
     }
 
+    def onchange_company_id(self, cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id):
+        """
+        This is a method to redefine the journal_id domain with the current_instance taken into account
+        """
+        res = super(account_invoice, self).onchange_company_id(cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id)
+        if company_id and ctype:
+            res.setdefault('domain', {})
+            res.setdefault('value', {})
+            ass = {
+                'out_invoice': 'sale',
+                'in_invoice': 'purchase',
+                'out_refund': 'sale_refund',
+                'in_refund': 'purchase_refund',
+            }
+            journal_ids = self.pool.get('account.journal').search(cr, uid, [
+                ('company_id','=',company_id), ('type', '=', ass.get(ctype, 'purchase')), ('is_current_instance', '=', True)
+            ])
+            if not journal_ids:
+                raise osv.except_osv(_('Configuration Error !'), _('Can\'t find any account journal of %s type for this company.\n\nYou can create one in the menu: \nConfiguration\Financial Accounting\Accounts\Journals.') % (ass.get(type, 'purchase'), ))
+            res['value']['journal_id'] = journal_ids[0]
+            # TODO: it's very bad to set a domain by onchange method, no time to rewrite UniField !
+            res['domain']['journal_id'] = [('id', 'in', journal_ids)]
+        return res
+
+    def onchange_partner_id(self, cr, uid, ids, ctype, partner_id,\
+        date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False, is_intermission=False):
+        """
+        Update fake_account_id field regarding account_id result.
+        Get default donation account for Donation invoices.
+        Get default intermission account for Intermission Voucher IN/OUT invoices.
+        Get default currency from partner if this one is linked to a pricelist.
+        Ticket utp917 - added code to avoid currency cd change if a direct invoice
+        """
+        res = super(account_invoice, self).onchange_partner_id(cr, uid, ids, ctype, partner_id, date_invoice, payment_term, partner_bank_id, company_id)
+        if is_inkind_donation and partner_id:
+            partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            account_id = partner and partner.donation_payable_account and partner.donation_payable_account.id or False
+            res['value']['account_id'] = account_id
+        if is_intermission and partner_id:
+            intermission_default_account = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
+            account_id = intermission_default_account and intermission_default_account.id or False
+            if not account_id:
+                raise osv.except_osv(_('Error'), _('Please configure a default intermission account in Company configuration.'))
+            res['value']['account_id'] = account_id
+        if res.get('value', False) and 'account_id' in res['value']:
+            res['value'].update({'fake_account_id': res['value'].get('account_id')})
+        if partner_id and ctype:
+            p = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            if ids: #utp917
+                ai = self.browse(cr, uid, ids)[0]
+            if p:
+                c_id = False
+                if ctype in ['in_invoice', 'out_refund'] and p.property_product_pricelist_purchase:
+                    c_id = p.property_product_pricelist_purchase.currency_id.id
+                elif ctype in ['out_invoice', 'in_refund'] and p.property_product_pricelist:
+                    c_id = p.property_product_pricelist.currency_id.id
+                if ids:
+                    if c_id and not ai.is_direct_invoice:   #utp917
+                        if not res.get('value', False):
+                            res['value'] = {'currency_id': c_id}
+                        else:
+                            res['value'].update({'currency_id': c_id})
+        return res
+
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
         """
         Rename Supplier/Customer to "Donor" if view_type == tree
@@ -232,15 +272,6 @@ class account_invoice(osv.osv):
                 node.set('string', name)
             res['arch'] = etree.tostring(doc)
         return res
-
-    def copy_data(self, cr, uid, inv_id, default=None, context=None):
-        """
-        Copy an invoice line without its move lines
-        """
-        if default is None:
-            default = {}
-        default.update({'move_lines': False,})
-        return super(account_invoice_line, self).copy_data(cr, uid, inv_id, default, context)
 
     def default_get(self, cr, uid, fields, context=None):
         """
@@ -273,6 +304,79 @@ class account_invoice(osv.osv):
                     defaults['fake_journal_id'] = int_journal_id[0]
                     defaults['journal_id'] = defaults['fake_journal_id']
         return defaults
+
+    def copy(self, cr, uid, inv_id, default={}, context=None):
+        """
+        Delete period_id from invoice.
+        Check context for splitting invoice.
+        """
+        # Some checks
+        if context is None:
+            context = {}
+        if default is None:
+            default = {}
+        default.update({
+            'period_id': False,
+            'partner_move_line': False,
+            'imported_invoices': False
+        })
+        # Default behaviour
+        new_id = super(account_invoice, self).copy(cr, uid, inv_id, default, context)
+        # Case where you split an invoice
+        if 'split_it' in context:
+            purchase_obj = self.pool.get('purchase.order')
+            sale_obj = self.pool.get('sale.order')
+            if purchase_obj:
+                # attach new invoice to PO
+                purchase_ids = purchase_obj.search(cr, uid, [('invoice_ids', 'in', [inv_id])], context=context)
+                if purchase_ids:
+                    purchase_obj.write(cr, uid, purchase_ids, {'invoice_ids': [(4, new_id)]}, context=context)
+            if sale_obj:
+                # attach new invoice to SO
+                sale_ids = sale_obj.search(cr, uid, [('invoice_ids', 'in', [inv_id])], context=context)
+                if sale_ids:
+                    sale_obj.write(cr, uid, sale_ids, {'invoice_ids': [(4, new_id)]}, context=context)
+        return new_id
+
+    def copy_data(self, cr, uid, inv_id, default=None, context=None):
+        """
+        Copy an invoice line without its move lines
+        """
+        if default is None:
+            default = {}
+        default.update({'move_lines': False,})
+        return super(account_invoice_line, self).copy_data(cr, uid, inv_id, default, context)
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Filled in 'from_yml_test' to True if we come from tests
+        """
+        if not context:
+            context = {}
+        # Create a sequence for this new invoice
+        res_seq = self.create_sequence(cr, uid, vals, context)
+        vals.update({'sequence_id': res_seq,})
+        # UTP-317 # Check that no inactive partner have been used to create this invoice
+        if 'partner_id' in vals:
+            partner_id = vals.get('partner_id')
+            if isinstance(partner_id, (str)):
+                partner_id = int(partner_id)
+            partner = self.pool.get('res.partner').browse(cr, uid, [partner_id])
+            if partner and partner[0] and not partner[0].active:
+                raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
+        return super(account_invoice, self).create(cr, uid, vals, context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check document_date
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
+        self._check_document_date(cr, uid, ids)
+        return res
 
     def create_sequence(self, cr, uid, vals, context=None):
         """
@@ -349,46 +453,6 @@ class account_invoice(osv.osv):
                             'view_id': supplier_view_id})
         return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, context)
 
-    def onchange_partner_id(self, cr, uid, ids, ctype, partner_id,\
-        date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False, is_intermission=False):
-        """
-        Update fake_account_id field regarding account_id result.
-        Get default donation account for Donation invoices.
-        Get default intermission account for Intermission Voucher IN/OUT invoices.
-        Get default currency from partner if this one is linked to a pricelist.
-        Ticket utp917 - added code to avoid currency cd change if a direct invoice
-        """
-        res = super(account_invoice, self).onchange_partner_id(cr, uid, ids, ctype, partner_id, date_invoice, payment_term, partner_bank_id, company_id)
-        if is_inkind_donation and partner_id:
-            partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
-            account_id = partner and partner.donation_payable_account and partner.donation_payable_account.id or False
-            res['value']['account_id'] = account_id
-        if is_intermission and partner_id:
-            intermission_default_account = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
-            account_id = intermission_default_account and intermission_default_account.id or False
-            if not account_id:
-                raise osv.except_osv(_('Error'), _('Please configure a default intermission account in Company configuration.'))
-            res['value']['account_id'] = account_id
-        if res.get('value', False) and 'account_id' in res['value']:
-            res['value'].update({'fake_account_id': res['value'].get('account_id')})
-        if partner_id and ctype:
-            p = self.pool.get('res.partner').browse(cr, uid, partner_id)
-            if ids: #utp917
-                ai = self.browse(cr, uid, ids)[0]
-            if p:
-                c_id = False
-                if ctype in ['in_invoice', 'out_refund'] and p.property_product_pricelist_purchase:
-                    c_id = p.property_product_pricelist_purchase.currency_id.id
-                elif ctype in ['out_invoice', 'in_refund'] and p.property_product_pricelist:
-                    c_id = p.property_product_pricelist.currency_id.id
-                if ids:
-                    if c_id and not ai.is_direct_invoice:   #utp917
-                        if not res.get('value', False):
-                            res['value'] = {'currency_id': c_id}
-                        else:
-                            res['value'].update({'currency_id': c_id})
-        return res
-
     def _check_document_date(self, cr, uid, ids):
         """
         Check that document's date is done BEFORE posting date
@@ -409,25 +473,6 @@ class account_invoice(osv.osv):
             del line['import_invoice_id']
         res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines)
         return res
-
-    def create(self, cr, uid, vals, context=None):
-        """
-        Filled in 'from_yml_test' to True if we come from tests
-        """
-        if not context:
-            context = {}
-        # Create a sequence for this new invoice
-        res_seq = self.create_sequence(cr, uid, vals, context)
-        vals.update({'sequence_id': res_seq,})
-        # UTP-317 # Check that no inactive partner have been used to create this invoice
-        if 'partner_id' in vals:
-            partner_id = vals.get('partner_id')
-            if isinstance(partner_id, (str)):
-                partner_id = int(partner_id)
-            partner = self.pool.get('res.partner').browse(cr, uid, [partner_id])
-            if partner and partner[0] and not partner[0].active:
-                raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
-        return super(account_invoice, self).create(cr, uid, vals, context)
 
     def action_reconcile_imported_invoice(self, cr, uid, ids, context=None):
         """
@@ -653,39 +698,6 @@ class account_invoice(osv.osv):
             }
         return False
 
-    def copy(self, cr, uid, inv_id, default={}, context=None):
-        """
-        Delete period_id from invoice.
-        Check context for splitting invoice.
-        """
-        # Some checks
-        if context is None:
-            context = {}
-        if default is None:
-            default = {}
-        default.update({
-            'period_id': False,
-            'partner_move_line': False,
-            'imported_invoices': False
-        })
-        # Default behaviour
-        new_id = super(account_invoice, self).copy(cr, uid, inv_id, default, context)
-        # Case where you split an invoice
-        if 'split_it' in context:
-            purchase_obj = self.pool.get('purchase.order')
-            sale_obj = self.pool.get('sale.order')
-            if purchase_obj:
-                # attach new invoice to PO
-                purchase_ids = purchase_obj.search(cr, uid, [('invoice_ids', 'in', [inv_id])], context=context)
-                if purchase_ids:
-                    purchase_obj.write(cr, uid, purchase_ids, {'invoice_ids': [(4, new_id)]}, context=context)
-            if sale_obj:
-                # attach new invoice to SO
-                sale_ids = sale_obj.search(cr, uid, [('invoice_ids', 'in', [inv_id])], context=context)
-                if sale_ids:
-                    sale_obj.write(cr, uid, sale_ids, {'invoice_ids': [(4, new_id)]}, context=context)
-        return new_id
-
     def __hook_lines_before_pay_and_reconcile(self, cr, uid, lines):
         """
         Add document date to account_move_line before pay and reconcile
@@ -694,18 +706,6 @@ class account_invoice(osv.osv):
             if line[2] and 'date' in line[2] and not line[2].get('document_date', False):
                 line[2].update({'document_date': line[2].get('date')})
         return lines
-
-    def write(self, cr, uid, ids, vals, context=None):
-        """
-        Check document_date
-        """
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
-        self._check_document_date(cr, uid, ids)
-        return res
 
 account_invoice()
 
