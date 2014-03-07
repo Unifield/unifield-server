@@ -1001,7 +1001,6 @@ class account_bank_statement_line(osv.osv):
         'cheque_number': fields.char(string="Cheque Number", size=120),
         'from_cash_return': fields.boolean(string='Come from a cash return?'),
         'direct_invoice': fields.boolean(string='Direct invoice?'),
-        'invoice_id': fields.many2one('account.invoice', "Invoice", required=False),
         'first_move_line_id': fields.many2one('account.move.line', "Register Move Line"),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True,
             string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], help="To use for python code when registering", multi="third_parties_key"),

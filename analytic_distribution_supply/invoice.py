@@ -31,10 +31,8 @@ class account_invoice_line(osv.osv):
     _inherit = 'account.invoice.line'
 
     _columns = {
-        'order_line_id': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, 
-            help="Purchase Order Line from which this invoice line has been generated (when coming from a purchase order)."),
         'sale_order_lines': fields.many2many('sale.order.line', 'sale_order_line_invoice_rel', 'invoice_id', 'order_line_id', 'Sale Order Lines', readonly=True),
-        'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line", readonly=True, 
+        'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line", readonly=True,
             help="Sale Order Line from which this line have been generated (when coming from a sale order)"),
     }
 
@@ -45,9 +43,7 @@ class account_invoice(osv.osv):
     _inherit = 'account.invoice'
 
     _columns = {
-        'purchase_ids': fields.many2many('purchase.order', 'purchase_invoice_rel', 'invoice_id', 'purchase_id', 'Purchase Order', 
-            help="Purchase Order from which invoice have been generated"),
-        'order_ids': fields.many2many('sale.order', 'sale_order_invoice_rel', 'invoice_id', 'order_id', 'Sale Order', 
+        'order_ids': fields.many2many('sale.order', 'sale_order_invoice_rel', 'invoice_id', 'order_id', 'Sale Order',
             help="Sale Order from which invoice have been generated"),
     }
 
@@ -171,7 +167,7 @@ class account_invoice(osv.osv):
                 for line in invoice_lines[account_id]:
                     total_amount += line.price_subtotal
                 # search for matching commitment line
-                cl_ids = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', co.id), ('account_id', '=', account_id)], limit=1, 
+                cl_ids = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', co.id), ('account_id', '=', account_id)], limit=1,
                     context=context)
                 # Do nothing if no commitment line exists for this invoice line. FIXME: waiting for a decision about this case
                 if not cl_ids:
@@ -225,10 +221,10 @@ class account_invoice(osv.osv):
                                     if cmp_vals == vals:
                                         # Update analytic line with new amount
                                         anal_amount = (distrib_line.percentage * diff) / 100
-                                        amount = -1 * self.pool.get('res.currency').compute(cr, uid, inv.currency_id.id, company_currency, 
+                                        amount = -1 * self.pool.get('res.currency').compute(cr, uid, inv.currency_id.id, company_currency,
                                             anal_amount, round=False, context=context)
                                         # write new amount to corresponding engagement line
-                                        eng_res = self.pool.get('account.analytic.line').write(cr, uid, [eng_line.id], 
+                                        eng_res = self.pool.get('account.analytic.line').write(cr, uid, [eng_line.id],
                                             {'amount': amount, 'amount_currency': -1 * anal_amount}, context=context)
                                         # delete processed engagement lines
                                         engagement_lines[i] = None
@@ -264,44 +260,10 @@ class account_invoice(osv.osv):
                     # UTP-536 : Check if the PO is closed and all SI are draft, then close the CV
                     if po.state == 'done' and all(x.id in ids or x.state != 'draft' for x in po.invoice_ids):
                         self.pool.get('purchase.order')._finish_commitment(cr, uid, [po.id], context=context)
-                
+
         # Process invoices
-        res = self.update_commitments(cr, uid, to_process, context=context)
+        self.update_commitments(cr, uid, to_process, context=context)
         return super(account_invoice, self).action_open_invoice(cr, uid, ids, context=context)
-
-    def check_po_link(self, cr, uid, ids, context=None):
-        """
-        Check that invoice (only supplier invoices) has no link with a PO. This is because of commitments presence.
-        """
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for inv in self.browse(cr, uid, ids):
-            if inv.type == 'in_invoice' and not inv.is_inkind_donation and not inv.is_debit_note:
-                if inv.purchase_ids:
-                    raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
-        return True
-
-    def unlink(self, cr, uid, ids, context=None):
-        """
-        Don't delete an invoice that is linked to a PO.
-        This is only for supplier invoices.
-        """
-        if not context:
-            context = {}
-        self.check_po_link(cr, uid, ids)
-        return super(account_invoice, self).unlink(cr, uid, ids, context)
-
-    def action_cancel(self, cr, uid, ids, context=None):
-        """
-        Don't delete an invoice that is linked to a PO.
-        This is only for supplier invoices.
-        """
-        if not context:
-            context = {}
-        self.check_po_link(cr, uid, ids)
-        return super(account_invoice, self).action_cancel(cr, uid, ids, context)
 
 account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
