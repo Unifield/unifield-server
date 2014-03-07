@@ -1719,9 +1719,6 @@ class account_bank_statement_line(osv.osv):
         """
         Copy down_payment link to right move line
         """
-        # some verifications
-        if isinstance(ids, (int, long)):
-            ids = [ids]
         # browse all bank statement line
         if not absl.is_down_payment:
             return False
