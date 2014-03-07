@@ -41,55 +41,37 @@ class financing_contract_funding_pool_line(osv.osv):
     
     def create(self, cr, uid, vals, context=None):
         result = super(financing_contract_funding_pool_line, self).create(cr, uid, vals, context=context)
-        # Add the corresponding quadruplets (one for each CC in the format and all A/D)
+        # when a new funding pool is added to contract, then add all of the cost centers to the cost center tab, unless
+        # the cost center is already there. No action is taken when a cost center is deleted
         if 'contract_id' in vals and 'funding_pool_id' in vals:
-            # Create quadruplets accordingly
+            # get the cc ids from for this funding pool
             quad_obj = self.pool.get('financing.contract.account.quadruplet')
+            quad_ids = quad_obj.search(cr, uid, [('funding_pool_id','=',vals['funding_pool_id'])],context=context)
+            quad_rows = quad_obj.browse(cr, uid, quad_ids,context=context)
+            quad_cc_ids = []
+            for quad in quad_rows:
+                quad_cc_ids.append(quad.cost_center_id.id)
+            
+            # get the format instance
             format_obj = self.pool.get('financing.contract.format')
-            data = format_obj.get_data_for_quadruplets(cr, vals['contract_id'])
-            # for each funding pool, add all quadruplets
-            for cost_center_id in data['cost_center_ids']:
-                for account_destination_id in data['account_destination_ids']:
-                        quad_obj.create(cr, uid,
-                                        {'format_id': vals['contract_id'],
-                                         'account_destination_id': account_destination_id,
-                                         'cost_center_id': cost_center_id,
-                                         'funding_pool_id': vals['funding_pool_id']}, context=context)
+            cc_rows = format_obj.browse(cr, uid, vals['contract_id'], context=context).cost_center_ids
+            cc_ids = []
+            for cc in cc_rows:
+                cc_ids.append(cc.id)
+                
+            # append the ccs from the fp only if not already there
+            cc_ids = list(set(cc_ids).union(quad_cc_ids))
+                
+            # replace the associated cc list -NOT WORKING
+            format_obj.write(cr, uid, vals['contract_id'],{'cost_center_ids':[(6,0,cc_ids)]}, context=context)
+   
         return result
         
-    def write(self, cr, uid, ids, vals, context=None):
-        if 'funding_pool_id' in vals:
-            # if the funding pool changes, add/remove accordingly
-            quad_obj = self.pool.get('financing.contract.account.quadruplet')
-            format_obj = self.pool.get('financing.contract.format')
-            for id in ids:
-                funding_pool_line = self.browse(cr, uid, id, context=context)
-                format_id = funding_pool_line.contract_id.id
-                data = format_obj.get_data_for_quadruplets(cr, format_id)
-                old_funding_pool_id = funding_pool_line.funding_pool_id.id
-                new_funding_pool_id = vals['funding_pool_id']
-                
-                quads_to_delete = quad_obj.search(cr, uid, [('funding_pool_id', '=', old_funding_pool_id)], context=context)
-                quad_obj.unlink(cr, uid, quads_to_delete, context=context)
-                # add missing quadruplets
-                for cost_center_id in data['cost_center_ids']:
-                    for account_destination_id in data['account_destination_ids']:
-                        quad_obj.create(cr, uid,
-                                        {'format_id': format_id,
-                                         'account_destination_id': account_destination_id,
-                                         'cost_center_id': cost_center_id,
-                                         'funding_pool_id': new_funding_pool_id}, context=context)
-                
-        return super(financing_contract_funding_pool_line, self).write(cr, uid, ids, vals, context=context)
+    #def write(self, cr, uid, ids, vals, context=None):  
+    #    return super(financing_contract_funding_pool_line, self).write(cr, uid, ids, vals, context=context)
     
-    def unlink(self, cr, uid, ids, context=None):
-        # for unlink, simple: remove all lines for those funding pools
-        quad_obj = self.pool.get('financing.contract.account.quadruplet')
-        for funding_pool_line in self.browse(cr, uid, ids, context=context):
-            quads_to_delete = quad_obj.search(cr, uid, [('funding_pool_id', '=', funding_pool_line.funding_pool_id.id)], context=context)
-            quad_obj.unlink(cr, uid, quads_to_delete, context=context)
-                            
-        return super(financing_contract_funding_pool_line, self).unlink(cr, uid, ids, context=context)
+    #def unlink(self, cr, uid, ids, context=None):   
+    #    return super(financing_contract_funding_pool_line, self).unlink(cr, uid, ids, context=context)
     
 financing_contract_funding_pool_line()
 
@@ -247,7 +229,7 @@ class financing_contract_contract(osv.osv):
         default['name'] = (contract['name'] or '') + '(copy)'
         # Copy lines manually but remove CCs and FPs
         default['funding_pool_ids'] = []
-        default['cost_center_ids'] = []
+        default['cost_center_ids'] = []  
         default['actual_line_ids'] = []
         copy_id = super(financing_contract_contract, self).copy(cr, uid, id, default, context=context)
         copy = self.browse(cr, uid, copy_id, context=context)
@@ -479,7 +461,6 @@ class financing_contract_contract(osv.osv):
             for contract in self.browse(cr, uid, ids, context=context):
                 if contract.donor_id and contract.format_id and vals['donor_id'] != contract.donor_id.id:
                     self.pool.get('financing.contract.format').copy_format_lines(cr, uid, donor.format_id.id, contract.format_id.id, context=context)
-
         return super(financing_contract_contract, self).write(cr, uid, ids, vals, context=context)
 
 financing_contract_contract()

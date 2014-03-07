@@ -59,79 +59,15 @@ class financing_contract_format(osv.osv):
         ('date_overlap', 'check(eligibility_from_date < eligibility_to_date)', 'The "Eligibility Date From" should be sooner than the "Eligibility Date To".'),
     ]
     
-    def get_data_for_quadruplets(self, cr, format_id):
-        # Get all existing account/destination links
-        cr.execute('''select id from account_destination_link''')
-        account_destination_ids = [x[0] for x in cr.fetchall()]
-        # Get funding pools
-        cr.execute('''select distinct funding_pool_id 
-                      from financing_contract_funding_pool_line
-                      where contract_id = %s ''' % (format_id))
-        funding_pool_ids = [x[0] for x in cr.fetchall()]
-        # Get cost centers
-        cr.execute('''select distinct cost_center_id
-                      from financing_contract_cost_center
-                      where contract_id = %s ''' % (format_id))
-        cost_center_ids = [x[0] for x in cr.fetchall()]
         
-        return {'account_destination_ids': account_destination_ids,
-                'funding_pool_ids': funding_pool_ids,
-                'cost_center_ids': cost_center_ids}
+    #def create(self, cr, uid, vals, context=None):
+    #    return super(financing_contract_format, self).create(cr, uid, vals, context=context)
         
-    def create(self, cr, uid, vals, context=None):
-        result = super(financing_contract_format, self).create(cr, uid, vals, context=context)
-        if 'cost_center_ids' in vals or 'funding_pool_ids' in vals:
-            # Create quadruplets accordingly
-            data = self.get_data_for_quadruplets(cr, result)
-            quad_obj = self.pool.get('financing.contract.account.quadruplet')
-            # for each funding pool, add all quadruplets
-            for funding_pool_id in data['funding_pool_ids']:
-                for cost_center_id in data['cost_center_ids']:
-                    for account_destination_id in data['account_destination_ids']:
-                        quad_obj.create(cr, uid,
-                                        {'format_id': result,
-                                         'account_destination_id': account_destination_id,
-                                         'cost_center_id': cost_center_id,
-                                         'funding_pool_id': funding_pool_id}, context=context)
-        return result
-        
-    def write(self, cr, uid, ids, vals, context=None):
-        # Only for CC; FPs and Accts/Dests are edited in their objects
-        if 'cost_center_ids' in vals and len(vals['cost_center_ids']) > 0:
-            quad_obj = self.pool.get('financing.contract.account.quadruplet')
-            
-            # Compare "before" and "after" in order to delete/create quadruplets
-            for id in ids:
-                data = self.get_data_for_quadruplets(cr, id)
-                old_cost_centers = data['cost_center_ids']
-                new_cost_centers = vals['cost_center_ids'][0][2]
-            
-                # create "diffs" for CC and FP
-                cc_to_add = [cc_id for cc_id in new_cost_centers if cc_id not in old_cost_centers]
-                cc_to_remove = [cc_id for cc_id in old_cost_centers if cc_id not in new_cost_centers]
-                # remove quadruplets accordingly
-                
-                quads_to_delete = quad_obj.search(cr, uid, [('cost_center_id', 'in', cc_to_remove)], context=context)
-                quad_obj.unlink(cr, uid, quads_to_delete, context=context)
-                # add missing cost center's quadruplets
-                for funding_pool_id in data['funding_pool_ids']:
-                    for cost_center_id in cc_to_add:
-                        for account_destination_id in data['account_destination_ids']:
-                            quad_obj.create(cr, uid,
-                                            {'format_id': id,
-                                             'account_destination_id': account_destination_id,
-                                             'cost_center_id': cost_center_id,
-                                             'funding_pool_id': funding_pool_id}, context=context)
-                            
-        return super(financing_contract_format, self).write(cr, uid, ids, vals, context=context)
+    #def write(self, cr, uid, ids, vals, context=None):                   
+    #    return super(financing_contract_format, self).write(cr, uid, ids, vals, context=context)
     
-    def unlink(self, cr, uid, ids, context=None):
-        # for unlink, simple: remove all lines for that format
-        quad_obj = self.pool.get('financing.contract.account.quadruplet')
-        quads_to_delete = quad_obj.search(cr, uid, [('format_id', 'in', ids)], context=context)
-        quad_obj.unlink(cr, uid, quads_to_delete, context=context)
-                            
-        return super(financing_contract_format, self).unlink(cr, uid, ids, context=context)
+    #def unlink(self, cr, uid, ids, context=None):                   
+    #    return super(financing_contract_format, self).unlink(cr, uid, ids, context=context)
 
 financing_contract_format()
 
@@ -140,6 +76,7 @@ class account_destination_link(osv.osv):
     _inherit = 'account.destination.link'
 
     def _get_used_in_contract(self, cr, uid, ids, field_name, arg, context=None):
+        print 'account_destination_link _get_used_in_contract'
         res = {}
         if context is None:
             context = {}
@@ -169,6 +106,7 @@ class account_destination_link(osv.osv):
         return res
 
     def _search_used_in_contract(self, cr, uid, obj, name, args, context=None):
+        print 'account_destination_link _search_used_in_contract'
         if not args:
             return []
         if context is None:
@@ -205,37 +143,15 @@ class account_destination_link(osv.osv):
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'financing_contract', 'view_account_destination_link_for_contract_tree')[1]
         return super(account_destination_link, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
     
-    def create(self, cr, uid, vals, context=None):
-        result = super(account_destination_link, self).create(cr, uid, vals, context=context)
-        # Add quadruplets for each format/CC/FP combination
-        quad_obj = self.pool.get('financing.contract.account.quadruplet')
-        format_obj = self.pool.get('financing.contract.format')
-        # get all formats
-        cr.execute('''select id from financing_contract_format''')
-        format_ids = [x[0] for x in cr.fetchall()]
-        for format_id in format_ids:
-            data = format_obj.get_data_for_quadruplets(cr, format_id)
-            # for each funding pool, add all quadruplets
-            for funding_pool_id in data['funding_pool_ids']:
-                for cost_center_id in data['cost_center_ids']:
-                    quad_obj.create(cr, uid,
-                                    {'format_id': format_id,
-                                     'account_destination_id': result,
-                                     'cost_center_id': cost_center_id,
-                                     'funding_pool_id': funding_pool_id}, context=context)
-        return result
+    #def create(self, cr, uid, vals, context=None):
+    #    return super(account_destination_link, self).create(cr, uid, vals, context=context)
         
-    def write(self, cr, uid, ids, vals, context=None):
-        # Nothing to be done, since the id does not change
-        return super(account_destination_link, self).write(cr, uid, ids, vals, context=context)
+    #def write(self, cr, uid, ids, vals, context=None):
+    #    # Nothing to be done, since the id does not change
+    #    return super(account_destination_link, self).write(cr, uid, ids, vals, context=context)
     
-    def unlink(self, cr, uid, ids, context=None):
-        # for unlink, simple: remove all lines for that account/destination
-        quad_obj = self.pool.get('financing.contract.account.quadruplet')
-        quads_to_delete = quad_obj.search(cr, uid, [('account_destination_id', 'in', ids)], context=context)
-        quad_obj.unlink(cr, uid, quads_to_delete, context=context)
-                            
-        return super(account_destination_link, self).unlink(cr, uid, ids, context=context)
+    #def unlink(self, cr, uid, ids, context=None):
+    #    return super(account_destination_link, self).unlink(cr, uid, ids, context=context)
 
 account_destination_link()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

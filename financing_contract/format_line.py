@@ -99,6 +99,7 @@ class financing_contract_format_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
+                    #account_quadruplet_domain = ['&',('funding_pool_id', 'in', (36,40))]
         res = {}
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = line.child_ids and len(line.child_ids) or 0
@@ -326,6 +327,7 @@ class financing_contract_format_line(osv.osv):
         'code': fields.char('Code', size=16, required=True),
         'format_id': fields.many2one('financing.contract.format', 'Format'),
         'is_quadruplet': fields.boolean('Input CC/FP at line level?'),
+        'account_quadruplet_ids': many2many_sorted('financing.contract.account.quadruplet', 'financing_contract_actual_account_quadruplets', 'actual_line_id', 'account_quadruplet_id', string='Accounts/Destinations/Funding Pools/Cost Centres'),
         'account_destination_ids': many2many_sorted('account.destination.link', 'financing_contract_actual_account_destinations', 'actual_line_id', 'account_destination_id', string='Accounts/Destinations', domain=ACCOUNT_RESTRICTED_AREA['contract_reporting_lines']),
         'parent_id': fields.many2one('financing.contract.format.line', 'Parent line'),
         'child_ids': fields.one2many('financing.contract.format.line', 'parent_id', 'Child lines'),
@@ -348,6 +350,8 @@ class financing_contract_format_line(osv.osv):
         'project_real': fields.function(_get_actual_amount, method=True, store=False, string="Total project - Actuals", type="float", readonly=True),
 
     }
+ 
+    
     
     _defaults = {
         'is_quadruplet': False,
@@ -359,6 +363,7 @@ class financing_contract_format_line(osv.osv):
     _order = 'code asc'
 
     def create(self, cr, uid, vals, context=None):
+        print 'sfc format_line#create vals:', vals
         if not context:
             context = {}
         # if the account is set as view, remove budget and account values
@@ -397,6 +402,7 @@ class financing_contract_format_line(osv.osv):
         return super(financing_contract_format_line, self).write(cr, uid, ids, vals, context=context)
     
     def copy_format_line(self, cr, uid, browse_source_line, destination_format_id, parent_id=None, context=None):
+        print 'sfc financing_contract_format_line copy_format_line '
         if destination_format_id:
             format_line_vals = {
                 'name': browse_source_line.name,
