@@ -405,15 +405,17 @@ class audittrail_rule(osv.osv):
         return self.search(cr, 1, [('object_id.model', '=', model), (log_field, '=', True), ('state', '=', 'subscribed')])
 
 
-    def audit_log(self, cr, uid, ids, obj, objids, method, previous=None, current=None, context=None):
+    def audit_log(self, cr, uid, ids, obj, objids, method, previous_value=None, current=None, context=None):
         uid_orig = uid
         uid = 1
         log_line_obj = self.pool.get('audittrail.log.line')
 
         if isinstance(objids, (int, long)):
             obj_ids = [objids]
+            previous = [previous_value]
         else:
             obj_ids = objids[:]
+            previous = previous_value
 
         for rule in self.browse(cr, uid, ids, context=context):
             if not obj_ids:
