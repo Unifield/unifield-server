@@ -172,9 +172,12 @@ def _split_test(cr, workitem, split_mode, ident, signal=None, stack=None):
             if not cr.fetchone()[0]:
                 transitions.append((transition['id'], workitem['inst_id']))
     if test and len(transitions):
+        witm_trans_obj = pooler.get_pool(cr.dbname).get('workflow.witm_trans')
         for transition in transitions:
-            witm_trans_obj = pooler.get_pool(cr.dbname).get('workflow.witm_trans')
-            witm_trans_obj.create(cr, 1, {'trans_id': transition[0], 'inst_id': transition[1]})
+            if witm_trans_obj:
+                witm_trans_obj.create(cr, 1, {'trans_id': transition[0], 'inst_id': transition[1]})
+            else:
+                cr.executemany('insert into wkf_witm_trans (trans_id,inst_id) values (%s,%s)', transitions)
             
         cr.execute('delete from wkf_workitem where id=%s', (workitem['id'],))
         for t in transitions:
@@ -188,8 +191,11 @@ def _join_test(cr, trans_id, inst_id, ident, stack):
     if activity['join_mode']=='XOR':
         create(cr,[activity], inst_id, ident, stack)
         witm_trans_obj = pooler.get_pool(cr.dbname).get('workflow.witm_trans')
-        witm_trans_to_delete = witm_trans_obj.search(cr, 1, [('inst_id', '=', inst_id), ('trans_id', '=', trans_id)])
-        witm_trans_obj.unlink(cr, 1, witm_trans_to_delete)
+        if witm_trans_obj:
+            witm_trans_to_delete = witm_trans_obj.search(cr, 1, [('inst_id', '=', inst_id), ('trans_id', '=', trans_id)])
+            witm_trans_obj.unlink(cr, 1, witm_trans_to_delete)
+        else:
+	       cr.execute('delete from wkf_witm_trans where inst_id=%s and trans_id=%s', (inst_id,trans_id))
     else:
         cr.execute('select id from wkf_transition where act_to=%s', (activity['id'],))
         trans_ids = cr.fetchall()
@@ -203,8 +209,11 @@ def _join_test(cr, trans_id, inst_id, ident, stack):
         if ok:
             for (id,) in trans_ids:
                 witm_trans_obj = pooler.get_pool(cr.dbname).get('workflow.witm_trans')
-                witm_trans_to_delete = witm_trans_obj.search(cr, 1, [('inst_id', '=', inst_id), ('trans_id', '=', id)])
-                witm_trans_obj.unlink(cr, 1, witm_trans_to_delete)
+                if witm_trans_obj:
+                    witm_trans_to_delete = witm_trans_obj.search(cr, 1, [('inst_id', '=', inst_id), ('trans_id', '=', id)])
+                    witm_trans_obj.unlink(cr, 1, witm_trans_to_delete)
+                else:
+                    cr.execute('delete from wkf_witm_trans where trans_id=%s and inst_id=%s', (id,inst_id))
             create(cr, [activity], inst_id, ident, stack)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
