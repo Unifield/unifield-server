@@ -1414,9 +1414,17 @@ class stock_inventory_line(osv.osv):
         result = {'value':{}}
         # reset expiry date or fill it
         if prod_lot_id:
-            result['value'].update(expiry_date=prodlot_obj.browse(cr, uid, prod_lot_id).life_date)
+            expiry_date = prodlot_obj.browse(cr, uid, prod_lot_id).life_date
         else:
-            result['value'].update(expiry_date=False)
+            expiry_date = False
+        result['value']['expiry_date'] = expiry_date
+        if expiry_date:
+            # UFTP-50: got an expiry value,
+            # flagging hidden_perishable_mandatory to True:
+            # expiry_date field should pass to not readable bc available,
+            # and to be sendable by client into create/write vals
+            # for adhoc comment column
+            result['value']['hidden_perishable_mandatory'] = True
         # compute qty
         result = self.common_on_change(cr, uid, ids, location_id, product, prod_lot_id, uom, to_date, result=result)
         return result
