@@ -42,10 +42,22 @@ class sale_order(osv.osv):
     _inherit = 'sale.order'
 
     def copy(self, cr, uid, id, default=None, context=None):
-        '''
-        Delete the loan_id field on the new sale.order
-        - reset split flag to original value (field order flow) if not in default
-        '''
+        """
+        Copy the sale.order. When copy the sale.order:
+            * re-set the sourcing logs,
+            * re-set the loan_id field
+            * re-set split flag to original value (field order flow) if
+              not in default
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param order_id: ID of the sale.order to copy
+        :param default: Default values to put on the new sale.order
+        :param context: Context of the call
+
+        :return ID of the new sale.order
+        :rtype integer
+        """
         if context is None:
             context = {}
         if default is None:
@@ -58,8 +70,12 @@ class sale_order(osv.osv):
         if 'loan_id' not in default:
             default.update({'loan_id': False})
 
-        default.update({'order_policy': 'picking',
-                        'active': True})
+        default.update({
+            'order_policy': 'picking',
+            'active': True,
+            'sourcing_trace': '',
+            'sourcing_trace_ok': False,
+        })
 
         if not context.get('keepClientOrder', False):
             default.update({'client_order_ref': False})
@@ -1674,11 +1690,11 @@ class sale_order_line(osv.osv):
 
         if not context.get('noraise') and not context.get('import_in_progress'):
             if ids and not 'product_uom_qty' in vals:
-                for line in self.read(cr, uid, ids, ['product_uom_qty'], context=context):
-                    if line['product_uom_qty'] <= 0.00:
+                empty_lines = self.search(cr, uid, [('id', 'in', ids), ('product_uom_qty', '<=', 0.00)], count=True, context=context)
+                if empty_lines:
                         raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
-                    elif 'product_uom_qty' in vals and vals.get('product_uom_qty') == 0.00:
-                        raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
+            elif 'product_uom_qty' in vals and vals.get('product_uom_qty') == 0.00:
+                raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
 
         return True
 
@@ -1730,11 +1746,12 @@ class sale_order_line(osv.osv):
 
         # UTP-392: fixed from the previous code: check if the sale order line contains the product, and not only from vals!
         product_id = vals.get('product_id')
-        if not product_id:
-            product_id = self.browse(cr, uid, ids, context=context)[0].product_id
+        if context.get('sale_id', False):
+            if not product_id:
+                product_id = self.browse(cr, uid, ids, context=context)[0].product_id
 
-        if not product_id and context.get('sale_id', []):
-            vals.update({'type': 'make_to_order'})
+            if not product_id:
+                vals.update({'type': 'make_to_order'})
         # Internal request
         order_id = vals.get('order_id', False)
         if order_id and self.pool.get('sale.order').read(cr, uid, order_id, ['procurement_request'], context)['procurement_request']:

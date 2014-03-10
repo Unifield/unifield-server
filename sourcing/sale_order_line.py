@@ -838,8 +838,8 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             self.write(cr, uid, ids, {'cf_estimated_delivery_date': False}, context=context)
 
         # partner_id
-        for line in self.browse(cr, uid, ids, context=context):
-            if 'supplier' in vals:
+        if 'supplier' in vals:
+            for line in self.browse(cr, uid, ids, context=context):
                 partner_id = vals['supplier']
                 vals.update({'supplier': partner_id})
                 # update the delivery date according to partner_id, only update from the sourcing tool

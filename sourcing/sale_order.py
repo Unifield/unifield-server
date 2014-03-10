@@ -43,33 +43,6 @@ class sale_order(osv.osv):
         ),
     }
 
-    def copy(self, cr, uid, order_id, default=None, context=None):
-        """
-        Copy the sale.order. When copy the sale.order, re-set the
-        sourcing logs.
-
-        :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
-        :param order_id: ID of the sale.order to copy
-        :param default: Default values to put on the new sale.order
-        :param context: Context of the call
-
-        :return ID of the new sale.order
-        :rtype integer
-        """
-        if context is None:
-            context = {}
-
-        if default is None:
-            default = {}
-
-        default.update({
-            'sourcing_trace': '',
-            'sourcing_trace_ok': False,
-        })
-
-        return super(sale_order, self).copy(cr, uid, order_id, default, context)
-
     # TODO: TO REFACTORE
     def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -122,13 +95,11 @@ class sale_order(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         sol_obj = self.pool.get('sale.order.line')
 
-        # we confirm (validation in unifield) the sale order
-        # we set all line state to 'sourced' of the original Fo
-        for obj in self.browse(cr, uid, ids, context=context):
-            for line in obj.order_line:
-                sol_obj.write(cr, uid, [line.id], {'state': 'sourced'}, context=context)
-            # trigger workflow signal
-            wf_service.trg_validate(uid, 'sale.order', obj.id, 'order_confirm', cr)
+        sol_ids = sol_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
+        sol_obj.write(cr, uid, sol_ids, {'state': 'sourced'}, context=context)
+
+        for order_id in ids:
+            wf_service.trg_validate(uid, 'sale.order', order_id, 'order_confirm', cr)
 
         return True
 
