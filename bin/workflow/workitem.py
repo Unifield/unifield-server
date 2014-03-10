@@ -173,11 +173,11 @@ def _split_test(cr, workitem, split_mode, ident, signal=None, stack=None):
                 transitions.append((transition['id'], workitem['inst_id']))
     if test and len(transitions):
         witm_trans_obj = pooler.get_pool(cr.dbname).get('workflow.witm_trans')
-        for transition in transitions:
-            if witm_trans_obj:
+        if witm_trans_obj:
+            for transition in transitions:
                 witm_trans_obj.create(cr, 1, {'trans_id': transition[0], 'inst_id': transition[1]})
-            else:
-                cr.executemany('insert into wkf_witm_trans (trans_id,inst_id) values (%s,%s)', transitions)
+        else:
+            cr.executemany('insert into wkf_witm_trans (trans_id,inst_id) values (%s,%s)', transitions)
             
         cr.execute('delete from wkf_workitem where id=%s', (workitem['id'],))
         for t in transitions:
