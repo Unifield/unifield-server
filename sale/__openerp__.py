@@ -51,7 +51,6 @@
     'init_xml': [],
     'update_xml': [
         'wizard/sale_make_invoice_advance.xml',
-        'wizard/sale_line_invoice.xml',
         'wizard/sale_make_invoice.xml',
         'security/sale_security.xml',
         'security/ir.model.access.csv',
@@ -65,7 +64,7 @@
         'sale_report.xml',
         'stock_view.xml',
         'board_sale_view.xml',
-        #'process/sale_process.xml',
+        # 'process/sale_process.xml',
     ],
     'demo_xml': ['sale_demo.xml'],
     'test': [
