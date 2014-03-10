@@ -214,7 +214,7 @@ class msf_budget_tools(osv.osv):
                 tmp_res = cr.fetchall()
                 # If result, write on the given budget line the result
                 if tmp_res:
-                    budget_line_vals = dict(zip(vals_headers, [x[0] for x in tmp_res]))
+                    budget_line_vals = dict(zip(vals_headers, tmp_res[0]))
                     budget_line_obj.write(cr, uid, budget_line_id, budget_line_vals, context=context)
         return True
 

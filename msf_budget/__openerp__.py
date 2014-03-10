@@ -38,6 +38,7 @@
         'data/msf_budget_decision_moment_data.xml',
         'wizard/wizard_budget_criteria_export_view.xml',
         'wizard/wizard_actual_export_view.xml',
+        'wizard/wizard_budget_summary.xml',
     ],
     'test': [
         'test/budget_test.yml'
