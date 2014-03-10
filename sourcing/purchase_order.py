@@ -60,7 +60,11 @@ class purchase_order(osv.osv):
         return True
 
     _constraints = [
-        (_check_order_type_and_partner, "Partner type and order type are incompatible! Please change either order type or partner.", ['order_type', 'partner_id']),
+        (
+            _check_order_type_and_partner,
+            "Partner type and order type are incompatible! Please change either order type or partner.",
+            ['order_type', 'partner_id'],
+        ),
     ]
 
 purchase_order()

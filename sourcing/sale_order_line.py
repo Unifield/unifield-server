@@ -726,7 +726,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                     raise osv.except_osv(
                         _('Warning'),
                         _("You can't Source to an '%s' partner if you don't have product.") %
-                            (line.supplier.partner_type == 'external' and 'External' or 'ESC'),
+                        (line.supplier.partner_type == 'external' and 'External' or 'ESC'),
                     )
 
             if line.state not in ('draft', 'cancel') and line.product_id and line.supplier:
@@ -743,7 +743,8 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         return True
 
-    def _check_product_constraints(self, cr, uid, line_type='make_to_order', po_cft='po', product_id=False, partner_id=False, check_fnct=False, *args, **kwargs):
+    def _check_product_constraints(self, cr, uid, line_type='make_to_order', po_cft='po',
+                                   product_id=False, partner_id=False, check_fnct=False, *args, **kwargs):
         """
         Check if the value of lines are compatible with the other
         values.
@@ -978,9 +979,10 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             if lines_not_confirmed:
                 break
 
-            self.pool.get('sale.order').write(cr, uid, [order_id],
-                                                {'sourcing_trace_ok': True,
-                                                 'sourcing_trace': 'Sourcing in progress'}, context=context)
+            self.pool.get('sale.order').write(cr, uid, [order_id], {
+                'sourcing_trace_ok': True,
+                'sourcing_trace': 'Sourcing in progress',
+            }, context=context)
             thread = threading.Thread(target=self.confirmOrder, args=(cr, uid, order_id, state_to_use, context))
             thread.start()
 
@@ -1053,7 +1055,6 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         return self.write(cr, uid, ids, {'state': 'draft'}, context=context)
 
-
     """
     Controller methods
     """
@@ -1122,8 +1123,9 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         return res
 
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
-        uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-        lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+                          uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+                          lang=False, update_tax=True, date_order=False, packaging=False,
+                          fiscal_position=False, flag=False):
         """
         When the product is changed on the line, looking for the
         best supplier for the new product.
@@ -1220,18 +1222,18 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         if line_id and partner_id and line.product_id:
             check_fnct = product_obj._on_change_restriction_error
             res, error = self._check_product_constraints(
-                                                        cr,
-                                                        uid,
-                                                        line.type,
-                                                        value.get('po_cft', line.po_cft),
-                                                        line.product_id.id,
-                                                        partner_id,
-                                                        check_fnct,
-                                                        field_name='po_cft',
-                                                        values=res,
-                                                        vals={'partner_id': partner_id},
-                                                        context=context,
-                                                        )
+                cr,
+                uid,
+                line.type,
+                value.get('po_cft', line.po_cft),
+                line.product_id.id,
+                partner_id,
+                check_fnct,
+                field_name='po_cft',
+                values=res,
+                vals={'partner_id': partner_id},
+                context=context,
+            )
 
             if error:
                 return res
@@ -1290,18 +1292,18 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 check_fnct = product_obj._on_change_restriction_error
                 if line.product_id:
                     res, error = self._check_product_constraints(
-                                                                cr,
-                                                                uid,
-                                                                l_type,
-                                                                line.po_cft,
-                                                                line.product_id.id,
-                                                                False,
-                                                                check_fnct,
-                                                                field_name='l_type',
-                                                                values=res,
-                                                                vals={'constraints': ['storage']},
-                                                                context=context,
-                                                                )
+                        cr,
+                        uid,
+                        l_type,
+                        line.po_cft,
+                        line.product_id.id,
+                        False,
+                        check_fnct,
+                        field_name='l_type',
+                        values=res,
+                        vals={'constraints': ['storage']},
+                        context=context,
+                    )
 
                     if error:
                         return res
@@ -1333,8 +1335,8 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             line_id = line_id[0]
 
         result = {
-            'value':{},
-            'domain':{},
+            'value': {},
+            'domain': {},
         }
 
         if not supplier:
@@ -1357,18 +1359,18 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         if line_id and partner_id and line.product_id:
             check_fnct = product_obj._on_change_restriction_error
             result, error = self._check_product_constraints(
-                                                            cr,
-                                                            uid,
-                                                            line.type,
-                                                            value.get('po_cft', line.po_cft),
-                                                            line.product_id.id,
-                                                            partner_id,
-                                                            check_fnct,
-                                                            field_name='supplier',
-                                                            values=result,
-                                                            vals={'partner_id': partner_id},
-                                                            context=context,
-                                                            )
+                cr,
+                uid,
+                line.type,
+                value.get('po_cft', line.po_cft),
+                line.product_id.id,
+                partner_id,
+                check_fnct,
+                field_name='supplier',
+                values=result,
+                vals={'partner_id': partner_id},
+                context=context,
+            )
 
             if error:
                 return result

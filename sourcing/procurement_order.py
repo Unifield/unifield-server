@@ -22,6 +22,8 @@
 from osv import fields
 from osv import osv
 
+from tools.translate import _
+
 from sourcing.sale_order_line import _SELECTION_PO_CFT
 
 
@@ -69,24 +71,54 @@ class procurement_order(osv.osv):
             if procurement.po_cft in ('cft', 'rfq') and procurement.price_unit:
                 line.update({'price_unit': procurement.price_unit})
 
-        if line.get('price_unit', False) == False:
+        if not line.get('price_unit', False):
             cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
             if 'pricelist' in kwargs:
                 if 'procurement' in kwargs and 'partner_id' in context:
                     procurement = kwargs['procurement']
                     pricelist = kwargs['pricelist']
-                    st_price = self.pool.get('product.pricelist').price_get(cr, uid, [pricelist.id], procurement.product_id.id, procurement.product_qty, context['partner_id'], {'uom': line.get('product_uom', procurement.product_id.uom_id.id)})[pricelist.id]
+                    st_price = self.pool.get('product.pricelist').price_get(
+                        cr,
+                        uid,
+                        [pricelist.id],
+                        procurement.product_id.id,
+                        procurement.product_qty,
+                        context['partner_id'],
+                        {'uom': line.get('product_uom', procurement.product_id.uom_id.id)}
+                    )[pricelist.id]
                 st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, kwargs['pricelist'].currency_id.id, st_price, round=False, context=context)
             if not st_price:
                 product = self.pool.get('product.product').browse(cr, uid, line['product_id'])
                 st_price = product.standard_price
                 if 'pricelist' in kwargs:
-                    st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, kwargs['pricelist'].currency_id.id, st_price, round=False, context=context)
+                    st_price = self.pool.get('res.currency').compute(
+                        cr,
+                        uid,
+                        cur_id,
+                        kwargs['pricelist'].currency_id.id,
+                        st_price,
+                        round=False,
+                        context=context,
+                    )
                 elif 'partner_id' in context:
                     partner = self.pool.get('res.partner').browse(cr, uid, context['partner_id'], context=context)
-                    st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, partner.property_product_pricelist_purchase.currency_id.id, st_price, round=False, context=context)
+                    st_price = self.pool.get('res.currency').compute(
+                        cr,
+                        uid,
+                        cur_id,
+                        partner.property_product_pricelist_purchase.currency_id.id,
+                        st_price,
+                        round=False,
+                        context=context,
+                    )
                 if origin_line:
-                    st_price = self.pool.get('product.uom')._compute_price(cr, uid, product.uom_id.id, st_price or product.standard_price, to_uom_id=origin_line.product_uom.id)
+                    st_price = self.pool.get('product.uom')._compute_price(
+                        cr,
+                        uid,
+                        product.uom_id.id,
+                        st_price or product.standard_price,
+                        to_uom_id=origin_line.product_uom.id,
+                    )
             line.update({'price_unit': st_price})
 
         return line
@@ -185,12 +217,12 @@ class procurement_order(osv.osv):
                 categ = sol.order_id.categ
 
             if sol.analytic_distribution_id:
-                new_analytic_distribution_id = self.pool.get('analytic.distribution').copy(cr, uid,
-                                                    sol.analytic_distribution_id.id, context=context)
+                new_analytic_distribution_id = self.pool.get('analytic.distribution').copy(
+                    cr, uid, sol.analytic_distribution_id.id, context=context)
                 values['order_line'][0][2].update({'analytic_distribution_id': new_analytic_distribution_id})
             elif sol.order_id.analytic_distribution_id:
-                new_analytic_distribution_id = self.pool.get('analytic.distribution').copy(cr,
-                                                    uid, sol.order_id.analytic_distribution_id.id, context=context)
+                new_analytic_distribution_id = self.pool.get('analytic.distribution').copy(
+                    cr, uid, sol.order_id.analytic_distribution_id.id, context=context)
                 values['order_line'][0][2].update({'analytic_distribution_id': new_analytic_distribution_id})
         elif procurement.product_id:
             if procurement.product_id.type == 'consu':
@@ -291,8 +323,10 @@ class procurement_order(osv.osv):
         # the specified supplier in sourcing tool has priority over suppinfo
         partner = procurement.supplier or super(procurement_order, self)._partner_get_hook(cr, uid, ids, context=context, *args, **kwargs)
         if partner.id == self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id:
-            cr.execute('update procurement_order set message=%s where id=%s',
-                           (_('Impossible to make a Purchase Order to your own company !'), procurement.id))
+            cr.execute('update procurement_order set message=%s where id=%s', (
+                _('Impossible to make a Purchase Order to your own company !'),
+                procurement.id
+            ),)
         return partner
 
     def get_delay_qty(self, cr, uid, ids, partner, product, context=None):

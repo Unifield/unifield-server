@@ -35,16 +35,25 @@ class product_template(osv.osv):
 
         for product in self.browse(cr, uid, ids, context=context):
             if product.seller_ids:
-                partner_list = sorted([(partner_id.sequence, partner_id) for partner_id in  product.seller_ids if partner_id and partner_id.sequence])
+                partner_list = sorted([(partner_id.sequence, partner_id) for partner_id in product.seller_ids if partner_id and partner_id.sequence])
                 main_supplier = partner_list and partner_list[0] and partner_list[0][1] or False
                 result[product.id]['seller_info_id'] = main_supplier and main_supplier.id or False
         return result
 
     _inherit = "product.template"
     _description = "Product Template"
+
     _columns = {
-                'seller_info_id': fields.function(_calc_seller, method=True, type='many2one', relation='product.supplierinfo', string='Main Supplier Info', help="Main Supplier who has highest priority in Supplier List - Info object.", multi="seller_id"),
-                }
+        'seller_info_id': fields.function(
+            _calc_seller,
+            method=True,
+            type='many2one',
+            relation='product.supplierinfo',
+            string='Main Supplier Info',
+            help="Main Supplier who has highest priority in Supplier List - Info object.",
+            multi="seller_id",
+        ),
+    }
 
 product_template()
 

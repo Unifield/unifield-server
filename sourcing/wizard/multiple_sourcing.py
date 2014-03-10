@@ -34,13 +34,35 @@ class multiple_sourcing_wizard(osv.osv_memory):
     _name = 'multiple.sourcing.wizard'
 
     _columns = {
-        'line_ids': fields.many2many('sale.order.line', 'source_sourcing_line_rel', 'line_id', 'wizard_id',
-                                     string='Sourcing lines'),
-        'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', required=True),
-        'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT'),
-        'supplier': fields.many2one('res.partner', 'Supplier', help='If you have choose lines coming from Field Orders, only External/ESC suppliers will be available.'),
-        'company_id': fields.many2one('res.company', 'Current company'),
-        'error_on_lines': fields.boolean('If there is line without need sourcing on selected lines'),
+        'line_ids': fields.many2many(
+            'sale.order.line',
+            'source_sourcing_line_rel',
+            'line_id',
+            'wizard_id',
+            string='Sourcing lines',
+        ),
+        'type': fields.selection(
+            _SELECTION_TYPE,
+            string='Procurement Method',
+            required=True,
+        ),
+        'po_cft': fields.selection(
+            _SELECTION_PO_CFT,
+            string='PO/CFT',
+        ),
+        'supplier': fields.many2one(
+            'res.partner',
+            string='Supplier',
+            help="If you have choose lines coming from Field Orders, only External/ESC suppliers will be available.",
+        ),
+        'company_id': fields.many2one(
+            'res.company',
+            string='Current company',
+        ),
+        'error_on_lines': fields.boolean(
+            string='Error',
+            help="If there is line without need sourcing on selected lines",
+        ),
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -160,7 +182,6 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
-
     def change_type(self, cr, uid, ids, l_type, context=None):
         '''
         Unset the other fields if the type is 'from stock'
@@ -182,4 +203,3 @@ class multiple_sourcing_wizard(osv.osv_memory):
 multiple_sourcing_wizard()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

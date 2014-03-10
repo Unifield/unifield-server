@@ -22,6 +22,8 @@
 from osv import fields
 from osv import osv
 
+from tools.translate import _
+
 
 class res_partner(osv.osv):
     """
@@ -145,8 +147,8 @@ class res_partner(osv.osv):
         for arg in args:
             if arg[0] == 'check_partner_po':
                 if arg[1] != '=' \
-                or arg[2]['order_type'] not in ['regular', 'donation_exp', 'donation_st', 'loan', 'in_kind', 'purchase_list', 'direct']\
-                or not isinstance(arg[2]['partner_id'], (int, long)):
+                   or arg[2]['order_type'] not in ['regular', 'donation_exp', 'donation_st', 'loan', 'in_kind', 'purchase_list', 'direct']\
+                   or not isinstance(arg[2]['partner_id'], (int, long)):
                     raise osv.except_osv(_('Error'), _('Filter check_partner_po different than (arg[0], =, %s) not implemented.') % arg[2])
                 order_type = arg[2]['order_type']
                 # Added by UF-1660 to filter partners

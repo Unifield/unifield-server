@@ -22,6 +22,8 @@
 from osv import fields
 from osv import osv
 
+import netsvc
+
 
 class sale_order(osv.osv):
     """
@@ -129,16 +131,6 @@ class sale_order(osv.osv):
             wf_service.trg_validate(uid, 'sale.order', obj.id, 'order_confirm', cr)
 
         return True
-        return {'name':_("Field Orders"),
-                'view_mode': 'form,tree',
-                'view_type': 'form',
-                'res_model': 'sale.order',
-                'res_id': ids[0],
-                'type': 'ir.actions.act_window',
-                'target': 'dummy',
-                'domain': [],
-                'context': {},
-                }
 
 sale_order()
 

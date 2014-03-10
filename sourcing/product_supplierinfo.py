@@ -22,6 +22,8 @@
 from osv import fields
 from osv import osv
 
+from tools.translate import _
+
 
 class product_supplierinfo(osv.osv):
     """
@@ -51,7 +53,10 @@ class product_supplierinfo(osv.osv):
         if not args:
             return []
         if args[0][1] != '=':
-            raise osv.except_osv(_('Error !'), _('Filter not implemented'))
+            raise osv.except_osv(
+                _('Error !'),
+                _('Filter not implemented'),
+            )
         # product id of sourcing line
         productId = args[0][2]
         # gather product template id for that product
@@ -59,8 +64,16 @@ class product_supplierinfo(osv.osv):
         # search filter on product_id of supplierinfo
         return [('product_id', '=', templateId)]
 
-    _columns = {'product_product_ids': fields.function(_get_false, method=True, type='one2many', relation='product.product', string="Products", fnct_search=_get_product_ids),
-                }
+    _columns = {
+        'product_product_ids': fields.function(
+            _get_false,
+            fnct_search=_get_product_ids,
+            method=True,
+            type='one2many',
+            relation='product.product',
+            string="Products",
+        ),
+    }
 
     def name_get(self, cr, uid, ids, context=None):
         '''
