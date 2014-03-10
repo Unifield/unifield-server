@@ -67,7 +67,7 @@ class res_partner(osv.osv):
             ids = [ids]
         result = {}
         for l_id in ids:
-            result[l_id] = False
+            result[l_id] = True
         return result
 
     def _check_partner_type(self, cr, uid, obj, name, args, context=None):
@@ -85,7 +85,7 @@ class res_partner(osv.osv):
                     raise osv.except_osv(_('Error'), _('Filter check_partner different than (arg[0], =, id) not implemented.'))
                 if arg[2]:
                     so = self.pool.get('sale.order').browse(cr, uid, arg[2])
-                    sl = self.browse(cr, uid, active_id)[0]
+                    sl = self.pool.get('sale.order.line').browse(cr, uid, active_id)[0]
                     if not so.procurement_request:
                         newargs.append(('partner_type', 'in', ['external', 'esc']))
                     elif so.procurement_request and not sl.product_id:
@@ -169,6 +169,17 @@ class res_partner(osv.osv):
                 newargs.append(args)
         return newargs
 
+    def _src_contains_fo(self, cr, uid, obj, name, args, context=None):
+        res = []
+        for arg in args:
+            if arg[0] == 'line_contains_fo':
+                if type(arg[2]) == type(list()):
+                    for line in self.pool.get('sale.order.line').browse(cr, uid, arg[2][0][2], context=context):
+                        if not line.order_id.procurement_request:
+                            res.append(('partner_type', 'in', ['external', 'esc']))
+
+        return res
+
     _columns = {
         'available_for_dpo': fields.function(_get_available_for_dpo, fnct_search=_src_available_for_dpo,
                                              method=True, type='boolean', string='Available for DPO', store=False),
@@ -176,6 +187,7 @@ class res_partner(osv.osv):
         'check_partner_rfq': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type', fnct_search=_check_partner_type_rfq),
         'check_partner_ir': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type On IR', fnct_search=_check_partner_type_ir),
         'check_partner_po': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type On PO', fnct_search=_check_partner_type_po),
+        'line_contains_fo': fields.function(_get_fake, fnct_search=_src_contains_fo, method=True, string='Lines contains FO', type='boolean', store=False),
     }
 
 res_partner()

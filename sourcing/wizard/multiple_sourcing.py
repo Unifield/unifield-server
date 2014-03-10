@@ -19,21 +19,15 @@
 #
 ##############################################################################
 
-from osv import osv
 from osv import fields
-
+from osv import osv
 from tools.translate import _
+
+from sourcing.sale_order_line import _SELECTION_PO_CFT
 
 _SELECTION_TYPE = [
     ('make_to_stock', 'from stock'),
     ('make_to_order', 'on order'), ]
-
-_SELECTION_PO_CFT = [
-    ('po', 'Purchase Order'),
-    ('dpo', 'Direct Purchase Order'),
-    ('cft', 'Tender'),
-    ('rfq', 'Request for Quotation'),
-    ]
 
 
 class multiple_sourcing_wizard(osv.osv_memory):
@@ -99,10 +93,10 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
             errors = {}
             for line in wiz.line_ids:
-                if line.sale_order_id.procurement_request and wiz.po_cft == 'dpo':
+                if line.order_id.procurement_request and wiz.po_cft == 'dpo':
                     err_msg = 'You cannot choose Direct Purchase Order as method to source Internal Request lines.'
                     errors.setdefault(err_msg, [])
-                    errors[err_msg].append((line.id, '%s of %s' % (line.line_number, line.sale_order_id.name)))
+                    errors[err_msg].append((line.id, '%s of %s' % (line.line_number, line.order_id.name)))
                 else:
                     try:
                         line_obj.write(cr, uid, [line.id], {'type': wiz.type,
@@ -110,7 +104,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
                                                             'supplier': wiz.supplier and wiz.supplier.id or False}, context=context)
                     except osv.except_osv, e:
                         errors.setdefault(e.value, [])
-                        errors[e.value].append((line.id, '%s of %s' % (line.line_number, line.sale_order_id.name)))
+                        errors[e.value].append((line.id, '%s of %s' % (line.line_number, line.order_id.name)))
 
             if errors:
                 error_msg = ''
@@ -140,7 +134,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         for wiz in self.browse(cr, uid, ids, context=context):
             for line in wiz.line_ids:
-                if line.sale_order_id.procurement_request and wiz.po_cft == 'dpo':
+                if line.order_id.procurement_request and wiz.po_cft == 'dpo':
                     raise osv.except_osv(_('Error'), _('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
                 line_obj.confirmLine(cr, uid, [line.id], context=context)
 
@@ -178,43 +172,6 @@ class multiple_sourcing_wizard(osv.osv_memory):
         return {}
 
 multiple_sourcing_wizard()
-
-
-#############################################################
-#                                                           #
-# This modification on res.partner avoid the selection      #
-# of internal/inter-section/intermission partners           #
-# if a line on multiple sourcing wizard coming from a FO    #
-#                                                           #
-#############################################################
-class res_partner(osv.osv):
-    _name = 'res.partner'
-    _inherit = 'res.partner'
-
-    def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
-        res = {}
-        for l_id in ids:
-            res[l_id] = True
-
-        return res
-
-    def _src_contains_fo(self, cr, uid, obj, name, args, context=None):
-        res = []
-        for arg in args:
-            if arg[0] == 'line_contains_fo':
-                if type(arg[2]) == type(list()):
-                    for line in self.pool.get('sale.order.line').browse(cr, uid, arg[2][0][2], context=context):
-                        if not line.sale_order_id.procurement_request:
-                            res.append(('partner_type', 'in', ['external', 'esc']))
-
-        return res
-
-    _columns = {
-        'line_contains_fo': fields.function(_get_dummy, fnct_search=_src_contains_fo, method=True, string='Lines contains FO', type='boolean', store=False),
-    }
-
-res_partner()
-
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

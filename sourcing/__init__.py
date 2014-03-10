@@ -19,23 +19,14 @@
 #
 ##############################################################################
 
+import sale_order_line
+import wizard
+
 import procurement_order
 import product_supplierinfo
 import product_template
 import purchase_order
 import res_partner
 import sale_order
-import sale_order_line
-
-import wizard
-
-_SELECTION_PO_CFT = [
-    ('po', 'Purchase Order'),
-    ('dpo', 'Direct Purchase Order'),
-    ('cft', 'Tender'),
-    ('rfq', 'Request for Quotation'),
-]
-
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

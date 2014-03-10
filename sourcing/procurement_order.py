@@ -22,7 +22,7 @@
 from osv import fields
 from osv import osv
 
-from sourcing import _SELECTION_PO_CFT
+from sourcing.sale_order_line import _SELECTION_PO_CFT
 
 
 class procurement_order(osv.osv):
