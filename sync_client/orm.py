@@ -8,7 +8,7 @@ import types
 
 from sync_common import MODELS_TO_IGNORE, xmlid_to_sdref
 
-
+#import cProfile
 ## Helpers ###################################################################
 
 class DuplicateKey(KeyError):
@@ -49,6 +49,11 @@ def orm_method_overload(fn):
     @functools.wraps(fn)
     def wrapper(self, *args, **kwargs):
         if self.pool.get(extended_orm._name) is not None:
+            #datafn = '/tmp/' + self._name + fn.__name__ + ".profile" # Name the data file sensibly
+            #prof = cProfile.Profile()
+            #retval = prof.runcall(fn, self, original_method, *args, **kwargs)
+            #prof.dump_stats(datafn)
+            #return retval
             return fn(self, original_method, *args, **kwargs)
         else:
             return original_method(self, *args, **kwargs)
@@ -217,7 +222,7 @@ SELECT res_id, touched
             for id, touched_fields
             in self.get_sd_ref(cr, uid, ids, field='touched', context=context).items())
 
-    def touch(self, cr, uid, ids, previous_values, synchronize,
+    def touch(self, cr, uid, ids, previous_values, synchronize, current_values=None,
             _previous_calls=None, context=None):
         """
         Touch the fields that has changed and/or mark the records to be
@@ -293,17 +298,21 @@ SELECT res_id, touched
                     if isinstance(self._all_columns[f].column, fields.one2many)]
 
         # read current values
-        whole_fields = [x for x in self._all_columns if not self._all_columns[x].column._properties or self._all_columns[x].column._classic_write] \
-            if previous_values is None \
-            else previous_values[0].keys()
+        if previous_values is not None:
+            whole_fields = previous_values[0].keys()
+        elif current_values is not None:
+            whole_fields = current_values.values()[0].keys()
+        else:
+            whole_fields = [x for x in self._all_columns if not self._all_columns[x].column._properties or self._all_columns[x].column._classic_write]
         try:
             whole_fields.remove('id')
         except ValueError:
             pass
-        current_values = dict(
-            (d['id'], d)
-            for d in self.read(cr, uid, ids, whole_fields, context=context) )
 
+        if not current_values:
+            current_values = dict(
+                (d['id'], d)
+                for d in self.read(cr, uid, ids, whole_fields, context=context) )
         # touch things
         if previous_values is None:
             touch(
@@ -435,31 +444,70 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
     def create(self, original_create, cr, uid, values, context=None):
         if context is None: context = {}
         id = original_create(self, cr, uid, values, context=context)
+
+        audit_rule_ids = self.check_audit(cr, uid, 'create')
+        audit_obj = self.pool.get('audittrail.rule')
+        funct_field = []
+        if audit_rule_ids:
+            funct_field = audit_obj.get_functionnal_fields(cr, 1, self._name, audit_rule_ids)
+
         to_be_synchronized = (
             self._name not in MODELS_TO_IGNORE and
             (not context.get('sync_update_execution') and
              not context.get('sync_update_creation')))
+
+        if audit_rule_ids or to_be_synchronized or hasattr(self, 'on_create'):
+            current_values = dict((x['id'], x) for x in self.read(cr, uid, [id], values.keys()+funct_field, context=context))
+
+        if audit_rule_ids:
+            audit_obj.audit_log(cr, uid, audit_rule_ids, self, [id], 'create', current=current_values, context=context)
+
         if to_be_synchronized or hasattr(self, 'on_create'):
             self.touch(cr, uid, [id], None,
-                to_be_synchronized, context=context)
+                to_be_synchronized, current_values=current_values, context=context)
             if hasattr(self, 'on_create'):
                 self.on_create(cr, uid, id,
-                    self.read(cr, uid, [id], values.keys(), context=context)[0],
+                    current_values[id],
                     context=context)
         return id
+
+    def check_audit(self, cr, uid, method):
+        audit_obj = self.pool.get('audittrail.rule')
+        if audit_obj:
+            return self.pool.get('audittrail.rule').to_trace(cr, 1, self._name, method)
+        return False
 
     @orm_method_overload
     def write(self, original_write, cr, uid, ids, values, context=None):
         if context is None: context = {}
-        previous_values = self.read(cr, uid, ids, values.keys(), context=context)
-        result = original_write(self, cr, uid, ids, values,context=context)
+
+        audit_rule_ids = self.check_audit(cr, uid, 'write')
+        audit_obj = self.pool.get('audittrail.rule')
+        funct_field = []
+        if audit_rule_ids:
+            funct_field = audit_obj.get_functionnal_fields(cr, 1, self._name, audit_rule_ids)
+
         to_be_synchronized = (
             self._name not in MODELS_TO_IGNORE and
             (not context.get('sync_update_execution') and
              not context.get('sync_update_creation')))
+
+        if to_be_synchronized or hasattr(self, 'on_change') or audit_rule_ids:
+            # FIXME: add fields.function for track changes
+            previous_values = self.read(cr, uid, ids, values.keys()+funct_field, context=context)
+
+        result = original_write(self, cr, uid, ids, values,context=context)
+        current_values = dict((x['id'], x) for x in self.read(
+            cr, uid, isinstance(ids, (int, long)) and [ids] or ids,
+            values.keys()+funct_field, context=context)
+        )
+
+        if audit_rule_ids:
+            audit_obj.audit_log(cr, uid, audit_rule_ids, self, ids, 'write', previous_values, current_values, context=context)
+
         if to_be_synchronized or hasattr(self, 'on_change'):
             changes = self.touch(cr, uid, ids, previous_values,
-                to_be_synchronized, context=context)
+                to_be_synchronized, current_values=current_values, context=context)
             if hasattr(self, 'on_change'):
                 self.on_change(cr, uid, changes, context=context)
         return result
@@ -506,6 +554,9 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if not ids: return True
         context = context or {}
 
+        audit_rule_ids = self.check_audit(cr, uid, 'unlink')
+        if audit_rule_ids:
+            self.pool.get('audittrail.rule').audit_log(cr, uid, audit_rule_ids, self, ids, 'unlink', context=context)
         if context.get('sync_message_execution'):
             return original_unlink(self, cr, uid, ids, context=context)
 
