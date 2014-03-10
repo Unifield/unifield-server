@@ -3755,7 +3755,7 @@ class orm(orm_template):
 
         done = []
 
-        result = self._store_get_values(cr, uid, ids, keys, context)
+        result += self._store_get_values(cr, uid, ids, keys, context)
         result.sort()
         for order, object, ids, fields2 in result:
             if bypass and context.get('bypass_store_function') and (object, fields2) in context['bypass_store_function']:
