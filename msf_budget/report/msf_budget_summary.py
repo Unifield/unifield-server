@@ -64,7 +64,7 @@ class msf_budget_summary(osv.osv_memory):
                 cr.execute(sql, (cc_id, date_start, date_stop))
                 if cr.rowcount:
                     tmp_res = cr.fetchall()
-                    tmp_amount = tmp_res and tmp_res[0] and tmp_res[0][0] and tmp_res[0][0] != None or 0.0
+                    tmp_amount = tmp_res and tmp_res[0] and tmp_res[0][0] or 0.0
                     actual_amount += tmp_amount
 
             actual_amount = abs(actual_amount)
