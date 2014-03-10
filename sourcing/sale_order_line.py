@@ -778,7 +778,6 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         return '', False
 
-    # TODO: TO REFACTORE
     def check_supplierinfo(self, line, partner, context=None):
         """
         Returns the supplier lead time or -1 according to supplier
@@ -803,17 +802,21 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         return -1
 
-    # TODO: TO REFACTORE
     def write(self, cr, uid, ids, vals, context=None):
-        '''
-        _inherit = 'sale.order.line'
+        """
+        Write new values on the sale.order.line record and
+        check if the new values are compatible with the line
+        and order values.
 
-        override to update sourcing_line :
-         - supplier
-         - type
-         - po_cft
-         - product_id
-        '''
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param ids: List of IDs of sale.order.line to write
+        :param vals: Dictionary with the new values
+        :param context: Context of the call
+
+        :return True if all is ok else False
+        :rtype boolean
+        """
         # Objects
         product_obj = self.pool.get('product.product')
         partner_obj = self.pool.get('res.partner')
@@ -885,16 +888,28 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         return result
 
-    # TODO: TO REFACTORE
     def confirmLine(self, cr, uid, ids, context=None):
-        '''
-        set the corresponding line's state to 'confirmed'
-        if all lines are 'confirmed', the sale order is confirmed
-        '''
+        """
+        Set the line as confirmed and check if all lines
+        of the FO/IR are confirmed. If yes, launch the
+        confirmation of the FO/IR in background.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param ids: List of IDs of sale.order.line to check
+        :param context: Context of the call
+
+        :return Raise an error or True
+        :rtype boolean
+        """
         # Objects
         order_obj = self.pool.get('sale.order')
-        context = context or {}
-        result = []
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         context['procurement_request'] = True
         no_prod = self.search(cr, uid, [
@@ -969,13 +984,22 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             thread = threading.Thread(target=self.confirmOrder, args=(cr, uid, order_id, state_to_use, context))
             thread.start()
 
-        return result
+        return True
 
-    # TODO: TO REFACTORE
     def confirmOrder(self, cr, uid, order_id, state_to_use, context=None, new_cursor=True):
-        '''
-        Confirm the Order in a Thread
-        '''
+        """
+        Confirm the order specified in the parameter.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param order_id: ID of the order to confirm
+        :param state_to_use: Determine if the order is an IR or a FO
+        :param context: Context of the call
+        :param new_cursor: Use a new DB cursor or not
+
+        :return Raise an error or True
+        :rtype boolean
+        """
         if not context:
             context = {}
 
@@ -1009,28 +1033,50 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         return True
 
-    # TODO: TO REFACTORE
     def unconfirmLine(self, cr, uid, ids, context=None):
-        '''
-        set the sale order line state to 'draft'
-        '''
-        line_obj = self.pool.get('sale.order.line')
-        result = []
-        for sl in self.browse(cr, uid, ids, context):
-            result.append((sl.id, line_obj.write(cr, uid, sl.id, {'state':'draft'}, context)))
+        """
+        Set the line as draft.
 
-        return result
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param ids: List of IDs of sale.order.line to unconfirm
+        :param context: Context of the call
+
+        :return True if all is ok or False
+        :rtype boolean
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        return self.write(cr, uid, ids, {'state': 'draft'}, context=context)
 
 
     """
     Controller methods
     """
-    # TODO: TO REFACTORE
     def onChangeLocation(self, cr, uid, ids, location_id, product_id, rts, sale_order_id):
-        '''
-        Compute the stock values according to parameters
-        '''
-        prod_obj = self.pool.get('product.product')
+        """
+        When the location is changed on line, re-compute the stock
+        quantity values for the line.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param ids: List of IDs of sale.order.line on which the
+                     modifications will be done.
+        :param location_id: ID of the current or new value for the stock location of the line
+        :param product_id: ID of the current or new value for the product of the line
+        :param rts: Current or new value for the Ready to ship date of the line
+        :param sale_order_id: ID of the current or new value for the order of the line
+
+        :return A dictionary with the new values
+        :rtype dict
+        """
+        # Objects
+        product_obj = self.pool.get('product.product')
+        order_obj = self.pool.get('sale.order')
 
         res = {'value': {}}
 
@@ -1038,74 +1084,131 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             return res
 
         if sale_order_id:
-            so = self.pool.get('sale.order').browse(cr, uid, sale_order_id)
+            so = order_obj.browse(cr, uid, sale_order_id)
             if so.procurement_request and so.location_requestor_id.id == location_id:
-                return {'value': {'location_id': False,
-                                  'real_stock': 0.00,
-                                  'virtual_stock': 0.00,
-                                  'available_stock': 0.00},
-                        'warning': {'title': _('Warning'),
-                                    'message': _('You cannot choose a source location which is the destination location of the Internal request')}}
+                return {
+                    'value': {
+                        'location_id': False,
+                        'real_stock': 0.00,
+                        'virtual_stock': 0.00,
+                        'available_stock': 0.00,
+                    },
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _('You cannot choose a source location which is the destination location of the Internal request'),
+                    },
+                }
 
         rts = rts < time.strftime('%Y-%m-%d') and time.strftime('%Y-%m-%d') or rts
-        ctx = {'location': location_id, 'to_date': '%s 23:59:59' % rts}
-        product = prod_obj.browse(cr, uid, product_id, context=ctx)
-        res['value']['real_stock'] = product.qty_available
-        res['value']['virtual_stock'] = product.virtual_available
+        ctx = {
+            'location': location_id,
+            'to_date': '%s 23:59:59' % rts,
+        }
 
-        ctx2 = {'states': ('assigned',), 'what': ('out',), 'location': location_id}
-        product2 = prod_obj.get_product_available(cr, uid, [product_id], context=ctx2)
+        product = product_obj.browse(cr, uid, product_id, context=ctx)
+        res['value'].update({
+            'real_stock': product.qty_available,
+            'virtual_stock': product.virtual_available,
+        })
+
+        ctx2 = {
+            'states': ('assigned',),
+            'what': ('out',),
+            'location': location_id,
+        }
+        product2 = product_obj.get_product_available(cr, uid, [product_id], context=ctx2)
         res['value']['available_stock'] = res['value']['real_stock'] + product2.get(product_id, 0.00)
 
         return res
 
-    # TODO: TO REFACTORE
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
         uom=False, qty_uos=0, uos=False, name='', partner_id=False,
         lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
-        '''
-        override to update hidden values :
-         - supplier
-         - type
-         - po_cft
-        '''
+        """
+        When the product is changed on the line, looking for the
+        best supplier for the new product.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param ids: List of IDs of sale.order.line on which the
+                     modifications will be done.
+        :param pricelist: ID of the pricelist of the FO. Used to compute the good price.
+        :param product: ID of the current or new product of the line.
+        :param qty: Quantity of product on the line
+        :param uom: ID of the UoM on the line
+        :param qty_uos: Quantity of product on the line in UoS
+        :param uos: ID of the UoS on the line
+        :param name: Name of the line
+        :param partner_id: ID of the partner of the order
+        :param lang: Lang of the partner of the ordre
+        :param update_tax: Is the modification of product must change the taxes
+        :param date_order: Date of the order
+        :param packaging: Packaging of the product
+        :param fiscal_position: Fiscal position of the partner of the order (used to compute taxes)
+        :param flag: ???
+
+        :return A dictionary with the new values
+        :rtype dict
+        """
+        # Objects
+        product_obj = self.pool.get('product.product')
+
         result = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
                                                                 uom, qty_uos, uos, name, partner_id,
                                                                 lang, update_tax, date_order, packaging, fiscal_position, flag)
 
-        # add supplier
+        # Add supplier
         sellerId = False
         po_cft = False
         l_type = 'type' in result['value'] and result['value']['type']
         if product and type:
-            productObj = self.pool.get('product.product').browse(cr, uid, product)
-            seller = productObj.seller_id
+            seller = product_obj.browse(cr, uid, product).seller_id
             sellerId = (seller and seller.id) or False
 
             if l_type == 'make_to_order':
                 po_cft = 'po'
 
-            result['value'].update({'supplier': sellerId, 'po_cft': po_cft})
+            result['value'].update({
+                'supplier': sellerId,
+                'po_cft': po_cft,
+            })
 
         return result
 
-    # TODO: TO REFACTORE
     def onChangePoCft(self, cr, uid, line_id, po_cft, order_id=False, partner_id=False, context=None):
-        '''
-        '''
+        """
+        When the method of procurement for Make To Order lines is changed, check if the new
+        values are compatible with the other values of the line and of the order.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param line_id: ID of the line to check
+        :param po_cft: Value of the procurement method
+        :param order_id: ID of the order of the line
+        :param partner_id: ID of the partner of the order
+        :param context: Context of the change
+
+        :return A dictionary with the new values
+        :rtype dict
+        """
+        # Objects
+        order_obj = self.pool.get('sale.order')
+        product_obj = self.pool.get('product.product')
+
         warning = {}
         value = {}
 
         if order_id:
-            order = self.pool.get('sale.order').browse(cr, uid, order_id, context=context)
+            order = order_obj.browse(cr, uid, order_id, context=context)
             if order.procurement_request and po_cft == 'dpo':
-                warning = {'title': 'DPO for IR',
-                           'message': 'You cannot choose Direct Purchase Order as method to source an Internal Request line.'}
-                value = {'po_cft': 'po'}
+                warning = {
+                    'title': _('DPO for IR'),
+                    'message': _('You cannot choose Direct Purchase Order as method to source an Internal Request line.'),
+                }
+                value['po_cft'] = 'po'
             if po_cft == 'cft':
-                # tender does not allow supplier selection
-                value = {'supplier': False}
-
+                # Tender does not allow supplier selection
+                value['supplier'] = False
 
         if line_id and isinstance(line_id, list):
             line_id = line_id[0]
@@ -1115,88 +1218,158 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         line = self.browse(cr, uid, line_id, context=context)
         partner_id = 'supplier' in value and value['supplier'] or partner_id
         if line_id and partner_id and line.product_id:
-            check_fnct = self.pool.get('product.product')._on_change_restriction_error
-            res, error = self._check_product_constraints(cr, uid, line.type, value.get('po_cft', line.po_cft), line.product_id.id, partner_id, check_fnct, field_name='po_cft', values=res, vals={'partner_id': partner_id}, context=context)
+            check_fnct = product_obj._on_change_restriction_error
+            res, error = self._check_product_constraints(
+                                                        cr,
+                                                        uid,
+                                                        line.type,
+                                                        value.get('po_cft', line.po_cft),
+                                                        line.product_id.id,
+                                                        partner_id,
+                                                        check_fnct,
+                                                        field_name='po_cft',
+                                                        values=res,
+                                                        vals={'partner_id': partner_id},
+                                                        context=context,
+                                                        )
+
             if error:
                 return res
 
         return res
-    # TODO: TO REFACTORE
+
     def onChangeType(self, cr, uid, line_id, l_type, location_id=False, context=None):
-        '''
-        if l_type == make to stock, change pocft to False
-        '''
+        """
+        When the method of procurement is changed, check if the new
+        values are compatible with the other values of the line and of the order.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param line_id: ID of the line to check
+        :param l_type: Value of the procurement method
+        :param location_id: ID of the stock location of the line
+        :param context: Context of the change
+
+        :return A dictionary with the new values
+        :rtype dict
+        """
+        # Objects
+        wh_obj = self.pool.get('stock.warehouse')
+        product_obj = self.pool.get('product.product')
+
         if not context:
             context = {}
 
+        if line_id and isinstance(line_id, list):
+            line_id = line_id[0]
+
         value = {}
         message = {}
+
         if line_id:
             line = self.browse(cr, uid, line_id, context=context)[0]
             if line.product_id.type in ('consu', 'service', 'service_recep') and l_type == 'make_to_stock':
                 product_type = line.product_id.type == 'consu' and 'non stockable' or 'service'
-                value.update({'l_type': 'make_to_order'})
-                message.update({'title': _('Warning'),
-                                'message': _('You cannot choose \'from stock\' as method to source a %s product !') % product_type})
+                value['l_type'] = 'make_to_order'
+                message.update({
+                    'title': _('Warning'),
+                    'message': _('You cannot choose \'from stock\' as method to source a %s product !') % product_type,
+                })
 
         if l_type == 'make_to_stock':
             if not location_id:
-                wh_obj = self.pool.get('stock.warehouse')
                 wh_ids = wh_obj.search(cr, uid, [], context=context)
                 if wh_ids:
-                    value.update({'location_id': wh_obj.browse(cr, uid, wh_ids[0], context=context).lot_stock_id.id})
+                    value['location_id'] = wh_obj.browse(cr, uid, wh_ids[0], context=context).lot_stock_id.id
 
-            value.update({'po_cft': False})
-
-            if line_id and isinstance(line_id, list):
-                line_id = line_id[0]
+            value['po_cft'] = False
 
             res = {'value': value, 'warning': message}
             if line_id:
                 line = self.browse(cr, uid, line_id, context=context)
-                check_fnct = self.pool.get('product.product')._on_change_restriction_error
+                check_fnct = product_obj._on_change_restriction_error
                 if line.product_id:
-                    res, error = self._check_product_constraints(cr, uid, l_type, line.po_cft, line.product_id.id, False, check_fnct, field_name='l_type', values=res, vals={'constraints': ['storage']}, context=context)
+                    res, error = self._check_product_constraints(
+                                                                cr,
+                                                                uid,
+                                                                l_type,
+                                                                line.po_cft,
+                                                                line.product_id.id,
+                                                                False,
+                                                                check_fnct,
+                                                                field_name='l_type',
+                                                                values=res,
+                                                                vals={'constraints': ['storage']},
+                                                                context=context,
+                                                                )
+
                     if error:
                         return res
 
         return {'value': value, 'warning': message}
-    # TODO: TO REFACTORE
+
     def onChangeSupplier(self, cr, uid, line_id, supplier, context=None):
-        '''
-        supplier changes, we update 'estimated_delivery_date' with corresponding delivery lead time
-        we add a domain for the IR line on the supplier
-        '''
+        """
+        When the supplier is changed, check if the new values are compatible
+        with the other values of the line and of the order.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param line_id: ID of the line to check
+        :param supplier: ID of the current or new choosen supplier
+        :param context: Context of the change
+
+        :return A dictionary with the new values
+        :rtype dict
+        """
         # Objects
         partner_obj = self.pool.get('res.partner')
+        product_obj = self.pool.get('product.product')
 
-        result = {'value':{}, 'domain':{}}
+        if context is None:
+            context = {}
+
+        if line_id and isinstance(line_id, list):
+            line_id = line_id[0]
+
+        result = {
+            'value':{},
+            'domain':{},
+        }
 
         if not supplier:
             for sl in self.browse(cr, uid, line_id, context):
                 if not sl.product_id and sl.sale_order_id.procurement_request and sl.type == 'make_to_order':
-                    result['domain'].update({'supplier': [('partner_type', 'in', ['internal', 'section', 'intermission'])]})
+                    result['domain']['supplier'] = [('partner_type', 'in', ['internal', 'section', 'intermission'])]
             return result
 
         partner = partner_obj.browse(cr, uid, supplier, context)
-        # if the selected partner belongs to product->suppliers, we take that delay (from supplierinfo)
-        if line_id and isinstance(line_id, list):
-            line_id = line_id[0]
-
+        # If the selected partner belongs to product->suppliers, we take that delay (from supplierinfo)
         line = self.browse(cr, uid, line_id, context=context)
         delay = self.check_supplierinfo(line, partner, context=context)
 
-        daysToAdd = delay
-        estDeliveryDate = date.today()
-        estDeliveryDate = estDeliveryDate + relativedelta(days=int(daysToAdd))
+        estDeliveryDate = date.today() + relativedelta(days=int(delay))
 
-        result['value'].update({'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d')})
+        result['value']['estimated_delivery_date'] = estDeliveryDate.strftime('%Y-%m-%d')
 
         value = result['value']
         partner_id = 'supplier' in value and value['supplier'] or supplier
         if line_id and partner_id and line.product_id:
-            check_fnct = self.pool.get('product.product')._on_change_restriction_error
-            result, error = self._check_product_constraints(cr, uid, line.type, value.get('po_cft', line.po_cft), line.product_id.id, partner_id, check_fnct, field_name='supplier', values=result, vals={'partner_id': partner_id}, context=context)
+            check_fnct = product_obj._on_change_restriction_error
+            result, error = self._check_product_constraints(
+                                                            cr,
+                                                            uid,
+                                                            line.type,
+                                                            value.get('po_cft', line.po_cft),
+                                                            line.product_id.id,
+                                                            partner_id,
+                                                            check_fnct,
+                                                            field_name='supplier',
+                                                            values=result,
+                                                            vals={'partner_id': partner_id},
+                                                            context=context,
+                                                            )
+
             if error:
                 return result
 
