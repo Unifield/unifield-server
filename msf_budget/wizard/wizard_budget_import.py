@@ -57,7 +57,7 @@ class wizard_budget_import(osv.osv_memory):
     _columns = {
         'import_file': fields.binary("CSV File"),
     }
-    
+
     def split_budgets(self, import_data):
         """
         Split budget file into several budget_data by using a curious way: split on the line that is empty and that next line have data and that the line is not the end of the budget file.
@@ -212,16 +212,9 @@ class wizard_budget_import(osv.osv_memory):
             context = {}
         # Prepare some values
         budgets_2be_approved = {}
-        a_obj = self.pool.get('account.account')
         tool_obj = self.pool.get('msf.budget.tools')
         budget_obj = self.pool.get('msf.budget')
         sql = """
-            SELECT id, CASE WHEN type = 'view' THEN type ELSE 'normal' END AS account_type, parent_id
-            FROM account_account
-            WHERE id IN %s
-            ORDER BY code"""
-        imported_obj = self.pool.get('imported.msf.budget.line')
-        sql2 = """
             DELETE FROM imported_msf_budget_line
             WHERE sequence = %s"""
         sql_budget = """
@@ -283,7 +276,7 @@ class wizard_budget_import(osv.osv_memory):
                 # Create budget line
                 tool_obj.create_budget_lines(cr, uid, budget_id, seq, context=context)
                 # Delete lines that comes from the given sequence
-                cr.execute(sql2, (seq,))
+                cr.execute(sql, (seq,))
         # Open a different wizard regarding number of budget to be approved.
         #+ - if budget to approve, use a wizard to permit user to approve budget
         #+ - otherwise use a wizard for user to inform user the import is OK

@@ -92,7 +92,7 @@
                     </field>
                     <field name="state" select="1" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
                     <group col="4" colspan="2">
-                        <button string="Approve" name="validate" type="workflow" icon="gtk-ok" attrs="{'invisible': [('|'), ('type', '=', 'view'), ('state', '!=', 'draft')]}"/>
+                        <button string="Approve" name="validate" type="workflow" icon="gtk-ok" attrs="{'invisible': [('|'), ('type', '=', 'view'), ('state', '!=', 'draft')]}" help="By using this button you will not only validate the budget but also update all parent budgets. This will take a while..."/>
                         <button string="Done" name="done" type="workflow" icon="gtk-jump-to" attrs="{'invisible': [('|'), ('type', '=', 'view'), ('state', '!=', 'valid')]}"/>
                     </group>
                 </form>
