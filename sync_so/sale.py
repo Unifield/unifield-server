@@ -225,7 +225,7 @@ class sale_order_sync(osv.osv):
                 message = "The reference object is not found in the current instance: " + name        
         
         if not message:        
-            message = "The reference to " + name + " in all documents becomes now VOID due to the recovery event at " + source
+            message = "The reference in " + name + " becomes now VOID due to the recovery event at " + source
         self._logger.info(message)
         return message    
     

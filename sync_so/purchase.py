@@ -256,7 +256,7 @@ class purchase_order_sync(osv.osv):
                     self.write(cr, uid, [res_id], {'origin': name}, context=context)
                     so_object.write(cr, uid, so_ids, {'origin': False} , context=context) # reset this origin value of the FO counterpart back to null
 
-        message = "The split PO " + order.name + " is created by sync and linked to the split PO " + so_info.name + " at " + source
+        message = "The split PO " + order.name + " is created by sync and linked to the split FO " + so_info.name + " at " + source
         self._logger.info(message)
         return message
 
