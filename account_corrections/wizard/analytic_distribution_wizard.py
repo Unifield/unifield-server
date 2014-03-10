@@ -236,7 +236,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             # note that account_analytic_line.move_id is actually account_analytic_line.move_line_id, but the journal_id is
             # stored on both account_move and account_move_line. Complete madness.
             sequence_number = self.pool.get('ir.sequence').get_id(cr, uid, orig_line.move_id.journal_id.sequence_id.id, context={'fiscalyear_id': period.fiscalyear_id.id})
-            entry_seq = "%s-%s-%s" % (seq_vals['name'], seq_vals['code'], sequence_number)
+            entry_seq = "%s-%s-%s" % (seq_vals['name'], 'OD', sequence_number)
               
             # UTP-943: Set wizard date as date for REVERSAL AND CORRECTION lines
             reversed_id = self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids[0], posting_date=wizard.date, context=context)[0]
