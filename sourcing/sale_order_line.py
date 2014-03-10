@@ -233,36 +233,66 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return result
 
-    # TODO: To refactore
     def _getVirtualStock(self, cr, uid, ids, field_names=None, arg=False, context=None):
-        '''
-        get virtual stock (virtual_available) for the product of the corresponding sourcing line
-        where date of stock.move is smaller than or equal to rts
-        '''
+        """
+        Get the virtual stock for each line
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param ids: List of ID of field order lines to re-compute
+        :param field_name: A field or a list of fields to be computed
+        :param args: Some other arguments
+        :param context: Context of the call
+
+        :return A dictionnary with field order line id as keys and associated
+                 available stock
+        :rtype dict
+        """
+        # Objects
+        warehouse_obj = self.pool.get('stock.warehouse')
+        product_obj = self.pool.get('product.product')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         result = {}
-        productObj = self.pool.get('product.product')
 
         # UF-1411 : Compute the virtual stock on Stock + Input locations
-        location_ids = []
-        wids = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)
-        for w in self.pool.get('stock.warehouse').browse(cr, uid, wids, context=context):
-            location_ids.append(w.lot_stock_id.id)
-            location_ids.append(w.lot_input_id.id)
+        wh_location_ids = []
+        wids = warehouse_obj.search(cr, uid, [], context=context)
+        for w in warehouse_obj.browse(cr, uid, wids, context=context):
+            wh_location_ids.append(w.lot_stock_id.id)
+            wh_location_ids.append(w.lot_input_id.id)
 
-        # for each sourcing line
+        # For each sourcing line
         for sl in self.browse(cr, uid, ids, context):
-            product_context = context
-            rts = sl.rts < time.strftime('%Y-%m-%d') and time.strftime('%Y-%m-%d') or sl.rts
+            # Get the stock location on which the stock is computed
             if sl.type == 'make_to_stock' and sl.location_id:
                 location_ids = sl.location_id.id
-            product_context.update({'location': location_ids, 'to_date': '%s 23:59:59' % rts})
-            if sl.product_id:
-                product_virtual = productObj.browse(cr, uid, sl.product_id.id, context=product_context)
-                res = {'real_stock': product_virtual.qty_available,
-                       'virtual_stock': product_virtual.virtual_available}
             else:
-                res = {'real_stock': 0.00,
-                       'virtual_stock': 0.00}
+                location_ids = wh_location_ids
+
+            rts = sl.rts < time.strftime('%Y-%m-%d') and time.strftime('%Y-%m-%d') or sl.rts
+
+            context.update({
+                'location': location_ids,
+                'to_date': '%s 23:59:59' % rts
+            })
+
+            if sl.product_id:
+                product_virtual = product_obj.browse(cr, uid, sl.product_id.id, context=context)
+                res = {
+                    'real_stock': product_virtual.qty_available,
+                    'virtual_stock': product_virtual.virtual_available,
+                }
+            else:
+                res = {
+                    'real_stock': 0.00,
+                    'virtual_stock': 0.00,
+                }
 
             result[sl.id] = res
 
@@ -301,16 +331,32 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         return res
 
     def _search_need_sourcing(self, cr, uid, obj, name, args, context=None):
-        if not args:
-            return []
+        """
+        Returns all field order lines that need to be sourced according to the
+        domain given in args.
 
-        if args[0][1] != '=' or not args[0][2]:
-            raise osv.except_osv(_('Error !'), _('Filter not implemented'))
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param obj: Object on which the search is
+        :param field_name: Name of the field on which the search is
+        :param args: The domain
+        :param context: Context of the call
 
+        :return A list of tuples that allows the system to return the list
+                 of matching field order lines
+        :rtype list
+        """
         if context is None:
             context = {}
 
+        if not args:
+            return []
+
+        # Put procurement_request = True in context to get FO and IR
         context['procurement_request'] = True
+
+        if args[0][1] != '=' or not args[0][2]:
+            raise osv.except_osv(_('Error !'), _('Filter not implemented'))
 
         return [('state', '=', 'draft'), ('sale_order_state', '=', 'validated')]
 
@@ -394,22 +440,59 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             readonly=True,
             multi='line_info',
         ),
-        # TODO: To refactore
-        'display_confirm_button': fields.function(_get_line_values, method=True, type='boolean', string='Display Button', multi='line_info',),
-        # TODO: To refactore
-        'need_sourcing': fields.function(_get_fake, method=True, type='boolean', string='Only for filtering', fnct_search=_search_need_sourcing),
-        # TODO: To refactore
+        'display_confirm_button': fields.function(
+            _get_line_values,
+            method=True,
+            type='boolean',
+            string='Display Button',
+            multi='line_info',
+        ),
+        'need_sourcing': fields.function(
+            _get_fake,
+            method=True,
+            type='boolean',
+            string='Only for filtering',
+            fnct_search=_search_need_sourcing,
+        ),
         # UTP-392: if the FO is loan type, then the procurement method is only Make to Stock allowed
-        'loan_type': fields.function(_get_line_values, method=True, type='boolean', multi='line_info',),
-        # TODO: To refactore
-        'sale_order_in_progress': fields.function(_get_line_values, method=True, type='boolean', multi='line_info'),
+        'loan_type': fields.function(
+            _get_line_values,
+            method=True,
+            type='boolean',
+            multi='line_info',
+        ),
+        'sale_order_in_progress': fields.function(
+            _get_line_values,
+            method=True,
+            type='boolean',
+            string='Order in progress',
+            multi='line_info'),
         # UTP-965 : Select a source stock location for line in make to stock
-        # TODO: To refactore
-        'real_stock': fields.function(_getVirtualStock, method=True, type='float', string='Real Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True, multi='stock_qty'),
-        # TODO: To refactore
-        'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True, multi='stock_qty'),
-        # TODO: To refactore
-        'available_stock': fields.function(_getAvailableStock, method=True, type='float', string='Available Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'real_stock': fields.function(
+            _getVirtualStock,
+            method=True,
+            type='float',
+            string='Real Stock',
+            digits_compute=dp.get_precision('Product UoM'),
+            readonly=True,
+            multi='stock_qty',
+        ),
+        'virtual_stock': fields.function(
+            _getVirtualStock, method=True,
+            type='float',
+            string='Virtual Stock',
+            digits_compute=dp.get_precision('Product UoM'),
+            readonly=True,
+            multi='stock_qty',
+        ),
+        'available_stock': fields.function(
+            _getAvailableStock,
+            method=True,
+            type='float',
+            string='Available Stock',
+            digits_compute=dp.get_precision('Product UoM'),
+            readonly=True,
+        ),
     }
 
     """
@@ -565,11 +648,23 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return False
 
-    # TODO: TO REFACTORE
+    # TODO: Maybe move conditions on some methods
     def _check_line_conditions(self, cr, uid, ids, context=None):
-        '''
-        Check if the line have good values
-        '''
+        """
+        Check if the value of lines are compatible with the other
+        values.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param ids: List of IDs of sale.order.line to check
+        :param context: Context of the call
+
+        :return The error message if any or False
+        :rtype boolean
+        """
+        # Objects
+        product_obj = self.pool.get('product.product')
+
         if not context:
             context = {}
         if context.get('no_check_line', False):
@@ -582,43 +677,90 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if clc:
                 raise osv.except_osv(_('Warning'), clc)
 
-            if line.type == 'make_to_order' and line.po_cft not in ['cft'] and not line.product_id and \
-               line.order_id.procurement_request and line.supplier and line.supplier.partner_type not in ['internal', 'section', 'intermission']:
-                raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product, the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type."""))
+            if line.type == 'make_to_order' and \
+               line.po_cft not in ['cft'] and \
+               not line.product_id and \
+               line.order_id.procurement_request and \
+               line.supplier and \
+               line.supplier.partner_type not in ['internal', 'section', 'intermission']:
+                raise osv.except_osv(
+                    _('Warning'),
+                    _("""For an Internal Request with a procurement method 'On Order' and without product,
+the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type."""),
+                )
 
-            if line.product_id and line.product_id.type in ('consu', 'service', 'service_recep') and line.type == 'make_to_stock':
+            if line.product_id and \
+               line.product_id.type in ('consu', 'service', 'service_recep') and \
+               line.type == 'make_to_stock':
                 product_type = line.product_id.type == 'consu' and _('non stockable') or _('service')
-                raise osv.except_osv(_('Warning'), _("""You cannot choose 'from stock' as method to source a %s product !""") % product_type)
+                raise osv.except_osv(
+                    _('Warning'),
+                    _("""You cannot choose 'from stock' as method to source a %s product !""") % product_type,
+                )
 
-            if line.product_id and line.po_cft == 'rfq' and line.supplier.partner_type in ['internal', 'section', 'intermission']:
-                raise osv.except_osv(_('Warning'), _("""You can't source with 'Request for Quotation' to an internal/inter-section/intermission partner."""))
+            if line.product_id and \
+               line.po_cft == 'rfq' and \
+               line.supplier.partner_type in ['internal', 'section', 'intermission']:
+                raise osv.except_osv(
+                    _('Warning'),
+                    _("""You can't source with 'Request for Quotation' to an internal/inter-section/intermission partner."""),
+                )
 
             if not line.product_id:
                 if line.po_cft == 'cft':
-                    raise osv.except_osv(_('Warning'), _("You can't source with 'Tender' if you don't have product."))
+                    raise osv.except_osv(
+                        _('Warning'),
+                        _("You can't source with 'Tender' if you don't have product."),
+                    )
                 if line.po_cft == 'rfq':
-                    raise osv.except_osv(_('Warning'), _("You can't source with 'Request for Quotation' if you don't have product."))
+                    raise osv.except_osv(
+                        _('Warning'),
+                        _("You can't source with 'Request for Quotation' if you don't have product."),
+                    )
                 if line.type == 'make_to_stock':
-                    raise osv.except_osv(_('Warning'), _("You can't Source 'from stock' if you don't have product."))
+                    raise osv.except_osv(
+                        _('Warning'),
+                        _("You can't Source 'from stock' if you don't have product."),
+                    )
                 if line.supplier and line.supplier.partner_type in ('external', 'esc'):
-                    raise osv.except_osv(_('Warning'), _("You can't Source to an '%s' partner if you don't have product.") % (line.supplier.partner_type == 'external' and 'External' or 'ESC'))
+                    raise osv.except_osv(
+                        _('Warning'),
+                        _("You can't Source to an '%s' partner if you don't have product.") %
+                            (line.supplier.partner_type == 'external' and 'External' or 'ESC'),
+                    )
 
             if line.state not in ('draft', 'cancel') and line.product_id and line.supplier:
                 # Check product constraints (no external supply, no storage...)
-                check_fnct = self.pool.get('product.product')._get_restriction_error
+                check_fnct = product_obj._get_restriction_error
                 self._check_product_constraints(cr, uid, line.type, line.po_cft, line.product_id.id, line.supplier.id, check_fnct, context=context)
 
             if line.order_id and line.order_id.procurement_request and line.type == 'make_to_stock':
                 if line.order_id.location_requestor_id.id == line.location_id.id:
-                    raise osv.except_osv(_('Warning'), _("You cannot choose a source location which is the destination location of the Internal Request"))
+                    raise osv.except_osv(
+                        _('Warning'),
+                        _("You cannot choose a source location which is the destination location of the Internal Request"),
+                    )
 
         return True
 
-    # TODO: TO REFACTORE
     def _check_product_constraints(self, cr, uid, line_type='make_to_order', po_cft='po', product_id=False, partner_id=False, check_fnct=False, *args, **kwargs):
-        '''
-        Check product constraints (no extenal supply, no storage...)
-        '''
+        """
+        Check if the value of lines are compatible with the other
+        values.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param line_type: Procurement type of the line
+        :param po_cft: MTO procurement type of the line
+        :param product_id: ID of the product of the line
+        :param partner_id: ID of the supplier
+        :param check_fnct: The method that will be called to check constraints
+        :param *args: Othen non-keyward arguments
+        :param **kwargs: Other keyword arguments
+
+        :return A tuple with the error message if any and the result of the check
+        :rtype tuple(string, boolean)
+        """
         if not check_fnct:
             check_fnct = self.pool.get('product.product')._get_restriction_error
 
