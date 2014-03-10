@@ -2311,9 +2311,9 @@ class purchase_order_line(osv.osv):
                 sol_to_update[sol.id] += diff_qty
                 if line.has_to_be_resourced:
                     sol_obj.add_resource_line(cr, uid, sol, False, diff_qty, context=context)
-                else:
-                    # UFTP-82: do not delete IR/FO line with a PO line
-                    # not ressourced (PO cancelled only)
+                elif sol.order_id.procurement_request:
+                    # UFTP-82: do not delete IR line with a PO line not ressourced
+                    # (PO cancelled only)
                     sol_not_to_delete_ids.append(sol.id)
         for sol in sol_to_update:
             context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete_ids

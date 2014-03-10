@@ -1417,7 +1417,7 @@ class sale_order_line(osv.osv):
             if not 'update_or_cancel_line_not_delete' in context \
                 or not context['update_or_cancel_line_not_delete']:
                 # UFTP-82:
-                # do not delete cancelled IR/FO line in PO 'Cancel Only'
+                # do not delete cancelled IR line in PO 'Cancel Only'
                 # see purchase_override/purchase.py 
                 # - purchase_order_cancel_wizard.cancel_po()
                 # - purchase_order_line.cancel_sol()
