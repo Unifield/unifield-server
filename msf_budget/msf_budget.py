@@ -275,7 +275,7 @@ class msf_budget(osv.osv):
                             for x in xrange(1, 13, 1):
                                 try:
                                     line_vals.update({'month'+str(x): res[x - 1]})
-                                except IndexError, i:
+                                except IndexError, _:
                                     continue
                 line_obj.write(cr, uid, [budget_line.id], line_vals)
         return True

@@ -294,7 +294,10 @@ class report_budget_actual_2(report_sxw.rml_parse):
         line_vals = self.pool.get('msf.budget.line').read(self.cr, self.uid, ids, fields, context=context)
         if not line_vals:
             return {}, {}
-        res = sorted(line_vals, key=lambda x: (x.get('account_code', ''), x.get('line_type', '')))
+        # Sort first by line_type DESC. Then sort by account_code.
+        #+ This is to have first all budget lines sorted by code, then in each code the normal line then budget lines (with destination axis)
+        res = sorted(line_vals, key=lambda x: x.get('line_type', ''), reverse=True)
+        res = sorted(res, key=lambda x: x.get('account_code', ''))
         return res
 
 SpreadsheetReport('report.budget.criteria.2','msf.budget','addons/msf_budget/report/budget_criteria_xls.mako', parser=report_budget_actual_2)

@@ -35,9 +35,12 @@ class report_pdf_budget_summary(report_sxw.rml_parse):
         result = []
         # Read budget lines to fetch values.
         #+ Use 'commitment' in context to include commitment in actual amount
-        lines = self.pool.get('msf.budget.line').read(self.cr, self.uid, [x.id for x in budget_lines], ['line_type', 'name', 'budget_amount', 'actual_amount', 'balance', 'percentage'], context={'commitment': False})
+        lines = self.pool.get('msf.budget.line').read(self.cr, self.uid, [x.id for x in budget_lines], ['line_type', 'name', 'account_code', 'budget_amount', 'actual_amount', 'balance', 'percentage'], context={'commitment': False})
         if lines:
-            result = sorted(lines, key=lambda x: x.get('name', ''))
+            # Sort first by line_type DESC. Then sort by account_code.
+            #+ This is to have first all budget lines sorted by code, then in each code the normal line then budget lines (with destination axis)
+            result = sorted(lines, key=lambda x: x.get('line_type', ''), reverse=True)
+            result = sorted(result, key=lambda x: x.get('account_code', ''))
         return result
 
 report_sxw.report_sxw('report.msf.pdf.budget.summary', 'msf.budget', 'addons/msf_budget/report/budget_summary.rml', parser=report_pdf_budget_summary, header=False)
