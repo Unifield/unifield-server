@@ -50,7 +50,9 @@ class financing_contract_funding_pool_line(osv.osv):
             quad_rows = quad_obj.browse(cr, uid, quad_ids,context=context)
             quad_cc_ids = []
             for quad in quad_rows:
-                quad_cc_ids.append(quad.cost_center_id.id)
+                cc_id_temp = quad.cost_center_id.id
+                if cc_id_temp not in quad_cc_ids:
+                    quad_cc_ids.append(cc_id_temp)
             
             # get the format instance
             format_obj = self.pool.get('financing.contract.format')
@@ -61,14 +63,12 @@ class financing_contract_funding_pool_line(osv.osv):
                 
             # append the ccs from the fp only if not already there
             cc_ids = list(set(cc_ids).union(quad_cc_ids))
-                
             # replace the associated cc list -NOT WORKING
             format_obj.write(cr, uid, vals['contract_id'],{'cost_center_ids':[(6,0,cc_ids)]}, context=context)
-   
         return result
         
-    #def write(self, cr, uid, ids, vals, context=None):  
-    #    return super(financing_contract_funding_pool_line, self).write(cr, uid, ids, vals, context=context)
+#    def write(self, cr, uid, ids, vals, context=None):  
+#        return super(financing_contract_funding_pool_line, self).write(cr, uid, ids, vals, context=context)
     
     #def unlink(self, cr, uid, ids, context=None):   
     #    return super(financing_contract_funding_pool_line, self).unlink(cr, uid, ids, context=context)
@@ -200,10 +200,12 @@ class financing_contract_contract(osv.osv):
         'instance_id': fields.many2one('msf.instance','Proprietary Instance', required=True), 
         # Define for _inherits
         'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade"),
+        'fp_added_flag': fields.boolean('Flag when new FP is added')
     }
     
     _defaults = {
         'state': 'draft',
+        'fp_added_flag': False,
         'reporting_currency': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
     }
 
@@ -461,7 +463,28 @@ class financing_contract_contract(osv.osv):
             for contract in self.browse(cr, uid, ids, context=context):
                 if contract.donor_id and contract.format_id and vals['donor_id'] != contract.donor_id.id:
                     self.pool.get('financing.contract.format').copy_format_lines(cr, uid, donor.format_id.id, contract.format_id.id, context=context)
-        return super(financing_contract_contract, self).write(cr, uid, ids, vals, context=context)
+                    
+        if 'funding_pool_ids' in vals: # When the FP is added into the contract, then set this flag into the database
+            vals['fp_added_flag'] = True
+
+        # check if the flag has been set TRUE in the previous save
+        fp_added_flag = self.browse(cr, uid, ids[0], context=context).fp_added_flag                            
+        if 'format_id' in vals and fp_added_flag: # if the flag is TRUE, and there is a format
+            format_obj = self.pool.get('financing.contract.format')
+            f_value = format_obj.browse(cr, uid, vals['format_id'], context=context)
+            
+            # if there is some FP in this contract format, then perform the "recovery" of cost center ids, if not just use the one from the form
+            if f_value.funding_pool_ids: 
+                cc_rows = f_value.cost_center_ids # retrieve all the cc stored previously in the DB
+                cc_ids = []
+                for cc in cc_rows:
+                    cc_ids.append(cc.id)
+                vals['cost_center_ids'] = [(6,0,cc_ids)] # this will be used at final value of cc list to this contract
+                    
+        res = super(financing_contract_contract, self).write(cr, uid, ids, vals, context=context)
+        if fp_added_flag: # if the previous save has been recovered thanks to the flag set to True, then reset it back to False 
+            cr.execute('''update financing_contract_contract set fp_added_flag = 'f' where id = %s''' % (ids[0]))
+        return res
 
 financing_contract_contract()
 
