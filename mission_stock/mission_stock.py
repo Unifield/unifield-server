@@ -28,7 +28,8 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import pooler
 import time
 import threading
-import base64                                                                   
+import base64
+import logging
 
 REPLACE_DICT = {'cell': 'Cell',
                 'row': 'Row',
@@ -386,8 +387,7 @@ class stock_mission_report(osv.osv):
                 for r in cr.dictfetchall():
                     data += r[data_name] % (product_amc, reviewed_consumption)
             except Exception, e:
-                import pdb
-                pdb.set_trace()
+                logging.getLogger('Mission stock report').warning("""An error is occured when compute the consumption values for product at mission stock report file generation. Data: \n %s""" % data_name)
 
             data += '\n'
             return data
@@ -650,12 +650,12 @@ class stock_mission_report(osv.osv):
                     s_nv_data  += replace_all(line['s_nv_data'] % (product_amc, reviewed_consumption))
                     s_v_data   += replace_all(line['s_v_data'] % (product_amc, reviewed_consumption))
                 except Exception, e:
-                    import pdb
-                    pdb.set_trace()
+                    logging.getLogger('Mission stock report').warning("""An error is occured when generate the mission stock report file. Data: \n %s""" % line)
 
             # No split - No valuation
             ns_nv_tmpl = SpreadsheetCreator('Template of Mission stock - No split - No valuation', ns_nv_headers, [])
             ns_nv_split = ns_nv_tmpl.get_xml(default_filters=['decode.utf8']).split('</Row>')
+            ns_nv_split[0] = ns_nv_split[0].replace('ss:ExpandedRowCount="1" ', '')
             ns_nv_file = base64.encodestring(ns_nv_split[0] + '</Row>' + ns_nv_data + ns_nv_split[1])
             del ns_nv_tmpl
             del ns_nv_split
@@ -665,6 +665,7 @@ class stock_mission_report(osv.osv):
             # No split, valuation
             ns_v_tmpl = SpreadsheetCreator('Template of Mission stock - No split - No valuation', ns_v_headers, [])
             ns_v_split = ns_v_tmpl.get_xml(default_filters=['decode.utf8']).split('</Row>')
+            ns_v_split[0] = ns_v_split[0].replace('ss:ExpandedRowCount="1" ', '')
             ns_v_file = base64.encodestring(ns_v_split[0] + '</Row>' + ns_v_data + ns_v_split[1])
             del ns_v_tmpl
             del ns_v_split
@@ -674,6 +675,7 @@ class stock_mission_report(osv.osv):
             # Split, no valuation
             s_nv_tmpl = SpreadsheetCreator('Template of Mission stock - No split - No valuation', s_nv_headers, [])
             s_nv_split = s_nv_tmpl.get_xml(default_filters=['decode.utf8']).split('</Row>')
+            s_nv_split[0] = s_nv_split[0].replace('ss:ExpandedRowCount="1" ', '')
             s_nv_file = base64.encodestring(s_nv_split[0] + '</Row>' + s_nv_data + s_nv_split[1])
             del s_nv_tmpl
             del s_nv_split
@@ -683,6 +685,7 @@ class stock_mission_report(osv.osv):
             # Split, valuation
             s_v_tmpl = SpreadsheetCreator('Template of Mission stock - No split - No valuation', s_v_headers, [])
             s_v_split = s_v_tmpl.get_xml(default_filters=['decode.utf8']).split('</Row>')
+            s_v_split[0] = s_v_split[0].replace('ss:ExpandedRowCount="1" ', '')
             s_v_file = base64.encodestring(s_v_split[0] + '</Row>' + s_v_data + s_v_split[1])
             del s_v_tmpl
             del s_v_split
