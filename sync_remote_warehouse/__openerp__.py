@@ -20,6 +20,6 @@
         'views/usb_recovery.xml',
         'views/sync_monitor.xml',
     ],
-    'depends': ['sync_client'],
+    'depends': ['sync_client', 'sync_remote_warehouse_common'],
     'installable': True,
 }
