@@ -21,5 +21,25 @@
             <field name="model">msf.budget</field>
         </record>
 
+        <record id="wizard_budget_criteria_export_view" model="ir.ui.view">
+            <field name="name">Budget vs. Actuals Export</field>
+            <field name="model">wizard.budget.criteria.export</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Budget vs. Actuals Export">
+                    <field name="currency_table_id" domain="[('state','=','valid')]" />
+                    <field name="period_id"/>
+                    <field name="commitment"/>
+                    <field name="breakdown"/>
+                    <field name="granularity"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="No" icon="gtk-cancel"/>
+                        <button name="button_create_budget_2" string="Create report" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
     </data>
 </openerp>

@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2014 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -18,20 +18,13 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from osv import osv, fields
-import time
+from osv import osv
+from osv import fields
 
-class wizard_budget_criteria_export(osv.osv_memory):
-    _name = "wizard.budget.criteria.export"
+class wizard_budget_summary_export(osv.osv_memory):
+    _name = "wizard.budget.summary.export"
 
     _columns = {
-        'currency_table_id': fields.many2one('res.currency.table', 'Currency table'),
-        'period_id': fields.many2one('account.period', 'Year-to-date'),
-        'commitment': fields.boolean('Commitments'),
-        'breakdown': fields.selection([
-            ('month','By month'),
-            ('year','Total figure')
-        ], 'Breakdown', select=1, required=True),
         'granularity': fields.selection([
             ('all','By expense and destination'),
             ('expense','By expense'),
@@ -40,19 +33,12 @@ class wizard_budget_criteria_export(osv.osv_memory):
     }
 
     _defaults = {
-        'commitment': lambda *a: True,
-        'breakdown': lambda *a: 'year',
         'granularity': lambda *a: 'all',
-        'period_id': lambda *a: False,
     }
 
-    def button_create_budget_2(self, cr, uid, ids, context=None):
+    def button_confirm(self, cr, uid, ids, context=None):
         """
-        Take all criteria from wizard to the report.
-        Pay attention to have these criteria in context to display right lines:
-          - period_id
-          - currency_table_id
-          - granularity
+        Launch budget summary generation using given granularity.
         """
         wizard = self.browse(cr, uid, ids[0], context=context)
         data = {}
@@ -61,20 +47,12 @@ class wizard_budget_criteria_export(osv.osv_memory):
         if 'active_id' in context:
             # add parameters
             data['form'] = {}
-            data['form'].update({'commitment': wizard.commitment})
-            data['form'].update({'breakdown': wizard.breakdown})
             data['form'].update({'granularity': wizard.granularity})
-            budget_code = self.pool.get('msf.budget').read(cr, uid, context['active_id'], ['code'])
-            data['target_filename'] = 'Budget vs. Actual_%s_%s' % (budget_code['code'] or '', time.strftime('%Y%m%d'))
-            if wizard.currency_table_id:
-                data['form'].update({'currency_table_id': wizard.currency_table_id.id})
-            if wizard.period_id:
-                data['form'].update({'period_id': wizard.period_id.id})
         if not 'context' in data:
             data['context']= {}
         data['context'].update(data['form'])
 
-        return {'type': 'ir.actions.report.xml', 'report_name': 'budget.criteria.2', 'datas': data}
+        return {'type': 'ir.actions.report.xml', 'report_name': 'msf.pdf.budget.summary', 'datas': data, 'context': context}
 
-wizard_budget_criteria_export()
+wizard_budget_summary_export()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
