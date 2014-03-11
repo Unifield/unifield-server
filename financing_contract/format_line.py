@@ -360,11 +360,23 @@ class financing_contract_format_line(osv.osv):
     }
 
     _order = 'code asc'
+    
+    def _save_quad_ids(self, cr, uid, ids, context=None):
+        # save the quad ids to a string to avoid sync issues
+        
+        format_line_obj = self.browse(self, cr, uid, ids, context)
+        print 'sfc act_ids:', format_line_obj.account_destination_ids
+        print 'sfc quad_ids:', format_line_obj.account_quadruplet_ids
+
+        
+        
 
     def create(self, cr, uid, vals, context=None):
         print 'sfc format_line#create vals:', vals
         if not context:
             context = {}
+            
+        self._save_quad_ids(cr, uid, ids, context)
         # if the account is set as view, remove budget and account values
         if 'line_type' in vals and vals['line_type'] == 'view':
             vals['allocated_amount'] = 0.0
@@ -385,6 +397,8 @@ class financing_contract_format_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        self._save_quad_ids(cr, uid, ids, context)
         # if the account is set as view, remove budget and account values
         if 'line_type' in vals and vals['line_type'] == 'view':
             vals['allocated_amount'] = 0.0
