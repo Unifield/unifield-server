@@ -2303,6 +2303,7 @@ class purchase_order_line(osv.osv):
 
         sol_to_update = {}
         sol_not_to_delete_ids = []
+        ir_to_potentialy_cancel_ids = []
         for line in self.browse(cr, uid, ids, context=context):
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
             for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
@@ -2313,12 +2314,25 @@ class purchase_order_line(osv.osv):
                     sol_obj.add_resource_line(cr, uid, sol, False, diff_qty, context=context)
                 elif sol.order_id.procurement_request:
                     # UFTP-82: do not delete IR line with a PO line not ressourced
-                    # (PO cancelled only)
+                    # (its PO is 'cancelled only')
                     sol_not_to_delete_ids.append(sol.id)
+                    if sol.order_id.id not in ir_to_potentialy_cancel_ids:
+                        ir_to_potentialy_cancel_ids.append(sol.order_id.id)
         for sol in sol_to_update:
             context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete_ids
             sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
         del context['update_or_cancel_line_not_delete']
+        
+        # UFTP-82: IR and its PO is 'cancelled only'
+        # cancel all relative IRs but check before if IR's lines are all cancelled
+        ir_to_cancel_ids = []
+        for ir in self.pool.get('sale.order').browse(cr, uid, ir_to_potentialy_cancel_ids, context=context):
+            if all(map(lambda irl: irl.state == 'cancel', ir.order_line)):
+                ir_to_cancel_ids.append(ir.id)
+        if ir_to_cancel_ids:
+            self.pool.get('sale.order').write(cr, uid, ir_to_cancel_ids, 
+                {'state': 'cancel'}, context=context)
+        
         return True
 
     def fake_unlink(self, cr, uid, ids, context=None):

@@ -160,6 +160,7 @@ class procurement_request(osv.osv):
             multi='by_type', help="The amount of lines sourced from stock"),
         'state': fields.selection(SALE_ORDER_STATE_SELECTION, 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
         'name': fields.char('Order Reference', size=64, required=True, readonly=True, select=True),
+        'is_ir_from_po_cancel_only': fields.boolean('Is IR from a PO cancelled only', invisible=True),  # UFTP-82: flagging we are in an IR and its PO is 'cancelled only'
     }
     
     _defaults = {
@@ -167,6 +168,7 @@ class procurement_request(osv.osv):
         'procurement_request': lambda obj, cr, uid, context: context.get('procurement_request', False),
         'state': 'draft',
         'warehouse_id': lambda obj, cr, uid, context: len(obj.pool.get('stock.warehouse').search(cr, uid, [])) and obj.pool.get('stock.warehouse').search(cr, uid, [])[0],
+        'is_ir_from_po_cancel_only': False,  # UFTP-82
     }
 
     def create(self, cr, uid, vals, context=None):

@@ -1422,7 +1422,9 @@ class sale_order_line(osv.osv):
                 # - purchase_order_cancel_wizard.cancel_po()
                 # - purchase_order_line.cancel_sol()
                 self.unlink(cr, uid, [line.id], context=context)
-
+            elif line.order_id.procurement_request:
+                # UFTP-82: flagging SO is an IR and its PO is 'cancelled only'
+                self.pool.get('sale.order').write(cr, uid, [line.order_id.id], {'is_ir_from_po_cancel_only': True}, context=context)
             if proc:
                 proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
                 proc_obj.action_cancel(cr, uid, [proc])
