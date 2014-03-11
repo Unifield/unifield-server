@@ -639,9 +639,9 @@ class sale_order(osv.osv):
                             netsvc.LocalService("workflow").trg_change_subflow(uid, 'purchase.order', po_ids, 'sale.order', [so.id], split_id, cr)
                 # copy the line to the split Fo - the state is forced to 'draft' by default method in original add-ons
                 # -> the line state is modified to sourced when the corresponding procurement is created in action_ship_proc_create
-                new_context = dict(context, keepDateAndDistrib=True, keepLineNumber=True, no_store_function=True)
+                new_context = dict(context, keepDateAndDistrib=True, keepLineNumber=True, no_store_function=['sale.order.line'])
                 new_line_id = line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
-                                                 'original_line_id': line.id}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True, no_store_function=['sale.order.line']))
+                                                 'original_line_id': line.id}, context=new_context)
                 created_line.append(new_line_id)
 
             line_obj._call_store_function(cr, uid, created_line, keys=None, result=None, bypass=False, context=context)
