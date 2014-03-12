@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="split_move_processor_form_view" model="ir.ui.view">
+            <field name="name">split.move.processor.form.view</field>
+            <field name="model">split.move.processor</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Split quantity">
+                <separator string="Quantity for the new move" colspan="4"/>
+                <field name="uom_id" invisible="1" />
+                <field name="quantity" on_change="change_uom(uom_id, quantity)" />
+                <button name="cancel" string="_Cancel"
+                    type="object" icon='gtk-cancel' />
+                <button name="split" string="Ok"
+                    type="object" icon="gtk-ok" />
+            </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

@@ -103,16 +103,19 @@ class SpreadsheetReport(WebKitParser):
         del self.parser_instance
 
         if context.get('zipit'):
-            null, tmpzipname = tempfile.mkstemp()
+            null1, tmpzipname = tempfile.mkstemp()
             zf = zipfile.ZipFile(tmpzipname, 'w')
             zf.write(tmpname, 'export_result.xls', zipfile.ZIP_DEFLATED)
             zf.close()
             out = file(tmpzipname, 'rb').read()
+            os.close(null1)
+            os.close(null)
             os.unlink(tmpzipname)
             os.unlink(tmpname)
             return (out, 'zip')
 
         out = file(tmpname, 'rb').read()
+        os.close(null)
         os.unlink(tmpname)
         return (out, 'xls')
 

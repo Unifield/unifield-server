@@ -21,6 +21,7 @@
 
 from osv import osv
 import datetime
+from tools.translate import _
 
 class msf_budget_tools(osv.osv):
     _name = "msf.budget.tools"

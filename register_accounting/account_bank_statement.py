@@ -2124,7 +2124,8 @@ class account_bank_statement_line(osv.osv):
                 raise osv.except_osv(_('Error'), _("The staff field is not filled in. Please complete the third parties field with an employee/staff."))
         # then display the wizard with an active_id = cash_register_id, and giving in the context a number of the bank statement line
         st_obj = self.pool.get('account.bank.statement.line')
-        st = st_obj.browse(cr, uid, ids[0]).statement_id
+        stl = st_obj.browse(cr, uid, ids[0])
+        st = stl.statement_id
         if 'open_advance' in context:
             st = self.pool.get('account.bank.statement').browse(cr, uid, context.get('open_advance'), context=context)
         if st and st.state != 'open':
@@ -2141,6 +2142,8 @@ class account_bank_statement_line(osv.osv):
             'statement_id': statement_id,
             'amount': amount
         })
+        if stl.cash_register_op_advance_po_id:
+            context['cash_register_op_advance_po_id'] = stl.cash_register_op_advance_po_id.id
         wiz_id = wiz_obj.create(cr, uid, {'returned_amount': 0.0, 'initial_amount': abs(amount), 'advance_st_line_id': ids[0], \
             'currency_id': st_line.statement_id.currency.id}, context=context)
         if statement_id:

@@ -328,17 +328,15 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         move_obj = self.pool.get('stock.move')
-        pick_obj = self.pool.get('stock.picking')
-        for pick in pick_obj.browse(cr, uid, ids, context=context):
-            move_lines = pick.move_lines
-            if len(move_lines) >= 1:
-                for move in move_lines:
-                    move_ids = move.id
-                    for move in move_obj.browse(cr, uid, [move_ids], context=context):
-                        if move.move_cross_docking_ok:
-                            vals.update({'cross_docking_ok': True, })
-                        elif not move.move_cross_docking_ok:
-                            vals.update({'cross_docking_ok': False, })
+
+        cd_ids = move_obj.search(cr, uid, [('picking_id', 'in', ids), ('move_cross_docking_ok', '=', True)], count=True)
+        st_ids = move_obj.search(cr, uid, [('picking_id', 'in', ids), ('move_cross_docking_ok', '=', False)], count=True)
+
+        if cd_ids > st_ids:
+            vals['cross_docking_ok'] = True
+        else:
+            vals['cross_docking_ok'] = False
+
         return super(stock_picking, self).write(cr, uid, ids, vals, context=context)
 
     def button_cross_docking_all(self, cr, uid, ids, context=None):

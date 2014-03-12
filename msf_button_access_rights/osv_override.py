@@ -29,17 +29,16 @@ import string
 import logging
 import traceback
 
-super_fields_view_get = orm.orm.fields_view_get
+super_view_look_dom_arch = orm.orm_template._orm_template__view_look_dom_arch
 
-def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+def view_look_dom_arch(self, cr, uid, node, view_id, context=None):
     """
     Dynamically change button groups based on button access rules
     """
 
-    context = context or {}
-    fields_view = super_fields_view_get(self, cr, uid, view_id, view_type, context, toolbar, submenu)
-    view_id = view_id or fields_view.get('view_id', False)
-    
+    if context is None:
+        context = {}
+
     if uid != 1:
         
         rules_pool = self.pool.get('msf_button_access_rights.button_access_rule')
@@ -48,7 +47,7 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
         if view_id:
             search_ids = rules_pool._get_family_ids(cr, view_id)
         else:
-            return fields_view
+            return super_view_look_dom_arch(self, cr, uid, node, view_id, context)
         
         rules_search = rules_pool.search(cr, 1, [('view_id', 'in', search_ids)])
 
@@ -57,13 +56,10 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
             rules = rules_pool.browse(cr, 1, rules_search, context=context)
             
             # parse view and get all buttons with a name, a type that is not 'special', no position attribute, and may or may not have an invisible attribute (But not set to '1')
-            view_xml = etree.fromstring(fields_view['arch'])
-            buttons = view_xml.xpath("//button[ @name and @type != 'special' and not (@position) and @invisible != '1' or not (@invisible) ]")
-            
+            buttons = node.xpath("//button[ @name and @type != 'special' and not (@position) and @invisible != '1' or not (@invisible) ]")
             for button in buttons:
                 
                 button_name = button.attrib.get('name', '')
-                
                 # check if rule gives user access to button
                 rules_for_button = [rule for rule in rules if getattr(rule, 'name', False) == button_name]
                 if rules_for_button:
@@ -91,18 +87,10 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                             del button.attrib['invisible']
                     else:
                         button.attrib['invisible'] = '1'
-                            
-            fields_view['arch'] = etree.tostring(view_xml)
-            
-            return fields_view
 
-        else:
-            return fields_view
+    return super_view_look_dom_arch(self, cr, uid, node, view_id, context)
 
-    else:
-        return fields_view
-
-orm.orm.fields_view_get = fields_view_get
+orm.orm_template._orm_template__view_look_dom_arch = view_look_dom_arch
 
 module_whitelist = [
     'ir.module.module',

@@ -15109,7 +15109,7 @@ msgstr "Document Source"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:652
 #, python-format
-msgid "An error occured on the automatic reconciliation in advance return."
+msgid "An error occurred on the automatic reconciliation in advance return."
 msgstr "Une erreur est survenue lors du lettrage automatique du retour d'avance. "
 
 #. module: analytic_distribution
@@ -21687,7 +21687,7 @@ msgstr "Changer"
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:580
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:643
 #, python-format
-msgid "An error has occured: The journal entries cannot be posted."
+msgid "An error has occurred: The journal entries cannot be posted."
 msgstr "Une erreur est survenue: Les écritures de journal ne peuvent être encodées"
 
 #. module: product_nomenclature
@@ -46908,7 +46908,7 @@ msgstr "31 J(PA)"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:593
 #, python-format
-msgid "An error occured on invoice reconciliation: Invoice line not found."
+msgid "An error occurred on invoice reconciliation: Invoice line not found."
 msgstr "Une erreur est survenue lors du lettrage de la facture: Ligne de facture pas trouvée."
 
 #. module: account_voucher
