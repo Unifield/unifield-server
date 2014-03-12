@@ -144,6 +144,13 @@ class account_bank_statement_line(osv.osv):
 
 account_bank_statement_line()
 
+class account_cashbox_line(osv.osv):
+    _name = 'account.cashbox.line'
+    _inherit = 'account.cashbox.line'
+    _trace = True
+
+account_cashbox_line()
+
 class account_analytic_account(osv.osv):
     _name = 'account.analytic.account'
     _inherit = 'account.analytic.account'
