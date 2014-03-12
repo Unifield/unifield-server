@@ -1,0 +1,70 @@
+-
+    I create 4 partners
+-
+    I create a partner as localmarket 
+-
+  !record {model: res.partner, id: localmarket}:
+    name: Local Market
+    supplier: True
+    partner_type: external
+-
+    I create an address for localmarket
+-
+  !record {model: res.partner.address, id: localmarket_addr}:
+    name: Local Market
+    partner_id: localmarket
+-
+    I create supplier S1
+-
+  !record {model: res.partner, id: supplier1}:
+    name: S1
+    supplier: True
+    partner_type: internal
+-
+    I create the address for S1
+-
+  !record {model: res.partner.address, id: address1}:
+    name: S1
+    partner_id: supplier1
+-
+    I create the supplier S2
+-
+  !record {model: res.partner, id: supplier2}:
+    name: S2
+    supplier: True
+    partner_type: external
+-
+    I create the address for S2
+-
+  !record {model: res.partner.address, id: address2}:
+    name: S2
+    partner_id: supplier2
+-
+    I create the supplier S3
+-
+  !record {model: res.partner, id: supplier3}:
+    name: S3
+    supplier: True
+    partner_type: external
+-
+    I create the address for S3
+-
+  !record {model: res.partner.address, id: address3}:
+    name: S3
+    partner_id: supplier3
+-
+    Create the partner
+-
+  !record {model: res.partner, id: customer1}:
+    credit_limit: 0.0
+    debit_limit: 0.0
+    name: Berthe
+    supplier: true
+-
+    I create the corresponding addresses
+-
+  !record {model: res.partner.address, id: customer_address_1}:
+    country_id: base.fr
+    partner_id: customer1
+    street: street
+    type: default

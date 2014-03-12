@@ -23,7 +23,7 @@
 from osv import osv
 from osv import fields
 
-class unifield_test(osv.osv):
+class oerp_config(osv.osv):
     _name = "unifield.test"
     _description = "List of Unifield tests"
 
@@ -40,5 +40,5 @@ class unifield_test(osv.osv):
         ('unifield_test_name_uniq', 'unique (name)', 'You cannot have 2 unifield test with the same name!')
     ]
 
-unifield_test()
+oerp_config()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
