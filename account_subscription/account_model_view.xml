@@ -13,7 +13,7 @@
 	                   <group><html>
                             <p id="para_has_any_bad_ad_line_exp_in"
                             style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
-                            There is lines with expense or income accounts with invalid analytic distribution or using header AD that is not defined or not compatible. Check red lines.
+                            Please review analytic allocation for lines displayed in red.
                             </p>
                         <script language="javascript">
                             var has_any_bad_ad_line = $('#has_any_bad_ad_line_exp_in').val();
