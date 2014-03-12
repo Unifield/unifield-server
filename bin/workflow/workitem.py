@@ -24,6 +24,7 @@
 # cr.execute('delete from wkf_triggers where model=%s and res_id=%s', (res_type,res_id))
 #
 
+import pooler
 import netsvc
 import instance
 
@@ -171,7 +172,13 @@ def _split_test(cr, workitem, split_mode, ident, signal=None, stack=None):
             if not cr.fetchone()[0]:
                 transitions.append((transition['id'], workitem['inst_id']))
     if test and len(transitions):
-        cr.executemany('insert into wkf_witm_trans (trans_id,inst_id) values (%s,%s)', transitions)
+        witm_trans_obj = pooler.get_pool(cr.dbname).get('workflow.witm_trans')
+        if witm_trans_obj:
+            for transition in transitions:
+                witm_trans_obj.create(cr, 1, {'trans_id': transition[0], 'inst_id': transition[1]})
+        else:
+            cr.executemany('insert into wkf_witm_trans (trans_id,inst_id) values (%s,%s)', transitions)
+
         cr.execute('delete from wkf_workitem where id=%s', (workitem['id'],))
         for t in transitions:
             _join_test(cr, t[0], t[1], ident, stack)
@@ -183,7 +190,12 @@ def _join_test(cr, trans_id, inst_id, ident, stack):
     activity = cr.dictfetchone()
     if activity['join_mode']=='XOR':
         create(cr,[activity], inst_id, ident, stack)
-        cr.execute('delete from wkf_witm_trans where inst_id=%s and trans_id=%s', (inst_id,trans_id))
+        witm_trans_obj = pooler.get_pool(cr.dbname).get('workflow.witm_trans')
+        if witm_trans_obj:
+            witm_trans_to_delete = witm_trans_obj.search(cr, 1, [('inst_id', '=', inst_id), ('trans_id', '=', trans_id)])
+            witm_trans_obj.unlink(cr, 1, witm_trans_to_delete)
+        else:
+            cr.execute('delete from wkf_witm_trans where inst_id=%s and trans_id=%s', (inst_id,trans_id))
     else:
         cr.execute('select id from wkf_transition where act_to=%s', (activity['id'],))
         trans_ids = cr.fetchall()
@@ -196,7 +208,12 @@ def _join_test(cr, trans_id, inst_id, ident, stack):
                 break
         if ok:
             for (id,) in trans_ids:
-                cr.execute('delete from wkf_witm_trans where trans_id=%s and inst_id=%s', (id,inst_id))
+                witm_trans_obj = pooler.get_pool(cr.dbname).get('workflow.witm_trans')
+                if witm_trans_obj:
+                    witm_trans_to_delete = witm_trans_obj.search(cr, 1, [('inst_id', '=', inst_id), ('trans_id', '=', id)])
+                    witm_trans_obj.unlink(cr, 1, witm_trans_to_delete)
+                else:
+                    cr.execute('delete from wkf_witm_trans where trans_id=%s and inst_id=%s', (id,inst_id))
             create(cr, [activity], inst_id, ident, stack)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
