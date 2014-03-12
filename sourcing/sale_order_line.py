@@ -82,7 +82,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         Returns False for each ID.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param ids: List of ID of field order lines to re-compute
         :param field_name: A field or a list of fields to be computed
         :param args: Some other arguments
@@ -103,7 +103,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         Compute the state of the field order.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param line: browse_record of the sale.order
         :param context: Context of the call
 
@@ -128,7 +128,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         to values already on line.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param line: browse_record of the sale.order.line
         :param context: Context of the call
 
@@ -159,7 +159,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         Get some values from the field order line.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param ids: List of ID of field order lines to re-compute
         :param field_name: A field or a list of fields to be computed
         :param args: Some other arguments
@@ -198,7 +198,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         Get the available stock for each line
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param ids: List of ID of field order lines to re-compute
         :param field_name: A field or a list of fields to be computed
         :param args: Some other arguments
@@ -238,7 +238,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         Get the virtual stock for each line
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param ids: List of ID of field order lines to re-compute
         :param field_name: A field or a list of fields to be computed
         :param args: Some other arguments
@@ -307,7 +307,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         given in args.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param obj: Object on which the search is
         :param field_name: Name of the field on which the search is
         :param args: The domain
@@ -336,7 +336,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         domain given in args.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param obj: Object on which the search is
         :param field_name: Name of the field on which the search is
         :param args: The domain
@@ -504,7 +504,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         should be 'Make to Order'.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param ids: List of ID of the sale.order.line to check
         :param context: Context of the call
 
@@ -537,7 +537,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         Set default values (location_id) for sale_order_line
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param fields: Fields to set
         :param context: Context of the call
 
@@ -564,7 +564,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         Update some values according to Field order values
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param vals: A dictionary with values of the new line to create
         :param context: Context of the call
 
@@ -626,7 +626,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         of the order
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param line: browse_record of the sale.order.line
         :param context: Context of the call
 
@@ -655,7 +655,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         values.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param ids: List of IDs of sale.order.line to check
         :param context: Context of the call
 
@@ -750,7 +750,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         values.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param line_type: Procurement type of the line
         :param po_cft: MTO procurement type of the line
         :param product_id: ID of the product of the line
@@ -810,7 +810,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         and order values.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param ids: List of IDs of sale.order.line to write
         :param vals: Dictionary with the new values
         :param context: Context of the call
@@ -896,7 +896,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         confirmation of the FO/IR in background.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param ids: List of IDs of sale.order.line to check
         :param context: Context of the call
 
@@ -993,7 +993,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         Confirm the order specified in the parameter.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param order_id: ID of the order to confirm
         :param state_to_use: Determine if the order is an IR or a FO
         :param context: Context of the call
@@ -1040,7 +1040,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         Set the line as draft.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param ids: List of IDs of sale.order.line to unconfirm
         :param context: Context of the call
 
@@ -1064,7 +1064,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         quantity values for the line.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param ids: List of IDs of sale.order.line on which the
                      modifications will be done.
         :param location_id: ID of the current or new value for the stock location of the line
@@ -1131,7 +1131,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         best supplier for the new product.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param ids: List of IDs of sale.order.line on which the
                      modifications will be done.
         :param pricelist: ID of the pricelist of the FO. Used to compute the good price.
@@ -1183,7 +1183,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         values are compatible with the other values of the line and of the order.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param line_id: ID of the line to check
         :param po_cft: Value of the procurement method
         :param order_id: ID of the order of the line
@@ -1246,7 +1246,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         values are compatible with the other values of the line and of the order.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param line_id: ID of the line to check
         :param l_type: Value of the procurement method
         :param location_id: ID of the stock location of the line
@@ -1269,7 +1269,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         message = {}
 
         if line_id:
-            line = self.browse(cr, uid, line_id, context=context)[0]
+            line = self.browse(cr, uid, line_id, context=context)
             if line.product_id.type in ('consu', 'service', 'service_recep') and l_type == 'make_to_stock':
                 product_type = line.product_id.type == 'consu' and 'non stockable' or 'service'
                 value['l_type'] = 'make_to_order'
@@ -1316,7 +1316,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         with the other values of the line and of the order.
 
         :param cr: Cursor to the database
-        :param uid: ID of the user that launches the method
+        :param uid: ID of the user that runs the method
         :param line_id: ID of the line to check
         :param supplier: ID of the current or new choosen supplier
         :param context: Context of the change

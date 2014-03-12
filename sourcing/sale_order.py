@@ -44,43 +44,6 @@ class sale_order(osv.osv):
     }
 
     # TODO: TO REFACTORE
-    def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_ship_create method from sale>sale.py
-
-        - allow to modify the data for procurement order creation
-        '''
-        result = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
-        line = kwargs['line']
-
-        # new field representing selected partner from sourcing tool
-        result['supplier'] = line.supplier and line.supplier.id or False
-        if line.po_cft:
-            result.update({'po_cft': line.po_cft})
-        # uf-583 - the location defined for the procurementis input instead of stock if the procurement is on order
-        # if from stock, the procurement search from products in the default location: Stock
-        order = kwargs['order']
-        if line.type == 'make_to_order':
-            result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
-
-        return result
-
-    # TODO: TO REFACTORE
-    def _hook_procurement_create_line_condition(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_ship_create method from sale>sale.py
-
-        - allow to customize the execution condition
-        '''
-        line = kwargs['line']
-        result = super(sale_order, self)._hook_procurement_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
-
-        # if make_to_stock and procurement_request, no procurement is created
-        return result and not(line.type == 'make_to_stock' and line.order_id.procurement_request)
-
-    # TODO: TO REFACTORE
     def do_order_confirm_method(self, cr, uid, ids, context=None):
         '''
         trigger the workflow
