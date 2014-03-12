@@ -2273,7 +2273,7 @@ class account_subscription(osv.osv):
                 # expense/income accounts with invalid AD
                 raise osv.except_osv(
                     _('Warning !'),
-                    _("Compute cancelled. There is lines with expense or income accounts with invalid analytic distribution or using header AD that is not defined or not compatible.")
+                    _("Compute cancelled. Please review analytic allocation for lines with expense or income accounts.")
                 )
             ds = sub.date_start
             for i in range(sub.period_total):
