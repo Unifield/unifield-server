@@ -138,6 +138,66 @@
             </form>
             </field>
         </record>
+                
+    <!-- UFTP-103 Recurring entries AJ with colorize in red of invalid Analytic Distri -->
+        <record model="ir.ui.view" id="account_move_line_recurring_entries_to_validate">
+            <field name="name">account.move.line.recurring_entries_to_validate</field>
+            <field name="model">account.move.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Recurring Entries To Validate" min_rows="100" hide_new_button="1" hide_delete_button="1"
+                colors="red:analytic_distribution_state not in ('valid')">
+                    <field name="instance_id"/>
+                    <field name="is_corrigible" invisible="1"/>
+                    <field name="have_an_historic" invisible="1"/>
+                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard" 
+                        attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
+                    <button name="button_open_corrections" type="object" string="Open corrections history" 
+                        attrs="{'invisible': [('have_an_historic', '=', False)]}" icon="terp-mail-"/>
+                    <field name="journal_id"/>
+                    <field name="move_id"/>
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="document_date"/>
+                    <field name="date"/>
+                    <field name="period_id" domain="[('state','=','draft')]"/>
+                    <field name="account_id"/>
+                    <field name="account_type" invisible="1"/>
+                    <field name="move_state" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="employee_id" invisible="1"/>
+                    <field name="transfer_journal_id" invisible="1"/>
+                    <field name="partner_txt"/>
+                    <field name="partner_type" invisible="1"/>
+                        <!-- allow AD editing -->
+                        <field name="display_analytic_button" invisible="1"/>
+                        <field name="analytic_distribution_state"/>
+                        <field name="analytic_distribution_id" invisible="1"/>
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
+                            context="context" attrs="{'readonly': [('from_import_cheque_id', '!=', False)], 'invisible': [('display_analytic_button', '=', False)]}"/>
+                    <field name="debit_currency"/>
+                    <field name="credit_currency"/>
+                    <field name="currency_id"/>
+                    <field name="debit" sum="Total Functional Debit"/>
+                    <field name="credit" sum="Total Functional Credit"/>
+                    <field name="functional_currency_id"/>
+                    <field name="output_amount_debit"/>
+                    <field name="output_amount_credit"/>
+                    <field name="output_currency"/>
+                    <field name="reconcile_txt" />
+                    <field name="state"/>
+                    <field name="statement_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <act_window
+            id="act_account_subscription_to_account_move_line_open"
+            name="Recurring Entries To Validate"
+            domain="[('move_id.state','=','draft'), ('is_recurring', '=', True)]"
+            res_model="account.move.line"
+            src_model="account.subscription"
+            view_id="account_move_line_recurring_entries_to_validate"/>
 
     </data>
 </openerp>
