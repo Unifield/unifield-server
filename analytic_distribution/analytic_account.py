@@ -210,6 +210,7 @@ class analytic_account(osv.osv):
             SELECT parent_id
             FROM account_analytic_account
             WHERE id IN %s
+            AND parent_id IS NOT NULL
             GROUP BY parent_id"""
         cr.execute(sql, (tuple(ids),))
         if not cr.rowcount:

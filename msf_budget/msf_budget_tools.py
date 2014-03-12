@@ -205,7 +205,7 @@ class msf_budget_tools(osv.osv):
                     budget_line_obj.create(cr, uid, budget_line_vals, context=context)
         # Fill in parent lines (only if sequence is given which means that we have probably some values in destination lines)
         if sequence:
-            vals_headers = ['month1', 'month2', 'month3', 'month4', 'month5', 'month6', 'month6', 'month7', 'month8', 'month9', 'month10', 'month11', 'month12']
+            vals_headers = ['month1', 'month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9', 'month10', 'month11', 'month12']
             for budget_line_id in to_proceed:
                 # Search child_ids
                 child_ids = budget_line_obj.search(cr, uid, [('parent_id', 'child_of', budget_line_id)])
@@ -214,7 +214,7 @@ class msf_budget_tools(osv.osv):
                 tmp_res = cr.fetchall()
                 # If result, write on the given budget line the result
                 if tmp_res:
-                    budget_line_vals = dict(zip(vals_headers, [x[0] for x in tmp_res]))
+                    budget_line_vals = dict(zip(vals_headers, tmp_res[0]))
                     budget_line_obj.write(cr, uid, budget_line_id, budget_line_vals, context=context)
         return True
 

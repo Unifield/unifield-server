@@ -818,6 +818,47 @@ class stock_picking(osv.osv):
         if sp.partner_id.id == company_partner_id.id:
             res = False
         return res
+    
+    def _create_invoice(self, cr, uid, stock_picking):
+        """
+        Creates an invoice for the specified stock picking
+        @param stock_picking browse_record: The stock picking for which to create an invoice
+        """
+        picking_type = False
+        invoice_type = self._get_invoice_type(stock_picking)
+        
+        # Check if no invoice needed
+        if not self.is_invoice_needed(cr, uid, stock_picking):
+            return
+        
+        # we do not create invoice for procurement_request (Internal Request)
+        if not stock_picking.sale_id.procurement_request and stock_picking.subtype == 'standard':
+            if stock_picking.type == 'in' or stock_picking.type == 'internal':
+                if invoice_type == 'out_refund':
+                    picking_type = 'sale_refund'
+                else:
+                    picking_type = 'purchase'
+            elif stock_picking.type == 'out':
+                if invoice_type == 'in_refund':
+                    picking_type = 'purchase_refund'
+                else:
+                    picking_type = 'sale'
+                    
+            # Set journal type based on picking type
+            journal_type = picking_type
+            
+            # Disturb journal for invoice only on intermission partner type
+            if stock_picking.partner_id.partner_type == 'intermission':
+                journal_type = 'intermission'
+            
+            # Find appropriate journal
+            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type),
+                                                                            ('is_current_instance', '=', True)])
+            if not journal_ids:
+                raise osv.except_osv(_('Warning'), _('No journal of type %s found when trying to create invoice for picking %s!') % (journal_type, stock_picking.name))
+            
+            # Create invoice
+            self.action_invoice_create(cr, uid, [stock_picking.id], journal_ids[0], False, invoice_type, {})
 
     def action_done(self, cr, uid, ids, context=None):
         """
@@ -828,35 +869,8 @@ class stock_picking(osv.osv):
             if isinstance(ids, (int, long)):
                 ids = [ids]
             for sp in self.browse(cr, uid, ids):
-                sp_type = False
-                inv_type = self._get_invoice_type(sp)
-                # Check if no invoice needed
-                is_invoice_needed = self.is_invoice_needed(cr, uid, sp)
-                if not is_invoice_needed:
-                    continue
-                # we do not create invoice for procurement_request (Internal Request)
-                if not sp.sale_id.procurement_request and sp.subtype == 'standard':
-                    if sp.type == 'in' or sp.type == 'internal':
-                        if inv_type == 'out_refund':
-                            sp_type = 'sale_refund'
-                        else:
-                            sp_type = 'purchase'
-                    elif sp.type == 'out':
-                        if inv_type == 'in_refund':
-                            sp_type = 'purchase_refund'
-                        else:
-                            sp_type = 'sale'
-                    # Journal type
-                    journal_type = sp_type
-                    # Disturb journal for invoice only on intermission partner type
-                    if sp.partner_id.partner_type == 'intermission':
-                        journal_type = 'intermission'
-                    journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type),
-                                                                                    ('is_current_instance', '=', True)])
-                    if not journal_ids:
-                        raise osv.except_osv(_('Warning'), _('No %s journal found!') % (journal_type,))
-                    # Create invoice
-                    self.action_invoice_create(cr, uid, [sp.id], journal_ids[0], False, inv_type, {})
+                self._create_invoice(cr, uid, sp)
+                
         return res
 
     def _get_price_unit_invoice(self, cr, uid, move_line, type):
