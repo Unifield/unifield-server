@@ -393,6 +393,7 @@ class stock_move_processor(osv.osv):
             readonly=True,
             select=True,
             help="Move to process",
+            ondelete='cascade',
         ),
         'product_id': fields.many2one(
             'product.product',
