@@ -154,6 +154,7 @@
                                       'field_ids': [(6, 0, fields_ids)],
                                       'parent_field_id': parent_id,
                                       'name_get_field_id': name_id,
+                                      'domain_filter': "[('ending_id', '!=',  False)]",
                                      }, context=context)
 
       # Subscribe to the rule
