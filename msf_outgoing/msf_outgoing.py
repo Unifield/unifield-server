@@ -760,6 +760,9 @@ class shipment(osv.osv):
             for family in wizard.family_ids:
                 draft_packing = family.draft_packing_id.backorder_id
                 draft_shipment_id = draft_packing.shipment_id.id
+                
+                if family.return_from == 0 and family.return_to == 0:
+                    continue
 
                 # Search the corresponding moves
                 move_ids = move_obj.search(cr, uid, [
@@ -768,11 +771,9 @@ class shipment(osv.osv):
                     ('to_pack', '=', family.to_pack),
                 ], context=context)
 
-                stay = [(family.from_pack, family.to_pack)]
+                stay = []
 
                 if family.to_pack >= family.return_to:
-                    if family.return_from == 0 and family.return_to == 0:
-                        continue
                     if family.return_from == family.from_pack:
                         if family.return_to != family.to_pack:
                             stay.append((family.return_to + 1, family.to_pack))
@@ -784,9 +785,6 @@ class shipment(osv.osv):
                         stay.append((family.from_pack, family.return_from - 1))
                         stay.append((family.return_to + 1, family.to_pack))
 
-                # Old one is always removed
-                stay.pop(-1)
-
                 move_data = {}
                 for move in move_obj.browse(cr, uid, move_ids, context=context):
                     move_data.setdefault(move.id, {
@@ -796,7 +794,7 @@ class shipment(osv.osv):
 
                     for seq in stay:
                         # Corresponding number of packs
-                        selected_number = seq[1] - seq[0]
+                        selected_number = seq[1] - seq[0] + 1
                         # Quantity to return
                         new_qty = selected_number * move.qty_per_pack
                         # For both cases, we update the from/to and compute the corresponding quantity
@@ -849,6 +847,14 @@ class shipment(osv.osv):
                     context['non_stock_noupdate'] = True
                     move_obj.copy(cr, uid, move.id, move_values, context=context)
                     context['non_stock_noupdate'] = False
+                    
+                    move_values = {
+                        'product_qty': 0.00,
+                        'state': 'done',
+                        'from_pack': 0,
+                        'to_pack': 0,
+                    }
+                    move_obj.write(cr, uid, [move.id], move_values, context=context)
 
                 for move_vals in move_data.values():
                     if round(move_vals['initial'], 14) != round(move_vals['partial_qty'], 14):
@@ -856,14 +862,6 @@ class shipment(osv.osv):
                             _('Processing Error'),
                             _('The sum of the processed quantities is not equal to the sum of the initial quantities'),
                         )
-
-                move_values = {
-                    'product_qty': 0.00,
-                    'state': 'done',
-                    'from_pack': 0,
-                    'to_pack': 0,
-                }
-                move_obj.write(cr, uid, [move.id], move_values, context=context)
 
             # log corresponding action
             shipment_log_msg = _('Packs from the shipped Shipment (%s) have been returned to %s location.') % (shipment.name, _('Dispatch'))
