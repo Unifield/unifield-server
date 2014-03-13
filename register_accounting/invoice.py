@@ -286,7 +286,7 @@ class account_invoice(osv.osv):
         for inv in self.read(cr, uid, ids, ['purchase_ids']):
             # Create down payments for invoice that come from a purchase
             if inv.get('purchase_ids', []):
-                to_check.append(inv.id)
+                to_check.append(inv.get('id'))
         self.check_down_payments(cr, uid, to_check)
         return res
 

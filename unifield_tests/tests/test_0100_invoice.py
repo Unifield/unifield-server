@@ -83,6 +83,17 @@ class InvoiceTest(FinanceTest):
         analytic_lines = db.get('account.analytic.line').search([('move_id', 'in', move_lines)])
         self.assertNotEqual(analytic_lines, [], "No analytic lines generated!")
 
+    def test_020_purchase_order_invoice(self):
+        '''
+        Create a regular purchase order with an external supplier.
+        First Validate the purchase order.
+        Then process the stock.picking.
+        Finally check that invoice was generated.
+        Then validate it.
+        '''
+        # TODO: CREATE THIS TEST IN ORDER TO CHECK INVOICE CREATION AFTER A PO CREATION + STOCK process validation
+        pass
+
 def get_test_class():
     '''Return the class to use for tests'''
     return InvoiceTest
