@@ -68,11 +68,20 @@ class InvoiceTest(FinanceTest):
         self.assert_(invl_id != False, "Invoice line creation failed with given values: %s" % invoice_line_vals)
         # Validate the invoice
         try:
-            res = invoice_obj.action_open_invoice([inv_id])
+            res = db.exec_workflow('account.invoice', 'invoice_open', inv_id)
         except RPCError, e:
             raise Exception("\n### OpenERP error ###\n%s\n\n%s" % (e.message, e.oerp_traceback))
         self.assert_(res != False, "Invoice validation failed!")
-
+        # Check that the invoice state is "open"
+        invoice = invoice_obj.browse(inv_id)
+        self.assert_(invoice.state == 'open', "Invoice %s is not open but in %s state!" % (invoice.name or '', invoice.state or ''))
+        # Check that invoice have a move line attached to the invoice line
+        move_lines = db.search('account.move.line', [('invoice_line_id', '=', invl_id)])
+        self.assertNotEqual(move_lines, [], "No move lines generated!")
+        self.assertEqual(len(move_lines), 1, "Expect 1 move line. Found: %s" % len(move_lines))
+        # Check that analytic lines have been generated for given move lines
+        analytic_lines = db.get('account.analytic.line').search([('move_id', 'in', move_lines)])
+        self.assertNotEqual(analytic_lines, [], "No analytic lines generated!")
 
 def get_test_class():
     '''Return the class to use for tests'''
