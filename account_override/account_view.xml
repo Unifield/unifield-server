@@ -32,6 +32,9 @@
             <field name="priority">20</field>
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='account_id']" position="attributes">
+                        <attribute name="domain">[('company_id', '=', company_id), ('restricted_area', '=', 'in_invoice')]</attribute>
+                    </xpath>
                     <xpath expr="//tree[@string='Invoice lines']/field[@name='product_id']" position="before">
                         <field name="line_number"/>
                     </xpath>
@@ -46,6 +49,21 @@
             </field>
         </record>
 
+    <!-- Change account_id domain -->
+        <record id="invoice_line_form3" model="ir.ui.view">
+            <field name="name">account.invoice.line.form</field>
+            <field name="model">account.invoice.line</field>
+            <field name="type">form</field>
+            <field name="priority" eval="20"/>
+            <field name="inherit_id" ref="account.view_invoice_line_form"/>
+            <field name="arch" type="xml">
+              <xpath expr="//field[@name='account_id']" position="attributes">
+                  <attribute name="domain">[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]</attribute>
+              </xpath>
+            </field>
+        </record>
+
+
     <!-- Account View -->
         <record id="inherit_view_account_tree" model="ir.ui.view">
             <field name="name">inherit.view.account.tree</field>
@@ -58,8 +76,8 @@
                 <xpath expr="//field[@name='type']" position="replace">
                 </xpath>
                 <xpath expr="//field[@name='user_type']" position="after">
-                    <field name="type"/>
-                    <field name="type_for_register"/>
+                    <field name="type" invisible="1"/>
+                    <field name="type_for_register" invisible="1"/>
                     <field name="accrual_account" invisible="1"/>
                 </xpath>
             </field>
@@ -130,7 +148,7 @@
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="name"/>
                                         <field name="ref"/>
-                                        <field name="account_id"/>
+                                        <field name="account_id" domain="[('restricted_area', '=', 'account_move_lines')]"/>
                                         <field name="partner_id" invisible="1"/>
                                         <field name="debit_currency" sum="Total Booking Debit" string="Book. Debit"/>
                                         <field name="credit_currency" sum="Total Booking Credit" string="Book. Credit"/>
@@ -218,6 +236,7 @@
             <field name="priority" eval="10"/>
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="//field[@name='balance']" position="replace" /><!-- UTP-31: del balance: moving from extended filter to filter -->
                     <xpath expr="//filter[@string='Unbalanced']" position="replace">
                         <filter icon="terp-document-new" string="Invalid" domain="[('state','=','draft')]" help="Invalid Journal Items"/>
                       </xpath>
@@ -245,6 +264,13 @@
                         <field name="journal_id" context="{'journal_id':self, 'visible_id': self, 'normal_view':False}"/>
                         <field name="journal_type"/>
                     </xpath>
+                    <xpath expr="//field[@name='period_id']" position="replace">
+                        <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
+                        <newline />
+                        <!-- UTP-31: balance: moving from extended filter to filter (after period_id) -->
+                        <field name="balance" string="Debit/Credit Functional" select='1'/>
+                        <field name="balance_currency" string="Debit/Credit Booking" select='1'/>
+                    </xpath>
                 </data>
             </field>
         </record>
@@ -263,8 +289,6 @@
 
     <!-- Delete Confirm Draft Invoices wizard from supplier invoices -->
     <delete id="account.action_account_invoice_confirm" model="ir.actions.act_window"/>
-    
-    
 
     <!-- Account View -->
         <record id="inherit_view_account_form" model="ir.ui.view">
@@ -278,6 +302,21 @@
                 </xpath>
             </field>
         </record>
+
+    <!-- UF-1715 -->
+    <report id="account_partner_balance_tree_xls"
+        auto="False" 
+        menu="False"
+        header="False"
+        model="account.partner.balance.tree"
+        name="account.partner.balance.tree_xls"
+        file="account_override/report/account_partner_balance_tree_xls.mako"
+        report_type="webkit" 
+        string="Partner Balance"/>
+
+    <record id="account.action_account_moves_all_a" model="ir.actions.act_window">
+        <field name="context">{'search_default_posted': 1, 'target_filename_prefix': 'Journal Items'}</field>
+    </record>
 
     </data>
 </openerp>

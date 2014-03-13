@@ -69,6 +69,8 @@ class account_invoice_refund(osv.osv_memory):
     
     _defaults = {
         'document_date': lambda *a: time.strftime('%Y-%m-%d'),
+        #UTP-961: refund DI: only refund option is available
+        'filter_refund': 'refund',
     }
 
     def onchange_date(self, cr, uid, ids, date, context=None):

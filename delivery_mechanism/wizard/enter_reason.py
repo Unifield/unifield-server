@@ -44,6 +44,8 @@ class enter_reason(osv.osv_memory):
             ids = [ids]
         # objects
         picking_obj = self.pool.get('stock.picking')
+        purchase_obj = self.pool.get('purchase.order')
+        pol_obj = self.pool.get('purchase.order.line')
         # workflow
         wf_service = netsvc.LocalService("workflow")
         # depending on the button clicked the behavior is different
@@ -61,14 +63,29 @@ class enter_reason(osv.osv_memory):
         values = {'change_reason': change_reason}
         # update the object
         for obj in picking_obj.browse(cr, uid, picking_ids, context=context):
+            # purchase order line to re-source
+            pol_ids = []
             # set the reason
             obj.write({'change_reason': change_reason}, context=context)
-            # cancel the IN
-            wf_service.trg_validate(uid, 'stock.picking', obj.id, 'button_cancel', cr)
+
+            for move in obj.move_lines:
+                pol_ids.append(move.purchase_line_id.id)
+
             # if full cancel (no resource), we updated corresponding out and correct po state
             if cancel_type == 'update_out':
                 picking_obj.cancel_and_update_out(cr, uid, [obj.id], context=context)
-                
+            else:
+                pol_obj.write(cr, uid, pol_ids, {'has_to_be_resourced': True}, context=context)
+                pol_obj.cancel_sol(cr, uid, pol_ids, context=context)
+            
+            # cancel the IN
+            wf_service.trg_validate(uid, 'stock.picking', obj.id, 'button_cancel', cr)
+
+            # correct the corresponding po manually if exists - should be in shipping exception
+            if obj.purchase_id:
+                wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
+                purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s%% received')%(obj.purchase_id.name, round(obj.purchase_id.shipped_rate,2)))
+
         return {'type': 'ir.actions.act_window_close'}
     
 enter_reason()

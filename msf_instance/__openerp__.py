@@ -33,6 +33,8 @@
         'security/ir.model.access.csv',
         'msf_instance_view.xml',
         'wizard/wizard_add_cost_centers_view.xml',
+        'wizard/account_chart_view.xml',
+        'wizard/account_analytic_chart_view.xml',
     ],
     "additional_xml": [
         'data/instance_data.xml',

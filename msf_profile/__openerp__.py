@@ -114,13 +114,16 @@
         "export_import_lang",
         "msf_button_access_rights",
         "msf_field_access_rights",
+        "unifield_tests",
         "vertical_integration",
+        "msf_currency_revaluation",
     ],
     "update_xml": [
         "report.xml",
         "purchase_double_validation_workflow.xml",
         "usability.xml",
         "user_access_configurator_view.xml",
+        'view/group_view.xml',
     ],
     "demo_xml": [
     ],

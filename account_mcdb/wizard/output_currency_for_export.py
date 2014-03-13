@@ -24,6 +24,9 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from lxml import etree
+
+import time
 
 class output_currency_for_export(osv.osv_memory):
     _name = 'output.currency.for.export'
@@ -35,13 +38,53 @@ class output_currency_for_export(osv.osv_memory):
         'export_format': fields.selection([('xls', 'Excel'), ('csv', 'CSV'), ('pdf', 'PDF')], string="Export format", required=True),
         'domain': fields.text('Domain'),
         'export_selected': fields.boolean('Export only the selected items', help="The output is limited to 5000 records"),
+        'state': fields.selection([('normal', 'Analytic Journal Items'), ('free', 'Free 1/Free 2')]),
+        'background_time': fields.integer('Number of second before background processing'),
     }
 
     _defaults = {
         'export_format': lambda *a: 'xls',
         'domain': lambda cr, u, ids, c: c and c.get('search_domain',[]),
         'export_selected': lambda *a: False,
+        'state': lambda *a: 'normal',
+        'background_time': lambda *a: 200,
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Remove export_format for FREE1/FREE2 analytic accounts because it has no sens.
+        """
+        view = super(output_currency_for_export, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type == 'form' and context and context.get('active_ids', False) and context.get('from', False):
+            if context.get('from') == 'account.analytic.line':
+                ids = context.get('active_ids')
+                if isinstance(ids, (int, long)):
+                    ids = [ids]
+                first_line = self.pool.get('account.analytic.line').browse(cr, uid, ids)[0]
+                if first_line.account_id and first_line.account_id.category in ['FREE1', 'FREE2']:
+                    tree = etree.fromstring(view['arch'])
+                    fields = tree.xpath("/form/field[@name='export_format']")
+                    for field in fields:
+                        field.set('invisible', "1")
+                    view['arch'] = etree.tostring(tree)
+        return view
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Check first given line to see if we come from Analytic Journal Items or Free1/Free2.
+        This is to change state field value and permit to show the right export (for Free1/Free2)
+        """
+        if not context:
+            context = {}
+        if context.get('active_ids', False) and context.get('from', False):
+            if context.get('from') == 'account.analytic.line':
+                a_ids = context.get('active_ids')
+                if isinstance(a_ids, (int, long)):
+                    a_ids = [a_ids]
+                first_line = self.pool.get('account.analytic.line').browse(cr, uid, a_ids)[0]
+                if first_line.account_id and first_line.account_id.category in ['FREE1', 'FREE2']:
+                    vals.update({'state': 'free'})
+        return super(output_currency_for_export, self).create(cr, uid, vals, context=context)
 
     def onchange_fx_table(self, cr, uid, ids, fx_table_id, context=None):
         """
@@ -75,11 +118,7 @@ class output_currency_for_export(osv.osv_memory):
         if not choice:
             raise osv.except_osv(_('Error'), _('Please choose an export format!'))
         datas = {}
-        # Return CSV export is choosed.
-        #if choice == 'csv':
-            # Return good view
-        #    return self.pool.get('account.line.csv.export').export_to_csv(cr, uid, line_ids, currency_id, model, context=context) or False
-        # Else return PDF export
+        # Check user choice
         if wiz.export_selected:
             datas = {'ids': context.get('active_ids', [])}
         else:
@@ -98,12 +137,24 @@ class output_currency_for_export(osv.osv_memory):
         elif model == 'account.bank.statement.line':
             report_name = 'account.bank.statement.line'
 
+        context.update({'display_fp': display_fp})
+
+        if model == 'account.analytic.line' and wiz.state == 'free':
+            report_name = 'account.analytic.line.free'
+            context.update({'display_fp': False})
+
         if choice == 'csv':
             report_name += '_csv'
         elif choice == 'xls':
             report_name += '_xls'
 
-        context.update({'display_fp': display_fp})
+
+        datas['target_filename'] = '%s_%s' % (context.get('target_filename_prefix', 'Export_search_result'), time.strftime('%Y%m%d'))
+
+        if model in ('account.move.line', 'account.analytic.line') and choice in ('csv', 'xls'):
+            background_id = self.pool.get('memory.background.report').create(cr, uid, {'file_name': datas['target_filename'], 'report_name': report_name}, context=context)
+            context['background_id'] = background_id
+            context['background_time'] = wiz.background_time
 
         return {
             'type': 'ir.actions.report.xml',
@@ -113,4 +164,21 @@ class output_currency_for_export(osv.osv_memory):
         }
 
 output_currency_for_export()
+
+class background_report(osv.osv_memory):
+        _name = 'memory.background.report'
+        _description = 'Report result'
+
+        _columns = {
+            'file_name': fields.char('Filename', size=256),
+            'report_name': fields.char('Report Name', size=256),
+            'report_id': fields.integer('Report id'),
+            'percent': fields.float('Percent'),
+        }
+        def update_percent(self, cr, uid, ids, percent, context=None):
+            self.write(cr, uid, ids, {'percent': percent})
+
+
+background_report()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

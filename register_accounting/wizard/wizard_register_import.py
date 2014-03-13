@@ -49,7 +49,6 @@ class wizard_register_import(osv.osv_memory):
     }
 
     _defaults = {
-        'state': lambda *a: 'draft',
         'progression': lambda *a: 0.0,
         'state': lambda *a: 'draft',
     }
@@ -128,7 +127,7 @@ class wizard_register_import(osv.osv_memory):
                 # Analytic distribution
                 distrib_id = False
                 # Create analytic distribution
-                if l.account_id.user_type_code == 'expense' and l.destination_id and l.cost_center_id and l.funding_pool_id:
+                if l.account_id.is_analytic_addicted and l.destination_id and l.cost_center_id and l.funding_pool_id:
                     distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
                     common_vals = {
                         'distribution_id': distrib_id,
@@ -258,7 +257,7 @@ class wizard_register_import(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _('Currency %s is not active!') % (cur.name))
                 # Check that currency is the same as register's one
                 if wiz.register_id.currency.id not in currency_ids:
-                    raise osv.except_osv(_(''), _("the import's currency is %s whereas the register's currency is %s") % (cur[0].name, wiz.register_id.currency.name))
+                    raise osv.except_osv('', _("the import's currency is %s whereas the register's currency is %s") % (cur[0].name, wiz.register_id.currency.name))
                 # Search registers that correspond to this instance, journal's code and currency and check that our register is in the list
                 register_ids = self.pool.get('account.bank.statement').search(cr, uid, [('instance_id', 'in', instance_ids), ('journal_id', 'in', journal_ids), ('currency', 'in', currency_ids)])
                 if not register_ids or wiz.register_id.id not in register_ids:
@@ -382,8 +381,8 @@ class wizard_register_import(osv.osv_memory):
                                 errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, line[cols['third_party']],))
                                 continue
                         r_partner = tp_ids[0]
-                    # Check analytic axis only if G/L account is an expense account
-                    if account.user_type_code == 'expense':
+                    # Check analytic axis only if G/L account is an analytic-a-holic account
+                    if account.is_analytic_addicted:
                         # Check Destination
                         try:
                             if line[cols['destination']]:

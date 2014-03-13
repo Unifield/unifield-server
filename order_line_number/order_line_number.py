@@ -71,7 +71,11 @@ class sale_order(osv.osv):
         create from sale_order
         create the sequence for the numbering of the lines
         '''
-        vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
+        if context is None:
+            context = {}
+
+        if not context.get('keepClientOrder') or not context.get('keepDateAndDistrib') or not vals.get('sequence_id'):
+            vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
         
         return super(sale_order, self).create(cr, uid, vals, context)
     
@@ -127,16 +131,16 @@ class sale_order_line(osv.osv):
         # objects
         so_obj = self.pool.get('sale.order')
         seq_pool = self.pool.get('ir.sequence')
-        
+
         # gather the line number from the sale order sequence if not specified in vals
         # either line_number is not specified or set to False from copy, we need a new value
         if vals.get('order_id', False):
             if not vals.get('line_number', False):
                 # new number needed - gather the line number from the sequence
                 sequence_id = so_obj.read(cr, uid, [vals['order_id']], ['sequence_id'], context=context)[0]['sequence_id'][0]
-                line = seq_pool.get_id(cr, uid, sequence_id, test='id', context=context)
+                line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
                 vals.update({'line_number': line})
-        
+
         # create the new sale order line
         result = super(sale_order_line, self).create(cr, uid, vals, context=context)
         return result
@@ -287,7 +291,7 @@ class purchase_order_line(osv.osv):
                 if not vals.get('line_number', False):
                     # new number needed - gather the line number from the sequence
                     sequence_id = po_obj.read(cr, uid, [vals['order_id']], ['sequence_id'], context=context)[0]['sequence_id'][0]
-                    line = seq_pool.get_id(cr, uid, sequence_id, test='id', context=context)
+                    line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
                     vals.update({'line_number': line})
         
         # create the new sale order line
@@ -448,7 +452,7 @@ class supplier_catalogue_line(osv.osv):
             # gather the line number from the sale order sequence
             order = self.pool.get('supplier.catalogue').browse(cr, uid, vals['catalogue_id'], context)
             sequence = order.sequence_id
-            line = sequence.get_id(test='id', context=context)
+            line = sequence.get_id(code_or_id='id', context=context)
             vals.update({'line_number': line})
         
         # create the new sale order line
@@ -464,19 +468,25 @@ class ir_sequence(osv.osv):
     '''
     _inherit = 'ir.sequence'
 
-    def get_id(self, cr, uid, sequence_id, test='id', context=None):
+    def get_id(self, cr, uid, sequence_id, code_or_id='id', context=None):
         '''
         correct a bug as sequence_id is passed as an array, which
         is not taken into account in the override in account
         '''
+        if not context:
+            context = {}
         if isinstance(sequence_id, list):
-            return super(ir_sequence, self).get_id(cr, uid, sequence_id[0], test, context=context)
+            return super(ir_sequence, self).get_id(cr, uid, sequence_id[0], code_or_id, context=context)
 
-        return super(ir_sequence, self).get_id(cr, uid, sequence_id, test, context=context)
+        return super(ir_sequence, self).get_id(cr, uid, sequence_id, code_or_id, context=context)
 
     def _get_instance(self, cr, uid):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
         return company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.po_fo_cost_center_id and company.instance_id.po_fo_cost_center_id.code or ''
+
+    def _get_instance_code(self, cr, uid):
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        return company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.code or ''
 
     def _get_hqcode(self, cr, uid):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
@@ -510,6 +520,8 @@ class ir_sequence(osv.osv):
             data['instance'] = self._get_instance(cr, uid)
         if s and '%(hqcode)s' in s:
             data['hqcode'] =  self._get_hqcode(cr, uid)
+        if s and '%(instance_code)s' in s:
+            data['instance_code'] = self._get_instance_code(cr, uid)
         
         return (s or '') % data
 ir_sequence()

@@ -185,4 +185,4 @@
     period_ids = self.search(cr, uid, [], order='date_start, name')
     for p in self.browse(cr, uid, period_ids):
       self.write(cr, uid, [p.id], {'number': int(datetime.datetime.strptime(p.date_start, '%Y-%m-%d').strftime('%m'))})
-    self.action_set_state(cr, uid, period_ids, {'state': 'open'})
+    self.action_set_state(cr, uid, period_ids, {'state': 'draft'})

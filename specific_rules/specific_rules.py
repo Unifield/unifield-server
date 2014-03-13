@@ -869,11 +869,6 @@ class stock_production_lot(osv.osv):
         sequence = self.create_sequence(cr, uid, vals, context=context)
         vals.update({'sequence_id': sequence,})
         
-        if context.get('update_mode') in ['init', 'update']:
-            if not vals.get('life_date'):
-                # default value to today
-                vals.update(life_date=time.strftime('%Y-%m-%d'))
-        
         return super(stock_production_lot, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -887,7 +882,7 @@ class stock_production_lot(osv.osv):
         
         for lot in self.browse(cr, uid, ids, context=context):
            # create revision object for each lot
-           version_number = lot.sequence_id.get_id(test='id', context=context)
+           version_number = lot.sequence_id.get_id(code_or_id='id', context=context)
            values = {'name': 'Auto Revision Logging',
                      'description': 'The batch number has been modified, this revision log has been created automatically.',
                      'date': time.strftime('%Y-%m-%d'),
@@ -1088,7 +1083,7 @@ class stock_production_lot(osv.osv):
         Returns True if the lot is expired
         '''
         res = {}
-        context = context or {}
+        context = context is None and {} or context
 
         if isinstance(ids, (int, long)):
             ids = [ids]

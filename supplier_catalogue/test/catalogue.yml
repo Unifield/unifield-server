@@ -26,7 +26,6 @@
     rounding: 1.00
     line_uom_id: product.product_uom_unit
     unit_price: 70.00
-    rounding: 1.00
 -
   We create a second line for this catalogue
 -
@@ -69,7 +68,11 @@
     rounding: 5.00
     line_uom_id: product.product_uom_unit
     unit_price: 200.00
-    rounding: 5.00
+-
+  We confirm the supplier catalogue
+-
+  !python {model: supplier.catalogue}: |
+    self.button_confirm(cr, uid, ref('catalogue1'), context=context)
 -
   We check if the product3 has good values in supplierinfo
 - 
@@ -85,14 +88,14 @@
         assert line.uom_id.id == ref('product.product_uom_unit'), "UoM of the line is not correct :: result %s (expected PCE)" % line.uom_id.name
         assert line.valid_till == '2012-12-31', "Bad valid till date on the line :: result %s (expected 31/Dec/12)" % line.valid_till
         if line.min_quantity == 1.00:
-          assert line.price == 240.00, "Unit price of the line is not correct :: result %s (expected 240.00)" % line.price
-          assert line.rounding == 1.00, "Rounding of the line is not correct :: result %s (expected 1.00)" % line.rounding
+          assert line.price == 240.00, "Unit price of the line is not correct :: result %s (expected 240.00) - #1" % line.price
+          assert line.rounding == 1.00, "Rounding of the line is not correct :: result %s (expected 1.00) - #1" % line.rounding
         elif line.min_quantity == 10.00:
-          assert line.price == 230.00, "Unit price of the line is not correct :: result %s (expected 230.00)" % line.price
-          assert line.rounding == 1.00, "Rounding of the line is not correct :: result %s (expected 1.00)" % line.rounding
+          assert line.price == 230.00, "Unit price of the line is not correct :: result %s (expected 230.00) - #2" % line.price
+          assert line.rounding == 1.00, "Rounding of the line is not correct :: result %s (expected 1.00) - #2" % line.rounding
         elif line.min_quantity == 20.00:
-          assert line.price == 200.00, "Unit price of the line is not correct :: result %s (expected 200.00)" % line.price
-          assert line.rounding == 5.00, "Rounding of the line is not correct :: result %s (expected 5.00)" % line.rounding
+          assert line.price == 200.00, "Unit price of the line is not correct :: result %s (expected 200.00) - #3" % line.price
+          assert line.rounding == 5.00, "Rounding of the line is not correct :: result %s (expected 5.00) - #3" % line.rounding
         else:
           assert False, "Line with bad min qty is present :: Min qty of the line %s" % line.min_qty
 -

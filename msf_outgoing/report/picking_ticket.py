@@ -39,7 +39,7 @@ class picking_ticket(report_sxw.rml_parse):
         opening check
         '''
         for obj in objects:
-            if obj.subtype != 'picking' or obj.state == 'draft':
+            if obj.subtype != 'picking':
                 raise osv.except_osv(_('Warning !'), _('Picking Ticket is only available for Picking Ticket Objects!'))
         
         return super(picking_ticket, self).set_context(objects, data, ids, report_type=report_type)

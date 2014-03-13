@@ -1,5 +1,6 @@
                     <separator string="General" colspan="4"/>
                     <field name="description" colspan="4"/>
+                    <field name="analytic_axis" attrs="{'invisible': [('model', '=', 'account.move.line')], 'required': [('model', '=', 'account.analytic.line')]}" colspan="4" on_change="onchange_analytic_axis(analytic_axis)"/>
                     <separator string="Instances" colspan="3"/>
                     <field name="display_instance" colspan="1" nolabel="1"/>
                     <group col="4" colspan="4" attrs="{'invisible': [('display_instance', '=', False)]}">

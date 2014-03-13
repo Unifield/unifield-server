@@ -179,7 +179,7 @@ def compute_kit_value(cr, uid, **kwargs):
                 if kit_ids:
                     kit_id = kit_ids[0]
                 else:
-                    error_list.append(_('The Kit "%s" does not exist for this product.' % kit_name))
+                    error_list.append(_('The Kit "%s" does not exist for this product.') % (kit_name,))
         else:
             msg = _('The Kit Name has to be a string')
         if not kit_name:
@@ -197,6 +197,8 @@ def compute_location_value(cr, uid, **kwargs):
     cell_nb = kwargs['cell_nb']
     check_type = kwargs.get('check_type')
     product_id = kwargs.get('product_id')
+    pick_type = kwargs.get('pick_type')
+    pick_subtype = kwargs.get('pick_subtype')
     loc_id = None
     loc_name = None
     msg = ''
@@ -204,16 +206,29 @@ def compute_location_value(cr, uid, **kwargs):
         if row.cells[cell_nb].type == 'str':
             loc_name = row.cells[cell_nb].data.strip()
             if loc_name:
-                domain = [('name', '=', loc_name)]
-                if check_type and product_id and check_type == 'src':
+                domain = [('name', '=ilike', loc_name)]
+                if check_type and product_id and check_type == 'src' and pick_type == 'internal':
                     domain.extend([('internal_src', '=', product_id), ('usage', '!=', 'view')])
-                elif check_type and product_id and check_type == 'dest':
+                elif check_type and product_id and check_type == 'dest' and pick_type == 'internal':
                     domain.extend([('internal_dest', '=', product_id), ('usage', '!=', 'view')])
+                elif check_type and product_id and check_type == 'src' and pick_type == 'in':
+                    domain.extend([('usage', '=', 'supplier')])
+                elif check_type and product_id and check_type == 'dest' and pick_type == 'in':
+                    domain.extend([('incoming_dest', '=', product_id), ('usage', '!=', 'view')])
+                elif check_type and product_id and check_type == 'src' and pick_type == 'out' and pick_subtype == 'standard':
+                    domain.extend([('outgoing_src', '=', product_id), ('usage', '!=', 'view')])
+                elif check_type and product_id and check_type == 'dest' and pick_type == 'out' and pick_subtype == 'standard':
+                    domain.extend(['|', ('output_ok', '=', True), ('usage', '=', 'customer')])
+                elif check_type and product_id and check_type == 'src' and pick_type == 'out' and pick_subtype == 'picking':
+                    domain.extend([('picking_ticket_src', '=', product_id)])
+                elif check_type and product_id and check_type == 'dest' and pick_type == 'out' and pick_subtype == 'picking':
+                    pack_loc_id = loc_obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
+                    domain.extend([('id', '=', pack_loc_id)])
 
                 loc_ids = loc_obj.search(cr, uid, domain)
                 if loc_ids:
                     loc_id = loc_ids[0]
-                elif loc_obj.search(cr, uid, [('name', '=', loc_name)]):
+                elif loc_obj.search(cr, uid, [('name', '=ilike', loc_name)]):
                     error_list.append(_('The Location "%s" is not compatible with the product of the stock move.') % loc_name)
                 else:
                     error_list.append(_('The Location "%s" does not exist on this instance.') % loc_name)
@@ -251,7 +266,7 @@ def product_value(cr, uid, **kwargs):
             product_code = row.cells[cell_nb].data
             if product_code and row.cells[cell_nb].type == 'str':
                 product_code = product_code.strip()
-                p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)], context=context)
+                p_ids = product_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
                 if not p_ids:
                     comment += _(' Code: %s') % (product_code)
                     msg = _('Product code doesn\'t exist in the DB.')
@@ -298,6 +313,9 @@ def quantity_value(**kwargs):
                 product_qty = row.cells[cell_nb].data
             else:
                 error_list.append(_('The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default.'))
+            if product_qty <= 0.00:
+                error_list.append(_('The Product Quantity is required to be greater than 0, it is set to 1 by default'))
+                product_qty = 1.00
     # if the cell is empty
     except IndexError:
         warning_list.append(_('The Product Quantity was not set. It is set to 1 by default.'))
@@ -325,7 +343,7 @@ def compute_uom_value(cr, uid, **kwargs):
         if row.cells[cell_nb] and row.cells[cell_nb].data is not None:
             if row.cells[cell_nb].type == 'str':
                 uom_name = row.cells[cell_nb].data.strip()
-                uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
+                uom_ids = uom_obj.search(cr, uid, [('name', '=ilike', uom_name)], context=context)
                 if uom_ids:
                     uom_id = uom_ids[0]
                     # check the uom category consistency

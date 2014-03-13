@@ -127,9 +127,6 @@ class account_invoice(osv.osv):
         """
         if not context:
             context = {}
-        if context.get('update_mode') in ['init', 'update']:
-            logging.getLogger('init').info('INV: set from yml test to True')
-            vals['from_yml_test'] = True
         # Create a sequence for this new invoice
         res_seq = self.create_sequence(cr, uid, vals, context)
         vals.update({'sequence_id': res_seq,})
@@ -143,7 +140,7 @@ class account_invoice(osv.osv):
             if partner and partner[0] and not partner[0].active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
         return super(account_invoice, self).create(cr, uid, vals, context)
-
+    
     def _check_document_date(self, cr, uid, ids):
         """
         Check that document's date is done BEFORE posting date
@@ -217,13 +214,17 @@ class account_invoice(osv.osv):
                 el[2].update({'document_date': inv.document_date})
         return res
 
-    def copy(self, cr, uid, id, default={}, context=None):
+    def copy(self, cr, uid, id, default=None, context=None):
         """
         Delete period_id from invoice
         """
         if default is None:
             default = {}
-        default.update({'period_id': False,})
+        default.update({
+            'period_id': False,
+            'purchase_ids': False,  # UFTP-24 do not copy linked POs
+            'purchase_list': False,  # UFTP-24 do not copy linked: reset of potential purchase list flag (from a PO direct purchase)
+        })
         return super(account_invoice, self).copy(cr, uid, id, default, context)
 
     def __hook_lines_before_pay_and_reconcile(self, cr, uid, lines):
@@ -273,15 +274,12 @@ class account_invoice_line(osv.osv):
         """
         if not context:
             context = {}
-        if context.get('update_mode') in ['init', 'update']:
-            logging.getLogger('init').info('INV: set from yml test to True')
-            vals['from_yml_test'] = True
         # Create new number with invoice sequence
         if vals.get('invoice_id') and self._name in ['account.invoice.line']:
             invoice = self.pool.get('account.invoice').browse(cr, uid, vals['invoice_id'])
             if invoice and invoice.sequence_id:
                 sequence = invoice.sequence_id
-                line = sequence.get_id(test='id', context=context)
+                line = sequence.get_id(code_or_id='id', context=context)
                 vals.update({'line_number': line})
         return super(account_invoice_line, self).create(cr, uid, vals, context)
 
@@ -298,7 +296,7 @@ class account_invoice_line(osv.osv):
             for il in self.browse(cr, uid, ids):
                 if not il.line_number and il.invoice_id.sequence_id:
                     sequence = il.invoice_id.sequence_id
-                    il_number = sequence.get_id(test='id', context=context)
+                    il_number = sequence.get_id(code_or_id='id', context=context)
                     vals.update({'line_number': il_number})
         return super(account_invoice_line, self).write(cr, uid, ids, vals, context)
 

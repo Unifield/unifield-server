@@ -13,7 +13,7 @@
                     <field name="date" />
                     <label colspan="2" string=" " />
                     <field name="date_done" readonly="True" attrs="{'invisible': [('state', '!=', 'done')]}" />
-                    <separator colspan="4" string="Product filters" />
+                    <!--<separator colspan="4" string="Product filters" />
                     <field name="sublist_id" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('nomen_manda_0', '!=', False)]}"/>
                     <group colspan="2" col="4" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('sublist_id', '!=', False)]}">
                         <field name="nomen_manda_0"
@@ -40,7 +40,7 @@
                             on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
                         />
                     </group>
-                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'readonly': [('state', '!=', 'draft')]}" />-->
                     <notebook colspan="4">
                         <page string="Inventory lines">
                             <field colspan="4" name="inventory_line_id" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', '!=', 'draft')]}">

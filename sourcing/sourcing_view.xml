@@ -70,7 +70,8 @@
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
 				<tree string="Sourcing Lines" editable="top" hide_new_button="1" hide_delete_button="1" colors="red:priority=='emergency';darkgreen:priority=='urgent';blue:priority=='medium'">
-					<field name="display_confirm_button" invisible="True" />
+                    <field name="display_confirm_button" invisible="True" />
+                    <field name="sale_order_in_progress" invisible="True" />
 					<field name="loan_type" invisible="True" />
 					<field name="procurement_request" invisible="True" />
 					<field name="name" invisible="True" />
@@ -86,11 +87,16 @@
                                         <button name="open_split_wizard" type="object" string="Split line" icon="terp-stock_effects-object-colorize" 
 						attrs="{'invisible': [('display_confirm_button', '=', False)]}" />
 					<field name="rts" />
-					<field name="type" string="Proc. Method" on_change="onChangeType(type)" 
+					<field name="type" string="Proc. Method" on_change="onChangeType(type, location_id)" 
 						attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('loan_type', '=', True)]}" />
 					<field name="po_cft"
 					    on_change="onChangePoCft(po_cft, sale_order_id, supplier)" 
-						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
+                        attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
+                    <field name="location_id" 
+                        widget="selection"
+                        on_change="onChangeLocation(location_id, product_id, rts, sale_order_id)"
+                        domain="[('usage', '=', 'internal'), ('quarantine_location', '=', False), ('scrap_location', '=', False), ('destruction_location', '=', False), ('output_ok', '=', False), ('input_ok', '=', False)]"
+                        attrs="{'readonly': ['|', ('type', '!=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_stock')]}" />
 					<field name="real_stock" />
 					<field name="available_stock" />
                     <field name="virtual_stock" />
@@ -105,7 +111,8 @@
 					<field name="customer" invisible="1" />
 					<field name="estimated_delivery_date" />
 					<button name="confirmLine" string="Source Line" icon="gtk-go-forward" type="object" attrs="{'invisible':[('display_confirm_button', '=', False)]}" />
-					<!-- does not work. openerp bug ? <button name="unconfirmLine" string="Unconfirm Line" icon="gtk-cancel" type="object" attrs="{'invisible':['|', ('state', '!=', 'confirmed'), ('sale_order_state', '!=', 'draft')]}" />--> 
+                    <!-- does not work. openerp bug ? -->
+                    <button name="unconfirmLine" string="Unconfirm Line" icon="gtk-cancel" type="object" attrs="{'invisible': ['|', '|', ('sale_order_in_progress', '=', True), ('sale_order_state', '!=', 'Validated'), ('display_confirm_button', '=', True)]}" />
 
 				</tree>
 			</field>

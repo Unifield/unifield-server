@@ -81,7 +81,7 @@ class account_destination_link(osv.osv):
         return ret
 
     _columns = {
-        'account_id': fields.many2one('account.account', "G/L Account", required=True, domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]", readonly=True),
+        'account_id': fields.many2one('account.account', "G/L Account", required=True, domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]", readonly=True),
         'destination_id': fields.many2one('account.analytic.account', "Analytical Destination Account", required=True, domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", readonly=True),
         'funding_pool_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_destinations', 'tuple_id', 'funding_pool_id', "Funding Pools"),
         'name': fields.function(_get_tuple_name, method=True, type='char', size=254, string="Name", readonly=True, 
@@ -329,13 +329,16 @@ class account_move(osv.osv):
            context = {}
         for m in self.browse(cr, uid, ids):
             for ml in m.line_id:
-                if ml.account_id and ml.account_id.user_type and ml.account_id.user_type.code == 'expense':
+                if ml.account_id and ml.account_id.is_analytic_addicted:
                     if ml.analytic_distribution_state != 'valid':
                         raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for this line: %s') % (ml.name or '',))
                     # Copy analytic distribution from header
                     if not ml.analytic_distribution_id:
                         new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, ml.move_id.analytic_distribution_id.id, {}, context=context)
-                        self.pool.get('account.move.line').write(cr, uid, [ml.id], {'analytic_distribution_id': new_distrib_id})
+                        # UF-2248: Improve the code by using a sql directly, and not a write -- make no impact on the validation, as it will be done in the call super.validate_button
+                        #self.pool.get('account.move.line').write(cr, uid, [ml.id], {'analytic_distribution_id': new_distrib_id})
+                        cr.execute('update account_move_line set analytic_distribution_id=%s where id=%s', (new_distrib_id, ml.id))
+                        
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
 
     def validate(self, cr, uid, ids, context=None):
@@ -348,7 +351,7 @@ class account_move(osv.osv):
         for m in self.browse(cr, uid, ids):
             if m.status and m.status == 'manual':
                 for ml in m.line_id:
-                    if ml.analytic_distribution_state == 'invalid' or (ml.analytic_distribution_state == 'none' and ml.account_id.user_type.code == 'expense'):
+                    if ml.analytic_distribution_state == 'invalid' or (ml.analytic_distribution_state == 'none' and ml.account_id.is_analytic_addicted):
                         self.pool.get('account.move.line').write(cr, uid, [x.id for x in m.line_id], {'state': 'draft'}, context, check=False, update_check=False)
         return res
 

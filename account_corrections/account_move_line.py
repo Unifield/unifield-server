@@ -94,6 +94,9 @@ class account_move_line(osv.osv):
             # False if the account is used in a cash/bank/cheque journal
             if ml.account_id.id in account_ids:
                 res[ml.id] = False
+            # False if this line is a revaluation
+            if ml.journal_id.type == 'revaluation':
+                res[ml.id] = False
         return res
 
     _columns = {
@@ -305,99 +308,126 @@ receivable, item have not been corrected, item have not been reversed and accoun
         }
         return True
 
-    def reverse(self, cr, uid, ids, date=None, context=None):
+# Method abandonned because no "reverse" button on Correction Wizard
+#    def reverse(self, cr, uid, ids, date=None, context=None):
+#        """
+#        Reverse given lines by creating a new Journal Entry (account_move) and write in the reversal line.
+#        Reversal lines have some information:
+#         - name begin with REV
+#         - debit and credit are reversed
+#         - amount_currency is the opposite
+#         - date is those from given date or current date by default
+#         - period is those that correspond to the given date
+#         - line is written in the first 'correction' type journal found
+#        NB : return the succeeded move lines
+#        """
+#        # Verifications
+#        if not context:
+#            context = {}
+#        if isinstance(ids, (int, long)):
+#            ids = [ids]
+#        if not date:
+#            date = strftime('%Y-%m-%d')
+#        # Prepare some values
+#        success_move_line_ids = []
+#        move_obj = self.pool.get('account.move')
+#        aal_obj = self.pool.get('account.analytic.line')
+#        j_obj = self.pool.get('account.journal')
+#        j_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
+#                                       ('is_current_instance', '=', True)], context=context)
+#        # Search correction journal
+#        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
+#                                            ('is_current_instance', '=', True)], context=context)
+#        j_corr_id = j_corr_ids and j_corr_ids[0] or False
+#        # Search extra accounting journal
+#        ej_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
+#                                        ('is_current_instance', '=', True)])
+#        j_extra_id = ej_ids and ej_ids[0] or False
+#        # Search attached period
+#        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
+#            limit=1, order='date_start, name')
+#        # Browse move line
+#        for ml in self.browse(cr, uid, ids, context=context):
+#            # Abort process if this move line was corrected before
+#            if ml.corrected:
+#                continue
+#            # Retrieve right journal. Extra-accounting journal for donation, else correction journal
+#            journal_id = j_corr_id
+#            if ml.account_id and ml.account_id.type_for_register == 'donation':
+#                journal_id = j_extra_id
+#                if not journal_id:
+#                    raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
+#            elif not journal_id:
+#                raise osv.except_osv(_('Error'), _('No Correction Journal found!'))
+#            # Create a new move
+#            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date}, context=context)
+#            # Prepare default value for new line
+#            vals = {
+#                'move_id': move_id,
+#                'date': date,
+#                'document_date': date,
+#                'journal_id': journal_id,
+#                'period_id': period_ids[0],
+#            }
+#            # Copy the line
+#            rev_line_id = self.copy(cr, uid, ml.id, vals, context=context)
+#            # Do the reverse
+#            name = self.join_without_redundancy(ml.name, 'REV')
+#            amt = -1 * ml.amount_currency
+#            vals.update({
+#                'debit': ml.credit,
+#                'credit': ml.debit,
+#                'amount_currency': amt,
+#                'journal_id': journal_id,
+#                'name': name,
+#                'reversal_line_id': ml.id,
+#                'account_id': ml.account_id.id,
+#                'source_date': ml.date,
+#                'reversal': True,
+#                'reference': ml.move_id and ml.move_id.name or '',
+#                'ref': ml.move_id and ml.move_id.name or '',
+#            })
+#            self.write(cr, uid, [rev_line_id], vals, context=context)
+#            # Inform old line that it have been corrected
+#            self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context)
+#            # Search analytic lines from first move line
+#            aal_ids = aal_obj.search(cr, uid, [('move_id', '=', ml.id)])
+#            aal_obj.write(cr, uid, aal_ids, {'is_reallocated': True})
+#            # Search analytic lines from reversed line and flag them as "is_reversal"
+#            new_aal_ids = aal_obj.search(cr, uid, [('move_id', '=', rev_line_id)])
+#            aal_obj.write(cr, uid, new_aal_ids, {'is_reversal': True,})
+#            # Add this line to succeded lines
+#            success_move_line_ids.append(ml.id)
+#        return success_move_line_ids
+
+    def make_reversal_link(self, cr, uid, old_id, new_id, context=None):
         """
-        Reverse given lines by creating a new Journal Entry (account_move) and write in the reversal line.
-        Reversal lines have some information:
-         - name begin with REV
-         - debit and credit are reversed
-         - amount_currency is the opposite
-         - date is those from given date or current date by default
-         - period is those that correspond to the given date
-         - line is written in the first 'correction' type journal found
-        NB : return the succeeded move lines
+        Make new_id the reverse for the old_id in analytic items
         """
-        # Verifications
-        if not context:
+        # Checks
+        if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if not date:
-            date = strftime('%Y-%m-%d')
         # Prepare some values
-        success_move_line_ids = []
-        move_obj = self.pool.get('account.move')
-        aal_obj = self.pool.get('account.analytic.line')
-        j_obj = self.pool.get('account.journal')
-        j_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                       ('is_current_instance', '=', True)], context=context)
-        # Search correction journal
-        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                            ('is_current_instance', '=', True)], context=context)
-        j_corr_id = j_corr_ids and j_corr_ids[0] or False
-        # Search extra accounting journal
-        ej_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
-                                        ('is_current_instance', '=', True)])
-        j_extra_id = ej_ids and ej_ids[0] or False
-        # Search attached period
-        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
-            limit=1, order='date_start, name')
-        # Browse move line
-        for ml in self.browse(cr, uid, ids, context=context):
-            # Abort process if this move line was corrected before
-            if ml.corrected:
-                continue
-            
-            # FIXME: Verify that this line doesn't come from a register (statement_id) => update register line
-            
-            # Retrieve right journal. Extra-accounting journal for donation, else correction journal
-            journal_id = j_corr_id
-            if ml.account_id and ml.account_id.type_for_register == 'donation':
-                journal_id = j_extra_id
-                if not journal_id:
-                    raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
-            elif not journal_id:
-                raise osv.except_osv(_('Error'), _('No Correction Journal found!'))
-            # Create a new move
-            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date}, context=context)
-            # Prepare default value for new line
-            vals = {
-                'move_id': move_id,
-                'date': date,
-                'document_date': date,
-                'journal_id': journal_id,
-                'period_id': period_ids[0],
-            }
-            # Copy the line
-            rev_line_id = self.copy(cr, uid, ml.id, vals, context=context)
-            # Do the reverse
-            name = self.join_without_redundancy(ml.name, 'REV')
-            amt = -1 * ml.amount_currency
-            vals.update({
-                'debit': ml.credit,
-                'credit': ml.debit,
-                'amount_currency': amt,
-                'journal_id': journal_id,
-                'name': name,
-                'reversal_line_id': ml.id,
-                'account_id': ml.account_id.id,
-                'source_date': ml.date,
-                'reversal': True,
-                'reference': ml.move_id and ml.move_id.name or '',
-                'ref': ml.move_id and ml.move_id.name or '',
-            })
-            self.write(cr, uid, [rev_line_id], vals, context=context)
-            # Inform old line that it have been corrected
-            self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context)
-            # Search analytic lines from first move line
-            aal_ids = aal_obj.search(cr, uid, [('move_id', '=', ml.id)])
-            aal_obj.write(cr, uid, aal_ids, {'is_reallocated': True})
-            # Search analytic lines from reversed line and flag them as "is_reversal"
-            new_aal_ids = aal_obj.search(cr, uid, [('move_id', '=', rev_line_id)])
-            aal_obj.write(cr, uid, new_aal_ids, {'is_reversal': True,})
-            # Add this line to succeded lines
-            success_move_line_ids.append(ml.id)
-        return success_move_line_ids
+        ana_obj = self.pool.get('account.analytic.line')
+        old_ana_ids = ana_obj.search(cr, uid, [('move_id', '=', old_id)])
+        new_ana_ids = ana_obj.search(cr, uid, [('move_id', '=', new_id)])
+        if not old_ana_ids or not new_ana_ids:
+            raise osv.except_osv(_('Warning'), _('No analytic journal items found for the given journal items.'))
+        # Process: we search all linked Analytic Journal Items linked to the given one and write the link.
+        # Criteria:
+        # - cost center
+        # - destination
+        # - amount
+        # - analytic account (account_id)
+        for aal in ana_obj.browse(cr, uid, new_ana_ids, context=context):
+            amount = -1 * aal.amount
+            old_ids = ana_obj.search(cr, uid, [('id', 'in', old_ana_ids), ('cost_center_id', '=', aal.cost_center_id.id), ('destination_id', '=', aal.destination_id.id), ('amount', '=', amount), ('account_id', '=', aal.account_id.id)])
+            if not old_ids:
+                raise osv.except_osv(_('Error'), _('No corresponding analytic journal items with this one: %s') % (aal.name or ''))
+            if len(old_ids) > 1:
+                raise osv.except_osv(_('Error'), _('More than one corresponding line from this one: %s') % (aal.name or ''))
+            ana_obj.write(cr, uid, aal.id, {'reversal_origin': old_ids[0]}, context=context)
+        return True
 
     def reverse_move(self, cr, uid, ids, date=None, context=None):
         """
@@ -415,6 +445,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         success_move_line_ids = []
         move_obj = self.pool.get('account.move')
         j_obj = self.pool.get('account.journal')
+        ana_j_obj = self.pool.get('account.analytic.journal')
         aal_obj = self.pool.get('account.analytic.line')
         j_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
                                        ('is_current_instance', '=', True)], context=context)
@@ -422,6 +453,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
         j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
                                             ('is_current_instance', '=', True)], context=context)
         j_corr_id = j_corr_ids and j_corr_ids[0] or False
+        j_ana_corr_ids = ana_j_obj.search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)], context=context)
+        j_ana_corr_id = j_ana_corr_ids and j_ana_corr_ids[0] or False
         # Search extra-accounting journal
         j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
                                              ('is_current_instance', '=', True)])
@@ -488,6 +521,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                             to_reverse.append(ml.id)
             # Browse all move lines and change information
             new_ml_ids = []
+            tuple_old_new = []
             for ml in self.browse(cr, uid, to_reverse, context=context):
                 amt = -1 * ml.amount_currency
                 name = self.join_without_redundancy(ml.name, 'REV')
@@ -524,14 +558,20 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 if ml.id in ids:
                     success_move_line_ids.append(ml.id)
                 new_ml_ids.append(new_line_id)
+                # If this line is an expense one, add it to the tuple old/new for making a reversal link between them
+                if ml.account_id.user_type_code == 'expense':
+                    tuple_old_new.append((ml.id, new_line_id))
             # Hard post the move
             move_obj.post(cr, uid, [new_move_id], context=context)
             # Update analytic lines data (reversal: True)
             ana_ids = aal_obj.search(cr, uid, [('move_id', 'in', new_ml_ids)])
-            aal_obj.write(cr, uid, ana_ids, {'is_reversal': True,})
+            aal_obj.write(cr, uid, ana_ids, {'is_reversal': True, 'journal_id': j_ana_corr_id, 'last_corrected_id': False,})
             # Update old analytic lines as "is_reallocated" to True
             old_ana_ids = aal_obj.search(cr, uid, [('move_id', 'in', success_move_line_ids)])
             aal_obj.write(cr, uid, old_ana_ids, {'is_reallocated': True,})
+            # Add reversal link between old move line and new ones
+            for pair in tuple_old_new:
+                self.make_reversal_link(cr, uid, pair[0], pair[1], context=context)
             # Save successful new move_id post
             success_move_ids.append(new_move_id)
         return success_move_line_ids, success_move_ids
@@ -610,7 +650,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Retrieve right journal
             journal_id = j_corr_id
 
-            # Abort process if the move line is a donation expense account and that new account is not a donation expense account
+            # Abort process if the move line is a donation account (type for specific treatment) and that new account is not a donation account
             if ml.account_id.type_for_register == 'donation':
                 journal_id = j_extra_id
                 if not journal_id:
@@ -659,7 +699,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'reference': ml.move_id and ml.move_id.name or '',
                 'ref': ml.move_id and ml.move_id.name or '',
             })
-            self.write(cr, uid, [rev_line_id], vals, context=context)
+            self.write(cr, uid, [rev_line_id], vals, context=context, check=False, update_check=False)
             # Do the correction line
             name = self.join_without_redundancy(ml.name, 'COR')
             cor_vals = {
@@ -667,7 +707,6 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'journal_id': journal_id,
                 'corrected_line_id': ml.id,
                 'account_id': new_account_id,
-                'ref': ml.ref,
                 'source_date': ml.source_date or ml.date,
                 'have_an_historic': True,
                 'document_date': ml.document_date,
@@ -678,12 +717,12 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 cor_vals['analytic_distribution_id'] = distrib_id
             else:
                 cor_vals['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
-            self.write(cr, uid, [correction_line_id], cor_vals, context=context)
+            self.write(cr, uid, [correction_line_id], cor_vals, context=context, check=False, update_check=False)
             # Update register line if exists
             if ml.statement_id:
                 self.update_account_on_st_line(cr, uid, [ml.id], new_account_id, context=context)
             # Inform old line that it have been corrected
-            self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context)
+            self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context, check=False, update_check=False)
             # Post the move
             move_obj.post(cr, uid, [move_id], context=context)
             # Change analytic lines that come from:
@@ -704,8 +743,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
             for search_data in search_datas:
                 # keep initial analytic line as corrected line if it the 2nd or more correction on this line
                 if ml.corrected_line_id and search_data[0] == ml.id and first_analytic_line_id:
-                    search_data[1].update({'last_corrected_id': first_analytic_line_id})
-                search_ids = al_obj.search(cr, uid, [('move_id', '=', search_data[0])])
+                    search_data[1].update({'last_corrected_id': first_analytic_line_id, 'have_an_historic': True,})
+                search_ids = al_obj.search(cr, uid, [('move_id', '=', search_data[0]), ('reversal_origin', '=', False), ('last_corrected_id', '=', False)])
                 if search_ids:
                     al_obj.write(cr, uid, search_ids, search_data[1])
             # Add this line to succeded lines
@@ -814,15 +853,17 @@ class account_move(osv.osv):
     _name = 'account.move'
     _inherit = 'account.move'
 
-    def reverse(self, cr, uid, ids, date=False):
+    def reverse(self, cr, uid, ids, date=False, context=None):
         """
         Reverse move
         """
+        if not context:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         reversed_move = []
         for m in self.browse(cr, uid, ids):
-            res_ml_ids, res_move_ids = self.pool.get('account.move.line').reverse_move(cr, uid, [x.id for x in m.line_id], date=date)
+            res_ml_ids, res_move_ids = self.pool.get('account.move.line').reverse_move(cr, uid, [x.id for x in m.line_id], date=date, context=context)
             if res_ml_ids:
                 reversed_move.append(m.id)
         return reversed_move

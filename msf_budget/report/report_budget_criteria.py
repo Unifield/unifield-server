@@ -177,11 +177,11 @@ class report_budget_actual_2(report_sxw.rml_parse):
         if 'granularity' in parameters and parameters['granularity']:
             g = parameters['granularity']
             if g == 'all':
-                res = _('Expenses and destinations')
+                res = _('Accounts and Destinations')
             elif g == 'expense':
-                res = _('Expenses')
+                res = _('Accounts')
             elif g == 'parent':
-                res = _('Parent Expenses only')
+                res = _('Parent Accounts only')
         return res
 
     def getEndMonth(self, context=None):

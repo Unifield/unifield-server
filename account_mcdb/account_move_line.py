@@ -30,6 +30,31 @@ class account_move_line(osv.osv):
     _name = 'account.move.line'
     _inherit = 'account.move.line'
 
+    # UTP-936: Extract the method to calculate the output here, so that it can be used at other places, for example: 
+    # account_mcdb/report/account_mcdb_export.py, which is used to generate csv reports
+    def calculate_output(self, cr, uid, currency_id, ml, round, context):
+        currency_obj = self.pool.get('res.currency')
+        func_amount = ml.amount_currency
+        original_currency = ml.currency_id.id
+        if ml.journal_id.type == 'cur_adj':
+            # UF-2296: in case of Current Adjustmeent Journal (MT)
+            # if output ccy == fonctional ccy we must return functional amount
+            # explanation: export search result account_mcdb/report/account_mcdb_export.py
+            # uses 'output_currency_id' for amount computing even if no output ccy
+            return_func_amount = False
+            if currency_id == ml.functional_currency_id.id:
+                return_func_amount = True
+            #UTP-936: In case of MT journal, the conversion is from functional currency to output currency
+            if ml.debit:
+                func_amount = ml.debit
+            elif ml.credit:
+                func_amount = -ml.credit
+            if return_func_amount:  # UF-2296
+                return func_amount
+            original_currency = ml.functional_currency_id.id
+        # Perform the conversion from original currency to selected currency
+        return currency_obj.compute(cr, uid, original_currency, currency_id, func_amount, round=round, context=context)
+
     def _get_output(self, cr, uid, ids, field_name, arg, context=None):
         """
         Get an amount regarding currency in context (from 'output' and 'output_currency_id' values).
@@ -61,15 +86,16 @@ class account_move_line(osv.osv):
             # output_amount field
             # Update with date
             context.update({'date': ml.source_date or ml.date or strftime('%Y-%m-%d')})
-            mnt = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
-            res[ml.id]['output_amount'] = mnt or 0.0
-            if mnt < 0.0:
+            # Now call the common method to calculate the output values      
+            amount = self.calculate_output(cr, uid, currency_id, ml, round=True, context=context)
+            res[ml.id]['output_amount'] = amount or 0.0
+            if amount < 0.0:
                 res[ml.id]['output_amount_debit'] = 0.0
-                res[ml.id]['output_amount_credit'] = abs(mnt) or 0.0
+                res[ml.id]['output_amount_credit'] = abs(amount) or 0.0
             else:
-                res[ml.id]['output_amount_debit'] = abs(mnt) or 0.0
+                res[ml.id]['output_amount_debit'] = abs(amount) or 0.0
                 res[ml.id]['output_amount_credit'] = 0.0
-            # or output_currency field
+                # or output_currency field
             res[ml.id]['output_currency'] = currency_id
         return res
 

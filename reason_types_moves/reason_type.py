@@ -163,16 +163,6 @@ class stock_inventory_line(osv.osv):
         '''
         if not context:
             context = {}
-        if context.get('update_mode') in ['init', 'update']:
-            required = ['reason_type_id']
-            has_required = False
-            for req in required:
-                if  req in vals:
-                    has_required = True
-                    break
-            if not has_required:
-                logging.getLogger('init').info('Loading default values for stock.picking')
-                vals.update(self.pool.get('stock.picking')._get_default_reason(cr, uid, context))
         return super(stock_inventory_line, self).create(cr, uid, vals, context)
 
 stock_inventory_line()
@@ -218,20 +208,6 @@ class stock_fill_inventory(osv.osv_memory):
         res = super(stock_fill_inventory, self)._hook_fill_datas(cr, uid, *args, **kwargs)
         if kwargs.get('fill_inventory'):
             res.update({'reason_type_id': kwargs['fill_inventory'].reason_type_id.id})
-        
-        # Fix unit tests on stock
-        if kwargs.get('context'):
-            context = kwargs['context']
-            if context.get('update_mode') in ['init', 'update']:
-                required = ['reason_type_id']
-                has_required = False
-                for req in required:
-                    if  req in res and res.get('req'):
-                        has_required = True
-                        break
-                    if not has_required:
-                        logging.getLogger('init').info('Loading default values for stock.picking')
-                        res.update(self.pool.get('stock.picking')._get_default_reason(cr, uid, context))
 
         return res
     
@@ -286,16 +262,6 @@ class stock_picking(osv.osv):
         '''
         if not context:
             context = {}
-        if context.get('update_mode') in ['init', 'update']:
-            required = ['reason_type_id']
-            has_required = False
-            for req in required:
-                if  req in vals:
-                    has_required = True
-                    break
-            if not has_required:
-                logging.getLogger('init').info('Loading default values for stock.picking')
-                vals.update(self._get_default_reason(cr, uid, context))
         return super(stock_picking, self).create(cr, uid, vals, context)
 
     def default_get(self, cr, uid, fields, context=None):
@@ -359,9 +325,10 @@ class stock_move(osv.osv):
     _inherit = 'stock.move'
     
     def hook__create_chained_picking(self, cr, uid, pick_values, picking, context=None):
-        if not context:
+        if context is None:
             context = {}
             
+        pick_values = super(stock_move, self).hook__create_chained_picking(cr, uid, pick_values, picking)
         context.update({'from_chaining': True})
         if not 'reason_type_id' in pick_values:
             reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
@@ -384,18 +351,8 @@ class stock_move(osv.osv):
         '''
         if not context:
             context = {}
-        if context.get('update_mode') in ['init', 'update']:
-            required = ['reason_type_id']
-            has_required = False
-            for req in required:
-                if  req in vals:
-                    has_required = True
-                    break
-            if not has_required:
-                logging.getLogger('init').info('Loading default values for stock.picking')
-                vals.update(self._get_default_reason(cr, uid, context))
 
-        if 'location_dest_id' in vals:
+        if 'location_dest_id' in vals and vals.get('location_dest_id'):
             dest_id = self.pool.get('stock.location').browse(cr, uid, vals['location_dest_id'], context=context)
             if dest_id.usage == 'inventory'  and not dest_id.virtual_location :
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]

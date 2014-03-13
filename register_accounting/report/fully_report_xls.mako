@@ -100,6 +100,7 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
     </Style>
+    <!-- Blue left string for analytic distribution lines -->
     <Style ss:ID="ana_left">
       <Alignment ss:Horizontal="Left" ss:Indent="0"/>
       <Borders>
@@ -109,6 +110,50 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
       <Font ss:Color="#0000ff"/>
+    </Style>
+    <!-- Blue left string for analytic distribution lines -->
+    <Style ss:ID="blue_ana_left">
+      <Alignment ss:Horizontal="Left" ss:Indent="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Color="#0000ff"/>
+    </Style>
+    <!-- Darkblue left string for analytic distribution lines -->
+    <Style ss:ID="darkblue_ana_left">
+      <Alignment ss:Horizontal="Left" ss:Indent="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Color="#8b0082"/>
+    </Style>
+    <!-- Red left string for analytic distribution lines -->
+    <Style ss:ID="red_ana_left">
+      <Alignment ss:Horizontal="Left" ss:Indent="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Color="#ff0000"/>
+    </Style>
+    <!-- Green left string for analytic distribution lines -->
+    <Style ss:ID="green_ana_left">
+      <Alignment ss:Horizontal="Left" ss:Indent="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Color="#006400"/>
     </Style>
     <Style ss:ID="centre">
       <Alignment ss:Horizontal="Center" ss:Indent="0"/>
@@ -208,6 +253,54 @@
       </Borders>
       <Font ss:Color="#0000ff"/>
     </Style>
+    <!-- Formated Number (with thousand separator) for analytic distribution amounts (in blue font color) -->
+    <Style ss:ID="blue_ana_amount">
+      <Alignment ss:Horizontal="Right" ss:Indent="0"/>
+      <NumberFormat ss:Format="Standard"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Color="#0000ff"/>
+    </Style>
+    <!-- Formated Number (with thousand separator) for analytic distribution amounts (in darkblue font color) -->
+    <Style ss:ID="darkblue_ana_amount">
+      <Alignment ss:Horizontal="Right" ss:Indent="0"/>
+      <NumberFormat ss:Format="Standard"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Color="#8b0082"/>
+    </Style>
+    <!-- Formated Number in red for analytic distribution amounts -->
+    <Style ss:ID="red_ana_amount">
+      <Alignment ss:Horizontal="Right" ss:Indent="0"/>
+      <NumberFormat ss:Format="Standard"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Color="#ff0000"/>
+    </Style>
+    <!-- Formated Number in green for analytic distribution amounts -->
+    <Style ss:ID="green_ana_amount">
+      <Alignment ss:Horizontal="Right" ss:Indent="0"/>
+      <NumberFormat ss:Format="Standard"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Color="#006400"/>
+    </Style>
     <!-- Formated Number (without thousand separator) for analytic distribution amounts (in blue font color) -->
     <Style ss:ID="ana_percent">
       <Alignment ss:Horizontal="Right" ss:Indent="0"/>
@@ -275,6 +368,9 @@
   </Worksheet>
 % for o in objects:
   <Worksheet ss:Name="${o.period_id.name|x}, ${o.journal_id.code|x}">
+    <Names>
+      <NamedRange ss:Name="Print_Titles" ss:RefersTo="=!R11"/>
+    </Names>
     <Table>
       <Column ss:Width="95.9527"/>
       <Column ss:Width="70" ss:Span="1"/>
@@ -402,7 +498,7 @@
 % for line in sorted(o.line_ids, key=lambda x: x.sequence_for_reference):
       <Row ss:Height="14.5134">
         <Cell ss:StyleID="centre">
-          <Data ss:Type="String">${line.direct_invoice and _('Direct Invoice') or line.from_cash_return and _('Cash Return') or line.is_down_payment and _('Down Payment') and line.from_import_cheque_id and _('Cheque Import') or (line.transfer_journal_id and not line.is_transfer_with_change and _('Transfer')) or (line.transfer_journal_id and line.is_transfer_with_change and _('Transfer with change')) or line.imported_invoice_line_ids and _('Imported Invoice') or line.from_import_cheque_id and _('Imported Cheque') or _('Direct Payment')|x}</Data>
+          <Data ss:Type="String">${line.direct_invoice and _('Direct Invoice') or (line.from_cash_return and line.account_id.type_for_register == 'advance' and _('Cash Return')) or line.is_down_payment and _('Down Payment') and line.from_import_cheque_id and _('Cheque Import') or (line.transfer_journal_id and not line.is_transfer_with_change and _('Transfer')) or (line.transfer_journal_id and line.is_transfer_with_change and _('Transfer with change')) or line.imported_invoice_line_ids and _('Imported Invoice') or line.from_import_cheque_id and _('Imported Cheque') or _('Direct Payment')|x}</Data>
         </Cell>
         <Cell ss:StyleID="date">
           <Data ss:Type="DateTime">${line.document_date|n}T00:00:00.000</Data>
@@ -419,8 +515,8 @@
         <Cell ss:StyleID="centre">
           <Data ss:Type="String">${line.ref or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="number_centre_bold">
-          <Data ss:Type="Number">${line.account_id.code|x}</Data>
+        <Cell ss:StyleID="left_bold">
+          <Data ss:Type="String">${line.account_id.code + ' ' + line.account_id.name|x}</Data>
         </Cell>
         <Cell ss:StyleID="left_bold">
           <Data ss:Type="String">${(line.partner_id and line.partner_id.name or line.transfer_journal_id and line.transfer_journal_id.name or line.employee_id and line.employee_id.name or '')|x}</Data>
@@ -448,31 +544,17 @@
         </Cell>
       </Row>
 
-% if line.analytic_distribution_id and line.analytic_distribution_id.funding_pool_lines:
-% for ana_line in line.analytic_distribution_id.funding_pool_lines:
-      <Row>
-        <Cell ss:Index="10" ss:StyleID="ana_amount">
-          <Data ss:Type="Number">${line.amount and ana_line.percentage and ((line.amount or 0.0) * (ana_line.percentage or 0.0) / 100) or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${ana_line.destination_id and ana_line.destination_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${ana_line.cost_center_id and ana_line.cost_center_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${ana_line.analytic_id and ana_line.analytic_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_percent">
-          <Data ss:Type="Number">${ana_line.percentage or 0.0}</Data>
-        </Cell>
-      </Row>
+<!-- Direct invoice and invoice that comes from a PL (in a cash return) -->
+<% invoice_lines = [] %>
+% if line.invoice_id:
+<% invoice_lines = line.invoice_id.invoice_line %>
+% elif line.imported_invoice_line_ids:
+% for ji in line.imported_invoice_line_ids:
+<% invoice_lines += ji.invoice.invoice_line %>
 % endfor
 % endif
 
-<!-- Direct invoice and invoice that comes from a PL (in a cash return) -->
-% if line.invoice_id:
-% for inv_line in line.invoice_id.invoice_line:
+% for inv_line in invoice_lines:
       <Row>
         <Cell ss:Index="4" ss:StyleID="text_center">
           <Data ss:Type="String">${inv_line.line_number or ''|x}</Data>
@@ -483,8 +565,8 @@
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.name or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="number_centre">
-          <Data ss:Type="Number">${inv_line.account_id and inv_line.account_id.code or ''|x}</Data>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${inv_line.account_id and inv_line.account_id.code + ' ' + inv_line.account_id.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
           <Data ss:Type="String"></Data>
@@ -496,123 +578,85 @@
           <Data ss:Type="Number">${inv_line.price_subtotal or 0.0}</Data>
         </Cell>
       </Row>
-% if (inv_line.analytic_distribution_id and inv_line.analytic_distribution_id.funding_pool_lines) or (inv_line.invoice_id and inv_line.invoice_id.analytic_distribution_id and inv_line.invoice_id.analytic_distribution_id.funding_pool_lines):
-% if inv_line.analytic_distribution_id:
-% for inv_ana_line in inv_line.analytic_distribution_id.funding_pool_lines:
+% for ana_line in sorted(inv_line.analytic_lines, key=lambda x: x.id):
+<%
+line_color = 'blue'
+if ana_line.is_reallocated:
+    line_color = 'darkblue'
+elif ana_line.is_reversal:
+    line_color = 'green'
+elif ana_line.last_corrected_id:
+    line_color = 'red'
+endif
+%>
       <Row>
-        <Cell ss:Index="10" ss:StyleID="ana_amount">
-          <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and ((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
+        <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
+        <Cell>
+          <Data ss:Type="String"></Data>
         </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.code or ''|x}</Data>
+        <Cell>
+          <Data ss:Type="String"></Data>
         </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
+        <Cell ss:StyleID="${line_color}_ana_amount">
+          <Data ss:Type="Number">${ana_line.amount_currency}</Data>
         </Cell>
-        <Cell ss:StyleID="ana_percent">
-          <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.destination_id and ana_line.destination_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.cost_center_id and ana_line.cost_center_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
         </Cell>
       </Row>
 % endfor
-% elif inv_line.invoice_id.analytic_distribution_id:
-% for inv_ana_line in inv_line.invoice_id.analytic_distribution_id.funding_pool_lines:
-      <Row>
-        <Cell ss:Index="10" ss:StyleID="ana_amount">
-          <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and ((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_percent">
-          <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
-        </Cell>
-      </Row>
 % endfor
-% endif
-% endif
-% endfor
-% endif
 
-<!-- Imported invoice (pending payments) -->
-% if line.imported_invoice_line_ids:
-% for ji in line.imported_invoice_line_ids:
-% for imp_inv_line in ji.invoice.invoice_line:
+<!-- Display analytic lines linked to this register line -->
+% if line.fp_analytic_lines and not line.invoice_id and not line.imported_invoice_line_ids:
+% for ana_line in sorted(line.fp_analytic_lines, key=lambda x: x.id):
+<%
+line_color = 'blue'
+if ana_line.is_reallocated:
+    line_color = 'darkblue'
+elif ana_line.is_reversal:
+    line_color = 'green'
+elif ana_line.last_corrected_id:
+    line_color = 'red'
+endif
+%>
       <Row>
-        <Cell ss:Index="4" ss:StyleID="text_center">
-          <Data ss:Type="String">${imp_inv_line.line_number or ''|x}</Data>
+        <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
-        <Cell ss:StyleID="left">
-          <Data ss:Type="String">${imp_inv_line.product_id and imp_inv_line.product_id.name or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="left">
-          <Data ss:Type="String">${imp_inv_line.name or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="number_centre">
-          <Data ss:Type="Number">${imp_inv_line.account_id and imp_inv_line.account_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="left">
+        <Cell>
           <Data ss:Type="String"></Data>
         </Cell>
-        <Cell ss:StyleID="left">
+        <Cell>
           <Data ss:Type="String"></Data>
         </Cell>
-        <Cell ss:StyleID="amount">
-          <Data ss:Type="Number">${imp_inv_line.price_subtotal or 0.0}</Data>
+        <Cell ss:StyleID="${line_color}_ana_amount">
+          <Data ss:Type="Number">${ana_line.amount_currency}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.destination_id and ana_line.destination_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.cost_center_id and ana_line.cost_center_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
         </Cell>
       </Row>
-% if (imp_inv_line.analytic_distribution_id and imp_inv_line.analytic_distribution_id.funding_pool_lines) or (imp_inv_line.invoice_id and imp_inv_line.invoice_id.analytic_distribution_id and imp_inv_line.invoice_id.analytic_distribution_id.funding_pool_lines):
-% if imp_inv_line.analytic_distribution_id:
-% for inv_ana_line in imp_inv_line.analytic_distribution_id.funding_pool_lines:
-      <Row>
-        <Cell ss:Index="10" ss:StyleID="ana_amount">
-          <Data ss:Type="Number">${imp_inv_line.price_subtotal and inv_ana_line.percentage and ((imp_inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_percent">
-          <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
-        </Cell>
-      </Row>
-% endfor
-% elif imp_inv_line.invoice_id.analytic_distribution_id:
-% for inv_ana_line in imp_inv_line.invoice_id.analytic_distribution_id.funding_pool_lines:
-      <Row>
-        <Cell ss:Index="10" ss:StyleID="ana_amount">
-          <Data ss:Type="Number">${imp_inv_line.price_subtotal and inv_ana_line.percentage and ((imp_inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_percent">
-          <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
-        </Cell>
-      </Row>
-% endfor
-% endif
-% endif
-% endfor
 % endfor
 % endif
 
@@ -626,12 +670,13 @@
         <Footer x:Margin="0"/>
         <PageMargins x:Bottom="0.40" x:Left="0.40" x:Right="0.40" x:Top="0.40"/>
       </PageSetup>
+      <FitToPage/>
       <Print>
+        <FitHeight>0</FitHeight>
         <ValidPrinterInfo/>
         <PaperSizeIndex>9</PaperSizeIndex>
         <Scale>60</Scale>
       </Print>
-      <ShowPageBreakZoom/>
       <PageBreakZoom>70</PageBreakZoom>
       <DoNotDisplayGridlines/>
     </WorksheetOptions>

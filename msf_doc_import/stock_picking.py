@@ -25,8 +25,12 @@ from os import path
 from tools.translate import _
 
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
-from msf_doc_import.wizard import INT_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_int_line_import
-from msf_doc_import.wizard import INT_LINE_COLUMNS_FOR_IMPORT as columns_for_int_line_import
+from msf_doc_import.wizard import INT_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_internal_import
+from msf_doc_import.wizard import INT_LINE_COLUMNS_FOR_IMPORT as columns_for_internal_import
+from msf_doc_import.wizard import IN_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_incoming_import
+from msf_doc_import.wizard import IN_LINE_COLUMNS_FOR_IMPORT as columns_for_incoming_import
+from msf_doc_import.wizard import OUT_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_delivery_import
+from msf_doc_import.wizard import OUT_LINE_COLUMNS_FOR_IMPORT as columns_for_delivery_import
 from msf_doc_import import GENERIC_MESSAGE
 
 import base64
@@ -38,28 +42,70 @@ class stock_picking(osv.osv):
     """
     _inherit = 'stock.picking'
 
-    def wizard_import_int_line(self, cr, uid, ids, context=None):
+    _columns = {
+        'filetype': fields.selection([('excel', 'Excel file'),
+                                      ('xml', 'XML file')], string='Type of file',),
+        'last_imported_filename': fields.char(size=128, string='Filename'),
+    }
+
+    def export_template_file(self, cr, uid, ids, context=None):
+        '''
+        Export the template file in Excel or Pure XML format
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        pick = self.browse(cr, uid, ids[0], context=context)
+        if not pick.filetype:
+            raise osv.except_osv(_('Error'), _('You must select a file type before print the template'))
+
+        report_name = pick.filetype == 'excel' and 'incoming.shipment.xls' or 'incoming.shipment.xml'
+
+        datas = {'ids': ids}
+
+        return {'type': 'ir.actions.report.xml',
+                'report_name': report_name,
+                'datas': datas,
+                'context': context,
+        }
+
+    def wizard_import_pick_line(self, cr, uid, ids, context=None):
         '''
         Launches the wizard to import lines from a file
         '''
-        if context is None:
-            context = {}
+        # Objects
+        wiz_obj = self.pool.get('wizard.import.pick.line')
+
+        context = context is None and {} or context
 
         if isinstance(ids, (int, long)):
             ids = [ids]
 
         context.update({'active_id': ids[0]})
-        columns_header = [(_(f[0]), f[1]) for f in columns_header_for_int_line_import]
-        default_template = SpreadsheetCreator('Template of import', columns_header, [])
+
+        picking = self.browse(cr, uid, ids[0], context=context)
+        if picking.type == 'in':
+            header_cols = columns_header_for_incoming_import
+            cols = columns_for_incoming_import
+        elif picking.type == 'out' and picking.subtype == 'standard':
+            header_cols = columns_header_for_delivery_import
+            cols = columns_for_delivery_import
+        else:
+            header_cols = columns_header_for_internal_import
+            cols = columns_for_incoming_import
+
+        columns_header = [(_(f[0]), f[1]) for f in header_cols]
+        default_template = SpreadsheetCreator(_('Template of import'), columns_header, [])
         file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
-        export_id = self.pool.get('wizard.import.int.line').create(cr, uid, {'file': file,
-                                                                             'filename_template': 'template.xls',
-                                                                             'filename': 'Lines_Not_Imported.xls',
-                                                                             'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_int_line_import]), ),
-                                                                             'int_id': ids[0],
-                                                                             'state': 'draft',}, context)
+        export_id = wiz_obj.create(cr, uid, {'file': file,
+                                             'filename_template': 'template.xls',
+                                             'filename': 'Lines_Not_Imported.xls',
+                                             'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in cols])),
+                                             'picking_id': ids[0],
+                                             'state': 'draft',}, context=context)
+
         return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.import.int.line',
+                'res_model': 'wizard.import.pick.line',
                 'res_id': export_id,
                 'view_type': 'form',
                 'view_mode': 'form',
@@ -106,7 +152,7 @@ class stock_move(osv.osv):
         tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
         tbd_product = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
         message = ''
-        
+
         if not context.get('import_in_progress') or not context.get('button') and context.get('button') == 'save_and_close':
             if vals.get('product_uom') == tbd_uom:
                 message += _('You have to define a valid UoM, i.e. not "To be defined".')

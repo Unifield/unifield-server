@@ -110,7 +110,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                     self.write(cr, uid, [w.id], {'progression': progression})
                     distrib_id = False
                     # Create analytic distribution
-                    if l.account_id.user_type_code == 'expense':
+                    if l.account_id.is_analytic_addicted:
                         distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
                         common_vals = {
                             'distribution_id': distrib_id,
@@ -322,8 +322,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                             errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, line[cols['Third party']],))
                             continue
                         r_partner = tp_ids[0]
-                    # Check analytic axis only if G/L account is an expense account
-                    if account.user_type_code == 'expense':
+                    # Check analytic axis only if G/L account is analytic-a-holic
+                    if account.is_analytic_addicted:
                         # Check Destination
                         if not line[cols['Destination']]:
                             errors.append(_('Line %s. No destination specified!') % (current_line_num,))

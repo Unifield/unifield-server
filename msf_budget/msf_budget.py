@@ -93,9 +93,9 @@ class msf_budget(osv.osv):
         'decision_moment_order': fields.related('decision_moment_id', 'order', string="Decision Moment Order", readonly=True, store=True, type="integer"),
         'version': fields.integer('Version'),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
-        'display_type': fields.selection([('all', 'Expenses and destinations'),
-                                          ('expense', 'Expenses only'),
-                                          ('view', 'Parent expenses only')], string="Display type"),
+        'display_type': fields.selection([('all', 'Accounts and destinations'),
+                                          ('expense', 'Accounts only'),
+                                          ('view', 'Parent accounts only')], string="Display type"),
         'type': fields.selection([('normal', 'Normal'), ('view', 'View')], string="Budget type"),
         'total_budget_amount': fields.function(_get_total_budget_amounts, method=True, store=False, string="Total Budget Amount", type="float", readonly=True),
         'instance_type': fields.function(_get_instance_type, fnct_search=_search_instance_type, method=True, store=False, string='Instance type', type='selection', selection=[('section', 'HQ'), ('coordo', 'Coordo'), ('project', 'Project')], readonly=True),
@@ -132,8 +132,8 @@ class msf_budget(osv.osv):
                                                 'decision_moment_id': budget.decision_moment_id.id,
                                                 'type': 'view'}, context=context)
                 # Create all lines for all accounts/destinations (no budget values, those are retrieved)
-                expense_account_ids = self.pool.get('account.account').search(cr, uid, [('user_type_code', '=', 'expense'),
-                                                                                        ('user_type_report_type', '=', 'expense'),
+                expense_account_ids = self.pool.get('account.account').search(cr, uid, [('is_analytic_addicted', '=', True),
+                                                                                        ('user_type_report_type', '!=', 'none'),
                                                                                         ('type', '!=', 'view')], context=context)
                 destination_obj = self.pool.get('account.destination.link')
                 destination_link_ids = destination_obj.search(cr, uid, [('account_id', 'in',  expense_account_ids)], context=context)
@@ -172,33 +172,40 @@ class msf_budget(osv.osv):
     
     
     def budget_summary_open_window(self, cr, uid, ids, context=None):
-        parent_line_id = False
-        fiscalyear_id = self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), True, context=context)
-        prop_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        if prop_instance.top_cost_center_id:
-            cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
-                                                    AND cost_center_id = %s \
-                                                    AND state != 'draft' \
-                                                    ORDER BY decision_moment_order DESC, version DESC LIMIT 1",
-                                                    (fiscalyear_id,
-                                                     prop_instance.top_cost_center_id.id))
-            if cr.rowcount:
-                # A budget was found
-                budget_id = cr.fetchall()[0][0]
-                parent_line_id = self.pool.get('msf.budget.summary').create(cr,
-                                                                            uid,
-                                                                            {'budget_id': budget_id},
-                                                                            context=context)
-        context.update({'display_fp': True})
-        return {
-               'type': 'ir.actions.act_window',
-               'res_model': 'msf.budget.summary',
-               'view_type': 'tree',
-               'view_mode': 'tree',
-               'target': 'current',
-               'domain': [('id', '=', parent_line_id)],
-               'context': context
-        }
+        budget_id = False
+        if not ids:
+            fiscalyear_id = self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), True, context=context)
+            prop_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+            if prop_instance.top_cost_center_id:
+                cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
+                            AND cost_center_id = %s \
+                            AND state != 'draft' \
+                            ORDER BY decision_moment_order DESC, version DESC LIMIT 1",
+                            (fiscalyear_id,
+                             prop_instance.top_cost_center_id.id))
+                if cr.rowcount:
+                    # A budget was found
+                    budget_id = cr.fetchall()[0][0]
+        else:
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            budget_id = ids[0]
+            
+        if budget_id:
+            parent_line_id = self.pool.get('msf.budget.summary').create(cr,
+                uid, {'budget_id': budget_id}, context=context)
+            if parent_line_id:
+                context.update({'display_fp': True})
+                return {
+                       'type': 'ir.actions.act_window',
+                       'res_model': 'msf.budget.summary',
+                       'view_type': 'tree',
+                       'view_mode': 'tree',
+                       'target': 'current',
+                       'domain': [('id', '=', parent_line_id)],
+                       'context': context
+                }
+        return {}
         
 msf_budget()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -12,6 +12,7 @@
                         <field name="name" colspan="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <field name="donor_id" colspan="2" on_change="onchange_donor_id(donor_id, format_id, actual_line_ids)"
                             attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <field name="instance_id" colspan="1" domain="[('level','=','coordo')]" attrs="{'readonly': [('state','in',('soft_closed','hard_closed'))]}" /> 
                         <field name="reporting_type" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <separator string="Dates"/>
                         <field name="eligibility_from_date" on_change="onchange_date(eligibility_from_date, eligibility_to_date)"
@@ -103,9 +104,15 @@
                                             <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                             <field name="overhead_percentage" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                         </group>
-                                        <field name="account_destination_ids" colspan="4" string="Account/Destination"
+                                        <field name="is_quadruplet" attrs="{'invisible': [('line_type', '=', 'view')]}"/>
+                                        <field name="account_destination_ids" colspan="4" string="Account/Destination" nolabel="1"
                                                context="context" 
-                                               attrs="{'invisible': [('line_type', '=', 'view')]}">
+                                               attrs="{'invisible': [('|'), ('line_type', '=', 'view'), ('is_quadruplet', '=', True)]}">
+                                        </field>
+                                        <field name="account_quadruplet_ids" colspan="4" string="Account/Destination/Funding Pool/Cost Centre" nolabel="1"
+                                               context="context" 
+                                               attrs="{'invisible': [('|'), ('line_type', '=', 'view'), ('is_quadruplet', '=', False)]}"
+                                               domain="[('format_id', '=', parent.format_id)]">
                                         </field>
                                     </form>
                                 </field>
@@ -142,6 +149,51 @@
                         </tree>
                 </field>
             </record>
+    
+            <record id="view_financing_contract_account_quadruplet_tree" model="ir.ui.view">
+                <field name="name">financing.contract.account.quadruplet.tree</field>
+                <field name="model">financing.contract.account.quadruplet</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree string="Account/Destination/Funding Pool/Cost Centre" colors="grey:used_in_contract" notselectable="used_in_contract">
+                        <field name="format_id" invisible="1"/>
+                        <field name="account_destination_name"/>
+                        <field name="funding_pool_id"/>
+                        <field name="cost_center_id"/>
+                        <field name="used_in_contract" invisible='1'/>
+                    </tree>
+                </field>
+            </record>
+            
+            <record id="view_financing_contract_account_quadruplet_form" model="ir.ui.view">
+                <field name="name">financing.contract.account.quadruplet.form</field>
+                <field name="model">financing.contract.account.quadruplet</field>
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <form>
+                        <field name="account_destination_name" readonly="1" />
+                        <field name="account_destination_id"/>
+                        <field name="funding_pool_id" domain="[('category', '=', 'FUNDING')]"/>
+                        <field name="cost_center_id" domain="[('category', '=', 'OC')]"/>
+                        <!-- UTP-908 FIXME hiding format_id pre-filled with 'Format' (click on m2o gives let me fix) -->
+                        <field name="format_id" invisible="1"/>
+                        <field name="used_in_contract" invisible='1'/>
+                    </form>
+                </field>
+            </record>
+	
+	        <record id="view_financing_contract_account_quadruplet_search" model="ir.ui.view">
+	            <field name="name">financing.contract.account.quadruplet.search</field>
+	            <field name="model">financing.contract.account.quadruplet</field>
+	            <field name="type">search</field>
+	            <field name="arch" type="xml">
+	                <search string="Search Account/Destination/Funding Pool/Cost Centre">
+                        <field name="account_destination_id" string="Account"/>
+                        <field name="funding_pool_id" domain="[('category', '=', 'FUNDING')]"/>
+                        <field name="cost_center_id" domain="[('category', '=', 'OC')]"/>
+	                </search>
+	            </field>
+	        </record>
 
             <record id="view_financing_contract_contract_tree" model="ir.ui.view">
                 <field name="name">financing.contract.contract.tree</field>

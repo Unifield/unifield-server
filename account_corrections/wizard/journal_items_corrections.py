@@ -80,7 +80,7 @@ class journal_items_corrections_lines(osv.osv_memory):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Change account_id domain if account is donation expense
+        Change account_id domain if account is donation
         """
         if not context:
             context = {}

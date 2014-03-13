@@ -159,6 +159,18 @@
         		</data>
         	</field>
         </record>
+
+        <record id="catalogue_product_search_view" model="ir.ui.view">
+            <field name="name">catalogue.product.search.view</field>
+            <field name="model">product.product</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="product.product_search_form_view" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='list_ids']" position="after">
+                    <field name="catalogue_ids" widget="many2one" />
+                </xpath>
+            </field>
+        </record>
         
         
         <!-- Remove pricelists configuration menu entries -->

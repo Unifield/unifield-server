@@ -61,6 +61,7 @@ from osv import osv, fields
 from tools.translate import _
 from mx import DateTime
 import base64
+import decimal_precision as dp
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import time
@@ -165,6 +166,7 @@ class wizard_import_po(osv.osv_memory):
         'percent_completed': fields.integer('% completed', readonly=True),
         'state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done')],
                                   string="State", required=True, readonly=True),
+        'line_ids': fields.one2many('wizard.simu.import.po.line', 'import_id', string='Purchase Order Lines'),
     }
     
     _defaults = {
@@ -496,6 +498,7 @@ The columns should be in this values:
         pol_obj = self.pool.get('purchase.order.line')
         import_po_obj = self.pool.get('purchase.import.xml.line')
         import_obj = self.pool.get('purchase.line.import.xml.line')
+        simu_line_obj = self.pool.get('wizard.simu.import.po.line')
         context.update({'import_in_progress': True, 'po_integration': True})
         cell_data = self.pool.get('import.cell.data')
         start_time = time.time()
@@ -846,9 +849,8 @@ The columns should be in this values:
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         msg_to_return = _("""
-Important, please do not update the Purchase Order %s
-Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
-Otherwise, you can continue to use Unifield.""") % self.pool.get('purchase.order').read(cr, uid, po_id, ['name'])['name']
+        Please note that %s is temporary closed during the import to avoid conflict accesses (you can see the loading on the PO note tab check box). At the end of the load, POXX will be back in the right state. You can refresh the screen if you need to follow the upload progress
+""") % self.pool.get('purchase.order').read(cr, uid, po_id, ['name'])['name']
         return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
 
     def dummy(self, cr, uid, ids, context=None):
@@ -919,6 +921,91 @@ Otherwise, you can continue to use Unifield.""") % self.pool.get('purchase.order
                 }
     
 wizard_import_po()
+
+
+class wizard_simu_import_po_line(osv.osv_memory):
+    _name = 'wizard.simu.import.po.line'
+
+    def _get_discrepancy(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Get the discrepancy for all lines
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = (line.import_qty * line.import_unit_price) - (line.initial_qty * line.initial_unit_price)
+
+        return res
+
+    _columns = {
+        'line_id': fields.many2one('purchase.order.line', string='Purchase Order Line', required=True, readonly=True),
+        'import_id': fields.many2one('wizard.import.po', string='Simulation'),
+        'initial_product_code': fields.char(size=32, string='Product Code'),
+        'initial_product_name': fields.char(size=256, string='Product Description'),
+        'initial_nomenclature': fields.char(size=256, string='Nomenclature'),
+        'initial_comment': fields.char(size=256, string='Comment'),
+        'initial_qty': fields.float(digits=(16,2), string='Qty'),
+        'initial_uom_id': fields.many2one('product.uom', string='UoM'),
+        'initial_req_date': fields.date(string='Delivery Requested Date'),
+        'initial_unit_price': fields.float(digits_compute=dp.get_precision('Sale Price Computation'), string='Unit Price'),
+        'initial_origin': fields.char(size=256, string='Origin'),
+        'initial_currency': fields.many2one('res.currency', string='Currency'),
+        'line_number': fields.integer(string='Line'),
+        'change_type': fields.selection([('split', 'Split'),
+                                         ('error', 'Error'),
+                                         ('del', 'Del'),
+                                         ('new', 'New')], string='CHG'),
+        'import_product_code': fields.char(size=32, string='Product Code'),
+        'import_product_name': fields.char(size=256, string='Product Description'),
+        'import_qty': fields.float(digits=(16,2), string='Qty'),
+        'import_uom_id': fields.many2one('product.uom', string='UoM'),
+        'import_unit_price': fields.float(digits_compute=dp.get_precision('Sale Price Computation'), string='Unit Price'),
+        'discrepancy': fields.function(_get_discrepancy, method=True, string='Discrepancy', type='float',
+                                       digits_compute=dp.get_precision('Sale Price Computation'), store=False),
+        'currency_id': fields.many2one('res.currency', string='Currency'),
+        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
+        'message_esc1': fields.char(size=256, string='Message ESC1'),
+        'message_esc2': fields.char(size=256, string='Message ESC2'),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Set the initial values at creation
+        '''
+        res = super(wizard_simu_import_po_line, self).create(cr, uid, vals, context=context)
+        self.set_initial_data(cr, uid, [res], context=context)
+        return res
+
+    def set_initial_data(self, cr, uid, ids, context=None):
+        '''
+        Set the initial data with the values of the Purchase Order Line
+        '''
+        if not context:
+            context = {}
+
+        for simu_line in self.browse(cr, uid, ids, context=context):
+            line = simu_line.line_id
+            self.write(cr, uid, [simu_line.id], {'line_id': line.id,
+                                                 'initial_product_code': line.product_id and line.product_id.default_code,
+                                                 'initial_product_name': line.product_id and line.product_id.name,
+                                                 'initial_nomenclature': line.nomenclature_description,
+                                                 'initial_comment': line.comment,
+                                                 'initial_qty': line.product_qty,
+                                                 'initial_uom_id': line.product_uom.id,
+                                                 'initial_req_date': line.date_planned,
+                                                 'initial_unit_price': line.price_unit,
+                                                 'initial_origin': line.origin,
+                                                 'initial_currency': line.currency_id.id,
+                                                 'line_number': line.line_number,}, context=context)
+        
+        return True
+
+wizard_simu_import_po_line()
 
 
 class wizard_export_po(osv.osv_memory):

@@ -20,6 +20,8 @@
 ##############################################################################
 from osv import osv, fields
 import datetime
+from tools.translate import _
+
 
 class wizard_local_expenses(osv.osv_memory):
     _name = "wizard.local.expenses"
@@ -30,8 +32,8 @@ class wizard_local_expenses(osv.osv_memory):
         'end_period_id': fields.many2one('account.period', 'Period To'),
         'breakdown': fields.selection([('month','By month'),
                                        ('year','Total figure')], 'Breakdown', select=1, required=True),
-        'granularity': fields.selection([('all','By expense account'),
-                                         ('parent','By parent expense account')], 'Granularity', select=1, required=True),
+        'granularity': fields.selection([('all','By account'),
+                                         ('parent','By parent account')], 'Granularity', select=1, required=True),
         'booking_currency_id': fields.many2one('res.currency', 'Booking currency'),
         'output_currency_id': fields.many2one('res.currency', 'Output currency', required=True),
         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Centre', domain=[('category', '=', 'OC')], required=True),
@@ -72,6 +74,8 @@ class wizard_local_expenses(osv.osv_memory):
         if wizard.booking_currency_id:
             data['form'].update({'booking_currency_id': wizard.booking_currency_id.id})
 
+        instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
+        data['target_filename'] = '%s_%s_%s' % (_('Local Expenses'), instance and instance.code or '', datetime.datetime.now().strftime('%Y%m%d'))
         return {'type': 'ir.actions.report.xml', 'report_name': 'local.expenses', 'datas': data}
 
 wizard_local_expenses()

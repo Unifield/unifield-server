@@ -68,6 +68,45 @@ class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
+    def _get_invoice_report_name(self, cr, uid, ids, context=None):
+        '''
+        Returns the name of the invoice according to its type
+        '''
+        if isinstance(ids, list):
+            ids = ids[0]
+
+        inv = self.browse(cr, uid, ids, context=context)
+        inv_name = inv.number or inv.name or 'No_description'
+        prefix = 'STV_'
+
+        if inv.type == 'out_refund': # Customer refund    
+            prefix = 'CR_'
+        elif inv.type == 'in_refund': # Supplier refund
+            prefix = 'SR_'
+        elif inv.type == 'out_invoice': 
+            # Stock transfer voucher
+            prefix = 'STV_'
+            # Debit note
+            if inv.is_debit_note and not inv.is_inkind_donation and not inv.is_intermission:
+                prefix = 'DN_'
+            # Intermission voucher OUT
+            elif not inv.is_debit_note and not inv.is_inkind_donation and inv.is_intermission:
+                prefix = 'IMO_'
+        elif inv.type == 'in_invoice':
+            # Supplier invoice
+            prefix = 'SI_'
+            # Intermission voucher IN
+            if not inv.is_debit_note and not inv.is_inkind_donation and inv.is_intermission:
+                prefix = 'IMI_'
+            # Direct invoice
+            elif inv.is_direct_invoice:
+                prefix = 'DI_'
+            # In-kind donation
+            elif not inv.is_debit_note and inv.is_inkind_donation:
+                prefix = 'DON_'
+
+        return '%s%s' % (prefix, inv_name)
+
     def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Fake method for 'ready_for_import_in_debit_note' field
@@ -101,7 +140,24 @@ class account_invoice(osv.osv):
         res = {}
         name = field_name.replace("fake_", '')
         for i in self.browse(cr, uid, ids):
-            res[i.id] = getattr(i, name, False) and getattr(getattr(i, name, False), 'id', False) or False
+            if context and context.get('is_intermission', False):
+                res[i.id] = False
+                if name == 'account_id':
+                    user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+                    if user[0].company_id.intermission_default_counterpart:
+                        res[i.id] = user[0].company_id.intermission_default_counterpart.id
+                elif name == 'journal_id':
+                    int_journal_id = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission')], context=context)
+                    if int_journal_id:
+                        if isinstance(int_journal_id, (int, long)):
+                            int_journal_id = [int_journal_id]
+                        res[i.id] = int_journal_id[0]
+                elif name == 'currency_id':
+                    user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+                    if user[0].company_id.currency_id:
+                        res[i.id] = user[0].company_id.currency_id.id
+            else:
+                res[i.id] = getattr(i, name, False) and getattr(getattr(i, name, False), 'id', False) or False
         return res
 
     def _get_have_donation_certificate(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -137,6 +193,35 @@ class account_invoice(osv.osv):
         'is_inkind_donation': lambda obj, cr, uid, c: c.get('is_inkind_donation', False),
         'is_intermission': lambda obj, cr, uid, c: c.get('is_intermission', False),
     }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        defaults = super(account_invoice, self).default_get(cr, uid, fields, context=context)
+        if context and context.get('is_intermission', False):
+            intermission_type = context.get('intermission_type', False)
+            if intermission_type in ('in', 'out'):
+                # UF-2270: manual intermission (in or out)
+                if defaults is None:
+                    defaults = {}
+                user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+                if user and user[0] and user[0].company_id:
+                    # get company default currency
+                    if user[0].company_id.currency_id:
+                        defaults['fake_currency_id'] = user[0].company_id.currency_id.id
+                        defaults['currency_id'] = defaults['fake_currency_id']
+                    # get 'intermission counter part' account
+                    if user[0].company_id.intermission_default_counterpart:
+                        defaults['fake_account_id'] = user[0].company_id.intermission_default_counterpart.id
+                        defaults['account_id'] = defaults['fake_account_id']
+                    else:
+                        raise osv.except_osv("Error","Company Intermission Counterpart Account must be set")
+                # 'INT' intermission journal
+                int_journal_id = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission')], context=context)
+                if int_journal_id:
+                    if isinstance(int_journal_id, (int, long)):
+                        int_journal_id = [int_journal_id]
+                    defaults['fake_journal_id'] = int_journal_id[0]
+                    defaults['journal_id'] = defaults['fake_journal_id']
+        return defaults
 
     def log(self, cr, uid, id, message, secondary=False, context=None):
         """
@@ -196,6 +281,7 @@ class account_invoice(osv.osv):
         Get default donation account for Donation invoices.
         Get default intermission account for Intermission Voucher IN/OUT invoices.
         Get default currency from partner if this one is linked to a pricelist.
+        Ticket utp917 - added code to avoid currency cd change if a direct invoice
         """
         res = super(account_invoice, self).onchange_partner_id(cr, uid, ids, type, partner_id, date_invoice, payment_term, partner_bank_id, company_id)
         if is_inkind_donation and partner_id:
@@ -212,17 +298,20 @@ class account_invoice(osv.osv):
             res['value'].update({'fake_account_id': res['value'].get('account_id')})
         if partner_id and type:
             p = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            if ids: #utp917
+                ai = self.browse(cr, uid, ids)[0]
             if p:
                 c_id = False
                 if type in ['in_invoice', 'out_refund'] and p.property_product_pricelist_purchase:
                     c_id = p.property_product_pricelist_purchase.currency_id.id
                 elif type in ['out_invoice', 'in_refund'] and p.property_product_pricelist:
                     c_id = p.property_product_pricelist.currency_id.id
-                if c_id:
-                    if not res.get('value', False):
-                        res['value'] = {'currency_id': c_id}
-                    else:
-                        res['value'].update({'currency_id': c_id})
+                if ids:
+                    if c_id and not ai.is_direct_invoice:   #utp917
+                        if not res.get('value', False):
+                            res['value'] = {'currency_id': c_id}
+                        else:
+                            res['value'].update({'currency_id': c_id})
 
         return res
 

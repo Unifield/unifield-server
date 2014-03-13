@@ -55,9 +55,12 @@ class msf_budget_summary(osv.osv_memory):
                 for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
                     actual_amount += analytic_line.amount
             
-            res[summary_line.id] = {'actual_amount': actual_amount,
-                                    'budget_amount': budget_amount}
-            
+            actual_amount = abs(actual_amount)
+            res[summary_line.id] = {
+                'actual_amount': actual_amount,
+                'budget_amount': budget_amount,
+                'balance_amount': budget_amount - actual_amount,  # utp-857
+            }
         return res
     
     _columns = {
@@ -66,6 +69,7 @@ class msf_budget_summary(osv.osv_memory):
         'code': fields.related('budget_id', 'code', type="char", string="Budget Code", store=False),
         'budget_amount': fields.function(_get_amounts, method=True, store=False, string="Budget Amount", type="float", multi="all"),
         'actual_amount': fields.function(_get_amounts, method=True, store=False, string="Actual Amount", type="float", multi="all"),
+        'balance_amount': fields.function(_get_amounts, method=True, store=False, string="Balance Amount", type="float", multi="all"),  # utp-857
         'parent_id': fields.many2one('msf.budget.summary', 'Parent'),
         'child_ids': fields.one2many('msf.budget.summary', 'parent_id', 'Children'),
     }

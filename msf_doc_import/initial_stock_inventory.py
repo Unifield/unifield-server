@@ -201,7 +201,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         batch = False
                         to_correct_ok = True
                         import_to_correct = True
-                        error_list.append(_('The batch %s was not found in the database.' % batch_name))
+                        error_list.append(_('The batch %s was not found in the database.') % batch_name)
                     else:
                         batch = batch_ids[0]
                 except Exception:
@@ -221,7 +221,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         batch = False
                         to_correct_ok = True
                         import_to_correct = True
-                        error_list.append(_('No batch found for the expiry date %s.' % expiry))
+                        error_list.append(_('No batch found for the expiry date %s.') % (expiry,))
                     else:
                         batch = batch_ids[0]
                 elif expiry and batch:
@@ -250,7 +250,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 product = product_obj.browse(cr, uid, product_id)
                 product_uom = product.uom_id.id
                 hidden_batch_management_mandatory = product.batch_management
-                hidden_perishable_mandatory = product.perishable
+                hidden_perishable_mandatory = product.perishable and not product.batch_management
                 if hidden_batch_management_mandatory and not batch:
                     comment += _('Batch is missing.\n')
                 if hidden_perishable_mandatory and not expiry:
@@ -318,23 +318,6 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s : %s')% (plural, message))
         return True
 
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        '''
-        Remove lines
-        '''
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        vals = {}
-        vals['inventory_line_id'] = []
-        for line in self.browse(cr, uid, ids, context=context):
-            line_browse_list = line.inventory_line_id
-            for var in line_browse_list:
-                vals['inventory_line_id'].append((2, var.id))
-            self.write(cr, uid, ids, vals, context=context)
-        return True
-        
 stock_inventory()
 
 
@@ -481,23 +464,6 @@ class initial_stock_inventory(osv.osv):
     _constraints = [
         (_check_active_product, "You cannot confirm this stock inventory because it contains a line with an inactive product", ['order_line', 'state'])
     ]
-
-    #def button_remove_lines(self, cr, uid, ids, context=None):
-    #    '''
-    #    Remove lines
-    #    '''
-    #    if context is None:
-    #        context = {}
-    #    if isinstance(ids, (int, long)):
-    #        ids = [ids]
-    #    vals = {}
-    #    vals['order_line'] = []
-    #    for line in self.browse(cr, uid, ids, context=context):
-    #        line_browse_list = line.order_line
-    #        for var in line_browse_list:
-    #            vals['order_line'].append((2, var.id))
-    #        self.write(cr, uid, ids, vals, context=context)
-    #    return True'''
 
     def import_file(self, cr, uid, ids, context=None):
         '''
@@ -737,23 +703,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s : %s')% (plural, message))
         return True
 
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        '''
-        Remove lines
-        '''
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        vals = {}
-        vals['inventory_line_id'] = []
-        for line in self.browse(cr, uid, ids, context=context):
-            line_browse_list = line.inventory_line_id
-            for var in line_browse_list:
-                vals['inventory_line_id'].append((2, var.id))
-            self.write(cr, uid, ids, vals, context=context)
-        return True
-        
 initial_stock_inventory()
 
 class initial_stock_inventory_line(osv.osv):

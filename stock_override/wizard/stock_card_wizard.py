@@ -221,7 +221,7 @@ class stock_card_wizard(osv.osv_memory):
         if not context:
             context = {}
 
-        if isistance(ids, (int, long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         raise NotImplementedError

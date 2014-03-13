@@ -357,7 +357,8 @@ class product_attributes(osv.osv):
         'heat_sensitive_item': fields.many2one('product.heat_sensitive', 'Temperature sensitive item',),
         'cold_chain': fields.many2one('product.cold_chain', 'Cold Chain',),
         'show_cold_chain': fields.boolean('Show cold chain'),
-
+        # Inverse of m2m options_ids
+        'options_ids_inv': fields.many2many('product.product', 'product_options_rel', 'product_option_id', 'product_id', 'Options Inv.'),
         'sterilized': fields.selection([('yes', 'Yes'), ('no', 'No')], string='Sterile'),
         'single_use': fields.selection([('yes', 'Yes'),('no', 'No')], string='Single Use'),
         'justification_code_id': fields.many2one('product.justification.code', 'Justification Code'),
@@ -490,7 +491,7 @@ class product_attributes(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if not context:
+        if context is None:
             context = {}
         
         error = False
@@ -536,11 +537,11 @@ class product_attributes(osv.osv):
                 st_cond = product.state.no_external or product.state.no_esc or product.state.no_internal
             elif product.no_external and 'external' in constraints:
                 error = True
-                msg = _('be %s externally' % (sale_obj and _('shipped') or _('purchased')))
+                msg = _('be %s externally') % (sale_obj and _('shipped') or _('purchased'))
                 st_cond = product.state.no_external
             elif product.no_esc and 'esc' in constraints:
                 error = True
-                msg = _('be %s ESC' % (sale_obj and _('shipped to') or _('purchased at')))
+                msg = _('be %s ESC') % (sale_obj and _('shipped to') or _('purchased at'))
                 st_cond = product.state.no_esc
             elif product.no_internal and 'internal' in constraints:
                 error = True

@@ -32,12 +32,12 @@
                     <button name="action_draft" position="replace">
                         <group>
                             <label string="" colspan="1"/>
-                            <button name="action_set_state" states="field-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" context="{'state': 'draft'}" colspan="1"/>
-                            <button name="action_set_state" states="mission-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Mission)" type="object" icon="gtk-go-back" context="{'state': 'field-closed'}" colspan="1"/>
-                            <button name="action_set_state" states="created" confirm="Are you sure you want to open this period?" string="Open period" type="object" icon="gtk-go-forward" context="{'state': 'draft'}" colspan="1"/>
-                            <button name="action_set_state" states="draft" confirm="Are you sure you want to close this period?" string="Close period (Field)" type="object" icon="gtk-go-forward" context="{'state': 'field-closed'}" colspan="1"/>
-                            <button name="action_set_state" states="field-closed" confirm="Are you sure you want to close this period?" string="Close period (Mission)" type="object" icon="gtk-go-forward" context="{'state': 'mission-closed'}" colspan="1"/>
-                            <button name="action_set_state" states="mission-closed" confirm="Are you sure you want to close this period?" string="Close period (HQ)" type="object" icon="gtk-go-forward" context="{'state': 'done'}" colspan="1"/>
+                            <button name="action_reopen_field" states="field-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" colspan="1"/>
+                            <button name="action_reopen_mission" states="mission-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Mission)" type="object" icon="gtk-go-back" colspan="1"/>
+                            <button name="action_open_period" states="created" confirm="Are you sure you want to open this period?" string="Open period" type="object" icon="gtk-go-forward" colspan="1"/>
+                            <button name="action_close_field" states="draft" confirm="Are you sure you want to close this period?" string="Close period (Field)" type="object" icon="gtk-go-forward" colspan="1"/>
+                            <button name="action_close_mission" states="field-closed" confirm="Are you sure you want to close this period?" string="Close period (Mission)" type="object" icon="gtk-go-forward" colspan="1"/>
+                            <button name="action_close_hq" states="mission-closed" confirm="Are you sure you want to close this period?" string="Close period (HQ)" type="object" icon="gtk-go-forward" colspan="1"/>
                         </group>
                     </button>
                 </data>
@@ -70,8 +70,8 @@
                         <field name="special"/>
                         <field name="state"/>
                         <field name="number" invisible="1"/>
-                        <button name="action_set_state" states="field-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" context="{'state': 'draft'}" colspan="1"/>
-                        <button name="action_set_state" states="created" confirm="Are you sure you want to open this period?" string="Open period" type="object" icon="gtk-go-forward" context="{'state': 'draft'}" colspan="1"/>
+                        <button name="action_reopen_field" states="field-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" colspan="1"/>
+                        <button name="action_open_period" states="created" confirm="Are you sure you want to open this period?" string="Open period" type="object" icon="gtk-go-forward" colspan="1"/>
                     </tree>
                 </tree>
             </field>
@@ -104,7 +104,7 @@
                         </head>
                         <body style="border:0; margin: 0;">
                             <p style="width: 700px; margin: 15px 0 25px 5px;">You have to verify manually:<br/>
-                            - Check that fx rates have been updated for the period to close<br/>
+                            - Check that FX rates have been updated for the period to close<br/>
                             - Check that HR entries from the Homere interface have been imported<br/>
                             - Check list of monthly accruals (all records, by account)<br/>
                             - Check list of recurring entries for the period (check that they have been generated)<br/>
@@ -120,7 +120,7 @@
                     <group col="4" colspan="4">
                         <label string="" colspan="2"/>
                         <button string='No' special='cancel' icon='gtk-cancel'/>
-                        <button name="button_confirm" type="object" string="Yes" icon="gtk-ok" confirm="Have you really do all verifications given at screen?"/>
+                        <button name="button_confirm" type="object" string="Yes" icon="gtk-ok" confirm="Have you performed all verifications on the previous screen?"/>
                     </group>
                 </form>
             </field>

@@ -101,6 +101,47 @@ class account_bank_statement(osv.osv):
 
 account_bank_statement()
 
+class account_bank_statement_line(osv.osv):
+    _name = 'account.bank.statement.line'
+    _inherit = 'account.bank.statement.line'
+    _trace = True
+
+    def _get_partner_type2(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Get "Third Parties" audittrail version
+        (audittrail does not process field function reference for now)
+        """
+        res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for st_line in self.browse(cr, uid, ids, context=context):
+            if st_line.employee_id:
+                res[st_line.id] = st_line.employee_id.name
+            elif st_line.transfer_journal_id:
+                res[st_line.id] = st_line.transfer_journal_id.name
+            elif st_line.partner_id:
+                res[st_line.id] = st_line.partner_id.name
+            else:
+                res[st_line.id] = False
+        return res
+
+    _columns = {
+        'partner_type2': fields.function(_get_partner_type2, method=True, string="Third Parties"),
+    }
+
+    _defaults = {
+        'name': lambda *a: '',
+    }
+
+account_bank_statement_line()
+
+class account_cashbox_line(osv.osv):
+    _name = 'account.cashbox.line'
+    _inherit = 'account.cashbox.line'
+    _trace = True
+
+account_cashbox_line()
+
 class account_analytic_account(osv.osv):
     _name = 'account.analytic.account'
     _inherit = 'account.analytic.account'
@@ -275,8 +316,10 @@ class audittrail_rule(osv.osv):
                  "src_model": thisrule.object_id.model,
                  "search_view_id": search_view_id and search_view_id[1] or False,
                  "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
-
             }
+            if thisrule.object_id.model == 'account.bank.statement.line':
+                # for register line we allow to select many lines in track changes view
+                val['domain'] = "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', 'in', active_ids)]"
 
             action_id = obj_action.create(cr, uid, val)
             self.write(cr, uid, [thisrule.id], {"state": "subscribed", "action_id": action_id})
@@ -520,6 +563,20 @@ class audittrail_log_line(osv.osv):
 #            res['arch'] = etree.tostring(xml_view)
         return res
 
+    def _get_report_name(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self_info = self.browse(cr, uid, ids[0], context)
+        name = self_info.object_id.name or ''
+        if self_info.res_id and self_info.object_id.model:
+            obj = self.pool.get(self_info.object_id.model)
+            if obj:
+                name_get = obj.name_get(cr, uid, [self_info.res_id])
+                if name_get and name_get[0]:
+                    name = name_get[0][1].replace('/','_')
+        return "LL_%s_%s" % (name, time.strftime('%Y%m%d'))
+
 audittrail_log_line()
 
 
@@ -658,6 +715,8 @@ def create_log_line(self, cr, uid, model, lines=[]):
             old_value = False
         if not new_value:
             new_value = False
+        if new_value == old_value:
+            continue  # nothing has changed, nothing to log
         
         # for the many2one field, we compare old_value and new_value with the name (uf_1624), so the 2nd part of the tupe (old_value[1] == new_value[1])
         if method not in ('create', 'unlink') and (old_value == new_value \
@@ -686,7 +745,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
             log_sequence = self.pool.get('audittrail.log.sequence').search(cr, uid, [('model', '=', fct_object.model), ('res_id', '=', seq_res_id)])
             if log_sequence:
                 log_seq = self.pool.get('audittrail.log.sequence').browse(cr, uid, log_sequence[0]).sequence
-                log = log_seq.get_id(test='id')
+                log = log_seq.get_id(code_or_id='id')
             else:
                 # Create a new sequence
                 seq_pool = self.pool.get('ir.sequence')
@@ -704,7 +763,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
                 }
                 seq_id = seq_pool.create(cr, uid, seq)
                 self.pool.get('audittrail.log.sequence').create(cr, uid, {'model': fct_object.model, 'res_id': seq_res_id, 'sequence': seq_id})
-                log = self.pool.get('ir.sequence').browse(cr, uid, seq_id).get_id(test='id')
+                log = self.pool.get('ir.sequence').browse(cr, uid, seq_id).get_id(code_or_id='id')
 
 
         if field_id:

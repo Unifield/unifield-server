@@ -209,7 +209,7 @@
     assert data['state'] == 'cancel', 'the incoming shipment is not Canceled - cancel - %s'%data['state']
     # check the corresponding purchase state
     data = po_obj.read(cr, uid, [data['purchase_id'][0]], ['state'], context=context)[0]
-    assert data['state'] == 'except_picking', 'the corresponding po is not in shipping exception state - except_picking - %s'%data['state']
+    assert data['state'] == 'done', 'the corresponding po is not in shipping exception state - except_picking - %s'%data['state']
     # check the moves in OUT - back order contained 3 A and 1 B, should not have been decreased in OUT
     a_qty = [3.0]
     b_qty = [1.0]

@@ -235,6 +235,19 @@ class account_analytic_line(osv.osv):
             vals['instance_id'] = journal.instance_id.id
         return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
 
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        """
+        Filtering regarding context
+        """
+        if not context:
+            context = {}
+        if context.get('instance_ids'):
+            instance_ids = context.get('instance_ids')
+            if isinstance(instance_ids, (int, long)):
+                instance_ids = [instance_ids]
+            args.append(('instance_id', 'in', instance_ids))
+        return super(account_analytic_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+
 account_analytic_line()
 
 class account_move(osv.osv):
@@ -307,7 +320,34 @@ class account_move_line(osv.osv):
             vals['instance_id'] = journal.instance_id.id
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
 
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        """
+        Filtering regarding context
+        """
+        if not context:
+            context = {}
+        if context.get('instance_ids'):
+            instance_ids = context.get('instance_ids')
+            if isinstance(instance_ids, (int, long)):
+                instance_ids = [instance_ids]
+            args.append(('instance_id', 'in', instance_ids))
+        return super(account_move_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+
 account_move_line()
+
+class account_move_reconcile(osv.osv):
+    _name = 'account.move.reconcile'
+    _inherit = 'account.move.reconcile'
+
+    _columns = {
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+    }
+
+    _defaults = {
+        'instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id,
+    }
+
+account_move_reconcile()
 
 class account_bank_statement(osv.osv):
     _name = 'account.bank.statement'

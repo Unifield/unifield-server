@@ -25,6 +25,8 @@
 from report import report_sxw
 from osv import osv
 from report_webkit.webkit_report import WebKitParser
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+from tools.translate import _
 
 import pooler
 
@@ -89,6 +91,34 @@ class purchase_order_report_xls(WebKitParser):
 
 purchase_order_report_xls('report.purchase.order_xls','purchase.order','addons/msf_supply_doc_export/report/report_purchase_order_xls.mako')
 
+# VALIDATED PURCHASE ORDER (Excel XML)
+class validated_purchase_order_report_xls(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context):
+        super(validated_purchase_order_report_xls, self).__init__(cr, uid, name, context=context)
+
+SpreadsheetReport('report.validated.purchase.order_xls', 'purchase.order', 'addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako', parser=validated_purchase_order_report_xls)
+
+# VALIDATE PURCHASE ORDER (Pure XML)
+class parser_validated_purchase_order_report_xml(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context):
+        super(parser_validated_purchase_order_report_xml, self).__init__(cr, uid, name, context=context)
+
+class validated_purchase_order_report_xml(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header = " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(validated_purchase_order_report_xml, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(validated_purchase_order_report_xml, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xml')
+
+validated_purchase_order_report_xml('report.validated.purchase.order_xml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_validated_purchase_order_xml.mako', parser=parser_validated_purchase_order_report_xml)
 
 class request_for_quotation_report_xls(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -246,6 +276,34 @@ class internal_move_xls(WebKitParser):
 internal_move_xls('report.internal.move.xls', 'stock.picking', 'addons/msf_supply_doc_export/report/report_internal_move_xls.mako')
 
 
+class incoming_shipment_xls(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context):
+        super(incoming_shipment_xls, self).__init__(cr, uid, name, context=context)
+
+SpreadsheetReport('report.incoming.shipment.xls', 'stock.picking', 'addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako', parser=incoming_shipment_xls)
+
+class parser_incoming_shipment_xml(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context):
+        super(incoming_shipment_xls, self).__init__(cr, uid, name, context=context)
+
+class incoming_shipment_xml(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header = " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(incoming_shipment_xml, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(incoming_shipment_xml, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xml')
+
+incoming_shipment_xml('report.incoming.shipment.xml', 'stock.picking', 'addons/msf_supply_doc_export/report/report_incoming_shipment_xml.mako')
+
+
 class ir_values(osv.osv):
     """
     we override ir.values because we need to filter where the button to print report is displayed (this was also done in register_accounting/account_bank_statement.py)
@@ -299,11 +357,11 @@ class ir_values(osv.osv):
             Delivery_Order = trans_obj.tr_view(cr, 'Delivery Order', context)
             Internal_Moves = trans_obj.tr_view(cr, 'Internal Moves', context)
             for v in values:
-                if '_terp_view_name' in context and v[2]['report_name'] == 'picking.ticket' and context['_terp_view_name'] in (Picking_Tickets, Picking_Ticket) and context.get('picking_screen', False)\
-                or '_terp_view_name' in context and v[2]['report_name'] == 'pre.packing.list' and context['_terp_view_name'] in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
-                or '_terp_view_name' in context and v[2]['report_name'] == 'labels' and context['_terp_view_name'] in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order]\
+                if v[2]['report_name'] == 'picking.ticket' and (context.get('_terp_view_name') in (Picking_Tickets, Picking_Ticket) or context.get('picking_type') == 'picking_ticket') and context.get('picking_screen', False)\
+                or v[2]['report_name'] == 'pre.packing.list' and context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
+                or v[2]['report_name'] == 'labels' and (context.get('_terp_view_name') in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order] or context.get('picking_type', False) in ('delivery_order', 'picking_ticket'))\
                 or v[2]['report_name'] in ('internal.move.xls', 'internal.move') and (('_terp_view_name' in context and context['_terp_view_name'] in [Internal_Moves]) or context.get('picking_type') == 'internal_move') \
-                or v[2]['report_name'] == 'delivery.order' and context.get('_terp_view_name') in [Delivery_Orders, Delivery_Order]:
+                or v[2]['report_name'] == 'delivery.order' and (context.get('_terp_view_name') in [Delivery_Orders, Delivery_Order] or context.get('picking_type', False) == 'delivery_order'):
                     new_act.append(v)
                 values = new_act
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'shipment' in [x[0] for x in models]:
@@ -331,9 +389,13 @@ class ir_values(osv.osv):
         elif key == 'action' and key2 == 'client_print_multi' and 'composition.kit' in [x[0] for x in models]:
             new_act = []
             for v in values:
-                if context.get('composition_type')=='theoretical' and v[2]['report_name'] == 'composition.kit.xls':
+                if context.get('composition_type')=='theoretical' and v[2]['report_name'] in ('composition.kit.xls', 'kit.report'):
+                    if v[2]['report_name'] == 'kit.report':
+                        v[2]['name'] = _('Theoretical Kit')
                     new_act.append(v)
-                elif context.get('composition_type')=='real' and v[2]['report_name'] == 'real.composition.kit.xls':
+                elif context.get('composition_type')=='real' and v[2]['report_name'] in ('real.composition.kit.xls', 'kit.report'):
+                    if v[2]['report_name'] == 'kit.report':
+                        v[2]['name'] = _('Kit Composition')
                     new_act.append(v)
             values = new_act
 

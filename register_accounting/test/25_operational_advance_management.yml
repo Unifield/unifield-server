@@ -211,6 +211,18 @@
 -
   In order to test the cash return without PO, I create a new cash register then I create an advance of 500 EUR then I return 100 EUR and do an expense of 400 EUR with a Supplier as a Third Party.
 -
+  I create the period 0001 for the operational advance
+-
+  !record {model: account.period, id: period_0001}: 
+    company_id: base.main_company 
+    date_start: !eval time.strftime('%Y-%m-01') 
+    date_stop: !eval (DateTime.now()+DateTime.RelativeDateTime(day=-1)).strftime('%Y-%m-%d') 
+    fiscalyear_id: fiscalyear0 
+    name: For operational advance 
+    special: 1
+    number: 1
+    state: draft
+-
   I create a Cash Register with Opening and Closing balance 1000.
 -
  !record {model: account.bank.statement, id: account_bank_statement_8}:

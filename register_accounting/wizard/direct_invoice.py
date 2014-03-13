@@ -48,6 +48,7 @@ class wizard_account_invoice(osv.osv):
         'residual': fields.float('Residual', digits_compute=dp.get_precision('Account')),
         'amount_total': fields.float('Total', digits_compute=dp.get_precision('Account'), readonly=True),
         'register_posting_date': fields.date(string="Register posting date", required=True),
+        'reference': fields.char(string="Reference", size=64),
     }
     _defaults = {
         'currency_id': lambda cr, uid, ids, c: c.get('currency'),
@@ -128,6 +129,7 @@ class wizard_account_invoice(osv.osv):
                         'price_subtotal': line['price_subtotal'],
                         'name': line['name'],
                         'uos_id': line['uos_id'] and line['uos_id'][0] or False,
+                        'ref': inv['reference'] and inv['reference'] or False,
                     }
                 ))
                 amount += line['price_subtotal']
@@ -172,6 +174,7 @@ class wizard_account_invoice(osv.osv):
             'partner_type': 'res.partner,%d'%(vals['partner_id'], ),
             'statement_id': inv['register_id'][0],
             'name': 'Direct Invoice',
+            'ref': inv['reference'] and inv['reference'] or False,
         })
         
         # Temp post the line
@@ -185,6 +188,7 @@ class wizard_account_invoice(osv.osv):
 
         # Delete the wizard
         self.unlink(cr, uid, ids, context=context)
+        # TODO: unlink the wizard_account_invoice_line rows also
 
         return open_register_view(self, cr, uid,inv['register_id'][0])
 
@@ -277,7 +281,7 @@ class wizard_account_invoice_line(osv.osv):
         
         fields_to_write = ['journal_id', 'partner_id', 'address_invoice_id', 'date_invoice', 'register_posting_date', 
             'account_id', 'partner_bank_id', 'payment_term', 'name', 'document_date',
-            'origin', 'address_contact_id', 'user_id', 'comment']
+            'origin', 'address_contact_id', 'user_id', 'comment', 'reference']
         to_write = {}
         for f in fields_to_write:
             if 'd_%s'%(f,) in context:

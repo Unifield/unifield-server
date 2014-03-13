@@ -551,13 +551,34 @@ class composition_kit(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.composition_type == 'theoretical':
                 date = datetime.strptime(obj.composition_creation_date, db_date_format)
-                name = obj.composition_version + ' - ' + date.strftime(date_format)
+                version = obj.composition_version or 'no_version'
+                name = version + ' - ' + date.strftime(date_format)
             else:
                 name = obj.composition_combined_ref_lot
                 
             res += [(obj.id, name)]
         return res
-    
+
+    def _get_report_name(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj = self.browse(cr, uid, ids[0], context)
+        db_date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
+
+        data = {
+            'prodcode': obj.composition_product_id.code.replace('/',''),
+            'date': time.strftime(db_date_format).replace('/','_')
+        }
+        if obj.composition_type == 'theoretical':
+            data['version'] = obj.composition_version_txt or ''
+            name = 'TKL %(prodcode)s %(version)s %(date)s' % data
+        else:
+            data['ref'] = obj.composition_reference
+            data['version'] = obj.composition_version_id and obj.composition_version_id.composition_version_txt or ''
+            name = 'KCL %(prodcode)s %(version)s %(date)s %(ref)s' % data
+
+        return name
+
     def on_change_product_id(self, cr, uid, ids, product_id, context=None):
         '''
         when the product is changed, lot checks are updated - mandatory workaround for attrs use
@@ -858,6 +879,7 @@ class composition_item(osv.osv):
     kit composition items representing kit parts
     '''
     _name = 'composition.item'
+    _order = 'item_module'
     
     def _common_update(self, cr, uid, vals, context=None):
         '''
@@ -984,6 +1006,7 @@ class composition_item(osv.osv):
         """
         if context is None:
             context = {}
+
         # call super
         result = super(composition_item, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         # columns depending on type
