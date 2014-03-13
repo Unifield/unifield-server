@@ -40,6 +40,8 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
             'getReportPeriod': self._get_report_period,
             'getReportConsumptionType': self._get_report_consumption_type,
             'getReportDates': self._get_report_dates,
+            'getReportDatesWithExpiry': self._get_report_dates_with_expiry,
+            'getReportNoExpiryFromTo': self._get_report_no_expiry_from_to,
             'getLines': self._get_lines,
             'getExpiryValueTotal': self._get_expiry_value_total,
             'getLineItems': self._get_line_items,
@@ -53,6 +55,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
             'toDate': self.str_to_time,
         })
         self._dates_context = {}
+        self._report_context = {}
         
     def _get_report_period(self, report):
         """get period header(str)"""
@@ -74,6 +77,24 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         """get months period header(str)
         return list(tuple(date, str)) of month headers (1st day of month)"""
         return self.pool.get('product.likely.expire.report').get_report_dates_multi(report)
+    
+    def _get_report_dates_with_expiry(self, report):
+        dates = self.pool.get('product.likely.expire.report').get_report_dates_multi(report)
+        res = []
+        for dt_tuple in dates:  # dates: [(mx_date, '01/14'),]
+            if not self._get_month_item_lines_ids(report, dt_tuple[0]):
+                self._report_context['no_expiry_from_to'] = "No expiry from %s to %s" % (dt_tuple[1], dates[len(dates)-1][1], )
+                break  # first month with no product in expiry
+            res.append(dt_tuple)
+            self._report_context['last_date'] = dt_tuple[1]
+        return res
+        
+    def _get_report_no_expiry_from_to(self, date):
+        if date:
+            last_date = self._report_context.get('last_date', False)
+            if last_date and last_date == date:
+                return self._report_context.get('no_expiry_from_to', '')
+        return False
         
     def _get_lines(self, report, type='all'):
         """get report lines('product.likely.expire.report.line')"""
@@ -101,7 +122,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
                                     order='period_start')  # items ordered by date
         return item_obj.browse(self.cr, self.uid, items_ids)
         
-    def _get_month_item_lines(self, report, month_date):
+    def _get_month_item_lines_ids(self, report, month_date):
         """get month items('product.likely.expire.report.item')
         """
         lines_obj = self.pool.get('product.likely.expire.report.line')
@@ -125,7 +146,13 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         domain = [('item_id', 'in', items_ids)]
         item_lines_ids = item_line_obj.search(self.cr, self.uid, domain,
                                               order='expired_date')
-        return item_line_obj.browse(self.cr, self.uid, item_lines_ids)
+        return item_lines_ids
+        
+    def _get_month_item_lines(self, report, month_date):
+        """get month items('product.likely.expire.report.item')
+        """
+        item_line_obj = self.pool.get('product.likely.expire.report.item.line')
+        return item_line_obj.browse(self.cr, self.uid, self._get_month_item_lines_ids(report, month_date))
         
     def _get_rml_tables(self, report, month_cols_count):
         """

@@ -253,7 +253,7 @@
     </story>
     
     <story>
-        [[ repeatIn(getReportDates(objects[0]), 'dates') ]]
+        [[ repeatIn(getReportDatesWithExpiry(objects[0]), 'dates') ]]
         <para style="Standard">
 	    	<font color="white"> </font>
 	    </para>
@@ -315,6 +315,15 @@
 	    		</td>
 	    	</tr>
 	    </blockTable>
+        
+        <blockTable colWidths="772.0" style="LinesTableTotal">
+	    	<tr><td></td></tr>
+            <tr>
+	    		<td>
+	    			<para style="TextInfoBold">[[ getReportNoExpiryFromTo(dates[1]) or removeParentNode('blockTable') ]]</para>
+	    		</td>
+	    	</tr>
+	    </blockTable>
     </story>
-    
+
 </document>
