@@ -29,6 +29,7 @@ import time
 import logging
 from tools.safe_eval import safe_eval as eval
 from tools import cache
+from tools.translate import _
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
