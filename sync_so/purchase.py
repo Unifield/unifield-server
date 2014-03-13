@@ -346,7 +346,6 @@ class purchase_order_sync(osv.osv):
         default.update(header_result)
         
         res_id = self.write(cr, uid, po_id, default, context=context)
-        
         if so_info.original_so_id_sale_order:    
             wf_service = netsvc.LocalService("workflow")
             if so_info.state == 'validated':
@@ -354,6 +353,9 @@ class purchase_order_sync(osv.osv):
             else:
                 ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
                 res = self.purchase_approve(cr, uid, [po_id], context=context) # UTP-972: Use a proper workflow to confirm a PO
+                # UFTP-49: the call to wf_service.trg_validate does not trigger any write to PO, so there is no log recorded, set it manually here
+                logger = get_sale_purchase_logger(cr, uid, self, po_id, context=context)
+                logger.is_status_modified = True
         return True
 
     # UTP-872: If the PO is a split one, then still allow it to be confirmed without po_line 
