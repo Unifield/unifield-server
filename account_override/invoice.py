@@ -930,7 +930,10 @@ class account_invoice_line(osv.osv):
                 vals.update({'line_number': line})
         res = super(account_invoice_line, self).create(cr, uid, vals, context)
         if vals.get('invoice_id', False):
-            invoice = self.pool.get('account.invoice').browse(cr, uid, vals.get('invoice_id'))
+            inv_obj_name = 'account.invoice'
+            if self._name != 'account.invoice.line':
+                inv_obj_name = 'wizard.account.invoice'
+            invoice = self.pool.get(inv_obj_name).browse(cr, uid, vals.get('invoice_id'))
             if invoice and invoice.is_direct_invoice and invoice.state == 'draft':
                 amount = 0.0
                 for l in invoice.invoice_line:
