@@ -7,6 +7,14 @@
     name: Receivable
     sign: 1
 -
+  I create a Payable Account Type.
+-
+  !record {model: account.account.type, id: account_account_type_payable0}:
+    close_method: balance
+    code: payable
+    name: Payable
+    sign: 1
+-
   I create an Expense Account Type.
 -
   !record {model: account.account.type, id: account_account_type_expense0}:
@@ -66,6 +74,19 @@
     currency_mode: current
     name: Supplier Payable
     type: payable
+    user_type: account_account_type_payable0
+    reconcile: 1
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+-
+  I create Supplier 1300 Receivable Account.
+-
+  !record {model: account.account, id: account_account_receivable_supplier0}:
+    code: '1300-supplier-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Supplier Receivable
+    type: receivable
     user_type: account_account_type_receivable0
     reconcile: 1
     type_for_register: none

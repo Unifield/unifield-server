@@ -263,7 +263,7 @@ class wizard_account_invoice_line(osv.osv):
         'invoice_id': fields.many2one('wizard.account.invoice', 'Invoice Reference', select=True),
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
     }
-
+ 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on a direct invoice line
