@@ -438,16 +438,18 @@ class shipment(osv.osv):
                     'allow_copy': True,
                     'non_stock_noupdate': True,
                     'shipment_proc_id': wizard.id,
+                    'draft_packing_id': picking.id,
                 })
 
                 new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
 
                 # Reset context
                 context.update({
-                    'keep_prodlot': True,
-                    'keepLineNumber': True,
-                    'allow_copy': True,
-                    'non_stock_noupdate': True,
+                    'keep_prodlot': False,
+                    'keepLineNumber': False,
+                    'allow_copy': False,
+                    'non_stock_noupdate': False,
+                    'draft_packing_id': False,
                 })
 
                 # confirm the new packing
@@ -460,7 +462,7 @@ class shipment(osv.osv):
             self.log(cr, uid, shipment.id, _('The new Shipment %s has been created.') % (shipment_name,))
             # The shipment is automatically shipped, no more pack states in between.
             self.ship(cr, uid, [shipment_id], context=context)
-
+            
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         view_id = view_id and view_id[1] or False
 
@@ -2296,12 +2298,19 @@ class stock_picking(osv.osv):
                         _('Processing Error'),
                         _('Missing the ID of the shipment in the context'),
                     )
+                    
+                if not context.get('draft_packing_id', False):
+                    raise osv.except_osv(
+                        _('Processing Error'),
+                        _('Missing the ID of the draft packing in the context'),
+                    )
 
                 ship_proc = ship_proc_obj.browse(cr, uid, context['shipment_proc_id'], context=context)
                 shipment_id = context['shipment_id']
+                draft_packing_id = context['draft_packing_id']
 
                 for family in ship_proc.family_ids:
-                    if family.selected_number == 0.00:
+                    if family.draft_packing_id.id != draft_packing_id or family.selected_number == 0.00:
                         continue
 
                     selected_from_pack = family.to_pack - family.selected_number + 1
