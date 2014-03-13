@@ -200,7 +200,7 @@ class financing_contract_format_line(osv.osv):
     
     _columns = {
         'account_quadruplet_ids': many2many_sorted('financing.contract.account.quadruplet', 'financing_contract_actual_account_quadruplets', 'actual_line_id', 'account_quadruplet_id', string='Accounts/Destinations/Funding Pools/Cost Centres'),
-        'quadruplet_update': fields.char('Internal Use Only', size=16),
+        'quadruplet_update': fields.char('Internal Use Only', size=128),
     }
         
 financing_contract_format_line()

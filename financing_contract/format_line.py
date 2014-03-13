@@ -347,7 +347,7 @@ class financing_contract_format_line(osv.osv):
 
         'allocated_real': fields.function(_get_actual_amount, method=True, store=False, string="Funded - Actuals", type="float", readonly=True),
         'project_real': fields.function(_get_actual_amount, method=True, store=False, string="Total project - Actuals", type="float", readonly=True),
-
+        'quadruplet_update': fields.char('Internal Use Only', size=128),
     }
  
     
@@ -361,22 +361,14 @@ class financing_contract_format_line(osv.osv):
 
     _order = 'code asc'
     
-    def _save_quad_ids(self, cr, uid, ids, context=None):
-        # save the quad ids to a string to avoid sync issues
+ 
         
-        format_line_obj = self.browse(self, cr, uid, ids, context)
-        print 'sfc act_ids:', format_line_obj.account_destination_ids
-        print 'sfc quad_ids:', format_line_obj.account_quadruplet_ids
-
-        
-        
-
+ 
     def create(self, cr, uid, vals, context=None):
-        print 'sfc format_line#create vals:', vals
         if not context:
             context = {}
             
-        self._save_quad_ids(cr, uid, ids, context)
+        
         # if the account is set as view, remove budget and account values
         if 'line_type' in vals and vals['line_type'] == 'view':
             vals['allocated_amount'] = 0.0
@@ -387,9 +379,15 @@ class financing_contract_format_line(osv.osv):
             if vals['is_quadruplet']:
                 # delete account/destinations
                 vals['account_destination_ids'] = []
+                if context.get('sync_update_execution'):
+                    vals['account_quadruplet_ids'] = vals['quadruplet_update']
+                    #vals['quadruplet_update'] = 
+                else:
+                    vals['quadruplet_update'] = vals['account_quadruplet_ids']
             else:
                 # delete quadruplets
                 vals['account_quadruplet_ids'] = []
+                
         return super(financing_contract_format_line, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -398,7 +396,6 @@ class financing_contract_format_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
             
-        self._save_quad_ids(cr, uid, ids, context)
         # if the account is set as view, remove budget and account values
         if 'line_type' in vals and vals['line_type'] == 'view':
             vals['allocated_amount'] = 0.0
@@ -409,6 +406,11 @@ class financing_contract_format_line(osv.osv):
             if vals['is_quadruplet']:
                 # delete previous account/destinations
                 vals['account_destination_ids'] = [(6, 0, [])]
+                if context.get('sync_update_execution'):
+                    vals['account_quadruplet_ids'] = vals['quadruplet_update']
+                    #vals['quadruplet_update'] = []
+                else:
+                    vals['quadruplet_update'] = vals['account_quadruplet_ids']
             else:
                 # delete previous quadruplets
                 vals['account_quadruplet_ids'] = [(6, 0, [])]
