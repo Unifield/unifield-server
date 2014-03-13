@@ -771,6 +771,8 @@ class shipment(osv.osv):
                 stay = [(family.from_pack, family.to_pack)]
 
                 if family.to_pack >= family.return_to:
+                    if family.return_from == 0 and family.return_to == 0:
+                        continue
                     if family.return_from == family.from_pack:
                         if family.return_to != family.to_pack:
                             stay.append((family.return_to + 1, family.to_pack))
@@ -794,7 +796,7 @@ class shipment(osv.osv):
 
                     for seq in stay:
                         # Corresponding number of packs
-                        selected_number = seq[1] - seq[0] + 1
+                        selected_number = seq[1] - seq[0]
                         # Quantity to return
                         new_qty = selected_number * move.qty_per_pack
                         # For both cases, we update the from/to and compute the corresponding quantity
