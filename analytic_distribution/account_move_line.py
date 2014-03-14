@@ -20,7 +20,6 @@
 ##############################################################################
 
 from osv import fields, osv
-import tools
 from tools.translate import _
 
 class account_move_line(osv.osv):
@@ -105,15 +104,15 @@ class account_move_line(osv.osv):
 
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
-        'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True, 
+        'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True,
             help="This informs system that we can display or not an analytic button", store=False),
-        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
-         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
+         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean',
             string='Header Distrib.?'),
-        'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, 
-            string="Distribution", 
+        'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30,
+            string="Distribution",
             help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
   }
 
@@ -178,7 +177,7 @@ class account_move_line(osv.osv):
                                      'date': obj_line.get('date', False),
                                      'ref': obj_line.get('ref', ''),
                                      'journal_id': journal.get('analytic_journal_id', [False])[0],
-                                     'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency, 
+                                     'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency,
                                         anal_amount, round=False, context=context),
                                      'amount_currency': -1 * anal_amount,
                                      'account_id': distrib_line.analytic_id.id,
@@ -243,7 +242,6 @@ class account_move_line(osv.osv):
             raise osv.except_osv(_('Error'), _('No journal item given. Please save your line before.'))
         # Prepare some values
         ml = self.browse(cr, uid, ids[0], context=context)
-        distrib_id = False
         amount = ml.debit_currency - ml.credit_currency
         # Search elements for currency
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
@@ -370,7 +368,7 @@ class account_move_line(osv.osv):
         res = super(account_move_line, self).write(cr, uid, ids, vals, context, check, update_check)
         return res
 
-    def copy(self, cr, uid, id, default=None, context=None):
+    def copy(self, cr, uid, aml_id, default=None, context=None):
         """
         Copy analytic_distribution
         """
@@ -380,7 +378,7 @@ class account_move_line(osv.osv):
         if not default:
             default = {}
         # Default method
-        res = super(account_move_line, self).copy(cr, uid, id, default, context)
+        res = super(account_move_line, self).copy(cr, uid, aml_id, default, context)
         # Update analytic distribution
         if res:
             c = self.browse(cr, uid, res, context=context)

@@ -58,10 +58,10 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         'wizard_id': fields.many2one('analytic.distribution.wizard', string="Analytic Distribution Wizard", required=True),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True),
         'distribution_line_id': fields.many2one('distribution.line', string="Distribution Line", readonly=True),
-        'type': fields.selection([('cost.center', 'Cost Center Lines'), ('funding.pool', 'Funding Pool Lines'), ('free.1', 'Free 1 Lines'), 
-            ('free.2', 'Free 2 Lines')], string="Line type", help="Specify the type of lines"), # Important for some method that take this values 
+        'type': fields.selection([('cost.center', 'Cost Center Lines'), ('funding.pool', 'Funding Pool Lines'), ('free.1', 'Free 1 Lines'),
+            ('free.2', 'Free 2 Lines')], string="Line type", help="Specify the type of lines"), # Important for some method that take this values
             #+ to construct object research !
-        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True, 
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True,
             domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
     }
 
@@ -80,7 +80,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         amount = abs(res.get('amount', 0.0))
         wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, [context.get('parent_id')], context=context)
         if wiz and wiz[0]:
-            purchase = wiz[0].purchase_id or wiz[0].purchase_line_id.order_id
+            #purchase = wiz[0].purchase_id or wiz[0].purchase_line_id.order_id
             # UTP-952: Remove the default intermission CC
 #            if purchase and wiz[0].partner_type == 'intermission':
 #                try:
@@ -193,7 +193,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                     # UTP-952: Replaced the line below by another field.set by removing the intermission_restricted param
                     # field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s]),  ('intermission_restricted', '=', [parent.purchase_id, parent.purchase_line_id, parent.partner_type])]" % oc_id)
                     field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s])]" % oc_id)
-                    
+
                 # Change Destination field
                 dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
                 for field in dest_fields:
@@ -371,7 +371,7 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
 
     _columns = {
         'cost_center_id': fields.many2one('account.analytic.account', string="Cost Center", required=True),
-        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True, 
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True,
             domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
     }
 
@@ -387,11 +387,11 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
         res = {}
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
             'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
-        
+
         # If all elements given, then search FP compatibility
         if destination_id and analytic_id and account_id:
             fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
@@ -416,11 +416,11 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
         res = {}
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
             'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
-        
+
         if cost_center_id and analytic_id:
             fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
             if cost_center_id not in [x.id for x in fp_line.cost_center_ids] and analytic_id != fp_id:
@@ -440,7 +440,7 @@ class analytic_distribution_wizard_f1_lines(osv.osv_memory):
     _inherit = 'analytic.distribution.wizard.lines'
 
     _columns = {
-        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=False, 
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=False,
             domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
     }
 
@@ -456,7 +456,7 @@ class analytic_distribution_wizard_f2_lines(osv.osv_memory):
     _inherit = 'analytic.distribution.wizard.lines'
 
     _columns = {
-        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=False, 
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=False,
             domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
     }
 
@@ -568,7 +568,7 @@ class analytic_distribution_wizard(osv.osv_memory):
 
     _columns = {
         'total_amount': fields.float(string="Total amount", size=64, readonly=True),
-        'state': fields.selection([('draft', 'Draft'), ('cc', 'Cost Center only'), ('dispatch', 'All other elements'), ('done', 'Done')], 
+        'state': fields.selection([('draft', 'Draft'), ('cc', 'Cost Center only'), ('dispatch', 'All other elements'), ('done', 'Done')],
             string="State", required=True, readonly=True),
         'entry_mode': fields.selection([('percentage','Percentage'), ('amount','Amount')], 'Entry Mode', select=1),
         'line_ids': fields.one2many('analytic.distribution.wizard.lines', 'wizard_id', string="Cost Center Allocation"),
@@ -589,9 +589,9 @@ class analytic_distribution_wizard(osv.osv_memory):
         'model_line_id': fields.many2one('account.model.line', string="Account Model Line"),
         'accrual_line_id': fields.many2one('msf.accrual.line', string="Accrual Line"),
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
-        'is_writable': fields.function(_is_writable, method=True, string='Is this wizard writable?', type='boolean', readonly=True, 
+        'is_writable': fields.function(_is_writable, method=True, string='Is this wizard writable?', type='boolean', readonly=True,
             help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
-        'have_header': fields.function(_have_header, method=True, string='Is this wizard come from an invoice line?', 
+        'have_header': fields.function(_have_header, method=True, string='Is this wizard come from an invoice line?',
             type='boolean', readonly=True, help="This informs the wizard if we are on a line and if the parent has an distrib."),
         'account_id': fields.many2one('account.account', string="G/L Account", readonly=True,
             help="This account come from an invoice line. When filled in it permits to test compatibility for each funding pool and display those that was linked with."),
@@ -746,7 +746,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Verify that Cost Center are done if we come from a purchase order
             if not wiz.line_ids and (wiz.purchase_id or wiz.purchase_line_id or wiz.sale_order_id or wiz.sale_order_line_id):
                 raise osv.except_osv(_('Warning'), _('No Allocation done!'))
-            # Verify that Funding Pool Lines are done if we come from an invoice, invoice line, direct invoice, direct invoice line, register line, 
+            # Verify that Funding Pool Lines are done if we come from an invoice, invoice line, direct invoice, direct invoice line, register line,
             #+ move line, commitment, commitment line, model
             for obj in ['invoice_id', 'invoice_line_id', 'direct_invoice_id', 'direct_invoice_line_id', 'register_line_id', 'move_id', 'move_line_id', 'commitment_id', 'commitment_line_id', 'accrual_line_id', 'model_line_id', 'cash_return_id', 'cash_return_line_id']:
                 if getattr(wiz, obj, False) and not wiz.fp_line_ids:
@@ -919,7 +919,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 }
                 if wizard.partner_type: #UF-2138: added the ref to partner type of FO/PO
                     vals.update({'partner_type': wizard.partner_type})
-                    
+
                 new_line = line_obj.create(cr, uid, vals, context=context)
                 processed_line_ids.append(new_line)
             wiz_lines[i] = None
@@ -933,7 +933,7 @@ class analytic_distribution_wizard(osv.osv_memory):
     def _check_analytic_account_validity(self, cr, uid, ids, context=None):
         """
         Check analytic account validity regarding posting/document date.
-        Note: The date in the context will determine 
+        Note: The date in the context will determine
         """
         if not context:
             context = {}
@@ -993,10 +993,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # link it to the wizard
                 self.write(cr, uid, [wiz.id], {'distribution_id': distrib_id,}, context=context)
                 # link it to the element we come from (purchase order, invoice, purchase order line, invoice line, etc.)
-                for el in [('invoice_id', 'account.invoice'), ('invoice_line_id', 'account.invoice.line'), ('purchase_id', 'purchase.order'), 
-                    ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line'), 
-                    ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'), 
-                    ('direct_invoice_line_id', 'wizard.account.invoice.line'), ('commitment_id', 'account.commitment'), 
+                for el in [('invoice_id', 'account.invoice'), ('invoice_line_id', 'account.invoice.line'), ('purchase_id', 'purchase.order'),
+                    ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line'),
+                    ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'),
+                    ('direct_invoice_line_id', 'wizard.account.invoice.line'), ('commitment_id', 'account.commitment'),
                     ('commitment_line_id', 'account.commitment.line'), ('model_id', 'account.model'), ('model_line_id', 'account.model.line'),
                     ('accrual_line_id', 'msf.accrual.line'), ('sale_order_id', 'sale.order'), ('sale_order_line_id', 'sale.order.line'), ('move_id', 'account.move'),
                     ('cash_return_id', 'wizard.cash.return'), ('cash_return_line_id', 'wizard.advance.line')]:
@@ -1066,7 +1066,6 @@ class analytic_distribution_wizard(osv.osv_memory):
             # As analytic lines were deleted and recreated, we need to recreate links between reversal, corrections, etc.
             if reversal or correction:
                 for line in move.line_id:
-                    analytic_line_ids = ana_obj.search(cr, uid, [('move_id', '=', line.id)])
                     if line.reversal:
                         # For each reversal line, search its equivalent and write the right number
                         rev_ana_ids = ana_obj.search(cr, uid, [('move_id', '=', line.reversal_line_id.id)])
@@ -1095,7 +1094,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             self.pool.get('account.move').validate(cr, uid, [x.id for x in wiz.register_line_id.move_ids])
         # Update analytic lines
         self.update_analytic_lines(cr, uid, ids, context=context)
-        
+
         return_wiz =  dict(type='ir.actions.act_window_close', **o2m_toreload)
         if context.get("from_cash_return_analytic_dist"):
             # If the wizard was called from the cash return line, the perform some actions before returning back to the caller wizard
@@ -1103,9 +1102,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             wizard_id = context.get('wiz_id')
             cash_return_id = context.get('cash_return_id')
             cash_return_line_id = context.get('cash_return_line_id')
-            
+
             distr_id = False
-            if wiz and wiz.distribution_id and wiz.distribution_id.id: 
+            if wiz and wiz.distribution_id and wiz.distribution_id.id:
                 distr_id = wiz.distribution_id.id
             # Write the distribution analytic to the cash return
             if cash_return_id:
@@ -1113,7 +1112,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     cr, uid, [cash_return_id],
                     {'analytic_distribution_id': distr_id},
                     context=context)
-            # Write the distribution analytic to the cash return line    
+            # Write the distribution analytic to the cash return line
             if cash_return_line_id:
                 self.pool.get('wizard.advance.line').write(
                     cr, uid, [cash_return_line_id],
@@ -1173,7 +1172,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'percentage': wizard_line['percentage'],
                 'currency_id': currency,
             }
-            self.pool.get('analytic.distribution.wizard.lines').write(cr, uid, [wizard_line.get('id')], vals, 
+            self.pool.get('analytic.distribution.wizard.lines').write(cr, uid, [wizard_line.get('id')], vals,
                 context={'skip_validation': True})
         return True
 
@@ -1311,7 +1310,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             elif wizard.commitment_id:
                 if wizard.commitment_id.state == 'open':
                     # Search commitment lines that doesn't have any distribution and that are linked to this commitment
-                    cl_ids = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', wizard.commitment_id.id), 
+                    cl_ids = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', wizard.commitment_id.id),
                         ('analytic_distribution_id', '=', False)], context=context)
                     if cl_ids:
                         operator = 'in'

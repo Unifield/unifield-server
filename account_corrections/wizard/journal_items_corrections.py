@@ -25,7 +25,6 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from time import strftime
-from register_accounting.register_tools import _get_third_parties, _set_third_parties
 from lxml import etree
 
 class journal_items_corrections_lines(osv.osv_memory):
@@ -69,8 +68,8 @@ class journal_items_corrections_lines(osv.osv_memory):
         'credit_currency': fields.float('Book. Credit', readonly=True),
         'currency_id': fields.many2one('res.currency', string="Book. Curr.", readonly=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution", readonly=True),
-        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
     }
 
@@ -259,7 +258,7 @@ class journal_items_corrections(osv.osv_memory):
         new_distrib = new_line.analytic_distribution_id and new_line.analytic_distribution_id.id or False
         if cmp(old_account, new_account):
             res += 1
-        if cmp(old_partner, new_partner): # FIXME !!!!! or cmp(old_line.employee_id, new_line.employee_id) or 
+        if cmp(old_partner, new_partner): # FIXME !!!!! or cmp(old_line.employee_id, new_line.employee_id) or
             # cmp(old_line.register_id, new_line.register_id):
             res += 2
         if cmp(old_distrib, new_distrib):
@@ -305,7 +304,6 @@ class journal_items_corrections(osv.osv_memory):
                     raise osv.except_osv(_('Warning'), _('Please insert a correction date from the entry date onwards.'))
         # Retrieve values
         wizard = self.browse(cr, uid, ids[0], context=context)
-        wiz_line_obj = self.pool.get('wizard.journal.items.corrections.lines')
         aml_obj = self.pool.get('account.move.line')
         # Fetch old line
         old_line = wizard.move_line_id
@@ -325,7 +323,7 @@ class journal_items_corrections(osv.osv_memory):
             if not old_line.statement_id:
                 res = aml_obj.correct_partner_id(cr, uid, [old_line.id], wizard.date, new_lines[0].partner_id.id, context=context)
                 if not res:
-                    raise osv.except_osv(_('Error'), 
+                    raise osv.except_osv(_('Error'),
                         _('No partner changed! Verify that the Journal Entries attached to this line was not modify previously.'))
         elif comparison == 4:
             raise osv.except_osv('Warning', 'Do analytic distribution reallocation here!')

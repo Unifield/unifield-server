@@ -62,8 +62,7 @@ class wizard_split_invoice(osv.osv_memory):
         invoice_origin_id = wizard.invoice_id.id
         inv_obj = self.pool.get('account.invoice')
         invl_obj = self.pool.get('account.invoice.line')
-        wiz_lines_obj = self.pool.get('wizard.split.invoice.lines')
-        
+
         # Test lines
         if not wizard.invoice_line_ids:
             return { 'type' : 'ir.actions.act_window_close', 'active_id' : wizard.invoice_id.id, 'invoice_ids': invoice_ids}
@@ -79,7 +78,7 @@ class wizard_split_invoice(osv.osv_memory):
             # Price unit
             if wiz_line.price_unit <= 0:
                 raise osv.except_osv(_('Warning'), _('%s: Unit price should be positive!') % wiz_line.description)
-            # We add line if its quantity have changed or that another line have been deleted from original invoice 
+            # We add line if its quantity have changed or that another line have been deleted from original invoice
             #+ (so that the number of original invoice are more than invoice line in the current wizard)
             if wiz_line.quantity != wiz_line.invoice_line_id.quantity or len(wizard.invoice_id.invoice_line) > len(wizard.invoice_line_ids):
                 line_to_modify.append(wiz_line.id)
@@ -95,7 +94,7 @@ class wizard_split_invoice(osv.osv_memory):
         for wiz_line in wizard.invoice_line_ids:
             if wiz_line.invoice_line_id:
                 # create values for the new invoice line
-                new_line = invl_obj.copy(cr, uid, wiz_line.invoice_line_id.id, {'quantity': wiz_line.quantity,'invoice_id': new_inv_id}, context={'split_it': '1'})
+                invl_obj.copy(cr, uid, wiz_line.invoice_line_id.id, {'quantity': wiz_line.quantity,'invoice_id': new_inv_id}, context={'split_it': '1'})
                 # then update old line if exists
                 qty = wiz_line.invoice_line_id.quantity - wiz_line.quantity
                 # If quantity superior to 0, then write old line, if 0 then delete line
@@ -108,7 +107,7 @@ class wizard_split_invoice(osv.osv_memory):
         invoice_ids.append(wizard.invoice_id.id)
         for invoice in inv_obj.browse(cr, uid, invoice_ids, context=context):
             inv_obj.write(cr, uid, [invoice.id] + [invoice_origin_id], {'check_total': invoice.amount_total}, context=context)
-        
+
         return { 'type' : 'ir.actions.act_window_close', 'active_id' : new_inv_id, 'invoice_ids': invoice_ids}
 
 wizard_split_invoice()

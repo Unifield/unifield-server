@@ -44,12 +44,12 @@ class stock_picking(osv.osv):
             price_unit = move_line.price_unit
 
         # UTP-220: As now the price can be changed when making the reception, the system still needs to keep the PO price in the invoice!
-        # UF-2211: The price unit needs to be adapted to the UoM: so it needs to be retrieved from the move line, and not the po_line in another UoM 
+        # UF-2211: The price unit needs to be adapted to the UoM: so it needs to be retrieved from the move line, and not the po_line in another UoM
         # Finance may decide to change later, but for instance, this is not agreed by Finance. Check UTP-220 for further info
         if move_line.picking_id:
             inv_type = self._get_invoice_type(move_line.picking_id)
             price_unit = self._get_price_unit_invoice(cr, uid, move_line, inv_type)
-            
+
         if price_unit:
             values.update({'price_unit': price_unit})
 
@@ -81,9 +81,9 @@ class stock_picking(osv.osv):
         Update partner account
         BE CAREFUL : For FO with PICK/PACK/SHIP, the invoice is not created on picking but on shipment
         """
-        res = super(stock_picking, self)._hook_invoice_vals_before_invoice_creation(cr, uid, ids, invoice_vals, picking)
+        super(stock_picking, self)._hook_invoice_vals_before_invoice_creation(cr, uid, ids, invoice_vals, picking)
         if not invoice_vals.get('date_invoice',False):
-            invoice_vals['date_invoice'] = time.strftime('%Y-%m-%d',time.localtime())  
+            invoice_vals['date_invoice'] = time.strftime('%Y-%m-%d',time.localtime())
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind'),
                                                                         ('is_current_instance', '=', True)])
         if picking and picking.purchase_id and picking.purchase_id.order_type == "in_kind":

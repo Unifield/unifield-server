@@ -78,7 +78,7 @@ class account_analytic_line(osv.osv):
     def get_corrections_history(self, cr, uid, ids, context=None):
         """
         Give for each line their history by using "move_id and reversal_origin" field to browse lines
-        Return something like that: 
+        Return something like that:
             {id1: [line_id, another_line_id], id2: [a_line_id, other_line_id]}
         """
         # Verifications
@@ -87,7 +87,6 @@ class account_analytic_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
-        res = {}
         upstream_line_ids = []
         downstream_line_ids = []
         # Browse all given lines

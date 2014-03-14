@@ -20,7 +20,6 @@
 
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from report import report_sxw
-from tools.translate import _
 
 
 class report_open_invoices2(report_sxw.rml_parse):

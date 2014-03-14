@@ -27,6 +27,7 @@ import analytic_account
 import account_commitment
 import analytic_line
 import invoice
+import account_invoice_refund
 import wizard
 import report
 

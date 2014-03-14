@@ -83,7 +83,7 @@ class sale_order(osv.osv):
                 'context': context,
         }
 
-    def copy_data(self, cr, uid, id, default=None, context=None):
+    def copy_data(self, cr, uid, s_id, default=None, context=None):
         """
         Copy global distribution and give it to new sale order.
         """
@@ -95,7 +95,7 @@ class sale_order(osv.osv):
         # Default method
         if 'analytic_distribution_id' not in default and not context.get('keepDateAndDistrib'):
             default['analytic_distribution_id'] = False
-        new_data = super(sale_order, self).copy_data(cr, uid, id, default=default, context=context)
+        new_data = super(sale_order, self).copy_data(cr, uid, s_id, default=default, context=context)
         if new_data and new_data.get('analytic_distribution_id'):
             new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
         return new_data
@@ -126,7 +126,7 @@ class sale_order(osv.osv):
                 continue
             for line in so.order_line:
                 # Search intermission
-                intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
                     'analytic_account_project_intermission')
                 # check distribution presence
                 distrib_id = (line.analytic_distribution_id and line.analytic_distribution_id.id) or (so.analytic_distribution_id and so.analytic_distribution_id.id) or False
@@ -134,7 +134,7 @@ class sale_order(osv.osv):
                     account_id = line.account_4_distribution and line.account_4_distribution.id or False
                     # Search default destination_id
                     destination_id = self.pool.get('account.account').read(cr, uid, account_id, ['default_destination_id']).get('default_destination_id', False)
-                    distrib_id = ana_obj.create(cr, uid, {'sale_order_line_ids': [(4,line.id)], 
+                    distrib_id = ana_obj.create(cr, uid, {'sale_order_line_ids': [(4,line.id)],
                         'cost_center_lines': [(0, 0, {'destination_id': destination_id[0], 'analytic_id': intermission_cc[1] , 'percentage':'100', 'currency_id': so.currency_id.id})]})
                     self.pool.get('sale.order.line').write(cr, uid, [line.id], {'analytic_distribution_id': distrib_id})
                     line = self.pool.get('sale.order.line').browse(cr, uid, line.id)
@@ -144,7 +144,7 @@ class sale_order(osv.osv):
                 #    for cc_line in ana_obj.browse(cr, uid, distrib_id).cost_center_lines:
                 #        # self.pool.get('cost.center.distribution.line').write(cr, uid, cc_line.id, {'analytic_id': intermission_cc[1]})
                 #        pass
-                        
+
                 if not distrib_id and not so.from_yml_test and not so.order_type in ('loan', 'donation_st', 'donation_exp'):
                     raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',))
                 # check distribution state
@@ -326,10 +326,10 @@ class sale_order_line(osv.osv):
 
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
-        'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
+        'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean',
             string='Header Distrib.?'),
-        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
         'account_4_distribution': fields.function(_get_distribution_account, method=True, type='many2one', relation="account.account", string="Account for analytical distribution", readonly=True),
@@ -394,7 +394,7 @@ class sale_order_line(osv.osv):
                 'context': context,
         }
 
-    def copy_data(self, cr, uid, id, default=None, context=None):
+    def copy_data(self, cr, uid, l_id, default=None, context=None):
         """
         Copy global distribution and give it to new sale order line
         """
@@ -406,7 +406,7 @@ class sale_order_line(osv.osv):
         # Copy analytic distribution
         if 'analytic_distribution_id' not in default and not context.get('keepDateAndDistrib'):
             default['analytic_distribution_id'] = False
-        new_data = super(sale_order_line, self).copy_data(cr, uid, id, default, context)
+        new_data = super(sale_order_line, self).copy_data(cr, uid, l_id, default, context)
         if new_data and new_data.get('analytic_distribution_id'):
             new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
         return new_data

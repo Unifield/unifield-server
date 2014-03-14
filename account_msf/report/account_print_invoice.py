@@ -19,7 +19,6 @@
 #
 ##############################################################################
 
-import time
 from report import report_sxw
 from account.report import account_print_invoice as api
 

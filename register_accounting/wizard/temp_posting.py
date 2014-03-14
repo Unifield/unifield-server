@@ -2,7 +2,7 @@
 #-*- encoding:utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
+#    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
@@ -22,7 +22,6 @@
 ##############################################################################
 
 from osv import osv
-from osv import fields
 from tools.translate import _
 from ..register_tools import open_register_view
 

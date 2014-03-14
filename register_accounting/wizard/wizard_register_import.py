@@ -29,7 +29,6 @@ from time import strftime
 from tempfile import NamedTemporaryFile
 from base64 import decodestring
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from csv import DictReader
 import threading
 import pooler
 from ..register_tools import open_register_view
@@ -94,7 +93,7 @@ class wizard_register_import(osv.osv_memory):
         if not context:
             context = {}
         # Fetch default funding pool: MSF Private Fund
-        try: 
+        try:
             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         except ValueError:
             msf_fp_id = 0
@@ -171,9 +170,9 @@ class wizard_register_import(osv.osv_memory):
                         'destination_id': destination_id,
                     }
                     common_vals.update({'analytic_id': cost_center_id,})
-                    cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
+                    self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
                     common_vals.update({'analytic_id': funding_pool_id or msf_fp_id, 'cost_center_id': cost_center_id,})
-                    fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
+                    self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
                     # Check analytic distribution. Use SKIP_WRITE_CHECK to not do anything else that writing analytic distribution field
                     absl_obj.write(cr, uid, [absl_id], {'analytic_distribution_id': distrib_id,}, context={'skip_write_check': True})
                     # Add this line to be check at the end of the process
@@ -317,7 +316,6 @@ class wizard_register_import(osv.osv_memory):
                 # Check file's content
                 for num, r in enumerate(rows):
                     # Update wizard
-                    percent = (float(num+1) / float(nb_rows+1)) * 100.0
                     progression = ((float(num+1) * remaining) / float(nb_rows)) + 6
                     self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': progression}, context)
                     # Prepare some values
@@ -536,7 +534,7 @@ class wizard_register_import(osv.osv_memory):
         # Launch a thread
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
-        
+
         # Write changes
         self.write(cr, uid, ids, {'state': 'inprogress'}, context)
         # Return a dict to avoid problem of panel bar to the right
