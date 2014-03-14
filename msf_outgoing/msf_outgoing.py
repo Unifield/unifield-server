@@ -438,16 +438,18 @@ class shipment(osv.osv):
                     'allow_copy': True,
                     'non_stock_noupdate': True,
                     'shipment_proc_id': wizard.id,
+                    'draft_packing_id': picking.id,
                 })
 
                 new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
 
                 # Reset context
                 context.update({
-                    'keep_prodlot': True,
-                    'keepLineNumber': True,
-                    'allow_copy': True,
-                    'non_stock_noupdate': True,
+                    'keep_prodlot': False,
+                    'keepLineNumber': False,
+                    'allow_copy': False,
+                    'non_stock_noupdate': False,
+                    'draft_packing_id': False,
                 })
 
                 # confirm the new packing
@@ -761,6 +763,9 @@ class shipment(osv.osv):
                 draft_packing = family.draft_packing_id.backorder_id
                 draft_shipment_id = draft_packing.shipment_id.id
 
+                if family.return_from == 0 and family.return_to == 0:
+                    continue
+
                 # Search the corresponding moves
                 move_ids = move_obj.search(cr, uid, [
                     ('picking_id', '=', family.draft_packing_id.id),
@@ -768,7 +773,7 @@ class shipment(osv.osv):
                     ('to_pack', '=', family.to_pack),
                 ], context=context)
 
-                stay = [(family.from_pack, family.to_pack)]
+                stay = []
 
                 if family.to_pack >= family.return_to:
                     if family.return_from == family.from_pack:
@@ -781,9 +786,6 @@ class shipment(osv.osv):
                         # In the middle, two now tuple in stay
                         stay.append((family.from_pack, family.return_from - 1))
                         stay.append((family.return_to + 1, family.to_pack))
-
-                # Old one is always removed
-                stay.pop(-1)
 
                 move_data = {}
                 for move in move_obj.browse(cr, uid, move_ids, context=context):
@@ -848,20 +850,20 @@ class shipment(osv.osv):
                     move_obj.copy(cr, uid, move.id, move_values, context=context)
                     context['non_stock_noupdate'] = False
 
+                    move_values = {
+                        'product_qty': 0.00,
+                        'state': 'done',
+                        'from_pack': 0,
+                        'to_pack': 0,
+                    }
+                    move_obj.write(cr, uid, [move.id], move_values, context=context)
+
                 for move_vals in move_data.values():
                     if round(move_vals['initial'], 14) != round(move_vals['partial_qty'], 14):
                         raise osv.except_osv(
                             _('Processing Error'),
                             _('The sum of the processed quantities is not equal to the sum of the initial quantities'),
                         )
-
-                move_values = {
-                    'product_qty': 0.00,
-                    'state': 'done',
-                    'from_pack': 0,
-                    'to_pack': 0,
-                }
-                move_obj.write(cr, uid, [move.id], move_values, context=context)
 
             # log corresponding action
             shipment_log_msg = _('Packs from the shipped Shipment (%s) have been returned to %s location.') % (shipment.name, _('Dispatch'))
@@ -2297,11 +2299,18 @@ class stock_picking(osv.osv):
                         _('Missing the ID of the shipment in the context'),
                     )
 
+                if not context.get('draft_packing_id', False):
+                    raise osv.except_osv(
+                        _('Processing Error'),
+                        _('Missing the ID of the draft packing in the context'),
+                    )
+
                 ship_proc = ship_proc_obj.browse(cr, uid, context['shipment_proc_id'], context=context)
                 shipment_id = context['shipment_id']
+                draft_packing_id = context['draft_packing_id']
 
                 for family in ship_proc.family_ids:
-                    if family.selected_number == 0.00:
+                    if family.draft_packing_id.id != draft_packing_id or family.selected_number == 0.00:
                         continue
 
                     selected_from_pack = family.to_pack - family.selected_number + 1
@@ -3372,7 +3381,9 @@ class stock_picking(osv.osv):
                                                                  'location_dest_id': line.move_id.location_dest_id.id}, context=context)
 
                     # Create a move line in the Packing
+                    context['keepLineNumber'] = True
                     move_obj.copy(cr, uid, move_to_copy, pack_move_data, context=context)
+                    context['keepLineNumber'] = False
 
             # Check quantities integrity status
             for m_data in moves_data.values():
