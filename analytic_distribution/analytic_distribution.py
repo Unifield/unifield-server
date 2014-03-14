@@ -21,6 +21,7 @@
 
 from osv import osv
 import netsvc
+from tools.translate import _
 
 class analytic_distribution(osv.osv):
     _name = 'analytic.distribution'
