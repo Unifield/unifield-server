@@ -2059,8 +2059,6 @@ class sale_order_line(osv.osv):
                 empty_lines = self.search(cr, uid, [('id', 'in', ids), ('product_uom_qty', '<=', 0.00)], count=True, context=context)
                 if empty_lines:
                         raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
-            elif 'product_uom_qty' in vals and vals.get('product_uom_qty') == 0.00:
-                raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
 
         return True
 
