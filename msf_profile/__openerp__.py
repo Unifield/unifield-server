@@ -114,7 +114,6 @@
         "export_import_lang",
         "msf_button_access_rights",
         "msf_field_access_rights",
-        "unifield_tests",
         "vertical_integration",
         "msf_currency_revaluation",
     ],

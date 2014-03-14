@@ -1,0 +1,18 @@
+# Use it!
+
+To use PyUnit tests in this directory:
+
+    python test_runner.py
+
+# What does the script?
+
+  * Read the 'tests' directory
+  * For each file that begins by "test_" and ends with ".py" read the get_test_class() method that return the class to use
+  * Create a Test Suite with all given class
+  * Run all tests and create an "output.html" file that contains the result
+
+# Notes
+
+  * Tests should inherit from UnifieldTest or for another Class that inherits from UnifieldTest
+  * UnifieldTest class checks that "unifield_tests" module is loaded in order to check that some data are loaded
+  * Master data are loaded via the master_data directory and the "init_xml" value from __openerp__.py file
