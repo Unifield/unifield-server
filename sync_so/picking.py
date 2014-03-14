@@ -267,21 +267,23 @@ class stock_picking(osv.osv):
                     line_proc_ids = move_proc.search(cr, uid, [
                         ('wizard_id', '=', in_processor),
                         ('move_id', '=', move_id),
+                        ('quantity', '=', 0.00),
                     ], context=context)
                     data['move_id'] = move_id
                     data['wizard_id'] = in_processor
                     if not line_proc_ids:
+                        data['ordered_quantity'] = data['quantity']
                         self.pool.get('stock.move.in.processor').create(cr, uid, data, context=context)
                     else:
                         for line in move_proc.browse(cr, uid, line_proc_ids, context=context):
                             if line.product_id.id == data.get('product_id') and \
                                line.uom_id.id == data.get('uom_id') and \
-                               (line.prodlot_id and line.prdolot_id.id == data.get('prodlot_id')) or (not line.prodlot_id and not data.get('prodlot_id')) and \
+                               (line.prodlot_id and line.prodlot_id.id == data.get('prodlot_id')) or (not line.prodlot_id and not data.get('prodlot_id')) and \
                                (line.asset_id and line.asset_id.id == data.get('asset_id')) or (not line.asset_id and not data.get('asset_id')):
-                                data['quantity'] += line.quantity
-                                move_proc.write(cr, uid, [line.id], {'quantity': data['quantity']}, context=context)
+                                move_proc.write(cr, uid, [line.id], data, context=context)
                                 break
                         else:
+                            data['ordered_quantity'] = data['quantity']
                             move_proc.create(cr, uid, data, context=context)
 
             # for the last Shipment of an FO, no new INcoming shipment will be created --> same value as in_id
