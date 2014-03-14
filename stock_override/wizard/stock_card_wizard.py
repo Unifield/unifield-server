@@ -44,23 +44,22 @@ class stock_card_wizard(osv.osv_memory):
         'card_lines': fields.one2many('stock.card.wizard.line', 'card_id',
                                       string='Card lines'),
     }
-
-
-    def _get_default_product(self, cr, uid, context=None):
-        '''
-        If a product is passed in the context, set it on wizard form
-        '''
-        if not context:
-            context = {}
-
-        return context.get('product_id', False)
-
-
-    _defaults = {
-        'product_id': _get_default_product,
-        'to_date': lambda *a: time.strftime('%Y-%m-%d'),
-    }
-
+    
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(stock_card_wizard, self).default_get(cr, uid, fields, context=context)
+        product_id = context.get('product_id', False)
+        perishable = False
+        if product_id:
+            prod_obj = self.pool.get('product.product')
+            product_r = prod_obj.read(cr, uid, [product_id], ['perishable'], context=context)
+            if product_r:
+                perishable = product_r[0]['perishable']
+        res.update({
+            'product_id': product_id,
+            'perishable': perishable,
+            'to_date': time.strftime('%Y-%m-%d'),
+        })
+        return res
 
     def onchange_product_id(self, cr, uid, ids, product_id, context=None):
         '''
@@ -212,7 +211,6 @@ class stock_card_wizard(osv.osv_memory):
                 'target': 'current',
                 'nodestroy': True,
                 'context': context}
-
 
     def print_pdf(self, cr, uid, ids, context=None):
         '''
