@@ -159,12 +159,6 @@
                                                 <field name="state"/>
                                                 <field name="invoiced"/>
                                                 <group attrs="{'invisible':[('invoiced','=',True)]}">
-                                                <button colspan="1"
-                                                    name="%(action_view_sale_order_line_make_invoice)d"
-                                                    states="confirmed"
-                                                    string="Make Invoices"
-                                                    type="action"
-                                                    icon="terp-document-new" />
                                                  </group>
                                             </group>
                                         </page>
@@ -403,13 +397,6 @@
                             string="Cancel" type="object"
                             icon="gtk-cancel"
                             states="confirmed,exception"/>
-                        <button colspan="1"
-                            name="%(action_view_sale_order_line_make_invoice)d"
-                            string="Create Invoice"
-                            type="action"
-                            states="done"
-                            icon="gtk-go-forward"
-                            attrs="{'invisible': [('invoiced', '=', 1)]}"/>
                         <button name="button_done"
                             string="Done" type="object"
                             states="confirmed,exception"
