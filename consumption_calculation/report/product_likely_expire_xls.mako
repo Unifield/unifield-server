@@ -40,6 +40,16 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+    <Style ss:ID="line_number">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+        <Borders>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+        <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
     <Style ss:ID="short_date">
      <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
      <Borders>
@@ -114,19 +124,19 @@ if cols < 0:
 <Row>
 <Cell ss:StyleID="line"><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
-<Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(line.consumption or 0.00))}</Data></Cell>
+<Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.consumption or 0.}</Data></Cell>
 % for i in getLineItems(line):
     ## line items
     % if i.expired_qty:
-    <Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(i.available_qty or 0.00))} (${(formatLang(i.expired_qty) or 0.00)})</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(i.available_qty) or 0.00} (${(formatLang(i.expired_qty) or 0.00)})</Data></Cell>
     % endif
     % if not i.expired_qty:
-    <Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(i.available_qty or 0.00))}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="Number">${formatLang(i.available_qty) or 0.00}</Data></Cell>
     % endif
 % endfor
-<Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(line.in_stock or 0.00))}</Data></Cell>
-<Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(line.total_expired or 0.00))|x}</Data></Cell>
-<Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(line.total_value or 0.00))|x}</Data></Cell>
+<Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.in_stock or 0.}</Data></Cell>
+<Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.total_expired or 0.}</Data></Cell>
+<Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.total_value or 0.}</Data></Cell>
 </Row>
 % endfor
 ## total row
@@ -140,7 +150,7 @@ if cols < 0:
 % endfor
 <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="line"><Data ss:Type="String">${(formatLang(getExpiryValueTotal(o) or 0.00))|x}</Data></Cell>
+<Cell ss:StyleID="line_number"><Data ss:Type="Number">${getExpiryValueTotal(o) or 0.}</Data></Cell>
 </Row>
 </Table>
 % endfor
@@ -175,8 +185,8 @@ worksheet_name = d_str.replace('/', '-')
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.lot_id.name}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(il.expired_date, date=True) or '')}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.location_id.name}</Data></Cell>
-<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(il.available_qty or 0.00))}</Data></Cell>
-<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(il.expired_qty or 0.00))}</Data></Cell>
+<Cell ss:StyleID="line_number" ><Data ss:Type="Number">${il.available_qty or 0.}</Data></Cell>
+<Cell ss:StyleID="line_number" ><Data ss:Type="Number">${il.expired_qty or 0.}</Data></Cell>
 </Row>
 % endfor
 </Table>
