@@ -1,10 +1,8 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    Copyright (C) 2014 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -21,19 +19,6 @@
 #
 ##############################################################################
 
-{
-    "name" : "Account Tools",
-    "version" : "0.1",
-    "description" : "Some tools in order to develop accounting modules for OpenERP",
-    "author" : "MSF, TeMPO Consulting",
-    "category" : "Tools",
-    "depends" : ["account_override"],
-    "init_xml" : [],
-    "update_xml" : [],
-    "demo_xml" : [],
-    "test": [],
-    "installable": True,
-    "active": False
-}
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

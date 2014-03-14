@@ -21,7 +21,6 @@
 #
 ##############################################################################
 
-from time import strftime
 from osv import osv
 
 def get_period_from_date(self, cr, uid, date=False, context=None):
@@ -35,11 +34,11 @@ def get_period_from_date(self, cr, uid, date=False, context=None):
     if not date:
         return False
     # Search period in which this date come from
-    period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date), ('number', '!=', 16)], limit=1, 
+    period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date), ('number', '!=', 16)], limit=1,
         order='date_start asc, name asc', context=context) or []
     # Get last period if no period found
     if not period_ids:
-        period_ids = self.pool.get('account.period').search(cr, uid, [('state', '=', 'open'), ('number', '!=', 16)], limit=1, 
+        period_ids = self.pool.get('account.period').search(cr, uid, [('state', '=', 'open'), ('number', '!=', 16)], limit=1,
             order='date_stop desc, name desc', context=context) or []
     if isinstance(period_ids, (int, long)):
         period_ids = [period_ids]
