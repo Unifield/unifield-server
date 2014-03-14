@@ -22,6 +22,7 @@
 from osv import osv
 from osv import fields
 from datetime import datetime
+from datetime import date
 import decimal_precision as dp
 from dateutil.relativedelta import relativedelta
 from tools.translate import _
@@ -37,7 +38,7 @@ class analytic_account(osv.osv):
         The comparison could be done via a date given in context.
         '''
         res = {}
-        cmp_date = datetime.date.today().strftime('%Y-%m-%d')
+        cmp_date = date.today().strftime('%Y-%m-%d')
         if context.get('date', False):
             cmp_date = context.get('date')
         for a in self.browse(cr, uid, ids):
@@ -53,7 +54,7 @@ class analytic_account(osv.osv):
         UTP-410: Add the search on active/inactive CC
         """
         arg = []
-        cmp_date = datetime.date.today().strftime('%Y-%m-%d')
+        cmp_date = date.today().strftime('%Y-%m-%d')
         if context.get('date', False):
             cmp_date = context.get('date')
         for x in args:
@@ -370,7 +371,7 @@ class analytic_account(osv.osv):
         if context is None:
             context = {}
         if 'date' in vals and vals['date'] is not False:
-            if vals['date'] <= datetime.date.today().strftime('%Y-%m-%d') and not context.get('sync_update_execution', False):
+            if vals['date'] <= date.today().strftime('%Y-%m-%d') and not context.get('sync_update_execution', False):
                 # validate the date (must be > today)
                 raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
             elif 'date_start' in vals and not vals['date_start'] < vals['date']:
