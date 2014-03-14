@@ -22,9 +22,9 @@
 from osv import osv
 import netsvc
 
-class distribution_line(osv.osv):
-    _name = "distribution.line"
-    _inherit = "distribution.line"
+class analytic_distribution(osv.osv):
+    _name = 'analytic.distribution'
+    _inherit = 'analytic.distribution'
 
     def _get_distribution_state(self, cr, uid, distrib_id, parent_id, account_id, context=None):
         """
@@ -111,6 +111,12 @@ class distribution_line(osv.osv):
             if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp.tuple_destination_account_ids]:
                 return 'invalid', _('account/destination tuple not compatible with given FP analytic account')
         return res, info
+
+analytic_distribution()
+
+class distribution_line(osv.osv):
+    _name = "distribution.line"
+    _inherit = "distribution.line"
 
     def create_analytic_lines(self, cr, uid, ids, move_line_id, date, document_date, source_date=False, name=False, context=None):
         '''
