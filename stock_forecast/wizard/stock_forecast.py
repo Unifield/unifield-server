@@ -33,6 +33,7 @@ PREFIXES = {'sale.order': 'so_',
             'tender': 'tend_',
             }
 
+
 class stock_forecast_line(osv.osv_memory):
     '''
     view corresponding to pack families
@@ -130,27 +131,28 @@ class stock_forecast(osv.osv_memory):
                 values['product_family_info_id'] = wiz.product_id.nomen_manda_2.id
                 values['procurement_method'] = wiz.product_id.procure_method
                 values['supply_method'] = wiz.product_id.supply_method
-                values['keep_cool'] = wiz.product_id.heat_sensitive_item
+                if wiz.product_id.heat_sensitive_item:
+                    values['keep_cool'] = True
                 values['short_shelf_life'] = wiz.product_id.short_shelf_life
                 values['dangerous_goods'] = wiz.product_id.dangerous_goods
                 values['justification_code_id'] = wiz.product_id.justification_code_id.id
         return result
     
     _columns = {
-                'product_id': fields.many2one('product.product', 'Product'),
-                'warehouse_id' : fields.many2one('stock.warehouse', 'Warehouse'),
-                'product_uom_id': fields.many2one('product.uom', 'Product UoM'),
-                'qty' : fields.float('Quantity', digits=(16,2), readonly=True),
-                'product_family_id': fields.many2one('product.nomenclature', 'Product Family', domain=[('level', '=', 2)]), # not used
-                'stock_forecast_lines': fields.one2many('stock.forecast.line', 'wizard_id', 'Stock Forecasts'),
-                'product_family_info_id': fields.function(_get_info, type='many2one', relation='product.nomenclature', method=True, string='Product Family', multi='get_info',),
-                'procurement_method': fields.function(_get_info, type='selection', selection=[('make_to_stock','Make to Stock'),('make_to_order','Make to Order')], method=True, string='Procurement Method', multi='get_info',),
-                'supply_method': fields.function(_get_info, type='selection', selection=[('produce','Produce'),('buy','Buy')], method=True, string='Supply Method', multi='get_info',),
-                'keep_cool': fields.function(_get_info, type='boolean', method=True, string='Keep Cool', multi='get_info',),
-                'short_shelf_life': fields.function(_get_info, type='boolean', method=True, string='Short Shelf Life', multi='get_info',),
-                'dangerous_goods': fields.function(_get_info, type='boolean', method=True, string='Dangerous Goods', multi='get_info',),
-                'justification_code_id': fields.function(_get_info, type='many2one', relation='product.justification.code', method=True, string='Justification Code', multi='get_info',),
-                }
+        'product_id': fields.many2one('product.product', 'Product'),
+        'warehouse_id' : fields.many2one('stock.warehouse', 'Warehouse'),
+        'product_uom_id': fields.many2one('product.uom', 'Product UoM'),
+        'qty' : fields.float('Quantity', digits=(16,2), readonly=True),
+        'product_family_id': fields.many2one('product.nomenclature', 'Product Family', domain=[('level', '=', 2)]), # not used
+        'stock_forecast_lines': fields.one2many('stock.forecast.line', 'wizard_id', 'Stock Forecasts'),
+        'product_family_info_id': fields.function(_get_info, type='many2one', relation='product.nomenclature', method=True, string='Product Family', multi='get_info',),
+        'procurement_method': fields.function(_get_info, type='selection', selection=[('make_to_stock','Make to Stock'),('make_to_order','Make to Order')], method=True, string='Procurement Method', multi='get_info',),
+        'supply_method': fields.function(_get_info, type='selection', selection=[('produce','Produce'),('buy','Buy')], method=True, string='Supply Method', multi='get_info',),
+        'keep_cool': fields.function(_get_info, type='boolean', method=True, string='Keep Cool', multi='get_info',),
+        'short_shelf_life': fields.function(_get_info, type='boolean', method=True, string='Short Shelf Life', multi='get_info',),
+        'dangerous_goods': fields.function(_get_info, type='boolean', method=True, string='Dangerous Goods', multi='get_info',),
+        'justification_code_id': fields.function(_get_info, type='many2one', relation='product.justification.code', method=True, string='Justification Code', multi='get_info',),
+    }
     
     def start_forecast(self, cr, uid, ids, context=None):
         '''
@@ -169,9 +171,9 @@ class stock_forecast(osv.osv_memory):
                 'res_model': 'stock.forecast',
                 'view_type': 'form',
                 'view_mode': 'form',
-                'target': 'popup',
+                'target': 'new',
                 'res_id': wizard_id,
-                'context': dict(context),
+                'context': context,
                 }
     
     def onchange(self, cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context=None):
@@ -318,7 +320,6 @@ class stock_forecast(osv.osv_memory):
         
         return export_obj.export_to_csv(cr, uid, ids, context=dict(context, stock_forecast_id=ids))
         
-
     def reset_fields(self, cr, uid, ids, context=None):
         '''
         reset all fields and table
