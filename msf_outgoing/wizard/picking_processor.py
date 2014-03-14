@@ -393,6 +393,7 @@ class stock_move_processor(osv.osv):
             readonly=True,
             select=True,
             help="Move to process",
+            ondelete='cascade',
         ),
         'product_id': fields.many2one(
             'product.product',
@@ -400,6 +401,7 @@ class stock_move_processor(osv.osv):
             required=True,
             readonly=True,
             help="Received product",
+            ondelete='cascade',
         ),
         'ordered_product_id': fields.function(
             _get_move_info,
@@ -612,15 +614,18 @@ class stock_move_processor(osv.osv):
         'prodlot_id': fields.many2one(
             'stock.production.lot',
             string='Batch number',
+            ondelete='set null',
         ),
         'expiry_date': fields.date(string='Expiry date'),
         'asset_id': fields.many2one(
             'product.asset',
             string='Asset',
+            ondelete='set null',
         ),
         'composition_list_id': fields.many2one(
             'composition.kit',
             string='Kit',
+            ondelete='set null',
         ),
         'cost': fields.float(
             string='Cost',
@@ -633,6 +638,7 @@ class stock_move_processor(osv.osv):
             string='Currency',
             readonly=True,
             help="Currency in which Unit cost is expressed",
+            ondelete='set null',
         ),
         'change_reason': fields.char(size=256, string='Change reason'),
     }

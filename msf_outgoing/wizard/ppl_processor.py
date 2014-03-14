@@ -270,6 +270,7 @@ class ppl_family_processor(osv.osv):
         'pack_type': fields.many2one(
             'pack.type',
             string='Pack Type',
+            ondelete='set null',
         ),
         'length': fields.float(digits=(16, 2), string='Length [cm]'),
         'width': fields.float(digits=(16, 2), string='Width [cm]'),
@@ -417,6 +418,7 @@ class ppl_move_processor(osv.osv):
         'pack_id': fields.many2one(
             'ppl.family.processor',
             string='Pack',
+            ondelete='set null',
         ),
         'ordered_product_id': fields.function(
             _get_move_info,

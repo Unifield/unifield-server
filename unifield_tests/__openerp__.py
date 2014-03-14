@@ -27,27 +27,16 @@
     "description" : "This module adds unit test for Unifield modules",
     "author" : "TeMPO Consulting, MSF",
     "category" : "Tests",
-    "depends" : ["sale_override", 
-                 "stock_override", 
-                 "purchase_override",
-                 "product",
-                 "product_attributes",
-                 ],
-    "init_xml" : [],
+    "depends" : [],
+    "init_xml" : [
+        'master_data/010_partners.yml',
+        'master_data/020_accounts.yml'
+    ],
     "update_xml" : [],
     "demo_xml" : [],
-    "test": [
-        "test/test_partner_data.yml",
-        "test/test_product_data.yml",
-        "test/test_analytic_distrib_data.yml",
-        "test/resourcing/cancel_fo_line.yml",
-        "test/resourcing/cancel_fo.yml",
-        "test/resourcing/cancel_po.yml",
-        "test/resourcing/cancel_po_line.yml",
-        ],
+    "test": [],
     "installable": True,
     "active": False
 }
-
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

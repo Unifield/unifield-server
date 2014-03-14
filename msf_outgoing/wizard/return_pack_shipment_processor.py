@@ -127,6 +127,8 @@ class return_pack_shipment_processor(osv.osv):
         for wizard in self.browse(cr, uid, ids, context=context):
             sequences = []
             for family in wizard.family_ids:
+                if family.return_from == 0 and family.return_to == 0:
+                    continue
                 if family.return_from > family.return_to:
                     to_smaller_ids.append(family.id)
                 elif not (family.return_from >= family.from_pack and family.return_to <= family.to_pack):

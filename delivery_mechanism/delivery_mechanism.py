@@ -721,7 +721,7 @@ class stock_picking(osv.osv):
                 # If there is remaining quantity for the move, put the ID of the move
                 # and the remaining quantity to list of moves to put in backorder
                 if diff_qty > 0.00 and move.state != 'cancel':
-                    backordered_moves.append((move, diff_qty, average_values))
+                    backordered_moves.append((move, diff_qty, average_values, data_back))
 
             # Create the backorder if needed
             if backordered_moves:
@@ -731,7 +731,7 @@ class stock_picking(osv.osv):
                     'state': 'draft',
                 }, context=context)
 
-                for bo_move, bo_qty, av_values in backordered_moves:
+                for bo_move, bo_qty, av_values, data_back in backordered_moves:
                     # Create the corresponding move in the backorder - reset batch - reset asset_id
                     bo_values = {
                         'asset_id': False,
@@ -747,7 +747,7 @@ class stock_picking(osv.osv):
                     }
                     bo_values.update(av_values)
                     context['keepLineNumber'] = True
-                    move_obj.copy(cr, uid, move.id, bo_values, context=context)
+                    move_obj.copy(cr, uid, bo_move.id, bo_values, context=context)
                     context['keepLineNumber'] = False
 
                 # Put the done moves in this new picking
