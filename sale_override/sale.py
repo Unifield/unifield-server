@@ -1294,8 +1294,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                     rts_date = self._get_date_planned(order, line)
                     proc_data = self._get_procurement_order_data(line, order, rts_date, context)
+
                     # Just change some values because in case of IR, we need specific values
                     proc_data.update({
+                        'product_id': product_id,
                         'product_uom': product_uom,
                         'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
                         'move_id': move_id,
@@ -1464,15 +1466,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         for param in [line, order]:
             self._check_browse_param(param, '_create_procurement_order')
 
-        proc_data = {}
-
-        # these lines are valid for all types (stock and order)
-        # when the line is sourced, we already get a procurement for the line
-        # when the line is confirmed, the corresponding procurement order has already been processed
-        # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
-        if line.state in ['sourced', 'confirmed', 'done'] or (line.created_by_po_line and line.procurement_id) or not line.product_id:
-            return proc_data
-
         if line.type == 'make_to_order':
             location_id = order.shop_id.warehouse_id.lot_input_id.id
         else:
@@ -1604,8 +1597,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             # if the method is called after po update, we do not display log message
             display_log = True
             for line in order.order_line:
-                proc_data = self._get_procurement_order_data(line, order, rts, context=context)
-                if proc_data:
+                # these lines are valid for all types (stock and order)
+                # when the line is sourced, we already get a procurement for the line
+                # when the line is confirmed, the corresponding procurement order has already been processed
+                # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
+                if line.state in ['sourced', 'confirmed', 'done'] or (line.created_by_po_line and line.procurement_id) or not line.product_id:
+                    proc_data = self._get_procurement_order_data(line, order, rts, context=context)
                     proc_id = proc_obj.create(cr, uid, proc_data, context=context)
                     proc_ids.append(proc_id)
                     # set the flag for log message
