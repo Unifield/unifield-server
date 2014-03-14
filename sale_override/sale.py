@@ -961,7 +961,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         - allow to modify the data for stock picking creation
         '''
-        print 'sale_override'
         result = super(sale_order, self)._hook_ship_create_stock_picking(cr, uid, ids, context=context, *args, **kwargs)
         result['reason_type_id'] = self._get_reason_type(cr, uid, kwargs['order'], context)
 
@@ -1303,7 +1302,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         'property_ids': [(6, 0, [x.id for x in line.property_ids])],
                     })
 
-                    proc_id = self.pool.get('procurement.order').create(cr, uid, proc_data)
+                    proc_id = proc_obj.create(cr, uid, proc_data)
                     proc_ids.append(proc_id)
 
                     sol_obj.write(cr, uid, [line.id], {'procurement_id': proc_id})
@@ -1448,61 +1447,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return True
 
-    def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
-        """
-        Do some checks for SO validation :
-            1/ Check of the analytic distribution
-            2/ Check if there is lines in order
-            3/ Check of line procurement method in case of loan FO
-            4/ Check if the currency of the order is compatible with
-               the currency of the partner
-
-        :param cr: Cursor to the database
-        :param uid: ID of the user that runs the method
-        :param ids: List of IDs of the order to validate
-        :param context: Context of the call
-
-        :return True if all order have been written
-        :rtype boolean
-        """
-        result = []
-        line = kwargs['line']
-
-        # new field representing selected partner from sourcing tool
-
-        date_tools = self.pool.get('date.tools')
-        fields_tools = self.pool.get('fields.tools')
-        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
-        # call to super
-        result = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
-        # date_planned = rts - company.prep_lt
-        order = kwargs['order']
-        # get value from company
-        prep_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='preparation_lead_time', context=context)
-        # rts - prep_lt
-        rts = datetime.strptime(order.ready_to_ship_date, db_date_format)
-        rts = rts - relativedelta(days=prep_lt or 0)
-        rts = rts.strftime(db_date_format)
-        result['date_planned'] = rts
-        # update from yml flag
-        result['from_yml_test'] = order.from_yml_test
-
-        # Some verifications
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        # objects
-        line = kwargs['line']
-        # call to super
-        proc_data = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
-        # update proc_data for link to destination purchase order and purchase order line (for line number) during back update of sale order
-        proc_data.update({'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id,
-                          'so_back_update_dest_pol_id_procurement_order': line.so_back_update_dest_pol_id_sale_order_line.id,
-                          'sale_id': line.order_id.id, })
-        return proc_data
-
     def _get_procurement_order_data(self, line, order, rts_date, context=None):
         """
         Get data for the  procurement order creation according to
@@ -1583,7 +1527,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Objects
         wf_service = netsvc.LocalService("workflow")
         sol_obj = self.pool.get('sale.order.line')
-        user_obj = self.pool.get('res.users')
         fields_tools = self.pool.get('fields.tools')
         date_tools = self.pool.get('date.tools')
         proc_obj = self.pool.get('procurement.order')
@@ -1595,7 +1538,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        company = user_obj.browse(cr, uid, uid).company_id
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
         order_brw_list = self.browse(cr, uid, ids)
 
