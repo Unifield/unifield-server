@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
+#-*- coding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2014 MSF, TeMPO Consulting.
+#    Copyright (C) 2014 TeMPO Consulting, MSF. All Rights Reserved
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,10 +19,17 @@
 #
 ##############################################################################
 
-import account
-import invoice
-import account_voucher
-import report
-import wizard
+from osv import osv
+from osv import fields
 
+class account_invoice(osv.osv):
+    _name = 'account.invoice'
+    _inherit = 'account.invoice'
+
+    _columns = {
+        'purchase_ids': fields.many2many('purchase.order', 'purchase_invoice_rel', 'invoice_id', 'purchase_id', 'Purchase Order',
+            help="Purchase Order from which invoice have been generated"),
+    }
+
+account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -206,8 +206,6 @@ class account_invoice(osv.osv):
         'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False,
             states={'draft':[('readonly',False)]}),
         'register_posting_date': fields.date(string="Register posting date for Direct Invoice", required=False),
-        'purchase_ids': fields.many2many('purchase.order', 'purchase_invoice_rel', 'invoice_id', 'purchase_id', 'Purchase Order',
-            help="Purchase Order from which invoice have been generated"),
     }
 
     _defaults = {
