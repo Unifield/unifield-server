@@ -94,7 +94,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
-    def _get_sale_order_state(self, cr, uid, order=False, context=None):
+    def _get_sale_order_state(self, cr, uid, order=None, context=None):
         """
         Compute the state of the field order.
 
@@ -528,23 +528,23 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     """
     Model methods
     """
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields_list, context=None):
         """
         Set default values (location_id) for sale_order_line
 
         :param cr: Cursor to the database
         :param uid: ID of the user that runs the method
-        :param fields: Fields to set
+        :param fields_list: Fields to set
         :param context: Context of the call
 
-        :return Dictionnary with fields as keys and default value
+        :return Dictionnary with fields_list as keys and default value
                  of field.
         :rtype dict
         """
         # Objects
         warehouse_obj = self.pool.get('stock.warehouse')
 
-        res = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
+        res = super(sale_order_line, self).default_get(cr, uid, fields_list, context=context)
 
         if res is None:
             res = {}
@@ -577,7 +577,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if vals is None:
             vals = {}
 
-        product = False
+        product = None
         if vals.get('product_id', False):
             product = product_obj.browse(cr, uid, vals['product_id'], context=context)
 
