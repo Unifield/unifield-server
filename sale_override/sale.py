@@ -941,7 +941,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'donation_exp': 'reason_type_donation_expiry',
         }
 
-        if order.order_type in r_types:
+        if not order.procurement_request and order.order_type in r_types:
             return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', r_types[order.order_type])[1]
 
         return False
@@ -1065,7 +1065,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     picking_data.update({
                         'type': 'internal',
                         'subtype': 'standard',
-                        'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1],
+                        'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1],
                     })
                     pick_name = seq_obj.get(cr, uid, 'stock.picking.internal')
         else:
@@ -1150,7 +1150,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if order.procurement_request and order.location_requestor_id:
             move_data.update({
                 'type': 'internal',
-                'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1],
+                'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1],
                 'location_dest_id': order.location_requestor_id.id,
             })
 

@@ -65,7 +65,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         ),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields_list, context=None):
         """
         Set lines with the selected lines to source
         """
@@ -75,7 +75,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if not context.get('active_ids') or len(context.get('active_ids')) < 2:
             raise osv.except_osv(_('Error'), _('You should select at least two lines to process.'))
 
-        res = super(multiple_sourcing_wizard, self).default_get(cr, uid, fields, context=context)
+        res = super(multiple_sourcing_wizard, self).default_get(cr, uid, fields_list, context=context)
 
         res['line_ids'] = []
         res['error_on_lines'] = False
