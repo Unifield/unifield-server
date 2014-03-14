@@ -29,7 +29,7 @@
     "website": "http://unifield.msf.org",
     # Account tools depends on account_override, so account_override is not needed.
     # account_voucher: need it to change account_voucher object. Note that account_voucher is the dependance of account_payment which is in depandancy of register_accounting.
-    "depends" : ["analytic_override", "account_tools", "purchase", "account_voucher"],
+    "depends" : ["analytic_override", "account_tools", "purchase", "account_voucher", "account_msf"],
     "category" : "Generic Modules/Accounting",
     "init_xml" : ["data.xml",],
     "demo_xml" : [],

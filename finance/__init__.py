@@ -19,8 +19,8 @@
 #
 ##############################################################################
 
+import account
 import account_voucher
-
 import report
 import wizard
 
