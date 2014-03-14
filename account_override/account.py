@@ -331,6 +331,7 @@ class account_account(osv.osv):
 account_account()
 
 class account_journal(osv.osv):
+    _name = 'account.journal'
     _inherit = 'account.journal'
 
     # @@@override account>account.py>account_journal>create_sequence
