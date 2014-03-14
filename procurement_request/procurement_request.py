@@ -607,7 +607,7 @@ class purchase_order(osv.osv):
             proc_ids = proc_obj.search(cr, uid, [('move_id', '=', order_line.move_dest_id.id)], context=context)
             so_line_ids = sale_line_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
             po_line_ids = po_line_obj.search(cr, uid, [('move_dest_id', '=', order_line.move_dest_id.id)], context=context)
-            if all(not line.order_id or (line.order_id.procurement_request and line.order_id.location_requestor_id.usage != 'customer') for line in sale_line_obj.browse(cr, uid, so_line_ids, context=context)):
+            if so_line_ids and all(not line.order_id or (line.order_id.procurement_request and line.order_id.location_requestor_id.usage != 'customer') for line in sale_line_obj.browse(cr, uid, so_line_ids, context=context)):
                 for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
                     if proc.move_id:
                         move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)
