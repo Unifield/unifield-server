@@ -45,10 +45,6 @@ _SELECTION_PO_CFT = [
 
 
 class sale_order_line(osv.osv):
-    """
-    override of sale_order_line class
-    creation/update/copy of sourcing_line
-    """
     _inherit = 'sale.order.line'
     _description = 'Sales Order Line'
 

@@ -49,7 +49,6 @@
         'test/error_rfq_sourcing.yml',
         ],
     'update_xml': [
-        'security/ir.model.access.csv',
         'sourcing_view.xml',
         'wizard/multiple_sourcing_view.xml',
     ],
