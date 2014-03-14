@@ -230,10 +230,6 @@ class stock_forecast(osv.osv_memory):
         procurement_method = 'n/a'
         supply_method = 'n/a'
         
-        keep_cool = False
-        short_shelf_life = False
-        dangerous_goods = False
-        
         qty = False
         date = time.strftime('%Y-%m-%d')
         
@@ -250,9 +246,9 @@ class stock_forecast(osv.osv_memory):
                 procurement_method = self._get_selection(cr, uid, 'procure_method', ['product.template',], wizard.procurement_method, context=context)
                 supply_method = self._get_selection(cr, uid, 'supply_method', ['product.template',], wizard.supply_method, context=context)
                 
-                keep_cool = str(bool(wizard.keep_cool)) 
-                short_shelf_life = str(wizard.short_shelf_life)
-                dangerous_goods = str(wizard.dangerous_goods)
+                keep_cool = 'Yes' if wizard.keep_cool else 'No'
+                short_shelf_life = 'Yes' if wizard.short_shelf_life else 'No'
+                dangerous_goods = 'Yes' if wizard.dangerous_goods else 'No'
                 justification_code = wizard.justification_code_id and wizard.justification_code_id.name_get()[0][1] or 'n/a'
                 
             else:
