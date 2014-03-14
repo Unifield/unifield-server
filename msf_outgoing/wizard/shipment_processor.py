@@ -56,6 +56,7 @@ class shipment_processor(osv.osv):
             'res.partner.address',
             string='Address',
             help="Address of the customer",
+            ondelete='set null',
         ),
         'partner_id': fields.related(
             'address_id',
@@ -386,7 +387,8 @@ class shipment_additional_line_processor(osv.osv):
         'additional_item_id': fields.many2one(
             'shipment.additionalitems',
             string='Additional item id',
-            readonly=True
+            readonly=True,
+            ondelete='cascade',
         ),
         'name': fields.char(
             string='Additional Item',

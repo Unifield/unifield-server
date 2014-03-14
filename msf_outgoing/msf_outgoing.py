@@ -3372,7 +3372,9 @@ class stock_picking(osv.osv):
                                                                  'location_dest_id': line.move_id.location_dest_id.id}, context=context)
 
                     # Create a move line in the Packing
+                    context['keepLineNumber'] = True
                     move_obj.copy(cr, uid, move_to_copy, pack_move_data, context=context)
+                    context['keepLineNumber'] = False
 
             # Check quantities integrity status
             for m_data in moves_data.values():
