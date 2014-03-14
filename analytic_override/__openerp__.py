@@ -23,7 +23,6 @@
     "version": "1.1",
     "author" : "MSF, TeMPO Consulting",
     "category" : "Generic Modules/Projects & Services",
-    # As account_override depends on analytic and account_tools (that depends on account), no need for analytic and account dependances
     "depends" : ["analytic"],
     "description": """Module for defining analytic object related as:
       - analytic distribution
