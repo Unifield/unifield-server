@@ -28,7 +28,7 @@ import time
 class account_invoice_refund(osv.osv_memory):
     _name = 'account.invoice.refund'
     _inherit = 'account.invoice.refund'
-    
+
     def _get_journal(self, cr, uid, context=None):
         """
         WARNING: This method has been taken from account module from OpenERP
@@ -50,23 +50,23 @@ class account_invoice_refund(osv.osv_memory):
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
         journal_obj = self.pool.get('account.journal')
         res = super(account_invoice_refund,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-        type = context.get('journal_type', 'sale_refund')
-        if type in ('sale', 'sale_refund'):
-            type = 'sale_refund'
+        jtype = context.get('journal_type', 'sale_refund')
+        if jtype in ('sale', 'sale_refund'):
+            jtype = 'sale_refund'
         else:
-            type = 'purchase_refund'
+            jtype = 'purchase_refund'
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         for field in res['fields']:
             if field == 'journal_id' and user.company_id.instance_id:
-                journal_select = journal_obj._name_search(cr, uid, '', [('type', '=', type),('is_current_instance','=',True)], context=context, limit=None, name_get_uid=1)
+                journal_select = journal_obj._name_search(cr, uid, '', [('type', '=', jtype),('is_current_instance','=',True)], context=context, limit=None, name_get_uid=1)
                 res['fields'][field]['selection'] = journal_select
         return res
-    
+
     _columns = {
         'date': fields.date('Posting date'),
         'document_date': fields.date('Document Date', required=True),
     }
-    
+
     _defaults = {
         'document_date': lambda *a: time.strftime('%Y-%m-%d'),
         #UTP-961: refund DI: only refund option is available

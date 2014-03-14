@@ -23,7 +23,6 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from time import strftime
-from lxml import etree
 
 class analytic_line(osv.osv):
     _name = "account.analytic.line"
@@ -181,29 +180,9 @@ class analytic_line(osv.osv):
                 res[al.id] = True
         return res
 
-    def _get_is_free(self, cr, uid, ids, field_names, args, context=None):
-        """
-        Check if the line comes from a Free 1 or Free 2 analytic account category.
-        """
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = {}
-        for al in self.browse(cr, uid, ids, context=context):
-            res[al.id] = False
-            if al.account_id and al.account_id.category and al.account_id.category in ['FREE1', 'FREE2']:
-                res[al.id] = True
-        return res
-
     _columns = {
-        'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
-        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]"),
         'commitment_line_id': fields.many2one('account.commitment.line', string='Commitment Voucher Line', ondelete='cascade'),
-        'from_write_off': fields.boolean(string='Write-off?', readonly=True, help="Indicates that this line come from a write-off account line."),
-        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]"),
         'is_fp_compat_with': fields.function(_get_fake_is_fp_compat_with, fnct_search=_search_is_fp_compat_with, method=True, type="char", size=254, string="Is compatible with some FP?"),
-        'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
         'move_state': fields.related('move_id', 'move_id', 'state', type='selection', size=64, relation="account.move.line", selection=[('draft', 'Unposted'), ('posted', 'Posted')], string='Journal Entry state', readonly=True, help="Indicates that this line come from an Unposted Journal Entry."),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", readonly=True, \
             help="Indicates the Journal Type of the Analytic journal item"),
@@ -213,62 +192,11 @@ class analytic_line(osv.osv):
         'is_unposted': fields.function(_get_is_unposted, method=True, type='boolean', string="Unposted?"),
         'imported_commitment': fields.boolean(string="From imported commitment?"),
         'imported_entry_sequence': fields.text("Imported Entry Sequence"),
-        'free_account': fields.function(_get_is_free, method=True, type='boolean', string='Free account?', help="Is that line comes from a Free 1 or Free 2 account?"),
     }
 
     _defaults = {
-        'from_write_off': lambda *a: False,
         'imported_commitment': lambda *a: False,
     }
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        """
-        Change account_id field name to "Funding Pool if we come from a funding pool
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        is_funding_pool_view = False
-        if context.get('display_fp', False) and context.get('display_fp') is True:
-            is_funding_pool_view = True
-        view = super(analytic_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        if view_type in ('tree', 'search') and is_funding_pool_view:
-            tree = etree.fromstring(view['arch'])
-            # Change OC field
-            fields = tree.xpath('/' + view_type + '//field[@name="account_id"]')
-            for field in fields:
-                field.set('string', _("Funding Pool"))
-                field.set('domain', "[('category', '=', 'FUNDING'), ('type', '<>', 'view')]")
-            view['arch'] = etree.tostring(tree)
-        return view
-
-    def _check_date(self, cr, uid, vals, context=None):
-        """
-        Check if given account_id is active for given date. Except for mass reallocation ('from' = 'mass_reallocation' in context)
-        """
-        if not context:
-            context = {}
-        if not 'account_id' in vals:
-            raise osv.except_osv(_('Error'), _('No account_id found in given values!'))
-        if 'date' in vals and vals['date'] is not False:
-            account_obj = self.pool.get('account.analytic.account')
-            date = vals['date']
-            account = account_obj.browse(cr, uid, vals['account_id'], context=context)
-            # FIXME: refactoring of next code
-            if date < account.date_start or (account.date != False and date >= account.date):
-                if 'from' not in context or context.get('from') != 'mass_reallocation':
-                    raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (account.name or '',))
-            if vals.get('cost_center_id', False):
-                cc = account_obj.browse(cr, uid, vals['cost_center_id'], context=context)
-                if date < cc.date_start or (cc.date != False and date >= cc.date):
-                    if 'from' not in context or context.get('from') != 'mass_reallocation':
-                        raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (cc.name or '',))
-            if vals.get('destination_id', False):
-                dest = account_obj.browse(cr, uid, vals['destination_id'], context=context)
-                if date < dest.date_start or (dest.date != False and date >= dest.date):
-                    if 'from' not in context or context.get('from') != 'mass_reallocation':
-                        raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (dest.name or '',))
-        return True
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -279,8 +207,6 @@ class analytic_line(osv.osv):
             context = {}
         # Default behaviour
         res = super(analytic_line, self).create(cr, uid, vals, context=context)
-        # Check date
-        self._check_date(cr, uid, vals, context=context)
         # Check soft/hard closed contract
         sql = """SELECT fcc.id
         FROM financing_contract_funding_pool_line fcfpl, account_analytic_account a, financing_contract_format fcf, financing_contract_contract fcc
@@ -296,22 +222,6 @@ class analytic_line(osv.osv):
             contract = self.pool.get('financing.contract.contract').browse(cr, uid, sql_res[0][0])
             raise osv.except_osv(_('Warning'), _('Selected Funding Pool analytic account (%s) is blocked by a soft/hard closed contract: %s') % (account and account.code or '', contract and contract.name or ''))
         return res
-
-    def write(self, cr, uid, ids, vals, context=None):
-        """
-        Verify date for all given ids with account
-        """
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for l in self.browse(cr, uid, ids):
-            vals2 = vals.copy()
-            for el in ['account_id', 'cost_center_id', 'destination_id']:
-                if not el in vals:
-                    vals2.update({el: l[el] and l[el]['id'] or False})
-            self._check_date(cr, uid, vals2, context=context)
-        return super(analytic_line, self).write(cr, uid, ids, vals, context=context)
 
     def update_account(self, cr, uid, ids, account_id, date=False, context=None):
         """
