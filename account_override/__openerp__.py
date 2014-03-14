@@ -31,7 +31,11 @@
     "category" : "Generic Modules/Accounting",
     "init_xml" : ["data.xml",],
     "demo_xml" : [],
-    "update_xml" : [],
+    "update_xml" : [
+        'account_invoice_view.xml',
+        'account_invoice_report.xml',
+        'wizard/split_invoice.xml'
+    ],
     'test': [],
     'installable': True,
     'active': False,
