@@ -192,7 +192,6 @@ class account_invoice(osv.osv):
         'fake_account_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.account", string="Account", readonly="True"),
         'fake_journal_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.journal", string="Journal", readonly="True"),
         'fake_currency_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="res.currency", string="Currency", readonly="True"),
-        'picking_id': fields.many2one('stock.picking', string="Picking"),
         'have_donation_certificate': fields.function(_get_have_donation_certificate, method=True, type='boolean', string="Have a Certificate of donation?"),
         'purchase_list': fields.boolean(string='Purchase List ?', help='Check this box if the invoice comes from a purchase list', readonly=True, states={'draft':[('readonly',False)]}),
         'virtual_currency_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Currency",
@@ -897,8 +896,6 @@ class account_invoice_line(osv.osv):
             readonly=True, help="This informs system if this item have been corrected in analytic lines. Criteria: the invoice line is linked to a journal items that have analytic item which is reallocated.",
             store=False),
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
-        'order_line_id': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True,
-            help="Purchase Order Line from which this invoice line has been generated (when coming from a purchase order)."),
     }
 
     _defaults = {

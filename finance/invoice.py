@@ -27,9 +27,21 @@ class account_invoice(osv.osv):
     _inherit = 'account.invoice'
 
     _columns = {
+        'picking_id': fields.many2one('stock.picking', string="Picking"),
         'purchase_ids': fields.many2many('purchase.order', 'purchase_invoice_rel', 'invoice_id', 'purchase_id', 'Purchase Order',
             help="Purchase Order from which invoice have been generated"),
     }
 
 account_invoice()
+
+class account_invoice_line(osv.osv):
+    _name = 'account.invoice.line'
+    _inherit = 'account.invoice.line'
+
+    _columns = {
+        'order_line_id': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True,
+            help="Purchase Order Line from which this invoice line has been generated (when coming from a purchase order)."),
+    }
+
+account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
