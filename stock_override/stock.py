@@ -49,22 +49,26 @@ class procurement_order(osv.osv):
             context = {}
         return super(procurement_order, self).create(cr, uid, vals, context=context)
 
+    # @@@override: procurement>procurement.order->action_confirm()
     def action_confirm(self, cr, uid, ids, context=None):
         """ Confirms procurement and writes exception message if any.
         @return: True
         """
         move_obj = self.pool.get('stock.move')
+        data_obj = self.pool.get('ir.model.data')
+
         for procurement in self.browse(cr, uid, ids, context=context):
             if procurement.product_qty <= 0.00:
                 raise osv.except_osv(_('Data Insufficient !'),
                     _('Please check the Quantity in Procurement Order(s), it should not be less than 1!'))
             if procurement.product_id.type in ('product', 'consu'):
                 if not procurement.move_id:
-                    source = procurement.location_id.id
-                    reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
                     if procurement.procure_method == 'make_to_order':
-                        reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+                        reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
                         source = procurement.product_id.product_tmpl_id.property_stock_procurement.id
+                    else:
+                        source = procurement.location_id.id
+                        reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
                     id = move_obj.create(cr, uid, {
                         'name': procurement.name,
                         'location_id': source,
@@ -82,6 +86,7 @@ class procurement_order(osv.osv):
                     self.write(cr, uid, [procurement.id], {'move_id': id, 'close_move': 1})
         self.write(cr, uid, ids, {'state': 'confirmed', 'message': ''})
         return True
+    # @@@END override: procurement>procurement.order->action_confirm()
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
@@ -818,7 +823,7 @@ class stock_picking(osv.osv):
         if sp.partner_id.id == company_partner_id.id:
             res = False
         return res
-    
+
     def _create_invoice(self, cr, uid, stock_picking):
         """
         Creates an invoice for the specified stock picking
@@ -826,11 +831,11 @@ class stock_picking(osv.osv):
         """
         picking_type = False
         invoice_type = self._get_invoice_type(stock_picking)
-        
+
         # Check if no invoice needed
         if not self.is_invoice_needed(cr, uid, stock_picking):
             return
-        
+
         # we do not create invoice for procurement_request (Internal Request)
         if not stock_picking.sale_id.procurement_request and stock_picking.subtype == 'standard':
             if stock_picking.type == 'in' or stock_picking.type == 'internal':
@@ -843,20 +848,20 @@ class stock_picking(osv.osv):
                     picking_type = 'purchase_refund'
                 else:
                     picking_type = 'sale'
-                    
+
             # Set journal type based on picking type
             journal_type = picking_type
-            
+
             # Disturb journal for invoice only on intermission partner type
             if stock_picking.partner_id.partner_type == 'intermission':
                 journal_type = 'intermission'
-            
+
             # Find appropriate journal
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type),
                                                                             ('is_current_instance', '=', True)])
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No journal of type %s found when trying to create invoice for picking %s!') % (journal_type, stock_picking.name))
-            
+
             # Create invoice
             self.action_invoice_create(cr, uid, [stock_picking.id], journal_ids[0], False, invoice_type, {})
 
@@ -870,7 +875,7 @@ class stock_picking(osv.osv):
                 ids = [ids]
             for sp in self.browse(cr, uid, ids):
                 self._create_invoice(cr, uid, sp)
-                
+
         return res
 
     def _get_price_unit_invoice(self, cr, uid, move_line, type):
