@@ -361,14 +361,10 @@ class financing_contract_format_line(osv.osv):
     }
 
     _order = 'code asc'
-    
- 
-        
  
     def create(self, cr, uid, vals, context=None):
         if not context:
             context = {}
-            
         
         # if the account is set as view, remove budget and account values
         quads_list = []
@@ -377,45 +373,26 @@ class financing_contract_format_line(osv.osv):
             vals['project_amount'] = 0.0
             vals['account_destination_ids'] = []
             vals['account_quadruplet_ids'] = []
-        elif 'is_quadruplet' in vals:
-            if vals['is_quadruplet']:
+        else: 
+            if vals.get('is_quadruplet', False):
                 # delete account/destinations
                 vals['account_destination_ids'] = []
                 if context.get('sync_update_execution'):
-                    x = vals['quadruplet_update']
-                    #vals['account_quadruplet_ids'] = x.encode('ascii','ignore')
-                    ids_string = x[9:-3]
-                    quads_list = [int(s) for s in ids_string.split(',')]
-                    # Note to JF: commented code was trying to avoid SQL. Has been left in case someone can make it work.
-                    #    ids_string = x[9:-3]
-                    #    quads_list = [int(s) for s in ids_string.split(',')]
-                    #    print ids_string
-                    #    print "quads list:", quads_list
-                    #    domain = "[(6, 0, ["
-                    #    if len(quads_list) > 0:
-                    #        for quad in quads_list:
-                    #            domain += str(quad)
-                    #            domain += ', '
-                    #        domain = domain[:-2]
-                    #    domain += "])]"
-                    #    print "domain: ", domain
-                    #    vals['account_quadruplet_ids'] = domain
+                    quads_list = []
+                    if vals.get('quadruplet_update', False):
+                        quadrup_str = vals['quadruplet_update']
+                        quads_list = map(int, quadrup_str.split(','))
+                    vals['account_quadruplet_ids'] =[(6, 0, quads_list)]
                 else:
-                    vals['quadruplet_update'] = vals['account_quadruplet_ids']
+                    temp = vals['account_quadruplet_ids']
+                    if temp[0]: 
+                        vals['quadruplet_update'] = str(temp[0][2]).strip('[]')
             else:
                 # delete quadruplets
                 vals['account_quadruplet_ids'] = []
-                
-        res = super(financing_contract_format_line, self).create(cr, uid, vals, context=context)
-        if context.get('sync_update_execution'):
-            if quads_list:
-                for quad in quads_list:
-                    cr.execute('insert into financing_contract_actual_account_quadruplets (actual_line_id,account_quadruplet_id) values (%s, %s)', (res, quad))
-        return res
+        return super(financing_contract_format_line, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
-        print 'write ids: ', ids
-        print 'write vals:', vals
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
@@ -427,41 +404,24 @@ class financing_contract_format_line(osv.osv):
             vals['project_amount'] = 0.0
             vals['account_destination_ids'] = [(6, 0, [])]
             vals['account_quadruplet_ids'] = [(6, 0, [])]
-        elif 'is_quadruplet' in vals:
-            if vals['is_quadruplet']:
-                # delete previous account/destinations
-                vals['account_destination_ids'] = [(6, 0, [])]
+        else: 
+            if vals.get('is_quadruplet', False):
+                # delete account/destinations
+                vals['account_destination_ids'] = []
                 if context.get('sync_update_execution'):
-                    x = vals['quadruplet_update']
-                    print 'x:',x
-                    vals['account_quadruplet_ids'] = x.encode('ascii','ignore')
-                    print 'vals:', vals['account_quadruplet_ids']
-                    if x:
-                        ids_string = x[9:-3]
-                        quads_list = [int(s) for s in ids_string.split(',')]
-                        actual_line_id = ids[0]
-                        if quads_list:
-                            cr.execute('delete from financing_contract_actual_account_quadruplets where actual_line_id = %s',(actual_line_id,))
-                            for quad in quads_list:           
-                                cr.execute('insert into financing_contract_actual_account_quadruplets (actual_line_id,account_quadruplet_id) values (%s, %s)', (actual_line_id, quad,))
-                        # Note to JF: commented code was trying to avoid SQL. Has been left in case someone can make it work.
-                        #print ids_string
-                        #print "quads list:", quads_list
-                        #domain = "[(6, 0, ["
-                        #if len(quads_list) > 0:
-                        #    for quad in quads_list:
-                        #        domain += str(quad)
-                        #        domain += ', '
-                        #    domain = domain[:-2]
-                        #domain += "])]"
-                        #print "domain: ", domain
-                        #vals['account_quadruplet_ids'] = domain
-                        #vals['quadruplet_update'] = []
+                    quads_list = []
+                    if vals.get('quadruplet_update', False):
+                        quadrup_str = vals['quadruplet_update']
+                        quads_list = map(int, quadrup_str.split(','))
+                    vals['account_quadruplet_ids'] =[(6, 0, quads_list)]
                 else:
-                    vals['quadruplet_update'] = vals['account_quadruplet_ids']
+                    temp = vals['account_quadruplet_ids']
+                    if temp[0]: 
+                        vals['quadruplet_update'] = str(temp[0][2]).strip('[]')
             else:
-                # delete previous quadruplets
-                vals['account_quadruplet_ids'] = [(6, 0, [])]
+                # delete quadruplets
+                vals['account_quadruplet_ids'] = []
+                
         return super(financing_contract_format_line, self).write(cr, uid, ids, vals, context=context)
     
     def copy_format_line(self, cr, uid, browse_source_line, destination_format_id, parent_id=None, context=None):

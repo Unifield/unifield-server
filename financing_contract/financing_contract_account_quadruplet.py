@@ -28,8 +28,12 @@ class financing_contract_account_quadruplet(osv.osv):
     _auto = False
   
     
-    def init(self, cr):
-       cr.execute("""CREATE OR REPLACE VIEW financing_contract_account_quadruplet AS (
+    def _auto_init(self, cr, context=None):
+        res = super(financing_contract_account_quadruplet, self)._auto_init(cr, context)
+        # TODO The drop table can be eventually removed from this code, once the view changes have been propagated 
+        # across all codelines. The create view needs to remain here.
+        #cr.execute("""drop table financing_contract_account_quadruplet cascade""")
+        cr.execute("""CREATE OR REPLACE VIEW financing_contract_account_quadruplet AS (
             SELECT abs(('x'||substr(md5(fp.code || cc.code || lnk.name),1,16))::bit(32)::int) as id,
             lnk.id AS account_destination_id, cc.id AS cost_center_id, fp.id AS funding_pool_id, lnk.name AS account_destination_name
             FROM account_analytic_account fp, 
@@ -42,6 +46,8 @@ class financing_contract_account_quadruplet(osv.osv):
              AND lnk.id = fpad.tuple_id 
              AND fp.id = fpad.funding_pool_id
            ORDER BY lnk.name, cc.code DESC)""")
+        return res
+
         
     
     def _get_used_in_contract(self, cr, uid, ids, field_name, arg, context=None):
