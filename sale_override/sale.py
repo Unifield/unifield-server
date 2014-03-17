@@ -1346,11 +1346,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             # On P/P/S configuration, the system should only launch a first check availability on Picking Ticket
             if setup.delivery_process != 'simple' and picking_id:
                 picking_obj.log_picking(cr, uid, [picking_id], context=context)
-            else:
+            elif picking_id:
                 wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
 
-            # Launch a first check availability
-            picking_obj.action_assign(cr, uid, [picking_id], context=context)
+            if picking_id:
+                # Launch a first check availability
+                picking_obj.action_assign(cr, uid, [picking_id], context=context)
 
             for proc_id in proc_ids:
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
