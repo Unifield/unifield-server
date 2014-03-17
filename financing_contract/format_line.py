@@ -386,9 +386,7 @@ class financing_contract_format_line(osv.osv):
                     #vals['account_quadruplet_ids'] = x.encode('ascii','ignore')
                     ids_string = x[9:-3]
                     quads_list = [int(s) for s in ids_string.split(',')]
- 
-
-
+                    # Note to JF: commented code was trying to avoid SQL. Has been left in case someone can make it work.
                     #    ids_string = x[9:-3]
                     #    quads_list = [int(s) for s in ids_string.split(',')]
                     #    print ids_string
@@ -446,7 +444,7 @@ class financing_contract_format_line(osv.osv):
                             cr.execute('delete from financing_contract_actual_account_quadruplets where actual_line_id = %s',(actual_line_id,))
                             for quad in quads_list:           
                                 cr.execute('insert into financing_contract_actual_account_quadruplets (actual_line_id,account_quadruplet_id) values (%s, %s)', (actual_line_id, quad,))
-
+                        # Note to JF: commented code was trying to avoid SQL. Has been left in case someone can make it work.
                         #print ids_string
                         #print "quads list:", quads_list
                         #domain = "[(6, 0, ["
@@ -467,7 +465,6 @@ class financing_contract_format_line(osv.osv):
         return super(financing_contract_format_line, self).write(cr, uid, ids, vals, context=context)
     
     def copy_format_line(self, cr, uid, browse_source_line, destination_format_id, parent_id=None, context=None):
-        print 'sfc financing_contract_format_line copy_format_line '
         if destination_format_id:
             format_line_vals = {
                 'name': browse_source_line.name,
