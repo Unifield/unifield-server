@@ -113,7 +113,10 @@ class report_reception(report_sxw.rml_parse):
     
     def getQtyIS(self,line,o):
         # Amount received in this IN only
-        val = line.product_qty 
+        if o.state == 'assigned':
+            val = 0
+        else:
+            val = line.product_qty 
         return "{0:.2f}".format(val)
     
 
@@ -186,7 +189,11 @@ class report_reception(report_sxw.rml_parse):
 
     
     def getActualReceiptDate(self,o):
-        return time.strftime('%d/%m/%Y', time.strptime(o.date,'%Y-%m-%d %H:%M:%S'))
+        if o.state == 'assigned':
+          actual_receipt_date = ''
+        else:
+            actual_receipt_date = time.strftime('%d/%m/%Y', time.strptime(o.date,'%Y-%m-%d %H:%M:%S'))
+        return actual_receipt_date
             
     def get_lines(self, o):
         return o.move_lines
