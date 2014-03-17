@@ -27,6 +27,9 @@ from tools.translate import _
 
 from sourcing.sale_order_line import _SELECTION_PO_CFT
 
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+
 
 class procurement_order(osv.osv):
     """
@@ -37,6 +40,28 @@ class procurement_order(osv.osv):
     """
     _name = 'procurement.order'
     _inherit = 'procurement.order'
+
+    """
+    Other methods
+    """
+    def _check_browse_param(self, param, method):
+        """
+        Returns an error message if the parameter is not a
+        browse_record instance
+
+        :param param: The parameter to test
+        :param method: Name of the method that call the _check_browse_param()
+
+        :return True
+        """
+        if not isinstance(param, browse_record):
+            raise osv.except_osv(
+                _('Bad parameter'),
+                _("""Exception when call the method '%s' of the object '%s' :
+The parameter '%s' should be an browse_record instance !""") % (method, self._name, param)
+            )
+
+        return True
 
     _columns = {
         'supplier': fields.many2one('res.partner', 'Supplier'),
@@ -295,39 +320,89 @@ class procurement_order(osv.osv):
         '''
         return super(procurement_order, self).write(cr, uid, ids, vals, context)
 
-    def get_delay_qty(self, cr, uid, ids, partner, product, context=None):
+    def get_delay_qty(self, product, partner):
         '''
         find corresponding values for seller_qty and seller_delay from product supplierinfo or default values
         '''
-        result = {}
-        # if the supplier is present in product seller_ids, we take that quantity from supplierinfo
-        # otherwise 1
-        # seller_qty default value
-        seller_qty = 1
-        seller_delay = -1
+        """
+        Find corresponding values from seller_qty and seller_delay
+        from product supplierinfo or default values
+
+        :param product: A browse_record of product.product
+        :param partner: A browse_record of res.partner
+
+        :return A dictionnary with the seller_qty and the seller_delay
+        :rtype dict
+        """
+        self._check_browse_param(product, 'get_delay_qty')
+        self._check_browse_param(partner, 'get_delay_qty')
+
+        result = {
+            'seller_qty': 1,
+            'seller_delay':-1,
+        }
+
         for suppinfo in product.seller_ids:
             if suppinfo.name.id == partner.id:
-                seller_qty = suppinfo.qty
-                seller_delay = int(suppinfo.delay)
+                result.update({
+                    'seller_qty': suppinfo.qty,
+                    'seller_delay': int(suppinfo.delay),
+                })
 
         # if not, default delay from supplier (partner.default_delay)
-        if seller_delay < 0:
-            seller_delay = partner.default_delay
-
-        result.update(seller_qty=seller_qty,
-                      seller_delay=seller_delay,)
+        if result['seller_delay'] < 0:
+            result['seller_delay'] = partner.default_delay
 
         return result
 
-    def get_partner_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        get data from supplier
+    def _get_info_from_tender_line(self, sale_order_line, procurement):
+        """
+        Search for info about the product of the procurement in the corresponding tender.
 
-        return also the price_unit
-        '''
-        # get default values
-        result = super(procurement_order, self).get_partner_hook(cr, uid, ids, context=context, *args, **kwargs)
-        procurement = kwargs['procurement']
+        :param sale_order_line: A browse_record of the sale.order.line sourced by
+                                 the procurement order.
+        :param procurement: A browse_record of the procurement.order to treat
+
+        :return A dictionary with values of the tender lines or an empty dictionary
+                 if no corresponding tender lines found.
+        :rtype dict
+        """
+        self._check_browse_param(sale_order_line, '_get_info_from_tender_line')
+        self._check_browse_param(procurement, '_get_info_from_tender_line')
+
+        result = {}
+
+        for tender_line in sale_order_line.tender_line_ids:
+            # if a tender rfq has been selected for this sale order line
+            if tender_line.purchase_order_line_id:
+                result.update({
+                    'partner': tender_line.supplier_id,
+                    'price_unit': tender_line.price_unit,
+                })
+
+                delay_info = self.get_delay_qty(procurement.product_id, tender_line.supplier_id)
+                result.update(delay_info)
+                break
+
+        return result
+
+    def _get_partner(self, cr, uid, procurement, context=None):
+        """
+        Return information about the partner choosen to source this procurement.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that runs the method
+        :param procurement: A browse_record of a procurement.order
+        :param context: Context of the call
+
+        :return A dictionnary with these information:
+            * partner: A browse_record of the res.partner choosen
+            * seller_qty: The quantity of this partner
+            * seller_delay: The delay of this partner
+            * price_unit: The unit price (if any) given by this partner
+        :rtype dict
+        """
+        result = {}
 
         # this is kept here and not moved in the tender_flow module
         # because we have no control on the order of inherited function call (do we?)
@@ -337,30 +412,29 @@ class procurement_order(osv.osv):
             # tender line -> search for info about this product in the corresponding tender
             # if nothing found, we keep default values from super
             for sol in procurement.sale_order_line_ids:
-                for tender_line in sol.tender_line_ids:
-                    # if a tender rfq has been selected for this sale order line
-                    if tender_line.purchase_order_line_id:
-                        partner = tender_line.supplier_id
-                        price_unit = tender_line.price_unit
-                        # get corresponding delay and qty
-                        delay_qty = self.get_delay_qty(cr, uid, ids, partner, procurement.product_id, context=None)
-                        seller_delay = delay_qty['seller_delay']
-                        seller_qty = delay_qty['seller_qty']
-                        result.update(partner=partner,
-                                      seller_qty=seller_qty,
-                                      seller_delay=seller_delay,
-                                      price_unit=price_unit)
+                tl_infos = self.get_info_from_tender_line(sol, procurement)
+                if tl_infos:
+                    result['unit_price'] = 0.00
+                    result.update(tl_infos)
+                    break
         elif procurement.supplier:
             # not tender, we might have a selected supplier from sourcing tool
             # if not, we keep default values from super
-            partner = procurement.supplier
+            result.update({
+                'partner': procurement.supplier,
+                'unit_price': 0.00,
+            })
             # get corresponding delay and qty
-            delay_qty = self.get_delay_qty(cr, uid, ids, partner, procurement.product_id, context=None)
-            seller_delay = delay_qty['seller_delay']
-            seller_qty = delay_qty['seller_qty']
-            result.update(partner=partner,
-                          seller_qty=seller_qty,
-                          seller_delay=seller_delay)
+            delay_info = self.get_delay_qty(procurement.product_id, procurement.supplier)
+            result.update(delay_info)
+
+        if not result:
+            result.update({
+                'partner': procurement.product_id.seller_id,  # Taken Main Supplier of Product of Procurement
+                'seller_qty': procurement.product_id.seller_qty,
+                'seller_delay': int(procurement.product_id.seller_delay),
+                'unit_price': 0.00,
+            })
 
         return result
 
@@ -423,6 +497,112 @@ class procurement_order(osv.osv):
                 return False
 
         return True
+    # @@@END override
+
+    def _get_po_line_values(self, procurement, context=None):
+        """
+        Returns a dictionary with values for the new Purchase Order
+        Line to be created.
+
+        :param procuremnt: A browse_record of the procurement order that
+                            creates the PO line
+
+        :return A dictionary with values for the new Purchase Order Line
+        :rtype dict
+        """
+
+    # @@@override purchase>procurement_order>make_po()
+    def make_po(self, cr, uid, ids, context=None):
+        """
+        Make purchase order from procurement
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that runs the method
+        :param ids: List of ID of procurement orders to source
+        :param context: Context of the call
+
+        :return New created Purchase Orders procurement wise
+        """
+        # Objects
+        user_obj = self.pool.get('res.users')
+        partner_obj = self.pool.get('res.partner')
+        uom_obj = self.pool.get('product.uom')
+        pricelist_obj = self.pool.get('product.pricelist')
+        prod_obj = self.pool.get('product.product')
+        acc_pos_obj = self.pool.get('account.fiscal.position')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        company = user_obj.browse(cr, uid, uid, context=context).company_id
+
+        for procurement in self.browse(cr, uid, ids, context=context):
+            res_id = procurement.move_id.id
+
+            p_infos = self._get_partner(cr, uid, procurement, context=context)
+
+            partner = p_infos['partner']
+            address_id = partner_obj.address_get(cr, uid, [partner.id], ['delivery'])['delivery']
+            pricelist_id = partner.property_product_pricelist_purchase
+
+            uom_id = procurement.product_id.uom_po_id.id
+
+            qty = uom_obj._compute_qty(cr, uid, procurement.product_uom.id, procurement.product_qty, uom_id)
+            if p_infos['seller_qty']:
+                qty = max(qty, p_infos['seller_qty'])
+
+            price = pricelist_obj.price_get(cr, uid, [pricelist_id.id], procurement.product_id.id, qty, partner.id, {'uom': uom_id})[pricelist_id.id]
+            if p_infos['unit_price']:
+                price = p_infos['unit_price']
+
+            newdate = datetime.strptime(procurement.date_planned, '%Y-%m-%d %H:%M:%S')
+            newdate = (newdate - relativedelta(days=int(company.po_lead))) - relativedelta(days=int(p_infos['seller_delay']))
+
+            # Passing partner_id to context for purchase order line integrity of Line name
+            context.update({'lang': partner.lang, 'partner_id': partner.id})
+
+            product = prod_obj.browse(cr, uid, procurement.product_id.id, context=context)
+
+            line = {
+                'name': product.partner_ref,
+                'product_qty': qty,
+                'product_id': procurement.product_id.id,
+                'product_uom': uom_id,
+                'price_unit': price,
+                'date_planned': newdate.strftime('%Y-%m-%d %H:%M:%S'),
+                'move_dest_id': res_id,
+                'notes': product.description_purchase,
+            }
+
+            # line values modification from hook
+            line = self.po_line_values_hook(cr, uid, ids, context=context, line=line, procurement=procurement, pricelist=pricelist_id)
+
+            taxes_ids = procurement.product_id.product_tmpl_id.supplier_taxes_id
+            taxes = acc_pos_obj.map_tax(cr, uid, partner.property_account_position, taxes_ids)
+            line.update({
+                'taxes_id': [(6, 0, taxes)]
+            })
+            values = {
+                      'origin': procurement.origin,
+                      'partner_id': partner.id,
+                      'partner_address_id': address_id,
+                      'location_id': procurement.location_id.id,
+                      'pricelist_id': pricelist_id.id,
+                      'order_line': [(0, 0, line)],
+                      'company_id': procurement.company_id.id,
+                      'fiscal_position': partner.property_account_position and partner.property_account_position.id or False,
+                      }
+            # values modification from hook
+            values = self.po_values_hook(cr, uid, ids, context=context, values=values, procurement=procurement, line=line,)
+            # purchase creation from hook
+            purchase_id = self.create_po_hook(cr, uid, ids, context=context, values=values, procurement=procurement)
+            res[procurement.id] = purchase_id
+            self.write(cr, uid, [procurement.id], {'state': 'running', 'purchase_id': purchase_id})
+        return res
     # @@@END override
 
 procurement_order()
