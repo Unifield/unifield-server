@@ -21,6 +21,7 @@
 
 from osv import fields
 from osv import osv
+from osv.orm import browse_record
 
 from tools.translate import _
 
@@ -294,41 +295,6 @@ class procurement_order(osv.osv):
         '''
         return super(procurement_order, self).write(cr, uid, ids, vals, context)
 
-    def _partner_check_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        check the if supplier is available or not
-
-        the new selection field does not exist when the procurement has been produced by
-        an order_point (minimum stock rules). in this case we take the default supplier from product
-
-        same cas if no supplier were selected in the sourcing tool
-
-        return True if a supplier is available
-        '''
-        procurement = kwargs['procurement']
-        # add supplier check in procurement object from sourcing tool
-        result = procurement.supplier or super(procurement_order, self)._partner_check_hook(cr, uid, ids, context=context, *args, **kwargs)
-        return result
-
-    def _partner_get_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        returns the partner from procurement or suppinfo
-
-        the new selection field does not exist when the procurement has been produced by
-        an order_point (minimum stock rules). in this case we take the default supplier from product
-
-        same cas if no supplier were selected in the sourcing tool
-        '''
-        procurement = kwargs['procurement']
-        # the specified supplier in sourcing tool has priority over suppinfo
-        partner = procurement.supplier or super(procurement_order, self)._partner_get_hook(cr, uid, ids, context=context, *args, **kwargs)
-        if partner.id == self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id:
-            cr.execute('update procurement_order set message=%s where id=%s', (
-                _('Impossible to make a Purchase Order to your own company !'),
-                procurement.id
-            ),)
-        return partner
-
     def get_delay_qty(self, cr, uid, ids, partner, product, context=None):
         '''
         find corresponding values for seller_qty and seller_delay from product supplierinfo or default values
@@ -397,6 +363,67 @@ class procurement_order(osv.osv):
                           seller_delay=seller_delay)
 
         return result
+
+    # @@@override procurement>procurement_order>test_cancel()
+    def test_cancel(self, cr, uid, ids):
+        """ Tests whether state of move is cancelled or not.
+        @return: True or False
+        """
+        cancel = self.search(cr, uid, [
+            ('id', 'in', ids),
+            ('move_id', '!=', False),
+            ('move_id.state', '=', 'cancel'),
+        ], count=True)
+
+        return cancel and True or False
+    # @@@END override
+
+    # @@@override procurement->procurement_order->check_buy()
+    def check_buy(self, cr, uid, ids):
+        """ Checks product type.
+        @return: True or Product Id.
+        """
+        # Objects
+        partner_obj = self.pool.get('res.partner')
+        user_obj = self.pool.get('res.users')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        company_id = user_obj.browse(cr, uid, uid).company_id.partner_id.id
+
+        for procurement in self.browse(cr, uid, ids):
+            if procurement.product_id.product_tmpl_id.supply_method <> 'buy':
+                return False
+
+            if procurement.supplier:
+                partner = procurement.supplier
+            elif procurement.product_id:
+                partner = procurement.product_id.seller_id
+            else:
+                cr.execute(
+                    """update procurement_order set message=%s where id=%s""",
+                    (_('No default supplier defined for this product'), procurement.id),
+                )
+                return False
+
+            if partner.id == company_id:
+                cr.execute(
+                    """UPDATE procurement_order SET message=%s WHERE id = %s""",
+                    (_('Impossible to make a Purchase Order to your own company !'), procurement.id),
+                )
+                return False
+
+            address_id = partner_obj.address_get(cr, uid, [partner.id], ['delivery'])['delivery']
+            if not address_id:
+                cr.execute(
+                    """update procurement_order set message=%s where id=%s""",
+                    (_('No address defined for the supplier'), procurement.id),
+                )
+                return False
+
+        return True
+    # @@@END override
 
 procurement_order()
 
