@@ -1346,11 +1346,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             # On P/P/S configuration, the system should only launch a first check availability on Picking Ticket
             if setup.delivery_process != 'simple' and picking_id:
                 picking_obj.log_picking(cr, uid, [picking_id], context=context)
-            else:
+            elif picking_id:
                 wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
 
-            # Launch a first check availability
-            picking_obj.action_assign(cr, uid, [picking_id], context=context)
+            if picking_id:
+                # Launch a first check availability
+                picking_obj.action_assign(cr, uid, [picking_id], context=context)
 
             for proc_id in proc_ids:
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
@@ -1601,7 +1602,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 # when the line is sourced, we already get a procurement for the line
                 # when the line is confirmed, the corresponding procurement order has already been processed
                 # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
-                if line.state in ['sourced', 'confirmed', 'done'] or (line.created_by_po_line and line.procurement_id) or not line.product_id:
+                if line.state not in ['sourced', 'confirmed', 'done'] and not line.created_by_po_line and not line.procurement_id and line.product_id:
                     proc_data = self._get_procurement_order_data(line, order, rts, context=context)
                     proc_id = proc_obj.create(cr, uid, proc_data, context=context)
                     proc_ids.append(proc_id)
