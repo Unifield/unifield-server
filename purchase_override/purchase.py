@@ -201,28 +201,33 @@ class purchase_order(osv.osv):
 
         return res
 
-    def _is_po_from_ir(self, cr, uid, ids, field_name, args, context=None):
+    def _po_from_x(self, cr, uid, ids, field_names, args, context=None):
+        """fields.function multi for 'po_from_ir' and 'po_from_fo' fields."""
         res = {}
-        for po in self.browse(cr, uid, ids, context=context):
-            retour = False
-            for line in po.order_line:
-                if line.procurement_id:
-                    ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id),])
-                    if ids_proc:
-                        retour = True
-            res[po.id] = retour
-        return res
-
-    def _is_po_from_fo(self, cr, uid, ids, field_name, args, context=None):
-        res = {}
-        for po in self.browse(cr, uid, ids, context=context):
-            retour = False
-            for line in po.order_line:
-                if line.procurement_id:
-                    ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id),('order_id.procurement_request','=',False)])
-                    if ids_proc:
-                        retour = True
-            res[po.id] = retour
+        pol_obj = self.pool.get('purchase.order.line')
+        sol_obj = self.pool.get('sale.order.line')
+        for po_data in self.read(cr, uid, ids, ['order_line'], context=context):
+            res[po_data['id']] = {'po_from_ir': False, 'po_from_fo': False}
+            pol_ids = po_data.get('order_line')
+            if pol_ids:
+                pol_datas = pol_obj.read(
+                    cr, uid, pol_ids, ['procurement_id'], context=context)
+                proc_ids = [pol['procurement_id']
+                            for pol in pol_datas if pol.get('procurement_id')]
+                if proc_ids:
+                    # po_from_ir
+                    sol_ids = sol_obj.search(
+                        cr, uid,
+                        [('procurement_id', 'in', proc_ids)],
+                        context=context)
+                    res[po_data['id']]['po_from_ir'] = bool(sol_ids)
+                    # po_from_fo
+                    sol_ids = sol_obj.search(
+                        cr, uid,
+                        [('procurement_id', 'in', proc_ids),
+                         ('order_id.procurement_request', '=', False)],
+                        context=context)
+                    res[po_data['id']]['po_from_fo'] = bool(sol_ids)
         return res
 
     def _get_project_ref(self, cr, uid, ids, field_name, args, context=None):
@@ -288,8 +293,8 @@ class purchase_order(osv.osv):
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'active': fields.boolean('Active', readonly=True),
-        'po_from_ir': fields.function(_is_po_from_ir, method=True, type='boolean', string='Is PO from IR ?',),
-        'po_from_fo': fields.function(_is_po_from_fo, method=True, type='boolean', string='Is PO from FO ?',),
+        'po_from_ir': fields.function(_po_from_x, method=True, type='boolean', string='Is PO from IR ?', multi='po_from_x'),
+        'po_from_fo': fields.function(_po_from_x, method=True, type='boolean', string='Is PO from FO ?', multi='po_from_x'),
         'canceled_end': fields.boolean(string='Canceled End', readonly=True),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
