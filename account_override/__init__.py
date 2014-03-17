@@ -189,9 +189,12 @@ ACCOUNT_RESTRICTED_AREA = {
     ],
 }
 
+import res_company
 import res_currency
+import res_partner
 import account
 import invoice
+import product
 import account_move_line
 import account_analytic_line
 import account_bank_statement

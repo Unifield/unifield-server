@@ -19,9 +19,11 @@
 #
 ##############################################################################
 
+import stock
 import account
 import invoice
 import account_voucher
+import purchase
 import report
 import wizard
 

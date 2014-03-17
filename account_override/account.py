@@ -245,6 +245,46 @@ class account_account(osv.osv):
                 raise osv.except_osv(_('Error'), _('Operation not implemented!'))
         return arg
 
+    def _get_is_intermission_counterpart(self, cr, uid, ids, field_names, args, context=None):
+        """
+        If this account is the same as default intermission counterpart, then return True. Otherwise return nothing.
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = {}
+        intermission = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
+        intermission_id = intermission and intermission.id or False
+
+        for account_id in ids:
+            res[account_id] = False
+        if intermission_id in ids:
+            res[intermission_id] = True
+        return res
+
+    def _search_is_intermission_counterpart(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Return the intermission counterpart ID.
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        arg = []
+        intermission = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
+        intermission_id = intermission and intermission.id or False
+
+        for x in args:
+            if x[0] == 'is_intermission_counterpart' and x[2] is True:
+                if intermission_id:
+                    arg.append(('id', '=', intermission_id))
+            elif x[0] != 'is_intermission_counterpart':
+                arg.append(x)
+            else:
+                raise osv.except_osv(_('Error'), _('Filter on field is_intermission_counterpart not implemented! %s') % (x,))
+        return arg
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'),
@@ -260,6 +300,7 @@ class account_account(osv.osv):
         'balance': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Balance', multi='balance'),
         'debit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Debit', multi='balance'),
         'credit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Credit', multi='balance'),
+        'is_intermission_counterpart': fields.function(_get_is_intermission_counterpart, fnct_search=_search_is_intermission_counterpart, method=True, type='boolean', string='Is the intermission counterpart account?'),
     }
 
     _defaults = {

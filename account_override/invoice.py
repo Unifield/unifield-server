@@ -523,9 +523,9 @@ class account_invoice(osv.osv):
         # Search donation view and return it
         try:
             # try / except for runbot
-            debit_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_debit_note_form')
-            inkind_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_inkind_donation_form')
-            intermission_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_intermission_form')
+            debit_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_debit_note_form')
+            inkind_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_inkind_donation_form')
+            intermission_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_intermission_form')
             supplier_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_supplier_form')
             customer_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_form')
         except ValueError:
@@ -819,9 +819,9 @@ class account_invoice(osv.osv):
         for inv in self.browse(cr, uid, ids):
             pick_id = inv.picking_id and inv.picking_id.id or ''
             domain = "[('res_model', '=', 'stock.picking'), ('res_id', '=', " + str(pick_id) + "), ('description', '=', 'Certificate of Donation')]"
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_attachment_tree_2')
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_attachment_tree_2')
             view_id = view_id and view_id[1] or False
-            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_attachment_search_2')
+            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_attachment_search_2')
             search_view_id = search_view_id and search_view_id[1] or False
             return {
                 'name': "Certificate of Donation",
