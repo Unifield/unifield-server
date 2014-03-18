@@ -37,6 +37,12 @@ class UnifieldTest(unittest.TestCase):
         setattr(self, name, con)
         self.db[name] = con
 
+    def _hook_db_process(self, name, database):
+        '''
+        Some process to do for each database (except SYNC DB)
+        '''
+        return True
+
     def __init__(self, *args, **kwargs):
         # Default behaviour
         super(UnifieldTest, self).__init__(*args, **kwargs)
@@ -74,6 +80,8 @@ class UnifieldTest(unittest.TestCase):
                     pass
                 else:
                     raise EnvironmentError(' Wrong module state: %s' % (state or '',))
+            # Some processes after instanciation for this database
+            self._hook_db_process(database_name, database)
 
     def is_keyword_present(self, db, keyword):
         '''
