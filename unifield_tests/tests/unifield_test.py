@@ -6,6 +6,7 @@ Created on Feb 28, 2014
 @author: qt
 Modified by 'od' on 2014 March, the 11th
 '''
+from __future__ import print_function
 import unittest
 from connection import XMLRPCConnection as XMLConn
 from connection import UnifieldTestConfigParser
@@ -62,17 +63,17 @@ class UnifieldTest(unittest.TestCase):
             for module in module_obj.read(m_ids, ['state']):
                 state = module.get('state', '')
                 if state == 'uninstalled':
-                    print ('Updating %s module for %s DB' % (self.test_module_name, database_name))
+                    print ('  * %s: MODULE %s UPDATE...' % (database_name, self.test_module_name))
                     module_obj.button_install([module.get('id')])
                     database.get('base.module.upgrade').upgrade_module([])
                 elif state in ['to upgrade', 'to install']:
-                    print ('Updating %s module for %s DB' % (self.test_module_name, database_name))
+                    print ('  * %s: MODULE %s UPDATE...' % (database_name, self.test_module_name))
                     database.get('base.module.upgrade').upgrade_module([])
                 elif state in ['installed']:
-                    print ('%s module already installed in %s DB' % (self.test_module_name, database_name))
+                    print ('  * %s: MODULE %s LOADED' % (database_name, self.test_module_name))
                     pass
                 else:
-                    raise EnvironmentError('Wrong module state: %s' % (state or '',))
+                    raise EnvironmentError(' Wrong module state: %s' % (state or '',))
 
     def is_keyword_present(self, db, keyword):
         '''

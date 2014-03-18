@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf8 -*-
+from __future__ import print_function
 import unittest
 import HTMLTestRunner
 from os import walk
@@ -22,7 +23,6 @@ def main():
     added_paths = [] # path added to PYTHONPATH
 
     _separator()
-
     # Browse the directory to search all tests
     print ('Browsing %s directory.' % path_for_tests)
     for racine, _, files in walk(path_for_tests):
@@ -35,16 +35,14 @@ def main():
     # Inform how many modules was found
     print ('%d module(s) found' % len(test_modules))
 
+#     _separator()
+#     # Launch a python script that runs some tasks before tests
+#     print ('Launch pre-tasks')
+#     execfile('pre_runner.py')
+
     _separator()
-
-    # Launch a python script that runs some tasks before tests
-    print ('Launch pre-tasks')
-    execfile('pre_runner.py')
-
-    _separator()
-
     # Import found modules
-    print ('Import these modules:')
+    print('Import modules + instanciate them')
     #+ Sort them by module name (x[1])
     for module_info in sorted(test_modules, key=lambda x: x[1]):
         module_path = path.dirname(module_info[0])
@@ -55,12 +53,11 @@ def main():
         module = __import__(module_info[1])
         if 'get_test_class' in module.__dict__:
             class_type = module.get_test_class()
-            print (" - Module %s" % (class_type.__module__,))
+            print (" - Module %s:" % (class_type.__module__,))
             test_suite = unittest.TestSuite((unittest.makeSuite(class_type), ))
             suite.addTest(test_suite)
 
     _separator()
-
     # Create a file for the output result
     output = file('output.html', 'wb')
     # Run tests
@@ -69,21 +66,21 @@ def main():
         title='Example tests',
         description='A suite of tests that permit to test PyUnit class'
     )
-    print ('TESTING...')
+    print('Launch UnifieldTest Campaign')
+    print('----------------------------\n')
+    print('Note: 1 point represents a test. F means Fail. E means Error.')
     campaign.run(suite)
 
     _separator()
-
-    print ('Clean paths')
+    print ('Clean used paths')
     # Delete all paths added to the PYTHONPATH
     for added_path in added_paths:
         sys.path.remove(added_path)
 
-    _separator()
-
-    # Launch a python script that runs some tasks after all tests
-    print ('Launch post-tasks')
-    execfile('post_runner.py')
+#     _separator()
+#     # Launch a python script that runs some tasks after all tests
+#     print ('Launch post-tasks')
+#     execfile('post_runner.py')
 
     _separator()
 

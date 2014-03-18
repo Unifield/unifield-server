@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
+from __future__ import print_function
 from unifield_test import UnifieldTest
 from time import strftime
 
@@ -37,8 +38,8 @@ class FinanceTest(UnifieldTest):
                         raise Exception('error', e)
                 # Write the fact that data have been loaded
                 database.get(self.test_module_obj_name).create({'name': keyword, 'active': True})
-                print ("%s data loaded" % (keyword))
+                print ("  * %s: Data loaded (%s)" % (database_name, keyword))
             else:
-                print ("%s exists - no changes added." % (keyword))
+                print ("  * %s: Data exists (%s)" % (database_name, keyword))
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
