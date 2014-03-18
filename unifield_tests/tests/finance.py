@@ -19,6 +19,7 @@ class FinanceTest(UnifieldTest):
         Check that finance data are loaded into the given database
         '''
         keyword = 'finance_test_class'
+        colors = self.colors
         # If no one, do some changes on DBs
         if not self.is_keyword_present(database, keyword):
             # 00 Open periods from january to today's one
@@ -39,9 +40,9 @@ class FinanceTest(UnifieldTest):
                     raise Exception('error', e)
             # Write the fact that data have been loaded
             database.get(self.test_module_obj_name).create({'name': keyword, 'active': True})
-            print ("  * %s: Data loaded (%s)" % (name, keyword))
+            print (database.colored_name + ' [' + colors.BGreen + 'OK'.center(4) + colors.Color_Off + '] %s: Data loaded' % (keyword))
         else:
-            print ("  * %s: Data exists (%s)" % (name, keyword))
+            print (database.colored_name + ' [' + colors.BYellow + 'WARN'.center(4) + colors.Color_Off + '] %s: Data already exists' % (keyword))
         return super(FinanceTest, self)._hook_db_process(name, database)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

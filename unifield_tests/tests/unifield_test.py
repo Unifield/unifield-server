@@ -10,6 +10,7 @@ from __future__ import print_function
 import unittest
 from connection import XMLRPCConnection as XMLConn
 from connection import UnifieldTestConfigParser
+from colors import TerminalColors
 
 class UnifieldTest(unittest.TestCase):
     '''
@@ -36,6 +37,10 @@ class UnifieldTest(unittest.TestCase):
         con = XMLConn(db_suffix)
         setattr(self, name, con)
         self.db[name] = con
+        # Set colors
+        colors = self.colors
+        database_display = colors.BRed + '[' + colors.Color_Off + name.center(6) + colors.BRed + ']' + colors.Color_Off
+        self.db[name].colored_name = database_display
 
     def _hook_db_process(self, name, database):
         '''
@@ -54,6 +59,8 @@ class UnifieldTest(unittest.TestCase):
         names = ['sync', 'hq1', 'c1', 'p1']
         if not tempo_mkdb:
             db_suffixes = ['SYNC_SERVER', 'HQ_01', 'COORDO_01', 'PROJECT_01']
+        colors = TerminalColors()
+        self.colors = colors
         # Keep each database connection
         for db_tuple in zip(db_suffixes, names):
             self._addConnection(db_tuple[0], db_tuple[1])
@@ -66,17 +73,18 @@ class UnifieldTest(unittest.TestCase):
             database = self.db.get(database_name)
             module_obj = database.get('ir.module.module')
             m_ids = module_obj.search([('name', '=', self.test_module_name)])
+            database_display = database.colored_name
             for module in module_obj.read(m_ids, ['state']):
                 state = module.get('state', '')
                 if state == 'uninstalled':
-                    print ('  * %s: MODULE %s UPDATE...' % (database_name, self.test_module_name))
+                    print (database_display + ' [' + colors.BYellow + 'UP'.center(4) + colors.Color_Off + '] Module %s' % (self.test_module_name))
                     module_obj.button_install([module.get('id')])
                     database.get('base.module.upgrade').upgrade_module([])
                 elif state in ['to upgrade', 'to install']:
-                    print ('  * %s: MODULE %s UPDATE...' % (database_name, self.test_module_name))
+                    print (database_display + ' [' + colors.BYellow + 'UP'.center(4) + colors.Color_Off + '] Module %s' % (self.test_module_name))
                     database.get('base.module.upgrade').upgrade_module([])
                 elif state in ['installed']:
-                    print ('  * %s: MODULE %s LOADED' % (database_name, self.test_module_name))
+                    print (database_display + ' [' + colors.BGreen + 'OK'.center(4) + colors.Color_Off + '] Module %s' % (self.test_module_name))
                     pass
                 else:
                     raise EnvironmentError(' Wrong module state: %s' % (state or '',))

@@ -6,6 +6,7 @@ import HTMLTestRunner
 from os import walk
 from os import path
 import sys
+from tests import colors
 
 # TODO: Read a file to parse some configuration and read which directory to browse
 path_for_tests = 'tests'
@@ -21,10 +22,11 @@ def main():
     suite = unittest.TestSuite() # the suite of tests
     test_modules = [] # modules that are in 'tests' directory
     added_paths = [] # path added to PYTHONPATH
+    c = colors.TerminalColors()
 
     _separator()
     # Browse the directory to search all tests
-    print ('Browsing %s directory.' % path_for_tests)
+    print (c.BGreen + 'Browsing' + c.Color_Off + ' %s directory.' % path_for_tests)
     for racine, _, files in walk(path_for_tests):
         directory = path.basename(racine)
         if directory == 'tests':
@@ -42,7 +44,7 @@ def main():
 
     _separator()
     # Import found modules
-    print('Import modules + instanciate them')
+    print(c.BGreen + 'Import' + c.Color_Off + ' modules + instanciate them')
     #+ Sort them by module name (x[1])
     for module_info in sorted(test_modules, key=lambda x: x[1]):
         module_path = path.dirname(module_info[0])
@@ -53,7 +55,7 @@ def main():
         module = __import__(module_info[1])
         if 'get_test_class' in module.__dict__:
             class_type = module.get_test_class()
-            print (" - Module %s:" % (class_type.__module__,))
+            print ("%s module:" % (class_type.__module__,))
             test_suite = unittest.TestSuite((unittest.makeSuite(class_type), ))
             suite.addTest(test_suite)
 
@@ -66,7 +68,7 @@ def main():
         title='Example tests',
         description='A suite of tests that permit to test PyUnit class'
     )
-    print('Launch UnifieldTest Campaign')
+    print('Launch UnifieldTest ' + c.BGreen + 'Campaign' + c.Color_Off)
     print('----------------------------\n')
     print('Note: 1 point represents a test. F means Fail. E means Error.')
     campaign.run(suite)
