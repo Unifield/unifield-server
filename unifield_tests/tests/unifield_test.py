@@ -8,6 +8,7 @@ Modified by 'od' on 2014 March, the 11th
 '''
 import unittest
 from connection import XMLRPCConnection as XMLConn
+from connection import UnifieldTestConfigParser
 
 class UnifieldTest(unittest.TestCase):
     '''
@@ -36,12 +37,21 @@ class UnifieldTest(unittest.TestCase):
         self.db[name] = con
 
     def __init__(self, *args, **kwargs):
+        # Default behaviour
         super(UnifieldTest, self).__init__(*args, **kwargs)
+        # Prepare some values
+        c = UnifieldTestConfigParser()
+        self.config = c.read()
+        tempo_mkdb = c.getboolean('DB', 'tempo_mkdb')
+        db_suffixes = ['SYNC_SERVER', 'HQ1', 'HQ1C1', 'HQ1C1P1']
+        names = ['sync', 'hq1', 'c1', 'p1']
+        if not tempo_mkdb:
+            db_suffixes = ['SYNC_SERVER', 'HQ_01', 'COORDO_01', 'PROJECT_01']
+        print db_suffixes, names
         # Keep each database connection
-        self._addConnection('SYNC_SERVER', 'sync')
-        self._addConnection('HQ1', 'hq1')
-        self._addConnection('HQ1C1', 'c1')
-        self._addConnection('HQ1C1P1', 'p1')
+        for db_tuple in zip(db_suffixes, names):
+            print db_tuple[0], db_tuple[1]
+            self._addConnection(db_tuple[0], db_tuple[1])
         # For each database, check that unifield_tests module is loaded
         #+ If not, load it.
         #+ Except if the database is sync one
