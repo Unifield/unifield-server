@@ -1686,7 +1686,6 @@ stock moves which are already processed : '''
                         wf_service.trg_write(uid, 'stock.picking', line.procurement_id.move_id.picking_id.id, cr)
 
         self.pool.get('purchase.order.line').cancel_sol(cr, uid, line_ids, context=context)
-
         return self.write(cr, uid, ids, {'state':'cancel'}, context=context)
 
     def wkf_confirm_cancel(self, cr, uid, ids, context=None):
@@ -2304,6 +2303,7 @@ class purchase_order_line(osv.osv):
         sol_to_update = {}
         sol_not_to_delete_ids = []
         ir_to_potentialy_cancel_ids = []
+        sol_of_po_line_resourced_ids = []
         for line in self.browse(cr, uid, ids, context=context):
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
             for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
@@ -2312,9 +2312,9 @@ class purchase_order_line(osv.osv):
                 sol_to_update[sol.id] += diff_qty
                 if line.has_to_be_resourced:
                     sol_obj.add_resource_line(cr, uid, sol, False, diff_qty, context=context)
-                elif sol.order_id.procurement_request:
-                    # UFTP-82: do not delete IR line with a PO line not ressourced
-                    # (its PO is 'cancelled only')
+                    sol_of_po_line_resourced_ids.append(sol.id)
+                if sol.order_id.procurement_request:
+                    # UFTP-82: do not delete IR line, cancel it
                     sol_not_to_delete_ids.append(sol.id)
                     if sol.order_id.id not in ir_to_potentialy_cancel_ids:
                         ir_to_potentialy_cancel_ids.append(sol.order_id.id)
@@ -2323,15 +2323,33 @@ class purchase_order_line(osv.osv):
             sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
         del context['update_or_cancel_line_not_delete']
         
-        # UFTP-82: IR and its PO is 'cancelled only'
+        # UFTP-82: IR and its PO is cancelled
         # cancel all relative IRs but check before if IR's lines are all cancelled
         ir_to_cancel_ids = []
+        irl_cr_to_cancel_ids = []
         for ir in self.pool.get('sale.order').browse(cr, uid, ir_to_potentialy_cancel_ids, context=context):
-            if all(map(lambda irl: irl.state == 'cancel', ir.order_line)):
+            cancel_ir = True
+            for irl in ir.order_line:
+                line_cancelled = False
+                if irl.state == 'cancel':
+                    # we are typically in case PO Cancel only
+                    # (FYI potentialy 'exception' lines are moved to cancel
+                    # in addons sale/sale.py test_state)
+                    line_cancelled = True
+                elif irl.state == 'exception' and ir.is_ir_from_po_cancel:
+                    # we are in case PO C&R and cancel lines are in exception...
+                    # set line to cancel state
+                    line_cancelled = True
+                    irl_cr_to_cancel_ids.append(irl.id)
+                if not line_cancelled:
+                    cancel_ir = False
+            if cancel_ir:
                 ir_to_cancel_ids.append(ir.id)
         if ir_to_cancel_ids:
             self.pool.get('sale.order').write(cr, uid, ir_to_cancel_ids, 
                 {'state': 'cancel'}, context=context)
+            if irl_cr_to_cancel_ids:
+                self.pool.get('sale.order.line').write(cr, uid, irl_cr_to_cancel_ids, {'state': 'cancel'}, context=context)
         
         return True
 
