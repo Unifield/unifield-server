@@ -1220,7 +1220,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             move_ids = []
             picking_id = False
 
+            i = 0
             for line in order.order_line:
+                i += 1
                 proc_id = False
 
                 # Don't take care of closed lines
@@ -1232,7 +1234,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 # In case of IR to internal location, the creation of
                 # a picking is not need.
                 if self._get_new_picking(line):
-                    # Check if a new picking is required
                     if not picking_id:
                         picking_data = self._get_picking_data(cr, uid, order)
                         picking_id = picking_obj.create(cr, uid, picking_data, context=context)
@@ -1324,6 +1325,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                 move_obj.write(cr, uid, [move_id], values, context=context)
                                 proc_obj.write(cr, uid, [proc_id], values, context=context)
 
+                    wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+
             # compute overall_qty
             if move_ids:
                 compute_store = move_obj._store_get_values(cr, uid, move_ids, None, context)
@@ -1353,16 +1356,19 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 # Launch a first check availability
                 picking_obj.action_assign(cr, uid, [picking_id], context=context)
 
+            picks_to_check = set()
             for proc_id in proc_ids:
-                wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
                 if order.procurement_request:
                     proc = proc_obj.browse(cr, uid, [proc_id], context=context)
                     pick_id = proc and proc[0] and proc[0].move_id and proc[0].move_id.picking_id and proc[0].move_id.picking_id.id or False
                     if pick_id:
-                        wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
-                        # We also do a first 'check availability': cancel then check
-                        picking_obj.cancel_assign(cr, uid, [pick_id], context)
-                        picking_obj.action_assign(cr, uid, [pick_id], context)
+                        picks_to_check.add(pick_id)
+
+            for pick_id in picks_to_check:
+                wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
+                # We also do a first 'check availability': cancel then check
+                picking_obj.cancel_assign(cr, uid, [pick_id], context)
+                picking_obj.action_assign(cr, uid, [pick_id], context)
 
             if order.state == 'shipping_except':
                 manual_lines = False
