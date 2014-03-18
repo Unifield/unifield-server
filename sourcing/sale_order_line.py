@@ -816,7 +816,6 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         """
         # Objects
         product_obj = self.pool.get('product.product')
-        partner_obj = self.pool.get('res.partner')
 
         if not context:
             context = {}
@@ -832,25 +831,6 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         if 'state' in vals and vals['state'] == 'cancel':
             self.write(cr, uid, ids, {'cf_estimated_delivery_date': False}, context=context)
-
-        # partner_id
-        if 'supplier' in vals:
-            for line in self.browse(cr, uid, ids, context=context):
-                partner_id = vals['supplier']
-                vals.update({'supplier': partner_id})
-                # update the delivery date according to partner_id, only update from the sourcing tool
-                # not from order line as we dont want the date is udpated when the line's state changes for example
-                if partner_id:
-
-                    # if the selected partner belongs to product->suppliers, we take that delay (from supplierinfo)
-                    partner = partner_obj.browse(cr, uid, partner_id, context)
-                    delay = self.check_supplierinfo(line, partner, context=context)
-
-                    estDeliveryDate = date.today() + relativedelta(days=int(delay))
-                    vals.update({'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d')})
-                else:
-                    # no partner is selected, erase the date
-                    vals.update({'estimated_delivery_date': False})
 
         if 'type' in vals:
             if vals['type'] == 'make_to_stock':

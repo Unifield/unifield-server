@@ -1197,6 +1197,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         :return
         :rtype
         """
+        start = time.time()
         # Objects
         wf_service = netsvc.LocalService("workflow")
         move_obj = self.pool.get('stock.move')
@@ -1385,7 +1386,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 })
 
             self.write(cr, uid, [order.id], val)
-
+        print 'action_ship_create %s' % (time.time() - start)
+        raise
         return True
     # @@@END override sale>sale.py>sale_order>action_ship_create()
 
@@ -1524,6 +1526,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         :return True if all order have been written
         :rtype boolean
         """
+        start = time.time()
         # Objects
         wf_service = netsvc.LocalService("workflow")
         sol_obj = self.pool.get('sale.order.line')
@@ -1616,9 +1619,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     if line.so_back_update_dest_po_id_sale_order_line or line.created_by_po:
                         display_log = False
 
-                    if line.created_by_po:
-                        proc_to_check.append(proc_id)
-
                     if line.created_by_po_line:
                         pol_obj.write(cr, uid, [line.created_by_po_line.id], {'procurement_id': proc_id}, context=context)
 
@@ -1636,12 +1636,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                     sol_obj.write(cr, uid, [line.id], line_values, context=context)
 
-            for proc_id in proc_ids:
-                wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+                    wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
 
-            for proc_id in proc_to_check:
-                wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
-                proc_obj.write(cr, uid, [proc_id], {'state': 'running'}, context=context)
+                    if line.created_by_po:
+                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+                        proc_obj.write(cr, uid, [proc_id], {'state': 'running'}, context=context)
 
             # the Fo is sourced we set the state
             o_write_vals['state'] = 'sourced'
@@ -1652,7 +1651,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         if lines:
             sol_obj.write(cr, uid, lines, {'invoiced': 1}, context=context)
-
+        print 'action_ship_proc_create %s' % (time.time() - start)
+        raise
         return True
 
     def test_lines(self, cr, uid, ids, context=None):
