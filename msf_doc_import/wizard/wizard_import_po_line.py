@@ -90,26 +90,22 @@ class wizard_import_po_line(osv.osv_memory):
         line_with_error = []
         vals = {'order_line': []}
 
-        for wiz_browse in self.browse(cr, uid, ids, context):
-            po_browse = wiz_browse.po_id
-            po_id = po_browse.id
-
+        for wiz in self.browse(cr, uid, ids, context):
             ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
             line_ignored_num, error_list = [], []
             error_log, message = '', ''
             header_index = context['header_index']
+            template_col_count = len(header_index)
 
-            file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
+            file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
             # iterator on rows
             rows = file_obj.getRows()
             # ignore the first row
             rows.next()
-            line_num = 0
             to_write = {}
             total_line_num = len([row for row in file_obj.getRows()])
-            for row in rows:
-                line_num += 1
-                percent_completed = float(line_num)/float(total_line_num-1)*100.0
+            for line_num, row in enumerate(rows, start=1):
+                percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
                 # default values
                 to_write = {
                     'error_list': [],
@@ -117,8 +113,8 @@ class wizard_import_po_line(osv.osv_memory):
                     'to_correct_ok': False,
                     'show_msg_ok': False,
                     'comment': '',
-                    'date_planned': po_browse.delivery_requested_date,
-                    'functional_currency_id': po_browse.pricelist_id.currency_id.id,
+                    'date_planned': wiz.po_id.delivery_requested_date,
+                    'functional_currency_id': wiz.po_id.pricelist_id.currency_id.id,
                     'price_unit': 1,  # as the price unit cannot be null, it will be computed in the method "compute_price_unit" after.
                     'product_qty': 1,
                     #'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
@@ -131,13 +127,15 @@ class wizard_import_po_line(osv.osv_memory):
                 }
 
                 col_count = len(row)
-                template_col_count = len(header_index.items())
                 if col_count != template_col_count:
-                    message += _("""Line %s: You should have exactly %s columns in this order: %s \n""") % (
-                        line_num, template_col_count, ','.join(columns_for_po_line_import))
+                    message += _(
+                        "Line %s: You should have exactly %s columns in this order: %s \n") % (
+                            line_num, template_col_count,
+                            ','.join(columns_for_po_line_import))
                     line_with_error.append(
                         wiz_common_import.get_line_values(
-                            cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                            cr, uid, ids, row, cell_nb=False,
+                            error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
                     self.write(cr, uid, ids, {'percent_completed': percent_completed})
@@ -151,95 +149,80 @@ class wizard_import_po_line(osv.osv_memory):
                         continue
 
                     # Cell 0: Product Code
-                    p_value = {}
                     p_value = check_line.product_value(
                         cr, uid, obj_data=obj_data, cell_nb=header_index[_('Product Code')],
                         product_obj=product_obj, row=row, to_write=to_write, context=context)
-                    to_write.update({
-                        'default_code': p_value['default_code'],
-                        'product_id': p_value['default_code'],
-                        'comment': p_value['comment'],
-                        'error_list': p_value['error_list'],
-                        })
+                    to_write.update(
+                        default_code=p_value['default_code'],
+                        product_id=p_value['default_code'],
+                        comment=p_value['comment'],
+                        error_list=p_value['error_list'])
 
                     # Cell 2: Quantity
-                    qty_value = {}
                     qty_value = check_line.quantity_value(
                         product_obj=product_obj, cell_nb=header_index[_('Quantity')],
                         row=row, to_write=to_write, context=context)
-                    to_write.update({
-                        'product_qty': qty_value['product_qty'],
-                        'error_list': qty_value['error_list'],
-                        'warning_list': qty_value['warning_list'],
-                        })
+                    to_write.update(
+                        product_qty=qty_value['product_qty'],
+                        error_list=qty_value['error_list'],
+                        warning_list=qty_value['warning_list'])
 
                     # Cell 3: UOM
-                    uom_value = {}
                     uom_value = check_line.compute_uom_value(
                         cr, uid, obj_data=obj_data, cell_nb=header_index[_('UoM')], product_obj=product_obj,
                         uom_obj=uom_obj, row=row, to_write=to_write, context=context)
-                    to_write.update({
-                        'product_uom': uom_value['uom_id'],
-                        'error_list': uom_value['error_list'],
-                        })
+                    to_write.update(
+                        product_uom=uom_value['uom_id'],
+                        error_list=uom_value['error_list'])
 
                     # Check round of qty according to UoM
                     if qty_value['product_qty'] and uom_value['uom_id']:
-                        round_qty = self.pool.get('product.uom')._change_round_up_qty(
+                        round_qty = uom_obj._change_round_up_qty(
                             cr, uid, uom_value['uom_id'], qty_value['product_qty'], 'product_qty')
                         if round_qty.get('warning', {}).get('message'):
-                            to_write.update({'product_qty': round_qty['value']['product_qty']})
+                            to_write.update(product_qty=round_qty['value']['product_qty'])
                             warn_list = to_write['warning_list']
                             warn_list.append(round_qty['warning']['message'])
                             #message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
 
                     # Cell 4: Price
-                    price_value = {}
                     price_value = check_line.compute_price_value(
                         row=row, to_write=to_write, cell_nb=header_index[_('Price')], price='Cost Price', context=context)
-                    to_write.update({
-                        'price_unit': price_value['price_unit'],
-                        'error_list': price_value['error_list'],
-                        'warning_list': price_value['warning_list'],
-                        'price_unit_defined': price_value['price_unit_defined'],
-                        })
+                    to_write.update(
+                        price_unit=price_value['price_unit'],
+                        error_list=price_value['error_list'],
+                        warning_list=price_value['warning_list'],
+                        price_unit_defined=price_value['price_unit_defined'])
 
                     # Cell 5: Delivery Request Date
-                    date_value = {}
                     date_value = check_line.compute_date_value(
                         cell_nb=header_index[_('Delivery Request Date')], row=row, to_write=to_write, context=context)
-                    to_write.update({
-                        'date_planned': date_value['date_planned'],
-                        'error_list': date_value['error_list'],
-                        })
+                    to_write.update(
+                        date_planned=date_value['date_planned'],
+                        error_list=date_value['error_list'])
 
                     # Cell 6: Currency
-                    curr_value = {}
                     curr_value = check_line.compute_currency_value(
-                        cr, uid, cell_nb=header_index[_('Currency')], browse_purchase=po_browse,
+                        cr, uid, cell_nb=header_index[_('Currency')], browse_purchase=wiz.po_id,
                         currency_obj=currency_obj, row=row, to_write=to_write, context=context)
-                    to_write.update({
-                        'functional_currency_id': curr_value['functional_currency_id'],
-                        'warning_list': curr_value['warning_list'],
-                        })
+                    to_write.update(
+                        functional_currency_id=curr_value['functional_currency_id'],
+                        warning_list=curr_value['warning_list'])
 
                     # Cell 7: Comment
-                    c_value = {}
                     c_value = check_line.comment_value(
                         row=row, cell_nb=header_index[_('Comment')], to_write=to_write, context=context)
-                    to_write.update({
-                        'comment': c_value['comment'],
-                        'warning_list': c_value['warning_list'],
-                        })
-                    to_write.update({
-                        'to_correct_ok': any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
-                        'show_msg_ok': any(to_write['warning_list']),  # the lines with show_msg_ok=True won't change color, it is just info
-                        'order_id': po_browse.id,
-                        'text_error': '\n'.join(to_write['error_list'] + to_write['warning_list']),
-                        })
+                    to_write.update(
+                        comment=c_value['comment'],
+                        warning_list=c_value['warning_list'])
+                    to_write.update(
+                        to_correct_ok=any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
+                        show_msg_ok=any(to_write['warning_list']),  # the lines with show_msg_ok=True won't change color, it is just info
+                        order_id=wiz.po_id.id,
+                        text_error='\n'.join(to_write['error_list'] + to_write['warning_list']))
                     # we check consistency on the model of on_change functions to call for updating values
                     purchase_line_obj.check_line_consistency(
-                        cr, uid, po_browse.id, to_write=to_write, context=context)
+                        cr, uid, wiz.po_id.id, to_write=to_write, context=context)
 
                     if to_write.get('product_qty', 0.00) <= 0.00:
                         message += _("Line %s in the Excel file: Details: %s\n") % (
@@ -252,7 +235,7 @@ class wizard_import_po_line(osv.osv_memory):
                         continue
 
                     # write order line on PO
-                    if purchase_obj._check_service(cr, uid, po_id, vals, context=context):
+                    if purchase_obj._check_service(cr, uid, wiz.po_id.id, vals, context=context):
                         purchase_line_obj.create(cr, uid, to_write, context=context)
                         vals['order_line'].append((0, 0, to_write))
                         if to_write['error_list']:
@@ -301,8 +284,8 @@ class wizard_import_po_line(osv.osv_memory):
                         cr.commit()
 
             categ_log = purchase_obj.onchange_categ(
-                cr, uid, [po_id], po_browse.categ, po_browse.warehouse_id.id, po_browse.cross_docking_ok,
-                po_browse.location_id.id, context=context).get('warning', {}).get('message', '').upper()
+                cr, uid, [wiz.po_id.id], wiz.po_id.categ, wiz.po_id.warehouse_id.id, wiz.po_id.cross_docking_ok,
+                wiz.po_id.location_id.id, context=context).get('warning', {}).get('message', '').upper()
             categ_log = categ_log.replace('THIS', 'THE')
 
         error_log += '\n'.join(error_list)
@@ -328,7 +311,7 @@ Importation completed in %s!
             wizard_vals.update(file_to_export)
         self.write(cr, uid, ids, wizard_vals, context=context)
         # we reset the state of the PO to draft (initial state)
-        purchase_obj.write(cr, uid, po_id, {'state': 'draft', 'import_in_progress': False}, context)
+        purchase_obj.write(cr, uid, wiz.po_id.id, {'state': 'draft', 'import_in_progress': False}, context)
         if not context.get('yml_test', False):
             cr.commit()
             cr.close()
@@ -365,14 +348,22 @@ Importation completed in %s!
                 osv_name = osv_error.name
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
-            # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
-            purchase_obj.write(cr, uid, po_id, {'state': 'done', 'import_in_progress': True}, context)
+            # we close the PO only during the import process so that the user
+            # can't update the PO in the same time (all fields are readonly)
+            purchase_obj.write(
+                cr, uid, po_id,
+                {'state': 'done', 'import_in_progress': True}, context=context)
         if not context.get('yml_test'):
             thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
             thread.start()
         else:
             self._import(cr, uid, ids, context)
-        msg_to_return = _("""Please note that %s is temporary closed during the import to avoid conflict accesses (you can see the loading on the PO note tab check box). At the end of the load, POXX will be back in the right state. You can refresh the screen if you need to follow the upload progress""") % self.pool.get('purchase.order').browse(cr, uid, po_id).name
+        msg_to_return = _(
+            "Please note that %s is temporary closed during the import to "
+            "avoid conflict accesses (you can see the loading on the PO note "
+            "tab check box). At the end of the load, POXX will be back in the "
+            "right state. You can refresh the screen if you need to follow "
+            "the upload progress") % (purchase_obj.browse(cr, uid, po_id).name)
         return self.write(
             cr, uid, ids,
             {'message': msg_to_return, 'state': 'in_progress'},
