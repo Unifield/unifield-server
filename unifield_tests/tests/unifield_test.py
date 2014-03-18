@@ -47,10 +47,8 @@ class UnifieldTest(unittest.TestCase):
         names = ['sync', 'hq1', 'c1', 'p1']
         if not tempo_mkdb:
             db_suffixes = ['SYNC_SERVER', 'HQ_01', 'COORDO_01', 'PROJECT_01']
-        print db_suffixes, names
         # Keep each database connection
         for db_tuple in zip(db_suffixes, names):
-            print db_tuple[0], db_tuple[1]
             self._addConnection(db_tuple[0], db_tuple[1])
         # For each database, check that unifield_tests module is loaded
         #+ If not, load it.
