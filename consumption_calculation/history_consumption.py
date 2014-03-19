@@ -474,6 +474,17 @@ class product_product(osv.osv):
                 if element.get('string', '') == 'Group by...':
                     xml_view.remove(element)
             res['arch'] = etree.tostring(xml_view)
+            
+            # UTP-501 Positive AMC filter
+            xml_view = etree.fromstring(res['arch'])
+            new_separator = """<separator orientation="vertical" />"""
+            separator_node = etree.fromstring(new_separator)
+            xml_view.insert(0, separator_node)
+            new_filter = """<filter string="Positive AC" name="average" icon="terp-accessories-archiver-minus" domain="[('average','>',0.)]" />"""
+            # generate new xml form$
+            filter_node = etree.fromstring(new_filter)
+            xml_view.insert(0, filter_node)
+            res['arch'] = etree.tostring(xml_view)
 
         return res
 
@@ -588,27 +599,55 @@ class product_product(osv.osv):
         '''
         if not context:
             context = {}
+         
+        average_domain = False
+        if context.get('history_cons', False):
+            """UTP-501 'average' filter (filter button generated in fields_view_get)
+            if found, grab it, and remove it
+            (bc 'average' field is unknown in super(product_product, self))
+            """
+            new_args = []
+            for a in args:
+                if len(a) == 3 and a[0] == 'average':
+                    average_domain = a
+                else:
+                    new_args.append(a)
+            args = new_args
 
         hist_obj = self.pool.get('product.history.consumption.product')
 
         res = super(product_product, self).search(cr, uid, args, offset, limit, order, context, count)
 
-        if context.get('history_cons', False) and context.get('obj_id', False) and order:
-            hist_domain = [('consumption_id', '=', context.get('obj_id'))]
-            if context.get('amc') == 'AMC':
-                hist_domain.append(('cons_type', '=', 'amc'))
-            else:
-                hist_domain.append(('cons_type', '=', 'fmc'))
-
-            for order_part in order.split(','):
-                order_split = order_part.strip().split(' ')
-                order_field = order_split[0]
-                order_direction = order_split[1].strip() if len(order_split) == 2 else ''
-                if order_field != 'id' and order_field not in self._columns and order_field not in self._inherit_fields:
-                    hist_domain.append(('name', '=', order_field))
-                    hist_ids = hist_obj.search(cr, uid, hist_domain, offset=offset, limit=limit, order='value %s' % order_direction, context=context)
-                    res = list(x['product_id'][0] for x in hist_obj.read(cr, uid, hist_ids, ['product_id'], context=context))
-                    break
+        if context.get('history_cons', False) and context.get('obj_id', False):
+            if order or average_domain:
+                hist_domain = [('consumption_id', '=', context.get('obj_id'))]
+                if context.get('amc') == 'AMC':
+                    hist_domain.append(('cons_type', '=', 'amc'))
+                else:
+                    hist_domain.append(('cons_type', '=', 'fmc'))
+                    
+            if average_domain:
+                # UTP-501 'average' filter
+                hist_domain += [
+                    ('name', '=', 'average'),
+                    ('value', average_domain[1], average_domain[2])
+                ]
+            
+            if order:
+                # sorting with or without average_domain
+                for order_part in order.split(','):
+                    order_split = order_part.strip().split(' ')
+                    order_field = order_split[0]
+                    order_direction = order_split[1].strip() if len(order_split) == 2 else ''
+                    if order_field != 'id' and order_field not in self._columns and order_field not in self._inherit_fields:
+                        hist_domain.append(('name', '=', order_field))
+                        hist_ids = hist_obj.search(cr, uid, hist_domain, offset=offset, limit=limit, order='value %s' % order_direction, context=context)
+                        res = list(x['product_id'][0] for x in hist_obj.read(cr, uid, hist_ids, ['product_id'], context=context))
+                        break
+            elif average_domain:
+                # UTP-501 'average' filter without sorting
+                hist_ids = hist_obj.search(cr, uid, hist_domain, offset=offset, limit=limit, order=order, context=context)
+                res = [x['product_id'][0] for x in hist_obj.read(cr, uid, hist_ids, ['product_id'], context=context)]
 
         return res
 
