@@ -961,8 +961,6 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 'sourcing_trace_ok': True,
                 'sourcing_trace': 'Sourcing in progress',
             }, context=context)
-            print 'end %s' % time.strftime('%H:%M:%S')
-            raise
             thread = threading.Thread(target=self.confirmOrder, args=(cr, uid, order_id, state_to_use, context))
             thread.start()
 
