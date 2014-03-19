@@ -2167,6 +2167,35 @@ class purchase_order_line(osv.osv):
 
         return True
 
+    def _relatedFields(self, cr, uid, vals, context=None):
+        '''
+        related fields for create and write
+        '''
+        # recreate description because in readonly
+        if ('product_id' in vals) and (vals['product_id']):
+            # no nomenclature description
+            vals.update({'nomenclature_description':False})
+            # update the name (comment) of order line
+            # the 'name' is no more the get_name from product, but instead
+            # the name of product
+            productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
+            vals.update({'name':productObj.name})
+            vals.update({'default_code':productObj.default_code})
+            vals.update({'default_name':productObj.name})
+            # erase the nomenclature - readonly
+            self.pool.get('product.product')._resetNomenclatureFields(vals)
+        elif ('product_id' in vals) and (not vals['product_id']):
+            sale = self.pool.get('sale.order.line')
+            sale._setNomenclatureInfo(cr, uid, vals, context)
+            # erase default code
+            vals.update({'default_code':False})
+            vals.update({'default_name':False})
+            
+            if 'comment' in vals:
+                vals.update({'name':vals['comment']})
+        # clear nomenclature filter values
+        #self.pool.get('product.product')._resetNomenclatureFields(vals)
+
     def create(self, cr, uid, vals, context=None):
         '''
         Create or update a merged line
@@ -2214,6 +2243,11 @@ class purchase_order_line(osv.osv):
             vals = self._update_merged_line(cr, uid, False, vals, context=dict(context, skipResequencing=True))
 
         vals.update({'old_price_unit': vals.get('price_unit', False)})
+
+        # [imported from the 'analytic_distribution_supply']
+        # Don't save filtering data
+        self._relatedFields(cr, uid, vals, context)
+        # [/]
 
         # add the database Id to the sync_order_line_db_id
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
@@ -2285,6 +2319,10 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # [imported from the 'analytic_distribution_supply']
+        # Don't save filtering data
+        self._relatedFields(cr, uid, vals, context)
+        # [/]
 
         for line in self.browse(cr, uid, ids, context=context):
             if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok and not context.get('noraise'):

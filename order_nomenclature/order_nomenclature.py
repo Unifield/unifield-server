@@ -128,51 +128,6 @@ class purchase_order_line(osv.osv):
         
         return result
     
-    def _relatedFields(self, cr, uid, vals, context=None):
-        '''
-        related fields for create and write
-        '''
-        # recreate description because in readonly
-        if ('product_id' in vals) and (vals['product_id']):
-            # no nomenclature description
-            vals.update({'nomenclature_description':False})
-            # update the name (comment) of order line
-            # the 'name' is no more the get_name from product, but instead
-            # the name of product
-            productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
-            vals.update({'name':productObj.name})
-            vals.update({'default_code':productObj.default_code})
-            vals.update({'default_name':productObj.name})
-            # erase the nomenclature - readonly
-            self.pool.get('product.product')._resetNomenclatureFields(vals)
-        elif ('product_id' in vals) and (not vals['product_id']):
-            sale = self.pool.get('sale.order.line')
-            sale._setNomenclatureInfo(cr, uid, vals, context)
-            # erase default code
-            vals.update({'default_code':False})
-            vals.update({'default_name':False})
-            
-            if 'comment' in vals:
-                vals.update({'name':vals['comment']})
-        # clear nomenclature filter values
-        #self.pool.get('product.product')._resetNomenclatureFields(vals)
-    
-    def create(self, cr, uid, vals, context=None):
-        '''
-        override create. don't save filtering data
-        '''
-        self._relatedFields(cr, uid, vals, context)
-        
-        return super(purchase_order_line, self).create(cr, uid, vals, context=context)
-    
-    def write(self, cr, uid, ids, vals, context=None):
-        '''
-        override write. don't save filtering data
-        '''
-        self._relatedFields(cr, uid, vals, context)
-            
-        return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
-    
     def nomenChange(self, cr, uid, id, fieldNumber, nomenclatureId, nomenclatureType,
                     nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None, *optionalList):
         '''
