@@ -2179,6 +2179,10 @@ class purchase_order_line(osv.osv):
             vals.update({'change_price_manually': True})
             if not vals.get('product_qty', False):
                 vals['product_qty'] = 1.00
+            # [imported and adapted from the 'analytic_distribution_supply']
+            if not vals.get('price_unit', False):
+                vals['price_unit'] = 1.00
+            # [/]
 
         # If we are on a RfQ, use the last entered unit price and update other lines with this price
         if order_id.rfq_ok:

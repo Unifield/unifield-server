@@ -281,12 +281,6 @@ class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
 
-    def create(self, cr, uid, vals, context=None):
-        if (not 'price_unit' in vals or vals['price_unit'] == 0.00) and 'order_id' in vals and self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context=context).from_yml_test:
-            vals['price_unit'] = 1.00
-
-        return super(purchase_order_line, self).create(cr, uid, vals, context=context)
-
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
