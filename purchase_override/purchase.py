@@ -2198,12 +2198,25 @@ class purchase_order_line(osv.osv):
 
     def _update_name_attr(self, cr, uid, vals, context=None):
         """Update the name attribute in `vals` if a product is selected."""
+        if context is None:
+            context = {}
         prod_obj = self.pool.get('product.product')
         if vals.get('product_id'):
             product = prod_obj.browse(cr, uid, vals['product_id'], context=context)
             vals['name'] = product.name
         elif vals.get('comment'):
             vals['name'] = vals.get('comment', False)
+
+    def _check_product_uom(self, cr, uid, product_id, uom_id, context=None):
+        """Check the product UoM."""
+        if context is None:
+            context = {}
+        uom_tools_obj = self.pool.get('uom.tools')
+        if not uom_tools_obj.check_uom(cr, uid, product_id, uom_id, context=context):
+            raise osv.except_osv(
+                _('Error'),
+                _('You have to select a product UOM in the same '
+                  'category than the purchase UOM of the product !'))
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -2286,14 +2299,9 @@ class purchase_order_line(osv.osv):
 
         # Check the selected product UoM
         if not context.get('import_in_progress', False):
-            product_id = vals.get('product_id', False)
-            product_uom = vals.get('product_uom', False)
-            if product_id and product_uom:
-                if not uom_tools_obj.check_uom(cr, uid, product_id, product_uom, context):
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('You have to select a product UOM in the same '
-                          'category than the purchase UOM of the product !'))
+            if vals.get('product_id') and vals.get('product_uom'):
+                self._check_product_uom(
+                    cr, uid, vals['product_id'], vals['product_uom'], context=context)
 
         # utp-518:we write the comment from the sale.order.line on the PO line through the procurement (only for the create!!)
         po_procurement_id = vals.get('procurement_id', False)
@@ -2410,11 +2418,7 @@ class purchase_order_line(osv.osv):
                 if pol_read.get('product_id'):
                     product_id = pol_read['product_id'][0]
                     uom_id = pol_read['product_uom'][0]
-                    if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, uom_id, context):
-                        raise osv.except_osv(
-                            _('Error'),
-                            _('You have to select a product UOM in the same '
-                              'category than the purchase UOM of the product !'))
+                    self._check_product_uom(cr, uid, product_id, uom_id, context=context)
 
         return res
 
