@@ -2196,6 +2196,15 @@ class purchase_order_line(osv.osv):
         # clear nomenclature filter values
         #self.pool.get('product.product')._resetNomenclatureFields(vals)
 
+    def _update_name_attr(self, cr, uid, vals, context=None):
+        """Update the name attribute in `vals` if a product is selected."""
+        prod_obj = self.pool.get('product.product')
+        if vals.get('product_id'):
+            product = prod_obj.browse(cr, uid, vals['product_id'], context=context)
+            vals['name'] = product.name
+        elif vals.get('comment'):
+            vals['name'] = vals.get('comment', False)
+
     def create(self, cr, uid, vals, context=None):
         '''
         Create or update a merged line
@@ -2272,12 +2281,10 @@ class purchase_order_line(osv.osv):
                     vals.update({'line_number': line})
         # [/]
 
-        # [imported from 'purchase_msg']
         # Update the name attribute if a product is selected
-        if vals.get('product_id'):
-            vals.update(name=prod_obj.browse(cr, uid, vals.get('product_id'), context=context).name,)
-        elif vals.get('comment'):
-            vals.update(name=vals.get('comment'),)
+        self._update_name_attr(cr, uid, vals, context=context)
+
+        # Check the selected product UoM
         if not context.get('import_in_progress', False):
             product_id = vals.get('product_id', False)
             product_uom = vals.get('product_uom', False)
@@ -2295,7 +2302,6 @@ class purchase_order_line(osv.osv):
             if sale_id:
                 comment_so = sol_obj.read(cr, uid, sale_id, ['comment'], context=context)[0]['comment']
                 vals.update(comment=comment_so)
-        # [/]
 
         # add the database Id to the sync_order_line_db_id
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
@@ -2393,18 +2399,12 @@ class purchase_order_line(osv.osv):
         if 'price_unit' in vals:
             vals.update({'old_price_unit': vals.get('price_unit')})
 
-        # [imported from 'purchase_msg', part 1]
         # Update the name attribute if a product is selected
-        prod_obj = self.pool.get('product.product')
-        if vals.get('product_id'):
-            vals.update(name=prod_obj.browse(cr, uid, vals.get('product_id'), context=context).name,)
-        elif vals.get('comment'):
-            vals.update(name=vals.get('comment'),)
-        # [/]
+        self._update_name_attr(cr, uid, vals, context=context)
 
         res = super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
 
-        # [imported from 'purchase_msg', part 2]
+        # Check the selected product UoM
         if not context.get('import_in_progress', False):
             for pol_read in self.read(cr, uid, ids, ['product_id', 'product_uom']):
                 if pol_read.get('product_id'):
@@ -2415,7 +2415,6 @@ class purchase_order_line(osv.osv):
                             _('Error'),
                             _('You have to select a product UOM in the same '
                               'category than the purchase UOM of the product !'))
-        # [/]
 
         return res
 
