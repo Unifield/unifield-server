@@ -192,6 +192,7 @@ ACCOUNT_RESTRICTED_AREA = {
 import res_company
 import res_currency
 import res_partner
+import period
 import account
 import invoice
 import product
@@ -200,4 +201,5 @@ import account_analytic_line
 import account_bank_statement
 import report
 import wizard
+import finance_export
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
