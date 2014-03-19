@@ -26,8 +26,8 @@ from osv import fields
 from tools.translate import _
 
 from time import strftime
-from account_tools import get_period_from_date
-from account_tools import get_date_in_period
+from account_override.period import get_period_from_date
+from account_override.period import get_date_in_period
 
 from collections import defaultdict
 

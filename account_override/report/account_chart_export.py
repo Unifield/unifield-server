@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,30 +18,15 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name": "Chart of Accounts for MSF",
-    "version": "1.0",
-    "depends": ["account", "account_chart"],
-    "author" : "MSF, TeMPO Consulting",
-    "developer": "Matthieu Dietrich",
-    "category": "General/Standard",
-    "description": """
-    This module changes the view and adds a searchable "Active" attribute.
-    
-    """,
-    "init_xml": [
-        'data/account_type.xml',
-    ],
-    'update_xml': [
-        'account_activable_view.xml',
-        'wizard/account_chart_activable_view.xml',
-    ],
-    'test': [
-        'test/account_activable.yml'
-    ],
-    'demo_xml': [],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+from report import report_sxw
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+
+class report_account_chart_export(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        if not context:
+            context = {}
+        super(report_account_chart_export, self).__init__(cr, uid, name, context=context)
+
+SpreadsheetReport('report.account.chart.export','account.account','addons/account_override/report/account_chart_export.mako', parser=report_account_chart_export)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

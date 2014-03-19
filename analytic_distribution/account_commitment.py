@@ -27,7 +27,7 @@ from tools.translate import _
 from time import strftime
 from time import strptime
 import decimal_precision as dp
-from account_tools import get_period_from_date
+from account_override.period import get_period_from_date
 from tools.misc import flatten
 
 
