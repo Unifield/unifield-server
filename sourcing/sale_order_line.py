@@ -673,6 +673,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if clc:
                 raise osv.except_osv(_('Warning'), clc)
 
+            proc_request = line.order_id and line.order_id.procurement_request
+
+            if proc_request and line.type == 'make_to_stock' and line.order_id.location_requestor_id.id == line.location_id.id:
+                raise osv.except_osv(
+                    _('Warning'),
+                    _("You cannot choose a source location which is the destination location of the Internal Request"),
+                )
+
             if line.type == 'make_to_order' and \
                line.po_cft not in ['cft'] and \
                not line.product_id and \
@@ -730,12 +738,6 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 check_fnct = product_obj._get_restriction_error
                 self._check_product_constraints(cr, uid, line.type, line.po_cft, line.product_id.id, line.supplier.id, check_fnct, context=context)
 
-            if line.order_id and line.order_id.procurement_request and line.type == 'make_to_stock':
-                if line.order_id.location_requestor_id.id == line.location_id.id:
-                    raise osv.except_osv(
-                        _('Warning'),
-                        _("You cannot choose a source location which is the destination location of the Internal Request"),
-                    )
 
         return True
 
@@ -959,6 +961,8 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 'sourcing_trace_ok': True,
                 'sourcing_trace': 'Sourcing in progress',
             }, context=context)
+            print 'end %s' % time.strftime('%H:%M:%S')
+            raise
             thread = threading.Thread(target=self.confirmOrder, args=(cr, uid, order_id, state_to_use, context))
             thread.start()
 
