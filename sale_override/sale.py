@@ -1197,7 +1197,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         :return
         :rtype
         """
-        start = time.time()
         # Objects
         wf_service = netsvc.LocalService("workflow")
         move_obj = self.pool.get('stock.move')
@@ -1221,9 +1220,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             move_ids = []
             picking_id = False
 
-            i = 0
             for line in order.order_line:
-                i += 1
                 proc_id = False
 
                 # Don't take care of closed lines
@@ -1525,7 +1522,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         :return True if all order have been written
         :rtype boolean
         """
-        start = time.time()
         # Objects
         wf_service = netsvc.LocalService("workflow")
         sol_obj = self.pool.get('sale.order.line')

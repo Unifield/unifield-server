@@ -348,6 +348,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     'seller_qty': suppinfo.qty,
                     'seller_delay': int(suppinfo.delay),
                 })
+                break
 
         # if not, default delay from supplier (partner.default_delay)
         if result['seller_delay'] < 0:
@@ -498,18 +499,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return True
     # @@@END override
-
-    def _get_po_line_values(self, procurement, context=None):
-        """
-        Returns a dictionary with values for the new Purchase Order
-        Line to be created.
-
-        :param procuremnt: A browse_record of the procurement order that
-                            creates the PO line
-
-        :return A dictionary with values for the new Purchase Order Line
-        :rtype dict
-        """
 
     # @@@override purchase>procurement_order>make_po()
     def make_po(self, cr, uid, ids, context=None):
