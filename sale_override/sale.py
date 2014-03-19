@@ -1386,8 +1386,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 })
 
             self.write(cr, uid, [order.id], val)
-        print 'action_ship_create %s' % (time.time() - start)
-        raise
+
         return True
     # @@@END override sale>sale.py>sale_order>action_ship_create()
 
@@ -1651,8 +1650,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         if lines:
             sol_obj.write(cr, uid, lines, {'invoiced': 1}, context=context)
-        print 'action_ship_proc_create %s' % (time.time() - start)
-        raise
+
         return True
 
     def test_lines(self, cr, uid, ids, context=None):

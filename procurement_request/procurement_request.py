@@ -448,6 +448,8 @@ class procurement_request_line(osv.osv):
                 uom_qty = vals.get('product_uom_qty', req['product_uom_qty'])
                 vals['product_uom_qty'] = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_id, uom_qty, context=context)
                 res = res and super(procurement_request_line, self).write(cr, uid, [req.id], vals, context=context)
+        else:
+            res = res and super(procurement_request_line, self).write(cr, uid, ids, vals, context=context)
 
         return res
 
