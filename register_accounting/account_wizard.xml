@@ -95,7 +95,7 @@
             <field name="name">Analytic Lines</field>
             <field name="model_id" ref="model_account_bank_statement_line"/>
             <field name="state">code</field>
-            <field name="code">action = obj.get_analytic_lines(context=context)</field>
+            <field name="code">action = obj.show_analytic_lines(context=context)</field>
         </record>
 
         <record id="ir_open_analytic_register_lines" model="ir.values">

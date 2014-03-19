@@ -634,7 +634,11 @@ class product_attributes(osv.osv):
 
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
-            for product in self.browse(cr, uid, ids, context=context):
+            if isinstance(ids, (int, long)):
+                to_browse = [ids]
+            else:
+                to_browse = ids
+            for product in self.browse(cr, uid, to_browse, context=context):
                 category_id = product.uom_id.category_id.id
                 if category_id not in product_uom_categ:
                     product_uom_categ.append(category_id)

@@ -63,7 +63,7 @@ class procurement_order(osv.osv):
                     proc_id = proc_obj.create(cr, uid, {
                                         'name': _('Threshold value: %s') % (threshold.name,),
                                         'origin': threshold.name,
-                                        'date_planned': time.strftime('%Y-%m-%d %H:%M:%S'),
+                                        'date_planned': line.required_date or time.strftime('%Y-%m-%d %H:%M:%S'),
                                         'product_id': line.product_id.id,
                                         'product_qty': line.product_qty,
                                         'product_uom': line.product_id.uom_id.id,

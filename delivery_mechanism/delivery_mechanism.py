@@ -599,6 +599,7 @@ class stock_picking(osv.osv):
         sync_in = context.get('sync_message_execution', False)
 
         internal_loc = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('cross_docking_location_ok', '=', False)])
+        proc_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'location_procurement')[1]
         context['location'] = internal_loc
 
         product_availability = {}
@@ -723,6 +724,17 @@ class stock_picking(osv.osv):
                 if diff_qty > 0.00 and move.state != 'cancel':
                     backordered_moves.append((move, diff_qty, average_values, data_back))
 
+                # UTP-967
+                if move.state != 'cancel' and move.purchase_line_id and move.purchase_line_id.procurement_id:
+                    proc = move.purchase_line_id.procurement_id
+                    if proc.move_id.location_id.id == proc_loc_id:
+                        # Replace the stock move of the procurement order by the stock move of the PO line
+                        old_move = proc.move_id.id
+                        proc.write({'move_id': move.id}, context=context)
+                        if not (diff_qty > 0):
+                            # not cancel move if a diff qty is applied above
+                            move_obj.write(cr, uid, [old_move], {'state': 'cancel'}, context=context)
+
             # Create the backorder if needed
             if backordered_moves:
                 backorder_id = self.copy(cr, uid, picking.id, {
@@ -782,7 +794,6 @@ class stock_picking(osv.osv):
 
             if not sync_in:
                 move_obj.action_assign(cr, uid, processed_out_moves)
-
 
         # Create the first picking ticket if we are on a draft picking ticket
         for picking in self.browse(cr, uid, list(out_picks), context=context):

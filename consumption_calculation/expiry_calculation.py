@@ -55,12 +55,19 @@ class expiry_quantity_report(osv.osv_memory):
     
     def print_report_wizard(self, cr, uid, ids, context=None):
         '''
-        Print the report directly from the wizard
+        Print the report directly from the wizard: pdf
         '''
         self.process_lines(cr, uid, ids, context=context)
         return self.print_report(cr, uid, ids, context=context)
-    
-    def print_report(self, cr, uid, ids, context=None):
+   
+    def print_report_wizard_xls(self, cr, uid, ids, context=None):
+        '''
+        Print the report directly from the wizard: xls
+        '''
+        self.process_lines(cr, uid, ids, context=context)
+        return self.print_report_xls(cr, uid, ids, context=context)
+        
+    def _print_report(self, cr, uid, ids, report_name, context=None):
         '''
         Print the report of expiry report
         '''
@@ -68,12 +75,23 @@ class expiry_quantity_report(osv.osv_memory):
         
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'expiry.report',
+            'report_name': report_name,
             'datas': datas,
             'nodestroy': True,
             'context': context,
         }
+    
+    def print_report(self, cr, uid, ids, context=None):
+        '''
+        Print the report of expiry report: pdf
+        '''
+        return self._print_report(cr, uid, ids, 'expiry.report', context=None)
         
+    def print_report_xls(self, cr, uid, ids, context=None):
+        '''
+        Print the report of expiry report: xls
+        '''
+        return self._print_report(cr, uid, ids, 'expiry.report_xls', context=None)
     
     def process_lines(self, cr, uid, ids, context=None):
         '''
