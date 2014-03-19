@@ -2205,6 +2205,9 @@ class purchase_order_line(osv.osv):
 
         po_obj = self.pool.get('purchase.order')
         seq_pool = self.pool.get('ir.sequence')
+        sol_obj = self.pool.get('sale.order.line')
+        prod_obj = self.pool.get('product.product')
+        uom_tools_obj = self.pool.get('uom.tools')
 
         order_id = po_obj.browse(cr, uid, vals['order_id'], context=context)
         if order_id.from_yml_test:
@@ -2267,6 +2270,31 @@ class purchase_order_line(osv.osv):
                     sequence_id = po_obj.read(cr, uid, [vals['order_id']], ['sequence_id'], context=context)[0]['sequence_id'][0]
                     line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
                     vals.update({'line_number': line})
+        # [/]
+
+        # [imported from 'purchase_msg']
+        # Update the name attribute if a product is selected
+        if vals.get('product_id'):
+            vals.update(name=prod_obj.browse(cr, uid, vals.get('product_id'), context=context).name,)
+        elif vals.get('comment'):
+            vals.update(name=vals.get('comment'),)
+        if not context.get('import_in_progress', False):
+            product_id = vals.get('product_id', False)
+            product_uom = vals.get('product_uom', False)
+            if product_id and product_uom:
+                if not uom_tools_obj.check_uom(cr, uid, product_id, product_uom, context):
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('You have to select a product UOM in the same '
+                          'category than the purchase UOM of the product !'))
+
+        # utp-518:we write the comment from the sale.order.line on the PO line through the procurement (only for the create!!)
+        po_procurement_id = vals.get('procurement_id', False)
+        if po_procurement_id:
+            sale_id = sol_obj.search(cr, uid, [('procurement_id', '=', po_procurement_id)], context=context)
+            if sale_id:
+                comment_so = sol_obj.read(cr, uid, sale_id, ['comment'], context=context)[0]['comment']
+                vals.update(comment=comment_so)
         # [/]
 
         # add the database Id to the sync_order_line_db_id
@@ -2365,7 +2393,29 @@ class purchase_order_line(osv.osv):
         if 'price_unit' in vals:
             vals.update({'old_price_unit': vals.get('price_unit')})
 
+        # [imported from 'purchase_msg', part 1]
+        # Update the name attribute if a product is selected
+        prod_obj = self.pool.get('product.product')
+        if vals.get('product_id'):
+            vals.update(name=prod_obj.browse(cr, uid, vals.get('product_id'), context=context).name,)
+        elif vals.get('comment'):
+            vals.update(name=vals.get('comment'),)
+        # [/]
+
         res = super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
+
+        # [imported from 'purchase_msg', part 2]
+        if not context.get('import_in_progress', False):
+            for pol_read in self.read(cr, uid, ids, ['product_id', 'product_uom']):
+                if pol_read.get('product_id'):
+                    product_id = pol_read['product_id'][0]
+                    uom_id = pol_read['product_uom'][0]
+                    if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, uom_id, context):
+                        raise osv.except_osv(
+                            _('Error'),
+                            _('You have to select a product UOM in the same '
+                              'category than the purchase UOM of the product !'))
+        # [/]
 
         return res
 
