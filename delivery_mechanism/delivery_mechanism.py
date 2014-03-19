@@ -744,23 +744,24 @@ class stock_picking(osv.osv):
                 }, context=context)
 
                 for bo_move, bo_qty, av_values, data_back in backordered_moves:
-                    # Create the corresponding move in the backorder - reset batch - reset asset_id
-                    bo_values = {
-                        'asset_id': False,
-                        'product_qty': bo_qty,
-                        'product_uos_qty': bo_qty,
-                        'product_uom': data_back['product_uom'],
-                        'product_uos': data_back['product_uom'],
-                        'prodlot_id': False,
-                        'state': 'assigned',
-                        'move_dest_id': False,
-                        'change_reason': False,
-                        'processed_stock_move': True,
-                    }
-                    bo_values.update(av_values)
-                    context['keepLineNumber'] = True
-                    move_obj.copy(cr, uid, bo_move.id, bo_values, context=context)
-                    context['keepLineNumber'] = False
+                    if bo_move.product_qty != bo_qty:
+                        # Create the corresponding move in the backorder - reset batch - reset asset_id
+                        bo_values = {
+                            'asset_id': False,
+                            'product_qty': bo_qty,
+                            'product_uos_qty': bo_qty,
+                            'product_uom': data_back['product_uom'],
+                            'product_uos': data_back['product_uom'],
+                            'prodlot_id': False,
+                            'state': 'assigned',
+                            'move_dest_id': False,
+                            'change_reason': False,
+                            'processed_stock_move': True,
+                        }
+                        bo_values.update(av_values)
+                        context['keepLineNumber'] = True
+                        move_obj.copy(cr, uid, bo_move.id, bo_values, context=context)
+                        context['keepLineNumber'] = False
 
                 # Put the done moves in this new picking
                 move_obj.write(cr, uid, done_moves, {
