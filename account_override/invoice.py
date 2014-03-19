@@ -433,15 +433,6 @@ class account_invoice(osv.osv):
                     sale_obj.write(cr, uid, sale_ids, {'invoice_ids': [(4, new_id)]}, context=context)
         return new_id
 
-    def copy_data(self, cr, uid, inv_id, default=None, context=None):
-        """
-        Copy an invoice line without its move lines
-        """
-        if default is None:
-            default = {}
-        default.update({'move_lines': False,})
-        return super(account_invoice_line, self).copy_data(cr, uid, inv_id, default, context)
-
     def create(self, cr, uid, vals, context=None):
         """
         Filled in 'from_yml_test' to True if we come from tests
@@ -997,6 +988,15 @@ class account_invoice_line(osv.osv):
                     sale_lines_obj.write(cr, uid,  sale_lines_ids, {'invoice_lines': [(4, new_id)]})
 
         return new_id
+
+    def copy_data(self, cr, uid, inv_id, default=None, context=None):
+        """
+        Copy an invoice line without its move lines
+        """
+        if default is None:
+            default = {}
+        default.update({'move_lines': False,})
+        return super(account_invoice_line, self).copy_data(cr, uid, inv_id, default, context)
 
     def unlink(self, cr, uid, ids, context=None):
         """
