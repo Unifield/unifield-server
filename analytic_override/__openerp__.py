@@ -19,42 +19,25 @@
 #
 ##############################################################################
 {
-    "name" : "Analytic Account for MSF",
+    "name" : "Analytic for MSF",
     "version": "1.1",
     "author" : "MSF, TeMPO Consulting",
     "category" : "Generic Modules/Projects & Services",
     # As account_override depends on analytic and account_tools (that depends on account), no need for analytic and account dependances
-    "depends" : ["analytic_override", "account_override"],
-    "description": """Module for defining analytic accounting object and commitment voucher.
+    "depends" : ["analytic"],
+    "description": """Module for defining analytic object related as:
+      - analytic distribution
+      - analytic accounts
+      - analytic lines
     """,
-    "init_xml" : [
-        'data/analytic_account_data.xml',
-    ],
+    "init_xml" : [],
     "update_xml": [
         'security/ir.model.access.csv',
-        'account_view.xml',
-        'account_invoice_view.xml',
-        'analytic_account_view.xml',
-        'analytic_line_view.xml',
-        'wizard/account_analytic_chart_view.xml',
-        'analytic_distribution_wizard_view.xml',
-        'account_commitment_workflow.xml',
-        'account_commitment_sequence.xml',
-        'account_commitment_view.xml',
-        'funding_pool_report.xml',
     ],
-    'test': [
-        'test/10_analytic_account_activable.yml',
-        'test/20_analytic_data.yml',
-        'test/30_check_dates.yml',
-        'test/bug_1681.yml',
-        'test/40_check_report.yml',
-        'test/bug_2217.yml',
-    ],
+    'test': [],
     'demo_xml': [
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
