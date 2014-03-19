@@ -245,11 +245,24 @@ class product_history_consumption(osv.osv):
         '''
         import pooler
         new_cr = pooler.get_db(cr.dbname).cursor()
-
-        try:
-            self.pool.get('product.product').read(new_cr, uid, product_ids, ['average'], context=context)
-        except Exception, e:
-            cr.rollback()
+        
+        # split ids into slices to not read a lot record in the same time (memory)
+        ids_len = len(product_ids)
+        slice_len = 500
+        if ids_len > slice_len:
+            slice_count = ids_len / slice_len
+            if ids_len % slice_len:
+                slice_count = slice_count + 1
+            # http://www.garyrobinson.net/2008/04/splitting-a-pyt.html
+            slices = [product_ids[i::slice_count] for i in range(slice_count)]
+        else:
+            slices = [product_ids]
+            
+        for slice_ids in slices:
+            try:
+                self.pool.get('product.product').read(new_cr, uid, slice_ids, ['average'], context=context)
+            except Exception, e:
+                cr.rollback()
         self.write(new_cr, uid, ids, {'status': 'ready'}, context=context)
 
         new_cr.commit()
