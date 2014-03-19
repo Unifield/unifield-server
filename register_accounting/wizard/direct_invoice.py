@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
+#    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
@@ -24,7 +24,6 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from datetime import datetime
 import decimal_precision as dp
 import time
 from ..register_tools import open_register_view
@@ -37,10 +36,10 @@ class wizard_account_invoice(osv.osv):
 
     _columns  = {
         'invoice_line': fields.one2many('wizard.account.invoice.line', 'invoice_id', 'Invoice Lines', readonly=True, states={'draft':[('readonly',False)]}),
-        'partner_id': fields.many2one('res.partner', 'Partner', change_default=True, readonly=True, required=False, 
+        'partner_id': fields.many2one('res.partner', 'Partner', change_default=True, readonly=True, required=False,
             states={'draft':[('readonly',False)]}, domain=[('supplier','=',True)]),
         'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False, states={'draft':[('readonly',False)]}),
-        'account_id': fields.many2one('account.account', 'Account', required=False, readonly=True, states={'draft':[('readonly',False)]}, 
+        'account_id': fields.many2one('account.account', 'Account', required=False, readonly=True, states={'draft':[('readonly',False)]},
             help="The partner account used for this invoice."),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True, readonly=True),
         'register_id': fields.many2one('account.bank.statement', 'Register', readonly=True),
@@ -85,8 +84,8 @@ class wizard_account_invoice(osv.osv):
         """
         Reset the invoice by reseting some fields
         """
-        self.write(cr, uid, ids, {'invoice_line': [(5,)], 'register_posting_date': time.strftime('%Y-%m-%d'), 'date_invoice': time.strftime('%Y-%m-%d'), 
-            'partner_id': False, 'address_invoice_id': False, 'account_id': False, 'state': 'draft', 'analytic_distribution_id': False, 
+        self.write(cr, uid, ids, {'invoice_line': [(5,)], 'register_posting_date': time.strftime('%Y-%m-%d'), 'date_invoice': time.strftime('%Y-%m-%d'),
+            'partner_id': False, 'address_invoice_id': False, 'account_id': False, 'state': 'draft', 'analytic_distribution_id': False,
             'document_date': time.strftime('%Y-%m-%d'),})
         return True
 
@@ -116,7 +115,7 @@ class wizard_account_invoice(osv.osv):
         vals['invoice_line'] = []
         amount = 0
         if inv['invoice_line']:
-            for line in self.pool.get('wizard.account.invoice.line').read(cr, uid, inv['invoice_line'], 
+            for line in self.pool.get('wizard.account.invoice.line').read(cr, uid, inv['invoice_line'],
                 ['product_id','account_id', 'account_analytic_id', 'quantity', 'price_unit','price_subtotal','name', 'uos_id','analytic_distribution_id']):
                 vals['invoice_line'].append( (0, 0,
                     {
@@ -135,7 +134,7 @@ class wizard_account_invoice(osv.osv):
                 amount += line['price_subtotal']
         # Give the total of invoice in the "check_total" field. This permit not to encount problems when validating invoice.
         vals.update({'check_total': amount})
-        
+
         # Prepare some value
         inv_obj = self.pool.get('account.invoice')
         absl_obj = self.pool.get('account.bank.statement.line')
@@ -152,16 +151,16 @@ class wizard_account_invoice(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Register Line posting date is outside of the register period!'))
             elif vals['date_invoice'] > vals['register_posting_date']:
                 raise osv.except_osv(_('Warning'), _('Direct Invoice posting date must be sooner or equal to the register line posting date!'))
-            
+
         vals.update({'date_invoice': vals['date_invoice']})
         vals.update({'register_posting_date': vals['register_posting_date']})
-        
+
         # Create invoice
         inv_id = inv_obj.create(cr, uid, vals, context=context)
         # Set this invoice as direct invoice (since UTP-551, is_direct_invoice is a boolean and not a function)
         self.pool.get('account.invoice').write(cr, uid, [inv_id], {'is_direct_invoice': True})
 
-        
+
         # Create the attached register line and link the invoice to the register
         reg_line_id = absl_obj.create(cr, uid, {
             'account_id': vals['account_id'],
@@ -176,13 +175,13 @@ class wizard_account_invoice(osv.osv):
             'name': 'Direct Invoice',
             'ref': inv['reference'] and inv['reference'] or False,
         })
-        
+
         # Temp post the line
         absl_obj.button_temp_posting(cr, uid, [reg_line_id], context=context)
-        
+
         # Link invoice and register_line
-        res_inv = inv_obj.write(cr, uid, [inv_id], {'register_line_ids': [(4, reg_line_id)]}, context=context)
-        
+        inv_obj.write(cr, uid, [inv_id], {'register_line_ids': [(4, reg_line_id)]}, context=context)
+
         # Do reconciliation
         # Moved since UF-1471. This is now down when you hard post the linked register line.
 
@@ -264,7 +263,7 @@ class wizard_account_invoice_line(osv.osv):
         'invoice_id': fields.many2one('wizard.account.invoice', 'Invoice Reference', select=True),
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
     }
-
+ 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on a direct invoice line
@@ -278,8 +277,8 @@ class wizard_account_invoice_line(osv.osv):
             raise osv.except_osv(_('Error'), _('No direct invoice line given. Please save your direct invoice line before.'))
         # Prepare some values
         invoice_line = self.browse(cr, uid, ids[0], context=context)
-        
-        fields_to_write = ['journal_id', 'partner_id', 'address_invoice_id', 'date_invoice', 'register_posting_date', 
+
+        fields_to_write = ['journal_id', 'partner_id', 'address_invoice_id', 'date_invoice', 'register_posting_date',
             'account_id', 'partner_bank_id', 'payment_term', 'name', 'document_date',
             'origin', 'address_contact_id', 'user_id', 'comment', 'reference']
         to_write = {}
@@ -288,8 +287,7 @@ class wizard_account_invoice_line(osv.osv):
                 to_write[f] = context['d_%s'%(f,)]
         if to_write:
             self.pool.get('wizard.account.invoice').write(cr, uid, [invoice_line.invoice_id.id], to_write)
-        
-        distrib_id = False
+
         negative_inv = False
         amount = invoice_line.price_subtotal or 0.0
         # Search elements for currency

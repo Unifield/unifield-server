@@ -19,14 +19,8 @@
 #
 ##############################################################################
 
-import datetime
-
 from report import report_sxw
-from tools.translate import _
 import pooler
-import locale
-import csv
-import StringIO
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class report_liquidity_position2(report_sxw.rml_parse):
@@ -54,7 +48,7 @@ class report_liquidity_position2(report_sxw.rml_parse):
         iters = self.iter[1:]
         temp = self.iter[1:]
         tour = 1
-        for i in temp:
+        for _ in temp:
             tour += 1
             nb = 0
             for x in iters:
@@ -75,7 +69,7 @@ class report_liquidity_position2(report_sxw.rml_parse):
         temp = self.res
         self.res = 0
         return temp
- 
+
     def getCal(self):
         temp = self.cal
         self.cal = 0
@@ -91,7 +85,7 @@ class report_liquidity_position2(report_sxw.rml_parse):
         sql_register_ids = """
             SELECT abs.id FROM account_bank_statement abs
                 LEFT JOIN account_journal aj ON abs.journal_id = aj.id
-            WHERE 
+            WHERE
                 aj.type != 'cheque' AND abs.state != 'draft' AND abs.id not in (
                     SELECT prev_reg_id FROM account_bank_statement WHERE prev_reg_id is not null AND state != 'draft'
                 )
@@ -99,16 +93,16 @@ class report_liquidity_position2(report_sxw.rml_parse):
 
         self.cr.execute(sql_register_ids)
         register_ids = [x[0] for x in self.cr.fetchall()]
-        
+
         registers = {}
-    
+
         for register in pool.get('account.bank.statement').browse(self.cr, self.uid, register_ids):
             ids.append(register)
             if registers.has_key(register.instance_id.id):
                 registers[register.instance_id.id] += [register]
             else:
                 registers[register.instance_id.id] = [register]
-            
+
         self.registers = registers
         for x in registers:
             self.iter.append(len(registers[x]))
@@ -116,7 +110,6 @@ class report_liquidity_position2(report_sxw.rml_parse):
         return registers
 
     def getConvert(self,cur,func_cur,amount,option):
-        ids = []
         conv = self.pool.get('res.currency').compute(self.cr, self.uid, cur.id, func_cur.id, amount or 0.0, round=True,)
 
         if option == 'cal':

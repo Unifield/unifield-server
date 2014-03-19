@@ -24,7 +24,6 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from operator import itemgetter
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 from register_tools import _get_third_parties_name
@@ -39,8 +38,8 @@ class account_move_line(osv.osv):
         Lines that have an account that come from a cheque register.
         """
         res = {}
-        for id in ids:
-            res[id] = False
+        for i in ids:
+            res[i] = False
         return res
 
     def _search_cheque(self, cr, uid, obj, name, args, context=None):
@@ -62,7 +61,7 @@ class account_move_line(osv.osv):
             if j['default_credit_account_id']:
                 res.append(j['default_credit_account_id'][0])
         return [('account_id', 'in', res)]
-    
+
     def _search_ready_for_import_in_register(self, cr, uid, obj, name, args, context=None):
         if not args:
             return []
@@ -92,7 +91,7 @@ class account_move_line(osv.osv):
 
             move_line_total = move_line.amount_currency
             sign = move_line.amount_currency < 0 and -1 or 1
-            
+
             context_unreconciled = context.copy()
             if move_line.reconcile_partial_id:
                 for payment_line in move_line.reconcile_partial_id.line_partial_ids:
@@ -151,30 +150,30 @@ class account_move_line(osv.osv):
                 ids = self.pool.get('account.move.line').search(cr, uid, [('imported_invoice_line_ids', 'in', reg_ids), ('id', 'not in', r_move.keys())])
                 if ids:
                     new_move = True
-                    for id in ids:
-                        r_move[id] = True
+                    for i in ids:
+                        r_move[i] = True
         return r_move.keys()
 
     _columns = {
         'transfer_journal_id': fields.many2one('account.journal', 'Journal', ondelete="restrict"),
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
-        'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], 
+        'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True,
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')],
             multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
-        'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], 
+        'third_parties': fields.function(_get_third_parties, type='reference', method=True,
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')],
             help="To use for python code when registering", multi="third_parties_key"),
         'supplier_invoice_ref': fields.related('invoice', 'name', type='char', size=64, string="Supplier inv.ref.", store=False),
-        'imported_invoice_line_ids': fields.many2many('account.bank.statement.line', 'imported_invoice', 'move_line_id', 'st_line_id', 
+        'imported_invoice_line_ids': fields.many2many('account.bank.statement.line', 'imported_invoice', 'move_line_id', 'st_line_id',
             string="Imported Invoices", required=False, readonly=True),
-        'from_import_invoice_ml_id': fields.many2one('account.move.line', 'From import invoice', 
+        'from_import_invoice_ml_id': fields.many2one('account.move.line', 'From import invoice',
             help="Move line that have been used for an Pending Payments Wizard in order to generate the present move line"),
-        'is_cheque': fields.function(_get_fake, fnct_search=_search_cheque, type="boolean", method=True, string="Come from a cheque register ?", 
+        'is_cheque': fields.function(_get_fake, fnct_search=_search_cheque, type="boolean", method=True, string="Come from a cheque register ?",
             help="True if this line come from a cheque register and especially from an account attached to a cheque register."),
-        'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean", 
+        'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean",
             method=True, string="Can be imported as invoice in register?",),
-        'from_import_cheque_id': fields.one2many('account.bank.statement.line', 'from_import_cheque_id', string="Cheque Imported", 
+        'from_import_cheque_id': fields.one2many('account.bank.statement.line', 'from_import_cheque_id', string="Cheque Imported",
             help="This line has been created by a cheque import. This id is the move line imported."),
         'amount_residual_import_inv': fields.function(_amount_residual_import_inv, method=True, string='Residual Amount',
                         store={
@@ -295,9 +294,9 @@ class account_move_line(osv.osv):
         if not context:
             context = {}
         #UF-2214: if data comes from the sync, retrieve also the inactive
-        if context.get('sync_update_execution', False):    
+        if context.get('sync_update_execution', False):
             context.update({'active_test': False})
-                        
+
         # Retrieve third party name
         res = _get_third_parties_name(self, cr, uid, vals, context=context)
         if res:

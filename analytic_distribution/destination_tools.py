@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from osv import fields, osv
+from osv import fields
 import warnings
 import pooler
 
@@ -16,8 +16,8 @@ class many2many_sorted(fields.many2many):
         res = {}
         if not ids:
             return res
-        for id in ids:
-            res[id] = []
+        for i in ids:
+            res[i] = []
         if offset:
             warnings.warn("Specifying offset at a many2many.get() may produce unpredictable results.",
                       DeprecationWarning, stacklevel=2)
@@ -74,7 +74,7 @@ class many2many_notlazy(many2many_sorted):
     def __init__(self, obj, rel, id1, id2, string='unknown', limit=None, **args):
         super(many2many_notlazy, self).__init__(obj, rel, id1, id2, string, limit, **args)
 
-    def set(self, cr, obj, id, name, values, user=None, context=None):
+    def set(self, cr, obj, m_id, name, values, user=None, context=None):
         if context is None:
             context = {}
         if not values:
@@ -90,12 +90,12 @@ class many2many_notlazy(many2many_sorted):
                     d1 = ' and ' + ' and '.join(d1)
                 else:
                     d1 = ''
-                args = [id, id]+d2
+                args = [m_id, m_id]+d2
                 if not act[2]:
                     args.append((0,))
                 else:
                     args.append(tuple(act[2]))
-                    
+
                 # JIRA UTP-334
                 if self._rel == 'account_destination_link':
                     cr.execute('select id from '+self._rel+' where '+self._id1+'=%s AND '+self._id2+' IN (SELECT '+self._rel+'.'+self._id2+' FROM '+self._rel+', '+','.join(tables)+' WHERE '+self._rel+'.'+self._id1+'=%s AND '+self._rel+'.'+self._id2+' = '+obj._table+'.id '+ d1 +' and '+self._rel+'.'+self._id2+' not in %s)', args)
@@ -104,22 +104,22 @@ class many2many_notlazy(many2many_sorted):
                         unlink_obj.unlink(cr, user, unlinked_id[0])
                 else:
                     cr.execute('delete from '+self._rel+' where '+self._id1+'=%s AND '+self._id2+' IN (SELECT '+self._rel+'.'+self._id2+' FROM '+self._rel+', '+','.join(tables)+' WHERE '+self._rel+'.'+self._id1+'=%s AND '+self._rel+'.'+self._id2+' = '+obj._table+'.id '+ d1 +' and '+self._rel+'.'+self._id2+' not in %s)', args)
-                
 
-                cr.execute('select '+self._id2+' from '+self._rel+' where '+self._id1+'=%s', [id, ])
+
+                cr.execute('select '+self._id2+' from '+self._rel+' where '+self._id1+'=%s', [m_id, ])
                 existing = [x[0] for x in cr.fetchall()]
 
                 for act_nbr in act[2]:
                     if act_nbr not in existing:
                         if self._rel == 'account_destination_link':
                             link_obj = pooler.get_pool(cr.dbname).get('account.destination.link')
-                            link_obj.create(cr, user, {self._id1: id, self._id2: act_nbr})
+                            link_obj.create(cr, user, {self._id1: m_id, self._id2: act_nbr})
                         else:
-                            cr.execute('insert into '+self._rel+' ('+self._id1+','+self._id2+') values (%s, %s)', (id, act_nbr))
-                        
+                            cr.execute('insert into '+self._rel+' ('+self._id1+','+self._id2+') values (%s, %s)', (m_id, act_nbr))
+
             else:
                 newargs.append(act)
         if newargs:
-            return super(many2many_notlazy, self).set(cr, obj, id, name, newargs, user=user, context=context)
+            return super(many2many_notlazy, self).set(cr, obj, m_id, name, newargs, user=user, context=context)
 
-
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -24,43 +24,10 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-import time
-
-import netsvc
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
-
-    def button_dummy_compute_total(self, cr, uid, ids, context=None):
-        return True
-
-    def _get_virtual_fields(self, cr, uid, ids, field_name=None, arg=None, context=None):
-        """
-        Get fields in order to transform them into 'virtual fields" (kind of field duplicity):
-         - currency_id
-         - account_id
-         - supplier
-        """
-        res = {}
-        for inv in self.browse(cr, uid, ids, context=context):
-            res[inv.id] = {'virtual_currency_id': inv.currency_id.id or False, 'virtual_account_id': inv.account_id.id or False, 
-            'virtual_partner_id': inv.partner_id.id or False}
-        return res
-
-    def _is_direct_invoice(self, cr, uid, ids, field_name=None, arg=None, context=None):
-        """
-        If this invoice is linked to a register line with "register_line_ids", so this is a direct invoice.
-        Otherwise return False
-        """
-        if not context:
-            context = {}
-        res = {}
-        for inv in self.browse(cr, uid, ids):
-            res[inv.id] = False
-            if inv.register_line_ids:
-                res[inv.id] = True
-        return res
 
     def _search_imported_state(self, cr, uid, ids, name, args, context=None):
         """
@@ -142,49 +109,9 @@ class account_invoice(osv.osv):
         return res
 
     _columns = {
-        'register_line_ids': fields.one2many('account.bank.statement.line', 'invoice_id', string="Register Lines"),
-        'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False, 
-            states={'draft':[('readonly',False)]}),
-        'virtual_currency_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Currency", 
-            type='many2one', relation="res.currency", readonly=True),
-        'virtual_account_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Account",
-            type='many2one', relation="account.account", readonly=True),
-        'virtual_partner_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Supplier",
-            type='many2one', relation="res.partner", readonly=True),
-        'is_direct_invoice': fields.boolean("Is direct invoice?", readonly=True),
-        'register_posting_date': fields.date(string="Register posting date for Direct Invoice", required=False),
         'imported_state': fields.function(_get_imported_state, fnct_search=_search_imported_state, method=True, store=False, type='selection', selection=[('none', 'None'), ('imported', 'Imported'), ('not', 'Not Imported'), ('partial', 'Partially Imported')], string='Imported Status'),
         'down_payment_ids': fields.function(_get_down_payment_ids, type="one2many", obj='account.move.line', method=True, string='Down payments'),
     }
-
-    _defaults = {
-        'is_direct_invoice': lambda *a: False,
-    }
-
-    def action_reconcile_direct_invoice(self, cr, uid, inv, context=None):
-        """
-        Reconcile move line if invoice is a Direct Invoice
-        NB: In order to define that an invoice is a Direct Invoice, we need to have register_line_ids not null
-        """
-        # Verify that this invoice is linked to a register line and have a move
-        if not inv:
-            return False
-        if inv.move_id and inv.register_line_ids:
-            ml_obj = self.pool.get('account.move.line')
-            # First search move line that becomes from invoice
-            res_ml_ids = ml_obj.search(cr, uid, [('move_id', '=', inv.move_id.id), ('account_id', '=', inv.account_id.id)])
-            if len(res_ml_ids) > 1:
-                raise osv.except_osv(_('Error'), _('More than one journal items found for this invoice.'))
-            invoice_move_line_id = res_ml_ids[0]
-            # Then search move line that corresponds to the register line
-            reg_line = inv.register_line_ids[0]
-            reg_ml_ids = ml_obj.search(cr, uid, [('move_id', '=', reg_line.move_ids[0].id), ('account_id', '=', reg_line.account_id.id)])
-            if len(reg_ml_ids) > 1:
-                raise osv.except_osv(_('Error'), _('More than one journal items found for this register line.'))
-            register_move_line_id = reg_ml_ids[0]
-            # Finally do reconciliation
-            ml_reconcile_id = ml_obj.reconcile_partial(cr, uid, [invoice_move_line_id, register_move_line_id])
-        return True
 
     def create_down_payments(self, cr, uid, ids, amount, context=None):
         """
@@ -205,7 +132,7 @@ class account_invoice(osv.osv):
             # prepare some values
             total = 0.0
             to_use = [] # should contains tuple with: down payment line id, amount
-            
+
             # Create down payment until given amount is reached
             # browse all invoice purchase, then all down payment attached to purchases
             for po in inv.purchase_ids:
@@ -318,43 +245,28 @@ class account_invoice(osv.osv):
                 self.create_down_payments(cr, uid, inv.id, inv.amount_total)
         return True
 
-    def invoice_open(self, cr, uid, ids, context=None):
+    def _direct_invoice_updated(self, cr, uid, ids, context=None):
         """
-        No longer fills the date automatically, but requires it to be set
+        User has updated the direct invoice. The (parent) statement line needs to be updated, and then
+        the move lines deleted and re-created. Ticket utp917. Sheer madness.
         """
-        # Some verifications
-        if not context:
-            context = {}
-
-            
-        # Prepare workflow object
-        wf_service = netsvc.LocalService("workflow")
-        for inv in self.browse(cr, uid, ids):
-            values = {}
-            curr_date = time.strftime('%Y-%m-%d')
-            if not inv.date_invoice and not inv.document_date:
-                values.update({'date': curr_date, 'document_date': curr_date, 'state': 'date'})
-            elif not inv.date_invoice:
-                values.update({'date': curr_date, 'document_date': inv.document_date, 'state': 'date'})
-            elif not inv.document_date:
-                values.update({'date': inv.date_invoice, 'document_date': curr_date, 'state': 'date'})
-            if inv.type in ('in_invoice', 'in_refund') and abs(inv.check_total - inv.amount_total) >= (inv.currency_id.rounding/2.0):
-                state = values and 'both' or 'amount'
-                values.update({'check_total': inv.check_total , 'amount_total': inv.amount_total, 'state': state})
-            if values:
-                values['invoice_id'] = inv.id
-                wiz_id = self.pool.get('wizard.invoice.date').create(cr, uid, values, context)
-                return {
-                    'name': "Missing Information",
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'wizard.invoice.date',
-                    'target': 'new',
-                    'view_mode': 'form',
-                    'view_type': 'form',
-                    'res_id': wiz_id,
-                    }
-            
-            wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
+        # get object handles
+        account_bank_statement_line = self.pool.get('account.bank.statement.line')  #absl
+        direct_invoice = self.browse(cr, uid, ids, context=context)[0]
+        # get statement line id
+        absl = direct_invoice.register_line_ids[0]
+        if (direct_invoice.document_date != absl.document_date) or (direct_invoice.partner_id != absl.partner_id):
+            account_bank_statement_line.write(cr, uid, [absl.id], {'document_date': direct_invoice.document_date, \
+                                                                   'partner_id': direct_invoice.partner_id.id },     \
+                                                                   context=context)
+        # Delete moves
+        # existing seqnums are saved into context here. utp917
+        account_bank_statement_line.unlink_moves(cr, uid, [absl.id], context=context)
+        # Re-create moves and temp post them.
+        # account_bank_statement_line.write(cr, uid, [absl.id], {'state': 'draft'}, context=context)
+        account_bank_statement_line.button_temp_posting(cr, uid, [absl.id], context=context)
+        # remove seqnums from context
+        context.pop("seqnums",None)
         return True
 
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
@@ -366,123 +278,32 @@ class account_invoice(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # Browse invoice and all invoice lines to detect a non-valid line
+        self._check_analytic_distribution_state(cr, uid, ids)
+        # Default behaviour
         res = super(account_invoice, self).action_open_invoice(cr, uid, ids, context)
-        for inv in self.browse(cr, uid, ids):
+        to_check = []
+        for inv in self.read(cr, uid, ids, ['purchase_ids']):
             # Create down payments for invoice that come from a purchase
-            if inv.purchase_ids:
-                self.check_down_payments(cr, uid, inv.id)
+            if inv.get('purchase_ids', []):
+                to_check.append(inv.get('id'))
+        self.check_down_payments(cr, uid, to_check)
         return res
 
-    def unlink(self, cr, uid, ids, context=None):
+    def button_close_direct_invoice(self, cr, uid, ids, context=None):
         """
-        Delete register line if this invoice is a Direct Invoice
+        Check analytic distribution before closing pop-up
         """
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for inv in self.browse(cr, uid, ids):
-            if inv.is_direct_invoice and inv.register_line_ids:
-                if not context.get('from_register', False):
-                    self.pool.get('account.bank.statement.line').unlink(cr, uid, [x.id for x in inv.register_line_ids], {'from_direct_invoice': True})
-        return super(account_invoice, self).unlink(cr, uid, ids, context)
+        self._check_analytic_distribution_state(cr, uid, ids, context)
+        self._direct_invoice_updated(cr, uid, ids, context)
+
+        if context.get('from_register', False):
+            return {'type': 'ir.actions.act_window_close'}
+        return True
 
 account_invoice()
-
-class account_invoice_line(osv.osv):
-    _name = 'account.invoice.line'
-    _inherit = 'account.invoice.line'
-
-    def _get_product_code(self, cr, uid, ids, field_name=None, arg=None, context=None):
-        """
-        Give product code for each invoice line
-        """
-        res = {}
-        for inv_line in self.browse(cr, uid, ids, context=context):
-            res[inv_line.id] = ''
-            if inv_line.product_id:
-                res[inv_line.id] = inv_line.product_id.default_code
-        return res
-
-    _columns = {
-        'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
-    }
-
-    def create(self, cr, uid, vals, context=None):
-        """
-        If invoice is a Direct Invoice and is in draft state:
-         - compute total amount (check_total field)
-         - write total to the register line
-        """
-        if not context:
-            context = {}
-        res = super(account_invoice_line, self).create(cr, uid, vals, context)
-        if vals.get('invoice_id', False):
-            invoice = self.pool.get('account.invoice').browse(cr, uid, vals.get('invoice_id'))
-            if invoice and invoice.is_direct_invoice and invoice.state == 'draft':
-                amount = 0.0
-                for l in invoice.invoice_line:
-                    amount += l.price_subtotal
-                amount += vals.get('price_unit', 0.0) * vals.get('quantity', 0.0)
-                self.pool.get('account.invoice').write(cr, uid, [invoice.id], {'check_total': amount}, context)
-                self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invoice.register_line_ids], {'amount': -1 * amount}, context)
-        return res
-
-    def write(self, cr, uid, ids, vals, context=None):
-        """
-        If invoice is a Direct Invoice and is in draft state:
-         - compute total amount (check_total field)
-         - write total to the register line
-        """
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = super(account_invoice_line, self).write(cr, uid, ids, vals, context)
-        for invl in self.browse(cr, uid, ids):
-            if invl.invoice_id and invl.invoice_id.is_direct_invoice and invl.invoice_id.state == 'draft':
-                amount = 0.0
-                for l in invl.invoice_id.invoice_line:
-                    amount += l.price_subtotal
-                self.pool.get('account.invoice').write(cr, uid, [invl.invoice_id.id], {'check_total': amount}, context)
-                self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invl.invoice_id.register_line_ids], {'amount': -1 * amount}, context)
-        return res
-    
- 
-        
-
-    def unlink(self, cr, uid, ids, context=None):
-        """
-        If invoice is a Direct Invoice and is in draft state:
-         - compute total amount (check_total field)
-         - write total to the register line
-        """
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Fetch all invoice_id to check
-        direct_invoice_ids = []
-        abst_obj = self.pool.get('account.bank.statement.line')
-        for invl in self.browse(cr, uid, ids):
-            if invl.invoice_id and invl.invoice_id.is_direct_invoice and invl.invoice_id.state == 'draft':
-                direct_invoice_ids.append(invl.invoice_id.id)
-                # find account_bank_statement_lines and used this to delete the account_moves and associated records
-                absl_ids = abst_obj.search(cr, uid, [('invoice_id','=',invl.invoice_id.id)])
-                if absl_ids:
-                    abst_obj.unlink_moves(cr, uid, absl_ids, context)
-      
-        
-        # Normal behaviour
-        res = super(account_invoice_line, self).unlink(cr, uid, ids, context)
-        # See all direct invoice
-        for inv in self.pool.get('account.invoice').browse(cr, uid, direct_invoice_ids):
-            amount = 0.0
-            for l in inv.invoice_line:
-                amount += l.price_subtotal
-            self.pool.get('account.invoice').write(cr, uid, [inv.id], {'check_total': amount}, context)
-            self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in inv.register_line_ids], {'amount': -1 * amount}, context)
-        return res
-
-account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

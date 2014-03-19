@@ -20,9 +20,12 @@ class UnifieldTest(unittest.TestCase):
     @var test_module_name: name of the module used to create extended table for tests
     @var test_module_obj_name: name of the OpenERP object to use to access to extended table
     '''
+    # global variable
     db = {}
     test_module_name = 'unifield_tests'
     test_module_obj_name = 'unifield.test'
+
+    # FIXME/TODO: Make unittest.TestCase inherit from oerplib.error class because of RPCError that could be raised by unittest.TestCase
 
     def _addConnection(self, db_suffix, name):
         '''
@@ -41,7 +44,10 @@ class UnifieldTest(unittest.TestCase):
         self._addConnection('HQ1C1P1', 'p1')
         # For each database, check that unifield_tests module is loaded
         #+ If not, load it.
+        #+ Except if the database is sync one
         for database_name in self.db:
+            if database_name == 'sync':
+                continue
             database = self.db.get(database_name)
             module_obj = database.get('ir.module.module')
             m_ids = module_obj.search([('name', '=', self.test_module_name)])

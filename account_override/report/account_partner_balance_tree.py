@@ -19,11 +19,8 @@
 #
 ##############################################################################
 
-import time
-
 from tools.translate import _
 from report import report_sxw
-from report_webkit.webkit_report import WebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class account_partner_balance_tree(report_sxw.rml_parse):
@@ -46,23 +43,23 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             'get_end_period': self.get_end_period,
             'get_target_move': self._get_target_move,
             'get_prop_instances': self._get_prop_instances,
-            
+
             # data
             'get_partners': self._get_partners,
             'get_partner_account_move_lines': self._get_partner_account_move_lines,
             'get_partners_total_debit_credit_balance_by_account_type': self._get_partners_total_debit_credit_balance_by_account_type,
-            
+
             # currency
             'get_output_currency_code': self._get_output_currency_code,
             'currency_conv': self._currency_conv,
         })
-        
+
         # company currency
         self.currency_id = self.apbt_obj._get_company_currency(cr, uid, context=context)
- 
+
     def set_context(self, objects, data, ids, report_type=None):
         self.sortby = data['form'].get('sortby', 'sort_date')
-        
+
         self.display_partner = data['form'].get('display_partner', 'non-zero_balance')
         self.result_selection = data['form'].get('result_selection')
         self.target_move = data['form'].get('target_move', 'all')
@@ -73,7 +70,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             self.ACCOUNT_TYPE = ('payable',)
         else:
             self.ACCOUNT_TYPE = ('payable', 'receivable')
-            
+
         # output currency
         self.output_currency_id = data['form']['output_currency']
         self.output_currency_code = ''
@@ -97,10 +94,10 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             if objects:
                 res.append(objects)
         return res
-        
+
     def _get_partner_account_move_lines(self, account_type, partner_id, data):
         return self.apbt_obj.get_partner_account_move_lines_data(self.cr, self.uid, account_type, partner_id, data)
-    
+
     def _get_partners_total_debit_credit_balance_by_account_type(self, account_type, data):
         return self.apbt_obj.get_partners_total_debit_credit_balance_by_account_type(self.cr, self.uid, account_type, data)
 
@@ -122,14 +119,14 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         elif f == 'Periods':
             res = self.get_start_period(data) + ' - ' + self.get_end_period(data)
         return res
-        
+
     def _get_sortby(self, data):
         if self.sortby == 'sort_date':
             return 'Date'
         elif self.sortby == 'sort_journal_partner':
             return 'Journal & Partner'
         return 'Date'
-        
+
     def _get_start_date(self, data):
         if data.get('form', False) and data['form'].get('date_from', False):
             return data['form']['date_from']
@@ -191,21 +188,21 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         if not self.output_currency_code:
             return ''
         return self.output_currency_code
-        
+
     def _get_prop_instances(self, data):
         instances = []
         if data.get('form', False) and data['form'].get('instance_ids', False):
             self.cr.execute('select code from msf_instance where id IN %s',(tuple(data['form']['instance_ids']),))
             instances = [x for x, in self.cr.fetchall()]
         return instances
-        
+
     def _currency_conv(self, amount, date):
         return self.apbt_obj._currency_conv(self.cr, self.uid, amount,
                                                 self.currency_id,
                                                 self.output_currency_id,
                                                 date)
-        
-        
+
+
 class account_partner_balance_tree_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         super(account_partner_balance_tree_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)

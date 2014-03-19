@@ -22,18 +22,17 @@
 from osv import fields, osv
 from tools.translate import _
 
-import datetime
 import base64
 import StringIO
 import csv
 
 class wizard_import_mapping(osv.osv_memory):
     _name = "wizard.import.mapping"
-    
+
     _columns = {
         'import_file': fields.binary("CSV File", required=True),
     }
-    
+
     def import_account_mappings(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -44,16 +43,16 @@ class wizard_import_mapping(osv.osv_memory):
             mapping_obj = self.pool.get(context['active_model'])
         else:
             raise osv.except_osv(_('Error'), _('The object to be imported is undertermined!'))
-        
+
         # Delete previous lines
         mapping_ids = mapping_obj.search(cr, uid, [], context=context)
         mapping_obj.unlink(cr, uid, mapping_ids, context=context)
-        
+
         for wizard in self.browse(cr, uid, ids, context=context):
             import_file = base64.decodestring(wizard.import_file)
             import_string = StringIO.StringIO(import_file)
             import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
-        
+
             if context['active_model'] == 'account.export.mapping':
                 for line in import_data[1:]:
                     if len(line) == 2:
@@ -74,8 +73,8 @@ class wizard_import_mapping(osv.osv_memory):
                         else:
                             raise osv.except_osv(_('Error'), _('The instance code %s is not in the database!') % line[0])
                             break
-                        
+
         return {'type': 'ir.actions.act_window_close'}
-    
+
 wizard_import_mapping()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

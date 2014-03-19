@@ -25,8 +25,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import decimal_precision as dp
-import time 
-from ..register_tools import _get_date_in_period
+import time
 
 class wizard_import_invoice_lines(osv.osv_memory):
     """
@@ -124,7 +123,7 @@ class wizard_import_invoice(osv.osv_memory):
         wizard = self.browse(cr, uid, ids[0], context=context)
         if not wizard.line_ids:
             raise osv.except_osv(_('Warning'), _('Please add invoice lines'))
-        
+
         already = []
         for line in wizard.invoice_lines_ids:
             for inv in line.line_ids:
@@ -143,7 +142,7 @@ class wizard_import_invoice(osv.osv_memory):
                 ordered_lines[key] = [line]
             elif line not in ordered_lines[key]:
                 ordered_lines[key].append(line)
-        
+
         # For each partner, do an account_move with all lines => lines merge
         new_lines = []
         for key in ordered_lines:
@@ -203,12 +202,9 @@ class wizard_import_invoice(osv.osv_memory):
             wizard = self.browse(cr, uid, ids[0], context=context)
 
             # Prepare some values
-            move_line_obj = self.pool.get('account.move.line')
             absl_obj = self.pool.get('account.bank.statement.line')
             st = wizard.statement_id
             st_id = st.id
-            journal_id = st.journal_id.id
-            period_id = st.period_id.id
             cheque = False
             if st.journal_id.type == 'cheque':
                 cheque = True
@@ -241,7 +237,7 @@ class wizard_import_invoice(osv.osv_memory):
                 absl_id = absl_obj.create(cr, uid, register_vals, context=context)
 
                 # Temp post the register line
-                res = absl_obj.posting(cr, uid, [absl_id], 'temp', context=context)
+                absl_obj.posting(cr, uid, [absl_id], 'temp', context=context)
 
                 # Add id of register line in the exit of this function
                 st_line_ids.append(absl_id)

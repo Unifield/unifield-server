@@ -19,10 +19,6 @@
 #
 ##############################################################################
 
-import time
-import csv
-import StringIO
-import pooler
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 

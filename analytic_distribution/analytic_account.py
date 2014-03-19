@@ -292,7 +292,7 @@ class analytic_account(osv.osv):
             if account.for_fx_gain_loss == True and (account.type != 'normal' or account.category != 'OC'):
                 return False
         return True
-    
+
     def _check_default_destination(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -318,8 +318,8 @@ class analytic_account(osv.osv):
         (_check_default_destination, "You can't delete an account which has this destination as default", []),
     ]
 
-    def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
-        account = self.browse(cr, uid, id, context=context)
+    def copy(self, cr, uid, a_id, default=None, context=None, done_list=[], local=False):
+        account = self.browse(cr, uid, a_id, context=context)
         if not default:
             default = {}
         default = default.copy()
@@ -327,7 +327,7 @@ class analytic_account(osv.osv):
         default['name'] = (account['name'] or '') + '(copy)'
         default['tuple_destination_summary'] = []
         # code is deleted in copy method in addons
-        new_id = super(analytic_account, self).copy(cr, uid, id, default, context=context)
+        new_id = super(analytic_account, self).copy(cr, uid, a_id, default, context=context)
         self.write(cr, uid, new_id, {'code': '%s(copy)' % (account['code'] or '')})
         return new_id
 
@@ -348,7 +348,7 @@ class analytic_account(osv.osv):
                 # validate the date (must be > today)
                 raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
             elif 'date_start' in vals and not vals['date_start'] < vals['date']:
-                # validate that activation date 
+                # validate that activation date
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
 
     def create(self, cr, uid, vals, context=None):
@@ -411,7 +411,7 @@ class analytic_account(osv.osv):
             view['arch'] = etree.tostring(tree)
         return view
 
-    def on_change_category(self, cr, uid, id, category):
+    def on_change_category(self, cr, uid, a_id, category):
         if not category:
             return {}
         res = {'value': {}, 'domain': {}}
@@ -504,8 +504,8 @@ class analytic_account(osv.osv):
             msf_id = 0
         analytic_accounts.append(msf_id)
         # Accounts verification
-        for id in ids:
-            if id in analytic_accounts:
+        for i in ids:
+            if i in analytic_accounts:
                 raise osv.except_osv(_('Error'), _('You cannot delete this Analytic Account!'))
         return super(analytic_account, self).unlink(cr, uid, ids, context=context)
 

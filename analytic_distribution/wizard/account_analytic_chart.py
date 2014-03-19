@@ -175,8 +175,8 @@ class account_analytic_coa(osv.osv_memory):
                 data.update(periods.get('value'))
         # Create result
         result = mod_obj.get_object_reference(cr, uid, 'account', 'action_account_analytic_account_tree2')
-        id = result and result[1] or False
-        result = act_obj.read(cr, uid, [id], context=context)[0]
+        i = result and result[1] or False
+        result = act_obj.read(cr, uid, [i], context=context)[0]
         result['periods'] = []
         if data.get('period_from', False) and data.get('period_to', False):
             result['periods'] = period_obj.build_ctx_periods(cr, uid, data['period_from'], data['period_to'])
