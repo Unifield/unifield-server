@@ -230,6 +230,10 @@ class report_stock_move(osv.osv):
                         if x[0] == 'product_id':
                             product_id = x[2]
 
+                if isinstance(product_id, str):
+                    product_id = self.pool.get('product.product').search(cr, uid, [('default_code', '=', product_id)], context=context)
+                    if product_id:
+                        product_id = product_id[0]
                 if product_id:
                     uom = self.pool.get('product.product').browse(cr, uid, product_id, context=context).uom_id
                     data.update({'product_uom': (uom.id, uom.name)})
