@@ -480,7 +480,7 @@ class product_product(osv.osv):
             new_separator = """<separator orientation="vertical" />"""
             separator_node = etree.fromstring(new_separator)
             xml_view.insert(0, separator_node)
-            new_filter = """<filter string="Positive AC" name="average" icon="terp-accessories-archiver-minus" domain="[('average','>',0.)]" />"""
+            new_filter = """<filter string="Av.%s &gt; 0" name="average" icon="terp-accessories-archiver-minus" domain="[('average','>',0.)]" />""" % (context.get('amc', 'AMC'),)
             # generate new xml form$
             filter_node = etree.fromstring(new_filter)
             xml_view.insert(0, filter_node)
