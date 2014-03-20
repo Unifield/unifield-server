@@ -20,11 +20,8 @@
 ##############################################################################
 
 from osv import osv, fields
-import time
 
 from tools.translate import _
-from dateutil.relativedelta import relativedelta
-from datetime import datetime
 
 import netsvc
 
@@ -39,9 +36,11 @@ class stock_move(osv.osv):
                 'in_out_updated': fields.boolean(string='IN update OUT'),
                 'original_qty_partial': fields.integer(string='Original Qty for Partial process - only for sync and partial processed line', required=False),
                 }
-    _defaults = {'line_number': 0,
-                 'in_out_updated': False,
-                 'original_qty_partial':-1}
+    _defaults = {
+        'line_number': 0,
+        'in_out_updated': False,
+        'original_qty_partial': -1,
+    }
     _order = 'line_number, date_expected desc, id'
 
     def copy_data(self, cr, uid, id, defaults=None, context=None):
@@ -85,7 +84,17 @@ class stock_move(osv.osv):
             # re sequencing only happen if purchase order is draft (behavior 1)
             # get ids with corresponding po at draft state
             draft_not_wkf_ids = self.allow_resequencing(cr, uid, ids, context=context)
-            tools_obj.reorder_sequence_number_from_unlink(cr, uid, draft_not_wkf_ids, 'stock.picking', 'move_sequence_id', 'stock.move', 'picking_id', 'line_number', context=context)
+            tools_obj.reorder_sequence_number_from_unlink(
+                cr,
+                uid,
+                draft_not_wkf_ids,
+                'stock.picking',
+                'move_sequence_id',
+                'stock.move',
+                'picking_id',
+                'line_number',
+                context=context,
+            )
 
         return super(stock_move, self).unlink(cr, uid, ids, context=context)
 
@@ -100,7 +109,8 @@ class stock_move(osv.osv):
         # objects
         pick_obj = self.pool.get('stock.picking')
 
-        resequencing_ids = [x.id for x in self.browse(cr, uid, ids, context=context) if x.picking_id and pick_obj.allow_resequencing(cr, uid, x.picking_id, context=context)]
+        resequencing_ids = [x.id for x in self.browse(cr, uid, ids, context=context)
+                            if x.picking_id and pick_obj.allow_resequencing(cr, uid, x.picking_id, context=context)]
         return resequencing_ids
 
     def _create_chained_picking_move_values_hook(self, cr, uid, context=None, *args, **kwargs):
@@ -124,8 +134,6 @@ class stock_move(osv.osv):
         Get the requestor_location_id in case of IR to update the location_dest_id of each move
         '''
         location_dest_id = False
-        sol_obj = self.pool.get('sale.order.line')
-        so_obj = self.pool.get('sale.order')
         move = kwargs['move']
         if move.purchase_line_id:
             proc = move.purchase_line_id.procurement_id
@@ -190,7 +198,6 @@ class stock_move(osv.osv):
                         # we therefore do not raise an exception, but handle the case only if sale order lines are found
                         if so_line_ids:
                             # find the corresponding OUT move
-                            # move_ids = self.search(cr, uid, [('product_id', '=', obj.product_id.id), ('product_qty', '=', obj.product_qty), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
                             move_ids = self.search(cr, uid, [('product_id', '=', data_back['product_id']),
                                                              ('state', 'in', ('assigned', 'confirmed')),
                                                              ('sale_line_id', '=', so_line_ids[0]),
@@ -201,8 +208,11 @@ class stock_move(osv.osv):
                             # list of matching out moves
                             integrity_check = []
                             for move in self.browse(cr, uid, move_ids, context=context):
+                                pick = move.picking_id
+                                cond1 = move.picking_id.subtype == 'standard'
+                                cond2 = move.product_qty != 0.00 and pick.subtype == 'picking' and not pick.backorder_id and pick.state == 'draft'
                                 # move from draft picking or standard picking
-                                if (move.product_qty != 0.00 and move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id and move.picking_id.state == 'draft') or (move.picking_id.subtype == 'standard'):
+                                if cond2 or cond1:
                                     integrity_check.append(move)
                             # return the first one matching
                             if integrity_check:
@@ -217,7 +227,9 @@ class stock_move(osv.osv):
                                     })
                                 else:
                                     # the corresponding OUT move have been processed completely or partially,, we do not update the OUT
-                                    self.log(cr, uid, integrity_check[0].id, _('The Stock Move %s from %s has already been processed and is therefore not updated.') % (integrity_check[0].name, integrity_check[0].picking_id.name))
+                                    msg_log = _('The Stock Move %s from %s has already been processed and is '
+                                                'therefore not updated.') % (integrity_check[0].name, integrity_check[0].picking_id.name)
+                                    self.log(cr, uid, integrity_check[0].id, msg_log)
 
             else:
                 # we are looking for corresponding IN from on_order purchase order
@@ -253,9 +265,20 @@ class stock_picking(osv.osv):
     do_partial modification
     '''
     _inherit = 'stock.picking'
-    _columns = {'move_sequence_id': fields.many2one('ir.sequence', string='Moves Sequence', help="This field contains the information related to the numbering of the moves of this picking.", required=True, ondelete='cascade'),
-                'change_reason': fields.char(string='Change Reason', size=1024, readonly=True),
-                }
+    _columns = {
+        'move_sequence_id': fields.many2one(
+            'ir.sequence',
+            string='Moves Sequence',
+            help="This field contains the information related to the numbering of the moves of this picking.",
+            required=True,
+            ondelete='cascade',
+        ),
+        'change_reason': fields.char(
+            string='Change Reason',
+            size=1024,
+            readonly=True,
+        ),
+    }
 
     def _stock_picking_action_process_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -286,7 +309,6 @@ class stock_picking(osv.osv):
         # object
         seq_pool = self.pool.get('ir.sequence')
         po_obj = self.pool.get('purchase.order')
-        so_obj = self.pool.get('sale.order')
 
         new_seq_id = self.create_sequence(cr, uid, vals, context=context)
         vals.update({'move_sequence_id': new_seq_id, })
@@ -351,7 +373,6 @@ class stock_picking(osv.osv):
         '''
         # stock move object
         move_obj = self.pool.get('stock.move')
-        product_obj = self.pool.get('product.product')
         # first look for a move - we search even if we get out_move because out_move
         # may not be valid anymore (product changed) - get_mirror_move will validate it or return nothing
         out_move_id = move_obj.get_mirror_move(cr, uid, [data_back['id']], data_back, context=context)[data_back['id']]['move_id']
@@ -378,7 +399,7 @@ class stock_picking(osv.osv):
             present_qty = data['product_qty']
             new_qty = max(present_qty + diff_qty, 0)
             if new_qty > 0.00 and present_qty != 0.00:
-                new_move_id = move_obj.copy(cr, uid, out_move_id, {'product_qty' : diff_qty,
+                new_move_id = move_obj.copy(cr, uid, out_move_id, {'product_qty': diff_qty,
                                                                    'product_uom': data_back['product_uom'],
                                                                    'product_uos': data_back['product_uom'],
                                                                    'product_uos_qty': diff_qty, }, context=context)
@@ -387,14 +408,15 @@ class stock_picking(osv.osv):
 #                    move_obj.write(cr, uid, [out_move_id], {'state': 'draft'})
 #                    move_obj.unlink(cr, uid, out_move_id, context=context)
             else:
-                move_obj.write(cr, uid, [out_move_id], {'product_qty' : new_qty,
+                move_obj.write(cr, uid, [out_move_id], {'product_qty': new_qty,
                                                         'product_uom': data['product_uom'][0],
                                                         'product_uos': data['product_uom'][0],
                                                         'product_uos_qty': new_qty, }, context=context)
 
             # log the modification
             # log creation message
-            move_obj.log(cr, uid, out_move_id, _('The Stock Move %s from %s has been updated to %s %s.') % (stock_move_name, picking_out_name, new_qty, uom_name))
+            msg_log = _('The Stock Move %s from %s has been updated to %s %s.') % (stock_move_name, picking_out_name, new_qty, uom_name)
+            move_obj.log(cr, uid, out_move_id, msg_log)
         # return updated move or False
         return out_move_id
 
@@ -462,12 +484,12 @@ class stock_picking(osv.osv):
             # Recompute unit price if the currency used is not the functional currency
             if line.currency.id != move_currency_id:
                 new_price = currency_obj.compute(cr, uid, line.currency.id, move_currency_id,
-                    new_price, round=False, context=context)
+                                                 new_price, round=False, context=context)
 
             # Recompute unit price if the UoM received is not the default UoM of the product
             if line.uom_id.id != line.product_id.uom_id.id:
                 new_price = uom_obj._compute_price(cr, uid, line.uom_id.id, new_price,
-                    line.product_id.uom_id.id)
+                                                   line.product_id.uom_id.id)
 
             new_std_price = 0.00
             if line.product_id.qty_available <= 0.00:
@@ -477,8 +499,8 @@ class stock_picking(osv.osv):
                 current_price = product_obj.price_get(cr, uid, [line.product_id.id], 'standard_price', context=context)[line.product_id.id]
                 # Check no division by zero
                 if product_availability[line.product_id.id]:
-                    new_std_price = ((current_price * product_availability[line.product_id.id])\
-                        + (new_price * qty)) / (product_availability[line.product_id.id] + qty)
+                    new_std_price = ((current_price * product_availability[line.product_id.id])
+                                     + (new_price * qty)) / (product_availability[line.product_id.id] + qty)
 
             # Write the field according to price type field
             product_obj.write(cr, uid, [line.product_id.id], {'standard_price': new_std_price})
@@ -486,8 +508,8 @@ class stock_picking(osv.osv):
             # Record the values that were chosen in the wizard, so they can be
             # used for inventory valuation of real-time valuation is enabled.
             average_values = {
-              'price_unit': new_price,
-              'price_currency_id': line.currency.id,
+                'price_unit': new_price,
+                'price_currency_id': line.currency.id,
             }
 
         return average_values
@@ -545,8 +567,8 @@ class stock_picking(osv.osv):
         if wizard.dest_type == 'to_cross_docking':
             if db_data.get('setup').allocation_setup == 'unallocated':
                 raise osv.except_osv(
-                        _('Error'),
-                        _('You cannot made moves from/to Cross-docking locations when the Allocated stocks configuration is set to \'Unallocated\'.')
+                    _('Error'),
+                    _('You cannot made moves from/to Cross-docking locations when the Allocated stocks configuration is set to \'Unallocated\'.'),
                 )
             # Below, "source_type" is only used for the outgoing shipment. We set it to "None" because by default it is
             # "default" and we do not want that info on INCOMING shipment
@@ -744,23 +766,24 @@ class stock_picking(osv.osv):
                 }, context=context)
 
                 for bo_move, bo_qty, av_values, data_back in backordered_moves:
-                    # Create the corresponding move in the backorder - reset batch - reset asset_id
-                    bo_values = {
-                        'asset_id': False,
-                        'product_qty': bo_qty,
-                        'product_uos_qty': bo_qty,
-                        'product_uom': data_back['product_uom'],
-                        'product_uos': data_back['product_uom'],
-                        'prodlot_id': False,
-                        'state': 'assigned',
-                        'move_dest_id': False,
-                        'change_reason': False,
-                        'processed_stock_move': True,
-                    }
-                    bo_values.update(av_values)
-                    context['keepLineNumber'] = True
-                    move_obj.copy(cr, uid, bo_move.id, bo_values, context=context)
-                    context['keepLineNumber'] = False
+                    if bo_move.product_qty != bo_qty:
+                        # Create the corresponding move in the backorder - reset batch - reset asset_id
+                        bo_values = {
+                            'asset_id': False,
+                            'product_qty': bo_qty,
+                            'product_uos_qty': bo_qty,
+                            'product_uom': data_back['product_uom'],
+                            'product_uos': data_back['product_uom'],
+                            'prodlot_id': False,
+                            'state': 'assigned',
+                            'move_dest_id': False,
+                            'change_reason': False,
+                            'processed_stock_move': True,
+                        }
+                        bo_values.update(av_values)
+                        context['keepLineNumber'] = True
+                        move_obj.copy(cr, uid, bo_move.id, bo_values, context=context)
+                        context['keepLineNumber'] = False
 
                 # Put the done moves in this new picking
                 move_obj.write(cr, uid, done_moves, {
@@ -768,12 +791,10 @@ class stock_picking(osv.osv):
                     'dpo_line_id': 0,
                 }, context=context)
 
-
                 if sync_in:
                     # UF-1617: When it is from the sync., then just send the IN to shipped, then return the backorder_id
                     wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_shipped', cr)
                     return backorder_id
-
 
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                 # Then we finish the good picking
@@ -872,7 +893,8 @@ class stock_picking(osv.osv):
                 if out_move_id:
                     out_move = move_obj.browse(cr, uid, out_move_id, context=context)
                     cond1 = out_move.picking_id.subtype == 'standard'
-                    cond2 = out_move.picking_id.subtype == 'picking' and out_move.picking_id.has_picking_ticket_in_progress(context=context)[out_move.picking_id.id]
+                    tmp_cond = out_move.picking_id.has_picking_ticket_in_progress(context=context)[out_move.picking_id.id]
+                    cond2 = out_move.picking_id.subtype == 'picking' and tmp_cond
                     if out_move.picking_id.subtype in ('standard', 'picking') and out_move.picking_id.type == 'out' and not out_move.product_qty:
                         # replace the stock move in the procurement order by the non cancelled stock move
                         if (cond1 or cond2) and out_move.picking_id and out_move.picking_id.sale_id:
@@ -898,7 +920,8 @@ class stock_picking(osv.osv):
             # correct the corresponding po manually if exists - should be in shipping exception
             if obj.purchase_id:
                 wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
-                purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s%% received.') % (obj.purchase_id.name, round(obj.purchase_id.shipped_rate, 2)))
+                msg_log = _('The Purchase Order %s is %s%% received.') % (obj.purchase_id.name, round(obj.purchase_id.shipped_rate, 2))
+                purchase_obj.log(cr, uid, obj.purchase_id.id, msg_log)
             # correct the corresponding so
             for sale_id in sale_ids:
                 wf_service.trg_validate(uid, 'sale.order', sale_id, 'ship_corrected', cr)
@@ -913,8 +936,13 @@ class purchase_order_line(osv.osv):
     add the link to procurement order
     '''
     _inherit = 'purchase.order.line'
-    _columns = {'procurement_id': fields.many2one('procurement.order', string='Procurement Reference', readonly=True,),
-               }
+    _columns = {
+        'procurement_id': fields.many2one(
+            'procurement.order',
+            string='Procurement Reference',
+            readonly=True,
+        ),
+    }
     _defaults = {'procurement_id': False, }
 
 purchase_order_line()
@@ -964,4 +992,3 @@ class procurement_order(osv.osv):
         return line
 
 procurement_order()
-
