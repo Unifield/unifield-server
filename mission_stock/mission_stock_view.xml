@@ -7,7 +7,8 @@
 			<field name="model">mission.stock.wizard</field>
 			<field name="type">form</field>
 			<field name="arch" type="xml">
-				<form string="Mission stock report">
+                <form string="Mission stock report">
+                    <field name="export_ok" invisible="1" />
 					<separator colspan="4" string="Mission stock" />
 					<field name="report_id" widget="selection" on_change="report_change(report_id)" />
 					<field name="last_update" />
@@ -18,10 +19,29 @@
 					<separator colspan="4" string="Actions" />
 					<button name="update" string="Update (in background)" type="object" colspan="4" icon="gtk-remove" />
 					<button special="cancel" string="Close window" icon="gtk-cancel" />
-					<button name="open_products_view" string="Open report" type="object" icon="gtk-go-forward" colspan="3" />
+                    <button name="open_xml_file" string="Open XML file" type="object" icon="gtk-print" colspan="1" attrs="{'readonly': [('export_ok', '=', False)]}" />
+                    <button name="open_products_view" string="Open report" type="object" icon="gtk-go-forward" colspan="2" />
 				</form>
 			</field>
-		</record>
+        </record>
+
+        <record id="mission_stock_wizard_open_file_view" model="ir.ui.view">
+            <field name="name">mission.stock.wizard.open.file.view</field>
+            <field name="model">mission.stock.wizard</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Mission stock report XML file">
+                    <separator colspan="4" string="File" />
+                    <field name="export_file" filename="fname" />
+                    <field name="fname" invisible="1"/>
+                    <separator colspan="4" string="Actions" />
+                    <label colspan="2"> </label>
+                    <button name="go_previous" icon="terp-gtk-go-back-ltr" string="Previous" type="object" colspan="1" />
+                    <button special="cancel" icon="gtk-cancel" string="Close window" colspan="1" />
+                </form>
+            </field>
+        </record>
 		
 		<record id="mission_stock_wizard_action" model="ir.actions.act_window">
 			<field name="name">Mission stock report</field>
