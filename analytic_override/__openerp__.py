@@ -1,10 +1,8 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,7 +18,25 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
-import import_invoice
-
+{
+    "name" : "Analytic for MSF",
+    "version": "1.1",
+    "author" : "MSF, TeMPO Consulting",
+    "category" : "Generic Modules/Projects & Services",
+    "depends" : ["analytic"],
+    "description": """Module for defining analytic object related as:
+      - analytic distribution
+      - analytic accounts
+      - analytic lines
+    """,
+    "init_xml" : [],
+    "update_xml": [
+        'security/ir.model.access.csv',
+    ],
+    'test': [],
+    'demo_xml': [
+    ],
+    'installable': True,
+    'active': False,
+}
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

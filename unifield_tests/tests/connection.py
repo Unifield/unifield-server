@@ -7,7 +7,7 @@ Created on Feb 28, 2014
 
 Modified by 'od' on 2014 March, the 11th
 '''
-
+from __future__ import print_function
 from ConfigParser import ConfigParser
 from oerplib.oerp import OERP
 import os
@@ -58,6 +58,6 @@ class XMLRPCConnection(OERP):
 if __name__ == '__main__':
     c = XMLRPCConnection('HQ1C1P1')
     if c:
-        print "Connection succeeded"
+        print("Connection succeeded")
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

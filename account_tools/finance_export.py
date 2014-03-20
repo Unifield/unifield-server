@@ -106,7 +106,6 @@ class finance_archive():
         if not changes:
             return data
         # Prepare some values
-        pool = pooler.get_pool(cr.dbname)
         new_data = []
         # Fetch selections
         changes_values = {}

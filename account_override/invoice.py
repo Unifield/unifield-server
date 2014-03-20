@@ -192,7 +192,6 @@ class account_invoice(osv.osv):
         'fake_account_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.account", string="Account", readonly="True"),
         'fake_journal_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.journal", string="Journal", readonly="True"),
         'fake_currency_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="res.currency", string="Currency", readonly="True"),
-        'picking_id': fields.many2one('stock.picking', string="Picking"),
         'have_donation_certificate': fields.function(_get_have_donation_certificate, method=True, type='boolean', string="Have a Certificate of donation?"),
         'purchase_list': fields.boolean(string='Purchase List ?', help='Check this box if the invoice comes from a purchase list', readonly=True, states={'draft':[('readonly',False)]}),
         'virtual_currency_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Currency",
@@ -206,8 +205,6 @@ class account_invoice(osv.osv):
         'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False,
             states={'draft':[('readonly',False)]}),
         'register_posting_date': fields.date(string="Register posting date for Direct Invoice", required=False),
-        'purchase_ids': fields.many2many('purchase.order', 'purchase_invoice_rel', 'invoice_id', 'purchase_id', 'Purchase Order',
-            help="Purchase Order from which invoice have been generated"),
     }
 
     _defaults = {
@@ -526,9 +523,9 @@ class account_invoice(osv.osv):
         # Search donation view and return it
         try:
             # try / except for runbot
-            debit_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_debit_note_form')
-            inkind_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_inkind_donation_form')
-            intermission_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_intermission_form')
+            debit_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_debit_note_form')
+            inkind_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_inkind_donation_form')
+            intermission_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_intermission_form')
             supplier_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_supplier_form')
             customer_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_form')
         except ValueError:
@@ -822,9 +819,9 @@ class account_invoice(osv.osv):
         for inv in self.browse(cr, uid, ids):
             pick_id = inv.picking_id and inv.picking_id.id or ''
             domain = "[('res_model', '=', 'stock.picking'), ('res_id', '=', " + str(pick_id) + "), ('description', '=', 'Certificate of Donation')]"
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_attachment_tree_2')
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_attachment_tree_2')
             view_id = view_id and view_id[1] or False
-            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_attachment_search_2')
+            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_attachment_search_2')
             search_view_id = search_view_id and search_view_id[1] or False
             return {
                 'name': "Certificate of Donation",
@@ -899,8 +896,6 @@ class account_invoice_line(osv.osv):
             readonly=True, help="This informs system if this item have been corrected in analytic lines. Criteria: the invoice line is linked to a journal items that have analytic item which is reallocated.",
             store=False),
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
-        'order_line_id': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True,
-            help="Purchase Order Line from which this invoice line has been generated (when coming from a purchase order)."),
     }
 
     _defaults = {

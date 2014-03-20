@@ -6,8 +6,11 @@ Created on Feb 28, 2014
 @author: qt
 Modified by 'od' on 2014 March, the 11th
 '''
+from __future__ import print_function
 import unittest
 from connection import XMLRPCConnection as XMLConn
+from connection import UnifieldTestConfigParser
+from colors import TerminalColors
 
 class UnifieldTest(unittest.TestCase):
     '''
@@ -34,14 +37,33 @@ class UnifieldTest(unittest.TestCase):
         con = XMLConn(db_suffix)
         setattr(self, name, con)
         self.db[name] = con
+        # Set colors
+        colors = self.colors
+        database_display = colors.BRed + '[' + colors.Color_Off + name.center(6) + colors.BRed + ']' + colors.Color_Off
+        self.db[name].colored_name = database_display
+
+    def _hook_db_process(self, name, database):
+        '''
+        Some process to do for each database (except SYNC DB)
+        '''
+        return True
 
     def __init__(self, *args, **kwargs):
+        # Default behaviour
         super(UnifieldTest, self).__init__(*args, **kwargs)
+        # Prepare some values
+        c = UnifieldTestConfigParser()
+        self.config = c.read()
+        tempo_mkdb = c.getboolean('DB', 'tempo_mkdb')
+        db_suffixes = ['SYNC_SERVER', 'HQ1', 'HQ1C1', 'HQ1C1P1']
+        names = ['sync', 'hq1', 'c1', 'p1']
+        if not tempo_mkdb:
+            db_suffixes = ['SYNC_SERVER', 'HQ_01', 'COORDO_01', 'PROJECT_01']
+        colors = TerminalColors()
+        self.colors = colors
         # Keep each database connection
-        self._addConnection('SYNC_SERVER', 'sync')
-        self._addConnection('HQ1', 'hq1')
-        self._addConnection('HQ1C1', 'c1')
-        self._addConnection('HQ1C1P1', 'p1')
+        for db_tuple in zip(db_suffixes, names):
+            self._addConnection(db_tuple[0], db_tuple[1])
         # For each database, check that unifield_tests module is loaded
         #+ If not, load it.
         #+ Except if the database is sync one
@@ -51,20 +73,23 @@ class UnifieldTest(unittest.TestCase):
             database = self.db.get(database_name)
             module_obj = database.get('ir.module.module')
             m_ids = module_obj.search([('name', '=', self.test_module_name)])
+            database_display = database.colored_name
             for module in module_obj.read(m_ids, ['state']):
                 state = module.get('state', '')
                 if state == 'uninstalled':
-                    print ('Updating %s module for %s DB' % (self.test_module_name, database_name))
+                    print (database_display + ' [' + colors.BYellow + 'UP'.center(4) + colors.Color_Off + '] Module %s' % (self.test_module_name))
                     module_obj.button_install([module.get('id')])
                     database.get('base.module.upgrade').upgrade_module([])
                 elif state in ['to upgrade', 'to install']:
-                    print ('Updating %s module for %s DB' % (self.test_module_name, database_name))
+                    print (database_display + ' [' + colors.BYellow + 'UP'.center(4) + colors.Color_Off + '] Module %s' % (self.test_module_name))
                     database.get('base.module.upgrade').upgrade_module([])
                 elif state in ['installed']:
-                    print ('%s module already installed in %s DB' % (self.test_module_name, database_name))
+                    print (database_display + ' [' + colors.BGreen + 'OK'.center(4) + colors.Color_Off + '] Module %s' % (self.test_module_name))
                     pass
                 else:
-                    raise EnvironmentError('Wrong module state: %s' % (state or '',))
+                    raise EnvironmentError(' Wrong module state: %s' % (state or '',))
+            # Some processes after instanciation for this database
+            self._hook_db_process(database_name, database)
 
     def is_keyword_present(self, db, keyword):
         '''

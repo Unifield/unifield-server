@@ -27,7 +27,8 @@
     "description" : "Some tools in order to develop accounting modules for OpenERP",
     "author" : "MSF, TeMPO Consulting",
     "category" : "Tools",
-    "depends" : ["base", "account"],
+    # TODO: integrate account_tools into account_override + CHECK account_tools depandancies
+    "depends" : ["account_override"],
     "init_xml" : [],
     "update_xml" : [],
     "demo_xml" : [],

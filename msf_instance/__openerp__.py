@@ -24,7 +24,8 @@
     "author" : "MSF, TeMPO Consulting",
     "developer": "Matthieu Dietrich",
     "category" : "Generic Modules/Projects & Services",
-    "depends" : ["account_msf", "res_currency_functional"],
+    # Old account_msf was included in some modules as account_override and msf_partner and register accounting. So we include register_accounting module as last needed depandancy
+    "depends" : ["register_accounting", "res_currency_functional"],
     "description": """Module for defining proprietary instances, their informations
     """,
     "init_xml" : [],
