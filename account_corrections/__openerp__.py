@@ -31,7 +31,7 @@
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
     # As account_msf was included in account_override, msf_partner and register_accounting, we just need register accounting
-    # Register_accounting depends on finance, and finance on account_tools, account_tools on account_override and account_override on account. So account and finance module are not needed as dependancies.
+    # Register_accounting depends on finance, and finance on account_override and account_override on account. So account and finance module are not needed as dependancies.
     "depends" : ["base", 'res_currency_functional', 'analytic_distribution', 'account_journal', 'register_accounting'],
     "init_xml" : [],
     "update_xml" : [

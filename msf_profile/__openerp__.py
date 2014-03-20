@@ -38,8 +38,7 @@
         "analytic_distribution",
         "register_accounting",
         "account_period_closing_level",
-        # As register_accounting has account_activable and purchase_override dependancies, no need to add them after that
-        #"account_activable",
+        # As register_accounting has account_override and purchase_override dependancies, no need to add them after that
         #"purchase_override",
         "sale_override",
         "stock_override",

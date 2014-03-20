@@ -27,10 +27,9 @@
     Finance Extension using analytic and account modules
     """,
     "website": "http://unifield.msf.org",
-    # Account tools depends on account_override, so account_override is not needed.
     # account_voucher: need it to change account_voucher object. Note that account_voucher is the dependance of account_payment which is in depandancy of register_accounting.
     # account_msf: was deleted because of a dependance loop. But don't know why account_msf was in dependancy of account_override module (now finance one)
-    "depends" : ["analytic_override", "account_tools", "purchase_msf", "account_voucher"],
+    "depends" : ["analytic_override", "account_override", "purchase_msf", "account_voucher"],
     "category" : "Generic Modules/Accounting",
     "init_xml" : [],
     "demo_xml" : [],

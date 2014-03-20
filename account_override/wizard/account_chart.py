@@ -24,7 +24,7 @@ from osv import fields, osv
 from tools.translate import _
 from time import strftime
 
-class account_chart_activable(osv.osv_memory):
+class account_chart(osv.osv_memory):
     _inherit = "account.chart"
     _columns = {
         'show_inactive': fields.boolean('Show inactive accounts'),
@@ -39,8 +39,8 @@ class account_chart_activable(osv.osv_memory):
     }
 
     def account_chart_open_window(self, cr, uid, ids, context=None):
-        
-        result = super(account_chart_activable, self).account_chart_open_window(cr, uid, ids, context=context)
+
+        result = super(account_chart, self).account_chart_open_window(cr, uid, ids, context=context)
         # add 'active_test' to the result's context; this allows to show or hide inactive items
         data = self.read(cr, uid, ids, [], context=context)[0]
         context = eval(result['context'])
@@ -58,7 +58,7 @@ class account_chart_activable(osv.osv_memory):
         result['context'] = unicode(context)
         # UF-1718: Add a link on each account to display linked journal items
         try:
-            tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_activable', 'balance_account_tree') or False
+            tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'balance_account_tree') or False
         except:
             # Exception is for account tests that attempt to read balance_account_tree that doesn't exists
             tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'view_account_tree')
@@ -136,7 +136,7 @@ class account_chart_activable(osv.osv_memory):
             'datas': datas,
         }
 
-account_chart_activable()
+account_chart()
 
 class account_coa(osv.osv_memory):
     _name = 'account.coa'
@@ -170,8 +170,8 @@ class account_coa(osv.osv_memory):
                 data.update(periods.get('value'))
         # Create result
         result = mod_obj.get_object_reference(cr, uid, 'account', 'action_account_tree')
-        id = result and result[1] or False
-        result = act_obj.read(cr, uid, [id], context=context)[0]
+        view_id = result and result[1] or False
+        result = act_obj.read(cr, uid, [view_id], context=context)[0]
         result['periods'] = []
         if data.get('period_from', False) and data.get('period_to', False):
             result['periods'] = period_obj.build_ctx_periods(cr, uid, data['period_from'], data['period_to'])

@@ -23,7 +23,8 @@
     "version": "1.1",
     "author" : "MSF, TeMPO Consulting",
     "category" : "Generic Modules/Projects & Services",
-    # As account_override depends on analytic and account_tools (that depends on account), no need for analytic and account dependances
+    # As account_override depends on account and analytic_override on analytic, no need for analytic and account dependances
+    # TODO: Integrate analytic_distribution into FINANCE + check analytic_distribution dependancies
     "depends" : ["analytic_override", "account_override"],
     "description": """Module for defining analytic accounting object and commitment voucher.
     """,

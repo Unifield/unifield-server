@@ -27,10 +27,15 @@ from account_override import ACCOUNT_RESTRICTED_AREA
 from tools.translate import _
 from time import strftime
 import datetime
+from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
 import netsvc
 
 class account_account(osv.osv):
+    '''
+        To create a activity period, 2 new fields are created, and are NOT linked to the
+        'active' field, since the behaviors are too different.
+    '''
     _name = "account.account"
     _inherit = "account.account"
 
@@ -287,6 +292,9 @@ class account_account(osv.osv):
 
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
+        'activation_date': fields.date('Active from', required=True),
+        'inactivation_date': fields.date('Inactive from'),
+        'note': fields.char('Note', size=160),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'),
             ('advance', 'Operational Advance'), ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')], string="Type for specific treatment", required=True,
             help="""This permit to give a type to this account that impact registers. In fact this will link an account with a type of element
@@ -304,6 +312,7 @@ class account_account(osv.osv):
     }
 
     _defaults = {
+        'activation_date': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
         'type_for_register': lambda *a: 'none',
         'shrink_entries_for_hq': lambda *a: True,
     }
@@ -368,6 +377,39 @@ class account_account(osv.osv):
                 parent_ids = list(tmp_ids)
                 account_ids += tmp_ids
         return account_ids
+
+    def _check_date(self, vals, context=None):
+        if context is None:
+            context = {}
+
+        if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
+            if vals['inactivation_date'] <= datetime.date.today().strftime('%Y-%m-%d') and not context.get('sync_update_execution', False):
+                # validate the date (must be > today)
+                raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
+            elif 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
+                # validate that activation date
+                raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
+
+    def create(self, cr, uid, vals, context=None):
+        self._check_date(vals, context=context)
+        return super(account_account, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        self._check_date(vals, context=context)
+        return super(account_account, self).write(cr, uid, ids, vals, context=context)
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        """
+        Filtering regarding context
+        """
+        if not context:
+            context = {}
+        if context.get('filter_inactive_accounts'):
+            args.append(('activation_date', '<=', datetime.date.today().strftime('%Y-%m-%d')))
+            args.append('|')
+            args.append(('inactivation_date', '>', datetime.date.today().strftime('%Y-%m-%d')))
+            args.append(('inactivation_date', '=', False))
+        return super(account_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
 account_account()
 
@@ -709,4 +751,18 @@ class account_move_reconcile(osv.osv):
     }
 
 account_move_reconcile()
+
+class account_account_type(osv.osv):
+    _name = 'account.account.type'
+    _inherit = 'account.account.type'
+
+    _columns = {
+        'not_correctible': fields.boolean(string="Prevent entries to be correctible on this account type.")
+    }
+
+    _defaults = {
+        'not_correctible': lambda *a: False,
+    }
+
+account_account_type()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -27,16 +27,21 @@
     Account Module Extension for MSF.
     """,
     "website": "http://unifield.msf.org",
-    "depends" : ["account"],
+    "depends" : ["account", "account_chart"],
     "category" : "Generic Modules/Accounting",
-    "init_xml" : ["data.xml",],
+    "init_xml" : [
+        'data/computation.xml',
+        'data/account_type.xml'
+    ],
     "demo_xml" : [],
     "update_xml" : [
         'res_company_view.xml',
         'res_partner_view.xml',
         'product_product_view.xml',
+        'account_view.xml',
         'account_invoice_view.xml',
         'account_invoice_report.xml',
+        'wizard/account_chart.xml',
         'wizard/import_invoice.xml',
         'wizard/split_invoice.xml',
         'attachment_view.xml'
