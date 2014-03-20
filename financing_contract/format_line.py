@@ -390,6 +390,8 @@ class financing_contract_format_line(osv.osv):
             else:
                 # delete quadruplets
                 vals['account_quadruplet_ids'] = []
+                vals['quadruplet_update'] = ''
+                
         return super(financing_contract_format_line, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -418,9 +420,12 @@ class financing_contract_format_line(osv.osv):
                     temp = vals['account_quadruplet_ids']
                     if temp[0]: 
                         vals['quadruplet_update'] = str(temp[0][2]).strip('[]')
+                # delete previous account/destinations
+                vals['account_destination_ids'] = [(6, 0, [])]
             else:
                 # delete quadruplets
-                vals['account_quadruplet_ids'] = []
+                vals['account_quadruplet_ids'] = [(6, 0, [])]
+                vals['quadruplet_update'] = ''
                 
         return super(financing_contract_format_line, self).write(cr, uid, ids, vals, context=context)
     
