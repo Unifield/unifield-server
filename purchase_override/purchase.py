@@ -2228,11 +2228,13 @@ class purchase_order_line(osv.osv):
         po_obj = self.pool.get('purchase.order')
         seq_pool = self.pool.get('ir.sequence')
         sol_obj = self.pool.get('sale.order.line')
-        prod_obj = self.pool.get('product.product')
-        uom_tools_obj = self.pool.get('uom.tools')
 
-        order_id = po_obj.browse(cr, uid, vals['order_id'], context=context)
-        if order_id.from_yml_test:
+        order_id = vals.get('order_id')
+        product_id = vals.get('product_id')
+        product_uom = vals.get('product_uom')
+        order = po_obj.browse(cr, uid, order_id, context=context)
+
+        if order.from_yml_test:
             vals.update({'change_price_manually': True})
             if not vals.get('product_qty', False):
                 vals['product_qty'] = 1.00
@@ -2245,19 +2247,15 @@ class purchase_order_line(osv.osv):
         self._update_name_attr(cr, uid, vals, context=context)
 
         # If we are on a RfQ, use the last entered unit price and update other lines with this price
-        if order_id.rfq_ok:
+        if order.rfq_ok:
             vals.update({'change_price_manually': True})
         else:
-            if order_id.po_from_fo or order_id.po_from_ir:
+            if order.po_from_fo or order.po_from_ir:
                 vals['from_fo'] = True
             if vals.get('product_qty', 0.00) == 0.00 and not context.get('noraise'):
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
 
-        order_id = vals.get('order_id')
-        product_id = vals.get('product_id')
-        product_uom = vals.get('product_uom')
-        order = po_obj.browse(cr, uid, order_id, context=context)
-        other_lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom)], context=context)
+        other_lines = self.search(cr, uid, [('order_id', '=', order), ('product_id', '=', product_id), ('product_uom', '=', product_uom)], context=context)
         stages = self._get_stages_price(cr, uid, product_id, product_uom, order, context=context)
 
         if vals.get('origin'):
@@ -2287,12 +2285,12 @@ class purchase_order_line(osv.osv):
         #   the following line should *logically* be removed safely
         #   copy method should work as well, as merged line do *not* need to keep original line number with copy function (QT confirmed)
         if self._name != 'purchase.order.merged.line':
-            if vals.get('order_id', False):
+            if order_id:
                 # gather the line number from the sale order sequence if not specified in vals
                 # either line_number is not specified or set to False from copy, we need a new value
                 if not vals.get('line_number', False):
                     # new number needed - gather the line number from the sequence
-                    sequence_id = po_obj.read(cr, uid, [vals['order_id']], ['sequence_id'], context=context)[0]['sequence_id'][0]
+                    sequence_id = po_obj.read(cr, uid, [order_id], ['sequence_id'], context=context)[0]['sequence_id'][0]
                     line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
                     vals.update({'line_number': line})
         # [/]
@@ -2314,7 +2312,7 @@ class purchase_order_line(osv.osv):
         # add the database Id to the sync_order_line_db_id
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
         if not vals.get('sync_order_line_db_id', False): #'sync_order_line_db_id' not in vals or vals:
-            name = po_obj.browse(cr, uid, vals.get('order_id'), context=context).name
+            name = order.name
             super(purchase_order_line, self).write(cr, uid, [po_line_id], {'sync_order_line_db_id': name + "_" + str(po_line_id),}, context=context)
 
         return po_line_id
