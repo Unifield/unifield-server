@@ -27,10 +27,9 @@ from tools.translate import _
 
 class mission_stock_wizard(osv.osv_memory):
     _name = 'mission.stock.wizard'
-    
+
     _columns = {
         'report_id': fields.many2one('stock.mission.report', string='Report'),
-#        'with_valuation': fields.boolean(string='Display stock valuation ?'),
         'with_valuation': fields.selection([('true', 'Yes'), ('false', 'No')], string='Display stock valuation ?',
                                            required=True),
         'split_stock': fields.selection([('true', 'Yes'), ('false', 'No')], string='Split the Warehouse stock qty. to Stock and Unallocated Stock.',
@@ -40,13 +39,13 @@ class mission_stock_wizard(osv.osv_memory):
         'export_file': fields.binary(string='XML File'),
         'fname': fields.char('Filename',size=256),
     }
-    
+
     _defaults = {
         'with_valuation': lambda *a: 'false',
         'split_stock': lambda *a: 'false',
         'fname': lambda *a: 'Mission stock report',
     }
-    
+
     def default_get(self, cr, uid, fields, context=None):
         '''
         Choose the first local report as default
@@ -56,7 +55,7 @@ class mission_stock_wizard(osv.osv_memory):
         instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
         if not instance_id:
             raise osv.except_osv(_('Error'), _('Mission stock report cannot be available if no instance was set on the company !'))
-        
+
         local_id = self.pool.get('stock.mission.report').search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
         if local_id:
             res['report_id'] = local_id[0]
@@ -64,33 +63,33 @@ class mission_stock_wizard(osv.osv_memory):
             res['export_ok'] = self.pool.get('stock.mission.report').browse(cr, uid, local_id[0], context=context).export_ok
 
         return res
-    
+
     def report_change(self, cr, uid, ids, report_id, context=None):
         if isinstance(report_id, list):
             report_id = report_id[0]
-            
+
         v = {}
         if report_id:
             report = self.pool.get('stock.mission.report').browse(cr, uid, report_id, context=context)
             v.update({'last_update': report.last_update, 'export_ok': report.export_ok})
         else:
             v.update({'last_update': False, 'export_ok': False})
-        
+
         return {'value': v}
-    
+
     def open_products_view(self, cr, uid, ids, context=None):
         '''
         Open the product list with report information
         '''
         if isinstance(ids, list):
             ids = ids[0]
-            
+
         if not context:
             context = {}
-            
+
         if not ids:
             raise osv.except_osv(_('Error'), _('You should choose a report to display.'))
-            
+
         wiz_id = self.browse(cr, uid, ids, context=context)
         if not wiz_id.report_id:
             raise osv.except_osv(_('Error'), _('You should choose a report to display.'))
@@ -98,7 +97,7 @@ class mission_stock_wizard(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('The generation of this report is in progress. You could open this report when the last update field will be filled. Thank you for you comprehension.'))
         c = context.copy()
         c.update({'mission_report_id': wiz_id.report_id.id, 'with_valuation': wiz_id.with_valuation == 'true' and True or False, 'split_stock': wiz_id.split_stock == 'true' and True or False})
-        
+
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.mission.report.line',
                 'view_type': 'form',
@@ -161,9 +160,9 @@ class mission_stock_wizard(osv.osv_memory):
                 'view_type': 'form',
                 'view_mode': 'form',
                 'context': context}
-        
+
     def update(self, cr, uid, ids, context=None):
         ids = self.pool.get('stock.mission.report').search(cr, uid, [], context=context)
         return self.pool.get('stock.mission.report').background_update(cr, uid, ids)
-        
+
 mission_stock_wizard()
