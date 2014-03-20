@@ -29,6 +29,8 @@ import time
 from ..register_tools import open_register_view
 from ..register_tools import _get_date_in_period
 
+WIZARD_INVOICE_EXCEPTION = ['register_line_ids', 'invoice_line']
+
 class wizard_account_invoice(osv.osv):
     _name = 'wizard.account.invoice'
     _inherit = 'account.invoice'
@@ -56,6 +58,38 @@ class wizard_account_invoice(osv.osv):
         'document_date': lambda *a: time.strftime('%Y-%m-%d'),
         'state': lambda *a: 'draft',
     }
+
+    def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
+        """
+        Avoid problem of many2many and one2many that comes from the object from which we inherit.
+        BUG (found in REF-70): The ORM give the same value for m2m and o2m from the inherit object that have the same ID.
+        For an example:
+          - wizard.account.invoice inherits from account.invoice
+          - account.invoice have a purchase_ids field
+          - we got an account.invoice with ID 2 that is linked to a PO (with purchase_ids field)
+          - when you read wizard.account.invoice that have the same ID, it will return the same value of the purchase_ids field than account.invoice 2!
+        """
+        multiple = False
+        if isinstance(ids, list):
+            multiple = True
+        # Default behaviour
+        res = super(wizard_account_invoice, self).read(cr, uid, ids, fields, context, load)
+        # Fetch all many2many and all one2many fields
+        field_to_change = []
+        if self._name == 'wizard.account.invoice':
+            for field in self._columns:
+                if self._columns[field]._type in ['many2many', 'one2many'] and field not in WIZARD_INVOICE_EXCEPTION:
+                    field_to_change.append(field)
+            # Set all fetched field to False
+            if not isinstance(ids, list):
+                res = [res]
+
+            for obj in res:
+                for ftc in field_to_change:
+                    obj.update({ftc: []})
+        if not isinstance(ids, list):
+            return res[0]
+        return res
 
     def check_analytic_distribution(self, cr, uid, ids):
         """
@@ -159,7 +193,6 @@ class wizard_account_invoice(osv.osv):
         inv_id = inv_obj.create(cr, uid, vals, context=context)
         # Set this invoice as direct invoice (since UTP-551, is_direct_invoice is a boolean and not a function)
         self.pool.get('account.invoice').write(cr, uid, [inv_id], {'is_direct_invoice': True})
-
 
         # Create the attached register line and link the invoice to the register
         reg_line_id = absl_obj.create(cr, uid, {
