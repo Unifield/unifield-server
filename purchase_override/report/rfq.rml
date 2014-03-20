@@ -78,6 +78,7 @@
         <paraStyle name="HeaderBlue" textColor="blue" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="35.0" />
 		<!-- Information font style -->
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformationOrigin" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextRemarks" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
         <!-- Lines font style -->
         <paraStyle name="Lines" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="7.0" />
@@ -87,6 +88,22 @@
     <story>
 
         <para style="Standard">[[ setLang(objects[0].partner_id.lang) ]]</para>
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+        
+        <blockTable colWidths="772.0" style="OrderInformations">
+            <tr>
+                <td>
+                    <para style="TextInformationOrigin">Origin ref. : [[ encode_origin(objects[0].origin) ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+            </tr>
+        </blockTable>
         <para style="Standard">
             <font color="white"> </font>
         </para>
@@ -123,7 +140,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Origin ref. : [[ objects[0].origin[:64] ]]</para>
+                    <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>

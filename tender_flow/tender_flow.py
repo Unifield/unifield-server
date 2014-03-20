@@ -1375,6 +1375,10 @@ class purchase_order(osv.osv):
 
         
     def rfq_sent(self, cr, uid, ids, context=None):
+        if not ids:
+            return {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         self.hook_rfq_sent_check_lines(cr, uid, ids, context=context)
         for rfq in self.browse(cr, uid, ids, context=context):
             wf_service = netsvc.LocalService("workflow")
@@ -1383,6 +1387,9 @@ class purchase_order(osv.osv):
         self.write(cr, uid, ids, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
 
         datas = {'ids': ids}
+        if len(ids) == 1:
+            # UFTP-92: give a name to report when generated from RfQ worklow sent_rfq stage
+            datas['target_filename'] = 'RFQ_' + rfq.name
 
         return {'type': 'ir.actions.report.xml',
                 'report_name': 'msf.purchase.quotation',
