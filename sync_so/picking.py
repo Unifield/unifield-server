@@ -815,8 +815,6 @@ class stock_picking(osv.osv):
             # handle line's changes
             for line_id, line_changes in lines.get(id, {}).items():
                 logger.is_quantity_modified |= ('product_qty' in line_changes)
-                logger.is_product_price_modified |= \
-                    ('price_unit' in line_changes)
 
     def action_invoice_create(self, cr, uid, ids, journal_id=False,
             group=False, type='out_invoice', context=None):
