@@ -722,7 +722,7 @@ class product_supplierinfo(osv.osv):
         return res and res[0] or False
 
     _columns = {
-        'name' : fields.many2one('res.partner', 'Supplier', required=True,domain = [('supplier','=',True)], ondelete='cascade', help="Supplier of this product"),
+        'name' : fields.many2one('res.partner', 'Supplier', required=True,domain = [('supplier','=',True)], ondelete='cascade', help="Supplier of this product", select=True),
         'product_name': fields.char('Supplier Product Name', size=128, help="This supplier's product name will be used when printing a request for quotation. Keep empty to use the internal one."),
         'product_code': fields.char('Supplier Product Code', size=64, help="This supplier's product code will be used when printing a request for quotation. Keep empty to use the internal one."),
         'sequence' : fields.integer('Sequence', help="Assigns the priority to the list of product supplier."),
@@ -796,7 +796,7 @@ class pricelist_partnerinfo(osv.osv):
     _name = 'pricelist.partnerinfo'
     _columns = {
         'name': fields.char('Description', size=64),
-        'suppinfo_id': fields.many2one('product.supplierinfo', 'Partner Information', required=True, ondelete='cascade'),
+        'suppinfo_id': fields.many2one('product.supplierinfo', 'Partner Information', required=True, ondelete='cascade', select=True),
         'min_quantity': fields.float('Quantity', required=True, help="The minimal quantity to trigger this rule, expressed in the supplier UoM if any or in the default UoM of the product otherrwise."),
         'price': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price'), help="This price will be considered as a price for the supplier UoM if any or the default Unit of Measure of the product otherwise"),
     }
