@@ -608,6 +608,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             vals['po_cft'] = 'po'
         elif vals.get('type', False) == 'make_to_stock':
             vals['po_cft'] = False
+            
+        # UFTP-11: if make_to_order can not have a location
+        if vals.get('type', False) == 'make_to_order':
+            vals['location_id'] = False
 
         # Create the new sale order line
         res = super(sale_order_line, self).create(cr, uid, vals, context=context)
@@ -874,7 +878,11 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             if loan_sol_ids:
                 # Update lines with loan
                 super(sale_order_line, self).write(cr, uid, loan_sol_ids, loan_vals, context)
-
+                    
+        # UFTP-11: if make_to_order can not have a location
+        if vals.get('type', False) == 'make_to_order':
+            vals['location_id'] = False
+        
         result = super(sale_order_line, self).write(cr, uid, ids, vals, context)
 
         f_to_check = ['type', 'order_id', 'po_cft', 'product_id', 'supplier', 'state', 'location_id']
