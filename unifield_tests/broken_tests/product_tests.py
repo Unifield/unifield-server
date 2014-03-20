@@ -5,7 +5,7 @@ Created on Feb 28, 2014
 '''
 import unittest
 
-from tests_config.unifield_test import UnifieldTest
+from ..tests.unifield_test import UnifieldTest
 
 class ProductTest(UnifieldTest):
 
@@ -29,17 +29,18 @@ class ProductTest(UnifieldTest):
         default values than can be overrided by the
         special_vals parameter.
         """
-        values = {
-            'supply_method': 'buy',
-            'standard_price': 1.00,
-            'uom_id': self.getOrCreateUoM(instance),
-            'name': name,
-            'uom_po_id': self.getOrCreateUoM(instance),
-            'type': 'product',
-            'procure_method': 'make_to_order',
-            'cost_method': 'average',
-
-        }
+#         values = {
+#             'supply_method': 'buy',
+#             'standard_price': 1.00,
+#             'uom_id': self.getOrCreateUoM(instance),
+#             'name': name,
+#             'uom_po_id': self.getOrCreateUoM(instance),
+#             'type': 'product',
+#             'procure_method': 'make_to_order',
+#             'cost_method': 'average',
+#
+#         }
+        pass
 
     def setUp(self):
         super(ProductTest, self).setUp()

@@ -130,7 +130,7 @@ ACCOUNT_RESTRICTED_AREA = {
     # HQ ENTRIES
     'hq_lines': [
         ('type', '!=', 'view'),
-        ('user_type_code', '=', 'expense'), 
+        ('user_type_code', '=', 'expense'),
         '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Exclude non-extra accounting expense accounts
         #('is_not_hq_correctible', '=', False), # UF-2312: not possibleto add this domain because WE SHOULD ALLOW "Not HQ Correctible" account during the import
     ],
@@ -189,10 +189,12 @@ ACCOUNT_RESTRICTED_AREA = {
     ],
 }
 
+import res_company
 import res_currency
+import res_partner
 import account
 import invoice
-import account_voucher
+import product
 import account_move_line
 import account_analytic_line
 import account_bank_statement

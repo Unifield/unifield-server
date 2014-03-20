@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
+#    Copyright (C) 2014 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,28 +20,32 @@
 ##############################################################################
 
 {
-    "name" : "Account override",
+    "name" : "MSF Financing Module",
     "version" : "1.0",
     "author" : "MSF, TeMPO Consulting",
     "description" : """
-    Account Module Extension for MSF.
+    Finance Extension using analytic and account modules
     """,
     "website": "http://unifield.msf.org",
-    "depends" : ["account"],
+    # Account tools depends on account_override, so account_override is not needed.
+    # account_voucher: need it to change account_voucher object. Note that account_voucher is the dependance of account_payment which is in depandancy of register_accounting.
+    # account_msf: was deleted because of a dependance loop. But don't know why account_msf was in dependancy of account_override module (now finance one)
+    "depends" : ["analytic_override", "account_tools", "purchase_msf", "account_voucher"],
     "category" : "Generic Modules/Accounting",
-    "init_xml" : ["data.xml",],
+    "init_xml" : [],
     "demo_xml" : [],
     "update_xml" : [
-        'res_company_view.xml',
-        'res_partner_view.xml',
-        'product_product_view.xml',
+        'board_account_view.xml',
+        'account_invoice_workflow.xml',
+        'account_view.xml',
         'account_invoice_view.xml',
-        'account_invoice_report.xml',
-        'wizard/import_invoice.xml',
-        'wizard/split_invoice.xml',
-        'attachment_view.xml'
+        'account_analytic_line_view.xml',
+        'account_sequence.xml',
+        'wizard/account_report_partner_balance_tree_view.xml' # uf-1715
     ],
     'test': [],
     'installable': True,
     'active': False,
 }
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

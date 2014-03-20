@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,13 +21,18 @@
 #
 ##############################################################################
 
-from report import report_sxw
-from account.report import account_print_invoice as api
+from osv import osv
+from osv import fields
+from account_override import ACCOUNT_RESTRICTED_AREA
 
-report_sxw.report_sxw(
-    'report.account.invoice2',
-    'account.invoice',
-    'addons/account_msf/report/account_print_invoice.rml',
-    parser=api.account_invoice, header=False
-)
+class res_partner(osv.osv):
+    _name = 'res.partner'
+    _inherit = 'res.partner'
+
+    _columns = {
+        'donation_payable_account': fields.many2one('account.account', "Donation Payable Account",
+            domain=ACCOUNT_RESTRICTED_AREA['partner_donation']),
+    }
+
+res_partner()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

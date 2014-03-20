@@ -42,6 +42,7 @@
         "account_activable",
         "analytic_distribution",
         "purchase_override",
+        "finance",
         "msf_homere_interface",
     ],
     "init_xml" : [],

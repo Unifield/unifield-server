@@ -31,7 +31,7 @@ from lxml import etree
 class res_partner(osv.osv):
     _name = 'res.partner'
     _inherit = 'res.partner'
-    
+
     def search_in_product(self, cr, uid, obj, name, args, context=None):
         '''
         Search function of related field 'in_product'
@@ -51,19 +51,19 @@ class res_partner(osv.osv):
         info = supinfo_obj.read(cr, uid, info_ids, ['name'])
 
         sup_in = [x['name'] for x in info]
-        
+
         for arg in args:
             if arg[1] == '=':
                 if arg[2]:
                     res = sup_in
             else:
                     res = sup_obj.search(cr, uid, [('id', 'not in', sup_in)])
-        
+
         if not res:
             return [('id', '=', 0)]
         return [('id', 'in', [x[0] for x in res])]
-        
-    
+
+
     def _set_in_product(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns according to the context if the partner is in product form
@@ -71,9 +71,9 @@ class res_partner(osv.osv):
         if context is None:
             context = {}
         res = {}
-        
+
         product_obj = self.pool.get('product.product')
-        
+
         # If we aren't in the context of choose supplier on procurement list
         if not context.get('product_id', False) or 'choose_supplier' not in context:
             for i in ids:
@@ -94,22 +94,22 @@ class res_partner(osv.osv):
                     res[i] = {'in_product': False, 'min_qty': 'N/A', 'delay': 'N/A'}
 
         return res
-    
+
     def _get_price_info(self, cr, uid, ids, fiedl_name, args, context=None):
         '''
         Returns information from product supplierinfo if product_id is in context
         '''
         if not context:
             context = {}
-            
+
         partner_price = self.pool.get('pricelist.partnerinfo')
         res = {}
-        
+
         for id in ids:
             res[id] = {'price_currency': False,
                        'price_unit': 0.00,
                        'valide_until_date': False}
-            
+
         if context.get('product_id'):
             for partner in self.browse(cr, uid, ids, context=context):
                 product = self.pool.get('product.product').browse(cr, uid, context.get('product_id'), context=context)
@@ -134,12 +134,12 @@ class res_partner(osv.osv):
                     res[partner.id] = {'price_currency': currency,
                                        'price_unit': price,
                                        'valide_until_date': info_price.valid_till}
-            
+
         return res
 
 ## QT : Remove _get_price_unit
 
-## QT : Remove _get_valide_until_date 
+## QT : Remove _get_valide_until_date
 
     _columns = {
         'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
@@ -149,20 +149,20 @@ class res_partner(osv.osv):
         'delay': fields.function(_set_in_product, string='Delivery Lead time', type='char', readonly=True, method=True, multi='in_product'),
         'property_product_pricelist_purchase': fields.property(
           'product.pricelist',
-          type='many2one', 
-          relation='product.pricelist', 
+          type='many2one',
+          relation='product.pricelist',
           domain=[('type','=','purchase')],
-          string="Purchase default currency", 
+          string="Purchase default currency",
           method=True,
           view_load=True,
           required=True,
           help="This currency will be used, instead of the default one, for purchases from the current partner"),
         'property_product_pricelist': fields.property(
             'product.pricelist',
-            type='many2one', 
-            relation='product.pricelist', 
+            type='many2one',
+            relation='product.pricelist',
             domain=[('type','=','sale')],
-            string="Field orders default currency", 
+            string="Field orders default currency",
             method=True,
             view_load=True,
             required=True,
@@ -220,7 +220,7 @@ class res_partner(osv.osv):
 
     def get_objects_for_partner(self, cr, uid, ids, context):
         """
-        According to partner's ids: 
+        According to partner's ids:
         return the most important objects linked to him that are not closed or opened
         """
         # some verifications
@@ -243,7 +243,7 @@ class res_partner(osv.osv):
         purchase_ids = purchase_obj.search(cr, uid,
             [('rfq_ok', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
             context=context.update({'purchase_order': True}))
-        rfq_ids = purchase_obj.search(cr, uid, 
+        rfq_ids = purchase_obj.search(cr, uid,
             [('rfq_ok', '=', True), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
             context=context.update({'request_for_quotation': True}))
         sale_ids = sale_obj.search(cr, uid,
@@ -312,7 +312,7 @@ class res_partner(osv.osv):
             context=context)
         absl_ids = absl_obj.search(cr, uid, [('state', 'in', ['draft', 'temp']), ('partner_id', '=', ids[0])], context=context)
         aml_ids = aml_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('reconcile_id', '=', False), ('account_id.reconcile', '=', True)])
-        
+
         return ', '.join([
             po['name']+_(' (Purchase)') for po in purchase_obj.read(cr, uid, purchase_ids, ['name'], context) if po['name']]
             +[rfq['name']+_(' (RfQ)') for rfq in purchase_obj.read(cr, uid, rfq_ids, ['name'], context) if rfq['name']]
@@ -340,7 +340,7 @@ class res_partner(osv.osv):
             ids = [ids]
         if not context:
             context = {}
-        
+
         self._check_main_partner(cr, uid, ids, vals, context=context)
         bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
         bro = bro_uid.company_id
@@ -369,11 +369,11 @@ class res_partner(osv.osv):
             if msf_supplier and not 'property_stock_supplier' in vals:
                 vals['property_stock_supplier'] = msf_supplier[1]
         return super(res_partner, self).create(cr, uid, vals, context=context)
-    
-    
+
+
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
-        Erase some unused data copied from the original object, which sometime could become dangerous, as in UF-1631/1632, 
+        Erase some unused data copied from the original object, which sometime could become dangerous, as in UF-1631/1632,
         when duplicating a new partner (by button duplicate), or company, it creates duplicated currencies
         '''
         if default is None:
@@ -401,11 +401,11 @@ class res_partner(osv.osv):
                 ids = [ids]
             if context is None:
                 context = {}
-            
+
             objects_linked_to_partner = self.get_objects_for_partner(cr, uid, ids, context)
             if objects_linked_to_partner:
-                return {'value': {'active': True}, 
-                        'warning': {'title': _('Error'), 
+                return {'value': {'active': True},
+                        'warning': {'title': _('Error'),
                                     'message': _("Some documents linked to this partner need to be closed or cancelled before deactivating the partner: %s"
                                                 ) % (objects_linked_to_partner,)}}
         return {}
@@ -417,20 +417,20 @@ class res_partner(osv.osv):
         price_obj = self.pool.get('product.pricelist')
         cur_obj = self.pool.get('res.currency')
         user_obj = self.pool.get('res.users')
-        
+
         r = {'po_by_project': 'project'}
-        
+
         if not partner_type or partner_type in ('external', 'internal'):
             r.update({'po_by_project': 'all'})
-        
+
         sale_authorized_price = price_obj.search(cr, uid, [('type', '=', 'sale'), ('in_search', '=', partner_type)])
         if sale_authorized_price and sale_pricelist not in sale_authorized_price:
             r.update({'property_product_pricelist': sale_authorized_price[0]})
-            
+
         purchase_authorized_price = price_obj.search(cr, uid, [('type', '=', 'purchase'), ('in_search', '=', partner_type)])
         if purchase_authorized_price and purchase_pricelist not in purchase_authorized_price:
             r.update({'property_product_pricelist_purchase': purchase_authorized_price[0]})
-        
+
         if partner_type and partner_type in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
             if msf_customer:
@@ -444,10 +444,10 @@ class res_partner(osv.osv):
                 r.update({'property_stock_customer': other_customer[1]})
             other_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_suppliers')
             if other_supplier:
-                r.update({'property_stock_supplier': other_supplier[1]}) 
-        
+                r.update({'property_stock_supplier': other_supplier[1]})
+
         return {'value': r}
-    
+
     def search(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
         '''
         Sort suppliers to have all suppliers in product form at the top of the list
@@ -457,7 +457,7 @@ class res_partner(osv.osv):
             context = {}
         if args is None:
             args = []
-        
+
         # Get all supplier
         tmp_res = super(res_partner, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
         if not context.get('product_id', False) or 'choose_supplier' not in context or count:
@@ -471,7 +471,7 @@ class res_partner(osv.osv):
             # Sort suppliers by sequence in product form
             if 'product_id' in context:
                 supinfo_ids = supinfo_obj.search(cr, uid, [('name', 'in', res_in_prod), ('product_product_ids', '=', context.get('product_id'))], order='sequence')
-            
+
                 for result in supinfo_obj.read(cr, uid, supinfo_ids, ['name']):
                     try:
                         tmp_res.remove(result['name'][0])
@@ -482,7 +482,7 @@ class res_partner(osv.osv):
             #return new_res  # comment this line to have all suppliers (with suppliers in product form at the top of the list)
 
             new_res.extend(tmp_res)
-            
+
             return new_res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
