@@ -274,10 +274,13 @@ class product_history_consumption(osv.osv):
         '''
         Open the report
         '''
-        if not context:
+        if context is None:
             context = {}
 
         product_ids, domain, new_context = self.get_data(cr, uid, ids, context=context)
+        if new_context is None:
+            new_context = {}
+        new_context['search_default_average'] = 1  # UTP-501 positive Av.AMC/Av.RAC filter set to on by default
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'product.product',
