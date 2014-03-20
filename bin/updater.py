@@ -21,8 +21,8 @@ else:
 __all__ = ('isset_lock', 'server_version', 'base_version', 'do_prepare', 'base_module_upgrade', 'restart_server')
 
 restart_required = False
-if sys.platform == 'win32' and os.path.isdir(r'..\logs\server'):
-    log_file = r'..\serverlogs\updater.log'
+if sys.platform == 'win32' and os.path.isdir(r'..\ServerLog'):
+    log_file = r'..\ServerLog\updater.log'
 else:
     log_file = 'updater.log'
 lock_file = 'update.lock'
