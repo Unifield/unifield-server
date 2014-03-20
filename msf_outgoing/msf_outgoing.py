@@ -3082,9 +3082,15 @@ class stock_picking(osv.osv):
                     # Split happened during the validation
                     # Copy the stock move and set the quantity
                     values['state'] = 'assigned'
-                    context['keepLineNumber'] = True
+                    context.update({
+                        'keepLineNumber': True,
+                        'non_stock_noupdate': True,
+                    })
                     move_obj.copy(cr, uid, line.move_id.id, values, context=context)
-                    context['keepLineNumber'] = False
+                    context.update({
+                        'keepLineNumber': False,
+                        'non_stock_noupdate': False,
+                    })
 
                 values.update({
                     'picking_id': new_ppl_id,
@@ -3094,7 +3100,15 @@ class stock_picking(osv.osv):
                     'date': today,
                     'date_expected': today,
                 })
+                context.update({
+                    'keepLineNumber': True,
+                    'non_stock_noupdate': True,
+                })
                 move_obj.copy(cr, uid, line.move_id.id, values, context=context)
+                context.update({
+                    'keepLineNumber': False,
+                    'non_stock_noupdate': False,
+                })
 
 
             # For each move, check if there is remaining quantity
@@ -3372,18 +3386,26 @@ class stock_picking(osv.osv):
                         # Force state to 'assigned'
                         values['state'] = 'assigned'
                         # Copy stock move
-                        context['keepLineNumber'] = True
+                        context.update({
+                            'keepLineNumber': True,
+                            'non_stock_noupdate': True,
+                        })
                         move_to_copy = move_obj.copy(cr, uid, line.move_id.id, values, context=context)
-                        context['keepLineNumber'] = False
-                        # Need to change the locations after the copy, because the create of a new stock move with
-                        # non-stockable product force the locations
-                        move_obj.write(cr, uid, [move_to_copy], {'location_id': line.move_id.location_id.id,
-                                                                 'location_dest_id': line.move_id.location_dest_id.id}, context=context)
+                        context.update({
+                            'keepLineNumber': False,
+                            'non_stock_noupdate': False,
+                        })
 
                     # Create a move line in the Packing
-                    context['keepLineNumber'] = True
+                    context.update({
+                        'keepLineNumber': True,
+                        'non_stock_noupdate': True,
+                    })
                     move_obj.copy(cr, uid, move_to_copy, pack_move_data, context=context)
-                    context['keepLineNumber'] = False
+                    context.update({
+                        'keepLineNumber': False,
+                        'non_stock_noupdate': False,
+                    })
 
             # Check quantities integrity status
             for m_data in moves_data.values():
