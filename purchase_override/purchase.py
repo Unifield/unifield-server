@@ -208,7 +208,7 @@ class purchase_order(osv.osv):
             if pol_ids:
                 pol_datas = pol_obj.read(
                     cr, uid, pol_ids, ['procurement_id'], context=context)
-                proc_ids = [pol['procurement_id']
+                proc_ids = [pol['procurement_id'][0]
                             for pol in pol_datas if pol.get('procurement_id')]
                 if proc_ids:
                     # po_from_ir
