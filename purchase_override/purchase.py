@@ -2255,7 +2255,7 @@ class purchase_order_line(osv.osv):
             if vals.get('product_qty', 0.00) == 0.00 and not context.get('noraise'):
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
 
-        other_lines = self.search(cr, uid, [('order_id', '=', order), ('product_id', '=', product_id), ('product_uom', '=', product_uom)], context=context)
+        other_lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom)], context=context)
         stages = self._get_stages_price(cr, uid, product_id, product_uom, order, context=context)
 
         if vals.get('origin'):
@@ -2290,7 +2290,7 @@ class purchase_order_line(osv.osv):
                 # either line_number is not specified or set to False from copy, we need a new value
                 if not vals.get('line_number', False):
                     # new number needed - gather the line number from the sequence
-                    sequence_id = order.suequence_id.id
+                    sequence_id = order.sequence_id.id
                     line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
                     vals.update({'line_number': line})
         # [/]
