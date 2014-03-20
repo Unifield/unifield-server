@@ -2290,7 +2290,7 @@ class purchase_order_line(osv.osv):
                 # either line_number is not specified or set to False from copy, we need a new value
                 if not vals.get('line_number', False):
                     # new number needed - gather the line number from the sequence
-                    sequence_id = po_obj.read(cr, uid, [order_id], ['sequence_id'], context=context)[0]['sequence_id'][0]
+                    sequence_id = order.suequence_id.id
                     line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
                     vals.update({'line_number': line})
         # [/]
