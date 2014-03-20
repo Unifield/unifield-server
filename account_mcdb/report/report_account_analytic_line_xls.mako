@@ -79,7 +79,7 @@ x:FullRows="1">
         <Data ss:Type="String">${(o.journal_id and o.journal_id.code or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.move_id and o.move_id.move_id and o.move_id.move_id.name or '')|x}</Data>
+        <Data ss:Type="String">${(o.entry_sequence or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.name or '')|x}</Data>
