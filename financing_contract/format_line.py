@@ -329,6 +329,7 @@ class financing_contract_format_line(osv.osv):
         'format_id': fields.many2one('financing.contract.format', 'Format'),
         'is_quadruplet': fields.boolean('Input CC/FP at line level?'),
         'account_destination_ids': many2many_sorted('account.destination.link', 'financing_contract_actual_account_destinations', 'actual_line_id', 'account_destination_id', string='Accounts/Destinations', domain=ACCOUNT_RESTRICTED_AREA['contract_reporting_lines']),
+        'account_quadruplet_ids': many2many_sorted('financing.contract.account.quadruplet', 'financing_contract_actual_account_quadruplets', 'actual_line_id', 'account_quadruplet_id', string='Accounts/Destinations/Funding Pools/Cost Centres'),
         'parent_id': fields.many2one('financing.contract.format.line', 'Parent line'),
         'child_ids': fields.one2many('financing.contract.format.line', 'parent_id', 'Child lines'),
         'line_type': fields.selection([('view','View'),
@@ -348,10 +349,8 @@ class financing_contract_format_line(osv.osv):
 
         'allocated_real': fields.function(_get_actual_amount, method=True, store=False, string="Funded - Actuals", type="float", readonly=True),
         'project_real': fields.function(_get_actual_amount, method=True, store=False, string="Total project - Actuals", type="float", readonly=True),
-        'quadruplet_update': fields.char('Internal Use Only', size=128),
+        'quadruplet_update': fields.text('Internal Use Only'),
     }
- 
-    
     
     _defaults = {
         'is_quadruplet': False,
