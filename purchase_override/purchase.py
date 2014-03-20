@@ -2241,6 +2241,9 @@ class purchase_order_line(osv.osv):
                 vals['price_unit'] = 1.00
             # [/]
 
+        # Update the name attribute if a product is selected
+        self._update_name_attr(cr, uid, vals, context=context)
+
         # If we are on a RfQ, use the last entered unit price and update other lines with this price
         if order_id.rfq_ok:
             vals.update({'change_price_manually': True})
@@ -2293,9 +2296,6 @@ class purchase_order_line(osv.osv):
                     line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
                     vals.update({'line_number': line})
         # [/]
-
-        # Update the name attribute if a product is selected
-        self._update_name_attr(cr, uid, vals, context=context)
 
         # Check the selected product UoM
         if not context.get('import_in_progress', False):
@@ -2386,6 +2386,9 @@ class purchase_order_line(osv.osv):
         self._relatedFields(cr, uid, vals, context)
         # [/]
 
+        # Update the name attribute if a product is selected
+        self._update_name_attr(cr, uid, vals, context=context)
+
         for line in self.browse(cr, uid, ids, context=context):
             if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok and not context.get('noraise'):
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
@@ -2406,9 +2409,6 @@ class purchase_order_line(osv.osv):
 
         if 'price_unit' in vals:
             vals.update({'old_price_unit': vals.get('price_unit')})
-
-        # Update the name attribute if a product is selected
-        self._update_name_attr(cr, uid, vals, context=context)
 
         res = super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
 
