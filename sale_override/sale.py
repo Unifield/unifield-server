@@ -1595,9 +1595,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 for line in order.order_line:
                     lines.append(line.id)
 
-            # Create procurements
-            proc_ids = []
-            proc_to_check = []
             # flag to prevent the display of the sale order log message
             # if the method is called after po update, we do not display log message
             display_log = True
@@ -1609,7 +1606,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 if line.state not in ['sourced', 'confirmed', 'done'] and not line.created_by_po_line and not line.procurement_id and line.product_id:
                     proc_data = self._get_procurement_order_data(line, order, rts, context=context)
                     proc_id = proc_obj.create(cr, uid, proc_data, context=context)
-                    proc_ids.append(proc_id)
                     # set the flag for log message
                     if line.so_back_update_dest_po_id_sale_order_line or line.created_by_po:
                         display_log = False
