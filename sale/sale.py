@@ -316,9 +316,10 @@ class sale_order(osv.osv):
             # Deleting the existing instance of workflow for SO
             wf_service.trg_delete(uid, 'sale.order', inv_id, cr)
             wf_service.trg_create(uid, 'sale.order', inv_id, cr)
-        for (id,name) in self.name_get(cr, uid, ids):
-            message = _("The sales order '%s' has been set in draft state.") %(name,)
-            self.log(cr, uid, id, message)
+        for sale in self.browse(cr, uid, ids, context=context):
+            sale_order_label = 'IR' if sale.procurement_request else 'FO'  # UFTP-93
+            message = _("The %s '%s' has been set in draft state.") % (sale_order_label, sale.name,)
+            self.log(cr, uid, sale.id, message)
         return True
 
     def onchange_partner_id(self, cr, uid, ids, part):
@@ -592,7 +593,8 @@ class sale_order(osv.osv):
                     wf_service.trg_validate(uid, 'account.invoice', inv, 'invoice_cancel', cr)
             sale_order_line_obj.write(cr, uid, [l.id for l in  sale.order_line],
                     {'state': 'cancel'}, context=context)
-            message = _("The sales order '%s' has been cancelled.") % (sale.name,)
+            sale_order_label = 'IR' if sale.procurement_request else 'FO'  # UFTP-93
+            message = _("The %s '%s' has been cancelled.") % (sale_order_label, sale.name,)
             self.log(cr, uid, sale.id, message)
         self.write(cr, uid, ids, {'state': 'cancel'})
         return True
