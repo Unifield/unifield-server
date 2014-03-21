@@ -19,11 +19,9 @@
 #
 ##############################################################################
 
-from osv import osv, fields
-
-from tools.translate import _
-
 import netsvc
+from osv import osv, fields
+from tools.translate import _
 
 
 class stock_move(osv.osv):
@@ -647,6 +645,9 @@ class stock_picking(osv.osv):
 
                 for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
                     values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
+                    
+                    if not values.get('product_qty', 0.00):
+                        continue
 
                     # Check if we must re-compute the price of the product
                     compute_average = False
@@ -784,6 +785,8 @@ class stock_picking(osv.osv):
                         context['keepLineNumber'] = True
                         move_obj.copy(cr, uid, bo_move.id, bo_values, context=context)
                         context['keepLineNumber'] = False
+                    elif bo_move.id in done_moves:
+                        done_moves.remove(bo_move.id)
 
                 # Put the done moves in this new picking
                 move_obj.write(cr, uid, done_moves, {
