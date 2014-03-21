@@ -146,6 +146,7 @@ class update(osv.osv):
         'puller_ids': fields.one2many('sync.server.puller_logs', 'update_id', string="Pulled by"),
         'is_deleted' : fields.boolean('Is deleted?', select=True),
         'force_recreation' : fields.boolean('Force record recreation'),
+        'handle_priority': fields.boolean('Handle Priority'),
     }
 
     _order = 'sequence, create_date desc'
@@ -218,6 +219,7 @@ class update(osv.osv):
                         'fields': packet['fields'],
                         'values': update['values'],
                         'owner': owner,
+                        'handle_priority': update['handle_priority'],
                         'force_recreation' : update['force_recreation'],
                     }):
                 normal_updates_count += 1
@@ -439,6 +441,7 @@ class update(osv.osv):
                     'values' : tools.ustr([values[k] for k in complete_fields]),
                     'owner_name' : update.owner.name if update.owner else '',
                     'force_recreation' : update.force_recreation,
+                    'handle_priority' : update.handle_priority,
                 })
 
         return data

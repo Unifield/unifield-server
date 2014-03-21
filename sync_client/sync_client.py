@@ -516,6 +516,11 @@ class Entity(osv.osv):
         logger = context.get('logger')
         updates = self.pool.get(context.get('update_received_model', 'sync.client.update_received'))
 
+        # get instance prioritiies
+        proxy = self.pool.get("sync.client.sync_server_connection")\
+            .get_connection(cr, uid, "sync.server.entity")
+        priorities_stuff = proxy.get_entities_priorities()
+
         # Get a list of updates to execute
         # Warning: execution order matter
         update_ids = updates.search(cr, uid, [('run', '=', False)], order='id asc', context=context)
@@ -541,7 +546,11 @@ class Entity(osv.osv):
                 update_ids = update_groups[rule_seq]
                 while update_ids:
                     to_do, update_ids = update_ids[:MAX_EXECUTED_UPDATES], update_ids[MAX_EXECUTED_UPDATES:]
-                    messages, imported_executed, deleted_executed = updates.execute_update(cr, uid, to_do, context=context)
+                    messages, imported_executed, deleted_executed = \
+                        updates.execute_update(cr, uid,
+                            to_do,
+                            priorities=priorities_stuff,
+                            context=context)
                     imported += imported_executed
                     deleted += deleted_executed
                     # Do nothing with messages
