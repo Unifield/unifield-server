@@ -197,28 +197,33 @@ class purchase_order(osv.osv):
                 res[order.id] = False
         return res
 
-    def _is_po_from_ir(self, cr, uid, ids, field_name, args, context=None):
+    def _po_from_x(self, cr, uid, ids, field_names, args, context=None):
+        """fields.function multi for 'po_from_ir' and 'po_from_fo' fields."""
         res = {}
-        for po in self.browse(cr, uid, ids, context=context):
-            retour = False
-            for line in po.order_line:
-                if line.procurement_id:
-                    ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id),])
-                    if ids_proc:
-                        retour = True
-            res[po.id] = retour
-        return res
-
-    def _is_po_from_fo(self, cr, uid, ids, field_name, args, context=None):
-        res = {}
-        for po in self.browse(cr, uid, ids, context=context):
-            retour = False
-            for line in po.order_line:
-                if line.procurement_id:
-                    ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id),('order_id.procurement_request','=',False)])
-                    if ids_proc:
-                        retour = True
-            res[po.id] = retour
+        pol_obj = self.pool.get('purchase.order.line')
+        sol_obj = self.pool.get('sale.order.line')
+        for po_data in self.read(cr, uid, ids, ['order_line'], context=context):
+            res[po_data['id']] = {'po_from_ir': False, 'po_from_fo': False}
+            pol_ids = po_data.get('order_line')
+            if pol_ids:
+                pol_datas = pol_obj.read(
+                    cr, uid, pol_ids, ['procurement_id'], context=context)
+                proc_ids = [pol['procurement_id'][0]
+                            for pol in pol_datas if pol.get('procurement_id')]
+                if proc_ids:
+                    # po_from_ir
+                    sol_ids = sol_obj.search(
+                        cr, uid,
+                        [('procurement_id', 'in', proc_ids)],
+                        context=context)
+                    res[po_data['id']]['po_from_ir'] = bool(sol_ids)
+                    # po_from_fo
+                    sol_ids = sol_obj.search(
+                        cr, uid,
+                        [('procurement_id', 'in', proc_ids),
+                         ('order_id.procurement_request', '=', False)],
+                        context=context)
+                    res[po_data['id']]['po_from_fo'] = bool(sol_ids)
         return res
 
     def _get_dest_partner_names(self, cr, uid, ids, field_name, args, context=None):
@@ -296,8 +301,8 @@ class purchase_order(osv.osv):
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'active': fields.boolean('Active', readonly=True),
-        'po_from_ir': fields.function(_is_po_from_ir, method=True, type='boolean', string='Is PO from IR ?',),
-        'po_from_fo': fields.function(_is_po_from_fo, method=True, type='boolean', string='Is PO from FO ?',),
+        'po_from_ir': fields.function(_po_from_x, method=True, type='boolean', string='Is PO from IR ?', multi='po_from_x'),
+        'po_from_fo': fields.function(_po_from_x, method=True, type='boolean', string='Is PO from FO ?', multi='po_from_x'),
         'canceled_end': fields.boolean(string='Canceled End', readonly=True),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
@@ -2162,6 +2167,57 @@ class purchase_order_line(osv.osv):
 
         return True
 
+    def _relatedFields(self, cr, uid, vals, context=None):
+        '''
+        related fields for create and write
+        '''
+        # recreate description because in readonly
+        if ('product_id' in vals) and (vals['product_id']):
+            # no nomenclature description
+            vals.update({'nomenclature_description':False})
+            # update the name (comment) of order line
+            # the 'name' is no more the get_name from product, but instead
+            # the name of product
+            productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
+            vals.update({'name':productObj.name})
+            vals.update({'default_code':productObj.default_code})
+            vals.update({'default_name':productObj.name})
+            # erase the nomenclature - readonly
+            self.pool.get('product.product')._resetNomenclatureFields(vals)
+        elif ('product_id' in vals) and (not vals['product_id']):
+            sale = self.pool.get('sale.order.line')
+            sale._setNomenclatureInfo(cr, uid, vals, context)
+            # erase default code
+            vals.update({'default_code':False})
+            vals.update({'default_name':False})
+            
+            if 'comment' in vals:
+                vals.update({'name':vals['comment']})
+        # clear nomenclature filter values
+        #self.pool.get('product.product')._resetNomenclatureFields(vals)
+
+    def _update_name_attr(self, cr, uid, vals, context=None):
+        """Update the name attribute in `vals` if a product is selected."""
+        if context is None:
+            context = {}
+        prod_obj = self.pool.get('product.product')
+        if vals.get('product_id'):
+            product = prod_obj.browse(cr, uid, vals['product_id'], context=context)
+            vals['name'] = product.name
+        elif vals.get('comment'):
+            vals['name'] = vals.get('comment', False)
+
+    def _check_product_uom(self, cr, uid, product_id, uom_id, context=None):
+        """Check the product UoM."""
+        if context is None:
+            context = {}
+        uom_tools_obj = self.pool.get('uom.tools')
+        if not uom_tools_obj.check_uom(cr, uid, product_id, uom_id, context=context):
+            raise osv.except_osv(
+                _('Error'),
+                _('You have to select a product UOM in the same '
+                  'category than the purchase UOM of the product !'))
+
     def create(self, cr, uid, vals, context=None):
         '''
         Create or update a merged line
@@ -2169,25 +2225,36 @@ class purchase_order_line(osv.osv):
         if context is None:
             context = {}
 
-        order_id = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context=context)
-        if order_id.from_yml_test:
-            vals.update({'change_price_manually': True})
-            if not vals.get('product_qty', False):
-                vals['product_qty'] = 1.00
-
-        # If we are on a RfQ, use the last entered unit price and update other lines with this price
-        if order_id.rfq_ok:
-            vals.update({'change_price_manually': True})
-        else:
-            if order_id.po_from_fo or order_id.po_from_ir:
-                vals['from_fo'] = True
-            if vals.get('product_qty', 0.00) == 0.00 and not context.get('noraise'):
-                raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
+        po_obj = self.pool.get('purchase.order')
+        seq_pool = self.pool.get('ir.sequence')
+        sol_obj = self.pool.get('sale.order.line')
 
         order_id = vals.get('order_id')
         product_id = vals.get('product_id')
         product_uom = vals.get('product_uom')
-        order = self.pool.get('purchase.order').browse(cr, uid, order_id, context=context)
+        order = po_obj.browse(cr, uid, order_id, context=context)
+
+        if order.from_yml_test:
+            vals.update({'change_price_manually': True})
+            if not vals.get('product_qty', False):
+                vals['product_qty'] = 1.00
+            # [imported and adapted from 'analytic_distribution_supply']
+            if not vals.get('price_unit', False):
+                vals['price_unit'] = 1.00
+            # [/]
+
+        # Update the name attribute if a product is selected
+        self._update_name_attr(cr, uid, vals, context=context)
+
+        # If we are on a RfQ, use the last entered unit price and update other lines with this price
+        if order.rfq_ok:
+            vals.update({'change_price_manually': True})
+        else:
+            if order.po_from_fo or order.po_from_ir:
+                vals['from_fo'] = True
+            if vals.get('product_qty', 0.00) == 0.00 and not context.get('noraise'):
+                raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
+
         other_lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom)], context=context)
         stages = self._get_stages_price(cr, uid, product_id, product_uom, order, context=context)
 
@@ -2206,10 +2273,46 @@ class purchase_order_line(osv.osv):
 
         vals.update({'old_price_unit': vals.get('price_unit', False)})
 
+        # [imported from 'order_nomenclature']
+        # Don't save filtering data
+        self._relatedFields(cr, uid, vals, context)
+        # [/]
+
+        # [imported from 'order_line_number']
+        # Add the corresponding line number
+        #   I leave this line from QT related to purchase.order.merged.line for compatibility and safety reasons
+        #   merged lines, set the line_number to 0 when calling create function
+        #   the following line should *logically* be removed safely
+        #   copy method should work as well, as merged line do *not* need to keep original line number with copy function (QT confirmed)
+        if self._name != 'purchase.order.merged.line':
+            if order_id:
+                # gather the line number from the sale order sequence if not specified in vals
+                # either line_number is not specified or set to False from copy, we need a new value
+                if not vals.get('line_number', False):
+                    # new number needed - gather the line number from the sequence
+                    sequence_id = order.sequence_id.id
+                    line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
+                    vals.update({'line_number': line})
+        # [/]
+
+        # Check the selected product UoM
+        if not context.get('import_in_progress', False):
+            if vals.get('product_id') and vals.get('product_uom'):
+                self._check_product_uom(
+                    cr, uid, vals['product_id'], vals['product_uom'], context=context)
+
+        # utp-518:we write the comment from the sale.order.line on the PO line through the procurement (only for the create!!)
+        po_procurement_id = vals.get('procurement_id', False)
+        if po_procurement_id:
+            sale_id = sol_obj.search(cr, uid, [('procurement_id', '=', po_procurement_id)], context=context)
+            if sale_id:
+                comment_so = sol_obj.read(cr, uid, sale_id, ['comment'], context=context)[0]['comment']
+                vals.update(comment=comment_so)
+
         # add the database Id to the sync_order_line_db_id
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
         if not vals.get('sync_order_line_db_id', False): #'sync_order_line_db_id' not in vals or vals:
-            name = self.pool.get('purchase.order').browse(cr, uid, vals.get('order_id'), context=context).name
+            name = order.name
             super(purchase_order_line, self).write(cr, uid, [po_line_id], {'sync_order_line_db_id': name + "_" + str(po_line_id),}, context=context)
 
         return po_line_id
@@ -2276,6 +2379,13 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # [imported from the 'analytic_distribution_supply']
+        # Don't save filtering data
+        self._relatedFields(cr, uid, vals, context)
+        # [/]
+
+        # Update the name attribute if a product is selected
+        self._update_name_attr(cr, uid, vals, context=context)
 
         for line in self.browse(cr, uid, ids, context=context):
             if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok and not context.get('noraise'):
@@ -2299,6 +2409,14 @@ class purchase_order_line(osv.osv):
             vals.update({'old_price_unit': vals.get('price_unit')})
 
         res = super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
+
+        # Check the selected product UoM
+        if not context.get('import_in_progress', False):
+            for pol_read in self.read(cr, uid, ids, ['product_id', 'product_uom']):
+                if pol_read.get('product_id'):
+                    product_id = pol_read['product_id'][0]
+                    uom_id = pol_read['product_uom'][0]
+                    self._check_product_uom(cr, uid, product_id, uom_id, context=context)
 
         return res
 
