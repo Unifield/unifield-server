@@ -1863,7 +1863,15 @@ class sale_order_line(osv.osv):
         else:
             view_id = data_obj.get_object_reference(cr, uid, 'sale', 'view_order_form')[1]
         context.update({'view_id': view_id})
-        self.pool.get('sale.order').log(cr, uid, order_id, _('A line was added to the Field Order %s to re-source the canceled line.') % (order_name), context=context)
+ 
+        """UFTP-90
+        put a 'clean' context for 'log' without potential 'Enter a reason' wizard infos 
+        _terp_view_name, wizard_name, ..., these causes a wrong name of the FO/IR linked view
+        form was opened with 'Enter a Reason for Incoming cancellation' name
+        we just keep the view id (2 distincts ids for FO/IR)"""
+        self.pool.get('sale.order').log(cr, uid, order_id, 
+            _('A line was added to the Field Order %s to re-source the canceled line.') % (order_name),
+            context={'view_id': context.get('view_id', False)})
 
         return line_id
 
