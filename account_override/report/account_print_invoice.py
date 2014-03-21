@@ -1,10 +1,8 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -21,7 +19,13 @@
 #
 ##############################################################################
 
-from period import *
-import finance_export
+from report import report_sxw
+from account.report import account_print_invoice as api
 
+report_sxw.report_sxw(
+    'report.account.invoice2',
+    'account.invoice',
+    'addons/account_override/report/account_print_invoice.rml',
+    parser=api.account_invoice, header=False
+)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

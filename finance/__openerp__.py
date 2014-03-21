@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2014 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,30 +18,33 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+
 {
-    "name": "Chart of Accounts for MSF",
-    "version": "1.0",
-    "depends": ["account", "account_chart"],
+    "name" : "MSF Financing Module",
+    "version" : "1.0",
     "author" : "MSF, TeMPO Consulting",
-    "developer": "Matthieu Dietrich",
-    "category": "General/Standard",
-    "description": """
-    This module changes the view and adds a searchable "Active" attribute.
-    
+    "description" : """
+    Finance Extension using analytic and account modules
     """,
-    "init_xml": [
-        'data/account_type.xml',
+    "website": "http://unifield.msf.org",
+    # account_voucher: need it to change account_voucher object. Note that account_voucher is the dependance of account_payment which is in depandancy of register_accounting.
+    # account_msf: was deleted because of a dependance loop. But don't know why account_msf was in dependancy of account_override module (now finance one)
+    "depends" : ["analytic_override", "account_override", "purchase_msf", "account_voucher"],
+    "category" : "Generic Modules/Accounting",
+    "init_xml" : [],
+    "demo_xml" : [],
+    "update_xml" : [
+        'board_account_view.xml',
+        'account_invoice_workflow.xml',
+        'account_view.xml',
+        'account_invoice_view.xml',
+        'account_analytic_line_view.xml',
+        'account_sequence.xml',
+        'wizard/account_report_partner_balance_tree_view.xml' # uf-1715
     ],
-    'update_xml': [
-        'account_activable_view.xml',
-        'wizard/account_chart_activable_view.xml',
-    ],
-    'test': [
-        'test/account_activable.yml'
-    ],
-    'demo_xml': [],
+    'test': [],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
 }
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

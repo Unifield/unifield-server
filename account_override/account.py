@@ -27,10 +27,15 @@ from account_override import ACCOUNT_RESTRICTED_AREA
 from tools.translate import _
 from time import strftime
 import datetime
+from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
 import netsvc
 
 class account_account(osv.osv):
+    '''
+        To create a activity period, 2 new fields are created, and are NOT linked to the
+        'active' field, since the behaviors are too different.
+    '''
     _name = "account.account"
     _inherit = "account.account"
 
@@ -184,75 +189,6 @@ class account_account(osv.osv):
         return res
     #@@@end
 
-    def _get_is_analytic_addicted(self, cr, uid, ids, field_name, arg, context=None):
-        """
-        An account is dependant on analytic distribution in these cases:
-        - the account is expense (user_type_code == 'expense')
-
-        Some exclusive cases can be add in the system if you configure your company:
-        - either you also take all income account (user_type_code == 'income')
-        - or you take accounts that are income + 7xx (account code begins with 7)
-        """
-        # Some checks
-        if context is None:
-            context = {}
-        res = {}
-        company_account_active = False
-        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
-        if company and company.additional_allocation:
-            company_account_active = company.additional_allocation
-        company_account = 7 # User for accounts that begins by "7"
-        # Prepare result
-        for account in self.read(cr, uid, ids, ['user_type_code', 'code'], context=context):
-            account_id = account.get('id', False)
-            user_type = account.get('user_type_code', False)
-            code = account.get('code')
-            res[account_id] = False
-            if user_type == 'expense':
-                res[account_id] = True
-            elif user_type == 'income':
-                if not company_account_active:
-                    res[account_id] = True
-                elif company_account_active and code.startswith(str(company_account)):
-                    res[account_id] = True
-        return res
-
-    def _search_is_analytic_addicted(self, cr, uid, ids, field_name, args, context=None):
-        """
-        Search analytic addicted accounts regarding same criteria as those from _get_is_analytic_addicted method.
-        """
-        # Checks
-        if context is None:
-            context = {}
-        arg = []
-        company_account_active = False
-        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
-        if company and company.additional_allocation:
-            company_account_active = company.additional_allocation
-        company_account = "7"
-        for x in args:
-            if x[0] == 'is_analytic_addicted' and ((x[1] in ['=', 'is'] and x[2] is True) or (x[1] in ['!=', 'is not', 'not'] and x[2] is False)):
-                arg.append(('|'))
-                arg.append(('user_type.code', '=', 'expense'))
-                if company_account_active:
-                    arg.append(('&'))
-                arg.append(('user_type.code', '=', 'income'))
-                if company_account_active:
-                    arg.append(('code', '=like', '%s%%' % company_account))
-            elif x[0] == 'is_analytic_addicted' and ((x[1] in ['=', 'is'] and x[2] is False) or (x[1] in ['!=', 'is not', 'not'] and x[2] is True)):
-                arg.append(('user_type.code', '!=', 'expense'))
-                if company_account_active:
-                    arg.append(('|'))
-                    arg.append(('user_type.code', '!=', 'income'))
-                    arg.append(('code', 'not like', '%s%%' % company_account))
-                else:
-                    arg.append(('user_type.code', '!=', 'income'))
-            elif x[0] != 'is_analytic_addicted':
-                arg.append(x)
-            else:
-                raise osv.except_osv(_('Error'), _('Operation not implemented!'))
-        return arg
-
     def _get_restricted_area(self, cr, uid, ids, field_name, args, context=None):
         """
         FAKE METHOD
@@ -314,8 +250,51 @@ class account_account(osv.osv):
                 raise osv.except_osv(_('Error'), _('Operation not implemented!'))
         return arg
 
+    def _get_is_intermission_counterpart(self, cr, uid, ids, field_names, args, context=None):
+        """
+        If this account is the same as default intermission counterpart, then return True. Otherwise return nothing.
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        res = {}
+        intermission = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
+        intermission_id = intermission and intermission.id or False
+
+        for account_id in ids:
+            res[account_id] = False
+        if intermission_id in ids:
+            res[intermission_id] = True
+        return res
+
+    def _search_is_intermission_counterpart(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Return the intermission counterpart ID.
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        arg = []
+        intermission = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
+        intermission_id = intermission and intermission.id or False
+
+        for x in args:
+            if x[0] == 'is_intermission_counterpart' and x[2] is True:
+                if intermission_id:
+                    arg.append(('id', '=', intermission_id))
+            elif x[0] != 'is_intermission_counterpart':
+                arg.append(x)
+            else:
+                raise osv.except_osv(_('Error'), _('Filter on field is_intermission_counterpart not implemented! %s') % (x,))
+        return arg
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
+        'activation_date': fields.date('Active from', required=True),
+        'inactivation_date': fields.date('Inactive from'),
+        'note': fields.char('Note', size=160),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'),
             ('advance', 'Operational Advance'), ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')], string="Type for specific treatment", required=True,
             help="""This permit to give a type to this account that impact registers. In fact this will link an account with a type of element
@@ -324,15 +303,16 @@ class account_account(osv.osv):
             """),
         'shrink_entries_for_hq': fields.boolean("Shrink entries for HQ export", help="Check this attribute if you want to consolidate entries on this account before they are exported to the HQ system."),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
-        'is_analytic_addicted': fields.function(_get_is_analytic_addicted, fnct_search=_search_is_analytic_addicted, method=True, type='boolean', string='Analytic-a-holic?', help="Is this account addicted on analytic distribution?", store=False, readonly=True),
         'restricted_area': fields.function(_get_restricted_area, fnct_search=_search_restricted_area, type='boolean', method=True, string="Is this account allowed?"),
         'cash_domain': fields.function(_get_fake_cash_domain, fnct_search=_search_cash_domain, method=True, type='boolean', string="Domain used to search account in journals", help="This is only to change domain in journal's creation."),
         'balance': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Balance', multi='balance'),
         'debit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Debit', multi='balance'),
         'credit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Credit', multi='balance'),
+        'is_intermission_counterpart': fields.function(_get_is_intermission_counterpart, fnct_search=_search_is_intermission_counterpart, method=True, type='boolean', string='Is the intermission counterpart account?'),
     }
 
     _defaults = {
+        'activation_date': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
         'type_for_register': lambda *a: 'none',
         'shrink_entries_for_hq': lambda *a: True,
     }
@@ -398,9 +378,43 @@ class account_account(osv.osv):
                 account_ids += tmp_ids
         return account_ids
 
+    def _check_date(self, vals, context=None):
+        if context is None:
+            context = {}
+
+        if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
+            if vals['inactivation_date'] <= datetime.date.today().strftime('%Y-%m-%d') and not context.get('sync_update_execution', False):
+                # validate the date (must be > today)
+                raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
+            elif 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
+                # validate that activation date
+                raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
+
+    def create(self, cr, uid, vals, context=None):
+        self._check_date(vals, context=context)
+        return super(account_account, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        self._check_date(vals, context=context)
+        return super(account_account, self).write(cr, uid, ids, vals, context=context)
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        """
+        Filtering regarding context
+        """
+        if not context:
+            context = {}
+        if context.get('filter_inactive_accounts'):
+            args.append(('activation_date', '<=', datetime.date.today().strftime('%Y-%m-%d')))
+            args.append('|')
+            args.append(('inactivation_date', '>', datetime.date.today().strftime('%Y-%m-%d')))
+            args.append(('inactivation_date', '=', False))
+        return super(account_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+
 account_account()
 
 class account_journal(osv.osv):
+    _name = 'account.journal'
     _inherit = 'account.journal'
 
     # @@@override account>account.py>account_journal>create_sequence
@@ -737,4 +751,18 @@ class account_move_reconcile(osv.osv):
     }
 
 account_move_reconcile()
+
+class account_account_type(osv.osv):
+    _name = 'account.account.type'
+    _inherit = 'account.account.type'
+
+    _columns = {
+        'not_correctible': fields.boolean(string="Prevent entries to be correctible on this account type.")
+    }
+
+    _defaults = {
+        'not_correctible': lambda *a: False,
+    }
+
+account_account_type()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

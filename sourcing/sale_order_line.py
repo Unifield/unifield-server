@@ -1336,9 +1336,9 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         }
 
         if not supplier:
-            for sl in self.browse(cr, uid, line_id, context):
-                if not sl.product_id and sl.sale_order_id.procurement_request and sl.type == 'make_to_order':
-                    result['domain']['supplier'] = [('partner_type', 'in', ['internal', 'section', 'intermission'])]
+            sl = self.browse(cr, uid, line_id, context=context)
+            if not sl.product_id and sl.sale_order_id.procurement_request and sl.type == 'make_to_order':
+                result['domain']['supplier'] = [('partner_type', 'in', ['internal', 'section', 'intermission'])]
             return result
 
         partner = partner_obj.browse(cr, uid, supplier, context)

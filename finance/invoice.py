@@ -1,10 +1,8 @@
-#!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+#-*- coding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2013 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    Copyright (C) 2014 TeMPO Consulting, MSF. All Rights Reserved
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -24,17 +22,26 @@
 from osv import osv
 from osv import fields
 
-class account_account_type(osv.osv):
-    _name = 'account.account.type'
-    _inherit = 'account.account.type'
+class account_invoice(osv.osv):
+    _name = 'account.invoice'
+    _inherit = 'account.invoice'
 
     _columns = {
-        'not_correctible': fields.boolean(string="Prevent entries to be correctible on this account type.")
+        'picking_id': fields.many2one('stock.picking', string="Picking"),
+        'purchase_ids': fields.many2many('purchase.order', 'purchase_invoice_rel', 'invoice_id', 'purchase_id', 'Purchase Order',
+            help="Purchase Order from which invoice have been generated"),
     }
 
-    _defaults = {
-        'not_correctible': lambda *a: False,
+account_invoice()
+
+class account_invoice_line(osv.osv):
+    _name = 'account.invoice.line'
+    _inherit = 'account.invoice.line'
+
+    _columns = {
+        'order_line_id': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True,
+            help="Purchase Order Line from which this invoice line has been generated (when coming from a purchase order)."),
     }
 
-account_account_type()
+account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

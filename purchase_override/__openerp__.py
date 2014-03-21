@@ -28,9 +28,9 @@
     """,
     "website": "http://unifield.msf.org",
     "init_xml": [],
-    # As account_override depends on purchase, purchase is a useless dependancy for this module
     "depends" : [
         "account_override",
+        "purchase",
         "stock_override",
         "stock",
         "purchase_double_validation",

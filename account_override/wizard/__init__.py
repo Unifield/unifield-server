@@ -1,3 +1,3 @@
-import wizard_import_mapping
-import account_report_partner_balance_tree  # uf-1715
+import account_chart
 import split_invoice
+import import_invoice

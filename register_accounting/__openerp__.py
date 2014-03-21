@@ -39,9 +39,10 @@
         "hr",
         "account_payment",
         "account_accountant",
-        "account_activable",
         "analytic_distribution",
         "purchase_override",
+        # As finance contains account_override and account_override has included account_activable, no need for account_override and account_activable
+        "finance",
         "msf_homere_interface",
     ],
     "init_xml" : [],

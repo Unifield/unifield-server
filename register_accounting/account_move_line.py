@@ -63,6 +63,10 @@ class account_move_line(osv.osv):
         return [('account_id', 'in', res)]
 
     def _search_ready_for_import_in_register(self, cr, uid, obj, name, args, context=None):
+        """
+        Only permit to import invoice regarding some criteria (Cf. dom1 variable content).
+        Add debit note default account filter for search (if this account have been selected)
+        """
         if not args:
             return []
         dom1 = [
@@ -72,6 +76,10 @@ class account_move_line(osv.osv):
             ('journal_id.type', 'in', ['purchase', 'sale','purchase_refund','sale_refund', 'hr']),
             ('account_id.type_for_register', 'not in', ['down_payment'])
         ]
+        # verify debit note default account configuration
+        default_account = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.import_invoice_default_account
+        if default_account:
+            dom1.append(('account_id', '!=', default_account.id))
         return dom1+[('amount_residual_import_inv', '>', 0)]
 
     # @@override account.account_move_line _amount_residual()

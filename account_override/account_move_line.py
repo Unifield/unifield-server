@@ -29,8 +29,8 @@ from tools.translate import _
 from time import strftime
 
 class account_move_line(osv.osv):
-    _inherit = 'account.move.line'
     _name = 'account.move.line'
+    _inherit = 'account.move.line'
 
     # @@@override account>account_move_line.py>account_move_line>name_get
     def name_get(self, cr, uid, ids, context=None):
@@ -301,6 +301,16 @@ class account_move_line(osv.osv):
             res = res[0]
         return res
 
+    def _check_date(self, cr, uid, vals, context=None, check=True):
+        if 'date' in vals and vals['date'] is not False and 'account_id' in vals:
+            account_obj = self.pool.get('account.account')
+            account = account_obj.browse(cr, uid, vals['account_id'])
+            if vals['date'] < account.activation_date \
+            or (account.inactivation_date != False and \
+                vals['date'] >= account.inactivation_date):
+                raise osv.except_osv(_('Error !'), _('The selected account is not active: %s.') % (account.code or '',))
+        return super(account_move_line, self)._check_date(cr, uid, vals, context, check)
+
     def _check_document_date(self, cr, uid, ids, vals=None):
         """
         Check that document's date is done BEFORE posting date
@@ -393,6 +403,18 @@ class account_move_line(osv.osv):
         self._check_document_date(cr, uid, ids, vals)
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
         return res
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        """
+        Filtering regarding context
+        """
+        if not context:
+            context = {}
+        if context.get('currency_id'):
+            args.append(('currency_id', '=', context.get('currency_id')))
+        if context.get('move_state'):
+            args.append(('move_state', '=', context.get('move_state')))
+        return super(account_move_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
     def button_duplicate(self, cr, uid, ids, context=None):
         """
