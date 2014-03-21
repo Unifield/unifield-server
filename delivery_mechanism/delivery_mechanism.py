@@ -785,8 +785,6 @@ class stock_picking(osv.osv):
                         context['keepLineNumber'] = True
                         move_obj.copy(cr, uid, bo_move.id, bo_values, context=context)
                         context['keepLineNumber'] = False
-                    elif bo_move.id in done_moves:
-                        done_moves.remove(bo_move.id)
 
                 # Put the done moves in this new picking
                 move_obj.write(cr, uid, done_moves, {
