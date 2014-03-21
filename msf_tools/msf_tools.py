@@ -522,15 +522,35 @@ class uom_tools(osv.osv_memory):
         """
         if context is None:
             context = {}
-        uom_obj = self.pool.get('product.uom')
-        product_obj = self.pool.get('product.product')
         if product_id and uom_id:
             if isinstance(product_id, (int, long)):
                 product_id = [product_id]
             if isinstance(uom_id, (int, long)):
                 uom_id = [uom_id]
-            if not product_obj.browse(cr, uid, product_id, context)[0].uom_id.category_id.id == uom_obj.browse(cr, uid, uom_id, context)[0].category_id.id:
-                return False
+            cr.execute(
+            """
+            SELECT COUNT(*)
+            FROM 	(
+                SELECT cat.id AS cat_id
+                FROM product_category AS cat,
+                     product_uom AS uom,
+                     product_template AS pt,
+                     product_product AS pp
+                WHERE cat.id=uom.category_id
+                AND uom.id=pt.uom_id
+                AND pt.id=pp.product_tmpl_id
+                AND pp.id = %s
+                ) AS a,
+                (
+                SELECT cat2.id AS cat2_id
+                FROM product_category AS cat2,
+                     product_uom AS uom2
+                WHERE cat2.id=uom2.category_id
+                AND uom2.id = %s
+                ) AS b
+            WHERE a.cat_id=b.cat2_id""", (product_id[0], uom_id[0]))
+            count = cr.fetchall()[0][0]
+            return count > 0
         return True
 
 uom_tools()
