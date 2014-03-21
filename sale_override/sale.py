@@ -1232,7 +1232,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 # In case of IR to internal location, the creation of
                 # a picking is not need.
                 if self._get_new_picking(line):
-                    # Check if a new picking is required
                     if not picking_id:
                         picking_data = self._get_picking_data(cr, uid, order)
                         picking_id = picking_obj.create(cr, uid, picking_data, context=context)
@@ -1324,6 +1323,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                 move_obj.write(cr, uid, [move_id], values, context=context)
                                 proc_obj.write(cr, uid, [proc_id], values, context=context)
 
+                    wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+
             # compute overall_qty
             if move_ids:
                 compute_store = move_obj._store_get_values(cr, uid, move_ids, None, context)
@@ -1353,16 +1354,19 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 # Launch a first check availability
                 picking_obj.action_assign(cr, uid, [picking_id], context=context)
 
+            picks_to_check = set()
             for proc_id in proc_ids:
-                wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
                 if order.procurement_request:
                     proc = proc_obj.browse(cr, uid, [proc_id], context=context)
                     pick_id = proc and proc[0] and proc[0].move_id and proc[0].move_id.picking_id and proc[0].move_id.picking_id.id or False
                     if pick_id:
-                        wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
-                        # We also do a first 'check availability': cancel then check
-                        picking_obj.cancel_assign(cr, uid, [pick_id], context)
-                        picking_obj.action_assign(cr, uid, [pick_id], context)
+                        picks_to_check.add(pick_id)
+
+            for pick_id in picks_to_check:
+                wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
+                # We also do a first 'check availability': cancel then check
+                picking_obj.cancel_assign(cr, uid, [pick_id], context)
+                picking_obj.action_assign(cr, uid, [pick_id], context)
 
             if order.state == 'shipping_except':
                 manual_lines = False
@@ -1591,9 +1595,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 for line in order.order_line:
                     lines.append(line.id)
 
-            # Create procurements
-            proc_ids = []
-            proc_to_check = []
             # flag to prevent the display of the sale order log message
             # if the method is called after po update, we do not display log message
             display_log = True
@@ -1605,13 +1606,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 if line.state not in ['sourced', 'confirmed', 'done'] and not line.created_by_po_line and not line.procurement_id and line.product_id:
                     proc_data = self._get_procurement_order_data(line, order, rts, context=context)
                     proc_id = proc_obj.create(cr, uid, proc_data, context=context)
-                    proc_ids.append(proc_id)
                     # set the flag for log message
                     if line.so_back_update_dest_po_id_sale_order_line or line.created_by_po:
                         display_log = False
-
-                    if line.created_by_po:
-                        proc_to_check.append(proc_id)
 
                     if line.created_by_po_line:
                         pol_obj.write(cr, uid, [line.created_by_po_line.id], {'procurement_id': proc_id}, context=context)
@@ -1630,12 +1627,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                     sol_obj.write(cr, uid, [line.id], line_values, context=context)
 
-            for proc_id in proc_ids:
-                wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+                    wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
 
-            for proc_id in proc_to_check:
-                wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
-                proc_obj.write(cr, uid, [proc_id], {'state': 'running'}, context=context)
+                    if line.created_by_po:
+                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+                        proc_obj.write(cr, uid, [proc_id], {'state': 'running'}, context=context)
 
             # the Fo is sourced we set the state
             o_write_vals['state'] = 'sourced'

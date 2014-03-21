@@ -673,6 +673,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if clc:
                 raise osv.except_osv(_('Warning'), clc)
 
+            proc_request = line.order_id and line.order_id.procurement_request
+
+            if proc_request and line.type == 'make_to_stock' and line.order_id.location_requestor_id.id == line.location_id.id:
+                raise osv.except_osv(
+                    _('Warning'),
+                    _("You cannot choose a source location which is the destination location of the Internal Request"),
+                )
+
             if line.type == 'make_to_order' and \
                line.po_cft not in ['cft'] and \
                not line.product_id and \
@@ -730,12 +738,6 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 check_fnct = product_obj._get_restriction_error
                 self._check_product_constraints(cr, uid, line.type, line.po_cft, line.product_id.id, line.supplier.id, check_fnct, context=context)
 
-            if line.order_id and line.order_id.procurement_request and line.type == 'make_to_stock':
-                if line.order_id.location_requestor_id.id == line.location_id.id:
-                    raise osv.except_osv(
-                        _('Warning'),
-                        _("You cannot choose a source location which is the destination location of the Internal Request"),
-                    )
 
         return True
 
@@ -816,7 +818,6 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         """
         # Objects
         product_obj = self.pool.get('product.product')
-        partner_obj = self.pool.get('res.partner')
 
         if not context:
             context = {}
@@ -832,25 +833,6 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         if 'state' in vals and vals['state'] == 'cancel':
             self.write(cr, uid, ids, {'cf_estimated_delivery_date': False}, context=context)
-
-        # partner_id
-        if 'supplier' in vals:
-            for line in self.browse(cr, uid, ids, context=context):
-                partner_id = vals['supplier']
-                vals.update({'supplier': partner_id})
-                # update the delivery date according to partner_id, only update from the sourcing tool
-                # not from order line as we dont want the date is udpated when the line's state changes for example
-                if partner_id:
-
-                    # if the selected partner belongs to product->suppliers, we take that delay (from supplierinfo)
-                    partner = partner_obj.browse(cr, uid, partner_id, context)
-                    delay = self.check_supplierinfo(line, partner, context=context)
-
-                    estDeliveryDate = date.today() + relativedelta(days=int(delay))
-                    vals.update({'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d')})
-                else:
-                    # no partner is selected, erase the date
-                    vals.update({'estimated_delivery_date': False})
 
         if 'type' in vals:
             if vals['type'] == 'make_to_stock':
