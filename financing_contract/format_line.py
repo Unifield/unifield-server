@@ -361,36 +361,36 @@ class financing_contract_format_line(osv.osv):
 
     _order = 'code asc'
  
+    # UF-2311: Calculate the quadruplet value before writing or creating the format line
+    def calculate_quaduplet(self, vals, context):
+        if 'line_type' in vals and vals['line_type'] == 'view':
+            vals['allocated_amount'] = 0.0
+            vals['project_amount'] = 0.0
+            vals['account_destination_ids'] = [(6, 0, [])]
+            vals['account_quadruplet_ids'] = [(6, 0, [])]
+        elif vals.get('is_quadruplet', False):
+            # delete account/destinations
+            vals['account_destination_ids'] = []
+            if context.get('sync_update_execution'):
+                quads_list = []
+                if vals.get('quadruplet_update', False):
+                    quadrup_str = vals['quadruplet_update']
+                    quads_list = map(int, quadrup_str.split(','))
+                vals['account_quadruplet_ids'] = [(6, 0, quads_list)]
+            else:
+                temp = vals['account_quadruplet_ids']
+                if temp[0]:
+                    vals['quadruplet_update'] = str(temp[0][2]).strip('[]')
+        else:
+            vals['account_quadruplet_ids'] = [(6, 0, [])]
+            vals['quadruplet_update'] = '' # delete quadruplets
+
     def create(self, cr, uid, vals, context=None):
         if not context:
             context = {}
         
         # if the account is set as view, remove budget and account values
-        quads_list = []
-        if 'line_type' in vals and vals['line_type'] == 'view':
-            vals['allocated_amount'] = 0.0
-            vals['project_amount'] = 0.0
-            vals['account_destination_ids'] = []
-            vals['account_quadruplet_ids'] = []
-        else: 
-            if vals.get('is_quadruplet', False):
-                # delete account/destinations
-                vals['account_destination_ids'] = []
-                if context.get('sync_update_execution'):
-                    quads_list = []
-                    if vals.get('quadruplet_update', False):
-                        quadrup_str = vals['quadruplet_update']
-                        quads_list = map(int, quadrup_str.split(','))
-                    vals['account_quadruplet_ids'] =[(6, 0, quads_list)]
-                else:
-                    temp = vals['account_quadruplet_ids']
-                    if temp[0]: 
-                        vals['quadruplet_update'] = str(temp[0][2]).strip('[]')
-            else:
-                # delete quadruplets
-                vals['account_quadruplet_ids'] = []
-                vals['quadruplet_update'] = ''
-                
+        self.calculate_quaduplet(vals, context)
         return super(financing_contract_format_line, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -398,34 +398,7 @@ class financing_contract_format_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
-        # if the account is set as view, remove budget and account values
-        if 'line_type' in vals and vals['line_type'] == 'view':
-            vals['allocated_amount'] = 0.0
-            vals['project_amount'] = 0.0
-            vals['account_destination_ids'] = [(6, 0, [])]
-            vals['account_quadruplet_ids'] = [(6, 0, [])]
-        else: 
-            if vals.get('is_quadruplet', False):
-                # delete account/destinations
-                vals['account_destination_ids'] = []
-                if context.get('sync_update_execution'):
-                    quads_list = []
-                    if vals.get('quadruplet_update', False):
-                        quadrup_str = vals['quadruplet_update']
-                        quads_list = map(int, quadrup_str.split(','))
-                    vals['account_quadruplet_ids'] =[(6, 0, quads_list)]
-                else:
-                    temp = vals['account_quadruplet_ids']
-                    if temp[0]: 
-                        vals['quadruplet_update'] = str(temp[0][2]).strip('[]')
-                # delete previous account/destinations
-                vals['account_destination_ids'] = [(6, 0, [])]
-            else:
-                # delete quadruplets
-                vals['account_quadruplet_ids'] = [(6, 0, [])]
-                vals['quadruplet_update'] = ''
-                
+        self.calculate_quaduplet(vals, context)
         return super(financing_contract_format_line, self).write(cr, uid, ids, vals, context=context)
     
     def copy_format_line(self, cr, uid, browse_source_line, destination_format_id, parent_id=None, context=None):
