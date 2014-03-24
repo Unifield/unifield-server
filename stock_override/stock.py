@@ -1303,76 +1303,79 @@ class stock_move(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         '''
         Update the partner or the address according to the other
-        '''        
-        id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
-        prod_obj = self.pool.get('product.product')
+        '''
+        # Objects
+        prod_obj = self.pool.get('produc.product')
+        data_obj = self.pool.get('ir.model.data')
+        loc_obj = self.pool.get('stock.location')
+        pick_obj = self.pool.get('stock.picking')
+        
+        if not context:
+            context = {}
+        
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        product = None
+        pick_bro = None
+        id_cross = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
 
         if vals.get('product_id', False):
             # complete hidden flags - needed if not created from GUI
-            product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
+            product = prod_obj.browse(cr, uid, vals['product_id'], context=context)
+            vals.update({
+                'hidden_batch_management_mandatory': product.batch_management,
+                'hidden_perishable_mandatory': product.perishable,
+            })
+            
+            if vals.get('picking_id'):
+                pick_bro = pick_obj.browse(cr, uid, vals['picking_id'], context=context)
 
-            if vals.get('picking_id') and product.type == 'consu' and vals.get('location_dest_id') != id_cross:
-                pick_bro = self.pool.get('stock.picking').browse(cr, uid, vals.get('picking_id'))
-                id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')
-                if vals.get('sale_line_id'):
-                    id_pack = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')
-                    if pick_bro.type == 'out':
-                        vals.update(location_id=id_cross)
-                    else:
-                        vals.update(location_id=id_nonstock[1])
-                    vals.update(location_dest_id=id_pack[1])
-                else:
-                    if pick_bro.type != 'out':
-                        vals.update(location_dest_id=id_nonstock[1])
+        if pick_bro and product and product.type == 'consu' and vals.get('location_dest_id') != id_cross:
+            id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')
+            if vals.get('sale_line_id'):
+                id_pack = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')
+                vals.update({
+                    'location_id': pick_bro.type == 'out' and id_cross or id_nonstock[1],
+                    'location_dest_id': id_pack[1],
+                })
+            elif pick_bro.type != 'out':
+                vals['location_dest_id'] = id_nonstock[1]
+                
+        if vals.get('location_dest_id'):
+            dest_id = loc_obj.browse(cr, uid, vals['location_dest_id'], context=context)
+            if dest_id.usage == 'inventory' and not dest_id.virtual_location:
+                vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            if dest_id.scrap_location and not dest_id.virtual_location:
+                vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+            # if the source location and the destination location are the same, the state is done
+            if 'location_id' in vals and vals['location_dest_id'] == vals['location_id']:
+                vals['state'] = 'done'
 
-            if product.batch_management:
-                vals.update(hidden_batch_management_mandatory=True)
-            elif product.perishable:
-                vals.update(hidden_perishable_mandatory=True)
-            else:
-                vals.update(hidden_batch_management_mandatory=False,
-                            hidden_perishable_mandatory=False,
-                            )
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        if not vals.get('address_id') and vals.get('partner_id2'):
+        addr = vals.get('address_id')
+        partner = vals.get('partner_id2')
+        
+        cond1 = not addr and partner
+        cond2 = not partner and addr
+        
+        if vals.get('date_expected') or vals.get('reason_type_id') or cond1 or cond2:
             for move in self.browse(cr, uid, ids, context=context):
-                if move.partner_id.id != vals.get('partner_id'):
+                if cond1 and move.partner_id.id != partner:
                     addr = self.pool.get('res.partner').address_get(cr, uid, vals.get('partner_id2'), ['delivery', 'default'])
-                    if not addr.get('delivery'):
-                        vals['address_id'] = addr.get('default')
-                    else:
-                        vals['address_id'] = addr.get('delivery')
+                    vals['address_id'] = addr.get('delivery', False) or addr.get('default')
 
-        if not vals.get('partner_id2') and vals.get('address_id'):
-            for move in self.browse(cr, uid, ids, context=context):
-                if move.address_id.id != vals.get('address_id'):
+                if cond2 and move.address_id.id != vals.get('address_id'):
                     addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
                     vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
 
-        if vals.get('date_expected'):
-            for move in self.browse(cr, uid, ids, context=context):
-                if vals.get('state', move.state) not in ('done', 'cancel'):
+                if vals.get('date_expected') and vals.get('state', move.state) not in ('done', 'cancel'):
                     vals['date'] = vals.get('date_expected')
 
-        if vals.get('location_dest_id'):
-            dest_id = self.pool.get('stock.location').browse(cr, uid, vals['location_dest_id'], context=context)
-            if dest_id.usage == 'inventory' and not dest_id.virtual_location:
-                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-            if dest_id.scrap_location and not dest_id.virtual_location:
-                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
-            # if the source location and the destination location are the same, the state is done
-            if 'location_id' in vals:
-                if vals['location_dest_id'] == vals['location_id']:
-                    vals['state'] = 'done'
-        # Change the reason type of the picking if it is not the same
-        if 'reason_type_id' in vals:
-            for pick_id in self.browse(cr, uid, ids, context=context):
-                if pick_id.picking_id and pick_id.picking_id.reason_type_id.id != vals['reason_type_id']:
-                    other_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-                    self.pool.get('stock.picking').write(cr, uid, pick_id.picking_id.id, {'reason_type_id': other_type_id}, context=context)
+                # Change the reason type of the picking if it is not the same
+                if 'reason_type_id' in vals:
+                    if move.picking_id and move.picking_id.reason_type_id.id != vals['reason_type_id']:
+                        other_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+                        pick_obj.write(cr, uid, move.picking_id.id, {'reason_type_id': other_type_id}, context=context)
 
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
