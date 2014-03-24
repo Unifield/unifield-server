@@ -109,11 +109,16 @@ class wizard_common_import_line(osv.osv_memory):
         '''
         Open the wizard
         '''
-        context = context is None and {} or context
+        if context is None:
+            context = {}
 
-        wiz_id = self.create(cr, uid, {'parent_id': parent_id,
-                                       'parent_model': parent_model,
-                                       'line_model': line_model}, context=context)
+        vals = {
+            'parent_id': parent_id,
+            'parent_model': parent_model,
+            'line_model': line_model,
+            'search_default_not_restricted': 1 if 'search_default_not_restricted' in context else 0,
+        }
+        wiz_id = self.create(cr, uid, vals, context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': self._name,
@@ -129,6 +134,11 @@ class wizard_common_import_line(osv.osv_memory):
         'line_model': fields.char(size=128, string='Model of the line document'),
         'product_ids': fields.many2many('product.product', 'product_add_in_line_rel',
                                         'wiz_id', 'product_id', string='Products'),
+        'search_default_not_restricted': fields.integer('Search default not restricted', invisible=True),  # UFTP-15 (for context reinject in product_ids m2m for 'add multiple lines' button)
+    }
+        
+    _defaults = {
+        'search_default_not_restricted': 0,
     }
 
     def fill_lines(self, cr, uid, ids, context=None):
