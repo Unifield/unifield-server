@@ -29,16 +29,16 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 class report_open_advances(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
-    
+
     def _enc(self, st):
         if isinstance(st, unicode):
             return st.encode('utf8')
         return st
-    
+
     def create(self, cr, uid, ids, data, context=None):
         # Create the header
         header = [['Journal Code', 'Entry Sequence', 'Proprietary Instance', 'Reference', 'Document Date', 'Posting Date', 'Period', 'Account', 'Third Parties', 'Name', 'Booking Debit', 'Booking Credit', 'Booking Currency', 'Functional Debit', 'Functional Credit', 'Functional Currency']]
-        
+
         # retrieve a big sql query with all information
         sql_open_advances = """
             SELECT DISTINCT journal.name, move.name, instance.code,
@@ -47,7 +47,7 @@ class report_open_advances(report_sxw.report_sxw):
                    line.partner_txt, line.name,
                    line.debit_currency, line.credit_currency, booking_currency.name,
                    line.debit, line.credit, functional_currency.name
-            FROM 
+            FROM
                 account_move_line line
                 LEFT JOIN account_journal journal ON line.journal_id = journal.id
                 LEFT JOIN account_account account ON line.account_id = account.id
@@ -57,7 +57,7 @@ class report_open_advances(report_sxw.report_sxw):
                 LEFT JOIN res_company company ON line.company_id = company.id
                 LEFT JOIN res_currency functional_currency ON company.currency_id = functional_currency.id
                 LEFT JOIN msf_instance instance ON line.instance_id = instance.id
-            WHERE 
+            WHERE
                 account.type_for_register = 'advance' AND
                 line.state = 'valid' AND
                 line.reconcile_id IS NULL AND
@@ -66,13 +66,13 @@ class report_open_advances(report_sxw.report_sxw):
         """ % (time.strftime('%Y-%m-%d'))
         cr.execute(sql_open_advances)
         res = header + cr.fetchall()
-        
-        buffer = StringIO.StringIO()
-        writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
+
+        b = StringIO.StringIO()
+        writer = csv.writer(b, quoting=csv.QUOTE_ALL)
         for line in res:
             writer.writerow(map(self._enc,line))
-        out = buffer.getvalue()    
-        buffer.close()
+        out = b.getvalue()
+        b.close()
         return (out, 'csv')
 
 report_open_advances('report.open.advances', 'account.bank.statement', False, parser=False)

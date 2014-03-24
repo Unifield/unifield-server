@@ -26,8 +26,8 @@ from osv import fields
 from tools.translate import _
 
 from time import strftime
-from account_tools import get_period_from_date
-from account_tools import get_date_in_period
+from account_override.period import get_period_from_date
+from account_override.period import get_date_in_period
 
 from collections import defaultdict
 
@@ -113,7 +113,7 @@ class purchase_order(osv.osv):
                 'context': context,
         }
 
-    def copy_data(self, cr, uid, id, default=None, context=None):
+    def copy_data(self, cr, uid, p_id, default=None, context=None):
         """
         Copy global distribution and give it to new purchase.
         Delete commitment_ids link.
@@ -128,14 +128,14 @@ class purchase_order(osv.osv):
         if 'analytic_distribution_id' not in default:
             default['analytic_distribution_id'] = False
         # Default method
-        return super(purchase_order, self).copy_data(cr, uid, id, default=default, context=context)
+        return super(purchase_order, self).copy_data(cr, uid, p_id, default=default, context=context)
 
-    def action_create_commitment(self, cr, uid, ids, type=False, context=None):
+    def action_create_commitment(self, cr, uid, ids, ctype=False, context=None):
         """
         Create commitment from given PO, but only for external and esc partner_types
         """
         # Some verifications
-        if not type or type not in ['external', 'esc']:
+        if not ctype or ctype not in ['external', 'esc']:
             return False
         if not context:
             context = {}
@@ -143,10 +143,12 @@ class purchase_order(osv.osv):
             ids = [ids]
         # Prepare some values
         commit_obj = self.pool.get('account.commitment')
-        eng_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement'),
-                                                                             ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.id)],
-                                                                             limit=1,
-                                                                             context=context)
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.id
+        args = [
+            ('type', '=', 'engagement'),
+            ('instance_id', '=', instance_id)
+        ]
+        eng_ids = self.pool.get('account.analytic.journal').search(cr, uid, args, limit=1, context=context)
         for po in self.browse(cr, uid, ids, context=context):
             # fetch analytic distribution, period from delivery date, currency, etc.
             vals = {
@@ -179,7 +181,7 @@ class purchase_order(osv.osv):
                 new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, po.analytic_distribution_id.id, {}, context=context)
                 # Update this distribution not to have a link with purchase but with new commitment
                 if new_distrib_id:
-                    self.pool.get('analytic.distribution').write(cr, uid, [new_distrib_id], 
+                    self.pool.get('analytic.distribution').write(cr, uid, [new_distrib_id],
                         {'purchase_id': False, 'commitment_id': commit_id}, context=context)
                     # Create funding pool lines if needed
                     self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id], context=context)
@@ -279,12 +281,6 @@ class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
 
-    def create(self, cr, uid, vals, context=None):
-        if (not 'price_unit' in vals or vals['price_unit'] == 0.00) and 'order_id' in vals and self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context=context).from_yml_test:
-            vals['price_unit'] = 1.00
-
-        return super(purchase_order_line, self).create(cr, uid, vals, context=context)
-
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -322,21 +318,16 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
-        try:
-            intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                                    'analytic_account_project_intermission')[1]
-        except ValueError:
-            intermission_cc = 0
+#         try:
+#             intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+#                                     'analytic_account_project_intermission')[1]
+#         except ValueError:
+#             intermission_cc = 0
         # Browse all given lines
         for line in self.browse(cr, uid, ids, context=context):
-            is_intermission = False
-            if line.order_id and line.order_id.partner_id and line.order_id.partner_id.partner_type == 'intermission':
-                is_intermission = True
-
-            # Check if PO is inkind
-            is_inkind = False
-            if line.order_id and line.order_id.order_type == 'in_kind':
-                is_inkind = True
+#             is_intermission = False
+#             if line.order_id and line.order_id.partner_id and line.order_id.partner_id.partner_type == 'intermission':
+#                 is_intermission = True
             if line.order_id and line.order_id.from_yml_test:
                 res[line.id] = 'valid'
             elif line.order_id and not line.order_id.analytic_distribution_id and not line.analytic_distribution_id:
@@ -349,7 +340,7 @@ class purchase_order_line(osv.osv):
                     res[line.id] = 'invalid'
                     continue
                 res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, po_distrib_id, account_id)
-                
+
                 # UTP-953: For intersection, the cc_intermission can also be used for all partner types, so the block below is removed
 #                if res[line.id] == 'valid' and not is_intermission:
 #                    cr.execute('SELECT id FROM cost_center_distribution_line WHERE distribution_id=%s AND analytic_id=%s', (po_distrib_id or distrib_id, intermission_cc))
@@ -413,10 +404,10 @@ class purchase_order_line(osv.osv):
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
-        'commitment_line_ids': fields.many2many('account.commitment.line', 'purchase_line_commitment_rel', 'purchase_id', 'commitment_id', 
+        'commitment_line_ids': fields.many2many('account.commitment.line', 'purchase_line_commitment_rel', 'purchase_id', 'commitment_id',
             string="Commitment Voucher Lines", readonly=True),
-        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
         'account_4_distribution': fields.function(_get_distribution_account, method=True, type='many2one', relation="account.account", string="Account for analytical distribution", readonly=True),
@@ -452,7 +443,7 @@ class purchase_order_line(osv.osv):
         if is_inkind and not account_id:
             raise osv.except_osv(_('Error'), _('No donation account found for this line: %s. (product: %s)') % (purchase_line.name, purchase_line.product_id and purchase_line.product_id.name or ''))
         elif not account_id:
-            raise osv.except_osv(_('Error !'), 
+            raise osv.except_osv(_('Error !'),
                     _('There is no expense account defined for this product: "%s" (id:%d)') % (purchase_line.product_id.name, purchase_line.product_id.id))
         # Prepare values for wizard
         vals = {
@@ -487,7 +478,7 @@ class purchase_order_line(osv.osv):
                 'context': context,
         }
 
-    def copy_data(self, cr, uid, id, default=None, context=None):
+    def copy_data(self, cr, uid, l_id, default=None, context=None):
         """
         Copy global distribution and give it to new purchase line.
         """
@@ -500,7 +491,7 @@ class purchase_order_line(osv.osv):
         default.update({'commitment_line_ids': [(6, 0, [])],})
         if 'analytic_distribution_id' not in default and not context.get('keepDateAndDistrib'):
             default['analytic_distribution_id'] = False
-        new_data = super(purchase_order_line, self).copy_data(cr, uid, id, default, context)
+        new_data = super(purchase_order_line, self).copy_data(cr, uid, l_id, default, context)
         if new_data and new_data.get('analytic_distribution_id'):
             new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
         return new_data

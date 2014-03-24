@@ -26,14 +26,13 @@ from osv import fields
 from tools.translate import _
 import time
 from collections import defaultdict
-from tools.misc import flatten
 
 class analytic_distribution_wizard(osv.osv_memory):
     _inherit = 'analytic.distribution.wizard'
 
     _columns = {
         'date': fields.date(string="Date", help="This date is taken from analytic distribution corrections"),
-        'state': fields.selection([('draft', 'Draft'), ('cc', 'Cost Center only'), ('dispatch', 'All other elements'), ('done', 'Done'), 
+        'state': fields.selection([('draft', 'Draft'), ('cc', 'Cost Center only'), ('dispatch', 'All other elements'), ('done', 'Done'),
             ('correction', 'Correction')], string="State", required=True, readonly=True),
         'old_account_id': fields.many2one('account.account', "New account given by correction wizard", readonly=True),
     }
@@ -43,15 +42,15 @@ class analytic_distribution_wizard(osv.osv_memory):
         'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
-    def _check_lines(self, cr, uid, distribution_line_id, wiz_line_id, type):
+    def _check_lines(self, cr, uid, distribution_line_id, wiz_line_id, ltype):
         """
         Check components compatibility
         """
         # Prepare some values
         wiz_line_types = {'cost.center': '', 'funding.pool': 'fp', 'free.1': 'f1', 'free.2': 'f2',}
-        obj = '.'.join([type, 'distribution', 'line'])
+        obj = '.'.join([ltype, 'distribution', 'line'])
         oline = self.pool.get(obj).browse(cr, uid, distribution_line_id)
-        nline_type = '.'.join([wiz_line_types.get(type), 'lines'])
+        nline_type = '.'.join([wiz_line_types.get(ltype), 'lines'])
         nline_obj = '.'.join(['analytic.distribution.wizard', nline_type])
         nline = self.pool.get(nline_obj).browse(cr, uid, wiz_line_id)
         to_reverse = []
@@ -60,7 +59,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         if not period:
             raise osv.except_osv(_('Error'), _('No attached period to the correction wizard. Do you come from a correction wizard attached to a journal item?'))
         # Some cases
-        if type == 'funding.pool':
+        if ltype == 'funding.pool':
             old_component = [oline.destination_id.id, oline.analytic_id.id, oline.cost_center_id.id, oline.percentage]
             new_component = [nline.destination_id.id, nline.analytic_id.id, nline.cost_center_id.id, nline.percentage]
             if old_component != new_component:
@@ -116,7 +115,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Prepare some values
         wizard = self.browse(cr, uid, wizard_id)
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
-        current_date = time.strftime('%Y-%m-%d')
         ml = wizard.move_line_id
         orig_date = ml.source_date or ml.date
         orig_document_date = ml.document_date
@@ -124,10 +122,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
         if not correction_journal_id:
             raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
-        # OK let's go on funding pool lines
-        # Search old line and new lines
-        old_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
-        wiz_line_ids = self.pool.get('analytic.distribution.wizard.fp.lines').search(cr, uid, [('wizard_id', '=', wizard_id), ('type', '=', 'funding.pool')])
         to_create = []
         to_override = []
         to_delete = []

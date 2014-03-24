@@ -30,9 +30,9 @@ class account_bank_statement(osv.osv):
     _inherit = 'account.bank.statement'
 
     _columns = {
-        'prev_reg_id': fields.many2one('account.bank.statement', string="Previous register", required=False, readonly=True, 
+        'prev_reg_id': fields.many2one('account.bank.statement', string="Previous register", required=False, readonly=True,
             help="This fields give the previous register from which this one is linked."),
-        'next_reg_id': fields.one2many('account.bank.statement', 'prev_reg_id', string="Next register", readonly=True, 
+        'next_reg_id': fields.one2many('account.bank.statement', 'prev_reg_id', string="Next register", readonly=True,
             help="This fields give the next register if exists."),
     }
 
@@ -57,8 +57,10 @@ class account_bank_statement_line(osv.osv):
             if not context.get('sync_update_execution', False) and absl and absl[0] and absl[0].partner_id and not absl[0].partner_id.active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (absl[0].partner_id.name or '',))
         return res
+
     _columns = {
         'ref': fields.char('Reference', size=50), # UF-1613 - add reference field from 32 to 50 chars
+        'invoice_id': fields.many2one('account.invoice', "Invoice", required=False),
     }
 
 account_bank_statement_line()

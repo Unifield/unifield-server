@@ -133,6 +133,10 @@ class hq_entries_split_lines(osv.osv_memory):
         """
         if not context:
             context = {}
+        # UFTP-36 name readonly so not passed here into vals, get it
+        wiz = self.pool.get('hq.entries.split').browse(cr, uid, context.get('active_id'))
+        if wiz and wiz.original_id and wiz.original_id.name:
+            vals['name'] = wiz.original_id.name
         if vals.get('amount', 0.0):
             # Check that amount is not negative
             if vals.get('amount') <= 0.0:

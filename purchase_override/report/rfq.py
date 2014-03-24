@@ -30,6 +30,7 @@ class rfq(report_sxw.rml_parse):
             'time': time,
             'to_time': self.str_to_time,
             'enumerate': enumerate,
+            'encode_origin': self._encode_origin,
         })
         
     def str_to_time(self, time):
@@ -40,6 +41,11 @@ class rfq(report_sxw.rml_parse):
         if time:
             return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, datetime=time)
         
+        return ''
+        
+    def _encode_origin(self, origin):
+        if origin:
+            return origin.replace(';', '; ')
         return ''
             
 report_sxw.report_sxw('report.msf.purchase.quotation','purchase.order','addons/purchase_override/report/rfq.rml',parser=rfq, header=False)

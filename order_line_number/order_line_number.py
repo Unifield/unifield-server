@@ -31,12 +31,12 @@ import time
 
 
 class sale_order(osv.osv):
-    
+
     _inherit = 'sale.order'
     _description = 'Sales Order'
     _columns = {'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', help="This field contains the information related to the numbering of the lines of this order.", required=True, ondelete='cascade'),
                 }
-    
+
     def create_sequence(self, cr, uid, vals, context=None):
         """
         Create new entry sequence for every new order
@@ -65,7 +65,7 @@ class sale_order(osv.osv):
             'padding': 0,
         }
         return seq_pool.create(cr, uid, seq)
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         create from sale_order
@@ -76,9 +76,9 @@ class sale_order(osv.osv):
 
         if not context.get('keepClientOrder') or not context.get('keepDateAndDistrib') or not vals.get('sequence_id'):
             vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
-        
+
         return super(sale_order, self).create(cr, uid, vals, context)
-    
+
     def reorder_line_numbering(self, cr, uid, ids, context=None):
         '''
         test function
@@ -87,7 +87,7 @@ class sale_order(osv.osv):
         tools_obj = self.pool.get('sequence.tools')
         tools_obj.reorder_sequence_number(cr, uid, 'sale.order', 'sequence_id', 'sale.order.line', 'order_id', ids, 'line_number', context=context)
         return True
-    
+
     def allow_resequencing(self, cr, uid, so_browse, context=None):
         '''
         allow resequencing criteria
@@ -95,20 +95,6 @@ class sale_order(osv.osv):
         if so_browse.state == 'draft' and not so_browse.client_order_ref:
             return True
         return False
-    
-    def _hook_ship_create_stock_move(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_ship_create method from sale>sale.py
-        
-        - allow to modify the data for stock move creation
-        - set the line number of the Out corresponding to the one from Sale order
-        '''
-        move_data = super(sale_order, self)._hook_ship_create_stock_move(cr, uid, ids, context=context, *args, **kwargs)
-        line = kwargs['line']
-        # copy original line number
-        move_data['line_number'] = line.line_number
-        return move_data
 
 sale_order()
 
@@ -122,7 +108,7 @@ class sale_order_line(osv.osv):
     _columns = {'line_number': fields.integer(string='Line', required=True),
                 }
     _order = 'line_number, id'
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         _inherit = 'sale.order.line'
@@ -144,7 +130,7 @@ class sale_order_line(osv.osv):
         # create the new sale order line
         result = super(sale_order_line, self).create(cr, uid, vals, context=context)
         return result
-    
+
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
         if the line_number is not in the default, we set it to False
@@ -153,12 +139,12 @@ class sale_order_line(osv.osv):
             default = {}
         if context is None:
             context = {}
-        
+
         # we set line_number, so it will not be copied in copy_data - keepLineNumber - the original Line Number will be kept
         if 'line_number' not in default and not context.get('keepLineNumber', False):
             default.update({'line_number': False})
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
-    
+
     def unlink(self, cr, uid, ids, context=None):
         '''
         check the numbering on deletion
@@ -168,41 +154,41 @@ class sale_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         # objects
         tools_obj = self.pool.get('sequence.tools')
-        
+
         if not context.get('skipResequencing', False):
-            # re sequencing only happen if field order is draft and not synchronized (PUSH flow) (behavior 1) 
+            # re sequencing only happen if field order is draft and not synchronized (PUSH flow) (behavior 1)
             draft_not_synchronized_ids = self.allow_resequencing(cr, uid, ids, context=context)
             tools_obj.reorder_sequence_number_from_unlink(cr, uid, draft_not_synchronized_ids, 'sale.order', 'sequence_id', 'sale.order.line', 'order_id', 'line_number', context=context)
-        
+
         return super(sale_order_line, self).unlink(cr, uid, ids, context=context)
-    
+
     def allow_resequencing(self, cr, uid, ids, context=None):
         '''
         define if a resequencing has to be performed or not
-        
+
         return the list of ids for which resequencing will can be performed
-        
+
         linked to Fo + Fo draft + Fo not sync
         '''
         # objects
         so_obj = self.pool.get('sale.order')
-        
+
         resequencing_ids = [x.id for x in self.browse(cr, uid, ids, context=context) if x.order_id and so_obj.allow_resequencing(cr, uid, x.order_id, context=context)]
         return resequencing_ids
-            
+
 sale_order_line()
 
 
 class purchase_order(osv.osv):
-    
+
     _inherit = 'purchase.order'
     _description = 'Purchase Order'
     _columns = {'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', help="This field contains the information related to the numbering of the lines of this order.", required=True, ondelete='cascade'),
                 }
-    
+
     def create_sequence(self, cr, uid, vals, context=None):
         """
         Create new entry sequence for every new order
@@ -231,16 +217,16 @@ class purchase_order(osv.osv):
             'padding': 0,
         }
         return seq_pool.create(cr, uid, seq)
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         create from purchase_order
         create the sequence for the numbering of the lines
         '''
         vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
-        
+
         return super(purchase_order, self).create(cr, uid, vals, context)
-    
+
     def reorder_line_numbering(self, cr, uid, ids, context=None):
         '''
         test function
@@ -249,7 +235,7 @@ class purchase_order(osv.osv):
         tools_obj = self.pool.get('sequence.tools')
         tools_obj.reorder_sequence_number(cr, uid, 'purchase.order', 'sequence_id', 'purchase.order.line', 'order_id', ids, 'line_number', context=context)
         return True
-    
+
     def allow_resequencing(self, cr, uid, po_browse, context=None):
         '''
         allow resequencing criteria
@@ -271,33 +257,6 @@ class purchase_order_line(osv.osv):
                 }
     _order = 'line_number, id'
 
-    def create(self, cr, uid, vals, context=None):
-        '''
-        _inherit = 'purchase.order.line'
-        add the corresponding line number
-        '''
-        # objects
-        po_obj = self.pool.get('purchase.order')
-        seq_pool = self.pool.get('ir.sequence')
-        
-        # I leave this line from QT related to purchase.order.merged.line for compatibility and safety reasons
-        # merged lines, set the line_number to 0 when calling create function
-        # the following line should *logically* be removed safely
-        # copy method should work as well, as merged line do *not* need to keep original line number with copy function (QT confirmed)
-        if self._name != 'purchase.order.merged.line':
-            if vals.get('order_id', False):
-                # gather the line number from the sale order sequence if not specified in vals
-                # either line_number is not specified or set to False from copy, we need a new value
-                if not vals.get('line_number', False):
-                    # new number needed - gather the line number from the sequence
-                    sequence_id = po_obj.read(cr, uid, [vals['order_id']], ['sequence_id'], context=context)[0]['sequence_id'][0]
-                    line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
-                    vals.update({'line_number': line})
-        
-        # create the new sale order line
-        result = super(purchase_order_line, self).create(cr, uid, vals, context=context)
-        return result
-    
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
         if the line_number is not in the default, we set it to False
@@ -306,12 +265,12 @@ class purchase_order_line(osv.osv):
             default = {}
         if context is None:
             context = {}
-        
+
         # we set line_number, so it will not be copied in copy_data - keepLineNumber - the original Line Number will be kept
         if 'line_number' not in default and not context.get('keepLineNumber', False):
             default.update({'line_number': False})
         return super(purchase_order_line, self).copy_data(cr, uid, id, default, context=context)
-    
+
     def unlink(self, cr, uid, ids, context=None):
         '''
         check the numbering on deletion
@@ -321,32 +280,32 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         # objects
         tools_obj = self.pool.get('sequence.tools')
-        
+
         if not context.get('skipResequencing', False):
-            # re sequencing only happen if purchase order is draft (behavior 1) 
+            # re sequencing only happen if purchase order is draft (behavior 1)
             # get ids with corresponding po at draft state
             draft_ids = self.allow_resequencing(cr, uid, ids, context=context)
             tools_obj.reorder_sequence_number_from_unlink(cr, uid, draft_ids, 'purchase.order', 'sequence_id', 'purchase.order.line', 'order_id', 'line_number', context=context)
-        
+
         return super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
-    
+
     def allow_resequencing(self, cr, uid, ids, context=None):
         '''
         define if a resequencing has to be performed or not
-        
+
         return the list of ids for which resequencing will can be performed
-        
+
         linked to Po + Po allows resequencing
         '''
         # objects
         po_obj = self.pool.get('purchase.order')
-        
+
         resequencing_ids = [x.id for x in self.browse(cr, uid, ids, context=context) if x.order_id and po_obj.allow_resequencing(cr, uid, x.order_id, context=context)]
         return resequencing_ids
-            
+
 purchase_order_line()
 
 
@@ -360,16 +319,16 @@ class procurement_order(osv.osv):
         '''
         Please copy this to your module's method also.
         This hook belongs to the make_po method from purchase>purchase.py>procurement_order
-        
+
         - allow to modify the data for purchase order line creation
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         # objects
         po_obj = self.pool.get('purchase.order')
         procurement = kwargs['procurement']
-        
+
         line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         # if we are updating the sale order from the corresponding on order purchase order
         # the purchase order to merge the new line to is locked and provided in the procurement
@@ -379,17 +338,17 @@ class procurement_order(osv.osv):
             if not po_obj.allow_resequencing(cr, uid, procurement.so_back_update_dest_po_id_procurement_order, context=context):
                 line.update({'line_number': procurement.so_back_update_dest_pol_id_procurement_order.line_number})
         return line
-    
+
 procurement_order()
 
 
 class supplier_catalogue(osv.osv):
-    
+
     _inherit = 'supplier.catalogue'
     _description = 'Supplier catalogue'
     _columns = {'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', help="This field contains the information related to the numbering of the lines of this order.", required=True, ondelete='cascade'),
                 }
-    
+
     def create_sequence(self, cr, uid, vals, context=None):
         """
         Create new entry sequence for every new order
@@ -418,14 +377,14 @@ class supplier_catalogue(osv.osv):
             'padding': 0,
         }
         return seq_pool.create(cr, uid, seq)
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         create from purchase_order
         create the sequence for the numbering of the lines
         '''
         vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
-        
+
         return super(supplier_catalogue, self).create(cr, uid, vals, context)
 
 supplier_catalogue()
@@ -445,7 +404,7 @@ class supplier_catalogue_line(osv.osv):
     def create(self, cr, uid, vals, context=None):
         '''
         _inherit = 'supplier.catalogue.line'
-        
+
         add the corresponding line number
         '''
         if self._name != 'supplier.catalogue.merged.line':
@@ -454,10 +413,10 @@ class supplier_catalogue_line(osv.osv):
             sequence = order.sequence_id
             line = sequence.get_id(code_or_id='id', context=context)
             vals.update({'line_number': line})
-        
+
         # create the new sale order line
         result = super(supplier_catalogue_line, self).create(cr, uid, vals, context=context)
-        
+
         return result
 
 supplier_catalogue_line()
@@ -519,10 +478,10 @@ class ir_sequence(osv.osv):
         if s and '%(instance)s' in s:
             data['instance'] = self._get_instance(cr, uid)
         if s and '%(hqcode)s' in s:
-            data['hqcode'] =  self._get_hqcode(cr, uid)
+            data['hqcode'] = self._get_hqcode(cr, uid)
         if s and '%(instance_code)s' in s:
             data['instance_code'] = self._get_instance_code(cr, uid)
-        
+
         return (s or '') % data
 ir_sequence()
 

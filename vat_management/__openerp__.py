@@ -27,7 +27,8 @@
     "description" : "This module add somes elements to manage VAT @ MSF",
     "author" : "MSF, TeMPO Consulting",
     "category" : "Accounting",
-    "depends" : ["base", "account", "register_accounting", "account_activable", "purchase_msf"],
+# Account_activable is not needed because of register_accounting that depends on finance that depends on account_override in which account_activable have been included
+    "depends" : ["base", "account", "register_accounting", "purchase_msf"],
     "init_xml" : [
         'data/account_type.xml',
     ],

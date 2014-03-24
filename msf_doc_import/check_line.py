@@ -31,7 +31,7 @@ def get_xml(value):
     new_value = []
     for v in list(value):
         if v == '&':
-            v='&amp;'
+            v = '&amp;'
         elif v == '<':
             v = '&lt;'
         elif v == '>':
@@ -272,9 +272,10 @@ def product_value(cr, uid, **kwargs):
                     msg = _('Product code doesn\'t exist in the DB.')
                 else:
                     default_code = p_ids[0]
-                    proc_type = product_obj.browse(cr, uid, [default_code])[0].procure_method
-                    price_unit = product_obj.browse(cr, uid, [default_code])[0].list_price
-                    cost_price = product_obj.browse(cr, uid, [default_code])[0].standard_price
+                    product = product_obj.browse(cr, uid, default_code)
+                    proc_type = product.procure_method
+                    price_unit = product.list_price
+                    cost_price = product.standard_price
             else:
                 msg = _('The Product Code has to be a string.')
         if not default_code or default_code == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]:

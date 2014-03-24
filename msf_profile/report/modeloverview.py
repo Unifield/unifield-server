@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import time
 from report import report_sxw
-from osv import osv, fields
-import pooler
+from osv import fields
 import tools
 
 class modeloverview(report_sxw.rml_parse):
@@ -41,7 +39,7 @@ class modeloverview(report_sxw.rml_parse):
         tag = "{urn:oasis:names:tc:opendocument:xmlns:text:1.0}"
         tagxlink = "{http://www.w3.org/1999/xlink}"
         return ('%sa'%tag, {'%shref'%tagxlink: '#%s'%(name)})
-    
+
     def makelink(self, model):
         tag = "{urn:oasis:names:tc:opendocument:xmlns:table:1.0}"
         if not self.modulepos.get(model.model):
@@ -110,7 +108,7 @@ class modeloverview(report_sxw.rml_parse):
         if hasattr(obj_col,'help'):
             return getattr(obj_col, 'help')
         return ""
-    
+
     def listmodules(self):
         obj = self.pool.get('ir.module.module')
         ids = obj.search(self.cr, self.uid, [('state', 'in', ['installed', 'to upgrade', 'to install'])])
@@ -119,7 +117,7 @@ class modeloverview(report_sxw.rml_parse):
             ret.append(m['name'])
         self.num += len(ret)
         return ret
-   
+
     def is_inherits(self,obj):
         modobj = self.pool.get(obj)
         return hasattr(modobj, '_inherits') and modobj._inherits
@@ -131,7 +129,7 @@ class modeloverview(report_sxw.rml_parse):
         ret = modobj._inherits.items()
         self.num += len(ret)+1
         return ret
-            
+
     def has_constraints(self, obj):
         modobj = self.pool.get(obj)
         if not hasattr(modobj, '_constraints') or not modobj._constraints:

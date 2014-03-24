@@ -25,7 +25,7 @@ from tools.translate import _
 import pooler
 from time import strptime
 
-from account_tools import finance_export
+from account_override import finance_export
 
 from report import report_sxw
 

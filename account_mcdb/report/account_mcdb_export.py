@@ -29,6 +29,12 @@ from time import strftime
 import csv
 from tempfile import TemporaryFile
 
+def get_back_browse(self, cr, uid, context):
+    background_id = context.get('background_id')
+    if background_id:
+        return self.pool.get('memory.background.report').browse(cr, uid, background_id)
+    return False
+
 class account_line_csv_export(osv.osv_memory):
     _name = 'account.line.csv.export'
     _description = 'Account Entries CSV Export'
@@ -47,6 +53,7 @@ class account_line_csv_export(osv.osv_memory):
         if not context:
             context = {}
         field_sel = self.pool.get('ir.model.fields').get_browse_selection
+        back_browse = get_back_browse(self, cr, uid, context)
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -69,60 +76,76 @@ class account_line_csv_export(osv.osv_memory):
         ids.sort()
         # Then write lines
         account_move_line_obj = self.pool.get('account.move.line')
-        for ml in account_move_line_obj.browse(cr, uid, ids, context=context):
-            csv_line = []
-            #instance_id (Proprietary Instance)
-            csv_line.append(ml.instance_id and ml.instance_id.code and ml.instance_id.code.encode('utf-8') or '')
-            # journal_id
-            csv_line.append(ml.journal_id and ml.journal_id.code and ml.journal_id.code.encode('utf-8') or '')
-            #move_id (Entry Sequence)
-            csv_line.append(ml.move_id and ml.move_id.name and ml.move_id.name.encode('utf-8') or '')
-            #name
-            csv_line.append(ml.name and ml.name.encode('utf-8') or '')
-            #ref
-            csv_line.append(ml.ref and ml.ref.encode('utf-8') or '')
-            #document_date
-            csv_line.append(ml.document_date or '')
-            #date
-            csv_line.append(ml.date or '')
-            #period_id
-            csv_line.append(ml.period_id and ml.period_id.name and ml.period_id.name.encode('utf-8') or '')
-            #account_id code - name
-            account_code = ml.account_id and ml.account_id.code and ml.account_id.code.encode('utf-8') or ''
-            account_description = ml.account_id and ml.account_id.name and ml.account_id.name.encode('utf-8') or ''
-            csv_line.append("%s - %s" % (account_code or '', account_description or ''))
-            #partner_txt
-            csv_line.append(ml.partner_txt and ml.partner_txt.encode('utf-8') or '')
-            #debit_currency
-            csv_line.append(ml.debit_currency or 0.0)
-            #credit_currency
-            csv_line.append(ml.credit_currency or 0.0)
-            #currency_id
-            csv_line.append(ml.currency_id and ml.currency_id.name and ml.currency_id.name.encode('utf-8') or '')
-            if not currency_id:
-                #debit
-                csv_line.append(ml.debit or 0.0)
-                #credit
-                csv_line.append(ml.credit or 0.0)
-                #functional_currency_id
-                csv_line.append(ml.functional_currency_id and ml.functional_currency_id.name and ml.functional_currency_id.name.encode('utf-8') or '')
-            else:
-                #UTP-936: Now call the common method to calculate the output values
-                amount = account_move_line_obj.calculate_output(cr, uid, currency_id, ml, round=False, context=context)
-                if amount < 0.0:
-                    csv_line.append(0.0)
-                    csv_line.append(abs(amount) or 0.0)
+        len_ids = len(ids)
+        l = 0
+        steps = 1000
+        while l < len_ids:
+            if back_browse:
+                back_browse.update_percent(l/float(len_ids))
+            old_l = l
+            l += steps
+            new_ids = ids[old_l:l]
+            for ml in account_move_line_obj.browse(cr, uid, new_ids, context=context):
+                csv_line = []
+                #instance_id (Proprietary Instance)
+                csv_line.append(ml.instance_id and ml.instance_id.code and ml.instance_id.code.encode('utf-8') or '')
+                # journal_id
+                csv_line.append(ml.journal_id and ml.journal_id.code and ml.journal_id.code.encode('utf-8') or '')
+                #move_id (Entry Sequence)
+                csv_line.append(ml.move_id and ml.move_id.name and ml.move_id.name.encode('utf-8') or '')
+                #name
+                csv_line.append(ml.name and ml.name.encode('utf-8') or '')
+                #ref
+                csv_line.append(ml.ref and ml.ref.encode('utf-8') or '')
+                #document_date
+                csv_line.append(ml.document_date or '')
+                #date
+                csv_line.append(ml.date or '')
+                #period_id
+                csv_line.append(ml.period_id and ml.period_id.name and ml.period_id.name.encode('utf-8') or '')
+                #account_id code - name
+                account_code = ml.account_id and ml.account_id.code and ml.account_id.code.encode('utf-8') or ''
+                account_description = ml.account_id and ml.account_id.name and ml.account_id.name.encode('utf-8') or ''
+                csv_line.append("%s - %s" % (account_code or '', account_description or ''))
+                #partner_txt
+                csv_line.append(ml.partner_txt and ml.partner_txt.encode('utf-8') or '')
+                #debit_currency
+                csv_line.append(ml.debit_currency or 0.0)
+                #credit_currency
+                csv_line.append(ml.credit_currency or 0.0)
+                #currency_id
+                csv_line.append(ml.currency_id and ml.currency_id.name and ml.currency_id.name.encode('utf-8') or '')
+                if not currency_id or (currency_id and currency_id == ml.currency_id):
+                    # uf-2327 no currency or same as booking
+                    #debit
+                    csv_line.append(ml.debit or 0.0)
+                    #credit
+                    csv_line.append(ml.credit or 0.0)
+                    #functional_currency_id
+                    csv_line.append(ml.functional_currency_id and ml.functional_currency_id.name and ml.functional_currency_id.name.encode('utf-8') or '')
                 else:
-                    csv_line.append(abs(amount) or 0.0)
-                    csv_line.append(0.0)
-                #output currency
-                csv_line.append(currency_name.encode('utf-8') or '')
-            #reconcile_total_partial_id
-            csv_line.append(ml.reconcile_total_partial_id and ml.reconcile_total_partial_id.name and ml.reconcile_total_partial_id.name.encode('utf-8') or '')
-            #state
-            csv_line.append(field_sel(cr, uid, ml, 'move_state', context).encode('utf-8'))
-            # Write line
-            writer.writerow(csv_line)
+                    context['date'] = ml.source_date or ml.date  # uf-2333 [FIX] reversal line: source_date or posting_date
+                    amount = account_move_line_obj.calculate_output(cr, uid, currency_id, ml, round=False, context=context)
+                    if amount < 0.0:
+                        csv_line.append(0.0)
+                        csv_line.append(abs(amount) or 0.0)
+                    else:
+                        #output amount (debit/credit) regarding booking currency
+                        amount = currency_obj.compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=False, context=context)
+                        if amount < 0.0:
+                            csv_line.append(0.0)
+                            csv_line.append(abs(amount) or 0.0)
+                        else:
+                            csv_line.append(abs(amount) or 0.0)
+                            csv_line.append(0.0)
+                        #output currency
+                        csv_line.append(currency_name.encode('utf-8') or '')
+                    #reconcile_total_partial_id
+                    csv_line.append(ml.reconcile_total_partial_id and ml.reconcile_total_partial_id.name and ml.reconcile_total_partial_id.name.encode('utf-8') or '')
+                    #state
+                    csv_line.append(field_sel(cr, uid, ml, 'move_state', context).encode('utf-8'))
+                    # Write line
+                    writer.writerow(csv_line)
             
             #############################
             ###
@@ -151,6 +174,7 @@ class account_line_csv_export(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        back_browse = get_back_browse(self, cr, uid, context)
         # Is funding pool column needed?
         display_fp = context.get('display_fp', False)
         if not writer:
@@ -179,56 +203,65 @@ class account_line_csv_export(osv.osv_memory):
         # Sort items
         ids.sort()
         # Then write lines
-        for al in self.pool.get('account.analytic.line').browse(cr, uid, ids, context=context):
-            csv_line = []
-            #instance_id
-            csv_line.append(al.instance_id and al.instance_id.code and al.instance_id.code.encode('utf-8') or '')
-            # journal_id
-            csv_line.append(al.journal_id and al.journal_id.code and al.journal_id.code.encode('utf-8') or '')
-            #sequence
-            csv_line.append(al.move_id and al.move_id.move_id and al.move_id.move_id.name and al.move_id.move_id.name.encode('utf-8') or '')
-            #name (description)
-            csv_line.append(al.name and al.name.encode('utf-8') or '')
-            #ref
-            csv_line.append(al.ref and al.ref.encode('utf-8') or '')
-            #document_date
-            csv_line.append(al.document_date or '')
-            #date
-            csv_line.append(al.date or '')
-            #period
-            csv_line.append(al.period_id and al.period_id.name and al.period_id.name.encode('utf-8') or '')
-            #general_account_id (general account) code  - name
-            account_code = al.general_account_id and al.general_account_id.code and al.general_account_id.code.encode('utf-8') or ''
-            account_description = al.general_account_id and al.general_account_id.name and al.general_account_id.name.encode('utf-8') or ''
-            csv_line.append("%s - %s" % (account_code or '', account_description or ''))
-            if display_fp:
-                # destination_id
-                csv_line.append(al.destination_id and al.destination_id.code and al.destination_id.code.encode('utf-8') or '')
-                #cost_center_id
-                csv_line.append(al.cost_center_id and al.cost_center_id.code and al.cost_center_id.code.encode('utf-8') or '')
-            #account_id name (analytic_account)
-            csv_line.append(al.account_id and al.account_id.code and al.account_id.code.encode('utf-8') or '')
-            #third party
-            csv_line.append(al.partner_txt and al.partner_txt.encode('utf-8') or '')
-            #amount_currency
-            csv_line.append(al.amount_currency or 0.0)
-            #currency_id
-            csv_line.append(al.currency_id and al.currency_id.name and al.currency_id.name.encode('utf-8') or '')
-            if not currency_id:
-                #functional amount
-                csv_line.append(al.amount or 0.0)
-                #company currency
-                csv_line.append(company_currency.encode('utf-8') or '')
-            else:
-                #output debit/credit
-                amount = currency_obj.compute(cr, uid, al.currency_id.id, currency_id, al.amount_currency, round=True, context=context)
-                csv_line.append(amount or 0.0)
-                #output currency
-                csv_line.append(currency_name.encode('utf-8') or '')
-            csv_line.append(al.reversal_origin and al.reversal_origin.name and al.reversal_origin.name.encode('utf-8') or '')
-            csv_line.append(al.move_state and field_sel(cr, uid, al, 'move_state', context).encode('utf-8') or '')
-            # Write Line
-            writer.writerow(csv_line)
+        len_ids = len(ids)
+        l = 0
+        steps = 1000
+        while l < len_ids:
+            if back_browse:
+                back_browse.update_percent(l/float(len_ids))
+            old_l = l
+            l += steps
+            new_ids = ids[old_l:l]
+            for al in new_ids and self.pool.get('account.analytic.line').browse(cr, uid, new_ids, context=context) or []:
+                csv_line = []
+                #instance_id
+                csv_line.append(al.instance_id and al.instance_id.code and al.instance_id.code.encode('utf-8') or '')
+                # journal_id
+                csv_line.append(al.journal_id and al.journal_id.code and al.journal_id.code.encode('utf-8') or '')
+                #sequence
+                csv_line.append(al.move_id and al.move_id.move_id and al.move_id.move_id.name and al.move_id.move_id.name.encode('utf-8') or '')
+                #name (description)
+                csv_line.append(al.name and al.name.encode('utf-8') or '')
+                #ref
+                csv_line.append(al.ref and al.ref.encode('utf-8') or '')
+                #document_date
+                csv_line.append(al.document_date or '')
+                #date
+                csv_line.append(al.date or '')
+                #period
+                csv_line.append(al.period_id and al.period_id.name and al.period_id.name.encode('utf-8') or '')
+                #general_account_id (general account) code  - name
+                account_code = al.general_account_id and al.general_account_id.code and al.general_account_id.code.encode('utf-8') or ''
+                account_description = al.general_account_id and al.general_account_id.name and al.general_account_id.name.encode('utf-8') or ''
+                csv_line.append("%s - %s" % (account_code or '', account_description or ''))
+                if display_fp:
+                    # destination_id
+                    csv_line.append(al.destination_id and al.destination_id.code and al.destination_id.code.encode('utf-8') or '')
+                    #cost_center_id
+                    csv_line.append(al.cost_center_id and al.cost_center_id.code and al.cost_center_id.code.encode('utf-8') or '')
+                #account_id name (analytic_account)
+                csv_line.append(al.account_id and al.account_id.code and al.account_id.code.encode('utf-8') or '')
+                #third party
+                csv_line.append(al.partner_txt and al.partner_txt.encode('utf-8') or '')
+                #amount_currency
+                csv_line.append(al.amount_currency or 0.0)
+                #currency_id
+                csv_line.append(al.currency_id and al.currency_id.name and al.currency_id.name.encode('utf-8') or '')
+                if not currency_id:
+                    #functional amount
+                    csv_line.append(al.amount or 0.0)
+                    #company currency
+                    csv_line.append(company_currency.encode('utf-8') or '')
+                else:
+                    #output debit/credit
+                    amount = currency_obj.compute(cr, uid, al.currency_id.id, currency_id, al.amount_currency, round=True, context=context)
+                    csv_line.append(amount or 0.0)
+                    #output currency
+                    csv_line.append(currency_name.encode('utf-8') or '')
+                csv_line.append(al.reversal_origin and al.reversal_origin.name and al.reversal_origin.name.encode('utf-8') or '')
+                csv_line.append(al.move_state and field_sel(cr, uid, al, 'move_state', context).encode('utf-8') or '')
+                # Write Line
+                writer.writerow(csv_line)
         return True
 
     def _account_bank_statement_line_to_csv(self, cr, uid, ids, writer, currency_id, context=None):

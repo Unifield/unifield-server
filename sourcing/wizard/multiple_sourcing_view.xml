@@ -17,11 +17,11 @@
                         <separator colspan="4" string="Selected lines to source" />
                         <field name="line_ids" nolabel="1" colspan="4">
                             <tree string="Lines to source" hide_new_button="True" noteditable="True">
-                                <field name="sale_order_id" string="Order reference" />
+                                <field name="order_id" string="Order reference" />
                                 <field name="line_number" />
                                 <field name="product_id" />
-                                <field name="qty" />
-                                <field name="uom_id" />
+                                <field name="product_uom_qty" />
+                                <field name="product_uom" />
                                 <field name="real_stock" />
                             </tree>
                         </field>
@@ -46,7 +46,7 @@
 
         <act_window name="Source lines"
                     res_model="multiple.sourcing.wizard"
-                    src_model="sourcing.line"
+                    src_model="sale.order.line"
                     view_mode="form"
                     target="new"
                     key2="client_action_multi"

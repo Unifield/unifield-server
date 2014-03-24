@@ -24,21 +24,27 @@
     "version" : "1.0",
     "author" : "MSF, TeMPO Consulting",
     "description" : """
-    Add hook to account class, workflow, etc.
+    Account Module Extension for MSF.
     """,
     "website": "http://unifield.msf.org",
-    "depends" : ["account", "analytic", "account_tools", "msf_audittrail"],
+    "depends" : ["account", "account_chart"],
     "category" : "Generic Modules/Accounting",
-    "init_xml" : ["data.xml",],
+    "init_xml" : [
+        'data/computation.xml',
+        'data/account_type.xml'
+    ],
     "demo_xml" : [],
     "update_xml" : [
-        'account_invoice_workflow.xml',
+        'res_company_view.xml',
+        'res_partner_view.xml',
+        'product_product_view.xml',
         'account_view.xml',
         'account_invoice_view.xml',
         'account_invoice_report.xml',
-        'account_analytic_line_view.xml',
-        'account_sequence.xml',
-        'wizard/account_report_partner_balance_tree_view.xml',  # uf-1715
+        'wizard/account_chart.xml',
+        'wizard/import_invoice.xml',
+        'wizard/split_invoice.xml',
+        'attachment_view.xml'
     ],
     'test': [],
     'installable': True,

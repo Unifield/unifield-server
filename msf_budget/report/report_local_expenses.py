@@ -20,7 +20,6 @@
 ##############################################################################
 
 from report import report_sxw
-from osv import osv
 import pooler
 from report_webkit.webkit_report import WebKitParser
 import xml.sax.saxutils
@@ -29,7 +28,7 @@ from tools.translate import _
 
 class report_local_expenses(WebKitParser):
     _name = 'report.local.expenses'
-    
+
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
@@ -67,13 +66,13 @@ class report_local_expenses(WebKitParser):
                 booking_currency = currency_obj.browse(cr, uid, data['form']['booking_currency_id'], context=context)
                 # Add booking currency to header
                 header_data.append(['Booking currency:', booking_currency.name])
-            
+
             # Add output currency to header
             output_currency = currency_obj.browse(cr, uid, data['form']['output_currency_id'], context=context)
             header_data.append(['Output currency:', output_currency.name])
             # Cost Center
             cost_center = pool.get('account.analytic.account').browse(cr, uid, data['form']['cost_center_id'], context=context)
-            cost_center_ids = pool.get('msf.budget.tools')._get_cost_center_ids(cost_center)
+            cost_center_ids = pool.get('msf.budget.tools')._get_cost_center_ids(cr, uid, cost_center)
             domain.append(('cost_center_id', 'in', cost_center_ids))
             # Add cost center to header
             header_data.append(['Cost center:', cost_center.name])
@@ -105,8 +104,8 @@ class report_local_expenses(WebKitParser):
                                                                         context=context)
             # we only save the main accounts, not the destinations (new key: account id only)
             expenses = dict([(item[0], expenses[item]) for item in expenses.keys() if item[1] is False])
-            
-            
+
+
             # make the total row
             if 'breakdown' in data['form'] and data['form']['breakdown'] == 'month':
                 total_line = [0] * (month_stop - month_start + 1)
@@ -139,13 +138,13 @@ class report_local_expenses(WebKitParser):
                             total_amount += sum(expense_values)
             # Format total
             total_line = [_('Total'), ''] + map(int, map(round, total_line)) + [int(round(total_amount))]
-            
+
             data['form']['header'] = header_data
             data['form']['report_lines'] = result_data
             data['form']['total_line'] = total_line
-                
+
         a = super(report_local_expenses, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
-    
+
 report_local_expenses('report.local.expenses','account.analytic.line','addons/msf_budget/report/report_local_expenses_xls.mako')
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

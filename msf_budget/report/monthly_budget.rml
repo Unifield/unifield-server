@@ -204,22 +204,22 @@
         </td>
       </tr>
 
-      <tr style="trBold">[[ setTag('tr', 'tr', {'style': isBold(line) and 'trBold' or 'trNotBold'}) ]]
-          <para style="P20">[[ repeatIn(process(o.budget_line_ids),'line') ]]</para>
-              <td><para>[[ setTag('para', 'para', {'style': isBold(line) and 'P3abold' or 'P3a'})]] [[ line[0] ]]</para></td>
-              <td>[[ line[1] and formatLang(line[1], digits=0, grouping=True ) or '0' ]]</td>
-              <td>[[ line[2] and formatLang(line[2], digits=0, grouping=True ) or '0' ]]</td>
-              <td>[[ line[3] and formatLang(line[3], digits=0, grouping=True ) or '0' ]]</td>
-              <td>[[ line[4] and formatLang(line[4], digits=0, grouping=True ) or '0' ]]</td>
-              <td>[[ line[5] and formatLang(line[5], digits=0, grouping=True ) or '0' ]]</td>
-              <td>[[ line[6] and formatLang(line[6], digits=0, grouping=True ) or '0' ]]</td>
-              <td>[[ line[7] and formatLang(line[7], digits=0, grouping=True ) or '0' ]]</td>
-              <td>[[ line[8] and formatLang(line[8], digits=0, grouping=True ) or '0' ]]</td>
-              <td>[[ line[9] and formatLang(line[9], digits=0, grouping=True ) or '0' ]]</td>
-              <td>[[ line[10] and formatLang(line[10], digits=0, grouping=True ) or '0' ]]</td>
-              <td>[[ line[11] and formatLang(line[11], digits=0, grouping=True ) or '0' ]]</td>
-              <td>[[ line[12] and formatLang(line[12], digits=0, grouping=True ) or '0' ]]</td>
-              <td>[[ line[13] and formatLang(line[13], digits=0, grouping=True ) or '0' ]]</td>
+      <tr style="trBold">[[ setTag('tr', 'tr', {'style': line.line_type == 'view' and 'trBold' or 'trNotBold'}) ]]
+          <para style="P20">[[ repeatIn(o.budget_line_ids,'line') ]]</para>
+              <td><para>[[ setTag('para', 'para', {'style': line.line_type == 'view' and 'P3abold' or 'P3a'})]] [[ line.name ]]</para></td>
+              <td>[[ line.month1 and formatLang(line.month1, digits=0, grouping=True ) or '0' ]]</td>
+              <td>[[ line.month2 and formatLang(line.month2, digits=0, grouping=True ) or '0' ]]</td>
+              <td>[[ line.month3 and formatLang(line.month3, digits=0, grouping=True ) or '0' ]]</td>
+              <td>[[ line.month4 and formatLang(line.month4, digits=0, grouping=True ) or '0' ]]</td>
+              <td>[[ line.month5 and formatLang(line.month5, digits=0, grouping=True ) or '0' ]]</td>
+              <td>[[ line.month6 and formatLang(line.month6, digits=0, grouping=True ) or '0' ]]</td>
+              <td>[[ line.month7 and formatLang(line.month7, digits=0, grouping=True ) or '0' ]]</td>
+              <td>[[ line.month8 and formatLang(line.month8, digits=0, grouping=True ) or '0' ]]</td>
+              <td>[[ line.month9 and formatLang(line.month9, digits=0, grouping=True ) or '0' ]]</td>
+              <td>[[ line.month10 and formatLang(line.month10, digits=0, grouping=True ) or '0' ]]</td>
+              <td>[[ line.month11 and formatLang(line.month11, digits=0, grouping=True ) or '0' ]]</td>
+              <td>[[ line.month12 and formatLang(line.month12, digits=0, grouping=True ) or '0' ]]</td>
+              <td>[[ line.total and formatLang(line.total, digits=0, grouping=True ) or '0' ]]</td>
       </tr>
     </blockTable>
 

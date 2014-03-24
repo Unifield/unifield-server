@@ -4134,7 +4134,7 @@ msgstr "button_restart - (procurement.order)"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:602
 #, python-format
-msgid "An error occured on invoice reconciliation: Invoice line not found."
+msgid "An error occurred on invoice reconciliation: Invoice line not found."
 msgstr "Se produjo un error en la conciliación de facturas: No se encuentra la línea de factura."
 
 #. module: object_query
@@ -55451,7 +55451,7 @@ msgstr "Nombre de nuevos asientos"
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:589
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:652
 #, python-format
-msgid "An error has occured: The journal entries cannot be posted."
+msgid "An error has occurred: The journal entries cannot be posted."
 msgstr "Se ha producido un error: no se pueden contabilizar los asientos del diario."
 
 #. module: stock

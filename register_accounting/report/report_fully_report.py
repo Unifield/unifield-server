@@ -19,14 +19,7 @@
 #
 ##############################################################################
 
-import datetime
-
 from report import report_sxw
-from tools.translate import _
-import pooler
-import locale
-import csv
-import StringIO
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class report_fully_report(report_sxw.rml_parse):
