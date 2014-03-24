@@ -20,19 +20,20 @@
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import time
-from operator import itemgetter
 from itertools import groupby
-
-from osv import fields, osv
-from tools.translate import _
-import netsvc
-import tools
-import decimal_precision as dp
 import logging
+from operator import itemgetter
 from os import path
+import time
 
+import netsvc
+from osv import fields, osv
+import tools
+from tools.translate import _
+
+import decimal_precision as dp
 from msf_partner import PARTNER_TYPE
+
 
 #----------------------------------------------------------
 # Procurement Order
@@ -1302,7 +1303,36 @@ class stock_move(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         '''
         Update the partner or the address according to the other
-        '''
+        '''        
+        id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        prod_obj = self.pool.get('product.product')
+
+        if vals.get('product_id', False):
+            # complete hidden flags - needed if not created from GUI
+            product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
+
+            if vals.get('picking_id') and product.type == 'consu' and vals.get('location_dest_id') != id_cross:
+                pick_bro = self.pool.get('stock.picking').browse(cr, uid, vals.get('picking_id'))
+                id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')
+                if vals.get('sale_line_id'):
+                    id_pack = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')
+                    if pick_bro.type == 'out':
+                        vals.update(location_id=id_cross)
+                    else:
+                        vals.update(location_id=id_nonstock[1])
+                    vals.update(location_dest_id=id_pack[1])
+                else:
+                    if pick_bro.type != 'out':
+                        vals.update(location_dest_id=id_nonstock[1])
+
+            if product.batch_management:
+                vals.update(hidden_batch_management_mandatory=True)
+            elif product.perishable:
+                vals.update(hidden_perishable_mandatory=True)
+            else:
+                vals.update(hidden_batch_management_mandatory=False,
+                            hidden_perishable_mandatory=False,
+                            )
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -1327,9 +1357,24 @@ class stock_move(osv.osv):
                 if vals.get('state', move.state) not in ('done', 'cancel'):
                     vals['date'] = vals.get('date_expected')
 
-        res = super(stock_move, self).write(cr, uid, ids, vals, context=context)
+        if vals.get('location_dest_id'):
+            dest_id = self.pool.get('stock.location').browse(cr, uid, vals['location_dest_id'], context=context)
+            if dest_id.usage == 'inventory' and not dest_id.virtual_location:
+                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            if dest_id.scrap_location and not dest_id.virtual_location:
+                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+            # if the source location and the destination location are the same, the state is done
+            if 'location_id' in vals:
+                if vals['location_dest_id'] == vals['location_id']:
+                    vals['state'] = 'done'
+        # Change the reason type of the picking if it is not the same
+        if 'reason_type_id' in vals:
+            for pick_id in self.browse(cr, uid, ids, context=context):
+                if pick_id.picking_id and pick_id.picking_id.reason_type_id.id != vals['reason_type_id']:
+                    other_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+                    self.pool.get('stock.picking').write(cr, uid, pick_id.picking_id.id, {'reason_type_id': other_type_id}, context=context)
 
-        return res
+        return super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
     def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
         '''
@@ -1511,12 +1556,19 @@ class stock_move(osv.osv):
         if done:
             count += len(done)
 
+            done_ids = []
+            assigned_ids = []
             # If source location == dest location THEN stock move is done.
             for line in self.read(cr, uid, done, ['location_id', 'location_dest_id']):
                 if line.get('location_id') and line.get('location_dest_id') and line.get('location_id') == line.get('location_dest_id'):
-                    self.write(cr, uid, [line['id']], {'state': 'done'})
+                    done_ids.append(line['id'])
                 else:
-                    self.write(cr, uid, [line['id']], {'state': 'assigned'})
+                    assigned_ids.append(line['id'])
+            
+            if done_ids:
+                self.write(cr, uid, done_ids, {'state': 'done'})
+            if assigned_ids:
+                self.write(cr, uid, assigned_ids, {'state': 'assigned'})
 
         if notdone:
             self.write(cr, uid, notdone, {'state': 'confirmed'})
