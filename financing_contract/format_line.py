@@ -368,28 +368,29 @@ class financing_contract_format_line(osv.osv):
             vals['project_amount'] = 0.0
             vals['account_destination_ids'] = [(6, 0, [])]
             vals['account_quadruplet_ids'] = [(6, 0, [])]
-        elif vals.get('is_quadruplet', False):
-            # delete account/destinations
-            vals['account_destination_ids'] = []
-            if context.get('sync_update_execution'):
-                quads_list = []
-                if vals.get('quadruplet_update', False):
-                    quadrup_str = vals['quadruplet_update']
-                    quads_list = map(int, quadrup_str.split(','))
-                vals['account_quadruplet_ids'] = [(6, 0, quads_list)]
+        elif 'is_quadruplet' in vals: # If the vals contains quadruplet value, then check if it is true or false
+            if vals.get('is_quadruplet', False):
+                # delete account/destinations
+                vals['account_destination_ids'] = [(6, 0, [])]
+                if context.get('sync_update_execution'):
+                    quads_list = []
+                    if vals.get('quadruplet_update', False):
+                        quadrup_str = vals['quadruplet_update']
+                        quads_list = map(int, quadrup_str.split(','))
+                    vals['account_quadruplet_ids'] = [(6, 0, quads_list)]
+                else:
+                    temp = vals['account_quadruplet_ids']
+                    if temp[0]:
+                        vals['quadruplet_update'] = str(temp[0][2]).strip('[]')
             else:
-                temp = vals['account_quadruplet_ids']
-                if temp[0]:
-                    vals['quadruplet_update'] = str(temp[0][2]).strip('[]')
-        else:
-            vals['account_quadruplet_ids'] = [(6, 0, [])]
-            vals['quadruplet_update'] = '' # delete quadruplets
-
+                vals['account_quadruplet_ids'] = [(6, 0, [])]
+                vals['quadruplet_update'] = '' # delete quadruplets
+        
     def create(self, cr, uid, vals, context=None):
         if not context:
             context = {}
         
-        # if the account is set as view, remove budget and account values
+        # calculate the quadruplet combination
         self.calculate_quaduplet(vals, context)
         return super(financing_contract_format_line, self).create(cr, uid, vals, context=context)
     
@@ -398,6 +399,8 @@ class financing_contract_format_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        # calculate the quadruplet combination
         self.calculate_quaduplet(vals, context)
         return super(financing_contract_format_line, self).write(cr, uid, ids, vals, context=context)
     
