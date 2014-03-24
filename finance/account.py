@@ -98,7 +98,12 @@ class account_account(osv.osv):
         return arg
 
     _columns = {
-        'is_analytic_addicted': fields.function(_get_is_analytic_addicted, fnct_search=_search_is_analytic_addicted, method=True, type='boolean', string='Analytic-a-holic?', help="Is this account addicted on analytic distribution?", store=False, readonly=True),
+        'is_analytic_addicted': fields.function(
+            _get_is_analytic_addicted, fnct_search=_search_is_analytic_addicted,
+            method=True, type='boolean', string='Analytic-a-holic?', readonly=True,
+            help="Is this account addicted on analytic distribution?",
+            store={'res.company': (lambda self, cr, uid, ids, c={}: ids, ['additional_allocation'], 10),
+                   'account.account': (lambda self, cr, uid, ids, c={}: ids, ['user_type_code', 'code'], 10)}),
     }
 
 account_account()
