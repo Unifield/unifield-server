@@ -268,7 +268,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 FROM financing_contract_contract AS c, financing_contract_donor AS d, res_currency AS rc
                 WHERE c.donor_id = d.id
                 AND c.reporting_currency = rc.id
-                AND c.instance_id in %s;
+                AND c.instance_id in %s
+                AND c.state != 'draft';
                 """,
             # Pay attention to take analytic line that are not on HQ and MIGRATION journals.
             'rawdata': """
