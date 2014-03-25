@@ -2359,7 +2359,7 @@ class purchase_order_line(osv.osv):
             self.pool.get('sale.order').write(cr, uid, ir_to_cancel_ids, 
                 {'state': new_state}, context=context)
             if irl_cr_to_cancel_ids:
-                self.pool.get('sale.order.line').write(cr, uid, irl_cr_to_cancel_ids, {'state': 'new_state'}, context=context)
+                self.pool.get('sale.order.line').write(cr, uid, irl_cr_to_cancel_ids, {'state': new_state}, context=context)
         
         return True
 
