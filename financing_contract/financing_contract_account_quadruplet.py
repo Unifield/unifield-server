@@ -49,7 +49,7 @@ class financing_contract_account_quadruplet(osv.osv):
         return res
 
         
-    
+    # The result set with {ID:Flag} if Flag=True, the line will be grey, otherwise, it is selectable
     def _get_used_in_contract(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         if context is None:

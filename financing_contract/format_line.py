@@ -53,7 +53,7 @@ class financing_contract_format_line(osv.osv):
             cc_domain = eval(general_domain['cost_center_domain'])
             if general_domain.get('funding_pool_domain', False):
                 return temp_domain + ['&'] + [cc_domain] + [eval(general_domain['funding_pool_domain'])]
-            return temp_domain + cc_domain
+            return temp_domain + [cc_domain]
         else:
             return ['|'] \
                  + self._create_account_destination_domain([account_destination_list[0]], general_domain) \

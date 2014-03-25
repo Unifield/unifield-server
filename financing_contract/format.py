@@ -76,7 +76,6 @@ class account_destination_link(osv.osv):
     _inherit = 'account.destination.link'
 
     def _get_used_in_contract(self, cr, uid, ids, field_name, arg, context=None):
-        print 'account_destination_link _get_used_in_contract'
         res = {}
         if context is None:
             context = {}
@@ -95,18 +94,28 @@ class account_destination_link(osv.osv):
             id_toread = context['donor_id']
 
         exclude = {}
+        
+        list_desti = []
+        list_acc = []
         for line in ctr_obj.browse(cr, uid, id_toread).actual_line_ids:
             if not context.get('active_id', False) or line.id != context['active_id']:
                 for account_destination in line.account_destination_ids:
                     exclude[account_destination.id] = True
                 for account_quadruplet in line.account_quadruplet_ids:
-                    exclude[account_quadruplet.account_destination_id.id] = True
+                    list_desti += [account_quadruplet.account_destination_id.id]
+                    list_acc += [account_quadruplet.account_id.id]
+                    
+        # UFTP-16: The list of all duplet acc/destination needs to be grey if one line of combination in the quad has been selected            
+        if len(list_desti) != 0:
+            aa = self.search(cr, uid, [('account_id', 'in', list_acc),('destination_id','in',list_desti)])
+            for a in aa:
+                exclude[a] = True
+                    
         for id in ids:
             res[id] = id in exclude
         return res
 
     def _search_used_in_contract(self, cr, uid, obj, name, args, context=None):
-        print 'account_destination_link _search_used_in_contract'
         if not args:
             return []
         if context is None:
