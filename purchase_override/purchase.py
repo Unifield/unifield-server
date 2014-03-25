@@ -2346,10 +2346,20 @@ class purchase_order_line(osv.osv):
             if cancel_ir:
                 ir_to_cancel_ids.append(ir.id)
         if ir_to_cancel_ids:
+            # origin IR state (and its lines state), cancel only: to cancel, C&R to close
+            do_close = True if sol_of_po_line_resourced_ids else False
+            if sol_of_po_line_resourced_ids:
+                for ir_line_id in irl_cr_to_cancel_ids:
+                    if not ir_line_id in sol_of_po_line_resourced_ids:
+                        # one line not ressourced, we can not close, so cancel
+                        do_close = False
+                        break
+            
+            new_state = 'done' if do_close else 'cancel'
             self.pool.get('sale.order').write(cr, uid, ir_to_cancel_ids, 
-                {'state': 'cancel'}, context=context)
+                {'state': new_state}, context=context)
             if irl_cr_to_cancel_ids:
-                self.pool.get('sale.order.line').write(cr, uid, irl_cr_to_cancel_ids, {'state': 'cancel'}, context=context)
+                self.pool.get('sale.order.line').write(cr, uid, irl_cr_to_cancel_ids, {'state': 'new_state'}, context=context)
         
         return True
 
