@@ -381,6 +381,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'headers': ['Name', 'Identification No', 'Active', 'Employee type'],
                 'filename': instance_name + '_' + year + month + '_Employees.csv',
                 'key': 'employee',
+                'function': 'postprocess_selection_columns',
+                'fnct_params': [('hr.employee', 'employee_type', 3)],
                 },
             {
                 'headers': ['Instance', 'Code', 'Name', 'Journal type', 'Currency'],
