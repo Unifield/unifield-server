@@ -233,7 +233,12 @@ class purchase_order(osv.osv):
                         'purchase_id': order_id.id,
                         'purchase_order': True,
                         'uom': False,
-                        'product_ids_domain': [('available_for_restriction', '=', order_id.partner_type)], 
+                        # UFTP-15: we active 'only not forbidden' filter as default
+                        # (so we do not use product_ids_domain any more)
+                        'available_for_restriction': order_id.partner_type,
+                        'search_default_not_restricted': 1,
+                        'add_multiple_lines': True,
+                        #'product_ids_domain': [('available_for_restriction', '=', order_id.partner_type)], 
                         'partner_type': order_id.partner_type,
                         'pricelist_id': order_id.pricelist_id.id,
                         'pricelist': order_id.pricelist_id.id,
