@@ -40,54 +40,41 @@ class financing_contract_format_line(osv.osv):
         domain += "])"
         return domain
     
+    # get list of accounts for duplet format lines
     def _create_account_destination_domain(self, account_destination_list, general_domain):
         if len(account_destination_list) == 0:
-            return ['&',
-                    '&',
-                    ('general_account_id', 'in', []),
-                    ('destination_id', 'in', []),
-                    '&',
-                    eval(general_domain['cost_center_domain']),
-                    eval(general_domain['funding_pool_domain'])]
+            return [('id', '=', -1)] # Just make this condition to False
         elif len(account_destination_list) == 1:
-            return ['&',
+            temp_domain = ['&',
                     '&',
                     ('general_account_id', '=', account_destination_list[0].account_id.id),
-                    ('destination_id', '=', account_destination_list[0].destination_id.id),
-                    '&',
-                    eval(general_domain['cost_center_domain']),
-                    eval(general_domain['funding_pool_domain'])]
+                    ('destination_id', '=', account_destination_list[0].destination_id.id)]
+            
+            cc_domain = eval(general_domain['cost_center_domain'])
+            if general_domain.get('funding_pool_domain', False):
+                return temp_domain + ['&'] + [cc_domain] + [eval(general_domain['funding_pool_domain'])]
+            return temp_domain + cc_domain
         else:
             return ['|'] \
                  + self._create_account_destination_domain([account_destination_list[0]], general_domain) \
                  + self._create_account_destination_domain(account_destination_list[1:], general_domain)
     
-    def _create_account_quadruplet_domain(self, account_quadruplet_list, funding_pool_ids):
+    # get list of accounts for quadruplet format lines
+    def _create_account_quadruplet_domain(self, account_quadruplet_list, funding_pool_ids=False):
         if len(account_quadruplet_list) == 0:
-            return ['&',
-                    '&',
-                    ('general_account_id', '=', False),
-                    ('destination_id', '=', False),
-                    '&',
-                    ('cost_center_id', '=', False),
-                    ('account_id', '=', False)]
+            return [('id', '=', -1)] # Just make this condition to False
         elif len(account_quadruplet_list) == 1:
             if account_quadruplet_list[0].funding_pool_id.id in funding_pool_ids:
+                quad_element = account_quadruplet_list[0]
                 return ['&',
                         '&',
-                        ('general_account_id', '=', account_quadruplet_list[0].account_destination_id.account_id.id),
-                        ('destination_id', '=', account_quadruplet_list[0].account_destination_id.destination_id.id),
+                        ('general_account_id', '=', quad_element.account_id.id),
+                        ('destination_id', '=', quad_element.account_destination_id.id),
                         '&',
-                        ('cost_center_id', '=', account_quadruplet_list[0].cost_center_id.id),
-                        ('account_id', '=', account_quadruplet_list[0].funding_pool_id.id)]
-            else:
-                return ['&',
-                        '&',
-                        ('general_account_id', '=', False),
-                        ('destination_id', '=', False),
-                        '&',
-                        ('cost_center_id', '=', False),
-                        ('account_id', '=', False)]
+                        ('cost_center_id', '=', quad_element.cost_center_id.id),
+                        ('account_id', '=', quad_element.funding_pool_id.id)]
+            else: 
+                return [('id', '=', -1)] # Make this one false in sql
         else:
             return ['|'] \
                  + self._create_account_quadruplet_domain([account_quadruplet_list[0]], funding_pool_ids) \
@@ -126,7 +113,8 @@ class financing_contract_format_line(osv.osv):
         for total_cost in total_costs.values():
             result += total_cost
         return result
-    
+
+    # Get the list of accounts for both duplet and quadruplet    
     def _get_account_destination_quadruplets(self, browse_line):
         account_destination_result = []
         account_quadruplet_result = []
@@ -145,29 +133,38 @@ class financing_contract_format_line(osv.osv):
     
     def _get_general_domain(self, cr, uid, browse_format, domain_type, context=None):
         # Method to get the domain (allocated or project) of a line
+        
         date_domain = "[('document_date', '>=', '"
         date_domain += browse_format.eligibility_from_date
         date_domain += "'), ('document_date', '<=', '"
         date_domain += browse_format.eligibility_to_date
         date_domain += "')]"
+        
+        gen_domain = {}
+        gen_domain['date_domain'] = date_domain
+
+        cost_center_domain = self._create_domain('cost_center_id', browse_format.cost_center_ids)
+        gen_domain['cost_center_domain'] = cost_center_domain
+        
         # Funding pools
         funding_pool_ids = []
         if domain_type == 'allocated': 
             funding_pool_ids = [funding_pool_line.funding_pool_id for funding_pool_line in browse_format.funding_pool_ids if funding_pool_line.funded]
         else:
             funding_pool_ids = [funding_pool_line.funding_pool_id for funding_pool_line in browse_format.funding_pool_ids]
-        funding_pool_domain = self._create_domain('account_id', funding_pool_ids)
-        # Cost centers
-        cost_center_domain = self._create_domain('cost_center_id', browse_format.cost_center_ids)
-        return {'date_domain': date_domain,
-                'funding_pool_domain': funding_pool_domain,
-                'cost_center_domain': cost_center_domain,
-                'funding_pool_ids': [x.id for x in funding_pool_ids]}
+        
+        if funding_pool_ids:
+            funding_pool_domain = self._create_domain('account_id', funding_pool_ids)
+            gen_domain['funding_pool_domain'] = funding_pool_domain
+
+        gen_domain['funding_pool_ids'] = [x.id for x in funding_pool_ids]
+        return gen_domain
     
+    # UFTP-16: Temporary commit, this calculation was totally wrong! IS IN PROGRESS OF REVIEWING AND CORRECTING/REWRITING
     def _get_analytic_domain(self, cr, uid, browse_line, domain_type, context=None):
         if browse_line.line_type in ('consumption', 'overhead'):
             # No domain for those
-            return False
+            return []
         else:
             # last domain: get only non-corrected lines.
             non_corrected_domain = [('is_reallocated', '=', False),
@@ -179,13 +176,18 @@ class financing_contract_format_line(osv.osv):
                 account_destination_quadruplet_ids = self._get_account_destination_quadruplets(browse_line)
                 account_destination_domain = self._create_account_destination_domain(account_destination_quadruplet_ids['account_destination_list'], general_domain)
                 account_quadruplet_domain = self._create_account_quadruplet_domain(account_destination_quadruplet_ids['account_quadruplet_list'], general_domain['funding_pool_ids'])
-                # create the final domain
+
                 date_domain = eval(general_domain['date_domain'])
-                return [date_domain[0], date_domain[1]]  + non_corrected_domain + ['|'] + account_destination_domain + account_quadruplet_domain
+                second_part = account_destination_domain
+                if len(account_quadruplet_domain):
+                    if len(second_part) != 0:
+                        second_part = ['|'] + second_part + account_quadruplet_domain
+                
+                return ['&', '&', '&', '&', ] + date_domain  + non_corrected_domain + second_part
             else:
                 # Dates are not set (since we are probably in a donor).
                 # Return False
-                return False
+                return []
     
     def _is_overhead_present(self, cr, uid, ids, context={}):
         for line in self.browse(cr, uid, ids, context=context):
