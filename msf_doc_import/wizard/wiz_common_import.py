@@ -229,7 +229,7 @@ class purchase_order(osv.osv):
         order_id = self.browse(cr, uid, ids[0], context=context)
         context.update({'partner_id': order_id.partner_id.id,
                         'quantity': 0.00,
-                        'rfq_ok': False,
+                        'rfq_ok': order_id.rfq_ok,
                         'purchase_id': order_id.id,
                         'purchase_order': True,
                         'uom': False,
