@@ -34,6 +34,26 @@ class finance_archive(finance_export.finance_archive):
     Extend existing class with new methods for this particular export.
     """
 
+    def postprocess_partners(self, cr, uid, data, column_deletion=False):
+        """
+        Add XML_ID of each element.
+        """
+        # Prepare some values
+        new_data = []
+        pool = pooler.get_pool(cr.dbname)
+        partner_obj = pool.get('res.partner')
+        for line in data:
+            tmp_line = list(line)
+            p_id = line[0]
+            try:
+                xml = partner_obj.get_xml_id(cr, uid, [p_id])
+                xml_id = xml and xml.get(p_id, '') or ''
+            except:
+                xml_id = ''
+            tmp_line[0] = xml_id
+            new_data.append(self.line_to_utf8(tmp_line))
+        return self.postprocess_selection_columns(cr, uid, new_data, [('res.partner', 'partner_type', 3)], column_deletion=column_deletion)
+
     def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False):
         """
         Use current SQL result (data) to fetch IDs and mark lines as used.
@@ -169,7 +189,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         # - value: the SQL request to use
         sqlrequests = {
             'partner': """
-                SELECT name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active
+                SELECT id, name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active
                 FROM res_partner
                 WHERE partner_type != 'internal';
                 """,
@@ -352,11 +372,10 @@ class hq_report_ocb(report_sxw.report_sxw):
         instance_name = instance.code[0:3] # Take only 3 first digits
         processrequests = [
             {
-                'headers': ['Name', 'Reference', 'Partner type', 'Active/inactive'],
+                'headers': ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive'],
                 'filename': instance_name + '_' + year + month + '_Partners.csv',
                 'key': 'partner',
-                'function': 'postprocess_selection_columns',
-                'fnct_params': [('res.partner', 'partner_type', 2)],
+                'function': 'postprocess_partners',
                 },
             {
                 'headers': ['Name', 'Identification No', 'Active', 'Employee type'],
