@@ -331,13 +331,15 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         Check if all lines have a quantity larger than 0.00
         '''
-        issue_ids = []
-        for order in self.read(cr, uid, ids, ['state'], context=context):
-            if order['state'] not in ['draft', 'cancel']:
-                issue_ids.append(order['id'])
+        # Objects
+        line_obj = self.pool.get('sale.order.line')
 
-        line_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', 'in', issue_ids),
-                                                                     ('product_uom_qty', '=', 0.00)], context=context)
+        line_ids = line_obj.search(cr, uid, [
+            ('order_id', 'in', ids),
+            ('order_id.state', 'not in', ['draft', 'cancel']),
+            ('order_id.import_in_progress', '=', False),
+            ('product_uom_qty', '<=', 0.00),
+        ], count=True, context=context)
 
         if line_ids:
             return False
@@ -2050,7 +2052,11 @@ class sale_order_line(osv.osv):
 
         if not context.get('noraise') and not context.get('import_in_progress'):
             if ids and not 'product_uom_qty' in vals:
-                empty_lines = self.search(cr, uid, [('id', 'in', ids), ('product_uom_qty', '<=', 0.00)], count=True, context=context)
+                empty_lines = self.search(cr, uid, [
+                    ('id', 'in', ids),
+                    ('order_id.state', 'not in', ['draft', 'cancel']),
+                    ('product_uom_qty', '<=', 0.00),
+                ], count=True, context=context)
                 if empty_lines:
                         raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
 
