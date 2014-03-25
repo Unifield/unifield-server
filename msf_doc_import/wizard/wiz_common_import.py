@@ -289,12 +289,18 @@ class tender(osv.osv):
         '''
         Open the wizard to open multiple lines
         '''
-        context = context is None and {} or context
+        if context is None:
+            context = {}
         ids = isinstance(ids, (int, long)) and [ids] or ids
         
         tender = self.browse(cr, uid, ids[0], context=context)
-        context.update({'product_ids_domain': [('purchase_type', '=', tender.categ),
-                                               ('available_for_restriction', '=', 'tender')]})
+        context.update({
+            'product_ids_domain': [('purchase_type', '=', tender.categ)],
+            # UFTP-15: we active 'only not forbidden' filter as default
+            'available_for_restriction': 'tender',
+            'search_default_not_restricted': 1,
+            'add_multiple_lines': True,
+        })
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'tender', 'tender.line', context=context)
