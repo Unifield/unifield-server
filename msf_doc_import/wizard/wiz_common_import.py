@@ -356,12 +356,36 @@ class sale_order(osv.osv):
         '''
         Open the wizard to add multiple lines
         '''
-        context = context is None and {} or context
+        if context is None:
+            context = {}
         ids = isinstance(ids, (int, long)) and [ids] or ids
         
         order = self.browse(cr, uid, ids[0], context=context)
-        context.update({'product_ids_domain': [('purchase_type', '=', order.categ),
-                                               ('available_for_restriction', '=', order.procurement_request and 'consumption' or order.partner_type)]})
+        if order.procurement_request:
+            # UFTP-15: IR context available_for_restriction = 'consumption' (3.1.3.4 case (d))
+            context_update = {
+                'product_ids_domain': [('purchase_type', '=', order.categ)],
+                # UFTP-15: we active 'only not forbidden' filter as default
+                'available_for_restriction': 'consumption',
+                'search_default_not_restricted': 1,
+                'add_multiple_lines': True,
+            }
+        else:
+            # UFTP-15: FO context available_for_restriction = 'partner type'
+            context_update = {
+                'product_ids_domain': [('purchase_type', '=', order.categ)],
+                # UFTP-15: we active 'only not forbidden' filter as default
+                'available_for_restriction': order.partner_type,
+                'search_default_not_restricted': 1,
+                'add_multiple_lines': True,
+                # UFTP-15: we pass infos in context like for a FO line product m2o
+                'partner_id': order.partner_id.id,
+                'pricelist_id': order.pricelist_id.id,
+                'pricelist': order.pricelist_id.id,
+                'warehouse': order.warehouse_id.id,
+                'categ': order.categ,
+            }
+        context.update(context_update)
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'sale.order', 'sale.order.line', context=context)
