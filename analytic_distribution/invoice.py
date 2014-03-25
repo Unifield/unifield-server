@@ -221,21 +221,21 @@ class account_invoice(osv.osv):
                 'context': context,
         }
 
-        def button_reset_distribution(self, cr, uid, ids, context=None):
-            """
-            Reset analytic distribution on all invoice lines.
-            To do this, just delete the analytic_distribution id link on each invoice line.
-            """
-            if context is None:
-                context = {}
-            if isinstance(ids, (int, long)):
-                ids = [ids]
-            # Prepare some values
-            invl_obj = self.pool.get('account.invoice.line')
-            # Search invoice lines
-            to_reset = invl_obj.search(cr, uid, [('invoice_id', 'in', ids)])
-            invl_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
-            return True
+    def button_reset_distribution(self, cr, uid, ids, context=None):
+        """
+        Reset analytic distribution on all invoice lines.
+        To do this, just delete the analytic_distribution id link on each invoice line.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        invl_obj = self.pool.get('account.invoice.line')
+        # Search invoice lines
+        to_reset = invl_obj.search(cr, uid, [('invoice_id', 'in', ids)])
+        invl_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
+        return True
 
 account_invoice()
 
