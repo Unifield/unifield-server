@@ -738,7 +738,6 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 check_fnct = product_obj._get_restriction_error
                 self._check_product_constraints(cr, uid, line.type, line.po_cft, line.product_id.id, line.supplier.id, check_fnct, context=context)
 
-
         return True
 
     def _check_product_constraints(self, cr, uid, line_type='make_to_order', po_cft='po',
