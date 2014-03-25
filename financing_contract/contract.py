@@ -153,7 +153,6 @@ class financing_contract_contract(osv.osv):
         # we update the context with the contract reporting type and currency
         format_line_obj = self.pool.get('financing.contract.format.line')
         # Values to be set
-        account_destination_ids = []
         if reporting_type is None:
             reporting_type = browse_contract.reporting_type
         
@@ -161,7 +160,7 @@ class financing_contract_contract(osv.osv):
         # parse parent lines (either value or sum of children's values)
         for line in browse_contract.actual_line_ids:
             if not line.parent_id:
-                account_destination_ids += format_line_obj._get_analytic_domain(cr, uid, line, reporting_type, context=context)
+                analytic_domain += format_line_obj._get_analytic_domain(cr, uid, line, reporting_type, context=context)
             
         return analytic_domain
 
