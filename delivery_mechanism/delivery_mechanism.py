@@ -841,7 +841,7 @@ class stock_picking(osv.osv):
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'stock.picking',
-                'res_id': picking.id,
+                'res_id': wizard.picking_id.id,
                 'view_id': [view_id],
                 'view_mode': 'form, tree',
                 'view_type': 'form',
