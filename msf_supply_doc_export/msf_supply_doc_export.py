@@ -30,6 +30,19 @@ from tools.translate import _
 
 import pooler
 
+
+class _float_noformat(report_sxw._float_format):
+    def __str__(self):
+        return str(self.val)
+
+
+_fields_process = {
+    'float': _float_noformat,
+    'date': report_sxw._date_format,
+    'datetime': report_sxw._dttime_format
+}
+
+
 def getIds(self, cr, uid, ids, context):
     if not context:
         context = {}
@@ -117,6 +130,10 @@ class validated_purchase_order_report_xml(WebKitParser):
         ids = getIds(self, cr, uid, ids, context)
         a = super(validated_purchase_order_report_xml, self).create(cr, uid, ids, data, context)
         return (a[0], 'xml')
+
+    def getObjects(self, cr, uid, ids, context):
+        table_obj = pooler.get_pool(cr.dbname).get(self.table)
+        return table_obj.browse(cr, uid, ids, list_class=report_sxw.browse_record_list, context=context, fields_process=_fields_process)
 
 validated_purchase_order_report_xml('report.validated.purchase.order_xml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_validated_purchase_order_xml.mako', parser=parser_validated_purchase_order_report_xml)
 
