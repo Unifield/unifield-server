@@ -76,15 +76,15 @@ class account_destination_link(osv.osv):
     _inherit = 'account.destination.link'
 
     def _get_used_in_contract(self, cr, uid, ids, field_name, arg, context=None):
-        res = {}
+        ids_to_exclude = {}
         if context is None:
             context = {}
         exclude = {}
 
         if not context.get('contract_id') and not context.get('donor_id'):
             for id in ids:
-                res[id] = False
-            return res
+                ids_to_exclude[id] = False
+            return ids_to_exclude
 
         if context.get('contract_id'):
             ctr_obj = self.pool.get('financing.contract.contract')
@@ -93,27 +93,20 @@ class account_destination_link(osv.osv):
             ctr_obj = self.pool.get('financing.contract.donor')
             id_toread = context['donor_id']
 
-        exclude = {}
-        
-        list_desti = []
-        list_acc = []
+        active_id = context.get('active_id', False)
         for line in ctr_obj.browse(cr, uid, id_toread).actual_line_ids:
-            if not context.get('active_id', False) or line.id != context['active_id']:
-                for account_destination in line.account_destination_ids:
+            if not active_id or line.id != active_id:
+                for account_destination in line.account_destination_ids: # exclude from other duplet format lines
                     exclude[account_destination.id] = True
-                for account_quadruplet in line.account_quadruplet_ids:
-                    list_desti += [account_quadruplet.account_destination_id.id]
-                    list_acc += [account_quadruplet.account_id.id]
-                    
-        # UFTP-16: The list of all duplet acc/destination needs to be grey if one line of combination in the quad has been selected            
-        if len(list_desti) != 0:
-            aa = self.search(cr, uid, [('account_id', 'in', list_acc),('destination_id','in',list_desti)])
-            for a in aa:
-                exclude[a] = True
+                for account_quadruplet in line.account_quadruplet_ids: # exclude from other quadruplet format lines
+                    # UFTP-16: The list of all duplet acc/destination needs to be grey if one line of combination in the quad has been selected            
+                    duplet_ids_to_exclude = self.search(cr, uid, [('account_id', '=', account_quadruplet.account_id.id),('destination_id','=',account_quadruplet.account_destination_id.id)])
+                    for item in duplet_ids_to_exclude:
+                        exclude[item] = True
                     
         for id in ids:
-            res[id] = id in exclude
-        return res
+            ids_to_exclude[id] = id in exclude
+        return ids_to_exclude
 
     def _search_used_in_contract(self, cr, uid, obj, name, args, context=None):
         if not args:

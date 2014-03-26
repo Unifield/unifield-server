@@ -51,19 +51,19 @@ class financing_contract_account_quadruplet(osv.osv):
         
     # The result set with {ID:Flag} if Flag=True, the line will be grey, otherwise, it is selectable
     def _get_used_in_contract(self, cr, uid, ids, field_name, arg, context=None):
-        res = {}
+        ids_to_exclude = {}
         if context is None:
             context = {}
         exclude = {}
 
-        if not context.get('contract_id'):
+        contract_id = context.get('contract_id', False)
+        if not contract_id:
             for id in ids:
-                res[id] = False
-            return res
+                ids_to_exclude[id] = False
+            return ids_to_exclude
         
-
         ctr_obj = self.pool.get('financing.contract.contract')
-        contract = ctr_obj.browse(cr, uid, context['contract_id'])
+        contract = ctr_obj.browse(cr, uid, contract_id)
         # financing_contract_funding_pool_line.contract_id is a FK for financing_contract_format.id
         # TODO this should be renamed format_id 
         cr.execute('''select account_quadruplet_id
@@ -73,11 +73,19 @@ class financing_contract_account_quadruplet(osv.osv):
         rows = cr.fetchall()
         for id in [x[0] for x in rows]:
             exclude[id] = True
+
+        active_id = context.get('active_id', False)
+        for line in contract.actual_line_ids:
+            if not active_id or line.id != active_id:
+                for account_destination in line.account_destination_ids:
+                    # search the quadruplet to exclude
+                    quadruplet_ids_to_exclude = self.search(cr, uid, [('account_id', '=', account_destination.account_id.id),('account_destination_id','=',account_destination.destination_id.id)])
+                    for item in quadruplet_ids_to_exclude:
+                        exclude[item] = True
+                    
         for id in ids:
-            res[id] = id in exclude
-        return res
-        
-    
+            ids_to_exclude[id] = id in exclude
+        return ids_to_exclude
     
     def _can_be_used_in_contract(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
