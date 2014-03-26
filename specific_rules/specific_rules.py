@@ -1361,7 +1361,8 @@ class stock_inventory(osv.osv):
                         line.write({'prod_lot_id': prodlot_id,},)
                 line_ids.append(line.id)
 
-        self.pool.get('%s.line' % (self._name)).write(cr, uid, line_ids, {'comment': ''}, context=context)
+        if line_ids:
+            self.pool.get('%s.line' % (self._name)).write(cr, uid, line_ids, {'comment': ''}, context=context)
         
         # super function after production lot creation - production lot are therefore taken into account at stock move creation
         result = super(stock_inventory, self).action_confirm(cr, uid, ids, context=context)      
