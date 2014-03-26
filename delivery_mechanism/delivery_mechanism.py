@@ -752,11 +752,20 @@ class stock_picking(osv.osv):
                     proc = move.purchase_line_id.procurement_id
                     if proc.move_id.location_id.id == proc_loc_id:
                         # Replace the stock move of the procurement order by the stock move of the PO line
-                        old_move = proc.move_id.id
+                        old_move_id = proc.move_id.id
+                        old_move_qty = proc.move_id.product_qty
                         proc.write({'move_id': move.id}, context=context)
-                        if not (diff_qty > 0):
-                            # not cancel move if a diff qty is applied above
-                            move_obj.write(cr, uid, [old_move], {'state': 'cancel'}, context=context)
+                        if diff_qty > 0:
+                            # REF-59: move of partial in, 
+                            # adapt proc order's move qty (for correct virtual stock)
+                            proc_new_qty = old_move_qty - diff_qty
+                            if proc_new_qty < 0:
+                                proc_new_qty = 0
+                            move_obj.write(cr, uid, [old_move_id],
+                                {'product_qty': proc_new_qty}, context=context)
+                        else:
+                            # note: do not cancel move if a diff qty is applied above
+                            move_obj.write(cr, uid, [old_move_id], {'state': 'cancel'}, context=context)
 
             # Create the backorder if needed
             if backordered_moves:
