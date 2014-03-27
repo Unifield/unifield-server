@@ -170,38 +170,9 @@ class financing_contract_format_line(osv.osv):
         gen_domain['funding_pool_ids'] = [x.id for x in funding_pool_ids]
         return gen_domain
     
-    # UFTP-16: Temporary commit, this calculation was totally wrong! IS IN PROGRESS OF REVIEWING AND CORRECTING/REWRITING
-#    def _get_analytic_domain(self, cr, uid, browse_line, domain_type, context=None):
-#        if browse_line.line_type in ('consumption', 'overhead'):
-#            # No domain for those
-#            return []
-#        else:
-#            # last domain: get only non-corrected lines.
-#            non_corrected_domain = [('is_reallocated', '=', False),
-#                                    ('is_reversal', '=', False)]
-#            format = browse_line.format_id
-#            if format.eligibility_from_date and format.eligibility_to_date:
-#                general_domain = self._get_general_domain(cr, uid, format, domain_type, context=context)
-#                # Account + destination domain
-#                account_destination_quadruplet_ids = self._get_accounts_couple_and_quadruplets(browse_line)
-#                account_destination_domain = self._create_account_couple_domain(account_destination_quadruplet_ids['account_destination_list'], general_domain)
-#                account_quadruplet_domain = self._create_account_quadruplet_domain(account_destination_quadruplet_ids['account_quadruplet_list'], general_domain['funding_pool_ids'])
-#
-#                date_domain = eval(general_domain['date_domain'])
-#                second_part = account_destination_domain
-#                if len(account_quadruplet_domain):
-#                    if len(second_part) != 0:
-#                        second_part = ['|'] + second_part + account_quadruplet_domain
-#                
-#                return ['&', '&', '&', '&', ] + date_domain  + non_corrected_domain + second_part
-#            else:
-#                # Dates are not set (since we are probably in a donor).
-#                # Return False
-#                return []
-    
     def _get_analytic_domain(self, cr, uid, browse_line, domain_type, isFirst=True, context=None):
         if browse_line.line_type in ('consumption', 'overhead'):
-            # No domain for those
+            # No domain for this case
             return []
         else:
             # last domain: get only non-corrected lines.
@@ -211,19 +182,15 @@ class financing_contract_format_line(osv.osv):
                 general_domain = self._get_general_domain(cr, uid, format, domain_type, context=context)
                 # Account + destination domain
                 account_destination_quadruplet_ids = self._get_accounts_couple_and_quadruplets(browse_line)
-                # get the criteria for accounts of couple mode
                 account_couple_domain = self._create_account_couple_domain(account_destination_quadruplet_ids['account_destination_list'], general_domain)
                 # get the criteria for accounts of quadruplet mode
                 account_quadruplet_domain = self._create_account_quadruplet_domain(account_destination_quadruplet_ids['account_quadruplet_list'], general_domain['funding_pool_ids'])
                 
-                accounts_criteria = []
-                if isFirst: # this is onle for the first time call, to add date and type into the criteria
-                    date_domain = eval(general_domain['date_domain'])
-                    if not account_couple_domain and not account_quadruplet_domain:
-                        accounts_criteria = ['&', '&', '&', ] + date_domain  + non_corrected_domain
-                    else: 
-                        accounts_criteria = ['&','&', '&', '&', ] + date_domain  + non_corrected_domain
-                
+                date_domain = eval(general_domain['date_domain'])
+                if not account_couple_domain and not account_quadruplet_domain:
+                    return [('id', '=', '-1')]
+
+                accounts_criteria = ['&','&', '&', '&', ] + date_domain + non_corrected_domain
                 if account_couple_domain and account_quadruplet_domain:
                     accounts_criteria += ['|'] + account_couple_domain + account_quadruplet_domain
                 elif account_couple_domain:

@@ -156,15 +156,19 @@ class financing_contract_contract(osv.osv):
         if reporting_type is None:
             reporting_type = browse_contract.reporting_type
         
-        analytic_domain = []
+        analytic_domain = False
         isFirst = True
         # parse parent lines (either value or sum of children's values)
         for line in browse_contract.actual_line_ids:
             if not line.parent_id:
+                # Calculate the all the children lines account domain
                 temp = format_line_obj._get_analytic_domain(cr, uid, line, reporting_type, isFirst, context=context)
-                
-                analytic_domain += temp
-                isFirst = False
+                if analytic_domain:
+                    # if there exist already previous view, just add an OR operator
+                    analytic_domain = ['|'] + analytic_domain + temp
+                else:
+                    # first time
+                    analytic_domain = temp
             
         return analytic_domain
 
