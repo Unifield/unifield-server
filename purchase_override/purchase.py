@@ -2318,48 +2318,50 @@ class purchase_order_line(osv.osv):
                     sol_not_to_delete_ids.append(sol.id)
                     if sol.order_id.id not in ir_to_potentialy_cancel_ids:
                         ir_to_potentialy_cancel_ids.append(sol.order_id.id)
+
         for sol in sol_to_update:
             context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete_ids
             sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
         del context['update_or_cancel_line_not_delete']
         
         # UFTP-82: IR and its PO is cancelled
-        # cancel all relative IRs but check before if IR's lines are all cancelled
-        ir_to_cancel_ids = []
-        irl_cr_to_cancel_ids = []
-        for ir in self.pool.get('sale.order').browse(cr, uid, ir_to_potentialy_cancel_ids, context=context):
-            cancel_ir = True
-            for irl in ir.order_line:
-                line_cancelled = False
-                if irl.state == 'cancel':
-                    # we are typically in case PO Cancel only
-                    # (FYI potentialy 'exception' lines are moved to cancel
-                    # in addons sale/sale.py test_state)
-                    line_cancelled = True
-                elif irl.state == 'exception' and ir.is_ir_from_po_cancel:
-                    # we are in case PO C&R and cancel lines are in exception...
-                    # set line to cancel state
-                    line_cancelled = True
-                    irl_cr_to_cancel_ids.append(irl.id)
-                if not line_cancelled:
-                    cancel_ir = False
-            if cancel_ir:
-                ir_to_cancel_ids.append(ir.id)
-        if ir_to_cancel_ids:
-            # origin IR state (and its lines state), cancel only: to cancel, C&R to close
-            do_close = True if sol_of_po_line_resourced_ids else False
-            if sol_of_po_line_resourced_ids:
-                for ir_line_id in irl_cr_to_cancel_ids:
-                    if not ir_line_id in sol_of_po_line_resourced_ids:
-                        # one line not ressourced, we can not close, so cancel
-                        do_close = False
-                        break
-            
-            new_state = 'done' if do_close else 'cancel'
-            self.pool.get('sale.order').write(cr, uid, ir_to_cancel_ids, 
-                {'state': new_state}, context=context)
-            if irl_cr_to_cancel_ids:
-                self.pool.get('sale.order.line').write(cr, uid, irl_cr_to_cancel_ids, {'state': new_state}, context=context)
+        # IR cancel all lines that have to be cancelled
+        # and cancel IR if all its lines cancelled
+        if ir_to_potentialy_cancel_ids:
+            for ir in self.pool.get('sale.order').browse(cr, uid, ir_to_potentialy_cancel_ids, context=context):
+                # new IR state:
+                # we change his state to 'cancel' if at least one line cancelled
+                # we change his state to 'done' if all lines cancelled and resourced
+                # else NO CHANGE
+                ir_new_state = 'cancel'
+                lines_to_cancel_ids = []
+                all_lines_resourced = True
+                one_line_not_cancelled = False
+                
+                # check if at least one line is cancelled
+                # or all lines cancel and resourced
+                for irl in ir.order_line:
+                    line_cancelled = False
+                    if ir.is_ir_from_po_cancel and \
+                        (irl.state == 'cancel' or irl.state == 'exception'):
+                        # note PO sourced from IR, IR cancelled line can be in 'exception' as a 'cancelled' one
+                        line_cancelled = True
+                        if irl.id not in sol_of_po_line_resourced_ids:
+                            all_lines_resourced = False  # one cancelled line not resourced
+                        if irl.state == 'exception':
+                            lines_to_cancel_ids.append(irl.id)  # to be set to cancel
+                    if not line_cancelled:
+                        ir_new_state = False  # no cancelled line, then no change
+                if all_lines_resourced:
+                    ir_new_state = 'done'
+               
+                if lines_to_cancel_ids:
+                    self.pool.get('sale.order.line').write(cr, uid, lines_to_cancel_ids,
+                        {'state': ir_new_state if ir_new_state else 'cancel'},
+                        context=context)
+                if ir_new_state:
+                    self.pool.get('sale.order').write(cr, uid, ir.id, 
+                        {'state':  ir_new_state}, context=context)
         
         return True
 
