@@ -103,7 +103,8 @@ class account_account(osv.osv):
         res = []
         company_obj = self.pool.get('res.company')
         account_obj = self.pool.get('account.account')
-        account_ids = account_obj.search(cr, uid, [], context=context)
+        account_ids = account_obj.search(
+            cr, uid, [('user_type.code', 'in', ['expense', 'income'])], context=context)
         company_account = '7' # User for accounts that begins by "7"
         for company in company_obj.browse(cr, uid, ids, context=context):
             company_account_active = False
