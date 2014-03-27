@@ -190,7 +190,7 @@ class product_product(osv.osv):
         if not ids:
             return res
 
-    # TODO: write in more ORM way, less queries, more pg84 magic
+        # TODO: write in more ORM way, less queries, more pg84 magic
         if context.get('shop', False):
             cr.execute('select warehouse_id from sale_shop where id=%s', (int(context['shop']),))
             res2 = cr.fetchone()
@@ -225,10 +225,10 @@ class product_product(osv.osv):
 
         uoms_o = {}
         product2uom = {}
-        for product in self.browse(cr, uid, ids, context=context):
-            product2uom[product.id] = product.uom_id.id
-            uoms_o[product.uom_id.id] = product.uom_id
-
+        for product in self.read(cr, uid, ids, ['uom_id'], context=context):
+            product2uom[product['id']] = product['uom_id'][0]
+            if product['uom_id'][0] not in uoms_o:
+                uoms_o[product['uom_id'][0]] = self.pool.get('product.uom').browse(cr, uid, product['uom_id'][0], context=context)
         results = []
         results2 = []
 

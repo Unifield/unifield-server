@@ -19,14 +19,16 @@
 #
 ##############################################################################
 
-import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from osv import osv
-from tools.translate import _
-import tools
+import time
+
 import netsvc
+from osv import osv
 import pooler
+import tools
+from tools.translate import _
+
 
 class procurement_order(osv.osv):
     _inherit = 'procurement.order'
@@ -83,6 +85,8 @@ class procurement_order(osv.osv):
             while True:
                 cr.execute("select id from procurement_order where state='confirmed' and procure_method='make_to_order' order by priority,date_planned limit 500 offset %s", (offset,))
                 ids = map(lambda x: x[0], cr.fetchall())
+                # Put a lock on procurement.order
+                procurement_obj.write(cr, uid, ids, {}, context=context)
                 for proc in procurement_obj.browse(cr, uid, ids, context=context):
                     if maxdate >= proc.date_planned:
                         wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
