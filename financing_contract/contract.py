@@ -157,10 +157,14 @@ class financing_contract_contract(osv.osv):
             reporting_type = browse_contract.reporting_type
         
         analytic_domain = []
+        isFirst = True
         # parse parent lines (either value or sum of children's values)
         for line in browse_contract.actual_line_ids:
             if not line.parent_id:
-                analytic_domain += format_line_obj._get_analytic_domain(cr, uid, line, reporting_type, context=context)
+                temp = format_line_obj._get_analytic_domain(cr, uid, line, reporting_type, isFirst, context=context)
+                
+                analytic_domain += temp
+                isFirst = False
             
         return analytic_domain
 
@@ -291,6 +295,7 @@ class financing_contract_contract(osv.osv):
                                                                uid,
                                                                browse_format_line,
                                                                browse_contract.reporting_type,
+                                                               True,
                                                                context=context)
         vals = {'name': browse_format_line.name,
                 'code': browse_format_line.code,

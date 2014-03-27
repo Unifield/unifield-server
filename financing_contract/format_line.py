@@ -41,9 +41,9 @@ class financing_contract_format_line(osv.osv):
         return domain
     
     # get list of accounts for duplet format lines
-    def _create_account_destination_domain(self, account_destination_list, general_domain):
+    def _create_account_couple_domain(self, account_destination_list, general_domain):
         if len(account_destination_list) == 0:
-            return [('id', '=', -1)] # Just make this condition to False
+            return False # Just make this condition to False
         elif len(account_destination_list) == 1:
             temp_domain = ['&',
                     '&',
@@ -55,14 +55,19 @@ class financing_contract_format_line(osv.osv):
                 return temp_domain + ['&'] + [cc_domain] + [eval(general_domain['funding_pool_domain'])]
             return temp_domain + [cc_domain]
         else:
-            return ['|'] \
-                 + self._create_account_destination_domain([account_destination_list[0]], general_domain) \
-                 + self._create_account_destination_domain(account_destination_list[1:], general_domain)
+            firstElement = self._create_account_couple_domain([account_destination_list[0]], general_domain)
+            secondElement = self._create_account_couple_domain(account_destination_list[1:], general_domain)
+            
+            if firstElement and secondElement:
+                return ['|'] + firstElement + secondElement
+            elif firstElement: 
+                return firstElement
+            return secondElement
     
     # get list of accounts for quadruplet format lines
     def _create_account_quadruplet_domain(self, account_quadruplet_list, funding_pool_ids=False):
         if len(account_quadruplet_list) == 0:
-            return [('id', '=', -1)] # Just make this condition to False
+            return False
         elif len(account_quadruplet_list) == 1:
             if account_quadruplet_list[0].funding_pool_id.id in funding_pool_ids:
                 quad_element = account_quadruplet_list[0]
@@ -74,11 +79,16 @@ class financing_contract_format_line(osv.osv):
                         ('cost_center_id', '=', quad_element.cost_center_id.id),
                         ('account_id', '=', quad_element.funding_pool_id.id)]
             else: 
-                return [('id', '=', -1)] # Make this one false in sql
+                return False
         else:
-            return ['|'] \
-                 + self._create_account_quadruplet_domain([account_quadruplet_list[0]], funding_pool_ids) \
-                 + self._create_account_quadruplet_domain(account_quadruplet_list[1:], funding_pool_ids)
+            firstElement = self._create_account_quadruplet_domain([account_quadruplet_list[0]], funding_pool_ids)
+            secondElement = self._create_account_quadruplet_domain(account_quadruplet_list[1:], funding_pool_ids)
+            
+            if firstElement and secondElement:
+                return ['|'] + firstElement + secondElement
+            elif firstElement: 
+                return firstElement
+            return secondElement
 
     def _get_number_of_childs(self, cr, uid, ids, field_name=None, arg=None, context=None):
         # Verifications
@@ -115,7 +125,7 @@ class financing_contract_format_line(osv.osv):
         return result
 
     # Get the list of accounts for both duplet and quadruplet    
-    def _get_account_destination_quadruplets(self, browse_line):
+    def _get_accounts_couple_and_quadruplets(self, browse_line):
         account_destination_result = []
         account_quadruplet_result = []
         if browse_line.line_type != 'view':
@@ -125,7 +135,7 @@ class financing_contract_format_line(osv.osv):
                 account_destination_result = [account_destination for account_destination in browse_line.account_destination_ids]
         else:
             for child_line in browse_line.child_ids:
-                temp = self._get_account_destination_quadruplets(child_line)
+                temp = self._get_accounts_couple_and_quadruplets(child_line)
                 account_destination_result += temp['account_destination_list']
                 account_quadruplet_result += temp['account_quadruplet_list']
         return {'account_destination_list': account_destination_result,
@@ -161,32 +171,68 @@ class financing_contract_format_line(osv.osv):
         return gen_domain
     
     # UFTP-16: Temporary commit, this calculation was totally wrong! IS IN PROGRESS OF REVIEWING AND CORRECTING/REWRITING
-    def _get_analytic_domain(self, cr, uid, browse_line, domain_type, context=None):
+#    def _get_analytic_domain(self, cr, uid, browse_line, domain_type, context=None):
+#        if browse_line.line_type in ('consumption', 'overhead'):
+#            # No domain for those
+#            return []
+#        else:
+#            # last domain: get only non-corrected lines.
+#            non_corrected_domain = [('is_reallocated', '=', False),
+#                                    ('is_reversal', '=', False)]
+#            format = browse_line.format_id
+#            if format.eligibility_from_date and format.eligibility_to_date:
+#                general_domain = self._get_general_domain(cr, uid, format, domain_type, context=context)
+#                # Account + destination domain
+#                account_destination_quadruplet_ids = self._get_accounts_couple_and_quadruplets(browse_line)
+#                account_destination_domain = self._create_account_couple_domain(account_destination_quadruplet_ids['account_destination_list'], general_domain)
+#                account_quadruplet_domain = self._create_account_quadruplet_domain(account_destination_quadruplet_ids['account_quadruplet_list'], general_domain['funding_pool_ids'])
+#
+#                date_domain = eval(general_domain['date_domain'])
+#                second_part = account_destination_domain
+#                if len(account_quadruplet_domain):
+#                    if len(second_part) != 0:
+#                        second_part = ['|'] + second_part + account_quadruplet_domain
+#                
+#                return ['&', '&', '&', '&', ] + date_domain  + non_corrected_domain + second_part
+#            else:
+#                # Dates are not set (since we are probably in a donor).
+#                # Return False
+#                return []
+    
+    def _get_analytic_domain(self, cr, uid, browse_line, domain_type, isFirst=True, context=None):
         if browse_line.line_type in ('consumption', 'overhead'):
             # No domain for those
             return []
         else:
             # last domain: get only non-corrected lines.
-            non_corrected_domain = [('is_reallocated', '=', False),
-                                    ('is_reversal', '=', False)]
+            non_corrected_domain = [('is_reallocated', '=', False),('is_reversal', '=', False)]
             format = browse_line.format_id
             if format.eligibility_from_date and format.eligibility_to_date:
                 general_domain = self._get_general_domain(cr, uid, format, domain_type, context=context)
                 # Account + destination domain
-                account_destination_quadruplet_ids = self._get_account_destination_quadruplets(browse_line)
-                account_destination_domain = self._create_account_destination_domain(account_destination_quadruplet_ids['account_destination_list'], general_domain)
+                account_destination_quadruplet_ids = self._get_accounts_couple_and_quadruplets(browse_line)
+                # get the criteria for accounts of couple mode
+                account_couple_domain = self._create_account_couple_domain(account_destination_quadruplet_ids['account_destination_list'], general_domain)
+                # get the criteria for accounts of quadruplet mode
                 account_quadruplet_domain = self._create_account_quadruplet_domain(account_destination_quadruplet_ids['account_quadruplet_list'], general_domain['funding_pool_ids'])
-
-                date_domain = eval(general_domain['date_domain'])
-                second_part = account_destination_domain
-                if len(account_quadruplet_domain):
-                    if len(second_part) != 0:
-                        second_part = ['|'] + second_part + account_quadruplet_domain
                 
-                return ['&', '&', '&', '&', ] + date_domain  + non_corrected_domain + second_part
+                accounts_criteria = []
+                if isFirst: # this is onle for the first time call, to add date and type into the criteria
+                    date_domain = eval(general_domain['date_domain'])
+                    if not account_couple_domain and not account_quadruplet_domain:
+                        accounts_criteria = ['&', '&', '&', ] + date_domain  + non_corrected_domain
+                    else: 
+                        accounts_criteria = ['&','&', '&', '&', ] + date_domain  + non_corrected_domain
+                
+                if account_couple_domain and account_quadruplet_domain:
+                    accounts_criteria += ['|'] + account_couple_domain + account_quadruplet_domain
+                elif account_couple_domain:
+                    accounts_criteria += account_couple_domain
+                elif account_quadruplet_domain:
+                    accounts_criteria += account_quadruplet_domain
+                    
+                return accounts_criteria
             else:
-                # Dates are not set (since we are probably in a donor).
-                # Return False
                 return []
     
     def _is_overhead_present(self, cr, uid, ids, context={}):
@@ -289,9 +335,9 @@ class financing_contract_format_line(osv.osv):
                     # sum of analytic lines, determined by the domain
                     analytic_domain = []
                     if field_name == 'project_real':
-                        analytic_domain = self._get_analytic_domain(cr, uid, line, 'project', context=context)
+                        analytic_domain = self._get_analytic_domain(cr, uid, line, 'project', True, context=context)
                     elif field_name == 'allocated_real':
-                        analytic_domain = self._get_analytic_domain(cr, uid, line, 'allocated', context=context)
+                        analytic_domain = self._get_analytic_domain(cr, uid, line, 'allocated', True, context=context)
                     # selection of analytic lines
                     if 'reporting_currency' in context:
                         analytic_line_obj = self.pool.get('account.analytic.line')
