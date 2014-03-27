@@ -54,6 +54,25 @@ class finance_archive(finance_export.finance_archive):
             new_data.append(self.line_to_utf8(tmp_line))
         return self.postprocess_selection_columns(cr, uid, new_data, [('res.partner', 'partner_type', 3)], column_deletion=column_deletion)
 
+    def postprocess_add_db_id(self, cr, uid, data, model, column_deletion=False):
+        """
+        Change first column for the DB ID composed of:
+          - database name
+          - model
+          - id
+        """
+        # Prepare some values
+        new_data = []
+        dbname = cr.dbname
+        pool = pooler.get_pool(dbname)
+        column_number = 0
+        for line in data:
+            tmp_line = list(line)
+            line_ids = str(line[column_number])
+            tmp_line[column_number] = self.get_hash(cr, uid, line_ids, model)
+            new_data.append(self.line_to_utf8(tmp_line))
+        return self.postprocess_selection_columns(cr, uid, new_data, [], column_deletion=column_deletion)
+
     def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False):
         """
         Use current SQL result (data) to fetch IDs and mark lines as used.
@@ -79,9 +98,9 @@ class finance_archive(finance_export.finance_archive):
         sqlmark = """UPDATE account_move_line SET exporting_sequence = %s WHERE id in %s;"""
         cr.execute(sqlmark, (seq, tuple(ids),))
         # Do right request
-        sqltwo = """SELECT '' AS "DB ID", i.code, j.code, j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS "entry_sequence", 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END AS "debit", CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as "credit", c.name AS "booking_currency", CASE WHEN req.func_total > 0 THEN req.func_total ELSE 0.0 END AS "func_debit", CASE WHEN req.func_total < 0 THEN ABS(req.func_total) ELSE 0.0 END AS "func_credit"
+        sqltwo = """SELECT req.concat AS "DB ID", i.code, j.code, j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS "entry_sequence", 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END AS "debit", CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as "credit", c.name AS "booking_currency", CASE WHEN req.func_total > 0 THEN req.func_total ELSE 0.0 END AS "func_debit", CASE WHEN req.func_total < 0 THEN ABS(req.func_total) ELSE 0.0 END AS "func_credit"
             FROM (
-                SELECT aml.instance_id, aml.period_id, aml.journal_id, aml.currency_id, aml.account_id, SUM(amount_currency) AS total, SUM(debit - credit) AS func_total
+                SELECT aml.instance_id, aml.period_id, aml.journal_id, aml.currency_id, aml.account_id, SUM(amount_currency) AS total, SUM(debit - credit) AS func_total, array_to_string(array_agg(aml.id), ',') AS concat
                 FROM account_move_line AS aml, account_journal AS j
                 WHERE aml.exporting_sequence = %s
                 AND aml.journal_id = j.id
@@ -102,6 +121,8 @@ class finance_archive(finance_export.finance_archive):
         for line in datatwo:
             tmp_line = list(line)
             tmp_line.append(company_currency)
+            line_ids = tmp_line[0]
+            tmp_line[0] = self.get_hash(cr, uid, line_ids, 'account.move.line')
             new_data.append(tmp_line)
         # mark lines as exported
         sqlmarktwo = """UPDATE account_move_line SET exported = 't', exporting_sequence = Null WHERE id in %s;"""
@@ -424,6 +445,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'headers': ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit', 'Functional CCY'],
                 'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
                 'key': 'rawdata',
+                'function': 'postprocess_add_db_id', # to take analytic line IDS and make a DB ID with
+                'fnct_params': [0, 'account.analytic.line'],
                 'query_params': (first_day_of_period, last_day_of_period, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'delete_columns': [0],
                 'id': 0,
@@ -439,6 +462,8 @@ class hq_report_ocb(report_sxw.report_sxw):
             {
                 'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
                 'key': 'bs_entries',
+                'function': 'postprocess_add_db_id', # to take analytic line IDS and make a DB ID with
+                'fnct_params': ['account.move.line'],
                 'query_params': (period.id, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'delete_columns': [0],
                 'id': 0,

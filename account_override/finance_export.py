@@ -94,6 +94,26 @@ class finance_archive():
         data = pool.get(model).fields_get(cr, 1, [field])
         return dict(data[field]['selection'])
 
+    def get_hash(self, cr, uid, ids, model):
+        """
+        Create a concatenation of:
+          - dbname
+          - ids
+          - model
+        """
+        if not ids or not model:
+            return ''
+        if not isinstance(ids, (str, unicode)):
+            return ''
+        # preapre some values
+        name = cr.dbname
+        ids = sorted(ids.split(','))
+        # We have this: [u'2', u'4', u'6', u'8']
+        # And we want this: [2, 4, 6, 8]
+        # So we do some process on this list
+        res_ids = [int(x) for x in ids]
+        return ','.join([name, model, str(res_ids)])
+
     def postprocess_selection_columns(self, cr, uid, data, changes, column_deletion=False):
         """
         This method takes each line from data and change some columns regarding "changes" variable.
