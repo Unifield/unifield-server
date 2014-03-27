@@ -97,12 +97,35 @@ class account_account(osv.osv):
                 raise osv.except_osv(_('Error'), _('Operation not implemented!'))
         return arg
 
+    def _get_accounts_from_company(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        res = []
+        company_obj = self.pool.get('res.company')
+        account_obj = self.pool.get('account.account')
+        account_ids = account_obj.search(cr, uid, [], context=context)
+        company_account = '7' # User for accounts that begins by "7"
+        for company in company_obj.browse(cr, uid, ids, context=context):
+            company_account_active = False
+            if company.additional_allocation:
+                company_account_active = company.additional_allocation
+            # Prepare result
+            for account in account_obj.read(cr, uid, account_ids, ['user_type_code', 'code'], context=context):
+                if account['user_type_code'] == 'expense':
+                    res.append(account['id'])
+                elif account['user_type_code'] == 'income':
+                    if not company_account_active:
+                        res.append(account['id'])
+                    elif company_account_active and account['code'].startswith(company_account):
+                        res.append(account['id'])
+        return res
+
     _columns = {
         'is_analytic_addicted': fields.function(
             _get_is_analytic_addicted, fnct_search=_search_is_analytic_addicted,
             method=True, type='boolean', string='Analytic-a-holic?', readonly=True,
             help="Is this account addicted on analytic distribution?",
-            store={'res.company': (lambda self, cr, uid, ids, c={}: ids, ['additional_allocation'], 10),
+            store={'res.company': (_get_accounts_from_company, ['additional_allocation'], 10),
                    'account.account': (lambda self, cr, uid, ids, c={}: ids, ['user_type_code', 'code'], 10)}),
     }
 
