@@ -528,23 +528,18 @@ class uom_tools(osv.osv_memory):
             if isinstance(uom_id, (int, long)):
                 uom_id = [uom_id]
             cr.execute(
-            """
-            SELECT COUNT(*)
-            FROM (
-                SELECT uom.category_id AS cat_id
+                """
+                SELECT COUNT(*)
                 FROM product_uom AS uom,
                     product_template AS pt,
-                    product_product AS pp
-                WHERE uom.id=pt.uom_id
-                AND pt.id=pp.product_tmpl_id
+                    product_product AS pp,
+                    product_uom AS uom2
+                WHERE uom.id = pt.uom_id
+                AND pt.id = pp.product_tmpl_id
                 AND pp.id = %s
-                ) AS a,
-                (
-                SELECT uom2.category_id AS cat2_id
-                FROM product_uom AS uom2
-                WHERE uom2.id = %s
-                ) AS b
-            WHERE a.cat_id=b.cat2_id""", (product_id[0], uom_id[0]))
+                AND uom2.category_id = uom.category_id
+                AND uom2.id = %s""",
+                (product_id[0], uom_id[0]))
             count = cr.fetchall()[0][0]
             return count > 0
         return True
