@@ -1305,12 +1305,14 @@ class stock_move(osv.osv):
         Update the partner or the address according to the other
         '''
         # Objects
-        prod_obj = self.pool.get('produc.product')
+        prod_obj = self.pool.get('product.product')
         data_obj = self.pool.get('ir.model.data')
         loc_obj = self.pool.get('stock.location')
         pick_obj = self.pool.get('stock.picking')
+        addr_obj = self.pool.get('res.partner.address')
+        partner_obj = self.pool.get('res.partner')
 
-        if not context:
+        if context is None:
             context = {}
 
         if isinstance(ids, (int, long)):
@@ -1332,9 +1334,9 @@ class stock_move(osv.osv):
                 pick_bro = pick_obj.browse(cr, uid, vals['picking_id'], context=context)
 
         if pick_bro and product and product.type == 'consu' and vals.get('location_dest_id') != id_cross:
-            id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')
+            id_nonstock = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')
             if vals.get('sale_line_id'):
-                id_pack = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')
+                id_pack = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')
                 vals.update({
                     'location_id': pick_bro.type == 'out' and id_cross or id_nonstock[1],
                     'location_dest_id': id_pack[1],
@@ -1361,11 +1363,11 @@ class stock_move(osv.osv):
         if vals.get('date_expected') or vals.get('reason_type_id') or cond1 or cond2:
             for move in self.browse(cr, uid, ids, context=context):
                 if cond1 and move.partner_id.id != partner:
-                    addr = self.pool.get('res.partner').address_get(cr, uid, vals.get('partner_id2'), ['delivery', 'default'])
+                    addr = partner_obj.address_get(cr, uid, vals.get('partner_id2'), ['delivery', 'default'])
                     vals['address_id'] = addr.get('delivery', False) or addr.get('default')
 
                 if cond2 and move.address_id.id != vals.get('address_id'):
-                    addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
+                    addr = addr_obj.browse(cr, uid, vals.get('address_id'), context=context)
                     vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
 
                 if vals.get('date_expected') and vals.get('state', move.state) not in ('done', 'cancel'):
@@ -1374,7 +1376,7 @@ class stock_move(osv.osv):
                 # Change the reason type of the picking if it is not the same
                 if 'reason_type_id' in vals:
                     if move.picking_id and move.picking_id.reason_type_id.id != vals['reason_type_id']:
-                        other_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+                        other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
                         pick_obj.write(cr, uid, move.picking_id.id, {'reason_type_id': other_type_id}, context=context)
 
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)

@@ -109,6 +109,9 @@ class purchase_order(osv.osv):
         '''
         generate a po from the selected request for quotation
         '''
+        # Objects
+        line_obj = self.pool.get('purchase.order.line')
+
         # Some verifications
         if context is None:
             context = {}
@@ -120,6 +123,13 @@ class purchase_order(osv.osv):
         # copy the po with rfq_ok set to False
         data = self.read(cr, uid, ids[0], ['name'], context=context)
         new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False, 'origin': data['name']}, context=dict(context,keepOrigin=True))
+        # Remove lines with 0.00 as unit price
+        no_price_line_ids = line_obj.search(cr, uid, [
+            ('order_id', '=', new_po_id),
+            ('price_unit', '=', 0.00),
+        ], context=context)
+        line_obj.unlink(cr, uid, no_price_line_ids, context=context)
+
         data = self.read(cr, uid, new_po_id, ['name'], context=context)
         # log message describing the previous action
         self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.')%data['name'])
