@@ -323,6 +323,8 @@ class procurement_request(osv.osv):
                 or line.nomen_manda_3.id == nomen_manda_3 \
                 or line.product_uom.id == uom_tbd:
                     nb_lines += 1
+                if line.product_uom_qty <= 0.00:
+                    raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
             if nb_lines:
                 raise osv.except_osv(_('Error'), _('Please check the lines : you cannot have "To Be confirmed" for Nomenclature Level". You have %s lines to correct !') % nb_lines)
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
