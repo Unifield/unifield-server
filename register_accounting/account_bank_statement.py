@@ -183,6 +183,7 @@ class account_bank_statement(osv.osv):
         'notes': fields.text('Comments'),
         'period_number': fields.related('period_id', 'number', relation='account.period', string="Period number", type="integer", store=True, readonly=True),
         'closing_date': fields.date("Closed On"),
+        'responsible_ids': fields.many2many('res.users', 'bank_statement_users_rel', 'statement_id', 'user_id', 'Responsible'),
     }
 
     _order = 'state asc, period_number desc'
