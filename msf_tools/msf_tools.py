@@ -530,23 +530,19 @@ class uom_tools(osv.osv_memory):
             cr.execute(
             """
             SELECT COUNT(*)
-            FROM 	(
-                SELECT cat.id AS cat_id
-                FROM product_category AS cat,
-                     product_uom AS uom,
-                     product_template AS pt,
-                     product_product AS pp
-                WHERE cat.id=uom.category_id
-                AND uom.id=pt.uom_id
+            FROM (
+                SELECT uom.category_id AS cat_id
+                FROM product_uom AS uom,
+                    product_template AS pt,
+                    product_product AS pp
+                WHERE uom.id=pt.uom_id
                 AND pt.id=pp.product_tmpl_id
                 AND pp.id = %s
                 ) AS a,
                 (
-                SELECT cat2.id AS cat2_id
-                FROM product_category AS cat2,
-                     product_uom AS uom2
-                WHERE cat2.id=uom2.category_id
-                AND uom2.id = %s
+                SELECT uom2.category_id AS cat2_id
+                FROM product_uom AS uom2
+                WHERE uom2.id = %s
                 ) AS b
             WHERE a.cat_id=b.cat2_id""", (product_id[0], uom_id[0]))
             count = cr.fetchall()[0][0]
