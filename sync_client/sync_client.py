@@ -515,11 +515,12 @@ class Entity(osv.osv):
         context = context or {}
         logger = context.get('logger')
         updates = self.pool.get(context.get('update_received_model', 'sync.client.update_received'))
-
         # get instance prioritiies
-        proxy = self.pool.get("sync.client.sync_server_connection")\
-            .get_connection(cr, uid, "sync.server.entity")
-        priorities_stuff = proxy.get_entities_priorities()
+        priorities_stuff = None
+        if not context.get('offline_synchronization'):
+            proxy = self.pool.get("sync.client.sync_server_connection")\
+                .get_connection(cr, uid, "sync.server.entity")
+            priorities_stuff = proxy.get_entities_priorities()
 
         # Get a list of updates to execute
         # Warning: execution order matter
