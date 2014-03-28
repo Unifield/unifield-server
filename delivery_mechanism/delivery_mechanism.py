@@ -605,6 +605,7 @@ class stock_picking(osv.osv):
         uom_obj = self.pool.get('product.uom')
         move_obj = self.pool.get('stock.move')
         sequence_obj = self.pool.get('ir.sequence')
+        proc_obj = self.pool.get('procurement.order')
         wf_service = netsvc.LocalService("workflow")
 
         if context is None:
@@ -623,16 +624,6 @@ class stock_picking(osv.osv):
         context['location'] = internal_loc
 
         product_availability = {}
-        
-        # get 'Procurement' location
-        domain = [
-            ('name', '=', 'Procurement'),
-            ('usage', '=', 'procurement'),
-            ('location_category', '=', 'other'),
-        ]
-        procurement_location_id = self.pool.get('stock.location').search(cr, uid, domain, context=context)
-        if procurement_location_id:
-            procurement_location_id = procurement_location_id[0]
 
         for wizard in inc_proc_obj.browse(cr, uid, wizard_ids, context=context):
             picking = wizard.picking_id
@@ -760,38 +751,20 @@ class stock_picking(osv.osv):
                 # UTP-967
                 if move.state != 'cancel' and move.purchase_line_id and move.purchase_line_id.procurement_id:
                     proc = move.purchase_line_id.procurement_id
-                    in_original_move_id = proc.in_original_move_id
                     if proc.move_id.location_id.id == proc_loc_id:
                         # Replace the stock move of the procurement order by the stock move of the PO line
-                        old_move_id = proc.move_id.id
-                        old_move_qty = proc.move_id.product_qty
-                        old_move_location_id = proc.move_id.location_id.id
-
                         proc.write({'move_id': move.id}, context=context)
- 
                         if diff_qty > 0:
-                            if old_move_location_id == procurement_location_id:
-                                # REF-59: first move of partial IN, 
-                                # adapt proc order's move qty (for correct virtual stock)
-                                # (diff_qty <=> qty that lefts after that)
-                                move_obj.write(cr, uid, [old_move_id],
-                                    {'product_qty': diff_qty}, context=context)
-                                proc.write({'in_original_move_id': old_move_id}, context=context)    
+                            # REF-59: move of partial in, 
+                            # adapt proc order's move qty (for correct virtual stock)
+                            move_obj.write(cr, uid, [proc.move_id.id],
+                                {'product_qty': diff_qty}, context=context)
                         else:
                             # note: do not cancel move if a diff qty is applied above
-                            move_obj.write(cr, uid, [old_move_id], {'state': 'cancel'}, context=context)
-                    else:
-                        # REF-59: other moves of a partial IN
-                        # adapt proc order's move qty (for correct virtual stock)
-                        # (diff_qty <=> qty that lefts after that)
-                        if in_original_move_id:
-                            vals = {'product_qty': diff_qty if diff_qty >= 0 else 0}
-                            if vals['product_qty'] == 0:
-                                vals['state'] = 'done'
-                            move_obj.write(cr, uid, [in_original_move_id.id], vals, context=context)
-                            if vals['product_qty'] == 0:
-                                proc.write({'in_original_move_id': False}, context=context)
-                        
+                            # TODO: To test without next line and state = 'done' or with line and state = 'cancel'
+                            proc_obj.write(cr, uid, [proc.id], {'move_id': move.id}, context=context)
+                            move_obj.write(cr, uid, [proc.move_id.id], {'product_qty': 0.00, 'state': 'done'}, context=context)
+
             # Create the backorder if needed
             if backordered_moves:
                 backorder_id = self.copy(cr, uid, picking.id, {
@@ -988,10 +961,6 @@ class procurement_order(osv.osv):
     inherit po_values_hook
     '''
     _inherit = 'procurement.order'
-    
-    _columns = {
-        'in_original_move_id': fields.many2one('stock.move', 'Reserved. Incoming shipment original move.', invisible=True),  # REF-59
-    }
 
     def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
