@@ -275,7 +275,6 @@ class account_commitment(osv.osv):
         commit_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
         return True
 
-
     def button_compute(self, cr, uid, ids, context=None):
         """
         Compute commitment voucher total.
