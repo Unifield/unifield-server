@@ -964,21 +964,45 @@ class account_bank_statement_line(osv.osv):
                     res.add(ml.move_id.id)
         return list(res)
 
+
+
     def _get_fp_analytic_lines(self, cr, uid, ids, field_name=None, args=None, context=None):
         """
         Get all analytic lines linked to the given register lines
         """
-        # Some checks
         if not context:
             context = {}
-        # Prepare some values
+
         res = {}
+        aal_obj = self.pool.get('account.analytic.line')
+        aml_obj = self.pool.get('account.move.line')
         for absl in self.browse(cr, uid, ids, context=context):
-            # Fetch all analytic lines linked to this register line
-            ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id.move_id', 'in', self._get_move_ids(cr, uid, [absl.id], context=context)), ('account_id.category', '=', 'FUNDING')])
+            possible_aal_ids = []
+
+            # get ids of all possible analytic lines for this register lines via moves for the statement line
+            cr.execute('''select distinct id
+                from account_analytic_line
+                where move_id in (select id from account_move_line
+                                  where move_id in (select distinct statement_id as "move_id"
+                                        from account_bank_statement_line_move_rel
+                                        where move_id in (select id from account_bank_statement_line
+                                                          where id = %s)))''' % (absl.id))
+            possible_aal_ids += [x[0] for x in cr.fetchall()]
+
+            # filter the lines 
+            # - keep only if the account and abs(amount) of the parent account_move_line match and statement line
+            not_matched = []
+            for aal in aal_obj.browse(cr, uid, possible_aal_ids, context=context):
+                aml = aml_obj.browse(cr, uid, aal.move_id.id, context=context)
+                if not(absl.account_id.id == aml.account_id.id and abs(absl.amount) == abs(aml.amount_currency)):
+                    not_matched.append(aal.id)
+            aal_ids = [x for x in possible_aal_ids if x not in not_matched]
+
             # Then retrieve all corrections/reversals from them
-            res[absl.id] = self.pool.get('account.analytic.line').get_corrections_history(cr, uid, ana_ids, context=context)
+            res[absl.id] = aal_obj.get_corrections_history(cr, uid, aal_ids, context=context)
         return res
+
+
 
     _columns = {
         'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
