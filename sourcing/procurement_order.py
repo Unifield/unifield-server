@@ -473,7 +473,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             if procurement.supplier:
                 partner = procurement.supplier
-            elif procurement.product_id:
+            elif procurement.product_id.seller_id:
                 partner = procurement.product_id.seller_id
             else:
                 cr.execute(
