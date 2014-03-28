@@ -103,23 +103,7 @@ class account_account(osv.osv):
         res = []
         company_obj = self.pool.get('res.company')
         account_obj = self.pool.get('account.account')
-        account_ids = account_obj.search(
-            cr, uid, [('user_type.code', 'in', ['expense', 'income'])], context=context)
-        company_account = '7' # User for accounts that begins by "7"
-        for company in company_obj.browse(cr, uid, ids, context=context):
-            company_account_active = False
-            if company.additional_allocation:
-                company_account_active = company.additional_allocation
-            # Prepare result
-            for account in account_obj.read(cr, uid, account_ids, ['user_type_code', 'code'], context=context):
-                if account['user_type_code'] == 'expense':
-                    res.append(account['id'])
-                elif account['user_type_code'] == 'income':
-                    if not company_account_active:
-                        res.append(account['id'])
-                    elif company_account_active and account['code'].startswith(company_account):
-                        res.append(account['id'])
-        return res
+        return account_obj.search(cr, uid, [('user_type.code', '=', 'income')], context=context)
 
     _columns = {
         'is_analytic_addicted': fields.function(
