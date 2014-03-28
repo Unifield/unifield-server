@@ -1072,6 +1072,7 @@ stock moves which are already processed : '''
                     'price_unit': l.price_unit,
                     'procurement_id': l.procurement_id and l.procurement_id.id or False,
                     'type': 'make_to_order',
+                    'supplier': l.order_id.partner_id.id,
                     'analytic_distribution_id': new_distrib,
                     'created_by_po': l.order_id.id,
                     'created_by_po_line': l.id,
