@@ -231,7 +231,7 @@ class account_invoice(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
-        invl_obj = self.pool.get('account.invoice.line')
+        invl_obj = self.pool.get(self._name + '.line') # PAY ATTENTION to wizard.account.invoice.line
         # Search invoice lines
         to_reset = invl_obj.search(cr, uid, [('invoice_id', 'in', ids)])
         invl_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
