@@ -323,6 +323,7 @@ class purchase_order_line(osv.osv):
 #                                     'analytic_account_project_intermission')[1]
 #         except ValueError:
 #             intermission_cc = 0
+        ana_dist_obj = self.pool.get('analytic.distribution')
         # Browse all given lines
         for line in self.browse(cr, uid, ids, context=context):
 #             is_intermission = False
@@ -339,7 +340,7 @@ class purchase_order_line(osv.osv):
                 if not account_id:
                     res[line.id] = 'invalid'
                     continue
-                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, po_distrib_id, account_id)
+                res[line.id] = ana_dist_obj._get_distribution_state(cr, uid, distrib_id, po_distrib_id, account_id)
 
                 # UTP-953: For intersection, the cc_intermission can also be used for all partner types, so the block below is removed
 #                if res[line.id] == 'valid' and not is_intermission:
