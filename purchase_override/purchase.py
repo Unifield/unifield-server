@@ -109,6 +109,9 @@ class purchase_order(osv.osv):
         '''
         generate a po from the selected request for quotation
         '''
+        # Objects
+        line_obj = self.pool.get('purchase.order.line')
+
         # Some verifications
         if context is None:
             context = {}
@@ -120,6 +123,13 @@ class purchase_order(osv.osv):
         # copy the po with rfq_ok set to False
         data = self.read(cr, uid, ids[0], ['name'], context=context)
         new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False, 'origin': data['name']}, context=dict(context,keepOrigin=True))
+        # Remove lines with 0.00 as unit price
+        no_price_line_ids = line_obj.search(cr, uid, [
+            ('order_id', '=', new_po_id),
+            ('price_unit', '=', 0.00),
+        ], context=context)
+        line_obj.unlink(cr, uid, no_price_line_ids, context=context)
+
         data = self.read(cr, uid, new_po_id, ['name'], context=context)
         # log message describing the previous action
         self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.')%data['name'])
@@ -954,6 +964,9 @@ stock moves which are already processed : '''
             if not po.split_po and not po.order_line:
                 raise osv.except_osv(_('Error !'), _('You can not validate a purchase order without Purchase Order Lines.'))
 
+            if po.amount_total == 0:  # UFTP-69
+                raise osv.except_osv(_('Error'), _('You can not validate a purchase order with a total amount of 0.'))
+
             for line in po.order_line:
                 if line.state=='draft':
                     todo.append(line.id)
@@ -1381,6 +1394,12 @@ stock moves which are already processed : '''
         setup = uf_config.get_config(cr, uid)
 
         for order in self.browse(cr, uid, ids):
+            if order.amount_total == 0:  # UFTP-69
+                # total amount could be set to 0 after it was Validated
+                # or no lines
+                # (after wkf_confirm_order total amount check)
+                raise osv.except_osv(_('Error'), _('You can not confirm a purchase order with a total amount of 0.'))
+
             # Create commitments for each PO only if po is "from picking"
             # UTP-114: No Commitment Voucher on PO that are 'purchase_list'!
             if (order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type not in ['in_kind', 'purchase_list'] and order.partner_id.partner_type != 'intermission') or (order.invoice_method == 'manual' and order.order_type == 'direct' and order.partner_id.partner_type == 'esc'):

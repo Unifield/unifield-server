@@ -19,21 +19,21 @@
 #
 ##############################################################################
 
-from osv import osv
-from osv import fields
+import base64
 from os import path
+
+from osv import fields
+from osv import osv
 from tools.translate import _
 
-from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
+from msf_doc_import import GENERIC_MESSAGE
 from msf_doc_import.wizard import INT_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_internal_import
 from msf_doc_import.wizard import INT_LINE_COLUMNS_FOR_IMPORT as columns_for_internal_import
 from msf_doc_import.wizard import IN_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_incoming_import
 from msf_doc_import.wizard import IN_LINE_COLUMNS_FOR_IMPORT as columns_for_incoming_import
 from msf_doc_import.wizard import OUT_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_delivery_import
 from msf_doc_import.wizard import OUT_LINE_COLUMNS_FOR_IMPORT as columns_for_delivery_import
-from msf_doc_import import GENERIC_MESSAGE
-
-import base64
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 
 
 class stock_picking(osv.osv):
@@ -137,29 +137,3 @@ class stock_picking(osv.osv):
 
 stock_picking()
 
-
-class stock_move(osv.osv):
-    _inherit = 'stock.move'
-
-    def write(self, cr, uid, ids, vals, context=None):
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        obj_data = self.pool.get('ir.model.data')
-        tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
-        tbd_product = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
-        message = ''
-
-        if not context.get('import_in_progress') or not context.get('button') and context.get('button') == 'save_and_close':
-            if vals.get('product_uom') == tbd_uom:
-                message += _('You have to define a valid UoM, i.e. not "To be defined".')
-            if vals.get('product_id') == tbd_product:
-                message += _('You have to define a valid product, i.e. not "To be defined".')
-
-        return super(stock_move, self).write(cr, uid, ids, vals, context=context)
-
-
-stock_move()
