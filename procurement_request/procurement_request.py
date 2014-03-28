@@ -323,6 +323,8 @@ class procurement_request(osv.osv):
                 or line.nomen_manda_3.id == nomen_manda_3 \
                 or line.product_uom.id == uom_tbd:
                     nb_lines += 1
+                if line.product_uom_qty <= 0.00:
+                    raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
             if nb_lines:
                 raise osv.except_osv(_('Error'), _('Please check the lines : you cannot have "To Be confirmed" for Nomenclature Level". You have %s lines to correct !') % nb_lines)
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
@@ -441,13 +443,15 @@ class procurement_request_line(osv.osv):
         '''
         res = True
 
-        for req in self.browse(cr, uid, ids, context=context):
-            new_vals = vals.copy()
-            # Compute the rounding of the product qty
-            uom_id = new_vals.get('product_uom', req.product_uom.id)
-            uom_qty = new_vals.get('product_uom_qty', req.product_uom_qty)
-            new_vals['product_uom_qty'] = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_id, uom_qty, context=context)
-            res = res and super(procurement_request_line, self).write(cr, uid, [req.id], new_vals, context=context)
+        if 'product_uom_qty' in vals or 'product_uom' in vals:
+            for req in self.read(cr, uid, ids, ['product_uom_qty', 'product_uom'], context=context):
+                # Compute the rounding of the product qty
+                uom_id = vals.get('product_uom', req['product_uom'][0])
+                uom_qty = vals.get('product_uom_qty', req['product_uom_qty'])
+                vals['product_uom_qty'] = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_id, uom_qty, context=context)
+                res = res and super(procurement_request_line, self).write(cr, uid, [req['id']], vals, context=context)
+        else:
+            res = res and super(procurement_request_line, self).write(cr, uid, ids, vals, context=context)
 
         return res
 

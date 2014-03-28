@@ -19,15 +19,15 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+import logging
+import math
+from os import path
+import re
 
+from osv import osv, fields
+import tools
 from tools.translate import _
 
-import logging
-from os import path
-import math
-import re
-import tools
 
 class stock_reason_type(osv.osv):
     _name = 'stock.reason.type'
@@ -343,29 +343,6 @@ class stock_move(osv.osv):
 
         return super(stock_move, self).copy(cr, uid, ids, default, context=context)
 
-
-    def write(self, cr, uid, ids, vals, context=None):
-        '''
-        Set default values if the reason type has changed
-        '''
-        if vals.get('location_dest_id'):
-            dest_id = self.pool.get('stock.location').browse(cr, uid, vals['location_dest_id'], context=context)
-            if dest_id.usage == 'inventory' and not dest_id.virtual_location:
-                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-            if dest_id.scrap_location and not dest_id.virtual_location:
-                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
-            # if the source location and the destination location are the same, the state is done
-            if 'location_id' in vals:
-                if vals['location_dest_id'] == vals['location_id']:
-                    vals['state'] = 'done'
-        # Change the reason type of the picking if it is not the same
-        if 'reason_type_id' in vals:
-            for pick_id in self.browse(cr, uid, ids, context=context):
-                if pick_id.picking_id and pick_id.picking_id.reason_type_id.id != vals['reason_type_id']:
-                    other_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-                    self.pool.get('stock.picking').write(cr, uid, pick_id.picking_id.id, {'reason_type_id': other_type_id}, context=context)
-
-        return super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         '''

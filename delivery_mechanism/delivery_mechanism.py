@@ -19,11 +19,9 @@
 #
 ##############################################################################
 
-from osv import osv, fields
-
-from tools.translate import _
-
 import netsvc
+from osv import osv, fields
+from tools.translate import _
 
 
 class stock_move(osv.osv):
@@ -535,7 +533,7 @@ class stock_picking(osv.osv):
             'product_uos_qty': line.quantity,
             'product_uos': line.uom_id.id,
             'prodlot_id': line.prodlot_id and line.prodlot_id.id or False,
-            # 'asset_id': line.asset_id and line.asset_id.id or False,
+            'asset_id': line.asset_id and line.asset_id.id or False,
             'change_reason': line.change_reason,
             # Values from incoming wizard
             'direct_incoming': line.wizard_id.direct_incoming,
@@ -647,6 +645,9 @@ class stock_picking(osv.osv):
 
                 for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
                     values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
+
+                    if not values.get('product_qty', 0.00):
+                        continue
 
                     # Check if we must re-compute the price of the product
                     compute_average = False
@@ -840,7 +841,7 @@ class stock_picking(osv.osv):
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'stock.picking',
-                'res_id': picking.id,
+                'res_id': wizard.picking_id.id,
                 'view_id': [view_id],
                 'view_mode': 'form, tree',
                 'view_type': 'form',

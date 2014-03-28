@@ -943,7 +943,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
             SIMU_LINES = {}
         except Exception, e:
             self.write(cr, uid, ids, {'message': e}, context=context)
-            cr.commite()
+            cr.commit()
             cr.close()
 
         return True

@@ -609,6 +609,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         elif vals.get('type', False) == 'make_to_stock':
             vals['po_cft'] = False
 
+        # UFTP-11: if make_to_order can not have a location
+        if vals.get('type', False) == 'make_to_order':
+            vals['location_id'] = False
+
         # Create the new sale order line
         res = super(sale_order_line, self).create(cr, uid, vals, context=context)
 
@@ -673,6 +677,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if clc:
                 raise osv.except_osv(_('Warning'), clc)
 
+            proc_request = line.order_id and line.order_id.procurement_request
+
+            if proc_request and line.type == 'make_to_stock' and line.order_id.location_requestor_id.id == line.location_id.id:
+                raise osv.except_osv(
+                    _('Warning'),
+                    _("You cannot choose a source location which is the destination location of the Internal Request"),
+                )
+
             if line.type == 'make_to_order' and \
                line.po_cft not in ['cft'] and \
                not line.product_id and \
@@ -729,13 +741,6 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 # Check product constraints (no external supply, no storage...)
                 check_fnct = product_obj._get_restriction_error
                 self._check_product_constraints(cr, uid, line.type, line.po_cft, line.product_id.id, line.supplier.id, check_fnct, context=context)
-
-            if line.order_id and line.order_id.procurement_request and line.type == 'make_to_stock':
-                if line.order_id.location_requestor_id.id == line.location_id.id:
-                    raise osv.except_osv(
-                        _('Warning'),
-                        _("You cannot choose a source location which is the destination location of the Internal Request"),
-                    )
 
         return True
 
@@ -816,7 +821,6 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         """
         # Objects
         product_obj = self.pool.get('product.product')
-        partner_obj = self.pool.get('res.partner')
 
         if not context:
             context = {}
@@ -832,25 +836,6 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         if 'state' in vals and vals['state'] == 'cancel':
             self.write(cr, uid, ids, {'cf_estimated_delivery_date': False}, context=context)
-
-        # partner_id
-        if 'supplier' in vals:
-            for line in self.browse(cr, uid, ids, context=context):
-                partner_id = vals['supplier']
-                vals.update({'supplier': partner_id})
-                # update the delivery date according to partner_id, only update from the sourcing tool
-                # not from order line as we dont want the date is udpated when the line's state changes for example
-                if partner_id:
-
-                    # if the selected partner belongs to product->suppliers, we take that delay (from supplierinfo)
-                    partner = partner_obj.browse(cr, uid, partner_id, context)
-                    delay = self.check_supplierinfo(line, partner, context=context)
-
-                    estDeliveryDate = date.today() + relativedelta(days=int(delay))
-                    vals.update({'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d')})
-                else:
-                    # no partner is selected, erase the date
-                    vals.update({'estimated_delivery_date': False})
 
         if 'type' in vals:
             if vals['type'] == 'make_to_stock':
@@ -874,6 +859,10 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             if loan_sol_ids:
                 # Update lines with loan
                 super(sale_order_line, self).write(cr, uid, loan_sol_ids, loan_vals, context)
+
+        # UFTP-11: if make_to_order can not have a location
+        if vals.get('type', False) == 'make_to_order':
+            vals['location_id'] = False
 
         result = super(sale_order_line, self).write(cr, uid, ids, vals, context)
 
@@ -1337,7 +1326,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         if not supplier:
             sl = self.browse(cr, uid, line_id, context=context)
-            if not sl.product_id and sl.sale_order_id.procurement_request and sl.type == 'make_to_order':
+            if not sl.product_id and sl.order_id.procurement_request and sl.type == 'make_to_order':
                 result['domain']['supplier'] = [('partner_type', 'in', ['internal', 'section', 'intermission'])]
             return result
 

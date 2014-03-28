@@ -20,19 +20,20 @@
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import time
-from operator import itemgetter
 from itertools import groupby
-
-from osv import fields, osv
-from tools.translate import _
-import netsvc
-import tools
-import decimal_precision as dp
 import logging
+from operator import itemgetter
 from os import path
+import time
 
+import netsvc
+from osv import fields, osv
+import tools
+from tools.translate import _
+
+import decimal_precision as dp
 from msf_partner import PARTNER_TYPE
+
 
 #----------------------------------------------------------
 # Procurement Order
@@ -49,22 +50,26 @@ class procurement_order(osv.osv):
             context = {}
         return super(procurement_order, self).create(cr, uid, vals, context=context)
 
+    # @@@override: procurement>procurement.order->action_confirm()
     def action_confirm(self, cr, uid, ids, context=None):
         """ Confirms procurement and writes exception message if any.
         @return: True
         """
         move_obj = self.pool.get('stock.move')
+        data_obj = self.pool.get('ir.model.data')
+
         for procurement in self.browse(cr, uid, ids, context=context):
             if procurement.product_qty <= 0.00:
                 raise osv.except_osv(_('Data Insufficient !'),
                     _('Please check the Quantity in Procurement Order(s), it should not be less than 1!'))
             if procurement.product_id.type in ('product', 'consu'):
                 if not procurement.move_id:
-                    source = procurement.location_id.id
-                    reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
                     if procurement.procure_method == 'make_to_order':
-                        reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+                        reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
                         source = procurement.product_id.product_tmpl_id.property_stock_procurement.id
+                    else:
+                        source = procurement.location_id.id
+                        reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
                     id = move_obj.create(cr, uid, {
                         'name': procurement.name,
                         'location_id': source,
@@ -82,6 +87,7 @@ class procurement_order(osv.osv):
                     self.write(cr, uid, [procurement.id], {'move_id': id, 'close_move': 1})
         self.write(cr, uid, ids, {'state': 'confirmed', 'message': ''})
         return True
+    # @@@END override: procurement>procurement.order->action_confirm()
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
@@ -818,7 +824,7 @@ class stock_picking(osv.osv):
         if sp.partner_id.id == company_partner_id.id:
             res = False
         return res
-    
+
     def _create_invoice(self, cr, uid, stock_picking):
         """
         Creates an invoice for the specified stock picking
@@ -826,11 +832,11 @@ class stock_picking(osv.osv):
         """
         picking_type = False
         invoice_type = self._get_invoice_type(stock_picking)
-        
+
         # Check if no invoice needed
         if not self.is_invoice_needed(cr, uid, stock_picking):
             return
-        
+
         # we do not create invoice for procurement_request (Internal Request)
         if not stock_picking.sale_id.procurement_request and stock_picking.subtype == 'standard':
             if stock_picking.type == 'in' or stock_picking.type == 'internal':
@@ -843,20 +849,20 @@ class stock_picking(osv.osv):
                     picking_type = 'purchase_refund'
                 else:
                     picking_type = 'sale'
-                    
+
             # Set journal type based on picking type
             journal_type = picking_type
-            
+
             # Disturb journal for invoice only on intermission partner type
             if stock_picking.partner_id.partner_type == 'intermission':
                 journal_type = 'intermission'
-            
+
             # Find appropriate journal
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type),
                                                                             ('is_current_instance', '=', True)])
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No journal of type %s found when trying to create invoice for picking %s!') % (journal_type, stock_picking.name))
-            
+
             # Create invoice
             self.action_invoice_create(cr, uid, [stock_picking.id], journal_ids[0], False, invoice_type, {})
 
@@ -870,7 +876,7 @@ class stock_picking(osv.osv):
                 ids = [ids]
             for sp in self.browse(cr, uid, ids):
                 self._create_invoice(cr, uid, sp)
-                
+
         return res
 
     def _get_price_unit_invoice(self, cr, uid, move_line, type):
@@ -1298,33 +1304,82 @@ class stock_move(osv.osv):
         '''
         Update the partner or the address according to the other
         '''
+        # Objects
+        prod_obj = self.pool.get('product.product')
+        data_obj = self.pool.get('ir.model.data')
+        loc_obj = self.pool.get('stock.location')
+        pick_obj = self.pool.get('stock.picking')
+        addr_obj = self.pool.get('res.partner.address')
+        partner_obj = self.pool.get('res.partner')
+
+        if context is None:
+            context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if not vals.get('address_id') and vals.get('partner_id2'):
-            for move in self.browse(cr, uid, ids, context=context):
-                if move.partner_id.id != vals.get('partner_id'):
-                    addr = self.pool.get('res.partner').address_get(cr, uid, vals.get('partner_id2'), ['delivery', 'default'])
-                    if not addr.get('delivery'):
-                        vals['address_id'] = addr.get('default')
-                    else:
-                        vals['address_id'] = addr.get('delivery')
+        product = None
+        pick_bro = None
+        id_cross = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
 
-        if not vals.get('partner_id2') and vals.get('address_id'):
+        if vals.get('product_id', False):
+            # complete hidden flags - needed if not created from GUI
+            product = prod_obj.browse(cr, uid, vals['product_id'], context=context)
+            vals.update({
+                'hidden_batch_management_mandatory': product.batch_management,
+                'hidden_perishable_mandatory': product.perishable,
+            })
+
+            if vals.get('picking_id'):
+                pick_bro = pick_obj.browse(cr, uid, vals['picking_id'], context=context)
+
+        if pick_bro and product and product.type == 'consu' and vals.get('location_dest_id') != id_cross:
+            id_nonstock = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')
+            if vals.get('sale_line_id'):
+                id_pack = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')
+                vals.update({
+                    'location_id': pick_bro.type == 'out' and id_cross or id_nonstock[1],
+                    'location_dest_id': id_pack[1],
+                })
+            elif pick_bro.type != 'out':
+                vals['location_dest_id'] = id_nonstock[1]
+
+        if vals.get('location_dest_id'):
+            dest_id = loc_obj.browse(cr, uid, vals['location_dest_id'], context=context)
+            if dest_id.usage == 'inventory' and not dest_id.virtual_location:
+                vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            if dest_id.scrap_location and not dest_id.virtual_location:
+                vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+            # if the source location and the destination location are the same, the state is done
+            if 'location_id' in vals and vals['location_dest_id'] == vals['location_id']:
+                vals['state'] = 'done'
+
+        addr = vals.get('address_id')
+        partner = vals.get('partner_id2')
+
+        cond1 = not addr and partner
+        cond2 = not partner and addr
+
+        if vals.get('date_expected') or vals.get('reason_type_id') or cond1 or cond2:
             for move in self.browse(cr, uid, ids, context=context):
-                if move.address_id.id != vals.get('address_id'):
-                    addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
+                if cond1 and move.partner_id.id != partner:
+                    addr = partner_obj.address_get(cr, uid, vals.get('partner_id2'), ['delivery', 'default'])
+                    vals['address_id'] = addr.get('delivery', False) or addr.get('default')
+
+                if cond2 and move.address_id.id != vals.get('address_id'):
+                    addr = addr_obj.browse(cr, uid, vals.get('address_id'), context=context)
                     vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
 
-        if vals.get('date_expected'):
-            for move in self.browse(cr, uid, ids, context=context):
-                if vals.get('state', move.state) not in ('done', 'cancel'):
+                if vals.get('date_expected') and vals.get('state', move.state) not in ('done', 'cancel'):
                     vals['date'] = vals.get('date_expected')
 
-        res = super(stock_move, self).write(cr, uid, ids, vals, context=context)
+                # Change the reason type of the picking if it is not the same
+                if 'reason_type_id' in vals:
+                    if move.picking_id and move.picking_id.reason_type_id.id != vals['reason_type_id']:
+                        other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+                        pick_obj.write(cr, uid, move.picking_id.id, {'reason_type_id': other_type_id}, context=context)
 
-        return res
+        return super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
     def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
         '''
@@ -1470,9 +1525,14 @@ class stock_move(osv.osv):
         Set the bool already confirmed to True
         '''
         ids = isinstance(ids, (int, long)) and [ids] or ids
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.product_qty <= 0.00:
-                raise osv.except_osv(_('Error'), _('You cannot confirm a stock move without quantity.'))
+
+        no_product = self.search(cr, uid, [
+            ('id', 'in', ids),
+            ('product_qty', '<=', 0.00),
+        ], count=True, context=context)
+
+        if no_product:
+            raise osv.except_osv(_('Error'), _('You cannot confirm a stock move without quantity.'))
 
         res = super(stock_move, self).action_confirm(cr, uid, ids, context=context)
 
@@ -1501,12 +1561,19 @@ class stock_move(osv.osv):
         if done:
             count += len(done)
 
+            done_ids = []
+            assigned_ids = []
             # If source location == dest location THEN stock move is done.
             for line in self.read(cr, uid, done, ['location_id', 'location_dest_id']):
                 if line.get('location_id') and line.get('location_dest_id') and line.get('location_id') == line.get('location_dest_id'):
-                    self.write(cr, uid, [line['id']], {'state': 'done'})
+                    done_ids.append(line['id'])
                 else:
-                    self.write(cr, uid, [line['id']], {'state': 'assigned'})
+                    assigned_ids.append(line['id'])
+
+            if done_ids:
+                self.write(cr, uid, done_ids, {'state': 'done'})
+            if assigned_ids:
+                self.write(cr, uid, assigned_ids, {'state': 'assigned'})
 
         if notdone:
             self.write(cr, uid, notdone, {'state': 'confirmed'})

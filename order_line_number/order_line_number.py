@@ -107,7 +107,7 @@ class sale_order_line(osv.osv):
     _description = 'Sales Order Line'
     _columns = {'line_number': fields.integer(string='Line', required=True),
                 }
-    _order = 'line_number, id'
+    _order = 'order_id, line_number, id'
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -256,33 +256,6 @@ class purchase_order_line(osv.osv):
     _columns = {'line_number': fields.integer(string='Line', required=True),
                 }
     _order = 'line_number, id'
-
-    def create(self, cr, uid, vals, context=None):
-        '''
-        _inherit = 'purchase.order.line'
-        add the corresponding line number
-        '''
-        # objects
-        po_obj = self.pool.get('purchase.order')
-        seq_pool = self.pool.get('ir.sequence')
-
-        # I leave this line from QT related to purchase.order.merged.line for compatibility and safety reasons
-        # merged lines, set the line_number to 0 when calling create function
-        # the following line should *logically* be removed safely
-        # copy method should work as well, as merged line do *not* need to keep original line number with copy function (QT confirmed)
-        if self._name != 'purchase.order.merged.line':
-            if vals.get('order_id', False):
-                # gather the line number from the sale order sequence if not specified in vals
-                # either line_number is not specified or set to False from copy, we need a new value
-                if not vals.get('line_number', False):
-                    # new number needed - gather the line number from the sequence
-                    sequence_id = po_obj.read(cr, uid, [vals['order_id']], ['sequence_id'], context=context)[0]['sequence_id'][0]
-                    line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
-                    vals.update({'line_number': line})
-
-        # create the new sale order line
-        result = super(purchase_order_line, self).create(cr, uid, vals, context=context)
-        return result
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
