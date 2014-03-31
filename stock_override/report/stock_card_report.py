@@ -34,12 +34,9 @@ class stock_card_report(report_sxw.rml_parse):
         })
         
     def _parse_origin(self, origin):
-        max_len = 40
-        if not origin:
-            origin = ''
-        elif len(origin) > max_len:
-            origin = origin[:max_len] + '...'
-        return origin
+        if origin:
+            return origin.replace(';', '; ').replace(':', ': ')  # force word wrap
+        return ''
 
 report_sxw.report_sxw('report.stock.card.report','stock.card.wizard','addons/stock_override/report/stock_card_report.rml',parser=stock_card_report, header='internal landscape')
 
