@@ -31,12 +31,12 @@ class stock_card_wizard(osv.osv_memory):
     _columns = {
         'location_id': fields.many2one('stock.location', string='Location'),
         'all_inout': fields.boolean(string='Show all IN/OUT'),
-        'product_id': fields.many2one('product.product', string='Product', 
+        'product_id': fields.many2one('product.product', string='Product',
                                       required=True),
         'uom_id': fields.related('product_id', 'uom_id', type='many2one',
                                  relation='product.uom', string='UoM'),
         'perishable': fields.boolean(string='Perishable'),
-        'prodlot_id': fields.many2one('stock.production.lot', 
+        'prodlot_id': fields.many2one('stock.production.lot',
                                       string='Batch number'),
         'from_date': fields.date(string='From date'),
         'to_date': fields.date(string='To date'),
@@ -45,22 +45,21 @@ class stock_card_wizard(osv.osv_memory):
                                       string='Card lines'),
     }
 
-
-    def _get_default_product(self, cr, uid, context=None):
-        '''
-        If a product is passed in the context, set it on wizard form
-        '''
-        if not context:
-            context = {}
-
-        return context.get('product_id', False)
-
-
-    _defaults = {
-        'product_id': _get_default_product,
-        'to_date': lambda *a: time.strftime('%Y-%m-%d'),
-    }
-
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(stock_card_wizard, self).default_get(cr, uid, fields, context=context)
+        product_id = context.get('product_id', False)
+        perishable = False
+        if product_id:
+            prod_obj = self.pool.get('product.product')
+            product_r = prod_obj.read(cr, uid, [product_id], ['perishable'], context=context)
+            if product_r:
+                perishable = product_r[0]['perishable']
+        res.update({
+            'product_id': product_id,
+            'perishable': perishable,
+            'to_date': time.strftime('%Y-%m-%d'),
+        })
+        return res
 
     def onchange_product_id(self, cr, uid, ids, product_id, context=None):
         '''
@@ -106,7 +105,7 @@ class stock_card_wizard(osv.osv_memory):
 
         if location_id:
             context.update({'location': location_id})
-            location_ids = loc_obj.search(cr, uid, 
+            location_ids = loc_obj.search(cr, uid,
                                     [('location_id', 'child_of', location_id)],
                                     context=context)
 
@@ -114,7 +113,7 @@ class stock_card_wizard(osv.osv_memory):
         context.update({'to_date': card.from_date})
 
         prodlot_id = card.prodlot_id and card.prodlot_id.id or False
-        product = product_obj.browse(cr, uid, card.product_id.id, 
+        product = product_obj.browse(cr, uid, card.product_id.id,
                                                         context=context)
         if not card.from_date:
             initial_stock = 0.00
@@ -130,9 +129,9 @@ class stock_card_wizard(osv.osv_memory):
 
         if card.to_date:
             domain.append(('date', '<=', card.to_date))
-        
+
         if location_id:
-            domain.extend(['|', 
+            domain.extend(['|',
                            ('location_id', 'child_of', location_id),
                            ('location_dest_id', 'child_of', location_id)])
         else:
@@ -141,7 +140,7 @@ class stock_card_wizard(osv.osv_memory):
                            ('location_dest_id.usage', 'in', location_usage)])
 
         # Create one line per stock move
-        move_ids = move_obj.search(cr, uid, domain,order='date asc', 
+        move_ids = move_obj.search(cr, uid, domain,order='date asc',
                                                         context=context)
 
         for move in move_obj.browse(cr, uid, move_ids, context=context):
@@ -212,7 +211,6 @@ class stock_card_wizard(osv.osv_memory):
                 'target': 'current',
                 'nodestroy': True,
                 'context': context}
-
 
     def print_pdf(self, cr, uid, ids, context=None):
         '''

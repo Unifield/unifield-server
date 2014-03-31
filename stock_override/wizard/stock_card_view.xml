@@ -116,6 +116,7 @@
             view_type="form"
             view_mode="form"
             context="{'product_id': active_id}"
+            view_id="stock_card_wizard_form_view"
             />
 
 
