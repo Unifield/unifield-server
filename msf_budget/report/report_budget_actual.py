@@ -53,7 +53,7 @@ class report_budget_actual(report_sxw.report_sxw):
                                                                        uid,
                                                                        parameters['currency_table_id'],
                                                                        context=context)
-                result.append(['Currency table:', currency_table.name])
+                result.append([_('Currency table:'), currency_table.name])
             result.append([_('Report date:'), datetime.datetime.now().strftime("%d/%b/%Y %H:%M")])
             result.append([''])
 

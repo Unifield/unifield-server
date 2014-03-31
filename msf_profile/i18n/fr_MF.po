@@ -9070,6 +9070,7 @@ msgstr "Variant Price Margin"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:182
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 msgid "Mar"
 msgstr "Mar"
 
@@ -11503,6 +11504,7 @@ msgstr "Prêt"
 #: report:msf.pdf.budget.monthly:0
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:183
 #: code:addons/msf_budget/report/report_budget_actual.py:61
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 #, python-format
 msgid "Apr"
 msgstr "Avr"
@@ -14702,6 +14704,7 @@ msgstr "Pacific/Tongatapu"
 #: report:msf.pdf.budget.monthly:0
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:181
 #: code:addons/msf_budget/report/report_budget_actual.py:61
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 #, python-format
 msgid "Feb"
 msgstr "Fév"
@@ -20619,6 +20622,7 @@ msgstr "Réf. Liste de Pré-Colisage"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:189
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 msgid "Oct"
 msgstr "Oct"
 
@@ -27124,6 +27128,7 @@ msgstr "Spanish (UY) / Español (UY)"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:186
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 msgid "Jul"
 msgstr "Juil"
 
@@ -28328,9 +28333,10 @@ msgstr "Personnalisation des Etiquettes"
 msgid "RfQs Ref"
 msgstr "Réf. Demande de Devis"
 
-#. module: financing_contract
+#. modules: financing_contract, msf_budget
 #: selection:financing.contract.donor.reporting.line,line_type:0
 #: selection:financing.contract.format.line,line_type:0
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 msgid "Actual"
 msgstr "Réel"
 
@@ -30957,11 +30963,6 @@ msgstr "Mettre à jour"
 #: field:product.asset,receipt_place:0
 msgid "Receipt Place"
 msgstr "Lieu de Réception"
-
-#. module: msf_budget
-#: report:addons/msf_budget/report/budget_monthly_xls.mako:184
-msgid "May"
-msgstr "May"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,country_id:0
@@ -39772,6 +39773,7 @@ msgstr "Sudan"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:180
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 msgid "Jan"
 msgstr "Jan"
 
@@ -50255,6 +50257,7 @@ msgstr "Real Composition Kit Excel Export"
 #. module: msf_budget
 #: report:msf.pdf.budget.monthly:0
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:187
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 #: code:addons/msf_budget/report/report_budget_actual.py:61
 #, python-format
 msgid "Aug"
@@ -50712,6 +50715,7 @@ msgstr "SUP"
 #. module: msf_budget
 #: report:msf.pdf.budget.monthly:0
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:185
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 msgid "Jun"
 msgstr "Juin"
 
@@ -53120,6 +53124,7 @@ msgstr "Donor:"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:188
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 msgid "Sep"
 msgstr "Sep"
 
@@ -63065,6 +63070,8 @@ msgstr "Jours de fermeture"
 #: selection:stock.frequence,yearly_choose_month:0
 #: selection:stock.frequence,yearly_choose_month_freq:0
 #: code:addons/msf_budget/report/report_budget_actual.py:61
+#: report:addons/msf_budget/report/budget_monthly_xls.mako:184
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 #, python-format
 msgid "May"
 msgstr "Mai"
