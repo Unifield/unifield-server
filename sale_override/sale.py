@@ -1605,7 +1605,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 # when the line is sourced, we already get a procurement for the line
                 # when the line is confirmed, the corresponding procurement order has already been processed
                 # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
-                if line.state not in ['sourced', 'confirmed', 'done'] and not line.created_by_po_line and not line.procurement_id and line.product_id:
+                if line.state not in ['sourced', 'confirmed', 'done'] and not (line.created_by_po_line and line.procurement_id) and line.product_id:
                     proc_data = self._get_procurement_order_data(line, order, rts, context=context)
                     proc_id = proc_obj.create(cr, uid, proc_data, context=context)
                     # set the flag for log message
@@ -1861,7 +1861,15 @@ class sale_order_line(osv.osv):
         else:
             view_id = data_obj.get_object_reference(cr, uid, 'sale', 'view_order_form')[1]
         context.update({'view_id': view_id})
-        self.pool.get('sale.order').log(cr, uid, order_id, _('A line was added to the Field Order %s to re-source the canceled line.') % (order_name), context=context)
+ 
+        """UFTP-90
+        put a 'clean' context for 'log' without potential 'Enter a reason' wizard infos 
+        _terp_view_name, wizard_name, ..., these causes a wrong name of the FO/IR linked view
+        form was opened with 'Enter a Reason for Incoming cancellation' name
+        we just keep the view id (2 distincts ids for FO/IR)"""
+        self.pool.get('sale.order').log(cr, uid, order_id, 
+            _('A line was added to the Field Order %s to re-source the canceled line.') % (order_name),
+            context={'view_id': context.get('view_id', False)})
 
         return line_id
 

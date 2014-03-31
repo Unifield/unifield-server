@@ -212,7 +212,7 @@
       </tr>
       <tr>
         <td>
-          <para style="P13">Responsible: [[ o.user_id and o.user_id.name or '' ]]</para>
+          <para style="P13">Responsible: [[ o.responsible_ids and ', '.join([x.name for x in o.responsible_ids]) or '' ]]</para>
         </td>
         <td>
           <para style="P13">Period: [[ o.period_id and o.period_id.code or '' ]]</para>

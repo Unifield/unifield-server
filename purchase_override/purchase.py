@@ -1012,17 +1012,20 @@ stock moves which are already processed : '''
             if not po.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             # for all lines, if the confirmed date is not filled, we copy the header value
-            lines_to_update = []
-            for line in po.order_line:
-                # Don't accept the confirmation of regular PO with 0.00 unit price lines
-                if is_regular and line.price_unit == 0.00:
-                    line_error.append(line.line_number)
-                elif not line.confirmed_delivery_date:
-                    lines_to_update.append(line.id)
+            if is_regular:
+                line_error = po_line_obj.search(cr, uid, [
+                    ('order_id', '=', po.id),
+                    ('price_unit', '=', 0.00),
+                    ], context=context)
 
             if len(line_error) > 0:
-                errors = ' / '.join(str(x) for x in line_error)
+                errors = ' / '.join(str(x['line_number']) for x in po_line_obj.read(cr, uid, line_error, ['line_number'], context=context))
                 raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line with a 0.00 Unit Price. Lines in exception : %s') % errors)
+
+            lines_to_update = po_line_obj.search(
+                cr, uid,
+                [('order_id', '=', po.id), ('confirmed_delivery_date', '=', False)],
+                context=context)
 
             po_line_obj.write(cr, uid, lines_to_update, {'confirmed_delivery_date': po.delivery_confirmed_date}, context=context)
         # MOVE code for COMMITMENT into wkf_approve_order
@@ -1069,6 +1072,7 @@ stock moves which are already processed : '''
                     'price_unit': l.price_unit,
                     'procurement_id': l.procurement_id and l.procurement_id.id or False,
                     'type': 'make_to_order',
+                    'supplier': l.order_id.partner_id.id,
                     'analytic_distribution_id': new_distrib,
                     'created_by_po': l.order_id.id,
                     'created_by_po_line': l.id,

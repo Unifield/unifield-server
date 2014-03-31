@@ -97,8 +97,16 @@ class account_account(osv.osv):
                 raise osv.except_osv(_('Error'), _('Operation not implemented!'))
         return arg
 
+    def _get_accounts_from_company(self, cr, uid, ids, context=None):
+        return self.pool.get('account.account').search(cr, uid, [('user_type.code', '=', 'income')], context=context)
+
     _columns = {
-        'is_analytic_addicted': fields.function(_get_is_analytic_addicted, fnct_search=_search_is_analytic_addicted, method=True, type='boolean', string='Analytic-a-holic?', help="Is this account addicted on analytic distribution?", store=False, readonly=True),
+        'is_analytic_addicted': fields.function(
+            _get_is_analytic_addicted, fnct_search=_search_is_analytic_addicted,
+            method=True, type='boolean', string='Analytic-a-holic?', readonly=True,
+            help="Is this account addicted on analytic distribution?",
+            store={'res.company': (_get_accounts_from_company, ['additional_allocation'], 10),
+                   'account.account': (lambda self, cr, uid, ids, c={}: ids, ['user_type_code', 'code'], 10)}),
     }
 
 account_account()

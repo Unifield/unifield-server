@@ -473,7 +473,16 @@ class product_attributes(osv.osv):
             arg = context.get('available_for_restriction')
             if isinstance(arg, str):
                 arg = '\'%s\'' % arg
-            new_filter = """<filter string="Only not forbidden" name="not_restricted" icon="terp-accessories-archiver-minus" domain="[('available_for_restriction','=',%s)]" />""" % arg
+            if 'add_multiple_lines' in context:
+                # UFTP-15: parse 'available_for_restriction'
+                # to implement it directly in product 'not_restricted' filter
+                filter_domain = self._src_available_for_restriction(cr, uid,
+                    self, 'available_for_restriction',
+                    [('available_for_restriction','=', arg)],
+                    context=context)
+            else:
+                filter_domain = "[('available_for_restriction','=',%s)]" % arg
+            new_filter = """<filter string="Only not forbidden" name="not_restricted" icon="terp-accessories-archiver-minus" domain="%s" />""" % filter_domain
             #generate new xml form$
             new_form = etree.fromstring(new_filter)
             # instert new form just after state index position
