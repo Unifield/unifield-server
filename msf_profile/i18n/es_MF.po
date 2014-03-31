@@ -14931,15 +14931,6 @@ msgstr "Uid del servidor de sincronización"
 msgid "Mission"
 msgstr "Misión"
 
-#. modules: account, account_mcdb, account_hq_entries
-#: report:account.invoice2:0
-#: field:hq.entries.split.lines,account_id:0
-#: code:addons/account_mcdb/report/account_mcdb_export.py:61
-#: code:addons/account_mcdb/report/account_mcdb_export.py:252
-#, python-format
-msgid "Account"
-msgstr "Account"
-
 #. module: stock_forecast
 #: view:stock.forecast.line:0
 msgid "Forecasts"
@@ -23448,6 +23439,11 @@ msgstr "Mensajes"
 #: field:wizard.import.invoice.lines,account_id:0
 #: field:wizard.invoice.line,account_id:0
 #: code:addons/msf_budget/report/report_budget_actual.py:61
+#: report:account.invoice2:0
+#: field:hq.entries.split.lines,account_id:0
+#: code:addons/account_mcdb/report/account_mcdb_export.py:61
+#: code:addons/account_mcdb/report/account_mcdb_export.py:252
+#, python-format
 msgid "Account"
 msgstr "Cuenta"
 
