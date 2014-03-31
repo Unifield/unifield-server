@@ -322,6 +322,24 @@ class account_analytic_line(osv.osv):
         else:
             return False
 
+    def get_instance_level_from_cost_center(self, cr, uid, cost_center_id, context=None):
+        if cost_center_id:
+            target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_id),
+                                                                                     ('is_target', '=', True)])
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+            if len(target_ids) > 0:
+                target = self.pool.get('account.target.costcenter').browse(cr, uid, target_ids[0], context=context)
+                if target.instance_id and target.instance_id.level:
+                    return target.instance_id.level
+                
+            if current_instance.parent_id and current_instance.parent_id.level:
+                # Instance has a parent
+                return current_instance.parent_id.level
+            else:
+                return False
+        else:
+            return False
+
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         if not dest_field == 'cost_center_id':
             return super(account_analytic_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
@@ -357,13 +375,14 @@ class account_analytic_line(osv.osv):
             else:
                 new_cost_center_id = old_cost_center_id
 
-            old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
-            new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
-
-            if not old_destination_name == new_destination_name:
-                # Send delete message, but not to parents of the current instance
-                self.generate_message_for_destination(cr, uid, old_destination_name, xml_id, instance_name, send_to_parent_instances=False)
-
+            # UF-2342: only generate delete message if the instance is at Project level
+            old_destination_level = self.get_instance_level_from_cost_center(cr, uid, old_cost_center_id, context=context)
+            if old_destination_level == 'project':
+                old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
+                new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
+                if not old_destination_name == new_destination_name:
+                    # Send delete message, but not to parents of the current instance
+                    self.generate_message_for_destination(cr, uid, old_destination_name, xml_id, instance_name, send_to_parent_instances=False)
 
         return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
 
