@@ -1771,7 +1771,6 @@ stock moves which are already processed : '''
                         wf_service.trg_write(uid, 'stock.picking', line.procurement_id.move_id.picking_id.id, cr)
 
         self.pool.get('purchase.order.line').cancel_sol(cr, uid, line_ids, context=context)
-
         return self.write(cr, uid, ids, {'state':'cancel'}, context=context)
 
     def wkf_confirm_cancel(self, cr, uid, ids, context=None):
@@ -2213,7 +2212,7 @@ class purchase_order_line(osv.osv):
             # erase default code
             vals.update({'default_code':False})
             vals.update({'default_name':False})
-            
+
             if 'comment' in vals:
                 vals.update({'name':vals['comment']})
         # clear nomenclature filter values
@@ -2499,6 +2498,9 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         sol_to_update = {}
+        sol_not_to_delete_ids = []
+        ir_to_potentialy_cancel_ids = []
+        sol_of_po_line_resourced_ids = []
         for line in self.browse(cr, uid, ids, context=context):
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
             for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
@@ -2507,9 +2509,57 @@ class purchase_order_line(osv.osv):
                 sol_to_update[sol.id] += diff_qty
                 if line.has_to_be_resourced:
                     sol_obj.add_resource_line(cr, uid, sol, False, diff_qty, context=context)
+                    sol_of_po_line_resourced_ids.append(sol.id)
+                if sol.order_id.procurement_request:
+                    # UFTP-82: do not delete IR line, cancel it
+                    sol_not_to_delete_ids.append(sol.id)
+                    if sol.order_id.id not in ir_to_potentialy_cancel_ids:
+                        ir_to_potentialy_cancel_ids.append(sol.order_id.id)
 
         for sol in sol_to_update:
+            context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete_ids
             sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+        del context['update_or_cancel_line_not_delete']
+
+        # UFTP-82: IR and its PO is cancelled
+        # IR cancel all lines that have to be cancelled
+        # and cancel IR if all its lines cancelled
+        if ir_to_potentialy_cancel_ids:
+            for ir in self.pool.get('sale.order').browse(cr, uid, ir_to_potentialy_cancel_ids, context=context):
+                # new IR state:
+                # we change his state to 'cancel' if at least one line cancelled
+                # we change his state to 'done' if all lines cancelled and resourced
+                # else NO CHANGE
+                ir_new_state = 'cancel'
+                lines_to_cancel_ids = []
+                all_lines_resourced = True
+                one_line_not_cancelled = False
+
+                # check if at least one line is cancelled
+                # or all lines cancel and resourced
+                for irl in ir.order_line:
+                    line_cancelled = False
+                    if ir.is_ir_from_po_cancel and \
+                        (irl.state == 'cancel' or irl.state == 'exception'):
+                        # note PO sourced from IR, IR cancelled line can be in 'exception' as a 'cancelled' one
+                        line_cancelled = True
+                        if irl.id not in sol_of_po_line_resourced_ids:
+                            all_lines_resourced = False  # one cancelled line not resourced
+                        if irl.state == 'exception':
+                            lines_to_cancel_ids.append(irl.id)  # to be set to cancel
+                    if not line_cancelled:
+                        ir_new_state = False  # no cancelled line left, then no change
+                if ir_new_state and all_lines_resourced:
+                    # 'state change' flaged and all line resourced, state to done
+                    ir_new_state = 'done'
+
+                if lines_to_cancel_ids:
+                    self.pool.get('sale.order.line').write(cr, uid, lines_to_cancel_ids,
+                        {'state': ir_new_state if ir_new_state else 'cancel'},
+                        context=context)
+                if ir_new_state:
+                    self.pool.get('sale.order').write(cr, uid, ir.id,
+                        {'state':  ir_new_state}, context=context)
 
         return True
 
