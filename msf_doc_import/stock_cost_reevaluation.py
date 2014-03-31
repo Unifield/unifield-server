@@ -60,19 +60,20 @@ class stock_cost_reevaluation(osv.osv):
         # ignore the first row
         reader.next()
         line_num = 1
+        err_line_no_currency_count = 0
         for row in reader:
             line_num += 1
             # Check length of the row
-            if len(row) != 3:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 3 columns in this order:
-Product Code*, Product Description*, Product Cost*"""))
+            if len(row) != 4:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 4 columns in this order:
+Product Code*, Product Description*, Product Cost*, Currency*"""))
 
             # default values
             product_id = False
             product_cost = 1.00
             product_code = False
             product_name = False
-            currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+            currency_id = False
 
             # Product code
             product_code = row.cells[0].data
@@ -122,10 +123,19 @@ Product Code*, Product Description*, Product Cost*"""))
                 else:
                     product_cost = 1.00
                     
+            # Currency
+            currency_name = row.cells[3].data
+            if currency_name:
+                currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', currency_name)], context=context)
+                if currency_ids:
+                    currency_id = currency_ids[0]
+            if not currency_id:
+                err_line_no_currency_count += 1
            
             to_write = {
                 'product_id': product_id,
                 'average_cost': product_cost,
+                'currency_id': currency_id,
                 'currency_id': currency_id,
             }
             
@@ -137,6 +147,8 @@ Product Code*, Product Description*, Product Cost*"""))
         
         view_id = obj_data.get_object_reference(cr, uid, 'specific_rules','cost_reevaluation_form_view')[1]
        
+        if err_line_no_currency_count:
+            msg_to_return = _("There is %d Product line(s) without currency. Please check.") % (err_line_no_currency_count, )
         return self.log(cr, uid, obj.id, msg_to_return, context={'view_id': view_id,})
         
     def button_remove_lines(self, cr, uid, ids, context=None):
