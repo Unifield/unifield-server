@@ -37,7 +37,7 @@ class stock_card_report(report_sxw.rml_parse):
         max_len = 40
         if not origin:
             origin = ''
-        elif len(origin) >= max_len:
+        elif len(origin) > max_len:
             origin = origin[:max_len] + '...'
         return origin
 
