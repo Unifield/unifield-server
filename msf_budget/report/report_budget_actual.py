@@ -24,6 +24,7 @@ import StringIO
 import pooler
 import locale
 import datetime
+from tools.translate import _
 
 class report_budget_actual(report_sxw.report_sxw):
     _name = 'report.budget.actual'
@@ -44,20 +45,20 @@ class report_budget_actual(report_sxw.report_sxw):
             cost_center = pool.get('account.analytic.account').browse(cr, uid, cost_center_id, context=context)
             functional_currency_id = pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
 
-            result =  [['Fiscal year:', fiscalyear.name],
-                       ['Cost center name:', cost_center.name],
-                       ['Cost center code:', cost_center.code]]
+            result =  [[_('Fiscal year:'), fiscalyear.name],
+                       [_('Cost center name:'), cost_center.name],
+                       [_('Cost center code:'), cost_center.code]]
             if 'currency_table_id' in parameters:
                 currency_table = pool.get('res.currency.table').browse(cr,
                                                                        uid,
                                                                        parameters['currency_table_id'],
                                                                        context=context)
                 result.append(['Currency table:', currency_table.name])
-            result.append(['Report date:', datetime.datetime.now().strftime("%d/%b/%Y %H:%M")])
+            result.append([_('Report date:'), datetime.datetime.now().strftime("%d/%b/%Y %H:%M")])
             result.append([''])
 
             # Column header
-            header = ['Account','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Total actual', 'Total engagement', 'Total accrual', 'Total']
+            header = [_('Account'),_('Jan'),_('Feb'),_('Mar'),_('Apr'),_('May'),_('Jun'),_('Jul'),_('Aug'),_('Sep'),_('Oct'),_('Nov'),_('Dec'),_('Total actual'), _('Total engagement'), _('Total accrual'), _('Total')]
             result.append(header)
 
             # journal domains

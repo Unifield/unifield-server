@@ -59,14 +59,14 @@ class report_budget_actual_2(report_sxw.rml_parse):
     def getComm(self,):
         parameters = self.localcontext.get('data',{}).get('form',{})
         if 'commitment' in parameters and parameters['commitment']:
-            return 'Yes'
-        return 'No'
+            return _('Yes')
+        return _('No')
 
     def getBreak(self,):
         parameters = self.localcontext.get('data',{}).get('form',{})
         if 'breakdown' in parameters and parameters['breakdown'] == 'year':
-            return 'Total figure'
-        return 'By month'
+            return _('Total figure')
+        return _('By month')
 
     def byMonth(self,):
         parameters = self.localcontext.get('data',{}).get('form',{})
