@@ -304,6 +304,10 @@ class account_analytic_line(osv.osv):
     
     _inherit = 'account.analytic.line'
         
+    _columns = {
+        'correction_date': fields.datetime('Correction Date'), # UF-2343: Add timestamp when making the correction, to be synced
+    }
+        
     def get_instance_name_from_cost_center(self, cr, uid, cost_center_id, context=None):
         if cost_center_id:
             target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_id),
@@ -361,6 +365,7 @@ class account_analytic_line(osv.osv):
         if isinstance(ids, (long, int)):
             ids = [ids]
         
+        now = fields.datetime.now()
         instance_name = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context).name
         xml_ids = self.pool.get('ir.model.data').get(cr, uid, self, ids, context=context)
         line_data = self.read(cr, uid, ids, ['cost_center_id'], context=context)
@@ -376,25 +381,36 @@ class account_analytic_line(osv.osv):
                 new_cost_center_id = old_cost_center_id
             
             # UF-2342: only generate delete message if the instance is at Project level
+            msg_to_send_obj = self.pool.get("sync.client.message_to_send")
             old_destination_level = self.get_instance_level_from_cost_center(cr, uid, old_cost_center_id, context=context)
             if old_destination_level == 'project':
                 old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
                 new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
                 if not old_destination_name == new_destination_name:
-                    # Send delete message, but not to parents of the current instance
-                    self.generate_message_for_destination(cr, uid, old_destination_name, xml_id, instance_name, send_to_parent_instances=False)
+                    # Create a delete message for this AJI to destination project, and store it into the queue for next synchronisation
+                    message_data = {
+                            'identifier' : 'delete_%s_to_%s' % (xml_id, old_destination_name),
+                            'sent' : False,
+                            'generate_message' : True,
+                            'remote_call': self._name + ".message_unlink",
+                            'arguments': "[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
+                            'destination_name': old_destination_name
+                    }
+                    msg_to_send_obj.create(cr, uid, message_data)
             
             # Check if the new code center belongs to a project that has *previously* a delete message for the same AJI created but not sent
             # -> remove that delete message from the queue
             new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
             if new_destination_name and xml_id: 
-                msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+                
                 identifier = 'delete_%s_to_%s' % (xml_id, new_destination_name)
                 exist_ids = msg_to_send_obj.search(cr, uid, [('identifier','=',identifier),('sent','=',False)])
                 if exist_ids:
                     msg_to_send_obj.unlink(cr, uid, exist_ids,context=context) # delete this unsent delete-message
-
+        # Set the timestamps of correction/write to this AJI, for sync purpose
+        vals['correction_date'] = now
         return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
+
 
 account_analytic_line()
 

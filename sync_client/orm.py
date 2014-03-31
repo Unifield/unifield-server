@@ -473,6 +473,9 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if not res_id:
             return "Object %s %s does not exist in destination" % (model_name, xml_id)
 
+
+        # UF-2343: check if there is any data update with correction date is later than this delete message, if yes, ignore this message
+        
         return self.unlink(cr, uid, [res_id], context=context)
 
     def generate_message_for_destination(self, cr, uid, destination_name, sdref, instance_name, send_to_parent_instances):
