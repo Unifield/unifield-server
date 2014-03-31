@@ -413,7 +413,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             # tender line -> search for info about this product in the corresponding tender
             # if nothing found, we keep default values from super
             for sol in procurement.sale_order_line_ids:
-                tl_infos = self.get_info_from_tender_line(sol, procurement)
+                tl_infos = self._get_info_from_tender_line(sol, procurement)
                 if tl_infos:
                     result['unit_price'] = 0.00
                     result.update(tl_infos)

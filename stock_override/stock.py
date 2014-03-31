@@ -1149,7 +1149,17 @@ class stock_move(osv.osv):
             if backmove_ids or move.product_qty == 0.00:
                 raise osv.except_osv(_('Error'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
             if (move.sale_line_id and move.sale_line_id.order_id) or (move.purchase_line_id and move.purchase_line_id.order_id and (move.purchase_line_id.order_id.po_from_ir or move.purchase_line_id.order_id.po_from_fo)):
-                wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, {'move_id': ids[0]}, context=context)
+                vals = {'move_id': ids[0]}
+                if 'from_int' in context:
+                    """UFTP-29: we are in a INT stock move - line by line cancel
+                    do not allow Cancel and Resource if move linked to a PO line
+                    => the INT is sourced from a PO-IN flow
+                    'It should only be possible to resource an INT created from the sourcing of an IR / FO from stock,
+                     but not an INT created by an incoming shipment (Origin field having a "PO" ref.)'
+                    """
+                    if move.purchase_line_id:
+                        vals['cancel_only'] = True
+                wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
 
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'stock.move.cancel.wizard',
@@ -2162,10 +2172,12 @@ class stock_move_cancel_wizard(osv.osv_memory):
 
     _columns = {
         'move_id': fields.many2one('stock.move', string='Move', required=True),
+        'cancel_only': fields.boolean('Just allow cancel only', invisible=True),
     }
 
     _defaults = {
         'move_id': lambda self, cr, uid, c: c.get('active_id'),
+        'cancel_only': False,
     }
 
     def just_cancel(self, cr, uid, ids, context=None):
