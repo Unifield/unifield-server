@@ -2351,8 +2351,9 @@ class purchase_order_line(osv.osv):
                         if irl.state == 'exception':
                             lines_to_cancel_ids.append(irl.id)  # to be set to cancel
                     if not line_cancelled:
-                        ir_new_state = False  # no cancelled line, then no change
-                if all_lines_resourced:
+                        ir_new_state = False  # no cancelled line left, then no change
+                if ir_new_state and all_lines_resourced:
+                    # 'state change' flaged and all line resourced, state to done
                     ir_new_state = 'done'
                
                 if lines_to_cancel_ids:
