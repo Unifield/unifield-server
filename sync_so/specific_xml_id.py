@@ -384,6 +384,15 @@ class account_analytic_line(osv.osv):
                     # Send delete message, but not to parents of the current instance
                     self.generate_message_for_destination(cr, uid, old_destination_name, xml_id, instance_name, send_to_parent_instances=False)
             
+            # Check if the new code center belongs to a project that has *previously* a delete message for the same AJI created but not sent
+            # -> remove that delete message from the queue
+            new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
+            if new_destination_name and xml_id: 
+                msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+                identifier = 'delete_%s_to_%s' % (xml_id, new_destination_name)
+                exist_ids = msg_to_send_obj.search(cr, uid, [('identifier','=',identifier),('sent','=',False)])
+                if exist_ids:
+                    msg_to_send_obj.unlink(cr, uid, exist_ids,context=context) # delete this unsent delete-message
 
         return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
 
