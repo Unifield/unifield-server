@@ -12060,7 +12060,7 @@ msgstr "_Annuler piquage"
 msgid "'%s' Not comprehensive operator... Please use only '=', '!=', 'in' and 'not in' operators"
 msgstr "%s' N'est pas un opérateur global... Veuillez utiliser uniquement les opérateurs  '=', '!=', 'in' et 'not in'"
 
-#. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, account_period_closing_level, order_types, mission_stock, msf_accrual, procurement_report, msf_budget
+#. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, account_period_closing_level, order_types, mission_stock, msf_accrual, procurement_report
 #: view:account.state.open:0
 #: view:wizard.confirm.closing.period:0
 #: selection:mission.stock.wizard,split_stock:0
