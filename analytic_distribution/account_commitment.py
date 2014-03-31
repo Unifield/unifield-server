@@ -269,7 +269,7 @@ class account_commitment(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
-        commit_obj = self.pool.get(self._name + '.line') # PAY ATTENTION to wizard.account.invoice.line
+        commit_obj = self.pool.get(self._name + '.line')
         # Search commitment lines
         to_reset = commit_obj.search(cr, uid, [('commit_id', 'in', ids)])
         commit_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})

@@ -123,8 +123,8 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
-        purchase_obj = self.pool.get(self._name + '.line') # PAY ATTENTION to wizard.account.invoice.line
-        # Search commitment lines
+        purchase_obj = self.pool.get(self._name + '.line')
+        # Search purchase order lines
         to_reset = purchase_obj.search(cr, uid, [('order_id', 'in', ids)])
         purchase_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
         return True
