@@ -23447,6 +23447,7 @@ msgstr "Mensajes"
 #: field:wizard.import.cheque.lines,account_id:0
 #: field:wizard.import.invoice.lines,account_id:0
 #: field:wizard.invoice.line,account_id:0
+#: code:addons/msf_budget/report/report_budget_actual.py:61
 msgid "Account"
 msgstr "Cuenta"
 
