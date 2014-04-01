@@ -19,17 +19,19 @@
 #
 ##############################################################################
 
-from osv import osv
-from osv import fields
-from osv import orm
+from osv import fields, osv, orm
+from osv.osv import osv_pool, object_proxy
+from osv.orm import orm_template
+from tools.translate import _
+from lxml import etree
 from datetime import datetime
 import ir
 import pooler
 import time
+import tools
 import logging
 from tools.safe_eval import safe_eval as eval
-from tools import cache
-from tools.translate import _
+
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
@@ -142,13 +144,6 @@ class account_bank_statement_line(osv.osv):
 
 account_bank_statement_line()
 
-class account_cashbox_line(osv.osv):
-    _name = 'account.cashbox.line'
-    _inherit = 'account.cashbox.line'
-    _trace = True
-
-account_cashbox_line()
-
 class account_analytic_account(osv.osv):
     _name = 'account.analytic.account'
     _inherit = 'account.analytic.account'
@@ -201,11 +196,11 @@ class ir_module(osv.osv):
                 # Search all actions to rename
                 act_ids = act_obj.search(cr, uid, [('name', '=', src)], context=context)
                 for act in act_ids:
-                    exist = tr_obj.search(cr, uid, [('lang', '=', lang),
-                                                    ('type', '=', 'model'),
-                                                    ('src', '=', src),
-                                                    ('name', '=', 'ir.actions.act_window,name'),
-                                                    ('value', '=', trans),
+                    exist = tr_obj.search(cr, uid, [('lang', '=', lang), 
+                                                    ('type', '=', 'model'), 
+                                                    ('src', '=', src), 
+                                                    ('name', '=', 'ir.actions.act_window,name'), 
+                                                    ('value', '=', trans), 
                                                     ('res_id', '=', act)], context=context)
                     if not exist:
                         tr_obj.create(cr, uid, {'lang': lang,
@@ -244,9 +239,9 @@ class audittrail_rule(osv.osv):
         "log_read": fields.boolean("Log Reads", help="Select this if you want to keep track of read/open on any record of the object of this rule"),
         "log_write": fields.boolean("Log Writes", help="Select this if you want to keep track of modification on any record of the object of this rule"),
         "log_unlink": fields.boolean("Log Deletes", help="Select this if you want to keep track of deletion on any record of the object of this rule"),
-        "log_create": fields.boolean("Log Creates", help="Select this if you want to keep track of creation on any record of the object of this rule"),
-        "log_action": fields.boolean("Log Action", help="Select this if you want to keep track of actions on the object of this rule"),
-        "log_workflow": fields.boolean("Log Workflow", help="Select this if you want to keep track of workflow on any record of the object of this rule"),
+        "log_create": fields.boolean("Log Creates",help="Select this if you want to keep track of creation on any record of the object of this rule"),
+        "log_action": fields.boolean("Log Action",help="Select this if you want to keep track of actions on the object of this rule"),
+        "log_workflow": fields.boolean("Log Workflow",help="Select this if you want to keep track of workflow on any record of the object of this rule"),
         "domain_filter": fields.char(size=128, string="Domain", help="Python expression !"),
         "state": fields.selection((("draft", "Draft"),
                                    ("subscribed", "Subscribed")),
@@ -282,6 +277,7 @@ class audittrail_rule(osv.osv):
 
         return True
 
+
     _sql_constraints = [
         ('rule_name_uniq', 'unique(name)', """The AuditTrail rule name must be unique!""")
     ]
@@ -292,13 +288,14 @@ class audittrail_rule(osv.osv):
 
     __functions = {}
 
+
     def write(self, cr, uid, ids, value, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for rule in self.browse(cr, uid, ids):
             self.get_functionnal_fields.clear_cache(cr.dbname, objname=rule.object_id.model, ids=[rule.id])
             for method in ['read', 'create', 'write', 'unlink']:
-                field_name = 'log_' + method
+                field_name = 'log_'+method
                 if getattr(rule, field_name):
                     self.to_trace.clear_cache(cr.dbname, model=rule.object_id.model, method=method)
         return super(audittrail_rule, self).write(cr, uid, ids, value, context=context)
@@ -342,7 +339,7 @@ class audittrail_rule(osv.osv):
             keyword = 'client_action_relate'
             value = 'ir.actions.act_window,' + str(action_id)
             obj_model.ir_set(cr, uid, 'action', keyword, 'View_log_' + thisrule.object_id.model, [thisrule.object_id.model], value, replace=True, isobject=True, xml_id=False)
-            # End Loop
+            #End Loop
 
         # Check if an export model already exist for audittrail.rule
         export_ids = self.pool.get('ir.exports').search(cr, uid, [('name', '=', 'Log Lines'), ('resource', '=', 'audittrail.log.line')])
@@ -351,7 +348,7 @@ class audittrail_rule(osv.osv):
                                                                      'resource': 'audittrail.log.line'})
             fields = ['log', 'timestamp', 'sub_obj_name', 'method', 'field_description', 'old_value', 'new_value', 'user_id']
             for f in fields:
-                self.pool.get('ir.exports.line').create(cr, uid, {'name': f, 'export_id': export_id})
+                self.pool.get('ir.exports.line').create(cr, uid, {'name': f, 'export_id': export_id}) 
 
         return True
 
@@ -365,8 +362,8 @@ class audittrail_rule(osv.osv):
         """
         obj_action = self.pool.get('ir.actions.act_window')
         val_obj = self.pool.get('ir.values')
-        value = ''
-        # start Loop
+        value=''
+        #start Loop
         for thisrule in self.browse(cr, uid, ids):
             if thisrule.id in self.__functions:
                 for function in self.__functions[thisrule.id]:
@@ -379,11 +376,11 @@ class audittrail_rule(osv.osv):
             if val_id:
                 ir.ir_del(cr, uid, val_id[0])
             self.write(cr, uid, [thisrule.id], {"state": "draft"})
-        # End Loop
+        #End Loop
 
         return True
 
-    @cache(skiparg=3)
+    @tools.cache(skiparg=3)
     def get_functionnal_fields(self, cr, uid, objname, ids):
         # no context to not disturb caching
         fields_obj = self.pool.get('ir.model.fields')
@@ -398,7 +395,7 @@ class audittrail_rule(osv.osv):
             return ret
         return []
 
-    @cache(skiparg=3)
+    @tools.cache(skiparg=3)
     def to_trace(self, cr, uid, model, method):
         obj = self.pool.get(model)
         if not obj or not obj._trace:
@@ -466,20 +463,19 @@ class audittrail_rule(osv.osv):
 
 
             for res_id in res_ids:
-                parent_field_id = False
                 if parent_field:
-                    parent_field_id = new_values_computed[res_id][parent_field][0]
+                    parent_field = new_values_computed[res_id][parent_field][0]
 
                 vals = {
                     'name': rule.object_id.name,
                     'method': method,
                     'object_id': rule.object_id.id,
                     'user_id': uid_orig,
-                    'res_id': parent_field_id or res_id,
+                    'res_id': parent_field or res_id,
                 }
 
                 # Add the name of the created sub-object
-                if parent_field_id:
+                if parent_field:
                     # get the parent model_id
                     vals.update({
                         'sub_obj_name': new_values_computed[res_id][parent_field_display],
@@ -566,55 +562,6 @@ class audittrail_log_line(osv.osv):
     _description = "Log Line"
     _order = 'timestamp asc'
 
-    def _get_name_line(self, cr, uid, ids, field_name, args, context=None):
-        '''
-        Return the value of the field set in the rule
-        '''
-        res = {}
-
-        for line in self.browse(cr, uid, ids, context=context):
-            if not line.rule_id or not line.fct_res_id or not line.fct_object_id:
-                res[line.id] = False
-            else:
-                field = line.rule_id.name_get_field_id.name
-                res_id = line.fct_res_id
-                object_id = self.pool.get(line.fct_object_id.model)
-                try:
-                    res[line.id] = object_id.read(cr, uid, res_id, [field], context=context)[field]
-                except TypeError:
-                    res[line.id] = False
-
-        return res
-
-    ####
-    # TODO : To validate
-    ####
-    def _search_name_line(self, cr, uid, obj, name, args, context=None):
-        '''
-        Returns all lines corresponding to the args
-        '''
-        ids = []
-
-        if not context:
-            return []
-
-        for arg in args:
-            if not arg[2]:
-                return []
-            if arg[0] == 'sub_obj_name' and arg[1] == 'ilike' and arg[2]:
-                line_ids = self.browse(cr, uid, context.get('active_ids'), context=context)
-                for line in line_ids:
-                    if line.rule_id and line.fct_res_id and line.fct_object_id:
-                        field = line.rule_id.name_get_field_id.name
-                        res_id = line.fct_res_id
-                        object_id = self.pool.get(line.fct_object_id.model)
-                        if str(object_id.read(cr, uid, res_id, [field], context=context)[field]) == arg[2]:
-                            ids.append(line.id)
-
-                return [('id', 'in', ids)]
-
-        return []
-
     def _get_values(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Return the value of the field according to his type
@@ -635,9 +582,9 @@ class audittrail_log_line(osv.osv):
             if not line.old_value_text and not line.new_value_text:
                 self.write(cr, uid, [line.id], {'old_value_text': res[line.id]['old_value_fct'], 'new_value_text': res[line.id]['new_value_fct']})
             elif not line.old_value_text:
-                self.write(cr, uid, [line.id], {'old_value_text': res[line.id]['old_value_fct'], })
+                self.write(cr, uid, [line.id], {'old_value_text': res[line.id]['old_value_fct'],})
             elif not line.new_value_text:
-                self.write(cr, uid, [line.id], {'new_value_text': res[line.id]['new_value_fct'], })
+                self.write(cr, uid, [line.id], {'new_value_text': res[line.id]['new_value_fct'],})
 
         return res
 
@@ -699,7 +646,7 @@ class audittrail_log_line(osv.osv):
 
         for arg in args:
             if arg[0] == 'trans_field_description':
-                tr_fields = tr_obj.search(cr, uid, [('lang', '=', lang),
+                tr_fields = tr_obj.search(cr, uid, [('lang', '=', lang), 
                                                     ('type', 'in', ['field', 'model']),
                                                     ('value', arg[1], arg[2])], context=context)
 
@@ -736,24 +683,9 @@ class audittrail_log_line(osv.osv):
           'fct_object_id': fields.many2one('ir.model', string='Fct. Object'),
         }
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        '''
-        Display the name of the resource on the tree view
-        '''
-        res = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        # TODO: Waiting OEB-86
-#        if view_type == 'tree' and context.get('active_ids') and context.get('active_model'):
-#            element_name = self.pool.get(context.get('active_model')).name_get(cr, uid, context.get('active_ids'), context=context)[0][1]
-#            xml_view = etree.fromstring(res['arch'])
-#            for element in xml_view.iter("tree"):
-#                element.set('string', element_name)
-#            res['arch'] = etree.tostring(xml_view)
-        return res
-
     _defaults = {
         'timestamp': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
     }
-
     def _get_report_name(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -765,7 +697,7 @@ class audittrail_log_line(osv.osv):
             if obj:
                 name_get = obj.name_get(cr, uid, [self_info.res_id])
                 if name_get and name_get[0]:
-                    name = name_get[0][1].replace('/', '_')
+                    name = name_get[0][1].replace('/','_')
         return "LL_%s_%s" % (name, time.strftime('%Y%m%d'))
 
 audittrail_log_line()
@@ -791,7 +723,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
     """
     if not context:
         context = {}
-    if field_name in('__last_update', 'id'):
+    if field_name in('__last_update','id'):
         return values
     pool = pooler.get_pool(cr.dbname)
     field_pool = pool.get('ir.model.fields')
@@ -822,7 +754,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
                     res = relation_model_object[relation_model_pool._rec_name]
             return res
 
-        elif field['ttype'] in ('many2many', 'one2many'):
+        elif field['ttype'] in ('many2many','one2many'):
             res = []
             if values and values != '[]':
                 values = values[1:-1].split(',')
@@ -857,532 +789,19 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
                 res = dict(sel[field['name']]['selection']).get(values)
                 name = '%s,%s' % (fct_object, field['name'])
                 # Search translation
-                res_tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name), ('src', 'in', [values])])
+                res_tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', 'in', [values])])
                 if res_tr_ids:
                     res = self.pool.get('ir.translation').read(cr, uid, res_tr_ids, ['value'])[0]['value']
             return res
 
     return values
 
-def create_log_line(self, cr, uid, model, lines=[]):
-    """
-    Creates lines for changed fields with its old and new values
-
-    @param cr: the current row, from the database cursor,
-    @param uid: the current user’s ID for security checks,
-    @param model: Object who's values are being changed
-    @param lines: List of values for line is to be created
-    """
-    pool = pooler.get_pool(cr.dbname)
-    obj_pool = pool.get(model.model)
-    model_pool = pool.get('ir.model')
-    field_pool = pool.get('ir.model.fields')
-    log_line_pool = pool.get('audittrail.log.line')
-    #start Loop
-    for line in lines:
-        dict_of_values = {}
-        if line['name'] in('__last_update','id'):
-            continue
-        if obj_pool._inherits:
-            inherits_ids = model_pool.search(cr, uid, [('model', '=', obj_pool._inherits.keys()[0])])
-            field_ids = field_pool.search(cr, uid, [('name', '=', line['name']), ('model_id', 'in', (model.id, inherits_ids[0]))])
-        else:
-            field_ids = field_pool.search(cr, uid, [('name', '=', line['name']), ('model_id', '=', model.id)])
-        field_id = field_ids and field_ids[0] or False
-
-        if field_id:
-            field = field_pool.read(cr, uid, field_id)
-            if field['ttype'] == 'selection':
-                # if we have a fields.selection, we want to evaluate the 2nd part of the tuple which is user readable
-                try:
-                    dict_of_values = dict(self.pool.get(field['model'])._columns[line['name']].selection)
-                except TypeError as e:
-                    logging.getLogger('Track changes').warning("""Can\'t track changes for the field %s of the model %s. Error is %s"""
-                                                            % (line['name'], model.name, e))
-
-        # Get the values
-        old_value = line.get('old_value')
-        new_value = line.get('new_value')
-        method = line.get('method')
-
-#        if old_value == new_value and method not in ('create', 'unlink'):
-#            continue
-        # the check below is for the case where we have empty fields but with different types (i.e. transport_type that was comparing a unicode and a boolean)
-        if not old_value:
-            old_value = False
-        if not new_value:
-            new_value = False
-        if new_value == old_value:
-            continue  # nothing has changed, nothing to log
-
-        # for the many2one field, we compare old_value and new_value with the name (uf_1624), so the 2nd part of the tupe (old_value[1] == new_value[1])
-        if method not in ('create', 'unlink') and (old_value == new_value \
-           or (field['ttype'] == 'datetime' and old_value and new_value and old_value[:10] == new_value[:10])\
-           or (field['ttype'] == 'many2one' and old_value and new_value and old_value[1] == new_value[1])\
-           or (field['ttype'] == 'selection' and old_value and new_value and dict_of_values.get(old_value) == dict_of_values.get(new_value))):
-            continue
-
-        res_id = line.get('res_id')
-        name = line.get('name', '')
-        object_id = line.get('object_id')
-        user_id = line.get('user_id')
-        timestamp = line.get('timestamp', time.strftime('%Y-%m-%d %H:%M:%S'))
-        log = line.get('log')
-        field_description = line.get('field_description', '')
-        sub_obj_name = line.get('sub_obj_name', '')
-        rule_id = line.get('rule_id')
-        fct_res_id = line.get('fct_res_id')
-        fct_object_id = line.get('fct_object_id')
-
-        if res_id:
-            # Get the log number
-            seq_object_id = object_id
-            seq_res_id = res_id
-            fct_object = self.pool.get('ir.model').browse(cr, uid, seq_object_id)
-            log_sequence = self.pool.get('audittrail.log.sequence').search(cr, uid, [('model', '=', fct_object.model), ('res_id', '=', seq_res_id)])
-            if log_sequence:
-                log_seq = self.pool.get('audittrail.log.sequence').browse(cr, uid, log_sequence[0]).sequence
-                log = log_seq.get_id(code_or_id='id')
-            else:
-                # Create a new sequence
-                seq_pool = self.pool.get('ir.sequence')
-                seq_typ_pool = self.pool.get('ir.sequence.type')
-                types = {
-                    'name': fct_object.name,
-                    'code': fct_object.model,
-                }
-                seq_typ_pool.create(cr, uid, types)
-                seq = {
-                    'name': fct_object.name,
-                    'code': fct_object.model,
-                    'prefix': '',
-                    'padding': 1,
-                }
-                seq_id = seq_pool.create(cr, uid, seq)
-                self.pool.get('audittrail.log.sequence').create(cr, uid, {'model': fct_object.model, 'res_id': seq_res_id, 'sequence': seq_id})
-                log = self.pool.get('ir.sequence').browse(cr, uid, seq_id).get_id(code_or_id='id')
-
-
-        if field_id:
-            field_description = field['field_description']
-            if field_description == 'Pricelist':
-                field_description = 'Currency'
-
-#            if field['ttype'] == 'many2one':
-#                if type(old_value) == tuple:
-#                    old_value = old_value[0]
-#                if type(new_value) == tuple:
-#                    new_value = new_value[0]
-
-
-        vals = {
-                "field_id": field_id,
-                "old_value": old_value or '',
-                "new_value": new_value or '',
-                "field_description": field_description,
-                "res_id": res_id,
-                "name": name,
-                "object_id": object_id,
-                "user_id": user_id,
-                "method": method,
-                "timestamp": timestamp,
-                "log": log,
-                "rule_id": rule_id,
-                "fct_res_id": fct_res_id,
-                "fct_object_id": fct_object_id,
-                "sub_obj_name": sub_obj_name,
-                }
-        log_line_pool.create(cr, uid, vals)
-    #End Loop
-    return True
-
-def _get_domain_fields(self, domain=[]):
-    '''
-    Returns fields to read from the domain
-    '''
-    ret_f = []
-    for d in domain:
-        ret_f.append(d[0])
-
-    return ret_f
-
-def _check_domain(self, cr, uid, vals=[], domain=[], model=False, res_id=False):
-    '''
-    Check if the values check with the domain
-    '''
-    res = True
-    pool = pooler.get_pool(cr.dbname)
-    for d in tuple(domain):
-        assert d[1] in ('=', '!=', 'in', 'not in'), _("'%s' Not comprehensive operator... Please use only '=', '!=', 'in' and 'not in' operators") %(d[1])
-
-        if len(d[0].split('.')) == 2 and model:
-            p_rel, p_field = d[0].split('.')
-            parent_field_id = pool.get('ir.model.fields').search(cr, uid, [('model', '=', model.model), ('name', '=', p_rel)])
-            parent_field = pool.get('ir.model.fields').browse(cr, uid, parent_field_id)
-            if not vals.get(p_rel) and res_id:
-                vals[d[0]] = self.pool.get(model.model).read(cr, uid, res_id, [p_rel])[p_rel]
-            if parent_field and parent_field[0].relation and vals.get(p_rel):
-                if isinstance(vals[p_rel], (int, long)):
-                    p_rel_id = vals[p_rel]
-                else:
-                    p_rel_id = vals[p_rel][0]
-                value = pool.get(parent_field[0].relation).read(cr, uid, p_rel_id, [p_field])
-                if value:
-                    d = (p_field, d[1], d[2])
-                    vals[p_field] = value[p_field]
-
-        if d[0] not in vals and model and res_id:
-            obj = self.pool.get(model.model).read(cr, uid, res_id, [d[0]])
-            vals[d[0]] = obj[d[0]]
-
-        if d[1] == '=' and vals[d[0]] != d[2]:
-            res = False
-        elif d[1] == '!=' and vals[d[0]] == d[2]:
-            res = False
-        elif d[1] == 'in' and vals[d[0]] not in d[2]:
-            res = False
-        elif d[1] == 'not in' and vals[d[0]] in d[2]:
-            res = False
-
-    return res
-
 def get_field_description(model):
     """
     Redefine the field_description for sale order and sale order line
     """
-    if model.model == 'sale.order':
-        field_description = 'Field Order'
-    elif model.model == 'sale.order.line':
-        field_description = 'Field Order Line'
-    elif model.model== 'stock.picking':
-        field_description = 'Incoming Shipment'
-    else:
-        field_description = model.name
-    return field_description
-
-def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id=False, parent_field_id=False, name_get_field='name', domain='[]', *args, **kwargs):
-    """
-    Logging function: This function is performs logging operations according to method
-    @param cr: the current database
-    @param uid: the current user’s ID for security checks,
-    @param model: Object who's values are being changed
-    @param method: method to log: create, read, write, unlink
-    @param fct_src: execute method of Object proxy
-
-    @return: Returns result as per method of Object proxy
-    """
-    if not fields_to_trace:
-        fields_to_trace = []
-    uid_orig = uid
-    uid = 1
-    pool = pooler.get_pool(cr.dbname)
-    resource_pool = pool.get(model)
-    model_pool = pool.get('ir.model')
-
-    model_ids = model_pool.search(cr, uid, [('model', '=', model)])
-    model_id = model_ids and model_ids[0] or False
-    assert model_id, _("'%s' Model does not exist...") %(model,)
-    model = model_pool.browse(cr, uid, model_id)
-    domain = eval(domain)
-    fields_to_read = ['id']
-
-    old_values = {}
-    if method in ('create'):
-        res_id = fct_src(self, *args, **kwargs)
-
-        # If the object doesn't match with the domain
-        if domain and not _check_domain(self, cr, uid, args[2], domain, model, res_id):
-            return res_id
-
-        model_id = model.id
-        model_name = model.name
-        # If we are on the children object, escalate to the parent log
-        if parent_field_id:
-            parent_field = pool.get('ir.model.fields').browse(cr, uid, parent_field_id)
-            model_id = model_pool.search(cr, uid, [('model', '=', parent_field.relation)])
-            if not model_id or not args[2].get(parent_field.name, False):
-                return res_id
-            else:
-                model_id = model_id[0]
-            model_name = parent_field.model_id.name
-            resource = resource_pool.read(cr, uid, res_id, [parent_field.name, name_get_field or 'name'])
-            res_id2 = resource[parent_field.name][0]
-        else:
-            res_id2 = res_id
-
-        vals = {
-                "name": '%s' %model.name,
-                "method": method,
-                "object_id": model_id,
-                "user_id": uid_orig,
-                "res_id": res_id2,
-                "field_description": get_field_description(model),
-        }
-
-        # Add the name of the created sub-object
-        if parent_field_id:
-            vals.update({'sub_obj_name': resource[name_get_field or 'name'],
-                         'rule_id': rule_id,
-                         'fct_object_id': model.id,
-                         'fct_res_id': res_id})
-
-        # We create only one line on creation (not one line by field)
-        create_log_line(self, cr, uid, model, [vals])
-
-        # Get new values
-        if res_id and fields_to_trace:
-            resource = resource_pool.read(cr, uid, res_id, fields_to_trace)
-            if 'id' in resource:
-                del resource['id']
-
-            # now we create one line for each field tracked
-            lines = []
-            for field in resource.keys():
-                line = vals.copy()
-                line.update({
-                      'name': field,
-                      'new_value': resource[field],
-                      })
-                lines.append(line)
-
-            create_log_line(self, cr, uid, model, lines)
-
-        return res_id
-
-    elif method in ('unlink'):
-        res_ids = []
-        if isinstance(args[2], (int, long)):
-            res_ids = [args[2]]
-        else:
-            res_ids = list(args[2])
-        model_name = model.name
-        model_id = model.id
-        fields_to_read = [name_get_field, 'name']
-        fields_to_read.extend(_get_domain_fields(self, domain))
-
-        if parent_field_id:
-            parent_field = pool.get('ir.model.fields').browse(cr, uid, parent_field_id)
-            model_id = model_pool.search(cr, uid, [('model', '=', parent_field.relation)])
-            # If the parent object is not a valid object
-            if not model_id:
-                return fct_src(self, *args, **kwargs)
-            else:
-                model_id = model_id[0]
-            model_name = parent_field.model_id.name
-
-        for res_id in res_ids:
-            old_values[res_id] = resource_pool.read(cr, uid, res_id, fields_to_read)
-            # If the object doesn't match with the domain
-            if domain and not _check_domain(self, cr, uid, old_values[res_id], domain, model, res_id):
-                res_ids.pop(res_ids.index(res_id))
-                continue
-            if model_name == 'Sales Order':
-                model_name = 'Field Order'
-            elif model_name == 'Sales Order Line':
-                model_name = 'Field Order Line'
-            elif model_name == 'Picking List':
-                model_name = 'Incoming Shipment'
-            vals = {
-                "name": "%s" %model_name,
-                "method": method,
-                "object_id": model_id,
-                "user_id": uid_orig,
-                "field_description": model_name,
-            }
-
-            if not parent_field_id:
-                vals.update({'res_id': res_id})
-            else:
-                ressource = resource_pool.read(cr, uid, res_id, [parent_field.name, name_get_field or 'name'])
-                res_id = ressource[parent_field.name]
-                # Add the name of the created sub-object
-                if res_id:
-                    res_id = res_id[0]
-                else:
-                    continue
-                vals = {
-                        "name": "%s" %model_name,
-                        "sub_obj_name": "%s" %ressource.get(name_get_field or 'name', ''),
-                        "method": method,
-                        "object_id": model_id,
-                        "user_id": uid_orig,
-                        "res_id": res_id,
-                        "field_description": model_name,
-                        }
-
-            # We create only one line when deleting a record
-            create_log_line(self, cr, uid, model, [vals])
-        res = fct_src(self, *args, **kwargs)
-        return res
-    else:
-        res_ids = []
-        res = True
-        fields = []
-        if args:
-            if isinstance(args[2], (long, int)):
-                res_ids = [args[2]]
-            else:
-                res_ids = list(args[2])
-            if len(args)>3 and type(args[3]) == dict:
-                fields.extend(list(set(args[3]) & set(fields_to_trace)))
-            # we take below the fields.function that were ignored
-            fields_obj = self.pool.get('ir.model.fields')
-            fields_to_trace_ids = fields_obj.search(cr, uid, [('name', 'in', fields_to_trace), ('model_id', '=', model_id)])
-            for fields_value in fields_obj.read(cr, uid, fields_to_trace_ids, ['is_function', 'name']):
-                if fields_value['is_function']:
-                    fields.append(fields_value['name'])
-
-        model_id = model.id
-
-        # if no change on traced fields, variable fields is empty: so nothing to do.
-        if fields:
-            if parent_field_id:
-                parent_field = pool.get('ir.model.fields').browse(cr, uid, parent_field_id)
-                model_id = model_pool.search(cr, uid, [('model', '=', parent_field.relation)])
-                # If the parent object is not a valid object
-                if not model_id:
-                    return res
-                else:
-                    model_id = model_id[0]
-
-                if parent_field.name not in fields:
-                    fields.append(parent_field.name)
-
-            fields.extend(_get_domain_fields(self, domain))
-            # Remove double entries
-            fields = list(set(fields))
-            if name_get_field not in fields:
-                fields.append(name_get_field)
-
-            # Get old values
-            if res_ids:
-                for resource in resource_pool.read(cr, uid, res_ids, fields):
-                    if parent_field_id and not args[3].get(parent_field.name, resource[parent_field.name]):
-                        continue
-                    if domain and not _check_domain(self, cr, uid, resource, domain, model):
-                        res_ids.pop(res_ids.index(resource['id']))
-                        continue
-
-                    resource_id = resource['id']
-                    if 'id' in resource:
-                        del resource['id']
-
-                    old_value = resource.copy()
-#                for field in resource.keys():
-#                    old_value = resource.copy()
-
-                    old_values[resource_id] = {'value': old_value}
-
-        # Run the method on object
-        res = fct_src(self, *args, **kwargs)
-
-        # Get new values
-        if fields and res_ids:
-            for resource in resource_pool.read(cr, uid, res_ids, fields):
-                if parent_field_id and not args[3].get(parent_field.name, resource[parent_field.name]):
-                    continue
-                res_id = resource['id']
-                res_id2 = parent_field_id and resource[parent_field.name][0] or res_id
-                if 'id' in resource:
-                    del resource['id']
-
-                vals = {
-                    "method": method,
-                    "object_id": model_id,
-                    "user_id": uid_orig,
-                    "res_id": res_id2,
-                }
-                if 'name' in resource:
-                    vals.update({'name': resource['name']})
-
-                # Add the name of the created sub-object
-                if parent_field_id:
-                    vals.update({'sub_obj_name': resource[name_get_field],
-                                 'rule_id': rule_id,
-                                 'fct_object_id': model.id,
-                                 'fct_res_id': res_id})
-
-                lines = []
-                for field in resource.keys():
-                    line = vals.copy()
-                    line.update({
-                          'name': field,
-                          'new_value': resource[field],
-                          'old_value': old_values[res_id]['value'][field],
-                          })
-                    lines.append(line)
-
-                create_log_line(self, cr, uid, model, lines)
-        return res
-    return True
-
-
-#########################################################################
-#                                                                       #
-# OVERRIDE OSV METHODS (only create, write and unlink for the moment)   #
-#                                                                       #
-#########################################################################
-
-_old_create = orm.orm.create
-_old_write = orm.orm.write
-_old_unlink = orm.orm.unlink
-
-def _audittrail_osv_method(self, old_method, method_name, cr, *args, **kwargs):
-    """ General wrapper for osv methods """
-    # If the object is not marked as traced object, just return the normal method
-    if not self._trace:
-        return old_method(self, *args, **kwargs)
-
-    # If the object is traceable
-    uid_orig = args[1]
-    model = self._name
-    pool = pooler.get_pool(cr.dbname)
-    model_pool = pool.get('ir.model')
-    rule_pool = pool.get('audittrail.rule')
-
-    def my_fct(cr, uid, model, method, *args, **kwargs):
-        rule = False
-        model_ids = model_pool.search(cr, uid, [('model', '=', model)])
-        model_id = model_ids and model_ids[0] or False
-
-        if not model_id:
-            return old_method(self, *args, **kwargs)
-
-        if 'audittrail.rule' in pool.obj_list():
-            rule = True
-
-        if not rule:
-            return old_method(self, *args, **kwargs)
-
-        rule_ids = rule_pool.search(cr, uid, [('object_id', '=', model_id)])
-        if not rule_ids:
-            return old_method(self, *args, **kwargs)
-
-        for thisrule in rule_pool.browse(cr, uid, rule_ids):
-            # if the rule for the right method, then go inside and do the track change log
-            if getattr(thisrule, 'log_' + method_name):
-                fields_to_trace = [(field.name) for field in thisrule.field_ids]
-                return log_fct(self, cr, uid_orig, model, method, old_method, fields_to_trace, thisrule.id, thisrule.parent_field_id.id, thisrule.name_get_field_id.name, thisrule.domain_filter, *args, **kwargs)
-
-        return old_method(self, *args, **kwargs)
-    res = my_fct(cr, uid_orig, model, method_name, *args, **kwargs)
-    return res
-
-
-def _audittrail_create(self, *args, **kwargs):
-    """ Wrapper to trace the osv.create method """
-    return _audittrail_osv_method(self, _old_create, 'create', args[0], *args, **kwargs)
-
-def _audittrail_write(self, *args, **kwargs):
-    """ Wrapper to trace the osv.write method """
-    return _audittrail_osv_method(self, _old_write, 'write', args[0], *args, **kwargs)
-
-def _audittrail_unlink(self, *args, **kwargs):
-    """ Wrapper to trace the osv.unlink method """
-    return _audittrail_osv_method(self, _old_unlink, 'unlink', args[0], *args, **kwargs)
-
-orm.orm.create = _audittrail_create
-orm.orm.write = _audittrail_write
-orm.orm.unlink = _audittrail_unlink
+    if model.model== 'stock.picking':
+        return 'Incoming Shipment'
+    return model.name
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
