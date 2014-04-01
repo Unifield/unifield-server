@@ -183,7 +183,7 @@ class financing_contract_account_quadruplet(osv.osv):
     
     # columns for original table
 #     _columns = {
-#        'format_id': fields.many2one('financing.contract.format', 'Format'),
+#       'format_id': fields.many2one('financing.contract.format', 'Format'),
 # 
 #         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Centre'),
 #         'funding_pool_id': fields.many2one('account.analytic.account', 'Funding Pool'),

@@ -24,7 +24,7 @@ class report_interactive(report_sxw.rml_parse):
     def checkType2(self,):
         taille = 0
         for x in self.lines:
-            if len(x) > taille:
+            if len(x) > taille:    # taille = 'size'
                 taille = len(x)
         if taille < 7:
             return False
@@ -57,10 +57,20 @@ class report_interactive(report_sxw.rml_parse):
         if self.tot[o]:
             return self.tot[o]
         return ''
+    
 
     def getLines(self,contract):
         pool = pooler.get_pool(self.cr.dbname)
-        csv_data = pool.get('wizard.interactive.report')._get_interactive_data(self.cr, self.uid, contract.id, context={'mako':True})
+      
+        lcl_context = {}
+        if 'out_currency' in self.datas:
+            lcl_context = {'mako':True,'out_currency':self.datas['out_currency'],}
+        else:
+            lcl_context = {'mako':True,}
+
+        
+        csv_data = pool.get('wizard.interactive.report')._get_interactive_data(self.cr, self.uid, contract.id, context=lcl_context)
+    
         lines = []
         if contract.reporting_type == 'project':
             self.tot = csv_data.pop()[2:]

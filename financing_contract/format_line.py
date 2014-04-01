@@ -128,6 +128,7 @@ class financing_contract_format_line(osv.osv):
     def _get_accounts_couple_and_quadruplets(self, browse_line):
         account_destination_result = []
         account_quadruplet_result = []
+                
         if browse_line.line_type != 'view':
             if browse_line.is_quadruplet:
                 account_quadruplet_result = [account_quadruplet for account_quadruplet in browse_line.account_quadruplet_ids]
@@ -156,6 +157,14 @@ class financing_contract_format_line(osv.osv):
         cost_center_domain = self._create_domain('cost_center_id', browse_format.cost_center_ids)
         gen_domain['cost_center_domain'] = cost_center_domain
         
+        # note: even though reporting should be from quadruplets and couples, an additional verification against funding pools
+        # and cost centers is required. This is because a user could follow this sequence -
+        # 1. add a funding pool to the contract
+        # 2. create quads based on it 
+        # 3. remove the funding pool
+        # 4. The quad reporting line still refers to the removed FP.
+        # 
+        
         # Funding pools
         funding_pool_ids = []
         if domain_type == 'allocated': 
@@ -164,12 +173,18 @@ class financing_contract_format_line(osv.osv):
             funding_pool_ids = [funding_pool_line.funding_pool_id for funding_pool_line in browse_format.funding_pool_ids]
         
         if funding_pool_ids:
+            # remove 'FP' funding pool from the list if it exists. 
+            fp_ids = self.pool.get('account.analytic.account').search(cr, uid, ['&',('category','=','FUNDING'),('code','=','FP')], context=None)
+            funding_pool_ids = [x for x in funding_pool_ids if x not in fp_ids]
             funding_pool_domain = self._create_domain('account_id', funding_pool_ids)
             gen_domain['funding_pool_domain'] = funding_pool_domain
-
+            
         gen_domain['funding_pool_ids'] = [x.id for x in funding_pool_ids]
         return gen_domain
+
     
+    
+
     def _get_analytic_domain(self, cr, uid, browse_line, domain_type, isFirst=True, context=None):
         if browse_line.line_type in ('consumption', 'overhead'):
             # No domain for this case

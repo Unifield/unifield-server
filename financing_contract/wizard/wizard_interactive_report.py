@@ -64,13 +64,13 @@ class wizard_interactive_report(osv.osv_memory):
             currency_obj = self.pool.get('res.currency')
             line_allocated_budget = currency_obj.compute(cr, uid, reporting_currency_id, out_currency_id,
                                                          line_amounts['allocated_budget'] or 0.0, round=has_round, context=context)
-        
+         
             line_allocated_real = currency_obj.compute(cr, uid, reporting_currency_id, out_currency_id,
                                                        line_amounts['allocated_real'] or 0.0,round=has_round, context=context)
-        
+         
             line_project_budget = currency_obj.compute(cr, uid, reporting_currency_id, out_currency_id,
                                                        line_amounts['project_budget'] or 0.0, round=has_round, context=context)
-        
+         
             line_project_real = currency_obj.compute(cr, uid, reporting_currency_id, out_currency_id,
                                                      line_amounts['project_real'] or 0.0, round=has_round, context=context)
         else:
@@ -103,7 +103,12 @@ class wizard_interactive_report(osv.osv_memory):
         contract = contract_obj.browse(cr, uid, contract_id, context=context)
         
         # Update the context
-        context.update({'reporting_currency': contract.reporting_currency.id,
+        #context.update({'reporting_currency': contract.reporting_currency.id,
+        #                'reporting_type': contract.reporting_type,
+        #                'currency_table_id': contract.currency_table_id.id})
+        
+        # Update the context
+        context.update({'reporting_currency': context['out_currency'],
                         'reporting_type': contract.reporting_type,
                         'currency_table_id': contract.currency_table_id.id})
         
@@ -116,11 +121,13 @@ class wizard_interactive_report(osv.osv_memory):
         total_allocated_real = 0.
         total_project_real = 0.
         
-        # check the output currency if it has been selected        
-        out_currency_amount = contract.grant_amount
+        # check the output currency if it has been selected   
+        for header in header_data:
+            if "Grant amount:" in header:           
+                out_currency_amount = header[1]
         out_currency_id = None
-        if 'output_currency' in context:
-            out_currency_id = context.get('output_currency').id
+        if 'out_currency' in context:
+            out_currency_id = context['out_currency']
         
         max_parent_hierarchy = 0 # 0 for contract line
         temp_analytic_data = []
@@ -147,24 +154,24 @@ class wizard_interactive_report(osv.osv_memory):
                 
                 # if the output currency has been selected other than the reporting currency then convert the given value to 
                 # the selected output currency for exporting
-                if out_currency_id and out_currency_id != contract.reporting_currency.id:
-                    currency_obj = self.pool.get('res.currency')
-                    line_allocated_budget = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
-                                                                 line_amounts['allocated_budget'] or 0.0, round=has_round, context=context)
-        
-                    line_allocated_real = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
-                                                               line_amounts['allocated_real'] or 0.0,round=has_round, context=context)
-        
-                    line_project_budget = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
-                                                               line_amounts['project_budget'] or 0.0, round=has_round, context=context)
-        
-                    line_project_real = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
-                                                             line_amounts['project_real'] or 0.0, round=has_round, context=context)
-                else:
-                    line_allocated_budget = line_amounts['allocated_budget']
-                    line_allocated_real = line_amounts['allocated_real']
-                    line_project_budget = line_amounts['project_budget']
-                    line_project_real = line_amounts['project_real']
+                #if out_currency_id and out_currency_id != contract.reporting_currency.id:
+                #    currency_obj = self.pool.get('res.currency')
+                #    line_allocated_budget = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
+                #                                                 line_amounts['allocated_budget'] or 0.0, round=has_round, context=context)
+                # 
+                #    line_allocated_real = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
+                #                                               line_amounts['allocated_real'] or 0.0,round=has_round, context=context)
+                # 
+                #    line_project_budget = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
+                #                                               line_amounts['project_budget'] or 0.0, round=has_round, context=context)
+                # 
+                #    line_project_real = currency_obj.compute(cr, uid, contract.reporting_currency.id, out_currency_id,
+                #                                             line_amounts['project_real'] or 0.0, round=has_round, context=context)
+                #else:
+                line_allocated_budget = line_amounts['allocated_budget']
+                line_allocated_real = line_amounts['allocated_real']
+                line_project_budget = line_amounts['project_budget']
+                line_project_real = line_amounts['project_real']
     
                 total_allocated_budget += self._round(line_allocated_budget, context=context)
                 total_project_budget += self._round(line_project_budget, context=context)
@@ -192,8 +199,7 @@ class wizard_interactive_report(osv.osv_memory):
                                locale.format(format_str, total_project_budget, grouping=True),
                                locale.format(format_str, total_project_real, grouping=True),
                                '0%' if total_project_real == 0  or total_project_budget == 0 else str(locale.format(format_str, self._round(total_project_real/total_project_budget * 100, context=context), grouping=True)) + "%"]]
-
-
+                               
         # Now, do the hierarchy
         analytic_data = []
         for temp_line in temp_analytic_data:
@@ -208,7 +214,7 @@ class wizard_interactive_report(osv.osv_memory):
             final_line.append(temp_line[2])
             # then, add values depending of the reporting type
             if contract.reporting_type != 'project':
-                essai = temp_line[3:6]
+                essai = temp_line[3:6]         # essai = 'test'
                 final_line += temp_line[3:6]
             if contract.reporting_type != 'allocated':
                 final_line += temp_line[6:9]

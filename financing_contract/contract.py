@@ -67,11 +67,7 @@ class financing_contract_funding_pool_line(osv.osv):
             format_obj.write(cr, uid, vals['contract_id'],{'cost_center_ids':[(6,0,cc_ids)]}, context=context)
         return result
         
-#    def write(self, cr, uid, ids, vals, context=None):  
-#        return super(financing_contract_funding_pool_line, self).write(cr, uid, ids, vals, context=context)
-    
-    #def unlink(self, cr, uid, ids, context=None):   
-    #    return super(financing_contract_funding_pool_line, self).unlink(cr, uid, ids, context=context)
+
     
 financing_contract_funding_pool_line()
 
@@ -161,6 +157,7 @@ class financing_contract_contract(osv.osv):
         # parse parent lines (either value or sum of children's values)
         for line in browse_contract.actual_line_ids:
             if not line.parent_id:
+
                 # Calculate the all the children lines account domain
                 temp = format_line_obj._get_analytic_domain(cr, uid, line, reporting_type, isFirst, context=context)
                 if analytic_domain:
@@ -171,6 +168,7 @@ class financing_contract_contract(osv.osv):
                     analytic_domain = temp
             
         return analytic_domain
+        
 
     def _get_overhead_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """

@@ -107,7 +107,15 @@ class report_project_expenses2(report_sxw.rml_parse):
         contract_domain = contract_obj.get_contract_domain(self.cr, self.uid, contract, reporting_type=self.reporting_type)
         analytic_line_obj = self.pool.get('account.analytic.line')
         analytic_lines = analytic_line_obj.search(self.cr, self.uid, contract_domain, context=None)
-
+        
+        # list of analytic journal_ids which are 
+        exclude_journal_ids = self.pool.get('account.analytic.journal').search(self.cr, self.uid, [('type','=','engagement')])
+        exclude_line_ids = []
+        for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines, context=None):
+            if analytic_line.journal_id.id in exclude_journal_ids:
+                exclude_line_ids.append(analytic_line.id)
+        analytic_lines = [x for x in analytic_lines if x not in exclude_line_ids]
+        
         # UFTP-16: First search in the triplet in format line, then in the second block below, search in quadruplet        
         for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines, context=None):
             ids_adl = self.pool.get('account.destination.link').search(self.cr, self.uid,[('account_id', '=', analytic_line.general_account_id.id),('destination_id','=',analytic_line.destination_id.id) ])
@@ -135,7 +143,6 @@ class report_project_expenses2(report_sxw.rml_parse):
         self.lines = lines
         for x in lines:
             self.iter.append(len(lines[x]))
-
         return lines
 
     def getCostCenter(self,obj):

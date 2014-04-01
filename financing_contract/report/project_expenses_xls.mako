@@ -544,10 +544,9 @@
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="s49a"><Data ss:Type="String">${_('Sub-total')}</Data></Cell>
-<Cell ss:StyleID="s49a" ss:Formula="=SUM(R[-${getSub1()}]C:R[-1]C)">
-<Data ss:Type="Number"></Data>
-</Cell>
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="s49a" ss:Formula="=SUM(R[-${getSub2()}]C:R[-1]C)">
 <Data ss:Type="Number"></Data>
