@@ -101,17 +101,22 @@ class finance_archive():
           - ids
           - model
         """
+        is_list = False
         if not ids or not model:
             return ''
-        if not isinstance(ids, (str, unicode)):
+        if not isinstance(ids, (str, unicode, list)):
             return ''
+        if isinstance(ids, list):
+            is_list = True
+            res_ids = ids
         # preapre some values
         name = cr.dbname
-        ids = sorted(ids.split(','))
-        # We have this: [u'2', u'4', u'6', u'8']
-        # And we want this: [2, 4, 6, 8]
-        # So we do some process on this list
-        res_ids = [int(x) for x in ids]
+        if not is_list:
+            ids = sorted(ids.split(','))
+            # We have this: [u'2', u'4', u'6', u'8']
+            # And we want this: [2, 4, 6, 8]
+            # So we do some process on this list
+            res_ids = [int(x) for x in ids]
         return ','.join([name, model, str(res_ids)])
 
     def postprocess_selection_columns(self, cr, uid, data, changes, column_deletion=False):
