@@ -358,6 +358,50 @@ class account_analytic_line(osv.osv):
                 res[line_data.id] = current_instance.parent_id.instance
         return res
     
+    # Generate delete message for AJI at Project
+    def generate_delete_message_at_project(self, cr, uid, ids, vals, context):
+        # NEED REFACTORING FOR THIS METHOD, if the action write on Analytic.line happens often!
+        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+        instance_name = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context).name
+        xml_ids = self.pool.get('ir.model.data').get(cr, uid, self, ids, context=context)
+        line_data = self.read(cr, uid, ids, ['cost_center_id'], context=context)
+        line_data = dict((data['id'], data) for data in line_data)
+        
+        for i, xml_id_record in enumerate(self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)):
+            xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
+            old_cost_center_id = line_data[ids[i]]['cost_center_id'] and line_data[ids[i]]['cost_center_id'][0] or False
+            new_cost_center_id = False
+            if 'cost_center_id' in vals:
+                new_cost_center_id = vals['cost_center_id']
+            else:
+                new_cost_center_id = old_cost_center_id
+                
+            # UF-2342: only generate delete message if the instance is at Project level
+            old_destination_level = self.get_instance_level_from_cost_center(cr, uid, old_cost_center_id, context=context)
+            if old_destination_level == 'project':
+                old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
+                new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
+                if not old_destination_name == new_destination_name: # Create a delete message for this AJI to destination project, and store it into the queue for next synchronisation
+                    now = fields.datetime.now()
+                    message_data = {'identifier':'delete_%s_to_%s' % (xml_id, old_destination_name), 
+                        'sent':False, 
+                        'generate_message':True, 
+                        'remote_call':self._name + ".message_unlink", 
+                        'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now), 
+                        'destination_name':old_destination_name}
+                    msg_to_send_obj.create(cr, uid, message_data)
+                    
+            # Check if the new code center belongs to a project that has *previously* a delete message for the same AJI created but not sent
+            # -> remove that delete message from the queue
+            new_destination_level = self.get_instance_level_from_cost_center(cr, uid, new_cost_center_id, context=context)
+            if new_destination_level == 'project': # Only concern Project (other level has no delete message)
+                new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
+                if new_destination_name and xml_id:
+                    identifier = 'delete_%s_to_%s' % (xml_id, new_destination_name)
+                    exist_ids = msg_to_send_obj.search(cr, uid, [('identifier', '=', identifier), ('sent', '=', False)])
+                    if exist_ids:
+                        msg_to_send_obj.unlink(cr, uid, exist_ids, context=context) # delete this unsent delete-message
+
     def write(self, cr, uid, ids, vals, context=None):
         if not 'cost_center_id' in vals:
             return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
@@ -365,51 +409,11 @@ class account_analytic_line(osv.osv):
         if isinstance(ids, (long, int)):
             ids = [ids]
         
-        now = fields.datetime.now()
-        instance_name = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context).name
-        xml_ids = self.pool.get('ir.model.data').get(cr, uid, self, ids, context=context)
-        line_data = self.read(cr, uid, ids, ['cost_center_id'], context=context)
-        line_data = dict((data['id'], data) for data in line_data)
-        for i,  xml_id_record in enumerate(self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)):
-            xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
-            old_cost_center_id = line_data[ids[i]]['cost_center_id'] and line_data[ids[i]]['cost_center_id'][0] or False
-            
-            new_cost_center_id = False
-            if 'cost_center_id' in vals:
-                new_cost_center_id = vals['cost_center_id']
-            else:
-                new_cost_center_id = old_cost_center_id
-            
-            # UF-2342: only generate delete message if the instance is at Project level
-            msg_to_send_obj = self.pool.get("sync.client.message_to_send")
-            old_destination_level = self.get_instance_level_from_cost_center(cr, uid, old_cost_center_id, context=context)
-            if old_destination_level == 'project':
-                old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
-                new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
-                if not old_destination_name == new_destination_name:
-                    # Create a delete message for this AJI to destination project, and store it into the queue for next synchronisation
-                    message_data = {
-                            'identifier' : 'delete_%s_to_%s' % (xml_id, old_destination_name),
-                            'sent' : False,
-                            'generate_message' : True,
-                            'remote_call': self._name + ".message_unlink",
-                            'arguments': "[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
-                            'destination_name': old_destination_name
-                    }
-                    msg_to_send_obj.create(cr, uid, message_data)
-            
-            # Check if the new code center belongs to a project that has *previously* a delete message for the same AJI created but not sent
-            # -> remove that delete message from the queue
-            new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
-            if new_destination_name and xml_id: 
-                
-                identifier = 'delete_%s_to_%s' % (xml_id, new_destination_name)
-                exist_ids = msg_to_send_obj.search(cr, uid, [('identifier','=',identifier),('sent','=',False)])
-                if exist_ids:
-                    msg_to_send_obj.unlink(cr, uid, exist_ids,context=context) # delete this unsent delete-message
-        # Set the timestamps of correction/write to this AJI, for sync purpose
-        vals['correction_date'] = now
-        return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
+        vals['correction_date'] = fields.datetime.now()
+        res = super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
+        # call to generate delete message if the cost center is removed from a project
+        self.generate_delete_message_at_project(cr, uid, ids, vals, context)
+        return res
 
 
 account_analytic_line()
