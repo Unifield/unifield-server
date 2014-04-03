@@ -26,9 +26,6 @@ class report_reception(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(report_reception, self).__init__(cr, uid, name, context=context)
         self.item = 0
-        self.kc = False
-        self.dg = False
-        self.np = False
         self.localcontext.update({
             'time': time,
             'enumerate': enumerate,
@@ -56,20 +53,33 @@ class report_reception(report_sxw.rml_parse):
             'getActualReceiptDate': self.getActualReceiptDate,
             'getQtyBO': self.getQtyBO,
         })
-
+    
     def getOriginRef(self,o):
         return o and o.purchase_id and o.purchase_id.origin or False
 
-    def getWarning(self,):
+    def getWarning(self, o):
+        # UTP-756: Check the option right here on move lines of this stock picking, remove the check in self.check because it's too late!
+        lines = o.move_lines
+        kc_flag = False
+        dg_flag = False
+        np_flag = False
+        for line in lines:
+            if line.kc_check:
+                kc_flag = True
+            if line.dg_check:
+                dg_flag = True
+            if line.np_check:
+                np_flag = True
+        
         warn = ''
         tab = []
-        if self.kc or self.dg or self.np:
+        if kc_flag or dg_flag or np_flag:
             warn += 'You are about to receive'
-        if self.kc :
+        if kc_flag :
             tab.append('heat')
-        if self.np :
+        if np_flag :
             tab.append('sensitive')
-        if self.dg :
+        if dg_flag :
             tab.append('dangerous')
         if len(tab) > 0 :
             if len(tab) ==1:
@@ -78,7 +88,7 @@ class report_reception(report_sxw.rml_parse):
                 warn += ' ' + tab[0] + ' and ' + tab[1]
             elif len(tab) == 3:
                 warn += ' ' + tab[0] + ', ' + tab[1] + ' and ' +  tab[2]
-        if self.kc or self.dg or self.np:
+        if warn:
             warn += ' goods products, please refer to the appropriate procedures'
         return warn
 
@@ -92,18 +102,16 @@ class report_reception(report_sxw.rml_parse):
         
         # get PO qty
         qtyPO = line.purchase_line_id.product_qty if line.purchase_line_id else 0
-        
         # get received qty (current and previous INs)
         cr, uid = self.cr, self.uid
         val = 0.00
         stock_move_obj = self.pool.get('stock.move')
         closed_move_ids = stock_move_obj.search(cr, uid, [('purchase_line_id','=',line.purchase_line_id.id),('state','=','done'),('type','=','in'),('id','!=',line.id)])
-        closed_move_ids.append(line.id)    # append current line regardless of status
         if closed_move_ids:
             stock_moves = stock_move_obj.browse(cr, uid, closed_move_ids) 
-        if stock_moves:
-            for move in stock_moves:
-                val = val + move.product_qty
+            if stock_moves:
+                for move in stock_moves:
+                    val = val + move.product_qty
                 
         qtyBO = qtyPO - val
         if qtyBO <= 0:
@@ -160,19 +168,16 @@ class report_reception(report_sxw.rml_parse):
     def check(self,line,opt):
         if opt == 'kc':
             if line.kc_check:
-                self.kc = True
-                return 'Y'
-            return 'N'
+                return 'X'
+            return ' '
         elif opt == 'dg':
             if line.dg_check:
-                self.dg = True
-                return 'Y'
-            return 'N'
+                return 'X'
+            return ' '
         elif opt == 'np':
             if line.np_check:
-                self.np = True
-                return 'Y'
-            return 'N'
+                return 'X'
+            return ' '
 
     def getNbItem(self, ):
         self.item += 1

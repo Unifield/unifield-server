@@ -394,7 +394,6 @@
             <tr><td></td></tr>
         </blockTable>
 
-
         <blockTable colWidths="800.0" style="OrderInformations2" repeatRows="7">
 
             <tr>
@@ -402,7 +401,7 @@
                     <blockTable colWidths="800.0" style="OrderInformations3">
                         <tr>
                             <td>
-                                <para style="TextInformationGROS" alignment="CENTER"><b>[[ getWarning() ]]</b></para>
+                                <para style="TextInformationGROS" alignment="CENTER"><b>[[ getWarning(objects[0]) ]]</b></para>
                             </td>
                         </tr>
                     </blockTable>
@@ -472,10 +471,6 @@
 
                 </td>
             </tr>
-
-
-
-
 
             <tr>
                 <td>
