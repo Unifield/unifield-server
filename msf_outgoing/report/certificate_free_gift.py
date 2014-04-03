@@ -29,7 +29,6 @@ class certificate_free_gift(report_sxw.rml_parse):
         super(certificate_free_gift, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
-            'parse_fo_ref': self._parse_fo_ref,
         })
         
     def set_context(self, objects, data, ids, report_type=None):
@@ -41,27 +40,6 @@ class certificate_free_gift(report_sxw.rml_parse):
                 raise osv.except_osv(_('Warning !'), _('Free Gift Certificate is only available for Shipment Objects (not draft)!'))
         
         return super(certificate_free_gift, self).set_context(objects, data, ids, report_type=report_type)
-
-    def _parse_fo_ref(self, fo_id):
-        if fo_id:
-            name = fo_id.name or ''
-            if name:
-                # force word wrap at the end of the reference (last slash)
-                parts = name.split('/')
-                parts_len = len(parts)
-                index = 1
-                
-                new_name = ''
-                for p in parts:
-                    if index < parts_len:
-                        if index > 1:
-                            new_name += '/'
-                    else:
-                        new_name += '/ '  # last slash of the reference
-                    new_name += p
-                    index += 1
-                return new_name
-        return ''
 
 report_sxw.report_sxw('report.certificate.free.gift', 'shipment', 'addons/msf_outgoing/report/certificate_free_gift.rml', parser=certificate_free_gift, header="external")
 
