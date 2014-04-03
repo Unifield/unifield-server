@@ -27,7 +27,8 @@
     "description" : "This permits to have a chart of account for Unifield Project at MSF",
     "author" : "TeMPO Consulting, MSF",
     "category" : "Localisation/Account Charts",
-    "depends" : ["base", "account_activable", "register_accounting", "account_journal", "msf_instance"],
+    # As register_accounting has finance as dependancy which have account_override as dependancy (in which account_activable have been included): no need of account_activable
+    "depends" : ["base", "register_accounting", "account_journal", "msf_instance"],
     "init_xml": [],
     "update_xml" : [
         "data/account.xml",

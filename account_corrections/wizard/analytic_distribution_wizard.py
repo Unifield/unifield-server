@@ -26,14 +26,13 @@ from osv import fields
 from tools.translate import _
 import time
 from collections import defaultdict
-from tools.misc import flatten
 
 class analytic_distribution_wizard(osv.osv_memory):
     _inherit = 'analytic.distribution.wizard'
 
     _columns = {
         'date': fields.date(string="Date", help="This date is taken from analytic distribution corrections"),
-        'state': fields.selection([('draft', 'Draft'), ('cc', 'Cost Center only'), ('dispatch', 'All other elements'), ('done', 'Done'), 
+        'state': fields.selection([('draft', 'Draft'), ('cc', 'Cost Center only'), ('dispatch', 'All other elements'), ('done', 'Done'),
             ('correction', 'Correction')], string="State", required=True, readonly=True),
         'old_account_id': fields.many2one('account.account', "New account given by correction wizard", readonly=True),
     }
@@ -43,15 +42,15 @@ class analytic_distribution_wizard(osv.osv_memory):
         'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
-    def _check_lines(self, cr, uid, distribution_line_id, wiz_line_id, type):
+    def _check_lines(self, cr, uid, distribution_line_id, wiz_line_id, ltype):
         """
         Check components compatibility
         """
         # Prepare some values
         wiz_line_types = {'cost.center': '', 'funding.pool': 'fp', 'free.1': 'f1', 'free.2': 'f2',}
-        obj = '.'.join([type, 'distribution', 'line'])
+        obj = '.'.join([ltype, 'distribution', 'line'])
         oline = self.pool.get(obj).browse(cr, uid, distribution_line_id)
-        nline_type = '.'.join([wiz_line_types.get(type), 'lines'])
+        nline_type = '.'.join([wiz_line_types.get(ltype), 'lines'])
         nline_obj = '.'.join(['analytic.distribution.wizard', nline_type])
         nline = self.pool.get(nline_obj).browse(cr, uid, wiz_line_id)
         to_reverse = []
@@ -60,7 +59,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         if not period:
             raise osv.except_osv(_('Error'), _('No attached period to the correction wizard. Do you come from a correction wizard attached to a journal item?'))
         # Some cases
-        if type == 'funding.pool':
+        if ltype == 'funding.pool':
             old_component = [oline.destination_id.id, oline.analytic_id.id, oline.cost_center_id.id, oline.percentage]
             new_component = [nline.destination_id.id, nline.analytic_id.id, nline.cost_center_id.id, nline.percentage]
             if old_component != new_component:
@@ -109,14 +108,15 @@ class analytic_distribution_wizard(osv.osv_memory):
             del to_override[oline.id]
         return True, _("All is OK."), to_reverse, to_override
 
-    def do_analytic_distribution_changes(self, cr, uid, wizard_id, distrib_id):
+    def do_analytic_distribution_changes(self, cr, uid, wizard_id, distrib_id, context=None):
         """
         For each given wizard compare old (distrib_id) and new analytic distribution. Then adapt analytic lines.
         """
+        if context is None:
+            context = {}
         # Prepare some values
         wizard = self.browse(cr, uid, wizard_id)
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
-        current_date = time.strftime('%Y-%m-%d')
         ml = wizard.move_line_id
         orig_date = ml.source_date or ml.date
         orig_document_date = ml.document_date
@@ -124,10 +124,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
         if not correction_journal_id:
             raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
-        # OK let's go on funding pool lines
-        # Search old line and new lines
-        old_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
-        wiz_line_ids = self.pool.get('analytic.distribution.wizard.fp.lines').search(cr, uid, [('wizard_id', '=', wizard_id), ('type', '=', 'funding.pool')])
         to_create = []
         to_override = []
         to_delete = []
@@ -199,7 +195,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'currency_id': ml and  ml.currency_id and ml.currency_id.id or company_currency_id,
                 })
             # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
-            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=orig_date, document_date=orig_document_date, source_date=orig_date)
+            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=orig_date, document_date=orig_document_date, source_date=orig_date,context=context)
 
         #####
         ## FP: TO DELETE
@@ -217,13 +213,34 @@ class analytic_distribution_wizard(osv.osv_memory):
         for line in to_reverse:
             # reverse the line
             to_reverse_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+
+            # get the original sequence
+            orig_line = self.pool.get('account.analytic.line').browse(cr, uid, to_reverse_ids)[0]
+            period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wizard.date)
+            if not period_ids:
+                raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (wizard.date or ''))
+            period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
+
+            # note that account_analytic_line.move_id is actually account_analytic_line.move_line_id, but the journal_id is
+            # Get a new OD sequence for the REV / COR rows
+            cr.execute("select id, code from account_journal where type = 'correction' and is_current_instance = true")
+            for row in cr.dictfetchall():
+                journal_id = row['id']
+                code = row['code']
+            journal = self.pool.get('account.journal').browse(cr, uid, journal_id, context=context)
+            move_prefix = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.move_prefix
+            seqnum = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': period.fiscalyear_id.id}) 
+            entry_seq = "%s-%s-%s" % (move_prefix, code, seqnum)
+
             # UTP-943: Set wizard date as date for REVERSAL AND CORRECTION lines
-            reversed_ids = self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids[0], posting_date=wizard.date)
+            reversed_id = self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids[0], posting_date=wizard.date, context=context)[0]
             # Add reversal origin link (to not loose it). last_corrected_id is to prevent case where you do a reverse a line that have been already corrected
-            # UTP-943: Add correction journal on it
-            self.pool.get('account.analytic.line').write(cr, uid, [reversed_ids[0]], {'reversal_origin': to_reverse_ids[0], 'last_corrected_id': False, 'journal_id': correction_journal_id})
+    
+            self.pool.get('account.analytic.line').write(cr, uid, [reversed_id], {'reversal_origin': to_reverse_ids[0], 'last_corrected_id': False, 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence})
             # Mark old lines as non reallocatable (ana_ids): why reverse() don't set this flag ?
-            self.pool.get('account.analytic.line').write(cr, uid, [to_reverse_ids[0]], {'is_reallocated': True,})
+            self.pool.get('account.analytic.line').write(cr, uid, [to_reverse_ids[0]], {'is_reallocated': True})
+            cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, reversed_id) )
+
             # update the distrib line
             name = False
             if to_reverse_ids:
@@ -243,10 +260,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if cp.state != 'draft':
                     raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
             # Create the new ana line
-            ret = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name)
+            ret = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name,context=context)
             # Add link to first analytic lines
             for ret_id in ret:
-                self.pool.get('account.analytic.line').write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id})
+                self.pool.get('account.analytic.line').write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence })
+                cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, ret[ret_id]) )
 
         #####
         ## FP: TO OVERRIDE
@@ -342,6 +360,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # create the ana line
                 self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date)
 
+
+
+
     def button_cancel(self, cr, uid, ids, context=None):
         """
         Close wizard and return on another wizard if 'from' and 'wiz_id' are in context
@@ -401,8 +422,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                     return self.pool.get('wizard.journal.items.corrections').action_confirm(cr, uid, context.get('wiz_id'), distrib_id=new_distrib_id)
                 # JUST Distribution have changed
                 else:
-                    # Check all lines to proceed to changes
-                    self.do_analytic_distribution_changes(cr, uid, wiz.id, wiz.distribution_id.id)
+                    # Check all lines to proceed to change
+                    self.do_analytic_distribution_changes(cr, uid, wiz.id, wiz.distribution_id.id, context=context)
                     return {'type': 'ir.actions.act_window_close'}
         # Get default method
         return super(analytic_distribution_wizard, self).button_confirm(cr, uid, ids, context=context)

@@ -20,3 +20,5 @@
 ##############################################################################
 
 import wizard_add_cost_centers
+import account_chart
+import account_analytic_chart

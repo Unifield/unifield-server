@@ -2,7 +2,6 @@
 
 from osv import fields, osv
 import tools
-from os.path import join as opj
 
 class account_installer(osv.osv_memory):
     _name = 'account.installer'

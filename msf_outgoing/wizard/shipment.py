@@ -20,10 +20,12 @@
 #
 ##############################################################################
 
-from osv import fields, osv
+from osv import osv
+from osv import fields
 from tools.translate import _
 import time
-import netsvc
+
+
 
 class shipment_wizard(osv.osv_memory):
     _name = "shipment.wizard"

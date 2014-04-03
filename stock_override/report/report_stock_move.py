@@ -79,7 +79,6 @@ class report_stock_move(osv.osv):
         'product_qty_in':fields.integer('In Qty',readonly=True),
         'product_qty_out':fields.integer('Out Qty',readonly=True),
         'value' : fields.float('Total Value', required=True),
-        'currency_id': fields.many2one('res.currency', string='Currency', required=True),
         'day_diff2':fields.float('Lag (Days)',readonly=True,  digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
         'day_diff1':fields.float('Planned Lead Time (Days)',readonly=True, digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
         'day_diff':fields.float('Execution Lead Time (Days)',readonly=True,  digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
@@ -231,6 +230,10 @@ class report_stock_move(osv.osv):
                         if x[0] == 'product_id':
                             product_id = x[2]
 
+                if isinstance(product_id, str):
+                    product_id = self.pool.get('product.product').search(cr, uid, [('default_code', '=', product_id)], context=context)
+                    if product_id:
+                        product_id = product_id[0]
                 if product_id:
                     uom = self.pool.get('product.product').browse(cr, uid, product_id, context=context).uom_id
                     data.update({'product_uom': (uom.id, uom.name)})

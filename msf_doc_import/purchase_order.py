@@ -23,6 +23,7 @@ from osv import osv
 from osv import fields
 import logging
 import tools
+import time
 from mx.DateTime import *
 from os import path
 from tools.translate import _
@@ -34,7 +35,8 @@ from msf_doc_import import GENERIC_MESSAGE
 from check_line import *
 from msf_doc_import import MAX_LINES_NB
 from msf_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration, PO_COLUMNS_HEADER_FOR_INTEGRATION, NEW_COLUMNS_HEADER
-from msf_doc_import import check_line
+
+from lxml import etree
 
 
 class purchase_order(osv.osv):
@@ -63,17 +65,9 @@ class purchase_order(osv.osv):
             res = False
         return res
 
-# The field below were replaced by the wizard_import_fo_line (utp-113)
-#    def _get_import_error(self, cr, uid, ids, fields, arg, context=None):
-
-#    _columns = {
-#        'file_to_import': fields.binary(string='File to import', filters='*.xml',
-#                           ....
-#        'import_error_ok': fields.function(_get_import_error, method=True, type="boolean", string="Error in Import", store=True),
-#    }
-
     _columns = {
         'import_in_progress': fields.boolean(string='Importing'),
+        'import_filenames': fields.one2many('purchase.order.simu.import.file', 'order_id', string='Imported files', readonly=True),
     }
 
     _defaults = {
@@ -91,7 +85,7 @@ class purchase_order(osv.osv):
             defaults.update({'import_in_progress': False})
 
         return super(purchase_order, self).copy(cr, uid, id, defaults, context=context)
-    
+
     def _check_active_product(self, cr, uid, ids, context=None):
         '''
         Check if the Purchase order contains a line with an inactive products
@@ -99,45 +93,43 @@ class purchase_order(osv.osv):
         inactive_lines = self.pool.get('purchase.order.line').search(cr, uid, [('product_id.active', '=', False),
                                                                                ('order_id', 'in', ids),
                                                                                ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
-        
+
         if inactive_lines:
             plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')          
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
             raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
             return False
         return True
-    
+
     _constraints = [
         (_check_active_product, "You cannot validate this purchase order because it contains a line with an inactive product", ['order_line', 'state'])
     ]
-
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        '''
-        Remove lines
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        purchase_line_obj = self.pool.get('purchase.order.line')
-        pol_ids = purchase_line_obj.search(cr, uid, [('order_id', '=', ids[0])])
-        return purchase_line_obj.unlink(cr, uid, pol_ids, context)
 
     def wizard_import_file(self, cr, uid, ids, context=None):
         '''
         Launches the wizard to import lines from a file
         '''
+        export_obj = self.pool.get('wizard.import.po.simulation.screen')
+        export_line_obj = self.pool.get('wizard.import.po.simulation.screen.line')
+
         if context is None:
             context = {}
+
         context.update({'active_id': ids[0]})
         columns_header = NEW_COLUMNS_HEADER
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        export_id = self.pool.get('wizard.import.po').create(cr, uid, {'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])),
-                                                                        'filename_template': 'template.xls',
-                                                                        'filename': 'Lines_Not_Imported.xls',
-                                                                        'po_id': ids[0]}, context)
+        export_ids = export_obj.search(cr, uid, [('order_id', '=', ids[0])], context=context)
+        export_obj.unlink(cr, uid, export_ids, context=context)
+        export_id = export_obj.create(cr, uid, {
+                                                'order_id': ids[0]}, context)
+
+        for l in self.pool.get('purchase.order').browse(cr, uid, ids[0], context=context).order_line:
+            export_line_obj.create(cr, uid, {'po_line_id': l.id,
+                                             'in_line_number': l.line_number,
+                                             'simu_id': export_id}, context=context)
+
         return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.import.po',
+                'res_model': 'wizard.import.po.simulation.screen',
                 'res_id': export_id,
                 'view_type': 'form',
                 'view_mode': 'form',
@@ -147,59 +139,65 @@ class purchase_order(osv.osv):
 
     def export_po_integration(self, cr, uid, ids, context=None):
         '''
-        Creates an XML file and launches the wizard to save it
+        Call the wizard to choose the export file format
+        '''
+        wiz_obj = self.pool.get('wizard.export.po.validated')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wiz_id = wiz_obj.create(cr, uid, {'order_id': ids[0]}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': wiz_obj._name,
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context}
+
+
+    def export_xml_po_integration(self, cr, uid, ids, context=None):
+        '''
+        Call the Pure XML report of validated PO
         '''
         if context is None:
             context = {}
-        po = self.browse(cr, uid, ids[0], context=context)
-        header_columns = NEW_COLUMNS_HEADER
-        #header_columns = [(column, 'string') for column in columns_for_po_integration]
-        header_index = {}
-        [header_index.update({value: index})for (index, value) in enumerate(columns_for_po_integration)]
-        list_of_lines = []
-        for line in po.order_line:
-            new_list = []
-            new_list.insert(header_index['Line'], line.line_number)
-            new_list.insert(header_index['Product Code'], line.product_id.default_code and check_line.get_xml(line.product_id.default_code))
-            new_list.insert(header_index['Product Description'], line.product_id.name and check_line.get_xml(line.product_id.name))
-            new_list.insert(header_index['Quantity'], line.product_qty)
-            new_list.insert(header_index['UoM'], line.product_uom.name and check_line.get_xml(line.product_uom.name))
-            new_list.insert(header_index['Price'], line.price_unit)
-            new_list.insert(header_index['Delivery Request Date'], line.date_planned and strptime(line.date_planned,'%Y-%m-%d').strftime('%Y-%m-%d') or '')
-            new_list.insert(header_index['Delivery Confirmed Date'], line.confirmed_delivery_date and strptime(line.confirmed_delivery_date,'%Y-%m-%d').strftime('%Y-%m-%d') or '')
-            #new_list.insert(header_index['Order Reference*'], po.name)
-            #new_list.insert(header_index['Delivery Confirmed Date (PO)*'], po.delivery_confirmed_date and strptime(po.delivery_confirmed_date,'%Y-%m-%d').strftime('%Y-%m-%d') or '')
-            new_list.insert(header_index['Origin'], line.origin and check_line.get_xml(line.origin))
-            new_list.insert(header_index['Comment'], line.comment and check_line.get_xml(line.comment))
-            new_list.insert(header_index['Notes'], line.notes and check_line.get_xml(line.notes))
-            new_list.insert(header_index['Supplier Reference'], po.partner_ref or '')
-            #new_list.insert(header_index['Destination Partner'], po.dest_partner_id and po.dest_partner_id.name or '')
-            #new_list.insert(header_index['Destination Address'], po.dest_address_id and po.dest_address_id.name or po.dest_address_id.city or '')
-            #new_list.insert(header_index['Invoicing Address'], po.invoice_address_id and po.invoice_address_id.name or '')
-            #new_list.insert(header_index['Est. Transport Lead Time'], po.est_transport_lead_time or '')
-            #new_list.insert(header_index['Transport Mode'], po.transport_type or '')
-            #new_list.insert(header_index['Arrival Date in the country'], po.arrival_date and strptime(po.arrival_date,'%Y-%m-%d').strftime('%Y-%m-%d') or '')
-            new_list.insert(header_index['Incoterm'], po.incoterm_id and po.incoterm_id.name and check_line.get_xml(po.incoterm_id.name) or '')
-            #new_list.insert(header_index['Notes (PO)'], po.notes)
-            list_of_lines.append(new_list)
-        if any([f_line for f_line in list_of_lines if len(f_line) != len(header_columns)]):
-            raise osv.except_osv(_('Error'), _("""The number of columns in the header should be equal to the number of columns you want to export, please check
-            that what you have in the NEW_COLUMNS_HEADER (global variable defined in the __init__.py of the wizard) is the same as what you have in the lines of the list list_of_lines."""))
-        instanciate_class = SpreadsheetCreator('PO', header_columns, list_of_lines)
-        file = base64.encodestring(instanciate_class.get_xml(default_filters=['decode.utf8']))
-        
-        export_id = self.pool.get('wizard.export.po').create(cr, uid, {'po_id': ids[0], 
-                                                                        'file': file, 
-                                                                        'filename': 'po_%s.xls' % (po.name.replace(' ', '_')), 
-                                                                        'message': 'The PO has been exported. Please click on Save As button to download the file'}, context=context)
-        
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.export.po',
-                'res_id': export_id,
-                'view_mode': 'form',
-                'view_type': 'form',
-                'target': 'new',
-                }
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        datas = {}
+        datas['ids'] = ids
+        report_name = 'validated.purchase.order_xml'
+
+        return {
+                'type': 'ir.actions.report.xml',
+                'report_name': report_name,
+                'datas': datas,
+                'context': context,
+               }
+
+    def export_excel_po_integration(self, cr, uid, ids, context=None):
+        '''
+        Call the Excel report of validated PO
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        datas = {}
+        datas['ids'] = ids
+        report_name = 'validated.purchase.order_xls'
+
+        return {
+                'type': 'ir.actions.report.xml',
+                'report_name': report_name,
+                'datas': datas,
+                'context': context,
+               }
 
     def wizard_import_po_line(self, cr, uid, ids, context=None):
         '''
@@ -217,8 +215,8 @@ class purchase_order(osv.osv):
                                                                             'filename_template': 'template.xls',
                                                                             'filename': 'Lines_Not_Imported.xls',
                                                                             'po_id': ids[0],
-                                                                            'message': """%s %s"""  % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_po_line_import]), ),
-                                                                            'state': 'draft',},
+                                                                            'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_po_line_import]),),
+                                                                            'state': 'draft', },
                                                                    context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.po.line',
@@ -229,9 +227,6 @@ class purchase_order(osv.osv):
                 'context': context,
                 }
 
-# UTP-113 THE METHOD BELOW WAS RETAKEN IN THE WIZARD
-#    def import_file(self, cr, uid, ids, context=None):
-
     def check_lines_to_fix(self, cr, uid, ids, context=None):
         """
         Check both the lines that need to be corrected and also that the supplier or the address is not 'To be defined'
@@ -239,13 +234,13 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         message = ''
-        plural= ''
+        plural = ''
         obj_data = self.pool.get('ir.model.data')
-        
+
         for var in self.browse(cr, uid, ids, context=context):
             # we check the supplier and the address
-            if var.partner_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import','supplier_tbd')[1] \
-            or var.partner_address_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import','address_tbd')[1]:
+            if var.partner_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'supplier_tbd')[1] \
+            or var.partner_address_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'address_tbd')[1]:
                 raise osv.except_osv(_('Warning !'), _("\n You can't have a supplier or an address 'To Be Defined', please select a consistent supplier."))
             # we check the lines that need to be fixed
             if var.order_line:
@@ -266,7 +261,7 @@ class purchase_order(osv.osv):
             ids = [ids]
         for var in self.browse(cr, uid, ids, context=context):
             if not var.from_sync and var.partner_type != 'external':
-                raise osv.except_osv(_('Warning !'), _("""You can\'t cancel the PO because it may have already been synchronized, 
+                raise osv.except_osv(_('Warning !'), _("""You can\'t cancel the PO because it may have already been synchronized,
                 the cancellation should then come from the supplier instance (and synchronize down to the requestor instance)."""))
         return True
 
@@ -279,8 +274,8 @@ class purchase_order_line(osv.osv):
     '''
     _inherit = 'purchase.order.line'
     _description = 'Purchase Order Line'
-    
-    
+
+
     def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
         '''
         Fill the error message if the product of the line is inactive
@@ -294,9 +289,9 @@ class purchase_order_line(osv.osv):
             if line.order_id and line.order_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
                 res[line.id] = {'inactive_product': True,
                                 'inactive_error': _('The product in line is inactive !')}
-                
+
         return res
-    
+
     _columns = {
         'to_correct_ok': fields.boolean('To correct'),
         'show_msg_ok': fields.boolean('Info on importation of lines'),
@@ -304,12 +299,12 @@ class purchase_order_line(osv.osv):
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
     }
-    
+
     _defaults = {
         'inactive_product': False,
         'inactive_error': lambda *a: '',
     }
-    
+
     def check_line_consistency(self, cr, uid, ids, *args, **kwargs):
         """
         After having taken the value in the to_write variable we are going to check them.
@@ -366,7 +361,7 @@ class purchase_order_line(osv.osv):
                 # Check product line restrictions
                 if product and po.partner_id:
                     self.pool.get('product.product')._get_restriction_error(cr, uid, [product], {'partner_id': po.partner_id.id}, context=dict(context, noraise=False))
-                
+
         return to_write
 
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
@@ -384,8 +379,9 @@ class purchase_order_line(osv.osv):
                 text_error += _("""\n You have to select a product UOM in the same category than the UOM of the product.""")
                 return to_write.update({'text_error': text_error,
                                         'to_correct_ok': True})
-        elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1] and product_id:
+        elif (not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]) and product_id:
             # we take the default uom of the product
+            product = self.pool.get('product.product').browse(cr, uid, product_id)
             product_uom = product.uom_id.id
             return to_write.update({'product_uom': product_uom})
         elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]:
@@ -428,3 +424,48 @@ class purchase_order_line(osv.osv):
         return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
 
 purchase_order_line()
+
+
+class wizard_export_po_validated(osv.osv_memory):
+    _name = 'wizard.export.po.validated'
+
+    _columns = {
+        'order_id': fields.many2one('purchase.order', string='Purchase Order', required=True),
+        'file_type': fields.selection([('excel', 'Excel file'),
+                                       ('xml', 'XML file')], string='File type', required=True),
+    }
+
+    def export_file(self, cr, uid, ids, context=None):
+        '''
+        Launch the good method to download the good file
+        '''
+        order_obj = self.pool.get('purchase.order')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wiz = self.browse(cr, uid, ids[0], context=context)
+
+        if wiz.file_type == 'xml':
+            return order_obj.export_xml_po_integration(cr, uid, wiz.order_id.id, context=context)
+        else:
+            return order_obj.export_excel_po_integration(cr, uid, wiz.order_id.id, context=context)
+
+wizard_export_po_validated()
+
+
+class purchase_order_simu_import_file(osv.osv):
+    _name = 'purchase.order.simu.import.file'
+    _order = 'timestamp'
+
+    _columns = {
+        'order_id': fields.many2one('purchase.order', string='Order', required=True),
+        'filename': fields.char(size=256, string='Filename', required=True),
+        'timestamp': fields.datetime(string='Date', required=True),
+    }
+
+    _defaults = {
+        'timestamp': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+    }
+
+purchase_order_simu_import_file()

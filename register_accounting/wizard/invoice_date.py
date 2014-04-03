@@ -2,7 +2,7 @@
 #-*- encoding:utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
+#    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,6 @@
 
 from osv import osv
 from osv import fields
-from tools.translate import _
 import netsvc
 import decimal_precision as dp
 
@@ -50,9 +49,9 @@ class wizard_invoice_date(osv.osv_memory):
             if wiz.check_total:
                 values['check_total'] = wiz.check_total
 
-            res = inv_obj.write(cr, uid, [wiz.invoice_id.id], values)
+            inv_obj.write(cr, uid, [wiz.invoice_id.id], values)
             wf_service.trg_validate(uid, 'account.invoice', wiz.invoice_id.id, 'invoice_open', cr)
         return { 'type': 'ir.actions.act_window_close', }
-       
+
 wizard_invoice_date()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

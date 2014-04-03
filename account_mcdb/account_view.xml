@@ -226,6 +226,6 @@
             <field eval="'ir.actions.server,%d'%action_analytic_account_mass_reallocation_search" name="value"/>
             <field eval="True" name="object"/>
         </record>
-
+            
     </data>
 </openerp>

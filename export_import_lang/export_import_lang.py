@@ -217,7 +217,7 @@ class res_request(osv.osv):
 
     _defaults = {
         'import_trans': lambda *a: False,
-        'import_trans': lambda *a: False,
+        'export_trans': lambda *a: False,
     }
 res_request()
 

@@ -29,7 +29,6 @@ from time import strftime
 from tempfile import NamedTemporaryFile
 from base64 import decodestring
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from csv import DictReader
 import threading
 import pooler
 from ..register_tools import open_register_view
@@ -49,7 +48,6 @@ class wizard_register_import(osv.osv_memory):
     }
 
     _defaults = {
-        'state': lambda *a: 'draft',
         'progression': lambda *a: 0.0,
         'state': lambda *a: 'draft',
     }
@@ -95,66 +93,106 @@ class wizard_register_import(osv.osv_memory):
         if not context:
             context = {}
         # Fetch default funding pool: MSF Private Fund
-        try: 
+        try:
             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         except ValueError:
             msf_fp_id = 0
+        # Prepare some values
+        absl_obj = self.pool.get('account.bank.statement.line')
         # Browse all wizards
-        for w in self.browse(cr, uid, ids):
+        for w in self.read(cr, uid, ids, ['register_id']):
+            w_id = w.get('id', False)
+            register_id = w.get('register_id', False)
+            account_obj = self.pool.get('account.account')
             # Search lines
-            entries = self.pool.get('wizard.register.import.lines').search(cr, uid, [('wizard_id', '=', w.id)])
+            entries = self.pool.get('wizard.register.import.lines').search(cr, uid, [('wizard_id', '=', w_id)])
             if not entries:
                 raise osv.except_osv(_('Error'), _('No lines.'))
             # Browse result
-            b_entries = self.pool.get('wizard.register.import.lines').browse(cr, uid, entries)
+            fields = [
+                'description',
+                'ref',
+                'document_date',
+                'account_id',
+                'debit',
+                'credit',
+                'partner_id',
+                'employee_id',
+                'transfer_journal_id',
+                'destination_id',
+                'funding_pool_id',
+                'cost_center_id',
+                'date',
+                'currency_id'
+            ]
+            b_entries = self.pool.get('wizard.register.import.lines').read(cr, uid, entries, fields)
             current_percent = 100.0 - remaining_percent
             entries_number = len(b_entries)
+            to_check = []
             # Create a register line for each entry
             for nb, l in enumerate(b_entries):
                 # Prepare values
+                account_id = l.get('account_id', False) and l.get('account_id')[0] or False
+                partner_id = l.get('partner_id', False) and l.get('partner_id')[0] or False
+                employee_id = l.get('employee_id', False) and l.get('employee_id')[0] or False
+                transfer_journal_id = l.get('transfer_journal_id', False) and l.get('transfer_journal_id')[0] or False
+                destination_id = l.get('destination_id', False) and l.get('destination_id')[0] or False
+                funding_pool_id = l.get('funding_pool_id', False) and l.get('funding_pool_id')[0] or False
+                cost_center_id = l.get('cost_center_id', False) and l.get('cost_center_id')[0] or False
+                date = l.get('date', False)
+                currency_id = l.get('currency_id', False) and l.get('currency_id')[0] or False
+                account = account_obj.read(cr, uid, account_id, ['is_analytic_addicted'])
+
                 vals = {
-                    'name':                l.description,
-                    'reference':           l.ref,
-                    'document_date':       l.document_date,
-                    'date':                l.date,
-                    'account_id':          l.account_id.id,
-                    'amount':              (l.debit or 0.0) - (l.credit or 0.0),
-                    'partner_id':          l.partner_id and l.partner_id.id or False,
-                    'employee_id':         l.employee_id and l.employee_id.id or False,
-                    'transfer_journal_id': l.transfer_journal_id and l.transfer_journal_id.id or False,
-                    'statement_id':        w.register_id.id,
+                    'name':                l.get('description', ''),
+                    'reference':           l.get('ref', ''),
+                    'document_date':       l.get('document_date', False),
+                    'date':                date,
+                    'account_id':          account_id,
+                    'amount':              l.get('debit', 0.0) - l.get('credit', 0.0),
+                    'partner_id':          partner_id,
+                    'employee_id':         employee_id,
+                    'transfer_journal_id': transfer_journal_id,
+                    'statement_id':        register_id,
                 }
-                absl_id = self.pool.get('account.bank.statement.line').create(cr, uid, vals, context)
+                absl_id = absl_obj.create(cr, uid, vals, context)
                 # Analytic distribution
                 distrib_id = False
                 # Create analytic distribution
-                if l.account_id.user_type_code == 'expense' and l.destination_id and l.cost_center_id and l.funding_pool_id:
+                if account and account.get('is_analytic_addicted', False) and destination_id and cost_center_id and funding_pool_id:
                     distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
                     common_vals = {
                         'distribution_id': distrib_id,
-                        'currency_id': w.register_id.currency.id,
+                        'currency_id': currency_id,
                         'percentage': 100.0,
-                        'date': l.date,
-                        'source_date': l.date,
-                        'destination_id': l.destination_id.id,
+                        'date': date,
+                        'source_date': date,
+                        'destination_id': destination_id,
                     }
-                    common_vals.update({'analytic_id': l.cost_center_id.id,})
-                    cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
-                    common_vals.update({'analytic_id': l.funding_pool_id and l.funding_pool_id.id or msf_fp_id, 'cost_center_id': l.cost_center_id.id,})
-                    fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
-                    # Check analytic distribution
-                    self.pool.get('account.bank.statement.line').write(cr, uid, [absl_id], {'analytic_distribution_id': distrib_id,})
-                    absl_data = self.pool.get('account.bank.statement.line').read(cr, uid, [absl_id], ['analytic_distribution_state'], context)
-                    delete_distribution = True
-                    if absl_data and absl_data[0]:
-                        if absl_data[0].get('analytic_distribution_state', False) == 'valid':
-                            delete_distribution = False
-                    if delete_distribution:
-                        self.pool.get('account.bank.statement.line').write(cr, uid, [absl_id], {'analytic_distribution_id': False}, context)
-                        self.pool.get('analytic.distribution').unlink(cr, uid, [distrib_id], context)
+                    common_vals.update({'analytic_id': cost_center_id,})
+                    self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
+                    common_vals.update({'analytic_id': funding_pool_id or msf_fp_id, 'cost_center_id': cost_center_id,})
+                    self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
+                    # Check analytic distribution. Use SKIP_WRITE_CHECK to not do anything else that writing analytic distribution field
+                    absl_obj.write(cr, uid, [absl_id], {'analytic_distribution_id': distrib_id,}, context={'skip_write_check': True})
+                    # Add this line to be check at the end of the process
+                    to_check.append(absl_id)
                 # Update wizard with current progression
                 progression = current_percent + (nb + 1.0) / entries_number * remaining_percent
-                self.write(cr, uid, [w.id], {'progression': progression})
+                self.write(cr, uid, [w_id], {'progression': progression})
+            # Check analytic distribution on lines.
+            #+ As explained in UF-1982 we disregard the analytic distribution if any problem on it
+            to_delete = []
+            to_delete_distrib = []
+            for absl_data in absl_obj.read(cr, uid, to_check, ['analytic_distribution_state', 'analytic_distribution_id'], context):
+                if absl_data.get('analytic_distribution_state', '') == 'valid':
+                    continue
+                to_delete.append(absl_data.get('id'))
+                to_delete_distrib.append(absl_data.get('analytic_distribution_id', [False])[0])
+            # Delete analytic distribution field on register lines
+            absl_obj.write(cr, uid, to_delete, {'analytic_distribution_id': False}, context={'skip_write_check': True}) # do not do anything else than changing analytic_distribution_id field content (thanks to SKIP_WRITE_CHECK)
+            # Delete analytic distribution
+            self.pool.get('analytic.distribution').unlink(cr, uid, to_delete_distrib, context)
         return True
 
     def _import(self, dbname, uid, ids, context=None):
@@ -257,7 +295,8 @@ class wizard_register_import(osv.osv_memory):
                 if not cur or not cur[0] or not cur[0].active:
                     raise osv.except_osv(_('Error'), _('Currency %s is not active!') % (cur.name))
                 # Check that currency is the same as register's one
-                if wiz.register_id.currency.id not in currency_ids:
+                register_currency = wiz.register_id.currency.id
+                if register_currency not in currency_ids:
                     raise osv.except_osv('', _("the import's currency is %s whereas the register's currency is %s") % (cur[0].name, wiz.register_id.currency.name))
                 # Search registers that correspond to this instance, journal's code and currency and check that our register is in the list
                 register_ids = self.pool.get('account.bank.statement').search(cr, uid, [('instance_id', 'in', instance_ids), ('journal_id', 'in', journal_ids), ('currency', 'in', currency_ids)])
@@ -277,13 +316,12 @@ class wizard_register_import(osv.osv_memory):
                 # Check file's content
                 for num, r in enumerate(rows):
                     # Update wizard
-                    percent = (float(num+1) / float(nb_rows+1)) * 100.0
                     progression = ((float(num+1) * remaining) / float(nb_rows)) + 6
                     self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': progression}, context)
                     # Prepare some values
                     r_debit = 0
                     r_credit = 0
-                    r_currency = wiz.register_id.currency.id
+                    r_currency = register_currency
                     r_partner = False
                     r_account = False
                     r_destination = False
@@ -356,16 +394,17 @@ class wizard_register_import(osv.osv_memory):
                         errors.append(_('Line %s. G/L account %s not found!') % (current_line_num, account_code,))
                         continue
                     r_account = account_ids[0]
-                    account = self.pool.get('account.account').browse(cr, uid, r_account, context)
+                    account = self.pool.get('account.account').read(cr, uid, r_account, ['type_for_register', 'is_analytic_addicted'], context)
+                    type_for_register = account.get('type_for_register', '')
                     # Check that Third party exists (if not empty)
                     tp_label = _('Partner')
                     partner_type = 'partner'
                     if line[cols['third_party']]:
-                        if account.type_for_register == 'advance':
+                        if type_for_register == 'advance':
                             tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['third_party']])])
                             tp_label = _('Employee')
                             partner_type = 'employee'
-                        elif account.type_for_register in ['transfer', 'transfer_same']:
+                        elif type_for_register in ['transfer', 'transfer_same']:
                             tp_ids = self.pool.get('account.bank.statement').search(cr, uid, [('name', '=', line[cols['third_party']])])
                             tp_label = _('Journal')
                             partner_type = 'journal'
@@ -382,8 +421,8 @@ class wizard_register_import(osv.osv_memory):
                                 errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, line[cols['third_party']],))
                                 continue
                         r_partner = tp_ids[0]
-                    # Check analytic axis only if G/L account is an expense account
-                    if account.user_type_code == 'expense':
+                    # Check analytic axis only if G/L account is an analytic-a-holic account
+                    if account.get('is_analytic_addicted', False):
                         # Check Destination
                         try:
                             if line[cols['destination']]:
@@ -431,9 +470,9 @@ class wizard_register_import(osv.osv_memory):
                         'wizard_id': wiz.id,
                         'period_id': r_period or False,
                     }
-                    if account.type_for_register == 'advance':
+                    if type_for_register == 'advance':
                         vals.update({'employee_id': r_partner,})
-                    elif account.type_for_register in ['transfer', 'transfer_same']:
+                    elif type_for_register in ['transfer', 'transfer_same']:
                         vals.update({'transfer_journal_id': r_partner})
                     else:
                         if partner_type == 'partner':
@@ -495,7 +534,7 @@ class wizard_register_import(osv.osv_memory):
         # Launch a thread
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
-        
+
         # Write changes
         self.write(cr, uid, ids, {'state': 'inprogress'}, context)
         # Return a dict to avoid problem of panel bar to the right

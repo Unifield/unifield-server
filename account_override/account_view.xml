@@ -1,293 +1,156 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
 
-    <!--
-        Invoice Lines
-    -->
-        <record id="invoice_line_form_2" model="ir.ui.view">
-            <field name="name">account.invoice.line.form.2</field>
-            <field name="model">account.invoice.line</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="account.view_invoice_line_tree"/>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/tree/field[@name='name']" position="before">
-                        <field name="line_number"/>
-                        <field name="is_corrected" invisible="1"/>
-                        <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
-    <!--
-        Supplier Invoice
-    -->
-        <record id="invoice_supplier_form_3" model="ir.ui.view">
-            <field name="name">account.invoice.supplier.form.3</field>
-            <field name="model">account.invoice</field>
+        <record model="ir.ui.view" id="view_account_activable_form">
+            <field name="name">account.account_activable.form</field>
+            <field name="model">account.account</field>
             <field name="type">form</field>
-            <field name="inherit_id" ref="account.invoice_supplier_form"/>
-            <field name="priority">20</field>
+            <field name="inherit_id" ref="account.view_account_form"/>
+            <field name="priority" eval="17"/>
             <field name="arch" type="xml">
-                <data>
-                    <xpath expr="//tree[@string='Invoice lines']/field[@name='product_id']" position="before">
-                        <field name="line_number"/>
-                    </xpath>
-                    <xpath expr="//field[@name='date_invoice']" position="before">
-                        <field name="document_date"/>
-                    </xpath>
-                    <xpath expr="//field[@name='period_id']" position="replace">
-                    </xpath>
-                    <xpath expr="//label[@string='(keep empty to use the current period)']" position="replace">
-                    </xpath>
-                </data>
+                <field name="company_id" position="replace"/>
+                <page string="General Information" position="replace">
+                    <page string="General Information">
+                        <group col="6" colspan="4">
+                            <field name="activation_date"/>
+                            <field name="inactivation_date"/>
+                            <field name="reconcile"/>
+                        </group>
+                    </page>
+                </page>
             </field>
         </record>
 
-    <!-- Account View -->
-        <record id="inherit_view_account_tree" model="ir.ui.view">
-            <field name="name">inherit.view.account.tree</field>
+    <!-- Tree view for Balance by Account result -->
+        <record model="ir.ui.view" id="balance_account_tree">
+            <field name="name">balance.account.tree</field>
             <field name="model">account.account</field>
             <field name="type">tree</field>
             <field name="field_parent">child_id</field>
-            <field name="inherit_id" ref="account.view_account_tree"/>
-            <field name="priority">19</field>
+            <field name="priority" eval="25"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='type']" position="replace">
-                </xpath>
-                <xpath expr="//field[@name='user_type']" position="after">
-                    <field name="type"/>
-                    <field name="type_for_register"/>
-                    <field name="accrual_account" invisible="1"/>
-                </xpath>
-            </field>
-        </record>
-
-
-        <record id="inherit_view_account_search_pma" model="ir.ui.view">
-            <field name="name">inherit.view.account.search.pma</field>
-            <field name="model">account.account</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_search"/>
-            <field name="priority">25</field>
-            <field name="arch" type="xml">
-                <xpath expr="/search/group[1]" position="replace">
-                    <group col="12" colspan="4">
-
-                        <filter name="active" icon="terp-check" string="Active" domain="[('filter_active', '=', True)]" />
-                        <filter name="inactive" icon="gtk-dialog-error" string="Inactive" domain="[('filter_active', '=', False)]"/>
-                        <separator orientation="vertical"/>
-                        <filter icon="terp-sale" string="Receivable Accounts" domain="[('type','=','receivable')]"/>
-                        <filter icon="terp-purchase" string="Payable Accounts" domain="[('type','=','payable')]"/>
-                        <filter name="accrual_account" string="Accrual Account" domain="[('accrual_account','=',True)]"/>
-                        <separator orientation="vertical"/>
-                        <newline/>
-
-                        <group col="6" colspan="4">
-                            <field name="code"/>
-                            <field name="name"/>
-                            <field name="is_not_hq_correctible"/>
-                        </group>
-                        <newline/>
-
-                        <field name="user_type"/>
-                        <field name="type"/>
-                        <field name="type_for_register"/>
-
-                    </group>
-                </xpath>
-            </field>
-        </record>
-
-    <!--
-        Journal Entries
-    -->
-        <record id="view_move_form_2" model="ir.ui.view">
-            <field name="name">account.move.form.2</field>
-            <field name="model">account.move</field>
-            <field name="type">form</field>
-            <field name="priority" eval="20" />
-            <field name="inherit_id" ref="account.view_move_form"/>
-            <field name="arch" type="xml">
-                <form string="Journal Entries" position="replace">
-                    <form string="Journal Entries" hide_delete_button="1">
-                        <group colspan="4" col="6">
-                            <field name="journal_id" on_change="onchange_journal_id(journal_id)" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
-                            <field name="name" readonly="1"/>
-                            <field name="period_id" on_change="onchange_period_id(period_id, date)" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
-                            <field name="ref" attrs="{'readonly': [('status', '=', 'sys')]}"/>
-                            <field name="partner_id" invisible="1"/>
-                            <field name="document_date" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
-                            <field name="date" string="Posting Date" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
-                            <field name="amount" invisible="1"/>
-                        </group>
-                        <notebook colspan="4">
-                            <page string="Journal Items">
-                                <field colspan="4" name="line_id" nolabel="1" height="250" widget="one2many_list" default_get="{'lines': [], 'journal':journal_id, 'period_id':period_id}" attrs="{'readonly': [('status', '=', 'sys')]}">
-                                    <tree colors="blue:state in ('draft');black:state in ('posted')" editable="top" string="Journal Items">
-                                        <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
-                                        <field name="name"/>
-                                        <field name="ref"/>
-                                        <field name="account_id"/>
-                                        <field name="partner_id" invisible="1"/>
-                                        <field name="debit_currency" sum="Total Booking Debit" string="Book. Debit"/>
-                                        <field name="credit_currency" sum="Total Booking Credit" string="Book. Credit"/>
-                                        <field name="currency_id" string="Book. Currency"/>
-                                        <field name="debit" sum="Total Functional Debit" string="Func. Debit" readonly="1"/>
-                                        <field name="credit" sum="Total Functional Credit" string="Func. Credit" readonly="1"/>
-                                        <field name="functional_currency_id" readonly="1"/>
-                                        <field name="reconcile_total_partial_id" string="Reconcile"/>
-                                        <field name="state"/>
-                                    </tree>
-                                </field>
-                            </page>
-                        </notebook>
-                        <group colspan="4" col="4">
-                            <field name="state" colspan="2"/>
-                            <field name="status" invisible="0" readonly="1" colspan="2"/>
-                        </group>
-                        <group colspan="6" col="4">
-                            <!--button name="button_cancel" states="posted" string="Cancel" type="object" icon="gtk-cancel"/-->
-                            <label string="" colspan="2"/>
-                            <button name="button_validate" states="draft" string="Approve" type="object" icon="terp-camera_test" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('status', '=', 'sys')]}" colspan="2"/>
-                        </group>
-                    </form>
-                </form>
-            </field>
-        </record>
-
-        <record id="view_move_tree_2" model="ir.ui.view">
-            <field name="name">account.move.tree.2</field>
-            <field name="model">account.move</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="account.view_move_tree"/>
-            <field name="priority" eval="20"/>
-            <field name="arch" type="xml">
-                <tree string="Journal Entries" position="replace">
-                    <tree colors="blue:state in ('draft');black:state in ('posted')" string="Journal Entries" noteditable="status=='sys' or state=='posted'" hide_delete_button="1">
-                        <field name="status" invisible="1"/>
-                        <field name="name"/>
-                        <field name="ref"/>
-                        <field name="document_date"/>
-                        <field name="date" string="Posting Date"/>
-                        <field name="period_id"/>
-                        <field name="journal_id"/>
-                        <field name="partner_id" invisible="1"/>
-                        <field name="partner_type"/>
-                        <field name="book_amount" sum="Booking Amount"/>
-                        <field name="currency_id" />
-                        <field name="amount" sum="Total Amount"/>
-                        <field name="functional_currency_id" />
-                        <field name="state"/>
-                        <button name="button_delete" states="draft" string="Delete" type="object" icon="gtk-del" attrs="{'invisible': [('status', '=', 'sys')]}" confirm="Are you sure you want to delete these line?"/>
-                    </tree>
+                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" expand_button="1">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="note" invisible="1"/>
+                    <field name="type" invisible="1"/>
+                    <field name="user_type" invisible="1"/>
+                    <field name="balance"/>
+                    <field name="activation_date" invisible="1"/>
+                    <field name="inactivation_date" invisible="1"/>
+                    <field name="parent_id" invisible="1"/>
                 </tree>
             </field>
         </record>
 
-    <!-- Journal Entries Search (filter) -->
-        <record model="ir.ui.view" id="inherit_view_account_move_filter">
-            <field name="name">inherit.view.account.move.filter</field>
-            <field name="model">account.move</field>
+    <!-- Tree view for chart of account result -->
+        <record model="ir.ui.view" id="account.view_account_tree">
+            <field name="name">account.account_activable.tree</field>
+            <field name="model">account.account</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_id</field>
+            <field name="priority" eval="12"/>
+            <field name="arch" type="xml">
+                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" expand_button="1" nolink="1">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="note"/>
+                    <field name="type" invisible="1"/>
+                    <field name="user_type" invisible="1"/>
+                    <field name="activation_date" invisible="1"/>
+                    <field name="inactivation_date" invisible="1"/>
+                    <field name="parent_id" invisible="1"/>
+                    <field name="is_analytic_addicted" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="view_account_activable_search">
+            <field name="name">account.account_activable.search</field>
+            <field name="model">account.account</field>
             <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_move_filter" />
+            <field name="field_parent">child_id</field>
+            <field name="inherit_id" ref="account.view_account_search"/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="//filter[@string='To Review']" position="replace"/>
-                    <xpath expr="//field[@name='journal_id']" position="replace">
-                        <field name="journal_id"/>
-                        <field name="journal_type"/>
-                    </xpath>
-                    <xpath expr="//field[@name='date']" position="replace">
-                        <newline/>
-                        <field name="document_date" select="1"/>
-                        <field name="date" select="1"/>
-                    </xpath>
+                    <group string="Group By..." position="replace">
+                        <group expand="0" string="Group By...">
+                            <filter string="Internal Type" icon="terp-stock_symbol-selection" domain="" context="{'group_by':'type'}"/>
+                        </group>
+                    </group>
                 </data>
             </field>
         </record>
 
-    <!-- Journal Entries Search (filter) -->
-        <record model="ir.ui.view" id="inherit_view_account_move_line_filter">
-            <field name="name">inherit.view.account.move.line.filter</field>
-            <field name="model">account.move.line</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_move_line_filter" />
+    <!-- Tree view for default tree view of accounts -->
+        <record id="account.view_account_list" model="ir.ui.view">
+            <field name="name">account.account_activable.list</field>
+            <field name="model">account.account</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_id</field>
             <field name="priority" eval="10"/>
             <field name="arch" type="xml">
-                <data>
-                    <xpath expr="//field[@name='balance']" position="replace" /><!-- UTP-31: del balance: moving from extended filter to filter -->
-                    <xpath expr="//filter[@string='Unbalanced']" position="replace">
-                        <filter icon="terp-document-new" string="Invalid" domain="[('state','=','draft')]" help="Invalid Journal Items"/>
-                      </xpath>
-                    <xpath expr="//field[@name='ref']" position="replace">
-                    </xpath>
-                    <xpath expr="//field[@name='name']" position="replace">
-                    </xpath>
-                    <xpath expr="//field[@name='move_id']" position="replace">
-                        <newline/>
-                    </xpath>
-                    <xpath expr="//field[@name='date']" position="replace">
-                        <newline/>
-                        <field name="document_date" select="1"/>
-                        <field name="date" select="1"/>
-                        <newline/>
-                    </xpath>
-                    <xpath expr="//field[@name='partner_id']" position="replace">
-                        <field name="name" select="1"/>
-                    </xpath>
-                    <xpath expr="//field[@name='account_id']" position="before">
-                        <field name="move_id" select="1"/>
-                        <field name="ref" select="1"/>
-                    </xpath>
-                    <xpath expr="//field[@name='journal_id']" position="replace">
-                        <field name="journal_id" context="{'journal_id':self, 'visible_id': self, 'normal_view':False}"/>
-                        <field name="journal_type"/>
-                    </xpath>
-                    <xpath expr="//field[@name='period_id']" position="replace">
-                        <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
-                        <newline />
-                        <!-- UTP-31: balance: moving from extended filter to filter (after period_id) -->
-                        <field name="balance" string="Debit/Credit Functional" select='1'/>
-                        <field name="balance_currency" string="Debit/Credit Booking" select='1'/>
-                    </xpath>
-                </data>
+                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" nolink="1">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="type"/>
+                    <field name="activation_date"/>
+                    <field name="inactivation_date"/>
+                </tree>
             </field>
         </record>
 
-    <!-- Redefine journal entries action -->
-        <record id="account.action_move_journal_line" model="ir.actions.act_window">
-            <field name="name">Journal Entries</field>
-            <field name="res_model">account.move</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form,graph</field>
-            <field name="view_id" ref="account.view_move_tree"/>
-            <field name="search_view_id" ref="account.view_account_move_filter"/>
-            <field name="help">A journal entry consists of several journal items, each of which is either a debit or a credit transaction. OpenERP automatically creates one journal entry per accounting document: invoice, refund, supplier payment, bank statements, etc.</field>
-            <field name="context">{'from_web_menu': True}</field>
+        <record id="action_account_activable_form" model="ir.actions.act_window">
+            <field name="name">Accounts</field>
+            <field name="res_model">account.account</field>
+            <field name="inherit_id" ref="account.action_account_form"/>
+            <field name="context">{'search_default_active': 1,}</field>
         </record>
 
-    <!-- Delete Confirm Draft Invoices wizard from supplier invoices -->
-    <delete id="account.action_account_invoice_confirm" model="ir.actions.act_window"/>
-
-    <!-- Account View -->
-        <record id="inherit_view_account_form" model="ir.ui.view">
-            <field name='name'>inherit.view.account.form</field>
-            <field name='model'>account.account</field>
-            <field name="type">form</field>
-            <field name='inherit_id' ref='account.view_account_form' />
+        <!-- Account Types -->
+        <record id="view_account_type_tree_2" model="ir.ui.view">
+            <field name="name">account.account.type.tree.2</field>
+            <field name="model">account.account.type</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_type_tree"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='user_type']" position="after">
-                    <field name="shrink_entries_for_hq"/>
+                <xpath expr="/tree/field[@name='code']" position="after">
+                    <field name="not_correctible"/>
                 </xpath>
             </field>
         </record>
 
-        <record id="account.action_account_moves_all_a" model="ir.actions.act_window">
-            <field name="context">{'search_default_posted': 1, 'target_filename_prefix': 'Journal Items'}</field>
+        <record id="view_account_type_form_2" model="ir.ui.view">
+            <field name="name">account.account.type.form.2</field>
+            <field name="model">account.account.type</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_type_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form/group[1]/field[@name='code']" position="after">
+                    <field name="not_correctible"/>
+                </xpath>
+            </field>
         </record>
+
+        <!-- Menus -->
+        <menuitem action="action_account_activable_form" id="account.menu_action_account_form" parent="account.account_account_menu"/>
+
+      <!--
+          Reports
+      -->
+
+        <report
+            id="account_chart_export"
+            string="Balance by account"
+            model="account.account"
+            name="account.chart.export"
+            file="account_override/report/report_account_chart_export.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
 
     </data>
 </openerp>

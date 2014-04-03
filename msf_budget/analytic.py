@@ -22,7 +22,6 @@
 ##############################################################################
 
 from osv import osv
-from osv import fields
 from tools.translate import _
 
 class account_analytic_line(osv.osv):
@@ -41,7 +40,7 @@ class account_analytic_line(osv.osv):
                 else:
                     # Line without domain (consumption, overhead)
                     raise osv.except_osv(_('No Analytic Domain !'),_("This budget does not have an analytic domain!"))
-                    
+
         return super(account_analytic_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 account_analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

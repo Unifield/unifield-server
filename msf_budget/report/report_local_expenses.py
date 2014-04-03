@@ -20,14 +20,15 @@
 ##############################################################################
 
 from report import report_sxw
-from osv import osv
 import pooler
 from report_webkit.webkit_report import WebKitParser
 import xml.sax.saxutils
+from tools.translate import _
+
 
 class report_local_expenses(WebKitParser):
     _name = 'report.local.expenses'
-    
+
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
@@ -45,7 +46,8 @@ class report_local_expenses(WebKitParser):
                                                                       uid,
                                                                       [('type', 'in', ['hq','engagement','donation'])],
                                                                       context=context)
-        domain = [('journal_id', 'not in', bad_journal_ids)]
+        # UTP-944: As we can have other account than 6, we need to restrict Local expenses to only expenses accounts !
+        domain = [('journal_id', 'not in', bad_journal_ids), ('general_account_id.user_type_code', '=', 'expense'), ('general_account_id.user_type_report_type', '!=', 'none')]
         if 'form' in data:
             # general variables
             wizard_obj = pool.get('wizard.local.expenses')
@@ -64,13 +66,13 @@ class report_local_expenses(WebKitParser):
                 booking_currency = currency_obj.browse(cr, uid, data['form']['booking_currency_id'], context=context)
                 # Add booking currency to header
                 header_data.append(['Booking currency:', booking_currency.name])
-            
+
             # Add output currency to header
             output_currency = currency_obj.browse(cr, uid, data['form']['output_currency_id'], context=context)
             header_data.append(['Output currency:', output_currency.name])
             # Cost Center
             cost_center = pool.get('account.analytic.account').browse(cr, uid, data['form']['cost_center_id'], context=context)
-            cost_center_ids = pool.get('msf.budget.tools')._get_cost_center_ids(cost_center)
+            cost_center_ids = pool.get('msf.budget.tools')._get_cost_center_ids(cr, uid, cost_center)
             domain.append(('cost_center_id', 'in', cost_center_ids))
             # Add cost center to header
             header_data.append(['Cost center:', cost_center.name])
@@ -93,33 +95,36 @@ class report_local_expenses(WebKitParser):
                                                            data['form']['end_period_id'],
                                                            context=context)
                 header_data.append(['Period to:', period.name])
-            # Get expenses
+            # Get expenses. UTP-944: break down the _get_actual_amounts method to only return expense accounts and not income or donation accounts (extra-accounting accounts)
+            context.update({'only_expenses': True})
             expenses = pool.get('msf.budget.tools')._get_actual_amounts(cr,
                                                                         uid,
                                                                         data['form']['output_currency_id'],
                                                                         domain,
                                                                         context=context)
-            expenses_functional = pool.get('msf.budget.tools')._get_actual_amounts(cr,
-                                                                                   uid,
-                                                                                   data['form']['output_currency_id'],
-                                                                                   domain,
-                                                                                   context=context)
             # we only save the main accounts, not the destinations (new key: account id only)
             expenses = dict([(item[0], expenses[item]) for item in expenses.keys() if item[1] is False])
-            
-            
+
+
             # make the total row
             if 'breakdown' in data['form'] and data['form']['breakdown'] == 'month':
                 total_line = [0] * (month_stop - month_start + 1)
             else:
                 total_line = []
             total_amount = 0
+            # Search the chart of account account (those that have no parent_id
+            parent_view_id = pool.get('account.account').search(cr, uid, [('parent_id', '=', False)])
             for expense_account in pool.get('account.account').browse(cr, uid, expenses.keys(), context=context):
                 expense_values = expenses[expense_account.id][month_start - 1:month_stop]
                 # add line to result (code, name)...
                 if expense_account.type == 'view' or data['form']['granularity'] == 'all':
-                    if expense_account.code != '6':
-                        line = [expense_account.code, xml.sax.saxutils.escape(expense_account.name)]
+                    # search if this account have a parent view that is not "parent_view_id"
+                    is_under_the_big_one = False
+                    if expense_account.parent_id and expense_account.parent_id.id in parent_view_id:
+                        is_under_the_big_one = True
+                    # If not under the Chart of account view account, then display it
+                    if not is_under_the_big_one:
+                        line = [expense_account.type, expense_account.code, xml.sax.saxutils.escape(expense_account.name)]
                         # ...monthly amounts, ...
                         if 'breakdown' in data['form'] and data['form']['breakdown'] == 'month':
                             line += map(int, map(round, expense_values))
@@ -132,14 +137,14 @@ class report_local_expenses(WebKitParser):
                             total_line = [sum(pair) for pair in zip(expense_values, total_line)]
                             total_amount += sum(expense_values)
             # Format total
-            total_line = ['Total', ''] + map(int, map(round, total_line)) + [int(round(total_amount))]
-            
+            total_line = [_('Total'), ''] + map(int, map(round, total_line)) + [int(round(total_amount))]
+
             data['form']['header'] = header_data
             data['form']['report_lines'] = result_data
             data['form']['total_line'] = total_line
-                
+
         a = super(report_local_expenses, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
-    
+
 report_local_expenses('report.local.expenses','account.analytic.line','addons/msf_budget/report/report_local_expenses_xls.mako')
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

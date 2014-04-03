@@ -21,6 +21,8 @@
 
 from osv import fields, osv
 import decimal_precision as dp
+from tools.translate import _
+
 
 class account_move_compute_currency(osv.osv):
     _inherit = "account.move"
@@ -202,21 +204,21 @@ class account_move_compute_currency(osv.osv):
         if not context:
             context = {}
         res = []
-        for m in self.browse(cr, uid, ids):
-            j_id = m.journal_id and m.journal_id.id or False
+        for m in self.read(cr, uid, ids, ['journal_id', 'status', 'line_id']):
+            j_id = m.get('journal_id', False) and m.get('journal_id')[0] or False
             if 'journal_id' in vals:
                 j_id = vals.get('journal_id')
-            journal = self.pool.get('account.journal').browse(cr, uid, j_id)
-            if journal and journal.currency:
-                vals.update({'manual_currency_id': journal.currency.id, 'block_manual_currency_id': True,})
+            journal = self.pool.get('account.journal').read(cr, uid, j_id, ['currency'])
+            if journal and journal.get('currency', False):
+                vals.update({'manual_currency_id': journal.get('currency')[0], 'block_manual_currency_id': True,})
                 # Add currency to context for journal items lines
                 if not 'manual_currency_id' in context:
-                    context['manual_currency_id'] = journal.currency.id
-            tmp_res = super(account_move_compute_currency, self).write(cr, uid, [m.id], vals, context)
+                    context['manual_currency_id'] = journal.get('currency')[0]
+            tmp_res = super(account_move_compute_currency, self).write(cr, uid, [m.get('id')], vals, context)
             res.append(tmp_res)
             # Recompute account move lines debit/credit
-            if 'manual_currency_id' in vals and m.status == 'manu':
-                for ml in m.line_id:
+            if 'manual_currency_id' in vals and m.get('status') == 'manu':
+                for ml in self.pool.get('account.move.line').browse(cr, uid, m.get('line_id', []), context=context):
                     self.pool.get('account.move.line').write(cr, uid, [ml.id], {'currency_id': vals.get('manual_currency_id'), 'debit_currency': ml.debit_currency, 'credit_currency': ml.credit_currency}, context=context)
         return res
 

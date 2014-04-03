@@ -251,12 +251,19 @@ class procurement_order(osv.osv):
         procurement = kwargs['procurement']
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         sol_ids = sol_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
-        if len(sol_ids) and setup.allocation_setup != 'unallocated':
-            browse_so = sol_obj.browse(cr, uid, sol_ids, context=context)[0].order_id
-            req_loc = browse_so.location_requestor_id
-            if not (browse_so.procurement_request and req_loc and req_loc.usage != 'customer'):
-                values.update({'cross_docking_ok': True, 'location_id': stock_loc_obj.get_cross_docking_location(cr, uid)})
-            values.update({'priority': browse_so.priority, 'categ': browse_so.categ})
+        if (procurement.tender_line_id or procurement.rfq_line_id or len(sol_ids)) and setup.allocation_setup != 'unallocated':
+            if sol_ids:
+                browse_so = sol_obj.browse(cr, uid, sol_ids, context=context)[0].order_id
+            elif procurement.tender_line_id and procurement.tender_line_id.tender_id and procurement.tender_line_id.tender_id.sale_order_id:
+                browse_so = procurement.tender_line_id.tender_id.sale_order_id
+            elif procurement.rfq_line_id and procurement.rfq_line_id.order_id and procurement.rfq_line_id.order_id.sale_order_id:
+                browse_so = procurement.rfq_line_id.order_id.sale_order_id
+
+            if browse_so:
+                req_loc = browse_so.location_requestor_id
+                if not (browse_so.procurement_request and req_loc and req_loc.usage != 'customer'):
+                    values.update({'cross_docking_ok': True, 'location_id': stock_loc_obj.get_cross_docking_location(cr, uid)})
+                values.update({'priority': browse_so.priority, 'categ': browse_so.categ})
         return values
 
 procurement_order()
@@ -321,17 +328,15 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         move_obj = self.pool.get('stock.move')
-        pick_obj = self.pool.get('stock.picking')
-        for pick in pick_obj.browse(cr, uid, ids, context=context):
-            move_lines = pick.move_lines
-            if len(move_lines) >= 1:
-                for move in move_lines:
-                    move_ids = move.id
-                    for move in move_obj.browse(cr, uid, [move_ids], context=context):
-                        if move.move_cross_docking_ok:
-                            vals.update({'cross_docking_ok': True, })
-                        elif not move.move_cross_docking_ok:
-                            vals.update({'cross_docking_ok': False, })
+
+        cd_ids = move_obj.search(cr, uid, [('picking_id', 'in', ids), ('move_cross_docking_ok', '=', True)], count=True)
+        st_ids = move_obj.search(cr, uid, [('picking_id', 'in', ids), ('move_cross_docking_ok', '=', False)], count=True)
+
+        if cd_ids > st_ids:
+            vals['cross_docking_ok'] = True
+        else:
+            vals['cross_docking_ok'] = False
+
         return super(stock_picking, self).write(cr, uid, ids, vals, context=context)
 
     def button_cross_docking_all(self, cr, uid, ids, context=None):

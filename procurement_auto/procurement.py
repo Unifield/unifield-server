@@ -28,21 +28,21 @@ class stock_warehouse_automatic_supply(osv.osv):
     _name = 'stock.warehouse.automatic.supply'
     _description = 'Automatic Supply'
     _order = 'name, id'
-    
+
     def _get_next_date_from_frequence(self, cr, uid, ids, name, args, context=None):
         '''
         Returns the next date of the frequency
         '''
         res = {}
-        
+
         for proc in self.browse(cr, uid, ids):
             if proc.frequence_id and proc.frequence_id.next_date:
                 res[proc.id] = proc.frequence_id.next_date
             else:
                 res[proc.id] = False
-                
+
         return res
-    
+
     def _get_frequence_change(self, cr, uid, ids, context=None):
         '''
         Returns Auto. Sup. ids when frequence change
@@ -51,9 +51,9 @@ class stock_warehouse_automatic_supply(osv.osv):
         for frequence in self.pool.get('stock.frequence').browse(cr, uid, ids, context=context):
             for sup_id in frequence.auto_sup_ids:
                 result[sup_id.id] = True
-                
+
         return result.keys()
-    
+
     def _get_frequence_name(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns the name_get value of the frequence
@@ -62,28 +62,28 @@ class stock_warehouse_automatic_supply(osv.osv):
         for proc in self.browse(cr, uid, ids):
             if proc.frequence_id:
                 res[proc.id] = self.pool.get('stock.frequence').name_get(cr, uid, [proc.frequence_id.id], context=context)[0][1]
-            
+
         return res
-    
+
     def _get_product_ids(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns a list of products for the rule
         '''
         res = {}
-        
+
         for rule in self.browse(cr, uid, ids, context=context):
             res[rule.id] = []
             for line in rule.line_ids:
                 res[rule.id].append(line.product_id.id)
-        
+
         return res
-    
+
     def _src_product_ids(self, cr, uid, obj, name, args, context=None):
         if not context:
             context = {}
-            
+
         res = []
-            
+
         for arg in args:
             if arg[0] == 'product_ids':
                 rule_ids = []
@@ -92,9 +92,9 @@ class stock_warehouse_automatic_supply(osv.osv):
                     if l.supply_id.id not in rule_ids:
                         rule_ids.append(l.supply_id.id)
                 res.append(('id', 'in', rule_ids))
-                
+
         return res
-    
+
     _columns = {
         'sequence': fields.integer(string='Order', required=False, help='A higher order value means a low priority'),
         'name': fields.char(size=64, string='Reference', required=True),
@@ -127,35 +127,35 @@ class stock_warehouse_automatic_supply(osv.osv):
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
     }
-    
+
     _defaults = {
         'active': lambda *a: 1,
         'name': lambda x,y,z,c: x.pool.get('ir.sequence').get(y,z,'stock.automatic.supply') or '',
     }
-    
+
     def default_get(self, cr, uid, fields, context=None):
         '''
         Get the default values for the replenishment rule
         '''
         res = super(stock_warehouse_automatic_supply, self).default_get(cr, uid, fields, context=context)
-        
+
         company_id = res.get('company_id')
         warehouse_id = res.get('warehouse_id')
-        
+
         if not 'company_id' in res:
             company_id = self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.automatic.supply', context=context)
             res.update({'company_id': company_id})
-        
+
         if not 'warehouse_id' in res:
             warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [('company_id', '=', company_id)], context=context)[0]
             res.update({'warehouse_id': warehouse_id})
-            
+
         if not 'location_id' in res:
             location_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
             res.update({'location_id': location_id})
-        
+
         return res
-    
+
     def choose_change_frequence(self, cr, uid, ids, context=None):
         '''
         Open a wizard to define a frequency for the automatic supply
@@ -165,11 +165,11 @@ class stock_warehouse_automatic_supply(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-            
+
         frequence_id = False
         res_id = False
         res_ok = False
-            
+
         for proc in self.browse(cr, uid, ids):
             res_id = proc.id
             if proc.frequence_id and proc.frequence_id.id:
@@ -186,11 +186,11 @@ class stock_warehouse_automatic_supply(osv.osv):
                 frequence_id = self.pool.get('stock.frequence').create(cr, uid, frequence_data, context=context)
                 self.write(cr, uid, proc.id, {'frequence_id': frequence_id}, context=context)
                 res_ok = True
-            
+
         context.update({'active_id': res_id, 
                         'active_model': 'stock.warehouse.automatic.supply',
                         'res_ok': res_ok})
-            
+
         return {'type': 'ir.actions.act_window',
                 'target': 'new',
                 'res_model': 'stock.frequence',
@@ -198,7 +198,7 @@ class stock_warehouse_automatic_supply(osv.osv):
                 'view_model': 'form',
                 'context': context,
                 'res_id': frequence_id}
-    
+
     def onchange_warehouse_id(self, cr, uid, ids, warehouse_id, context=None):
         """ Finds location id for changed warehouse.
         @param warehouse_id: Changed id of warehouse.
@@ -209,7 +209,7 @@ class stock_warehouse_automatic_supply(osv.osv):
             v = {'location_id': w.lot_stock_id.id}
             return {'value': v}
         return {}
-    
+
     def onchange_product_id(self, cr, uid, ids, product_id, context=None):
         """ Finds uom for changed product.
         @param product_id: Changed id of product.
@@ -220,7 +220,7 @@ class stock_warehouse_automatic_supply(osv.osv):
             v = {'product_uom_id': w.uom_id.id}
             return {'value': v}
         return {}
-   
+
     def unlink(self, cr, uid, ids, context):
         '''
         When delete an automatic supply rule, also remove the frequency
@@ -249,7 +249,7 @@ class stock_warehouse_automatic_supply(osv.osv):
             'procurement_id': False,
         })
         return super(stock_warehouse_automatic_supply, self).copy(cr, uid, id, default, context=context)
- 
+
     def _check_frequency(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -345,22 +345,45 @@ class stock_warehouse_automatic_supply_line(osv.osv):
     _name = 'stock.warehouse.automatic.supply.line'
     _description = 'Automatic Supply Line'
     _rec_name = 'product_id'
-    
+
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
         'product_qty': fields.float(digit=(16,2), string='Quantity to order', required=True),
         'supply_id': fields.many2one('stock.warehouse.automatic.supply', string='Supply', ondelete='cascade', required=True)
     }
-    
+
     _defaults = {
         'product_qty': lambda *a: 1.00,
     }
-    
-    _sql_constraints = [
-        ('product_qty_check', 'CHECK( product_qty > 0 )', 'Product Qty must be greater than zero.'),
-    ]
-    
+
+    def _check_product_qty(self, cr, uid, ids, context=None):
+        '''
+        Check if the quantity is larger than 0.00
+        '''
+        context = context is None and {} or context
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not context.get('noraise'):
+            for line in self.read(cr, uid, ids, ['product_qty'], context=context):
+                if line['product_qty'] <= 0.00:
+                    raise osv.except_osv(_('Error'), _('Lines must have a quantity larger than 0.00'))
+                    return False
+
+        return True
+
+    def create(self, cr, uid, vals, context=None):
+        res = super(stock_warehouse_automatic_supply_line, self).create(cr, uid, vals, context=context)
+        self._check_product_qty(cr, uid, res, context=context)
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        res = super(stock_warehouse_automatic_supply_line, self).write(cr, uid, ids, vals, context=context)
+        self._check_product_qty(cr, uid, ids, context=context)
+        return res
+
     def _check_uniqueness(self, cr, uid, ids, context=None):
         '''
         Check if the product is not already in the current rule
@@ -371,13 +394,13 @@ class stock_warehouse_automatic_supply_line(osv.osv):
                                           ('supply_id', '=', line.supply_id.id)], context=context)
             if lines:
                 return False
-            
+
         return True
-    
+
     _constraints = [
         (_check_uniqueness, 'You cannot have two times the same product on the same automatic supply rule', ['product_id'])
     ]
-    
+
     def onchange_product_id(self, cr, uid, ids, product_id, uom_id, product_qty, context=None):
         """ Finds UoM for changed product.
         @param product_id: Changed id of product.
@@ -406,17 +429,17 @@ class stock_warehouse_automatic_supply_line(osv.osv):
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, product_qty, 'product_qty', result=res)
 
         return res
-    
+
 stock_warehouse_automatic_supply_line()
 
 class stock_frequence(osv.osv):
     _name = 'stock.frequence'
     _inherit = 'stock.frequence'
-    
+
     _columns = {
         'auto_sup_ids': fields.one2many('stock.warehouse.automatic.supply', 'frequence_id', string='Auto. Sup.'),
     }
-    
+
     def choose_frequency(self, cr, uid, ids, context=None):
         '''
         Adds the support of automatic supply on choose frequency method
@@ -425,13 +448,13 @@ class stock_frequence(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-            
+
         if not context.get('res_ok', False) and 'active_id' in context and 'active_model' in context and \
             context.get('active_model') == 'stock.warehouse.automatic.supply':
             self.pool.get('stock.warehouse.automatic.supply').write(cr, uid, [context.get('active_id')], {'frequence_id': ids[0]})
-            
+
         return super(stock_frequence, self).choose_frequency(cr, uid, ids, context=context)
-    
+
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}

@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from osv import osv
 
 class purchase_double_validation_installer(osv.osv_memory):
     _inherit = 'purchase.double.validation.installer'

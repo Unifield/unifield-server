@@ -62,11 +62,13 @@
                     <field name="decision_moment_id" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
                     <field name="version" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
                     <field name="type" readonly="1" invisible="1"/>
-                    <group col="4" colspan="2">
-                        <button name="button_display_type" string="Change display type" type="object" icon="terp-stock_zoom" context="context" colspan="1"/>
-                        <field name="display_type" readonly="1" nolabel="1"/>
-                    </group>
+                    <label string="" colspan="2"/>
                     <field name="currency_id" readonly="1"/>
+                    <group col="3" colspan="4">
+                        <button name="button_display_type" string="Parent accounts only" type="object" icon="terp-stock_zoom" context="{'granularity': 'view'}" colspan="1"/>
+                        <button name="button_display_type" string="Accounts only" type="object" icon="terp-stock_zoom" context="{'granularity': 'expense'}" colspan="1"/>
+                        <button name="button_display_type" string="Accounts and destinations" type="object" icon="terp-stock_zoom" context="{'granularity': 'all'}" colspan="1"/>
+                    </group>
                     <field name="budget_line_ids" colspan="4" nolabel="1" readonly="1">
                         <tree string="Budget Lines" editable="top" colors="black:line_type in ('normal');blue:line_type in ('view')">
                             <field name="name"/>
@@ -80,17 +82,17 @@
                         <form string="Budget Line">
                             <group colspan="4">
                                 <field name="name" colspan="2" readonly="1"/>
-	                            <field name="budget_amount" colspan="1" readonly="1" digits="(24,0)"/>
-	                            <field name="comm_amount" colspan="1" readonly="1" digits="(24,0)"/>
-	                            <field name="actual_amount" colspan="1" readonly="1" digits="(24,0)"/>
-	                            <field name="balance" colspan="1" readonly="1" digits="(24,0)"/>
-	                            <field name="percentage" colspan="1" readonly="1" digits="(24,0)"/>
+                                <field name="budget_amount" colspan="1" readonly="1" digits="(24,0)"/>
+                                <field name="comm_amount" colspan="1" readonly="1" digits="(24,0)"/>
+                                <field name="actual_amount" colspan="1" readonly="1" digits="(24,0)"/>
+                                <field name="balance" colspan="1" readonly="1" digits="(24,0)"/>
+                                <field name="percentage" colspan="1" readonly="1" digits="(24,0)"/>
                             </group>
                         </form>
                     </field>
                     <field name="state" select="1" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
                     <group col="4" colspan="2">
-                        <button string="Approve" name="validate" type="workflow" icon="gtk-ok" attrs="{'invisible': [('|'), ('type', '=', 'view'), ('state', '!=', 'draft')]}"/>
+                        <button string="Approve" name="validate" type="workflow" icon="gtk-ok" attrs="{'invisible': [('|'), ('type', '=', 'view'), ('state', '!=', 'draft')]}" help="By using this button you will not only validate the budget but also update all parent budgets. This will take a while..."/>
                         <button string="Done" name="done" type="workflow" icon="gtk-jump-to" attrs="{'invisible': [('|'), ('type', '=', 'view'), ('state', '!=', 'valid')]}"/>
                     </group>
                 </form>
@@ -107,31 +109,11 @@
             <field name="context">{'search_default_validated': 1}</field>
             <field name="help">A budget is a forecast of your company's income and expenses expected for a period in the future. With a budget, a company is able to carefully look at how much money they are taking in during a given period, and figure out the best way to divide it among various categories. By keeping track of where your money goes, you may be less likely to overspend, and more likely to meet your financial goals. Forecast a budget by detailing the expected revenue per analytic account and monitor its evolution based on the actuals realised during that period.</field>
         </record>
-        
+
         <menuitem id="next_id_31" name="Budgets" parent="account.menu_finance" sequence="11"/>
         <menuitem parent="next_id_31"
             id="menu_act_crossovered_budget_view"
             action="act_crossovered_budget_view" sequence="1" />
-
-        <record id="wizard_budget_criteria_export_view" model="ir.ui.view">
-            <field name="name">Budget vs. Actuals Export</field>
-            <field name="model">wizard.budget.criteria.export</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form string="Budget vs. Actuals Export">
-                    <field name="currency_table_id" domain="[('state','=','valid')]" />
-                    <field name="period_id"/>
-                    <field name="commitment"/>
-                    <field name="breakdown"/>
-                    <field name="granularity"/>
-                    <separator colspan="4"/>
-                    <group colspan="4" col="6">
-                        <button special="cancel" string="No" icon="gtk-cancel"/>
-                        <button name="button_create_budget_2" string="Create report" type="object" icon="gtk-ok"/>
-                    </group>
-                </form>
-            </field>
-        </record>
 
         <record id="wizard_budget_actual_export_view" model="ir.ui.view">
             <field name="name">Actuals by CC Export</field>
@@ -162,7 +144,7 @@
                     <separator colspan="4"/>
                     <group colspan="4" col="6">
                         <button special="cancel" string="Cancel" icon="gtk-cancel"/>
-                        <button name="import_csv_budget" string="Import Budget" type="object" icon="gtk-ok"/>
+                        <button name="button_import" string="Import Budget" type="object" icon="gtk-ok"/>
                     </group>
                 </form>
             </field>
@@ -207,7 +189,7 @@
             <field name="view_id" ref="wizard_budget_import_view"/>
             <field name="target">new</field>
         </record>
-        
+
         <record id="wizard_local_expenses_view" model="ir.ui.view">
             <field name="name">Local Expenses</field>
             <field name="model">wizard.local.expenses</field>
@@ -245,15 +227,15 @@
 		<!-- Menu Item: Analytic Accounts which displays only Cost Center, and not allow: delete, new, edit
 		hide_new_button="1" hide_delete_button="1"
 		 -->
-        
+
         <menuitem parent="account.menu_finance_generic_reporting"
             action="action_wizard_local_expenses"
             id="menu_action_wizard_local_expenses"/>
-            
+
         <menuitem parent="next_id_31"
             action="action_wizard_budget_import"
             id="menu_action_wizard_budget_import"  sequence="2"/>
-            
+
         <record id="view_msf_budget_summary_tree" model="ir.ui.view">
             <field name="name">msf.budget.summary.tree</field>
             <field name="model">msf.budget.summary</field>
@@ -270,7 +252,7 @@
                 </tree>
             </field>
         </record>
-        
+
         <record id="action_wizard_budget_summary_tree" model="ir.actions.server">
             <field name="name">Budget Status</field>
             <field name="model_id" ref="model_msf_budget"/>
@@ -294,7 +276,7 @@
             <field name="domain">[('category','=','OC')]</field>
             <field name="field_parent">child_complete_ids</field>
             <field name="arch" type="xml">
-                <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts" 
+                <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts"
                  toolbar="1" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
                     <field name="name"/>
                     <field name="code"/>
@@ -371,10 +353,10 @@
             <field name="view_type">form</field>
             <field name="view_id" ref="view_msf_budget_decision_moment_tree"/>
         </record>
-        
+
         <menuitem id="menu_action_msf_budget_decision_moment_tree"
             parent="next_id_31"
             action="action_msf_budget_decision_moment_tree"/>
-        
+
     </data>
 </openerp>

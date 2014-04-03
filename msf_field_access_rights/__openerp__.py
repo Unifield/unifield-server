@@ -24,7 +24,6 @@
     "author" : "OpenERP",
     "developer": "Max Mumford",
     "category" : "Generic Modules/Others",
-    "depends" : [],
     "description": """Provides functionality to define access rights and 
     synchronization propagation settings concerning the MSF synchronization 
     server hierarchy for models and specific fields of models.

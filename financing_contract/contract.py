@@ -23,26 +23,53 @@ from osv import fields, osv
 from tools.translate import _
 
 class financing_contract_funding_pool_line(osv.osv):
-    # 
     _name = "financing.contract.funding.pool.line"
     _description = "Funding pool line"
-    
+
     _columns = {
         'contract_id': fields.many2one('financing.contract.format', 'Contract', required=True),
         'funding_pool_id': fields.many2one('account.analytic.account', 'Funding pool name', required=True),
         'funded': fields.boolean('Earmarked'),
         'total_project': fields.boolean('Total project'),
     }
-        
+
     _defaults = {
         'funded': False,
         'total_project': True,
     }
-    
+
+    def create(self, cr, uid, vals, context=None):
+        result = super(financing_contract_funding_pool_line, self).create(cr, uid, vals, context=context)
+        # when a new funding pool is added to contract, then add all of the cost centers to the cost center tab, unless
+        # the cost center is already there. No action is taken when a cost center is deleted
+        if 'contract_id' in vals and 'funding_pool_id' in vals:
+            # get the cc ids from for this funding pool
+            quad_obj = self.pool.get('financing.contract.account.quadruplet')
+            quad_ids = quad_obj.search(cr, uid, [('funding_pool_id','=',vals['funding_pool_id'])],context=context)
+            quad_rows = quad_obj.browse(cr, uid, quad_ids,context=context)
+            quad_cc_ids = []
+            for quad in quad_rows:
+                cc_id_temp = quad.cost_center_id.id
+                if cc_id_temp not in quad_cc_ids:
+                    quad_cc_ids.append(cc_id_temp)
+
+            # get the format instance
+            format_obj = self.pool.get('financing.contract.format')
+            cc_rows = format_obj.browse(cr, uid, vals['contract_id'], context=context).cost_center_ids
+            cc_ids = []
+            for cc in cc_rows:
+                cc_ids.append(cc.id)
+
+            # append the ccs from the fp only if not already there
+            cc_ids = list(set(cc_ids).union(quad_cc_ids))
+            # replace the associated cc list -NOT WORKING
+            format_obj.write(cr, uid, vals['contract_id'],{'cost_center_ids':[(6,0,cc_ids)]}, context=context)
+        return result
+
 financing_contract_funding_pool_line()
 
 class financing_contract_contract(osv.osv):
-    
+
     _name = "financing.contract.contract"
     _inherits = {"financing.contract.format": "format_id"}
     _trace = True
@@ -114,38 +141,28 @@ class financing_contract_contract(osv.osv):
             'hard_closed_date': datetime.date.today().strftime('%Y-%m-%d')
         })
         return True
-    
+
     def get_contract_domain(self, cr, uid, browse_contract, reporting_type=None, context=None):
         # we update the context with the contract reporting type and currency
         format_line_obj = self.pool.get('financing.contract.format.line')
         # Values to be set
-        account_destination_ids = []
         if reporting_type is None:
             reporting_type = browse_contract.reporting_type
-        # general domain
-        general_domain = format_line_obj._get_general_domain(cr,
-                                                             uid,
-                                                             browse_contract.format_id,
-                                                             reporting_type,
-                                                             context=context)
-        
+
+        analytic_domain = False
+        isFirst = True
         # parse parent lines (either value or sum of children's values)
         for line in browse_contract.actual_line_ids:
             if not line.parent_id:
-                account_destination_ids += format_line_obj._get_account_destination_ids(line, general_domain['funding_pool_account_destination_ids'])
-                
-        # create the domain
-        analytic_domain = []
-        account_domain = format_line_obj._create_account_destination_domain(account_destination_ids)
-        date_domain = eval(general_domain['date_domain'])
-        analytic_domain = [date_domain[0],
-                           date_domain[1],
-                           ('is_reallocated', '=', False),
-                           ('is_reversal', '=', False),
-                           eval(general_domain['funding_pool_domain']),
-                           eval(general_domain['cost_center_domain'])]
-        analytic_domain += account_domain
-            
+                # Calculate the all the children lines account domain
+                temp = format_line_obj._get_analytic_domain(cr, uid, line, reporting_type, isFirst, context=context)
+                if analytic_domain:
+                    # if there exist already previous view, just add an OR operator
+                    analytic_domain = ['|'] + analytic_domain + temp
+                else:
+                    # first time
+                    analytic_domain = temp
+
         return analytic_domain
 
     def _get_overhead_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -161,7 +178,7 @@ class financing_contract_contract(osv.osv):
             elif budget.overhead_type == 'grant_percentage':
                 res[budget.id] = round(budget.grant_amount * budget.overhead_percentage / 100.0)
         return res
-    
+
     _columns = {
         'name': fields.char('Financing contract name', size=64, required=True),
         'code': fields.char('Financing contract code', size=16, required=True),
@@ -180,13 +197,15 @@ class financing_contract_contract(osv.osv):
                                     ('soft_closed', 'Soft-closed'),
                                     ('hard_closed', 'Hard-closed')], 'State'),
         'currency_table_id': fields.many2one('res.currency.table', 'Currency Table'),
-        'instance_id': fields.many2one('msf.instance','Proprietary Instance', required=True), 
+        'instance_id': fields.many2one('msf.instance','Proprietary Instance', required=True),
         # Define for _inherits
         'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade"),
+        'fp_added_flag': fields.boolean('Flag when new FP is added')
     }
-    
+
     _defaults = {
         'state': 'draft',
+        'fp_added_flag': False,
         'reporting_currency': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
     }
 
@@ -210,13 +229,15 @@ class financing_contract_contract(osv.osv):
         default = default.copy()
         default['code'] = (contract['code'] or '') + '(copy)'
         default['name'] = (contract['name'] or '') + '(copy)'
-        # Copy lines manually
+        # Copy lines manually but remove CCs and FPs
+        default['funding_pool_ids'] = []
+        default['cost_center_ids'] = []
         default['actual_line_ids'] = []
         copy_id = super(financing_contract_contract, self).copy(cr, uid, id, default, context=context)
         copy = self.browse(cr, uid, copy_id, context=context)
         self.pool.get('financing.contract.format').copy_format_lines(cr, uid, contract.format_id.id, copy.format_id.id, context=context)
         return copy_id
-    
+
     def onchange_donor_id(self, cr, uid, ids, donor_id, format_id, actual_line_ids, context=None):
         res = {}
         if donor_id:
@@ -231,7 +252,7 @@ class financing_contract_contract(osv.osv):
                 }
                 res = {'value': format_vals}
         return res
-    
+
     def onchange_currency_table(self, cr, uid, ids, currency_table_id, reporting_currency_id, context=None):
         values = {'reporting_currency': False}
         if reporting_currency_id:
@@ -258,7 +279,7 @@ class financing_contract_contract(osv.osv):
         if eligibility_from_date and eligibility_to_date:
             if eligibility_from_date >= eligibility_to_date:
                 warning = {
-                    'title': _('Error'), 
+                    'title': _('Error'),
                     'message': _("The 'Eligibility Date From' should be sooner than the 'Eligibility Date To'.")
                 }
                 return {'warning': warning}
@@ -271,6 +292,7 @@ class financing_contract_contract(osv.osv):
                                                                uid,
                                                                browse_format_line,
                                                                browse_contract.reporting_type,
+                                                               True,
                                                                context=context)
         vals = {'name': browse_format_line.name,
                 'code': browse_format_line.code,
@@ -293,7 +315,7 @@ class financing_contract_contract(osv.osv):
         for child_line in browse_format_line.child_ids:
             self.create_reporting_line(cr, uid, browse_contract, child_line, reporting_line_id, context=context)
         return reporting_line_id
-    
+
     def menu_interactive_report(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -315,7 +337,7 @@ class financing_contract_contract(osv.osv):
                                                              'code': contract.code,
                                                              'line_type': 'view'},
                                                      context=context)
-        
+
         # Values to be set
         allocated_budget = 0
         project_budget = 0
@@ -323,7 +345,7 @@ class financing_contract_contract(osv.osv):
         project_real = 0
         project_balance = 0
         allocated_balance = 0
-        
+
         # create "real" lines
         for line in contract.actual_line_ids:
             if not line.parent_id:
@@ -334,7 +356,7 @@ class financing_contract_contract(osv.osv):
                 allocated_real += round(line.allocated_real)
                 project_real += round(line.project_real)
                 reporting_line_id = self.create_reporting_line(cr, uid, contract, line, contract_line_id, context=context)
-        
+
         # Refresh contract line with general infos
         analytic_domain = self.get_contract_domain(cr, uid, contract, context=context)
 
@@ -351,12 +373,12 @@ class financing_contract_contract(osv.osv):
 
                            'analytic_domain': analytic_domain}
         reporting_line_obj.write(cr, uid, [contract_line_id], vals=contract_values, context=context)
-        
+
         # retrieve the corresponding_view
         model_data_obj = self.pool.get('ir.model.data')
         view_id = False
-        view_ids = model_data_obj.search(cr, uid, 
-                                        [('module', '=', 'financing_contract'), 
+        view_ids = model_data_obj.search(cr, uid,
+                                        [('module', '=', 'financing_contract'),
                                          ('name', '=', 'view_donor_reporting_line_tree_%s' % str(contract.reporting_type))],
                                         offset=0, limit=1)
         if len(view_ids) > 0:
@@ -370,7 +392,7 @@ class financing_contract_contract(osv.osv):
                'domain': [('id', '=', contract_line_id)],
                'context': context
         }
-        
+
     def menu_allocated_expense_report(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -388,7 +410,7 @@ class financing_contract_contract(osv.osv):
                 'res_id': [wiz_id],
                 'context': context,
         }
-        
+
     def menu_project_expense_report(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -406,7 +428,7 @@ class financing_contract_contract(osv.osv):
                 'res_id': [wiz_id],
                 'context': context,
         }
-        
+
     def menu_csv_interactive_report(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -423,8 +445,7 @@ class financing_contract_contract(osv.osv):
                 'res_id': [wiz_id],
                 'context': context,
         }
-        
-        
+
     def create(self, cr, uid, vals, context=None):
         # Do not copy lines from the Donor on create if coming from the sync server
         if context is None:
@@ -435,8 +456,8 @@ class financing_contract_contract(osv.osv):
             if contract.donor_id and contract.donor_id.format_id and contract.format_id:
                 self.pool.get('financing.contract.format').copy_format_lines(cr, uid, contract.donor_id.format_id.id, contract.format_id.id, context=context)
         return result
-    
-        
+
+
     def write(self, cr, uid, ids, vals, context=None):
         if 'donor_id' in vals:
             donor = self.pool.get('financing.contract.donor').browse(cr, uid, vals['donor_id'], context=context)
@@ -444,8 +465,28 @@ class financing_contract_contract(osv.osv):
                 if contract.donor_id and contract.format_id and vals['donor_id'] != contract.donor_id.id:
                     self.pool.get('financing.contract.format').copy_format_lines(cr, uid, donor.format_id.id, contract.format_id.id, context=context)
 
-        return super(financing_contract_contract, self).write(cr, uid, ids, vals, context=context)
-    
+        if 'funding_pool_ids' in vals: # When the FP is added into the contract, then set this flag into the database
+            vals['fp_added_flag'] = True
+
+        # check if the flag has been set TRUE in the previous save
+        fp_added_flag = self.browse(cr, uid, ids[0], context=context).fp_added_flag
+        if 'format_id' in vals and fp_added_flag: # if the flag is TRUE, and there is a format
+            format_obj = self.pool.get('financing.contract.format')
+            f_value = format_obj.browse(cr, uid, vals['format_id'], context=context)
+
+            # if there is some FP in this contract format, then perform the "recovery" of cost center ids, if not just use the one from the form
+            if f_value.funding_pool_ids:
+                cc_rows = f_value.cost_center_ids # retrieve all the cc stored previously in the DB
+                cc_ids = []
+                for cc in cc_rows:
+                    cc_ids.append(cc.id)
+                vals['cost_center_ids'] = [(6,0,cc_ids)] # this will be used at final value of cc list to this contract
+
+        res = super(financing_contract_contract, self).write(cr, uid, ids, vals, context=context)
+        if fp_added_flag: # if the previous save has been recovered thanks to the flag set to True, then reset it back to False
+            cr.execute('''update financing_contract_contract set fp_added_flag = 'f' where id = %s''' % (ids[0]))
+        return res
+
 financing_contract_contract()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

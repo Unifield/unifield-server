@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
+#    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
@@ -24,11 +24,13 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from datetime import datetime
 import decimal_precision as dp
 import time
 from ..register_tools import open_register_view
 from ..register_tools import _get_date_in_period
+
+WIZARD_INVOICE_EXCEPTION = ['register_line_ids', 'invoice_line']
+WIZARD_INVOICE_LINE_EXCEPTION = []
 
 class wizard_account_invoice(osv.osv):
     _name = 'wizard.account.invoice'
@@ -37,10 +39,10 @@ class wizard_account_invoice(osv.osv):
 
     _columns  = {
         'invoice_line': fields.one2many('wizard.account.invoice.line', 'invoice_id', 'Invoice Lines', readonly=True, states={'draft':[('readonly',False)]}),
-        'partner_id': fields.many2one('res.partner', 'Partner', change_default=True, readonly=True, required=False, 
+        'partner_id': fields.many2one('res.partner', 'Partner', change_default=True, readonly=True, required=False,
             states={'draft':[('readonly',False)]}, domain=[('supplier','=',True)]),
         'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False, states={'draft':[('readonly',False)]}),
-        'account_id': fields.many2one('account.account', 'Account', required=False, readonly=True, states={'draft':[('readonly',False)]}, 
+        'account_id': fields.many2one('account.account', 'Account', required=False, readonly=True, states={'draft':[('readonly',False)]},
             help="The partner account used for this invoice."),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True, readonly=True),
         'register_id': fields.many2one('account.bank.statement', 'Register', readonly=True),
@@ -57,6 +59,38 @@ class wizard_account_invoice(osv.osv):
         'document_date': lambda *a: time.strftime('%Y-%m-%d'),
         'state': lambda *a: 'draft',
     }
+
+    def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
+        """
+        Avoid problem of many2many and one2many that comes from the object from which we inherit.
+        BUG (found in REF-70): The ORM give the same value for m2m and o2m from the inherit object that have the same ID.
+        For an example:
+          - wizard.account.invoice inherits from account.invoice
+          - account.invoice have a purchase_ids field
+          - we got an account.invoice with ID 2 that is linked to a PO (with purchase_ids field)
+          - when you read wizard.account.invoice that have the same ID, it will return the same value of the purchase_ids field than account.invoice 2!
+        """
+        multiple = False
+        if isinstance(ids, list):
+            multiple = True
+        # Default behaviour
+        res = super(wizard_account_invoice, self).read(cr, uid, ids, fields, context, load)
+        # Fetch all many2many and all one2many fields
+        field_to_change = []
+        if self._name == 'wizard.account.invoice':
+            for field in self._columns:
+                if self._columns[field]._type in ['many2many', 'one2many'] and field not in WIZARD_INVOICE_EXCEPTION:
+                    field_to_change.append(field)
+            # Set all fetched field to False
+            if not isinstance(ids, list):
+                res = [res]
+
+            for obj in res:
+                for ftc in field_to_change:
+                    obj.update({ftc: []})
+        if not isinstance(ids, list):
+            return res[0]
+        return res
 
     def check_analytic_distribution(self, cr, uid, ids):
         """
@@ -85,8 +119,8 @@ class wizard_account_invoice(osv.osv):
         """
         Reset the invoice by reseting some fields
         """
-        self.write(cr, uid, ids, {'invoice_line': [(5,)], 'register_posting_date': time.strftime('%Y-%m-%d'), 'date_invoice': time.strftime('%Y-%m-%d'), 
-            'partner_id': False, 'address_invoice_id': False, 'account_id': False, 'state': 'draft', 'analytic_distribution_id': False, 
+        self.write(cr, uid, ids, {'invoice_line': [(5,)], 'register_posting_date': time.strftime('%Y-%m-%d'), 'date_invoice': time.strftime('%Y-%m-%d'),
+            'partner_id': False, 'address_invoice_id': False, 'account_id': False, 'state': 'draft', 'analytic_distribution_id': False,
             'document_date': time.strftime('%Y-%m-%d'),})
         return True
 
@@ -116,7 +150,7 @@ class wizard_account_invoice(osv.osv):
         vals['invoice_line'] = []
         amount = 0
         if inv['invoice_line']:
-            for line in self.pool.get('wizard.account.invoice.line').read(cr, uid, inv['invoice_line'], 
+            for line in self.pool.get('wizard.account.invoice.line').read(cr, uid, inv['invoice_line'],
                 ['product_id','account_id', 'account_analytic_id', 'quantity', 'price_unit','price_subtotal','name', 'uos_id','analytic_distribution_id']):
                 vals['invoice_line'].append( (0, 0,
                     {
@@ -135,7 +169,7 @@ class wizard_account_invoice(osv.osv):
                 amount += line['price_subtotal']
         # Give the total of invoice in the "check_total" field. This permit not to encount problems when validating invoice.
         vals.update({'check_total': amount})
-        
+
         # Prepare some value
         inv_obj = self.pool.get('account.invoice')
         absl_obj = self.pool.get('account.bank.statement.line')
@@ -152,16 +186,15 @@ class wizard_account_invoice(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Register Line posting date is outside of the register period!'))
             elif vals['date_invoice'] > vals['register_posting_date']:
                 raise osv.except_osv(_('Warning'), _('Direct Invoice posting date must be sooner or equal to the register line posting date!'))
-            
+
         vals.update({'date_invoice': vals['date_invoice']})
         vals.update({'register_posting_date': vals['register_posting_date']})
-        
+
         # Create invoice
         inv_id = inv_obj.create(cr, uid, vals, context=context)
         # Set this invoice as direct invoice (since UTP-551, is_direct_invoice is a boolean and not a function)
         self.pool.get('account.invoice').write(cr, uid, [inv_id], {'is_direct_invoice': True})
 
-        
         # Create the attached register line and link the invoice to the register
         reg_line_id = absl_obj.create(cr, uid, {
             'account_id': vals['account_id'],
@@ -176,20 +209,26 @@ class wizard_account_invoice(osv.osv):
             'name': 'Direct Invoice',
             'ref': inv['reference'] and inv['reference'] or False,
         })
-        
+
         # Temp post the line
         absl_obj.button_temp_posting(cr, uid, [reg_line_id], context=context)
-        
+
         # Link invoice and register_line
-        res_inv = inv_obj.write(cr, uid, [inv_id], {'register_line_ids': [(4, reg_line_id)]}, context=context)
-        
+        inv_obj.write(cr, uid, [inv_id], {'register_line_ids': [(4, reg_line_id)]}, context=context)
+
         # Do reconciliation
         # Moved since UF-1471. This is now down when you hard post the linked register line.
 
         # Delete the wizard
         self.unlink(cr, uid, ids, context=context)
+        # TODO: unlink the wizard_account_invoice_line rows also
 
-        return open_register_view(self, cr, uid,inv['register_id'][0])
+        view = open_register_view(self, cr, uid, inv['register_id'][0])
+        # UF-2308: When closing the Direct Invoice, just refresh only the register lines, and no the whole view
+        # to avoid having everything reset to default state.
+        view['o2m_refresh'] = 'line_ids'
+        view['type'] = 'ir.actions.act_window_close'
+        return view
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
@@ -264,6 +303,38 @@ class wizard_account_invoice_line(osv.osv):
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
     }
 
+    def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
+        """
+        Avoid problem of many2many and one2many that comes from the object from which we inherit.
+        BUG (found in REF-70): The ORM give the same value for m2m and o2m from the inherit object that have the same ID.
+        For an example:
+          - wizard.account.invoice inherits from account.invoice
+          - account.invoice have a purchase_ids field
+          - we got an account.invoice with ID 2 that is linked to a PO (with purchase_ids field)
+          - when you read wizard.account.invoice that have the same ID, it will return the same value of the purchase_ids field than account.invoice 2!
+        """
+        multiple = False
+        if isinstance(ids, list):
+            multiple = True
+        # Default behaviour
+        res = super(wizard_account_invoice_line, self).read(cr, uid, ids, fields, context, load)
+        # Fetch all many2many and all one2many fields
+        field_to_change = []
+        if self._name == 'wizard.account.invoice.line':
+            for field in self._columns:
+                if self._columns[field]._type in ['many2many', 'one2many'] and field not in WIZARD_INVOICE_LINE_EXCEPTION:
+                    field_to_change.append(field)
+            # Set all fetched field to False
+            if not isinstance(ids, list):
+                res = [res]
+
+            for obj in res:
+                for ftc in field_to_change:
+                    obj.update({ftc: []})
+        if not isinstance(ids, list):
+            return res[0]
+        return res
+
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on a direct invoice line
@@ -277,18 +348,17 @@ class wizard_account_invoice_line(osv.osv):
             raise osv.except_osv(_('Error'), _('No direct invoice line given. Please save your direct invoice line before.'))
         # Prepare some values
         invoice_line = self.browse(cr, uid, ids[0], context=context)
-        
-        fields_to_write = ['journal_id', 'partner_id', 'address_invoice_id', 'date_invoice', 'register_posting_date', 
+
+        fields_to_write = ['journal_id', 'partner_id', 'address_invoice_id', 'date_invoice', 'register_posting_date',
             'account_id', 'partner_bank_id', 'payment_term', 'name', 'document_date',
-            'origin', 'address_contact_id', 'user_id', 'comment','reference']
+            'origin', 'address_contact_id', 'user_id', 'comment', 'reference']
         to_write = {}
         for f in fields_to_write:
             if 'd_%s'%(f,) in context:
                 to_write[f] = context['d_%s'%(f,)]
         if to_write:
             self.pool.get('wizard.account.invoice').write(cr, uid, [invoice_line.invoice_id.id], to_write)
-        
-        distrib_id = False
+
         negative_inv = False
         amount = invoice_line.price_subtotal or 0.0
         # Search elements for currency

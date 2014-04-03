@@ -82,6 +82,12 @@
   </Style>
 </Styles>
 ## ================================= we loop over the stock_card_wizard "objects" == stock_card_wizard======================================
+<%
+def parse_origin(origin):
+    if origin:
+        return origin.replace(';', '; ').replace(':', ': ')  # force word wrap
+    return ''
+%>
 % for o in objects:
 <ss:Worksheet ss:Name="${"%s"%(o.location_id and o.location_id.name or 'Sheet1')|x}">
 <Table ss:ExpandedColumCount="8" x:FullColumns="1" x:FullRows="1">
@@ -160,7 +166,7 @@
     <Row AutoFitHeight="1">
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.date_done or ''|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.doc_ref or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.origin or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${parse_origin(line.origin)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.qty_in or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.qty_out or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.balance or '')|x}</Data></Cell>

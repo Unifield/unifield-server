@@ -9,8 +9,7 @@
         report_type="txt"
         auto="False"
         menu="False"/>
-    </data>
-    <data>
+
         <report id="hq_oca"
         string="Export to HQ system"
         model="account.move.line"
@@ -19,6 +18,22 @@
         report_type="txt"
         auto="False"
         menu="False"/>
+
+    <!-- Sequence for Finance export -->
+
+        <record id="seq_type_finance_export" model="ir.sequence.type">
+            <field name="name">Finance export - OCB</field>
+            <field name="code">finance.ocb.export</field>
+        </record>
+
+        <record id="seq_finance_export" model="ir.sequence">
+            <field name="name">Cash Register</field>
+            <field name="code">finance.ocb.export</field>
+            <field name="prefix"></field>
+            <field name="padding">3</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
     </data>
 </openerp>
-

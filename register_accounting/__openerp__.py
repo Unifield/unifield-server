@@ -2,7 +2,7 @@
 #-*- encoding:utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
+#    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
@@ -39,10 +39,10 @@
         "hr",
         "account_payment",
         "account_accountant",
-        "account_activable",
         "analytic_distribution",
         "purchase_override",
-        "analytic_distribution_invoice",
+        # As finance contains account_override and account_override has included account_activable, no need for account_override and account_activable
+        "finance",
         "msf_homere_interface",
     ],
     "init_xml" : [],

@@ -108,6 +108,10 @@
     distro_wiz_fpline_obj = self.pool.get('analytic.distribution.wizard.fp.lines')
     second_date = time.strftime('%Y-03-09')
     # Close period (mission closed)
+    # first I need to close Jan
+    jan_ids = period_obj.search(cr, uid, [('number', '=', 1), ('state', '=', 'draft')])
+    if jan_ids:
+        period_obj.write(cr, uid, jan_ids, {'state': 'mission-closed'})
     logging.getLogger('tests').log(logging.TEST, 'I close the period from February.')
     to_be_closed_ids = period_obj.search(cr, uid, [('number', '=', 2), ('state', '=', 'draft')])
     assert len(to_be_closed_ids) == 1, "We should only have ONE period to be closed in February. Current: %s" % len(to_be_closed_ids)

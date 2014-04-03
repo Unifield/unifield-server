@@ -20,6 +20,7 @@
 ##############################################################################
 
 import donor_reporting_line
+import financing_contract_account_quadruplet
 import format
 import format_line
 import donor

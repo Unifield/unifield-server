@@ -39,6 +39,7 @@ class output_currency_for_export(osv.osv_memory):
         'domain': fields.text('Domain'),
         'export_selected': fields.boolean('Export only the selected items', help="The output is limited to 5000 records"),
         'state': fields.selection([('normal', 'Analytic Journal Items'), ('free', 'Free 1/Free 2')]),
+        'background_time': fields.integer('Number of second before background processing'),
     }
 
     _defaults = {
@@ -46,6 +47,7 @@ class output_currency_for_export(osv.osv_memory):
         'domain': lambda cr, u, ids, c: c and c.get('search_domain',[]),
         'export_selected': lambda *a: False,
         'state': lambda *a: 'normal',
+        'background_time': lambda *a: 200,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -149,6 +151,11 @@ class output_currency_for_export(osv.osv_memory):
 
         datas['target_filename'] = '%s_%s' % (context.get('target_filename_prefix', 'Export_search_result'), time.strftime('%Y%m%d'))
 
+        if model in ('account.move.line', 'account.analytic.line') and choice in ('csv', 'xls'):
+            background_id = self.pool.get('memory.background.report').create(cr, uid, {'file_name': datas['target_filename'], 'report_name': report_name}, context=context)
+            context['background_id'] = background_id
+            context['background_time'] = wiz.background_time
+
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
@@ -157,4 +164,21 @@ class output_currency_for_export(osv.osv_memory):
         }
 
 output_currency_for_export()
+
+class background_report(osv.osv_memory):
+        _name = 'memory.background.report'
+        _description = 'Report result'
+
+        _columns = {
+            'file_name': fields.char('Filename', size=256),
+            'report_name': fields.char('Report Name', size=256),
+            'report_id': fields.integer('Report id'),
+            'percent': fields.float('Percent'),
+        }
+        def update_percent(self, cr, uid, ids, percent, context=None):
+            self.write(cr, uid, ids, {'percent': percent})
+
+
+background_report()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

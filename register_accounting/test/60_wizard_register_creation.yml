@@ -20,6 +20,7 @@
     name: PER-01
     special: 1
     number: 1
+    state: draft
 -
   I create the second period
 -
@@ -31,12 +32,7 @@
     name: PER-02
     special: 1
     number: 2
--
-  I open all periods
--
-  !python {model: account.period}: |
-      self.action_set_state(cr, uid, [ref('register_creation_wiz_period_01')], {'state': 'draft'})
-      self.action_set_state(cr, uid, [ref('register_creation_wiz_period_02')], {'state': 'draft'})
+    state: draft
 -
   I create a Cheque Journal in EUR
 -
