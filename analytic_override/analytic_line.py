@@ -46,18 +46,6 @@ class account_analytic_line(osv.osv):
                 res[al.id] = True
         return res
 
-    def __init__(self, pool, cr):
-        """
-        Permits to OpenERP not attempt to update DB field with the old field_function
-        """
-        super(account_analytic_line, self).__init__(pool, cr)
-        if self.pool._store_function.get(self._name, []):
-            newstore = []
-            for fct in self.pool._store_function[self._name]:
-                if fct[1] not in ['currency_id', 'amount_currency']:
-                    newstore.append(fct)
-            self.pool._store_function[self._name] = newstore
-
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]"),
@@ -67,7 +55,6 @@ class account_analytic_line(osv.osv):
         'free_account': fields.function(_get_is_free, method=True, type='boolean', string='Free account?', help="Is that line comes from a Free 1 or Free 2 account?"),
         'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed."),
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
-        'amount_currency': fields.float(string="Book. Amount", digits_compute=dp.get_precision('Account'), readonly=True, required=True, help="The amount expressed in an optional other currency.",),
         'currency_id': fields.many2one('res.currency', string="Book. Currency", required=True, readonly=True),
         'is_reversal': fields.boolean('Reversal?'),
         'is_reallocated': fields.boolean('Reallocated?'),
