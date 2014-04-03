@@ -22,6 +22,7 @@
 import consumption_calculation
 import expiry_calculation
 import history_consumption
+import weekly_forecast_report
 import report
 import wizard
 
