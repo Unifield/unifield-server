@@ -62,23 +62,18 @@ class report_reception(report_sxw.rml_parse):
         lines = o.move_lines
         kc_flag = False
         dg_flag = False
-        np_flag = False
         for line in lines:
             if line.kc_check:
                 kc_flag = True
             if line.dg_check:
                 dg_flag = True
-            if line.np_check:
-                np_flag = True
         
         warn = ''
         tab = []
-        if kc_flag or dg_flag or np_flag:
+        if kc_flag or dg_flag:
             warn += 'You are about to receive'
         if kc_flag :
-            tab.append('heat')
-        if np_flag :
-            tab.append('sensitive')
+            tab.append('heat sensitive')
         if dg_flag :
             tab.append('dangerous')
         if len(tab) > 0 :
