@@ -106,7 +106,7 @@ class report_reception(report_sxw.rml_parse):
         cr, uid = self.cr, self.uid
         val = 0.00
         stock_move_obj = self.pool.get('stock.move')
-        closed_move_ids = stock_move_obj.search(cr, uid, [('purchase_line_id','=',line.purchase_line_id.id),('state','=','done'),('type','=','in'),('id','!=',line.id)])
+        closed_move_ids = stock_move_obj.search(cr, uid, [('purchase_line_id','=',line.purchase_line_id.id),('state','=','done'),('type','=','in')])
         if closed_move_ids:
             stock_moves = stock_move_obj.browse(cr, uid, closed_move_ids) 
             if stock_moves:
