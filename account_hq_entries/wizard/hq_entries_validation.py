@@ -252,7 +252,7 @@ class hq_entries_validation(osv.osv_memory):
                 # create the analytic lines as a reversed copy of the original
                 initial_ana_ids = ana_line_obj.search(cr, uid, [('move_id.move_id', '=', move_id)])  # original move_id
                 res_reverse = ana_line_obj.reverse(cr, uid, initial_ana_ids, posting_date=line.date)
-                acor_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+                acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
                 if not acor_journal_ids:
                     raise osv.except_osv(_('Error'), _('No correction journal found!'))
                 acor_journal_id = acor_journal_ids[0]
