@@ -5,6 +5,7 @@ from tools.safe_eval import safe_eval as eval
 import logging
 import functools
 import types
+from datetime import date, datetime
 
 from sync_common import MODELS_TO_IGNORE, xmlid_to_sdref
 
@@ -463,7 +464,8 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
                 self.on_change(cr, uid, changes, context=context)
         return result
 
-    def message_unlink(self, cr, uid, source, unlink_info, context=None):
+    # BECAREFUL: This method is ONLY for deleting account.analytic.line by sync. NOT GENERIC!
+    def message_unlink_analytic_line(self, cr, uid, source, unlink_info, context=None):
         model_name = unlink_info.model
         xml_id =  unlink_info.xml_id
         if model_name != self._name:
@@ -473,36 +475,22 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if not res_id:
             return "Object %s %s does not exist in destination" % (model_name, xml_id)
 
-
         # UF-2343: check if there is any data update with correction date is later than this delete message, if yes, ignore this message
+        # Check if the correction_date of this record is older than the one of delete message, then ignore this delete message
+        correction_date_in_db = self.pool.get('account.analytic.line').browse(cr, uid, res_id, context=context).correction_date
+        correction_date = unlink_info.correction_date
+
+        # UF-2343: to handle this if both time exists         
+        if correction_date_in_db and correction_date:
+            #JF: Is this conversion will be valid for all date time format???? Thanks to correct this! 
+            date_in_db = datetime.strptime(correction_date_in_db, '%Y-%m-%d %H:%M:%S')
+            date_in_sync = datetime.strptime(correction_date, '%Y-%m-%d %H:%M:%S')
+
+            # If there is an update happening after the delete, then ignore this delete message            
+            if date_in_db > date_in_sync:
+                return "The delete message is ignored as the analytic line got updated after this delete message."
         
         return self.unlink(cr, uid, [res_id], context=context)
-
-    def generate_message_for_destination(self, cr, uid, destination_name, sdref, instance_name, send_to_parent_instances):
-        instance_obj = self.pool.get('msf.instance')
-
-        if not destination_name or destination_name == instance_name:
-            return
-        
-        message_data = {
-                'identifier' : 'delete_%s_to_%s' % (sdref, destination_name),
-                'sent' : False,
-                'generate_message' : True,
-                'remote_call': self._name + ".message_unlink",
-                'arguments': "[{'model' :  '%s', 'xml_id' : '%s'}]" % (self._name, sdref),
-                'destination_name': destination_name
-        }
-        self.pool.get("sync.client.message_to_send").create(cr, uid, message_data)
-
-        # Do recursive if the send_to_parent_instances is set to True            
-        if send_to_parent_instances:
-            # generate message for parent instance
-            instance_ids = instance_obj.search(cr, uid, [("instance", "=", destination_name)])
-            if instance_ids:
-                instance_record = instance_obj.browse(cr, uid, instance_ids[0])
-                parent = instance_record.parent_id and instance_record.parent_id.instance or False
-                if parent:
-                    self.generate_message_for_destination(cr, uid, parent, sdref, instance_name, send_to_parent_instances)
 
     @orm_method_overload
     def unlink(self, original_unlink, cr, uid, ids, context=None):

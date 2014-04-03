@@ -386,7 +386,7 @@ class account_analytic_line(osv.osv):
                     message_data = {'identifier':'delete_%s_to_%s' % (xml_id, old_destination_name), 
                         'sent':False, 
                         'generate_message':True, 
-                        'remote_call':self._name + ".message_unlink", 
+                        'remote_call':self._name + ".message_unlink_analytic_line", 
                         'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now), 
                         'destination_name':old_destination_name}
                     msg_to_send_obj.create(cr, uid, message_data)
@@ -403,17 +403,20 @@ class account_analytic_line(osv.osv):
                         msg_to_send_obj.unlink(cr, uid, exist_ids, context=context) # delete this unsent delete-message
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not context:
+            context = {}        
         if not 'cost_center_id' in vals:
             return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
 
         if isinstance(ids, (long, int)):
             ids = [ids]
-        
-        vals['correction_date'] = fields.datetime.now()
-        res = super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
+            
+        # Only set the correction date if data not come from sync
+        if not context.get('sync_update_execution', False): 
+            vals['correction_date'] = fields.datetime.now() # This timestamp is used for the write, but need to set BEFORE
         # call to generate delete message if the cost center is removed from a project
         self.generate_delete_message_at_project(cr, uid, ids, vals, context)
-        return res
+        return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
 
 
 account_analytic_line()
