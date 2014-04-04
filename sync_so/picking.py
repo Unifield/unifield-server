@@ -179,14 +179,23 @@ class stock_picking(osv.osv):
         # Look for the PO name, which has the reference to the FO on Coordo as source.out_info.origin
         so_ref = source + "." + pick_dict['origin']
         po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
-        po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
-
         # prepare the shipment/OUT reference to update to IN
         shipment = pick_dict.get('shipment_id', False)
         if shipment:
-            shipment_ref = source + "." + shipment['name']  # shipment made
+            shipment_ref = shipment['name'] # shipment made
         else:
-            shipment_ref = source + "." + pick_dict.get('name', False)  # the case of OUT
+            shipment_ref = pick_dict.get('name', False) # the case of OUT
+        if not po_id:
+            # UF-1830: Check if the PO exist, if not, and in restore mode, send a warning and create a message to remove the ref on the partner document
+            if context.get('restore_flag'):
+                # UF-1830: Create a message to remove the invalid reference to the inexistent document
+                so_po_common.create_invalid_recovery_message(cr, uid, source, shipment_ref, context)
+                return "Recovery: the reference to " + shipment_ref + " at " + source + " will be set to void."
+
+            raise Exception, "The PO is not found for the given FO Ref: " + so_ref
+
+        shipment_ref = source + "." + shipment_ref
+        po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
 
         # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
         in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned'], context)
@@ -368,13 +377,18 @@ class stock_picking(osv.osv):
         # Look for the PO name, which has the reference to the FO on Coordo as source.out_info.origin
         so_ref = source + "." + pick_dict['origin']
         po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
+
         if po_id:
             # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
             in_id = so_po_common.get_in_id_from_po_id(cr, uid, po_id, context)
             if in_id:
                 # Cancel the IN object
                 wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_cancel', cr)
-                return True
+
+                name = self.browse(cr, uid, in_id, context).name
+                message = "The IN " + name + " is canceled by sync as its partner " + out_info.name + " got canceled at " + source
+                self._logger.info(message)
+                return message
             else:
                 # UTP-872: If there is no IN corresponding to the give OUT/SHIP/PICK, then check if the PO has any line
                 # if it has no line, then no need to raise error, because PO without line does not generate any IN
@@ -383,6 +397,11 @@ class stock_picking(osv.osv):
                     message = "The message is ignored as there is no corresponding IN (because the PO " + po.name + " has no line)"
                     self._logger.info(message)
                     return message
+        elif context.get('restore_flag'):
+            # UF-1830: Create a message to remove the invalid reference to the inexistent document
+            shipment_ref = pick_dict['name']
+            so_po_common.create_invalid_recovery_message(cr, uid, source, shipment_ref, context)
+            return "Recovery: the reference to " + shipment_ref + " at " + source + " will be set to void."
 
         raise Exception("There is a problem (no PO or IN found) when cancel the IN at project")
 
@@ -408,8 +427,12 @@ class stock_picking(osv.osv):
             if in_id:
                 # Cancel the IN object to have all lines cancelled, but the IN object remained as closed, so the update of state is done right after
                 wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_cancel', cr)
-                self.write(cr, uid, in_id, {'state': 'done'}, context)  # UTP-872: reset state of the IN to become closed
-                return True
+                self.write(cr, uid, in_id, {'state': 'done'}, context) # UTP-872: reset state of the IN to become closed
+
+                name = self.browse(cr, uid, in_id, context).name
+                message = "The IN " + name + " is canceled by sync as its partner " + out_info.name + " got canceled at " + source
+                self._logger.info(message)
+                return message
             else:
                 po = po_obj.browse(cr, uid, [po_id], context=context)[0]
                 if len(po.order_line) == 0:
@@ -425,6 +448,12 @@ class stock_picking(osv.osv):
                     message = "The IN linked to " + po.name + " has been closed already, this message is thus ignored!"
                     self._logger.info(message)
                     return message
+        elif context.get('restore_flag'):
+            # UF-1830: Create a message to remove the invalid reference to the inexistent document
+            so_po_common = self.pool.get('so.po.common')
+            shipment_ref = pick_dict['name']
+            so_po_common.create_invalid_recovery_message(cr, uid, source, shipment_ref, context)
+            return "Recovery: the reference to " + shipment_ref + " at " + source + " will be set to void."
 
         raise Exception("There is a problem (no PO or IN found) when cancel the IN at project")
 
@@ -472,7 +501,8 @@ class stock_picking(osv.osv):
         pick_dict = out_info.to_dict()
 
         shipment_ref = pick_dict.get('shipment_ref', False)
-        if not shipment_ref:
+        in_name = pick_dict.get('name', False)
+        if not shipment_ref or not in_name:
             raise Exception("The shipment reference is empty. The action cannot be executed.")
 
         ship_split = shipment_ref.split('.')
@@ -487,27 +517,100 @@ class stock_picking(osv.osv):
         if 'SHIP' in out_doc_name:
             shipment_obj = self.pool.get('shipment')
             ship_ids = shipment_obj.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'done')], context=context)
+
             if ship_ids:
                 # set the Shipment to become delivered
                 context['InShipOut'] = ""  # ask the PACK object not to log (model stock.picking), because it is logged in SHIP
                 shipment_obj.set_delivered(cr, uid, ship_ids, context=context)
-                message = "The shipment " + out_doc_name + " has been well delivered to its partner."
-                shipment_obj.write(cr, uid, ship_ids, {'state': 'delivered', }, context=context)  # trigger an on_change in SHIP
+                message = "The shipment " + out_doc_name + " has been well delivered to its partner " + source + ": " + out_info.name
+                shipment_obj.write(cr, uid, ship_ids, {'state': 'delivered',}, context=context) # trigger an on_change in SHIP
             else:
                 ship_ids = shipment_obj.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'delivered')], context=context)
                 if ship_ids:
                     message = "The shipment " + out_doc_name + " has been MANUALLY confirmed as delivered."
+                elif context.get('restore_flag'):
+                    # UF-1830: Create a message to remove the invalid reference to the inexistent document
+                    so_po_common = self.pool.get('so.po.common')
+                    so_po_common.create_invalid_recovery_message(cr, uid, source, in_name, context)
+                    return "Recovery: the reference to " + in_name + " at " + source + " will be set to void."
+
         elif 'OUT' in out_doc_name:
             ship_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'done')], context=context)
             if ship_ids:
                 # set the Shipment to become delivered
                 context['InShipOut'] = "OUT"  # asking OUT object to be logged (model stock.picking)
                 self.set_delivered(cr, uid, ship_ids, context=context)
-                message = "The OUTcoming " + out_doc_name + " has been well delivered to its partner."
+                message = "The OUTcoming " + out_doc_name + " has been well delivered to its partner " + source + ": " + out_info.name
             else:
                 ship_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'delivered')], context=context)
                 if ship_ids:
                     message = "The OUTcoming " + out_doc_name + " has been MANUALLY confirmed as delivered."
+                elif context.get('restore_flag'):
+                    # UF-1830: Create a message to remove the invalid reference to the inexistent document
+                    so_po_common = self.pool.get('so.po.common')
+                    so_po_common.create_invalid_recovery_message(cr, uid, source, in_name, context)
+                    return "Recovery: the reference to " + in_name + " at " + source + " will be set to void."
+        if message:
+            self._logger.info(message)
+            return message
+
+        message = "Something goes wrong with this message and no confirmation of delivery"
+
+        # UF-1830: precise the error message for restore mode
+
+        self._logger.info(message)
+        raise Exception(message)
+
+    # UF-1830: Added this message to update the IN reference to the OUT or SHIP
+    def update_in_ref(self, cr, uid, source, values, context=None):
+        self._logger.info("+++ Update the IN reference to OUT/SHIP document from %s to the PO %s"%(source, cr.dbname))
+        if not context:
+            context = {}
+
+        so_po_common = self.pool.get('so.po.common')
+        shipment_ref = values.shipment_ref
+        in_name = values.name
+        message = False
+
+        if not shipment_ref or not in_name:
+            message = "The IN name or shipment reference is empty. The message cannot be executed."
+        else:
+            ship_split = shipment_ref.split('.')
+            if len(ship_split) != 2:
+                message = "Invalid shipment reference format. It must be in this format: instance.document"
+        # if there is any problem, just stop here without doing anything further, ignore the message
+        if message:
+            self._logger.info(message)
+            return message
+
+        in_name = source + "." + in_name
+        out_doc_name = ship_split[1]
+        if 'SHIP' in out_doc_name:
+            shipment_obj = self.pool.get('shipment')
+            ids = shipment_obj.search(cr, uid, [('name', '=', out_doc_name)], context=context)
+
+            if ids:
+                # TODO: Add the IN ref into the existing one if the SHIP is for various POs!
+
+                cr.execute('update shipment set in_ref=%s where id in %s', (in_name, tuple(ids)))
+                message = "The shipment " + out_doc_name + " is now referred to " + in_name + " at " + source
+            elif context.get('restore_flag'):
+                # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
+                so_po_common = self.pool.get('so.po.common')
+                so_po_common.create_invalid_recovery_message(cr, uid, source, in_name, context)
+                message = "Recovery: the reference to " + in_name + " at " + source + " will be set to void."
+        elif 'OUT' in out_doc_name:
+            ids = self.search(cr, uid, [('name', '=', out_doc_name)], context=context)
+            if ids:
+                # TODO: Add the IN ref into the existing one if the OUT is for various POs!
+
+                cr.execute('update stock_picking set in_ref=%s where id in %s', (in_name, tuple(ids)))
+                message = "The outcoming " + out_doc_name + " is now referred to " + in_name + " at " + source
+            elif context.get('restore_flag'):
+                # UF-1830: TODO: Create a message to remove the reference of the SO on the partner instance!!!!! to make sure that the SO does not link to a wrong PO in this instance
+                so_po_common = self.pool.get('so.po.common')
+                so_po_common.create_invalid_recovery_message(cr, uid, source, in_name, context)
+                message = "Recovery: the reference to " + in_name + " at " + source + " will be set to void."
 
         if message:
             self._logger.info(message)
@@ -515,7 +618,8 @@ class stock_picking(osv.osv):
 
         message = "Something goes wrong with this message and no confirmation of delivery"
         self._logger.info(message)
-        raise Exception(message)
+        return message
+
 
     def create_batch_number(self, cr, uid, source, out_info, context=None):
         if not context:
@@ -695,6 +799,7 @@ class stock_picking(osv.osv):
     def _hook_create_sync_messages(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
+        so_po_common = self.pool.get('so.po.common')
 
         res = super(stock_picking, self)._hook_create_sync_messages(cr, uid, ids, context=context)
         for pick in self.browse(cr, uid, ids, context=context):
@@ -718,13 +823,14 @@ class stock_picking(osv.osv):
                     # put the new batch number into the list, and create messages for them below
                     list_asset.append(move.asset_id.id)
 
+
             # for each new batch number object and for each partner, create messages and put into the queue for sending on next sync round
             for item in list_batch:
-                self.create_message_with_object_and_partner(cr, uid, 1001, item, partner.name, context)
+                so_po_common.create_message_with_object_and_partner(cr, uid, 1001, item, partner.name, context)
 
             # for each new asset object and for each partner, create messages and put into the queue for sending on next sync round
             for item in list_asset:
-                self.create_message_with_object_and_partner(cr, uid, 1002, item, partner.name, context)
+                so_po_common.create_message_with_object_and_partner(cr, uid, 1002, item, partner.name, context)
         return res
 
     def msg_close(self, cr, uid, source, stock_picking, context=None):

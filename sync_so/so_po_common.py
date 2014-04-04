@@ -22,10 +22,13 @@
 from osv import osv, fields
 from sync_common import xmlid_to_sdref
 
+
+
+
 class so_po_common(osv.osv_memory):
     _name = "so.po.common"
     _description = "Common methods for SO - PO"
-    
+
     # UTP-952: get the partner type, for the case of intermission and section
     def get_partner_type(self, cr, uid, partner_name, context=None):
         if not context:
@@ -35,7 +38,7 @@ class so_po_common(osv.osv_memory):
         ids = partner_obj.search(cr, uid, [('name', '=', partner_name)], context=context)
         if not ids:
             raise Exception("The partner %s is not found in the system. The operation is thus interrupted." % partner_name)
-        
+
         return partner_obj.read(cr, uid, ids, ['partner_type'], context=context)[0]['partner_type']
 
     def get_partner_id(self, cr, uid, partner_name, context=None):
@@ -46,7 +49,7 @@ class so_po_common(osv.osv_memory):
         if not ids:
             raise Exception("The partner %s is not found in the system. The operation is thus interrupted." % partner_name)
         return ids[0]
-    
+
     def get_partner_address_id(self, cr, uid, partner_id, context=None):
         if not context:
             context = {}
@@ -55,7 +58,7 @@ class so_po_common(osv.osv_memory):
         if not partner.address:
             raise Exception("The partner address is not found in the system. The operation is thus interrupted.")
         return partner.address[0].id
-    
+
     def get_price_list_id(self, cr, uid, partner_id, context=None):
         if not context:
             context = {}
@@ -84,7 +87,7 @@ class so_po_common(osv.osv_memory):
             context = {}
         context.update({'active_test': False})
         po_object = self.pool.get('purchase.order')
-        
+
         # First, search the original PO via the client_order_ref stored in the FO
         ref = so_info.client_order_ref
         if ref:
@@ -95,46 +98,46 @@ class so_po_common(osv.osv_memory):
         else: # if not found, then retrieve it via the FO Name as reference
             ref = self.get_full_original_fo_ref(source, so_info.name)
             po_ids = po_object.search(cr, uid, [('partner_ref', '=', ref)], context=context)
-            
-        if not po_ids:
-            raise Exception, "Cannot find the original PO with the given info: " + ref 
-        return po_ids[0]
+
+        if po_ids:
+            return po_ids[0]
+        return False
 
     def get_po_id_by_so_ref(self, cr, uid, so_ref, context):
-        # Get the Id of the original PO to update these info back 
+        # Get the Id of the original PO to update these info back
         if not so_ref:
             return False
         if not context:
             context = {}
         context.update({'active_test': False})
         po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', so_ref)], context=context)
-        if not po_ids:
-            raise Exception, "The PO is not found for the given FO Ref: " + so_ref
-        return po_ids[0]
+        if po_ids and po_ids[0]:
+            return po_ids[0]
+        return False
 
     def get_in_id_from_po_id(self, cr, uid, po_id, context):
-        # Get the Id of the original PO to update these info back 
+        # Get the Id of the original PO to update these info back
         if not po_id:
             return False
 
         in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', '=', 'assigned')], 0, None, None, context)
-        if not in_ids:
-            return False
-        return in_ids[0]
+        if in_ids:
+            return in_ids[0]
+        return False
 
     def get_in_id_by_state(self, cr, uid, po_id, po_ref, states, context):
-        # Get the Id of the original PO to update these info back 
+        # Get the Id of the original PO to update these info back
         if not po_id:
             return False
 
         in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id), ('state', 'in', states)], 0, None, None, context)
-        return in_ids[0] if in_ids else False 
+        return in_ids[0] if in_ids else False
 
     # Update the next line number for the FO, PO that have been created by the synchro
     def update_next_line_number_fo_po(self, cr, uid, order_id, fo_po_obj, order_line_object, context):
         sequence_id = fo_po_obj.read(cr, uid, [order_id], ['sequence_id'], context=context)[0]['sequence_id'][0]
         seq_tools = self.pool.get('sequence.tools')
-        
+
         # Make sure that even if the FO/PO has no line, then the default value is 1
         cr.execute("select max(line_number) from " + order_line_object + " where order_id = " + str(order_id))
         for x in cr.fetchall():
@@ -146,7 +149,7 @@ class so_po_common(osv.osv_memory):
         return True
 
     def get_original_so_id(self, cr, uid, so_ref, context):
-        # Get the Id of the original PO to update these info back 
+        # Get the Id of the original PO to update these info back
         if not so_ref:
             return False
         so_split = so_ref.split('.')
@@ -154,11 +157,15 @@ class so_po_common(osv.osv_memory):
             raise Exception, "The original sub-FO reference format/value is invalid! (correct format: instance_name.so_name) " + so_ref
 
         if not context:
-            context = {}                
+            context = {}
         context.update({'active_test': False})
         so_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', so_split[1])], context=context)
         if not so_ids:
-            raise Exception, "The original sub-FO does not exist! " + so_split[1]
+            if context.get('restore_flag'): # UF-1830
+                return False # If it is a restore case, then just return False, and the system will search for the new replacement FO
+            else:
+                raise Exception, "The original sub-FO does not exist! " + so_split[1]
+
         return so_ids[0]
 
     def retrieve_po_header_data(self, cr, uid, source, header_result, header_info, context):
@@ -168,7 +175,7 @@ class so_po_common(osv.osv_memory):
         elif 'note' in header_info:
             header_result['notes'] = header_info.get('note')
             header_result['note'] = header_info.get('note')
-            
+
         if 'order_type' in header_info:
             header_result['order_type'] = header_info.get('order_type')
         if 'priority' in header_info:
@@ -177,7 +184,7 @@ class so_po_common(osv.osv_memory):
             header_result['categ'] = header_info.get('categ')
         if 'loan_duration' in header_info:
             header_result['loan_duration'] = header_info.get('loan_duration')
-            
+
         if 'details' in header_info:
             header_result['details'] = header_info.get('details')
         if 'delivery_confirmed_date' in header_info:
@@ -188,24 +195,24 @@ class so_po_common(osv.osv_memory):
             header_result['transport_type'] = header_info.get('transport_type')
         if 'ready_to_ship_date' in header_info:
             header_result['ready_to_ship_date'] = header_info.get('ready_to_ship_date')
-            
-        if 'analytic_distribution_id' in header_info: 
+
+        if 'analytic_distribution_id' in header_info:
             header_result['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, header_info, context)
 
-        # UF-2267: If the original FO provided, then retrieve the original PO that links to this FO 
+        # UF-2267: If the original FO provided, then retrieve the original PO that links to this FO
         if header_info.get('parent_order_name', False):
             # build the complete partner_ref value and search for the linked PO
             parent_order_name = source + "." + header_info.get('parent_order_name')
             po_obj = self.pool.get('purchase.order')
 
-            # search only the original FO ref, not to the split one            
+            # search only the original FO ref, not to the split one
             if parent_order_name[-2] == '-':
                 parent_order_name = parent_order_name[:-2]
-            # retrieve the original PO linked to the original FO 
+            # retrieve the original PO linked to the original FO
             po_ids = po_obj.search(cr, uid, [('partner_ref', '=', parent_order_name)], context=context)
             if po_ids and po_ids[0]:
                 header_result['parent_order_name'] = po_ids[0] # and set the link into the newly created PO sourced
-        
+
         partner_id = self.get_partner_id(cr, uid, source, context)
         address_id = self.get_partner_address_id(cr, uid, partner_id, context)
         price_list = self.get_price_list_id(cr, uid, partner_id, context)
@@ -216,16 +223,16 @@ class so_po_common(osv.osv_memory):
         header_result['partner_address_id'] = address_id
         header_result['pricelist_id'] = price_list
         header_result['location_id'] = location_id
-        
+
         return header_result
 
     def get_analytic_distribution_id(self, cr, uid, data_dict, context):
-        # if it has been given in the sync message, then take into account if the value is False by intention, 
+        # if it has been given in the sync message, then take into account if the value is False by intention,
         # --> be careful when modifying the statement below
         analytic_id = data_dict.get('analytic_distribution_id', False)
         if analytic_id:
             return self.pool.get('analytic.distribution').find_sd_ref(cr, uid, xmlid_to_sdref(analytic_id['id']), context=context)
-        return False 
+        return False
 
     def retrieve_so_header_data(self, cr, uid, source, header_result, header_info, context):
         if 'notes' in header_info:
@@ -243,7 +250,7 @@ class so_po_common(osv.osv_memory):
             header_result['categ'] = header_info.get('categ')
         if 'loan_duration' in header_info:
             header_result['loan_duration'] = header_info.get('loan_duration')
-            
+
         if 'details' in header_info:
             header_result['details'] = header_info.get('details')
         if 'delivery_requested_date' in header_info:
@@ -251,11 +258,11 @@ class so_po_common(osv.osv_memory):
         if 'is_a_counterpart' in header_info:
             header_result['is_a_counterpart'] = header_info.get('is_a_counterpart')
 
-        # UTP-952: only retrieve the AD from the source if the partner type is not intermission or section        
+        # UTP-952: only retrieve the AD from the source if the partner type is not intermission or section
         partner_type = self.get_partner_type(cr, uid, source, context)
         if partner_type not in ['section', 'intermission'] and header_info.get('analytic_distribution_id', False):
             header_result['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, header_info, context)
-        
+
         partner_id = self.get_partner_id(cr, uid, source, context)
         address_id = self.get_partner_address_id(cr, uid, partner_id, context)
         price_list = self.get_price_list_id(cr, uid, partner_id, context)
@@ -266,17 +273,17 @@ class so_po_common(osv.osv_memory):
         header_result['partner_shipping_id'] = address_id
         header_result['partner_invoice_id'] = address_id
         header_result['pricelist_id'] = price_list
-        
+
         return header_result
-    
+
     def get_lines(self, cr, uid, source, line_values, po_id, so_id, for_update, so_called, context):
         line_result = []
         update_lines = []
-        
+
         line_vals_dict = line_values.to_dict()
         if 'order_line' not in line_vals_dict:
             return []
-        
+
         for line in line_values.order_line:
             values = {}
             line_dict = line.to_dict()
@@ -284,12 +291,12 @@ class so_po_common(osv.osv_memory):
             if line_dict.get('product_uom'):
                 values['product_uom'] = self.get_uom_id(cr, uid, line.product_uom, context=context)
 
-            if line_dict.get('have_analytic_distribution_from_header'): 
+            if line_dict.get('have_analytic_distribution_from_header'):
                 values['have_analytic_distribution_from_header'] = line.have_analytic_distribution_from_header
-                
+
             if line_dict.get('line_number'):
                 values['line_number'] = line.line_number
-                
+
             if line_dict.get('notes'):
                 values['notes'] = line.notes
 
@@ -305,34 +312,34 @@ class so_po_common(osv.osv_memory):
 
             if line_dict.get('product_qty'): # come from the PO
                 values['product_uom_qty'] = line.product_qty
-            
+
             if line_dict.get('date_planned'):
-                values['date_planned'] = line.date_planned 
+                values['date_planned'] = line.date_planned
 
             if line_dict.get('confirmed_delivery_date'):
                 values['confirmed_delivery_date'] = line.confirmed_delivery_date
-                 
+
             if line_dict.get('nomenclature_description'):
-                values['nomenclature_description'] = line.nomenclature_description 
+                values['nomenclature_description'] = line.nomenclature_description
 
             if line_dict.get('price_unit'):
                 values['price_unit'] = line.price_unit
             else:
                 values['price_unit'] = 0 # This case is for the line that has price unit False (actually 0 but OpenERP converted to False)
-                
+
             if line_dict.get('product_id'):
                 rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(line.product_id.id), context=context)
                 if rec_id:
                     values['product_id'] = rec_id
                     values['name'] = line.product_id.name
-                    
+
                     product_obj = self.pool.get('product.product')
                     product = product_obj.browse(cr, uid, [rec_id], context=context)[0]
                     procure_method = product.procure_method
                     # UF-1534: use the cost price of the product, not the one from PO line
                     if so_called and not so_id:
                         values['price_unit'] = product.list_price
-                        
+
                     values['type'] = procure_method
                 else:
                     values['name'] = line.comment
@@ -342,40 +349,40 @@ class so_po_common(osv.osv_memory):
             if line_dict.get('nomen_manda_0'):
                 rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_0.id), context=context)
                 if rec_id:
-                    values['nomen_manda_0'] = rec_id 
-                
+                    values['nomen_manda_0'] = rec_id
+
             if line_dict.get('nomen_manda_1'):
                 rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_1.id), context=context)
                 if rec_id:
-                    values['nomen_manda_1'] = rec_id 
+                    values['nomen_manda_1'] = rec_id
 
             if line_dict.get('nomen_manda_2'):
                 rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_2.id), context=context)
                 if rec_id:
-                    values['nomen_manda_2'] = rec_id 
+                    values['nomen_manda_2'] = rec_id
 
             if line_dict.get('nomen_manda_3'):
                 rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_3.id), context=context)
                 if rec_id:
                     values['nomen_manda_3'] = rec_id
-                
+
             # UTP-952: set empty AD for lines if the partner is intermission or section
             partner_type = self.get_partner_type(cr, uid, source, context)
             if partner_type not in ['section', 'intermission'] and line_dict.get('analytic_distribution_id'):
                 values['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, line_dict, context)
-                    
+
             line_ids = False
             sync_order_line_db_id = False
             if line_dict.get('sync_order_line_db_id'):
                 sync_order_line_db_id = line.sync_order_line_db_id
                 values['sync_order_line_db_id'] = sync_order_line_db_id
-                
+
             if line_dict.get('source_sync_line_id'):
                 values['original_purchase_line_id'] = line_dict['source_sync_line_id']
-            
+
             if (po_id or so_id) and not sync_order_line_db_id: # this updates the PO or SO -> the sync_order_line_db_id must exist
                 raise Exception, "The field sync_order_line_db_id is missing - please check the relevant message rule!"
-                
+
             if po_id: # this case is for update the PO
                 # look for the correct PO line for updating the value - corresponding to the SO line
                 line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', po_id)], context=context)
@@ -386,12 +393,12 @@ class so_po_common(osv.osv_memory):
             if line_ids and line_ids[0]:
                 if for_update: # add this value to the list of update, then remove
                     update_lines.append(line_ids[0])
-                    
+
                 line_result.append((1, line_ids[0], values))
-            else:     
+            else:
                 line_result.append((0, 0, values))
-            
-        # for update case, then check all updated lines, the other lines that are not presented in the sync message must be deleted at this destination instance!    
+
+        # for update case, then check all updated lines, the other lines that are not presented in the sync message must be deleted at this destination instance!
         if for_update:
             existing_line_ids = False
             if po_id: # this case is for update the PO
@@ -400,22 +407,22 @@ class so_po_common(osv.osv_memory):
             elif so_id:
                 # look for the correct PO line for updating the value - corresponding to the SO line
                 existing_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', '=', so_id)], context=context)
-                
+
             if existing_line_ids and update_lines:
                 for existing_line in existing_line_ids:
                     if existing_line not in update_lines:
                         line_result.append((2, existing_line))
-                
-        return line_result 
+
+        return line_result
 
     def get_stock_move_lines(self, cr, uid, line_values, context):
         line_result = []
         update_lines = []
-        
+
         line_vals_dict = line_values.to_dict()
         if 'move_lines' not in line_vals_dict:
             return []
-        
+
         for line in line_values.move_lines:
             values = {}
             line_dict = line.to_dict()
@@ -425,19 +432,19 @@ class so_po_common(osv.osv_memory):
 
             if line_dict.get('line_number'):
                 values['line_number'] = line.line_number
-                
+
             if line_dict.get('product_qty'): # come from the PO
                 values['product_qty'] = line.product_qty
-            
+
             if line_dict.get('expired_date'):
-                values['expired_date'] = line.expired_date 
+                values['expired_date'] = line.expired_date
 
             if line_dict.get('asset_id'):
                 values['asset_id'] = line.asset_id
-                 
+
             if line_dict.get('date_expected'):
                 values['date_expected'] = line.date_expected
-                
+
             if line_dict.get('product_id'):
                 rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(line.product_id.id), context=context)
                 if rec_id:
@@ -454,13 +461,13 @@ class so_po_common(osv.osv_memory):
 #            if line_ids and line_ids[0]:
 #                if for_update: # add this value to the list of update, then remove
 #                    update_lines.append(line_ids[0])
-#                    
+#
 #                line_result.append((1, line_ids[0], values))
-#            else:     
+#            else:
 #                line_result.append((0, 0, values))
-            
-        # for update case, then check all updated lines, the other lines that are not presented in the sync message must be deleted at this destination instance!    
-        return line_result 
+
+        # for update case, then check all updated lines, the other lines that are not presented in the sync message must be deleted at this destination instance!
+        return line_result
 
     def get_uom_id(self, cr, uid, uom_name, context=None):
         if not context:
@@ -474,8 +481,8 @@ class so_po_common(osv.osv_memory):
     def get_location(self, cr, uid, partner_id, context=None):
         '''
         For instance, the location ID for the PO created will be by default the Input Location of the default warehouse
-        Proper location should be taken when creating the PO from an SO 
-        
+        Proper location should be taken when creating the PO from an SO
+
         The location is mandatory in PO, so, if there is no location, an exception will be raised to stop creating the PO
         '''
         warehouse_obj = self.pool.get('stock.warehouse')
@@ -483,6 +490,67 @@ class so_po_common(osv.osv_memory):
         if not warehouse_ids:
             raise Exception, "No valid warehouse location found for the PO! The PO cannot be created."
         return warehouse_obj.read(cr, uid, warehouse_ids, ['lot_input_id'])[0]['lot_input_id'][0]
+
+    def create_message_with_object_and_partner(self, cr, uid, rule_sequence, object_id, partner_name, context):
+
+        ##############################################################################
+        # This method creates a message and put into the sendbox, but the message is created for a given object, AND for a given partner
+        # Meaning that for the same object, but for different internal partners, the object could be sent many times to these partner
+        #
+        ##############################################################################
+        rule_obj = self.pool.get("sync.client.message_rule")
+        rule = rule_obj.get_rule_by_sequence(cr, uid, rule_sequence, context)
+
+        if not rule or not object_id:
+            return
+
+        model_obj = self.pool.get(rule.model)
+        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+
+        arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, context=context)
+
+        identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [object_id], rule.server_id, context=context)
+        if not identifiers:
+            return
+
+        xml_id = identifiers[object_id]
+        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id), ('destination_name', '=', partner_name)], context=context)
+        if existing_message_id: # if similar message does not exist in the system, then do nothing
+            return
+
+        # if not then create a new one --- FOR THE GIVEN Batch number AND Destination
+        data = {
+                'identifier' : xml_id,
+                'remote_call': rule.remote_call,
+                'arguments': arguments,
+                'destination_name': partner_name,
+                'sent' : False,
+                'generate_message' : True,
+        }
+        return msg_to_send_obj.create(cr, uid, data, context=context)
+
+    def create_invalid_recovery_message(self, cr, uid, partner_name, name, context):
+        rule_obj = self.pool.get("sync.client.message_rule")
+        rule = rule_obj.get_rule_by_sequence(cr, uid, 1003, context)
+        if not rule:
+            return
+        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+
+        xml_id = cr.dbname + "_recovery_" + partner_name + "_object_" + name
+        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id), ('destination_name', '=', partner_name)], context=context)
+        if existing_message_id: # if similar message does not exist in the system, then do nothing
+            return
+
+        # if not then create a new one --- FOR THE GIVEN Batch number AND Destination
+        data = {
+                'identifier' : xml_id,
+                'remote_call': rule.remote_call,
+                'arguments': [{'name': name}],
+                'destination_name': partner_name,
+                'sent' : False,
+                'generate_message' : True,
+        }
+        return msg_to_send_obj.create(cr, uid, data, context=context)
 
 so_po_common()
 
