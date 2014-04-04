@@ -67,23 +67,35 @@ class finance_archive(finance_export.finance_archive):
             tmp_line = list(line)
             line_ids = str(line[column_number])
             tmp_line[column_number] = self.get_hash(cr, uid, line_ids, model)
-            # Partner DB ID
+            # Check if we have a partner_id in last column
             partner_id_present = False
+            partner_id = False
+            partner_hash = ''
             if len(tmp_line) > (partner_id_column_number - 1):
                 partner_id = tmp_line[partner_id_column_number - 1]
                 if partner_id:
                     partner_id_present = True
-            if partner_id_present:
-                tmp_line[partner_id_column_number - 1] = self.get_hash(cr, uid, [partner_id], 'res.partner')
-            else:
+            # If not partner_id, then check 'Third Party' column to search it by name
+            if not partner_id_present:
                 partner_name = tmp_line[partner_name_column_number - 1]
-                if isinstance(partner_name, unicode):
-                    partner_name = partner_name.encode('utf-8')
+                # Search only if partner_name is not empty
+                if partner_name:
+                    # UFT-8 encoding
+                    if isinstance(partner_name, unicode):
+                        partner_name = partner_name.encode('utf-8')
+                    partner_ids = partner_obj.search(cr, uid, [('name', 'ilike', partner_name)])
+                    if partner_ids:
+                        partner_id = partner_ids
+            # If we get some ids, fetch the partner hash
+            if partner_id:
+                if isinstance(partner_id, (int, long)):
+                    partner_id = [partner_id]
+                partner_hash = self.get_hash(cr, uid, partner_id, 'res.partner')
+            # Complete last column with partner_hash
+            if not partner_id_present:
                 tmp_line.append('')
-                partner_ids = partner_obj.search(cr, uid, [('name', 'ilike', partner_name)])
-                if partner_ids:
-                    result = self.get_hash(cr, uid, partner_ids, 'res.partner')
-                    tmp_line[partner_id_column_number - 1] = result
+            tmp_line[partner_id_column_number - 1] = partner_hash
+            # Add result to new_data
             new_data.append(self.line_to_utf8(tmp_line))
         return self.postprocess_selection_columns(cr, uid, new_data, [], column_deletion=column_deletion)
 
