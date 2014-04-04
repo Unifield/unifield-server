@@ -1501,7 +1501,7 @@ class product_product(osv.osv):
         for id in ids:
             res[id] = 0.00
             if from_date and to_date:
-                rcr_domain = ['&', '&', ('product_id', 'in', ids), ('rac_id.cons_location_id', 'in', location_ids),
+                rcr_domain = ['&', '&', ('product_id', '=', id), ('rac_id.cons_location_id', 'in', location_ids),
                               # All lines with a report started out the period and finished in the period 
                               '|', '&', ('rac_id.period_to', '>=', from_date), ('rac_id.period_to', '<=', to_date),
                               # All lines with a report started in the period and finished out the period 
