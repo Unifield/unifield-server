@@ -48,7 +48,6 @@
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
-        <NumberFormat ss:Format="#,##0.00"/>
     </Style>
     <Style ss:ID="header_short_date">
      <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -77,7 +76,7 @@
 
         <Row>
             <Cell ss:StyleID="header"><Data ss:Type="String">DB/instance name</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${o.requestor_id and o.requestor_id.company_id and o.requestor_id.company_id.instance_id and o.requestor_id.company_id.instance_id.name or False|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${o.requestor_id and o.requestor_id.company_id and o.requestor_id.company_id.instance_id and o.requestor_id.company_id.instance_id.name or ''|x}</Data></Cell>
         </Row>
 
         <Row>

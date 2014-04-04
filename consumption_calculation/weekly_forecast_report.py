@@ -159,35 +159,6 @@ class weekly_forecast_report(osv.osv):
                 
         return {'value': res}
     
-    def _get_average_consumption(self, cr, uid, product_id, consumption_type, date_from, date_to, context=None):
-        """
-        Return the average consumption for all locations
-        """
-        if context is None:
-            context = {}
-            
-        product_obj = self.pool.get('product.product')
-        res = 0.00
-        
-        if context.get('manual_consumption'):
-            return context.get('manual_consumption')
-        
-        new_context = context.copy()
-        new_context.update({
-            'from_date': date_from,
-            'to_date': date_to,
-            'average': True,
-        })
-        
-        if consumption_type == 'fmc':
-            res = product_obj.read(cr, uid, product_id, ['reviewed_consumption'], context=new_context)['reviewed_consumption']
-        elif consumption_type == 'amc':
-            res = product_obj.compute_amc(cr, uid, product_id, context=new_context)
-        else:
-            res = product_obj.read(cr, uid, product_id, ['monthly_consumption'], context=new_context)['monthly_consumption']
-            
-        return res
-    
     def process_lines(self, cr, uid, ids, context=None):
         '''
         Create one line by product for the period
@@ -199,11 +170,8 @@ class weekly_forecast_report(osv.osv):
                 ids = [ids]
             report = self.browse(cr, uid, ids[0], context=context)
             if report:
-                if report.interval > 20 or report.interval < 1:
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('The number of intervals must be between 1 and 20'),
-                    )
+                # Report values
+                self._check_report_values(report)
 
                 if report.status == 'in_progress':
                     # currently in progress
@@ -307,11 +275,18 @@ class weekly_forecast_report(osv.osv):
         if context is None:
             context = {}
         
-        if report_brw.interval <= 0 or not report_brw.interval_type:
-            raise osv.except_osv(_('Error'), _('You must enter an interval value !'))
+                
+        if report_brw.interval <= 0 or report_brw.interval > 20 or not report_brw.interval_type:
+            raise osv.except_osv(
+                _('Error'),
+                _('The number of intervals must be between 1 and 20'),
+            )
 
         if report_brw.consumption_type in ('amc', 'rac') and report_brw.consumption_from > report_brw.consumption_to:
-            raise osv.except_osv(_('Error'), _('You cannot have \'To date\' older than \'From date\''))
+            raise osv.except_osv(
+                _('Error'),
+                _('You cannot have \'To date\' older than \'From date\''),
+            )
 
         if report_brw.consumption_type in ('amc', 'rac'):
             context.update({'from': report_brw.consumption_from, 'to': report_brw.consumption_to})
@@ -352,9 +327,6 @@ class weekly_forecast_report(osv.osv):
                 offset = 50.00
                 nb_offset = (nb_products / offset) + 1
                 
-                # Report values
-                self._check_report_values(report)
-                
                 # Get all locations
                 location_ids = loc_obj.search(new_cr, uid, [
                     ('location_id', 'child_of', report.location_id.id),
@@ -381,7 +353,7 @@ class weekly_forecast_report(osv.osv):
                         interval_from = now() + RelativeDateTime(months=i-1, hour=0, minute=0, second=0)
                         interval_to = now() + RelativeDateTime(months=i, days=-1, hour=23, minute=59, second=59)
                     
-                    intervals.append((interval_name, interval_from, interval_to, i+8))
+                    intervals.append((interval_name, interval_from, interval_to))
                     dict_int_from.setdefault(interval_from.strftime('%Y-%m-%d'), interval_name)
                 
                 percent_completed = 0.00
@@ -460,7 +432,7 @@ class weekly_forecast_report(osv.osv):
                     weekly_cons = cons
                     if report.interval_type == 'week':
                         weekly_cons = round(cons / 30 * 7, 2)
-                        weekly_cons = uom_obj._change_round_up_qty(new_cr, uid, product['uom_id'][0], weekly_cons, 'weekly_cons', result={})['value']['weekly_cons']
+                        weekly_cons = uom_obj._change_round_up_qty(new_cr, uid, product['uom_id'][0], weekly_cons, 'cons', result={})['value']['cons']
 
                     line_values += """<Row>
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"String\">%(product_code)s</Data></Cell>
@@ -481,13 +453,12 @@ class weekly_forecast_report(osv.osv):
                     }
 
                     inter = {}
-                    for in_name, in_from, in_to, in_cn in intervals:
+                    for in_name, in_from, in_to in intervals:
                         inter.setdefault(in_name, {
                             'date_from': in_from,
                             'date_to': in_to,
                             'exp_qty': 0.00,
                             'pipe_qty': 0.00,
-                            'cn': in_cn,
                         })
 
                     # Return the last from date of interval closest to date
@@ -537,7 +508,7 @@ class weekly_forecast_report(osv.osv):
                             'value': last_value,
                         }
 
-                    # Ponderation of 30 percent on this part of the process 
+                    # Ponderation of 50 percent on this part of the process 
                     percent_completed = (0.5 + ((float(j)/nb_products) * 0.50)) * 100.00
                     progress_comment = """
                             Calculation of consumption values by product: %(nb_products)s/%(nb_products)s
@@ -776,80 +747,5 @@ class weekly_forecast_report(osv.osv):
         return res
         
 weekly_forecast_report()
-
-
-class weekly_forecast_product_report(osv.osv):
-    _name = 'weekly.forecast.product.report'
-    _rec_name = 'product_id'
-
-    _columns = {
-        'product_id': fields.many2one(
-            'product.product',
-            string='Product',
-            required=True,
-            select=1,
-        ),
-        'report_id': fields.many2one(
-            'weekly.forecast.report',
-            string='Report',
-            required=True,
-            select=1,
-        ),
-        'consumption': fields.float(
-            digits=(16,2),
-            string='AMC/FMC',
-        ),
-        'av_qty': fields.float(
-            digits=(16,2),
-            string='Current Stock Qty',
-        ),
-        'in_pipe_qty': fields.float(
-            digits=(16,2),
-            string='Pipeline Qty',
-        ),
-        'exp_qty': fields.float(
-            digits=(16,2),
-            string='Expiry Qty',
-        ),
-        'qty_values': fields.text(
-            string='Qty. Values',
-        ),
-    }
-
-weekly_forecast_product_report()
-
-
-class weekly_forecast_product_interval_report(osv.osv):
-    _name = 'weekly.forecast.product.interval.report'
-
-    _columns = {
-        'name': fields.char(
-            size=64,
-            string='Name',
-            required=True,
-        ),
-        'line_id': fields.many2one(
-            'weekly.forecast.product.report',
-            string='Product report line',
-            required=True,
-            select=1,
-        ),
-        'date_from': fields.date(
-            string='From',
-        ),
-        'date_to': fields.date(
-            string='To',
-        ),
-        'exp_qty': fields.float(
-            digits=(16,2),
-            string='Exp. Qty',
-        ),
-        'inp_qty': fields.float(
-            digits=(16,2),
-            string='In-Pipe Qty',
-        ),
-    }
-
-weekly_forecast_product_interval_report()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
