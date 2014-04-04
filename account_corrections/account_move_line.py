@@ -44,8 +44,10 @@ class account_move_line(osv.osv):
          - The line doesn't come from a write-off
          - The line is "corrected_upstream" that implies the line have been already corrected from a coordo or a hq to a level that is superior or equal to these instance.
         """
+        # Some checks
         if context is None:
             context = {}
+        # Prepare some values
         res = {}
         # Search all accounts that are used in bank, cheque and cash registers
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', 'in', ['bank', 'cheque', 'cash'])])
@@ -95,8 +97,8 @@ class account_move_line(osv.osv):
             # False if the account is used in a cash/bank/cheque journal
             if ml.account_id.id in account_ids:
                 res[ml.id] = False
-            # False if "corrected_upstream" is True
-            if ml.corrected_upstream:
+            # False if "corrected_upstream" is True and that we come from project level
+            if ml.corrected_upstream and ml.instance_id.level == 'project':
                 res[ml.id] = False
             # False if this line is a revaluation
             if ml.journal_id.type == 'revaluation':
