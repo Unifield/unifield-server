@@ -108,7 +108,7 @@ class report_project_expenses2(report_sxw.rml_parse):
         analytic_line_obj = self.pool.get('account.analytic.line')
         analytic_lines = analytic_line_obj.search(self.cr, self.uid, contract_domain, context=None)
         
-        # list of analytic journal_ids which are 
+        # list of analytic journal_ids which are in the engagement journals
         exclude_journal_ids = self.pool.get('account.analytic.journal').search(self.cr, self.uid, [('type','=','engagement')])
         exclude_line_ids = []
         for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines, context=None):

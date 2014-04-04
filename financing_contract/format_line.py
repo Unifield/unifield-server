@@ -321,9 +321,16 @@ class financing_contract_format_line(osv.osv):
                     elif field_name == 'allocated_real':
                         analytic_domain = self._get_analytic_domain(cr, uid, line, 'allocated', True, context=context)
                     # selection of analytic lines
-                    if 'reporting_currency' in context:
+                    if 'reporting_currency' in context:  # TODO Why do we only get analytic lines if reporting_currency in context
                         analytic_line_obj = self.pool.get('account.analytic.line')
                         analytic_lines = analytic_line_obj.search(cr, uid, analytic_domain ,context=context)
+                        # list of analytic journal_ids which are in the engagement journals
+                        exclude_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type','=','engagement')])
+                        exclude_line_ids = []
+                        for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=None):
+                            if analytic_line.journal_id.id in exclude_journal_ids:
+                                exclude_line_ids.append(analytic_line.id)
+                        analytic_lines = [x for x in analytic_lines if x not in exclude_line_ids]
                         real_sum = 0.0
                         currency_table = None
                         if 'currency_table_id' in context:
