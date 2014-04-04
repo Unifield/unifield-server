@@ -433,15 +433,15 @@ class weekly_forecast_report(osv.osv):
                             '|', ('auto_supply_ok', '=', 'yes'),
                             '|', ('order_cycle_ok', '=', 'yes'),
                             '|', ('min_max_ok', '=', 'yes'),
-                            '|', ('threshold_ok', '=', 'yes'),
-                        ], count=True, context=context)
+                            ('threshold_ok', '=', 'yes'),
+                        ], context=context)
                         if not proc_rules:
                             continue
 
                     weekly_cons = cons
                     if report.interval_type == 'week':
                         weekly_cons = round(cons / 30 * 7, 2)
-                        weekly_cons = uom_obj._change_round_up_qty(new_cr, uid, product['uom_id'][0], weekly_cons, 'cons', result={})['value']['cons']
+                        weekly_cons = uom_obj._change_round_up_qty(new_cr, uid, product['uom_id'][0], weekly_cons, 'cons', result={})['value'].get('cons', 0.0)
 
                     line_values += """<Row>
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"String\">%(product_code)s</Data></Cell>
