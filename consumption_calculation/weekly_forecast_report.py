@@ -33,7 +33,8 @@ import pooler
 LIKELY_EXPIRE_STATUS = [
     ('draft', 'Draft'),
     ('in_progress', 'In Progress'),
-    ('ready', 'Ready')
+    ('ready', 'Ready'),
+    ('error', 'Error'),
 ]
 CONSUMPTION_TYPE = [
     ('fmc', 'FMC -- Forecasted Monthly Consumption'), 
@@ -87,9 +88,11 @@ class weekly_forecast_report(osv.osv):
         'status': fields.selection(
             LIKELY_EXPIRE_STATUS,
             string='Status',
+            readonly=True,
         ),
         'xml_data': fields.text(
             string='XML data',
+            readonly=True,
         ),
         'progress': fields.float(
             digits=(16,2),
@@ -98,6 +101,7 @@ class weekly_forecast_report(osv.osv):
         ),
         'progress_comment': fields.text(
             string='Status of the progression',
+            readonly=True,
         ),
     }
     
@@ -108,6 +112,34 @@ class weekly_forecast_report(osv.osv):
         'consumption_type': 'fmc',
         'status': 'draft',
     }
+
+    def copy(self, cr, uid, report_id, defaults=None, context=None):
+        """
+        Reset value on copy.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that launches the method
+        :param report_id: ID of the weekly.forecast.report object to duplicate
+        :param defaults: Default values for the new object
+        :param context: Context of the call
+
+        :return The ID of the new object
+        """
+        if context is None:
+            context = {}
+
+        if defaults is None:
+            defaults = {}
+
+        defaults.update({
+            'status': 'draft',
+            'progress': 0.00,
+            'progress_comment': '',
+            'xml_data': '',
+            'requestor_date': time.strftime('%Y-%d-%m %H:%M:%S'),
+        })
+
+        return super(weekly_forecast_report, self).copy(cr, uid, report_id, defaults, context=context)
     
     def period_change(self, cr, uid, ids, consumption_from, consumption_to, consumption_type, context=None):
         """
@@ -176,6 +208,7 @@ class weekly_forecast_report(osv.osv):
                         'view_type': 'form',
                         'view_mode': 'form,tree',
                         'context': context,
+                        'target': 'crush',
                     }
                 elif report.status == 'ready':
                     # report already build, show it
@@ -228,6 +261,26 @@ class weekly_forecast_report(osv.osv):
             'nodestroy': True,
             'context': context,
         }
+
+    def in_progress(self, cr, uid, ids, context=None):
+        """
+        Refresh the tree view
+
+        :param cr: Cursor to the database
+        :param uid: ID of the use that runs the method
+        :param ids: List of ID of the weekly.forecast.report
+        :param context: Context of the call
+
+        :return Return a dictionary with the action to open the report
+        :rtype dict
+        """
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'weekly.forecast.report',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'context': context,
+        }
     
     def _check_report_values(self, report_brw, context=None):
         """
@@ -276,6 +329,7 @@ class weekly_forecast_report(osv.osv):
         # Objects
         product_obj = self.pool.get('product.product')
         loc_obj = self.pool.get('stock.location')
+        uom_obj = self.pool.get('product.uom')
         
         if context is None:
             context = {}
@@ -283,186 +337,76 @@ class weekly_forecast_report(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-
-        cons_cn = 5
-        current_stock_cn = 6
-            
         # background cursor
         new_cr = pooler.get_db(cr.dbname).cursor()
-        
-        for report in self.browse(new_cr, uid, ids, context=context):
-            nb_products = product_obj.search(new_cr, uid, [('type', '=', 'product'),], count=True, context=context)
-            # Process the products by group of 500
-            offset = 50.00
-            nb_offset = (nb_products / offset) + 1
-            
-            # Report values
-            self._check_report_values(report)
-            
-            # Get all locations
-            location_ids = loc_obj.search(new_cr, uid, [
-                ('location_id', 'child_of', report.location_id.id),
-                ('quarantine_location', '=', False),
-            ], order='location_id', context=context)
-            
-            context.update({
-                'location_id': location_ids,
-                'location': location_ids,
-            })
-
-            # Compute intervals
-            intervals = []
-            i = 0
-            while i != report.interval:
-                i += 1
-                interval_name = 'Month %s' % i
-                if report.interval_type == 'month':
-                    interval_from = now() + RelativeDateTime(months=i-1, hour=0, minute=0, second=0)
-                    interval_to = now() + RelativeDateTime(months=i, days=-1, hour=23, minute=59, second=59)
-                else:
-                    interval_from = now() + RelativeDateTime(weeks=i-1, hour=0, minute=0, second=0)
-                    interval_to = now() + RelativeDateTime(weeks=i, days=-1, hour=23, minute=59, second=59)
+ 
+        try:
+            for report in self.browse(new_cr, uid, ids, context=context):
+                nb_products = product_obj.search(new_cr, uid, [('type', '=', 'product'),], count=True, context=context)
+                # Process the products by group of 500
+                offset = 50.00
+                nb_offset = (nb_products / offset) + 1
                 
-                intervals.append((interval_name, interval_from, interval_to))
-            
-            percent_completed = 0.00
-            progress_comment = ""
-            product_ids = []
-            for i in range(int(nb_offset)):
-                tmp_product_ids = product_obj.search(new_cr, uid, [('type', '=', 'product')], limit=offset, offset=i, context=context)
-                product_ids.extend(tmp_product_ids)
-                product_cons = self._get_product_consumption(new_cr, uid, tmp_product_ids, location_ids, report, context=context)
-                in_pipe_vals = self._get_in_pipe_vals(new_cr, uid, tmp_product_ids, location_ids, report, context=context)
-                exp_vals = self._get_expiry_batch(new_cr, uid, product_cons, location_ids, report, context=context)
-                # Ponderation of 70 percent on this part of the process 
-                percent_completed = (((i*offset)/nb_products) * 0.70) * 100
-                print percent_completed
-                progress_comment = """
-                    Calculation of consumption values by product: %(treated_products)s/%(nb_products)s\n
-                    Calculation of in-pipe quantities by product and interval: %(treated_products)s/%(nb_products)s\n
-                    Calculation of expiry quantities by product and interval: %(treated_products)s/%(nb_products)s\n
-                    ------------------------------------------------------------------------------------------------\n
-                    Calculate the forecasted quantity by product and period: 0/%(nb_products)s\n
-                """ % {
-                        'treated_products': i*offset,
-                        'nb_products': nb_products,
-                }
-                self.write(new_cr, uid, [report.id], {
-                    'status': 'in_progress',
-                    'progress': percent_completed,
-                    'progress_comment': progress_comment,
-                }, context=context)
-                new_cr.commit()
-
-            line_style = 'line'
-            line_values = """
-                <Row>
-                  <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Product Code</Data></Cell>
-                  <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Description</Data></Cell>
-                  <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Unit Price</Data></Cell>
-                  <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Stock value</Data></Cell>
-                  <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">AMC/FMC</Data></Cell>
-                  <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Current Stock Qty</Data></Cell>
-                  <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Pipeline Qty</Data></Cell>
-                  <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Expiry Qty</Data></Cell>
-            """ % {
-                'style': line_style,
-            }
-            for interval in intervals:
-                line_values += """<Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">%(interval_name)s</Data></Cell>""" % {
-                    'style': line_style,
-                    'interval_name': interval[0],
-                }
-
-            line_values += """</Row>"""
-
-            j = 0
-            for product_id in product_ids:
-                j += 1
-                print '%s/%s' % (j, nb_products)
-                product = product_cons[product_id][0]
-                cons = product_cons[product_id][1]
-                if report.interval_type == 'week':
-                    cons = round(cons / 30 * 7, 2)
-
-                line_values += """
-                    <Row>
-                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">%(product_code)s</Data></Cell>
-                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">%(product_name)s</Data></Cell>
-                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"Number\">%(unit_price)s</Data></Cell>
-                      <Cell ss:StyleID=\"%(style)s\" ss:Formula=\"=RC[-1]*RC[2]\"><Data ss:Type=\"Number\"></Data></Cell>
-                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"Number\">%(consumption)s</Data></Cell>
-                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"Number\">%(stock_qty)s</Data></Cell>
-                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"Number\">%(pipe_qty)s</Data></Cell>
-                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"Number\">%(exp_qty)s</Data></Cell>
-                """ % {
-                    'style': 'line',
-                    'product_code': product.default_code,
-                    'product_name': product.name,
-                    'unit_price': product.standard_price,
-                    'consumption': cons,
-                    'stock_qty': product.qty_available,
-                    'pipe_qty': in_pipe_vals[product_id]['total'],
-                    'exp_qty': exp_vals[product_id]['total'],
-                }
-
-                inter = {}
-                columns_number = 9
-                for in_name, in_from, in_to in intervals:
-                    inter.setdefault(in_name, {
-                        'date_from': in_from,
-                        'date_to': in_to,
-                        'exp_qty': 0.00,
-                        'pipe_qty': 0.00,
-                        'cn': columns_number,
-                    })
-                    columns_number += 1
-
-                for exp_key, exp_val in exp_vals[product_id].iteritems():
-                    if exp_key != 'total':
-                        for interval in intervals:
-                            if interval[1] <= DateFrom(exp_key) <= interval[2]:
-                                inter[interval[0]]['exp_qty'] += exp_val
-                                break
-
-                for inp_key, inp_val in in_pipe_vals[product_id].iteritems():
-                    if inp_key != 'total':
-                        for interval in intervals:
-                            if interval[1] <= DateFrom(inp_key) <= interval[2]:
-                                inter[interval[0]]['pipe_qty'] += inp_val
-                                break
+                # Report values
+                self._check_report_values(report)
                 
-                first = True
-                for interval_name, interval_values in inter.iteritems():
-                    if first:
-                        first = False
-                        cs_cn = current_stock_cn - interval_values['cn']
+                # Get all locations
+                location_ids = loc_obj.search(new_cr, uid, [
+                    ('location_id', 'child_of', report.location_id.id),
+                    ('quarantine_location', '=', False),
+                ], order='location_id', context=context)
+                
+                context.update({
+                    'location_id': location_ids,
+                    'location': location_ids,
+                })
+
+                # Compute intervals
+                intervals = []
+                dict_int_from = {}
+                i = 0
+                while i != report.interval:
+                    i += 1
+                    if report.interval_type == 'week':
+                        interval_name = 'Week %s' % i
+                        interval_from = now() + RelativeDateTime(weeks=i-1, hour=0, minute=0, second=0)
+                        interval_to = now() + RelativeDateTime(weeks=i, days=-1, hour=23, minute=59, second=59)
                     else:
-                        cs_cn = -1
+                        interval_name = 'Month %s' % i
+                        interval_from = now() + RelativeDateTime(months=i-1, hour=0, minute=0, second=0)
+                        interval_to = now() + RelativeDateTime(months=i, days=-1, hour=23, minute=59, second=59)
+                    
+                    intervals.append((interval_name, interval_from, interval_to, i+8))
+                    dict_int_from.setdefault(interval_from.strftime('%Y-%m-%d'), interval_name)
+                
+                percent_completed = 0.00
+                progress_comment = ""
+                product_ids = []
+                product_cons = {}
+                in_pipe_vals = {}
+                exp_vals = {}
+                for i in range(int(nb_offset)):
+                    tmp_product_ids = product_obj.search(new_cr, uid, [('type', '=', 'product')], limit=offset, offset=i, context=context)
+                    product_ids.extend(tmp_product_ids)
+                    # Get consumption, in-pipe and expired quantities for each product
+                    product_cons.update(self._get_product_consumption(new_cr, uid, tmp_product_ids, location_ids, report, context=context))
+                    in_pipe_vals.update(self._get_in_pipe_vals(new_cr, uid, tmp_product_ids, location_ids, report, context=context))
+                    exp_vals.update(self._get_expiry_batch(new_cr, uid, product_cons, location_ids, report, context=context))
 
-                    c_cn = cons_cn - interval_values['cn']
-                    formula = "=RC[%(current_stock)s]-RC[%(consumption)s]-%(exp_qty)s+%(pipe_qty)s" % {
-                            'current_stock': cs_cn,
-                            'consumption': c_cn,
-                            'exp_qty': interval_values['exp_qty'],
-                            'pipe_qty': interval_values['pipe_qty'],
-                    }
-                    line_values += """
-                            <Cell ss:Style=\"%(style)s\" ss:Formula=\"%(formula)s\"><Data ss:Type=\"Number\"></Data></Cell>\n
-                    """ % {
-                            'formula': formula,
-                            'style': 'line',
-                    }
-                    # Ponderation of 30 percent on this part of the process 
-                    percent_completed = 0.7 + ((float(j)/nb_products) * 0.30)
+                    percent_completed = (((i*offset)/nb_products) * 0.50) * 100
                     progress_comment = """
-                        Calculation of consumption values by product: %(nb_products)s/%(nb_products)s\n
-                        Calculation of in-pipe quantities by product and interval: %(nb_products)s/%(nb_products)s\n
-                        Calculation of expiry quantities by product and interval: %(nb_products)s/%(nb_products)s\n
-                        ------------------------------------------------------------------------------------------------\n
-                        Calculate the forecasted quantity by product and period: %(treated_products)s/%(nb_products)s\n
+                        Calculation of consumption values by product: %(treated_products)s/%(nb_products)s
+
+                        Calculation of in-pipe quantities by product and interval: %(treated_products)s/%(nb_products)s
+
+                        Calculation of expiry quantities by product and interval: %(treated_products)s/%(nb_products)s
+
+                        ------------------------------------------------------------------------------------------------
+
+                        Calculate the forecasted quantity by product and period: 0/%(nb_products)s
+
                     """ % {
-                            'treated_products': j,
+                            'treated_products': int(i*offset),
                             'nb_products': nb_products,
                     }
                     self.write(new_cr, uid, [report.id], {
@@ -472,14 +416,175 @@ class weekly_forecast_report(osv.osv):
                     }, context=context)
                     new_cr.commit()
 
-                line_values += """
-                    </Row>
-                """
-            print line_values
-            self.write(new_cr, uid, [report.id], {'xml_data': line_values, 'status': 'done', 'progress': 100.00}, context=context)
+                line_style = 'line'
+                line_values = """
+                    <Row>
+                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Product Code</Data></Cell>
+                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Description</Data></Cell>
+                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Unit Price</Data></Cell>
+                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Stock value</Data></Cell>
+                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">AMC/FMC</Data></Cell>
+                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Current Stock Qty</Data></Cell>
+                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Pipeline Qty</Data></Cell>
+                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Expiry Qty</Data></Cell>
+                """ % {
+                    'style': line_style,
+                }
+                for interval in intervals:
+                    line_values += """<Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">%(interval_name)s</Data></Cell>""" % {
+                        'style': line_style,
+                        'interval_name': interval[0],
+                    }
+
+                line_values += """</Row>"""
+                
+                context.update({
+                    'from_date': False,
+                    'to_date': False,
+                })
+                stock_products = product_obj.read(new_cr, uid, product_ids, [
+                    'qty_available',
+                    'default_code',
+                    'name',
+                    'standard_price',
+                    'uom_id',
+                ], context=context)
+
+                j = 0
+                for product in stock_products:
+                    product_id = product['id']
+                    j += 1
+                    cons = product_cons[product_id][1]
+                    weekly_cons = cons
+                    if report.interval_type == 'week':
+                        weekly_cons = round(cons / 30 * 7, 2)
+                        weekly_cons = uom_obj._change_round_up_qty(new_cr, uid, product['uom_id'][0], weekly_cons, 'weekly_cons', result={})['value']['weekly_cons']
+
+                    line_values += """
+                        <Row>
+                          <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">%(product_code)s</Data></Cell>
+                          <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">%(product_name)s</Data></Cell>
+                          <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"Number\">%(unit_price)s</Data></Cell>
+                          <Cell ss:StyleID=\"%(style)s\" ss:Formula=\"=RC[-1]*RC[2]\"><Data ss:Type=\"Number\"></Data></Cell>
+                          <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"Number\">%(consumption)s</Data></Cell>
+                          <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"Number\">%(stock_qty)s</Data></Cell>
+                          <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"Number\">%(pipe_qty)s</Data></Cell>
+                          <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"Number\">%(exp_qty)s</Data></Cell>
+                    """ % {
+                        'style': 'line',
+                        'product_code': product['default_code'],
+                        'product_name': product['name'],
+                        'unit_price': product['standard_price'],
+                        'consumption': cons,
+                        'stock_qty': product['qty_available'],
+                        'pipe_qty': in_pipe_vals[product_id]['total'],
+                        'exp_qty': exp_vals[product_id]['total'],
+                    }
+
+                    inter = {}
+                    for in_name, in_from, in_to, in_cn in intervals:
+                        inter.setdefault(in_name, {
+                            'date_from': in_from,
+                            'date_to': in_to,
+                            'exp_qty': 0.00,
+                            'pipe_qty': 0.00,
+                            'cn': in_cn,
+                        })
+
+                    # Return the last from date of interval closest to date
+                    def get_interval_by_date(date):
+                        date = DateFrom(date)
+                        if report.interval_type == 'week':
+                            st_day = now().day_of_week
+                            last_date = date + RelativeDateTime(weekday=(st_day, 0))
+                            if date.iso_week[2] == last_date.iso_week[2]:
+                                return date
+                            elif date.iso_week[2] > last_date.iso_week[2]:
+                                return last_date
+                            else:
+                                return date + RelativeDateTime(weeks=-1) + RelativeDateTime(weekday=(st_day, 0))
+                        else:
+                            st_day = now().day
+                            if date.day >= st_day:
+                                return date + RelativeDateTime(day=st_day)
+                            else:
+                                return date + RelativeDateTime(months=-1, day=st_day)
+                    
+                    # Put expired quantity into the good interval
+                    for exp_key, exp_val in exp_vals[product_id].iteritems():
+                        if exp_key != 'total':
+                            date_key = get_interval_by_date(exp_key).strftime('%Y-%m-%d')
+                            int_name = dict_int_from.get(date_key, False)
+                            if int_name:
+                                inter[int_name]['exp_qty'] += exp_val
+
+                    # Put In-pipe quantity into the good interval
+                    for inp_key, inp_val in in_pipe_vals[product_id].iteritems():
+                        if inp_key != 'total':
+                            date_key = get_interval_by_date(inp_key).strftime('%Y-%m-%d')
+                            int_name = dict_int_from.get(date_key, False)
+                            if int_name:
+                                inter[int_name]['pipe_qty'] += inp_val
+
+                    # Sort the key of the dict, to have the values in good order
+                    # TODO: Use OrderedDict instead of this sort of dict keys but only available on Python 2.7
+                    interval_keys = inter.keys()
+                    interval_keys.sort(key=lambda x: int(x[5:]))
+                    last_value = product['qty_available']
+                    for interval_name in interval_keys:
+                        interval_values = inter.get(interval_name)
+                        last_value = last_value - weekly_cons - interval_values['exp_qty'] + interval_values['pipe_qty']
+                        line_values += """
+                                <Cell ss:Style=\"%(style)s\"><Data ss:Type=\"Number\">%(value)s</Data></Cell>\n
+                        """ % {
+                            'style': 'line',
+                            'value': last_value,
+                        }
+
+                    # Ponderation of 30 percent on this part of the process 
+                    percent_completed = (0.5 + ((float(j)/nb_products) * 0.50)) * 100.00
+                    progress_comment = """
+                            Calculation of consumption values by product: %(nb_products)s/%(nb_products)s
+
+                            Calculation of in-pipe quantities by product and interval: %(nb_products)s/%(nb_products)s
+
+                            Calculation of expiry quantities by product and interval: %(nb_products)s/%(nb_products)s
+
+                            ------------------------------------------------------------------------------------------------
+
+                            Calculate the forecasted quantity by product and period: %(treated_products)s/%(nb_products)s
+
+                    """ % {
+                        'treated_products': j,
+                        'nb_products': nb_products,
+                    }
+                    self.write(new_cr, uid, [report.id], {
+                        'status': 'in_progress',
+                        'progress': percent_completed,
+                        'progress_comment': progress_comment,
+                    }, context=context)
+                    new_cr.commit()
+
+                    line_values += """
+                        </Row>
+                    """
+                self.write(new_cr, uid, [report.id], {'xml_data': line_values, 'status': 'ready', 'progress': 100.00}, context=context)
+
+            new_cr.commit()
+        except Exception as e:
+            new_cr.rollback()
+            progress_comment = """
+            An error occured during the processing of the report.\n
+            Details of the error:\n
+            %s
+            """ % str(e)
+            print e
+            self.write(new_cr, uid, [report.id], {'status': 'error', 'progress_comment': progress_comment}, context=context)
+            new_cr.commit()
+
+        new_cr.close()
 
         print time.time() - start
-
         return True
 
     def _get_product_consumption(self, cr, uid, product_ids, location_ids, report, context=None):
@@ -507,6 +612,7 @@ class weekly_forecast_report(osv.osv):
             'from_date': report.consumption_from,
             'to_date': report.consumption_to,
             'location_id': location_ids,
+            'location': location_ids,
         })
 
         res = {}
@@ -517,10 +623,10 @@ class weekly_forecast_report(osv.osv):
         elif report.consumption_type == 'rac':
             cons_field = 'monthly_consumption'
 
-        for product in product_ids:
-            prod = product_obj.browse(cr, uid, product, context=context)
-            p_cons = prod[cons_field]
-            res[product] = (prod, p_cons)
+        products = product_obj.read(cr, uid, product_ids, ['perishable', 'batch_management', cons_field], context=context)
+        for product in products:
+            p_cons = product[cons_field]
+            res[product['id']] = (product, p_cons)
 
         return res
 
@@ -552,15 +658,21 @@ class weekly_forecast_report(osv.osv):
 
         res = {}
 
+        if report.interval_type == 'week':
+            report_end_date = now() + RelativeDateTime(weeks=report.interval)
+        else:
+            report_end_date = now() + RelativeDateTime(months=report.interval)
+
         for product, av_cons in product_cons.itervalues():
-            res.setdefault(product.id, {'total': 0.00})
-            if not product.perishable and not product.batch_management:
+            res.setdefault(product['id'], {'total': 0.00})
+            if not product['perishable'] and not product['batch_management']:
                 continue
 
             prodlot_ids = lot_obj.search(cr, uid, [
-                ('product_id', '=', product.id),
+                ('product_id', '=', product['id']),
                 ('stock_available', '>', 0.00),
                 ('life_date', '>=', time.strftime('%Y-%m-%d')),
+                ('life_date', '<=', report_end_date.strftime('%Y-%m-%d')),
             ], order='life_date', context=context)
 
             last_expiry_date = now() - RelativeDateTime(days=1)
@@ -588,10 +700,10 @@ class weekly_forecast_report(osv.osv):
 
                 if l_expired_qty:
                     total_expired += l_expired_qty
-                    res[product.id].setdefault(lot.life_date, 0.00)
-                    res[product.id].setdefault('total', 0.00)
-                    res[product.id][lot.life_date] += l_expired_qty
-                    res[product.id]['total'] += l_expired_qty
+                    res[product['id']].setdefault(lot.life_date, 0.00)
+                    res[product['id']].setdefault('total', 0.00)
+                    res[product['id']][lot.life_date] += l_expired_qty
+                    res[product['id']]['total'] += l_expired_qty
 
         return res
 
@@ -616,7 +728,9 @@ class weekly_forecast_report(osv.osv):
         res = {p_id: {'total': 0.00} for p_id in product_ids}
 
         cr.execute("""
-            SELECT 
+            SELECT product_id, sum(qty) AS qty, date
+            FROM
+            ((SELECT 
                p.id AS product_id, 
                sum(s.product_qty/u1.factor/u2.factor) AS qty, 
                s.date AS date 
@@ -627,20 +741,14 @@ class weekly_forecast_report(osv.osv):
                LEFT JOIN product_uom u1 ON s.product_uom = u1.id
                LEFT JOIN product_uom u2 ON pt.uom_id = u2.id
             WHERE
-               s.location_id IN %s
+               s.location_id IN %(location_ids)s
                AND
-               s.date > %s
-            GROUP BY p.id, s.date
-        """, (tuple(location_ids), time.strftime('%Y-%m-%d')))
-
-        for r in cr.dictfetchall():
-            res[r['product_id']].setdefault(r['date'], 0.00)
-            res[r['product_id']][r['date']] += r['qty']
-            res[r['product_id']].setdefault('total', 0.00)
-            res[r['product_id']]['total'] += r['qty']
-
-        cr.execute("""
-            SELECT 
+               s.product_id IN %(product_ids)s
+               AND 
+               s.state IN ('assigned', 'confirmed')
+            GROUP BY p.id, s.date)
+        UNION
+            (SELECT 
                p.id AS product_id, 
                sum(s.product_qty/u1.factor/u2.factor) AS qty, 
                s.date AS date 
@@ -651,17 +759,24 @@ class weekly_forecast_report(osv.osv):
                LEFT JOIN product_uom u1 ON s.product_uom = u1.id
                LEFT JOIN product_uom u2 ON pt.uom_id = u2.id
             WHERE
-              s.location_dest_id IN %s
+              s.location_dest_id IN %(location_ids)s
               AND
-              s.date > %s
-            GROUP BY p.id, s.date;
-        """, (tuple(location_ids), time.strftime('%Y-%m-%d')))
+              s.product_id IN %(product_ids)s
+              AND
+              s.state IN ('assigned', 'confirmed')
+            GROUP BY p.id, s.date))
+            AS subrequest
+            GROUP BY product_id, date;
+        """, {
+            'location_ids': tuple(location_ids), 
+            'product_ids': tuple(product_ids)
+        })
 
         for r in cr.dictfetchall():
             res[r['product_id']].setdefault(r['date'], 0.00)
-            res[r['product_id']][r['date']] -= r['qty']
+            res[r['product_id']][r['date']] = r['qty']
             res[r['product_id']].setdefault('total', 0.00)
-            res[r['product_id']]['total'] -= r['qty']
+            res[r['product_id']]['total'] = r['qty']
 
         return res
         

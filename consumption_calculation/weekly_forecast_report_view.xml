@@ -14,13 +14,13 @@
                         <html>
                             <div style="align: center">
                                 <p style="font-size:14px;align:center">
-                                    Your demand of Weekly forecast report will be treated quickly.<br />
+                                    Your demand of periodical forecast report will be treated quickly.<br />
                                 </p>
                                 <p style="font-size:14px;align:center">
                                     Due to the volume of data, your demand cannot be shown immediatly.<br />
                                 </p>
                                 <p style="font-size:14px;align:center">
-                                    When the report will be ready, you can access to it by the menu Warehouse / Reporting / Expiry / Weekly forecast report.<br />
+                                    When the report will be ready, you can access to it by the menu Warehouse / Reporting / Periodical forecast report.<br />
                                 </p>
                             </div>
                         </html>
@@ -34,7 +34,7 @@
             <field name="model">weekly.forecast.report</field>
             <field name="type=">search</field>
             <field name="arch" type="xml">
-                <search string="Weekly forecast reports">
+                <search string="Periodical forecast reports">
                     <field name="requestor_id" />
                     <filter domain="[('requestor_id', '=', uid)]" icon="terp-personal" help="My requests" />
                     <field name="requestor_date" />
@@ -47,17 +47,17 @@
             <field name="model">weekly.forecast.report</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Weekly forecast reports">
-                    <field name="requestor_date" />
-                    <field name="requestor_id" />
-                    <field name="consumption_type" />
-                    <field name="interval" />
-                    <field name="interval_type" />
-                    <field name="location_id" />
+                <tree string="Periodical forecast reports">
+                    <field name="requestor_date" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="requestor_id" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="consumption_type" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="interval" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="interval_type" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="location_id" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                     <field name="progress" widget="progressbar" />
-                    <field name="status" />
                     <button name="in_progress" type="object" icon="gtk-refresh" string="In Progress" attrs="{'invisible': [('status', '!=', 'in_progress')]}" />
-                    <button name="print_report" type="object" icon="gtk-print" string="Print report" attrs="{'invisible': [('status}', '!=', 'ready')]}" />
+                    <button name="print_report" type="object" icon="gtk-print" string="Print report" attrs="{'invisible': [('status', '!=', 'ready')]}" />
+                    <field name="status" />
                 </tree>
             </field>
         </record>
@@ -67,7 +67,7 @@
             <field name="model">weekly.forecast.report</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Weekly forecast report">
+                <form string="Periodical forecast report">
                     <separator colspan="4" string="Period of calculation" />
                     <field name="interval" />
                     <field name="interval_type" colspan="2" nolabel="1" />
@@ -78,13 +78,13 @@
                     <separator colspan="4" string="Location" />
                     <field name="location_id" domain="[('usage', '=', 'internal')]" />
                     <separator colspan="4" string="Actions" />
-                    <button name="process_lines" string="View report" type="object" colspan="4" icon="gtk-execute" attrs="{'invisible': [('state', '=', 'in_progress')]}" />
-                    <button name="update_report" string="Update" type="object" colspan="4" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'in_progress')]}" />
+                    <button name="process_lines" string="View report" type="object" colspan="4" icon="gtk-execute" attrs="{'invisible': [('status', '=', 'in_progress')]}" />
+                    <button name="process_lines" string="Update" type="object" colspan="4" icon="gtk-execute" attrs="{'invisible': [('status', '!=', 'in_progress')]}" />
                     <label string="" /><label string="" />
-                    <group colspan="4" col="4" attrs="{'invisible': [('state', '=', 'draft')]}">
+                    <group colspan="4" col="4" attrs="{'invisible': [('status', '=', 'draft')]}">
                         <separator string="Status" colspan="4" />
-                        <field name="progress_comment" colspan="4" nolabel="True" attrs="{'invisible': [('state', '!=', 'in_progress')]}" />
-                        <field name="state" />
+                        <field name="progress_comment" colspan="4" nolabel="True" attrs="{'invisible': [('status', 'not in', ('in_progress', 'error'))]}" />
+                        <field name="status" />
                         <field name="progress" widget="progressbar" />
                     </group>
                 </form>
@@ -101,7 +101,7 @@
         <menuitem id="menu_weekly_forecast_report"
                   action="action_weekly_forecast_report"
                   sequence="-1"
-                  parent="menu_warehouse_expiry" />
+                  parent="stock.next_id_61" />
 
     </data>
 </openerp>
