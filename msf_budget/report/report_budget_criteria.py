@@ -59,14 +59,14 @@ class report_budget_actual_2(report_sxw.rml_parse):
     def getComm(self,):
         parameters = self.localcontext.get('data',{}).get('form',{})
         if 'commitment' in parameters and parameters['commitment']:
-            return 'Yes'
-        return 'No'
+            return _('Yes')
+        return _('No')
 
     def getBreak(self,):
         parameters = self.localcontext.get('data',{}).get('form',{})
         if 'breakdown' in parameters and parameters['breakdown'] == 'year':
-            return 'Total figure'
-        return 'By month'
+            return _('Total figure')
+        return _('By month')
 
     def byMonth(self,):
         parameters = self.localcontext.get('data',{}).get('form',{})
@@ -192,7 +192,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
             sql_end = """ GROUP BY aal.currency_id, month ORDER BY month"""
         # Do sql request
         request = sql + sql_conditions + sql_end
-        params = [tuple(cost_center_ids), '%s' % date_start, '%s' % date_stop] + sql_conditions_params
+        params = [tuple(cost_center_ids), date_start.val, date_stop.val] + sql_conditions_params
         self.cr.execute(request, params) # Will return a list of tuple: (currency_id, month_number, journal_type, value, booking_value)
         #+ If not add_commitment, we have a list of tuple as: (currency_id, month_number, value, booking_value)
         analytics = self.cr.fetchall()

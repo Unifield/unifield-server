@@ -55,9 +55,9 @@ class report_local_expenses(WebKitParser):
             breakdown_selection = dict(wizard_obj._columns['breakdown'].selection)
             granularity_selection = dict(wizard_obj._columns['granularity'].selection)
             result_data = []
-            header_data = [['Local expenses report'],
-                           ['Breakdown:', breakdown_selection[data['form']['breakdown']]],
-                           ['Granularity:', granularity_selection[data['form']['granularity']]]]
+            header_data = [[_('Local expenses report')],
+                           [_('Breakdown:'), breakdown_selection[data['form']['breakdown']]],
+                           [_('Granularity:'), granularity_selection[data['form']['granularity']]]]
             month_start = data['form']['month_start']
             month_stop = data['form']['month_stop']
             # Booking currency
@@ -65,36 +65,36 @@ class report_local_expenses(WebKitParser):
                 domain.append(('currency_id', '=', data['form']['booking_currency_id']))
                 booking_currency = currency_obj.browse(cr, uid, data['form']['booking_currency_id'], context=context)
                 # Add booking currency to header
-                header_data.append(['Booking currency:', booking_currency.name])
+                header_data.append([_('Booking currency:'), booking_currency.name])
 
             # Add output currency to header
             output_currency = currency_obj.browse(cr, uid, data['form']['output_currency_id'], context=context)
-            header_data.append(['Output currency:', output_currency.name])
+            header_data.append([_('Output currency:'), output_currency.name])
             # Cost Center
             cost_center = pool.get('account.analytic.account').browse(cr, uid, data['form']['cost_center_id'], context=context)
             cost_center_ids = pool.get('msf.budget.tools')._get_cost_center_ids(cr, uid, cost_center)
             domain.append(('cost_center_id', 'in', cost_center_ids))
             # Add cost center to header
-            header_data.append(['Cost center:', cost_center.name])
+            header_data.append([_('Cost center:'), cost_center.name])
             # Dates
             fiscalyear = pool.get('account.fiscalyear').browse(cr, uid, data['form']['fiscalyear_id'], context=context)
             domain.append(('date', '>=', fiscalyear.date_start))
             domain.append(('date', '<=', fiscalyear.date_stop))
             # add fiscal year to header
-            header_data.append(['Fiscal year:', fiscalyear.name])
+            header_data.append([_('Fiscal year:'), fiscalyear.name])
             # Period name for header
             if 'start_period_id' in data['form']:
                 period = pool.get('account.period').browse(cr,
                                                            uid,
                                                            data['form']['start_period_id'],
                                                            context=context)
-                header_data.append(['Period from:', period.name])
+                header_data.append([_('Period from:'), period.name])
             if 'end_period_id' in data['form']:
                 period = pool.get('account.period').browse(cr,
                                                            uid,
                                                            data['form']['end_period_id'],
                                                            context=context)
-                header_data.append(['Period to:', period.name])
+                header_data.append([_('Period to:'), period.name])
             # Get expenses. UTP-944: break down the _get_actual_amounts method to only return expense accounts and not income or donation accounts (extra-accounting accounts)
             context.update({'only_expenses': True})
             expenses = pool.get('msf.budget.tools')._get_actual_amounts(cr,
