@@ -428,7 +428,7 @@ class weekly_forecast_report(osv.osv):
                     j += 1
                     cons = product_cons[product_id][1]
                     if not cons:
-                        proc_rules = self.pool.get('procurement.rules.report').search(cr, uid, [
+                        proc_rules = self.pool.get('procurement.rules.report').search(new_cr, uid, [
                             ('product_id', '=', product_id),
                             '|', ('auto_supply_ok', '=', 'yes'),
                             '|', ('order_cycle_ok', '=', 'yes'),
