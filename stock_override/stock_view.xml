@@ -812,11 +812,12 @@
                             <field name="date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
                             <field name="min_date" string="Expected Shipped Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}"
                             on_change="change_min_date()" required="1" />
-                            <field name="min_date_manually" invisible="1" />	
+                            <field name="min_date_manually" invisible="1" />
                             <field name="warehouse_id"
                                 widget="selection"
                                 attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
                                 />
+                            <field name="in_ref"  readonly="True" />
                        </group>
                    </group>
                     <notebook colspan="4">
