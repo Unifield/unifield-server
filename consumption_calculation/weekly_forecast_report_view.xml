@@ -65,7 +65,7 @@
         <record id="weekly_forecast_report_form_view" model="ir.ui.view">
             <field name="name">weekly.forecast.report.form.view</field>
             <field name="model">weekly.forecast.report</field>
-            <field name="priority" eval%"16" />
+            <field name="priority" eval="16" />
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Periodical forecast report">
