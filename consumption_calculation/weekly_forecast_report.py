@@ -719,7 +719,7 @@ class weekly_forecast_report(osv.osv):
         if context is None:
             context = {}
 
-        res = {p_id: {'total': 0.00} for p_id in product_ids}
+        res = {}
 
         cr.execute("""
             SELECT product_id, sum(qty) AS qty, date
@@ -767,6 +767,7 @@ class weekly_forecast_report(osv.osv):
         })
 
         for r in cr.dictfetchall():
+            res.setdefault(r['product_id'], {'total': 0.00})
             res[r['product_id']].setdefault(r['date'], 0.00)
             res[r['product_id']][r['date']] = r['qty']
             res[r['product_id']].setdefault('total', 0.00)
