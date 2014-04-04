@@ -199,6 +199,12 @@ class weekly_forecast_report(osv.osv):
                 ids = [ids]
             report = self.browse(cr, uid, ids[0], context=context)
             if report:
+                if report.interval > 20 or report.interval < 1:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('The number of intervals must be between 1 and 20'),
+                    )
+
                 if report.status == 'in_progress':
                     # currently in progress
                     return {
@@ -311,7 +317,7 @@ class weekly_forecast_report(osv.osv):
             context.update({'from': report_brw.consumption_from, 'to': report_brw.consumption_to})
             
         return True
-    
+
     def _process_lines(self, cr, uid, ids, context=None):
         """
         For each product of the DB, display the forecasted stock
@@ -449,6 +455,8 @@ class weekly_forecast_report(osv.osv):
                     product_id = product['id']
                     j += 1
                     cons = product_cons[product_id][1]
+                    if not cons:
+                        continue
                     weekly_cons = cons
                     if report.interval_type == 'week':
                         weekly_cons = round(cons / 30 * 7, 2)
