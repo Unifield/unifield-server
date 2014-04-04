@@ -41,16 +41,10 @@ class finance_archive(finance_export.finance_archive):
         # Prepare some values
         new_data = []
         pool = pooler.get_pool(cr.dbname)
-        partner_obj = pool.get('res.partner')
         for line in data:
             tmp_line = list(line)
             p_id = line[0]
-            try:
-                xml = partner_obj.get_xml_id(cr, uid, [p_id])
-                xml_id = xml and xml.get(p_id, '') or ''
-            except:
-                xml_id = ''
-            tmp_line[0] = xml_id
+            tmp_line[0] = self.get_hash(cr, uid, [p_id], 'res.partner')
             new_data.append(self.line_to_utf8(tmp_line))
         return self.postprocess_selection_columns(cr, uid, new_data, [('res.partner', 'partner_type', 3)], column_deletion=column_deletion)
 
