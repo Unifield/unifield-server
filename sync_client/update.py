@@ -598,7 +598,7 @@ class update_received(osv.osv):
             if not updates:
                 continue
             # ignore updates of instances that have lower priorities
-            if priorities is not None:
+            if priorities is not None and not do_deletion:
                 assert local_entity.name in priorities, \
                     "Oops! I don't even know my own priority."
                 import_fields = [
