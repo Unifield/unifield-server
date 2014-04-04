@@ -51,7 +51,7 @@ class finance_archive(finance_export.finance_archive):
             # Add DB ID on each line (first column)
             line_ids = str(line[0])
             tmp_line[0] = self.get_hash(cr, uid, line_ids, model)
-            new_data.append(tmp_line)
+            new_data.append(self.line_to_utf8(tmp_line))
         return new_data
 
 class hq_report_ocb_matching(report_sxw.report_sxw):
