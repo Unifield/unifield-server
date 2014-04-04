@@ -325,7 +325,6 @@ class weekly_forecast_report(osv.osv):
         :return True if all is ok
         :rtype boolean
         """
-        start = time.time()
         # Objects
         product_obj = self.pool.get('product.product')
         loc_obj = self.pool.get('stock.location')
@@ -416,23 +415,18 @@ class weekly_forecast_report(osv.osv):
                     }, context=context)
                     new_cr.commit()
 
-                line_style = 'line'
-                line_values = """
-                    <Row>
-                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Product Code</Data></Cell>
-                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Description</Data></Cell>
-                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Unit Price</Data></Cell>
-                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Stock value</Data></Cell>
-                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">AMC/FMC</Data></Cell>
-                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Current Stock Qty</Data></Cell>
-                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Pipeline Qty</Data></Cell>
-                      <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">Expiry Qty</Data></Cell>
-                """ % {
-                    'style': line_style,
-                }
+                line_values = """<Row></Row><Row>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Product Code</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Description</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Unit Price</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Stock value</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">AMC/FMC</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Current Stock Qty</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Pipeline Qty</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Expiry Qty</Data></Cell>"""
+                
                 for interval in intervals:
-                    line_values += """<Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">%(interval_name)s</Data></Cell>""" % {
-                        'style': line_style,
+                    line_values += """<Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%(interval_name)s</Data></Cell>""" % {
                         'interval_name': interval[0],
                     }
 
@@ -460,18 +454,15 @@ class weekly_forecast_report(osv.osv):
                         weekly_cons = round(cons / 30 * 7, 2)
                         weekly_cons = uom_obj._change_round_up_qty(new_cr, uid, product['uom_id'][0], weekly_cons, 'weekly_cons', result={})['value']['weekly_cons']
 
-                    line_values += """
-                        <Row>
-                          <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">%(product_code)s</Data></Cell>
-                          <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"String\">%(product_name)s</Data></Cell>
-                          <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"Number\">%(unit_price)s</Data></Cell>
-                          <Cell ss:StyleID=\"%(style)s\" ss:Formula=\"=RC[-1]*RC[2]\"><Data ss:Type=\"Number\"></Data></Cell>
-                          <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"Number\">%(consumption)s</Data></Cell>
-                          <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"Number\">%(stock_qty)s</Data></Cell>
-                          <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"Number\">%(pipe_qty)s</Data></Cell>
-                          <Cell ss:StyleID=\"%(style)s\"><Data ss:Type=\"Number\">%(exp_qty)s</Data></Cell>
-                    """ % {
-                        'style': 'line',
+                    line_values += """<Row>
+                          <Cell ss:StyleID=\"line\"><Data ss:Type=\"String\">%(product_code)s</Data></Cell>
+                          <Cell ss:StyleID=\"line\"><Data ss:Type=\"String\">%(product_name)s</Data></Cell>
+                          <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(unit_price)s</Data></Cell>
+                          <Cell ss:StyleID=\"line\" ss:Formula=\"=RC[-1]*RC[2]\"><Data ss:Type=\"Number\"></Data></Cell>
+                          <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(consumption)s</Data></Cell>
+                          <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(stock_qty)s</Data></Cell>
+                          <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(pipe_qty)s</Data></Cell>
+                          <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(exp_qty)s</Data></Cell>""" % {
                         'product_code': product['default_code'],
                         'product_name': product['name'],
                         'unit_price': product['standard_price'],
@@ -534,10 +525,7 @@ class weekly_forecast_report(osv.osv):
                     for interval_name in interval_keys:
                         interval_values = inter.get(interval_name)
                         last_value = last_value - weekly_cons - interval_values['exp_qty'] + interval_values['pipe_qty']
-                        line_values += """
-                                <Cell ss:Style=\"%(style)s\"><Data ss:Type=\"Number\">%(value)s</Data></Cell>\n
-                        """ % {
-                            'style': 'line',
+                        line_values += """<Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(value)s</Data></Cell>""" % {
                             'value': last_value,
                         }
 
@@ -578,13 +566,11 @@ class weekly_forecast_report(osv.osv):
             Details of the error:\n
             %s
             """ % str(e)
-            print e
             self.write(new_cr, uid, [report.id], {'status': 'error', 'progress_comment': progress_comment}, context=context)
             new_cr.commit()
 
         new_cr.close()
 
-        print time.time() - start
         return True
 
     def _get_product_consumption(self, cr, uid, product_ids, location_ids, report, context=None):

@@ -76,23 +76,23 @@
     <Table x:FullColumns="1" x:FullRows="1">
 
         <Row>
-            <Cell ss:Style="header"><Data ss:Type="String">DB/instance name</Data></Cell>
-            <Cell ss:Style="header"><Data ss:Type="String">${o.requestor_id and o.requestor_id.company_id and o.requestor_id.company_id.instance_id and o.requestor_id.company_id.instance_id.name or False|x}</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">DB/instance name</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${o.requestor_id and o.requestor_id.company_id and o.requestor_id.company_id.instance_id and o.requestor_id.company_id.instance_id.name or False|x}</Data></Cell>
         </Row>
 
         <Row>
-            <Cell ss:Style="header"><Data ss:Type="String">From</Data></Cell>
-            <Cell ss:Style="header_short_date"><Data ss:Type="DateTime">${o.requestor_date[:10]|n}T${o.requestor_date[11:]|n}.000</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">From</Data></Cell>
+            <Cell ss:StyleID="header_short_date"><Data ss:Type="DateTime">${o.requestor_date[:10]|n}T${o.requestor_date[11:]|n}.000</Data></Cell>
         </Row>
 
         <Row>
-            <Cell ss:Style="header"><Data ss:Type="String">Number of ${o.interval_type == 'week' and 'weeks' or 'months'|n} from now</Data></Cell>
-            <Cell ss:Style="header"><Data ss:Type="Number">${o.interval|x}</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">Number of ${o.interval_type == 'week' and 'weeks' or 'months'|n} from now</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="Number">${o.interval|x}</Data></Cell>
         </Row>
 
         <Row>
-            <Cell ss:Style="header"><Data ss:Type="String">Consumption calculation method</Data></Cell>
-            <Cell ss:Style="header"><Data ss:Type="String">${o.consumption_type == 'fmc' and 'FMC' or o.consumption_type == 'amc' and 'AMC' or 'RAC'|x}</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">Consumption calculation method</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${o.consumption_type == 'fmc' and 'FMC' or o.consumption_type == 'amc' and 'AMC' or 'RAC'|x}</Data></Cell>
         </Row>
 
         ${o.xml_data}
