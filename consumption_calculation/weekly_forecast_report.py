@@ -457,7 +457,7 @@ class weekly_forecast_report(osv.osv):
                         'unit_price': product['standard_price'],
                         'consumption': cons,
                         'stock_qty': product['qty_available'],
-                        'pipe_qty': in_pipe_vals[product_id]['total'],
+                        'pipe_qty': in_pipe_vals.get(product_id, {}).get('total', 0.00),
                         'exp_qty': exp_vals[product_id]['total'],
                     }
 
@@ -498,7 +498,7 @@ class weekly_forecast_report(osv.osv):
                                 inter[int_name]['exp_qty'] += exp_val
 
                     # Put In-pipe quantity into the good interval
-                    for inp_key, inp_val in in_pipe_vals[product_id].iteritems():
+                    for inp_key, inp_val in in_pipe_vals.get(product_id, {}).iteritems():
                         if inp_key != 'total':
                             date_key = get_interval_by_date(inp_key).strftime('%Y-%m-%d')
                             int_name = dict_int_from.get(date_key, False)
