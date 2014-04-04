@@ -66,7 +66,6 @@ class purchase_order_sync(osv.osv):
 
     _columns = {
         'sended_by_supplier': fields.boolean('Sended by supplier', readonly=True),
-        'split_po': fields.boolean('Created by split PO', readonly=True),
         'push_fo': fields.boolean('The Push FO case', readonly=False),
         'from_sync': fields.boolean('Updated by synchronization', readonly=False),
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
@@ -77,7 +76,6 @@ class purchase_order_sync(osv.osv):
     }
 
     _defaults = {
-        'split_po': False,
         'push_fo': False,
         'sended_by_supplier': True,
         'po_updated_by_sync': False,
