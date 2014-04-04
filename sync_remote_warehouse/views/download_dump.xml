@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+		<record id="wizard_download_dump" model="ir.ui.view">
+            <field name="name">download_dump_wizard</field>
+            <field name="model">download_dump</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Download Remote Warehouse Database">
+                	<label colspan="4" string="Download and restore this database to create the database for the Remote Warehouse instance"  />
+                	<field name="dump_name" invisible="1" />
+                    <field name="database_dump" filename="dump_name" attrs="{'invisible':[('database_dump','=','')]}" />
+                </form>
+            </field>
+        </record> 
+    </data>
+</openerp>

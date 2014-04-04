@@ -191,6 +191,20 @@ class so_po_common(osv.osv_memory):
             
         if 'analytic_distribution_id' in header_info: 
             header_result['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, header_info, context)
+
+        # UF-2267: If the original FO provided, then retrieve the original PO that links to this FO 
+        if header_info.get('parent_order_name', False):
+            # build the complete partner_ref value and search for the linked PO
+            parent_order_name = source + "." + header_info.get('parent_order_name')
+            po_obj = self.pool.get('purchase.order')
+
+            # search only the original FO ref, not to the split one            
+            if parent_order_name[-2] == '-':
+                parent_order_name = parent_order_name[:-2]
+            # retrieve the original PO linked to the original FO 
+            po_ids = po_obj.search(cr, uid, [('partner_ref', '=', parent_order_name)], context=context)
+            if po_ids and po_ids[0]:
+                header_result['parent_order_name'] = po_ids[0] # and set the link into the newly created PO sourced
         
         partner_id = self.get_partner_id(cr, uid, source, context)
         address_id = self.get_partner_address_id(cr, uid, partner_id, context)
@@ -281,6 +295,10 @@ class so_po_common(osv.osv_memory):
 
             if line_dict.get('comment'):
                 values['comment'] = line.comment
+
+            # UTP-972: send also the flat is line is a split line
+            if line_dict.get('is_line_split'):
+                values['is_line_split'] = line.is_line_split
 
             if line_dict.get('product_uom_qty'): # come from the SO
                 values['product_qty'] = line.product_uom_qty

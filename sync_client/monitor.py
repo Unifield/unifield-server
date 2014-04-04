@@ -42,8 +42,8 @@ class MonitorLogger(object):
         self.info.update(defaults)
         self.final_status = 'ok'
         self.messages = []
-        self.row_id = self.monitor.create(self.cr, self.uid, self.info, context=self.context)
         self.link_to = set()
+        self.row_id = self.monitor.create(self.cr, self.uid, self.info, context=self.context)
 
     def write(self):
         if not hasattr(self, 'cr'):

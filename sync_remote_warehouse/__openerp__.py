@@ -15,10 +15,11 @@
         'views/update.xml',
         'views/message.xml',
         'views/setup_remote_warehouse.xml',
+        'views/download_dump.xml',
         'views/usb_synchronisation.xml',
         'views/usb_recovery.xml',
         'views/sync_monitor.xml',
     ],
-    'depends': ['sync_client'],
+    'depends': ['sync_client', 'sync_remote_warehouse_common'],
     'installable': True,
 }

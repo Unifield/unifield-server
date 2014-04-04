@@ -9,9 +9,8 @@
                 <form string="Setup USB Synchronisation">
                     <field name="existing_usb_instance_type" attrs="{'invisible':[('existing_usb_instance_type','=','')]}" />
                     <group colspan="4"  attrs="{'invisible':[('existing_usb_instance_type','!=','')]}">
-	                	<label colspan="4" string="This wizard lets you mark this OpenERP instance as a Remote Warehouse or Central Platform. It can only be done once and is irreversble! Below, please choose the date and time that the Central Platform database was backed up to provide the seed database for the Remote Warehouse. This is important, as any data before this time will not be synchronized (As it is, in theory, already in the RW database)." />
+	                	<label colspan="4" string="This wizard lets you mark this OpenERP instance as a Remote Warehouse or Central Platform. It can only be done once and is irreversble!" />
 	                	<field name="usb_instance_type" attrs="{'required':[('existing_usb_instance_type','=','')]}" />
-	                    <field name="clone_date" colspan="4" attrs="{'required':[('existing_usb_instance_type','=','')]}" />
 	                    <group col="4" colspan="4">
 	                        <button icon="gtk-cancel" special="cancel" string="Cancel"/>
 	                        <button icon="gtk-ok" name="setup" string="Setup" type="object"/>

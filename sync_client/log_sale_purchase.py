@@ -91,6 +91,7 @@ class log_sale_purchase(osv.osv):
                 ('sale.order','Sale Order'),
                 ('purchase.order','Field Order'),
                 ('stock.picking','Picking'),
+                ('shipment','Shipment'),
             ], size=128, required=True, readonly=True),
         'model' :
             fields.function(_get_model_from_document, method=True,

@@ -27,7 +27,7 @@
     'description': 'Data files for Sync Server',
     'author': 'MSF, OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['base', 'sync_server', 'account', 'account_analytic_plans'],
+    'depends': ['base', 'sync_server', 'account'],
     'init_xml': [],
     'data': [
         'data/sync.server.group_type.csv',

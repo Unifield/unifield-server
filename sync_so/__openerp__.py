@@ -29,9 +29,9 @@
     """,
     'author': 'OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['base', 'sale', 'sync_client', 'purchase', 'account', 'register_accounting', 'account_hq_entries', 'msf_instance'],
+    'depends': ['base', 'sale', 'sync_client', 'purchase', 'account','register_accounting', 'account_hq_entries', 'msf_instance', 'msf_outgoing',],
     'init_xml': [],
-    'update_xml' : [],
+    'update_xml' : ['purchase_view.xml'],
     'data': [
     ],
     'demo_xml': [

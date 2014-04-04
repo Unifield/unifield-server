@@ -48,6 +48,7 @@
                     <field name="name"/>
                     <field name="model_ref"/>
                     <field name="can_delete" />
+                    <field name="handle_priority"/>
                     <field name="applies_to_type"/>
                     <field name="group_id" attrs="{'invisible':[('applies_to_type','=',True)]}"/>
                     <field name="type_id" attrs="{'invisible':[('applies_to_type','=',False)]}" />
@@ -74,14 +75,13 @@
                             <field name="sequence_number" on_change="invalidate(model_ref)" />
                             <field name="model_ref" on_change="invalidate(model_ref)" required="1" />
                         </group>
-                        <group col="2">
+                        <group col="4">
                             <separator string="Settings" />
-                            <group colspan="2" col="4">
-                                <field name="active" attrs="{'readonly':[('status','!=','valid')]}" />
-                                <field name="can_delete" />
-                            </group>
-                            <field name="direction" on_change="invalidate(model_ref)" />
-                            <field name="owner_field" on_change="invalidate(model_ref)" attrs="{'invisible':[('direction','!=','bi-private')], 'required':[('direction','=','bi-private')]}" />
+                            <field name="active" attrs="{'readonly':[('status','!=','valid')]}" />
+                            <field name="can_delete" />
+                            <field name="handle_priority"/>
+                            <field name="direction" on_change="invalidate(model_ref)" string="Direction"/>
+                            <field name="owner_field" on_change="invalidate(model_ref)" attrs="{'invisible':[('direction','!=','bi-private')], 'required':[('direction','=','bi-private')]}" colspan="4"/>
                         </group>
                         <group col="2">
                             <separator string="Group" />

@@ -24,6 +24,7 @@ import netsvc
 
 import logging
 import pdb
+from tools.translate import _
 
 from sync_client import get_sale_purchase_logger
 
@@ -42,12 +43,37 @@ class purchase_order_sync(osv.osv):
     _inherit = "purchase.order"
     _logger = logging.getLogger('------sync.purchase.order')
 
+    def _is_confirmed_and_synced(self, cr, uid, ids, field_name, arg, context=None):
+        """fields.function 'is_confirmed_and_synced'."""
+        if context is None:
+            context = {}
+        res = {}
+        sync_msg_obj = self.pool.get('sync.client.message_to_send')
+        for po in self.browse(cr, uid, ids, context=context):
+            res[po.id] = False
+            if po.state == 'confirmed' \
+                and po.partner_id and po.partner_id.partner_type != 'esc':  # uftp-88 PO for ESC partner are never to synchronised, no warning msg in PO form
+                po_identifier = self.get_sd_ref(cr, uid, po.id, context=context)
+                sync_msg_ids = sync_msg_obj.search(
+                    cr, uid,
+                    [('sent', '=', True),
+                     ('remote_call', '=', 'sale.order.create_so'),
+                     ('identifier', 'like', po_identifier),
+                     ],
+                    context=context)
+                res[po.id] = bool(sync_msg_ids)
+        return res
+
     _columns = {
         'sended_by_supplier': fields.boolean('Sended by supplier', readonly=True),
         'split_po': fields.boolean('Created by split PO', readonly=True),
         'push_fo': fields.boolean('The Push FO case', readonly=False),
         'from_sync': fields.boolean('Updated by synchronization', readonly=False),
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
+        'is_confirmed_and_synced': fields.function(
+            _is_confirmed_and_synced, method=True,
+            type='boolean',
+            string=u"Confirmed and Synced"),
     }
 
     _defaults = {
@@ -55,12 +81,37 @@ class purchase_order_sync(osv.osv):
         'push_fo': False,
         'sended_by_supplier': True,
         'po_updated_by_sync': False,
+        'is_confirmed_and_synced': False,
     }
+
+
+    # UF-2267: Added a new method to update the reference of the FO back to the PO
+    def update_fo_ref(self, cr, uid, source, so_info, context=None):
+        self._logger.info("+++ Update the FO reference from %s to the PO %s"%(source, cr.dbname))
+        if not context:
+            context = {}
+            
+        context['no_check_line'] = True
+        so_po_common = self.pool.get('so.po.common')
+        po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
+        po_value = self.browse(cr, uid, po_id)
+        
+        ref = po_value.partner_ref
+        partner_ref = source + "." + so_info.name
+        
+        if not ref or partner_ref != ref: # only issue a write if the client_order_reference is not yet set!
+            # Sorry: This trick is to avoid creating new useless message to the synchronisation engine!
+            cr.execute('update purchase_order set partner_ref=%s where id=%s', (partner_ref, po_id))
+        
+        message = "The partner reference of the PO " + po_value.name + " got updated successfully"
+        self._logger.info(message)
+        return message
+
 
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
-        default.update({'active': True, 'split_po' : False, 'po_updated_by_sync': False})
+        default.update({'active': True, 'split_po' : False, 'push_fo' : False, 'po_updated_by_sync': False})
         return super(purchase_order_sync, self).copy(cr, uid, id, default, context=context)
         
     def create_split_po(self, cr, uid, source, so_info, context=None):
@@ -88,10 +139,18 @@ class purchase_order_sync(osv.osv):
             text = "The given format of the split FO is not valid" + so_info.name
             self._logger.error(text)
             raise Exception, text
-            
+        
+        original_po = self.browse(cr, uid, po_id, context=context)
         # UTP-163: Get the 'source document' of the original PO, and add it into the split PO, if existed
-        origin = self.browse(cr, uid, po_id, context=context)['origin']
-        header_result['origin'] = origin
+        header_result['origin'] = original_po.origin
+        
+        # UF-2267: Copy the link to original PO from the split PO to the new PO-2/3 
+        if original_po.parent_order_name and original_po.parent_order_name.id:
+            header_result['parent_order_name'] = original_po.parent_order_name.id
+
+        # UTP-661: Get the 'Cross Docking' value of the original PO, and add it into the split PO
+        header_result['cross_docking_ok'] = original_po['cross_docking_ok']
+        header_result['location_id'] = original_po.location_id.id
 
         # UTP-952: If the partner is section or intermission, then take the AD from the original PO, not from the source instance
         partner_type = so_po_common.get_partner_type(cr, uid, source, context)
@@ -108,8 +167,9 @@ class purchase_order_sync(osv.osv):
             if orig_line:
                 orig_line = line_obj.browse(cr, uid, orig_line[0], context=context)
                 line[2].update({'move_dest_id': orig_line.move_dest_id and orig_line.move_dest_id.id or False})
+                line[2].update({'origin': orig_line.origin}) # UF-2291: set also the origin into the new line of the split PO 
 
-        # If partner is intermission or section, copy the ADs from the lines of original PO                
+        # If partner is intermission or section, copy the ADs from the lines of original PO
         if partner_type in ['section', 'intermission']:
             for line in default['order_line']:
                 orig_line = line_obj.search(cr, uid, [('order_id', '=', po_id), ('line_number', '=', line[2].get('line_number'))])
@@ -278,19 +338,25 @@ class purchase_order_sync(osv.osv):
         if partner_type in ['section', 'intermission']:
             del header_result['analytic_distribution_id']
 
+        original_po = self.browse(cr, uid, po_id, context=context)
+        # UTP-661: Get the 'Cross Docking' value of the original PO, and add it into the split PO
+        header_result['cross_docking_ok'] = original_po['cross_docking_ok']
+        header_result['location_id'] = original_po.location_id.id
+
         default = {}
         default.update(header_result)
         
         res_id = self.write(cr, uid, po_id, default, context=context)
-        
         if so_info.original_so_id_sale_order:    
             wf_service = netsvc.LocalService("workflow")
             if so_info.state == 'validated':
                 ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
             else:
                 ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
-                ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_approve', cr)
-                
+                res = self.purchase_approve(cr, uid, [po_id], context=context) # UTP-972: Use a proper workflow to confirm a PO
+                # UFTP-49: the call to wf_service.trg_validate does not trigger any write to PO, so there is no log recorded, set it manually here
+                logger = get_sale_purchase_logger(cr, uid, self, po_id, context=context)
+                logger.is_status_modified = True
         return True
 
     # UTP-872: If the PO is a split one, then still allow it to be confirmed without po_line 
@@ -320,9 +386,14 @@ class purchase_order_sync(osv.osv):
         if partner_type in ['section', 'intermission']:
             del header_result['analytic_distribution_id']
 
+        original_po = self.browse(cr, uid, po_id, context=context)
+        # UTP-661: Get the 'Cross Docking' value of the original PO, and add it into the split PO
+        header_result['cross_docking_ok'] = original_po['cross_docking_ok']
+        header_result['location_id'] = original_po.location_id.id
+
         default = {}
         default.update(header_result)
-        
+
         res_id = self.write(cr, uid, po_id, default, context=context)
         return True
     
