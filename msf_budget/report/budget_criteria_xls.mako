@@ -500,12 +500,12 @@
   <Cell ss:StyleID="s75"><Data ss:Type="String">${_('Account Desc')}</Data></Cell>
 
 % if by_month:
-  % for x in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][0:end_month]:
-    <Cell ss:StyleID="s84"><Data ss:Type="String">${_(x + ' (Budget)')}</Data></Cell>
+  % for x in [_('Jan'),_('Feb'),_('Mar'),_('Apr'),_('May'),_('Jun'),_('Jul'),_('Aug'),_('Sep'),_('Oct'),_('Nov'),_('Dec')][0:end_month]:
+    <Cell ss:StyleID="s84"><Data ss:Type="String">${x + ' ('+_('Budget')+')'}</Data></Cell>
     % if is_comm:
-      <Cell ss:StyleID="s67"><Data ss:Type="String">${_(x + ' (Comm.)')}</Data></Cell>
+      <Cell ss:StyleID="s67"><Data ss:Type="String">${x + ' ('+_('Comm.')+')'}</Data></Cell>
     % endif
-    <Cell ss:StyleID="s85"><Data ss:Type="String">${_(x + ' (Actual)')}</Data></Cell>
+    <Cell ss:StyleID="s85"><Data ss:Type="String">${x + ' ('+_('Actual')+')'}</Data></Cell>
   % endfor
 % endif
 

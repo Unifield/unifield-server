@@ -321,6 +321,22 @@ class account_move(osv.osv):
                 'context': context,
         }
 
+    def button_reset_distribution(self, cr, uid, ids, context=None):
+        """
+        Reset analytic distribution on all move lines.
+        To do this, just delete the analytic_distribution id link on each move line.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        move_obj = self.pool.get(self._name + '.line')
+        # Search move lines
+        to_reset = move_obj.search(cr, uid, [('move_id', 'in', ids)])
+        move_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
+        return True
+
     def button_validate(self, cr, uid, ids, context=None):
         """
         Check that analytic distribution is ok for all lines

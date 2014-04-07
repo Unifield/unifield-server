@@ -325,7 +325,8 @@ class purchase_order(osv.osv):
         'fnct_project_ref': fields.function(_get_project_ref, method=True, string='Project Ref.',
                                             type='char', size=256, store=False,),
         'dest_partner_ids': fields.many2many('res.partner', 'res_partner_purchase_order_rel', 'purchase_order_id', 'partner_id', 'Customers'),  # uf-2223
-        'dest_partner_names': fields.function(_get_dest_partner_names, type='string', string='Customers', method=True)  # uf-2223
+        'dest_partner_names': fields.function(_get_dest_partner_names, type='string', string='Customers', method=True),  # uf-2223
+        'split_po': fields.boolean('Created by split PO', readonly=True),
     }
 
     _defaults = {
@@ -343,6 +344,7 @@ class purchase_order(osv.osv):
         'is_a_counterpart': False,
         'parent_order_name': False,
         'canceled_end': False,
+        'split_po': False,
     }
 
     def _check_po_from_fo(self, cr, uid, ids, context=None):

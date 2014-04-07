@@ -229,13 +229,13 @@ class analytic_distribution_wizard(osv.osv_memory):
                 code = row['code']
             journal = self.pool.get('account.journal').browse(cr, uid, journal_id, context=context)
             move_prefix = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.move_prefix
-            seqnum = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': period.fiscalyear_id.id}) 
+            seqnum = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id, context={'fiscalyear_id': period.fiscalyear_id.id})
             entry_seq = "%s-%s-%s" % (move_prefix, code, seqnum)
 
             # UTP-943: Set wizard date as date for REVERSAL AND CORRECTION lines
             reversed_id = self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids[0], posting_date=wizard.date, context=context)[0]
             # Add reversal origin link (to not loose it). last_corrected_id is to prevent case where you do a reverse a line that have been already corrected
-    
+
             self.pool.get('account.analytic.line').write(cr, uid, [reversed_id], {'reversal_origin': to_reverse_ids[0], 'last_corrected_id': False, 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence})
             # Mark old lines as non reallocatable (ana_ids): why reverse() don't set this flag ?
             self.pool.get('account.analytic.line').write(cr, uid, [to_reverse_ids[0]], {'is_reallocated': True})
@@ -243,10 +243,11 @@ class analytic_distribution_wizard(osv.osv_memory):
 
             # update the distrib line
             name = False
+            fp_distrib_obj = self.pool.get('funding.pool.distribution.line')
             if to_reverse_ids:
                 ana_line_obj = self.pool.get('account.analytic.line')
                 name = ana_line_obj.join_without_redundancy(ana_line_obj.read(cr, uid, to_reverse_ids[0], ['name'])['name'], 'COR')
-            self.pool.get('funding.pool.distribution.line').write(cr, uid, [line.distribution_line_id.id], {
+            fp_distrib_obj.write(cr, uid, [line.distribution_line_id.id], {
                     'analytic_id': line.analytic_id.id,
                     'cost_center_id': line.cost_center_id.id,
                     'percentage': line.percentage,
@@ -260,7 +261,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if cp.state != 'draft':
                     raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
             # Create the new ana line
-            ret = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name,context=context)
+            ret = fp_distrib_obj.create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name,context=context)
             # Add link to first analytic lines
             for ret_id in ret:
                 self.pool.get('account.analytic.line').write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence })
