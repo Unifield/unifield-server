@@ -381,6 +381,12 @@ class sale_order_line(osv.osv):
         # drop modification to comment attribute
         if 'comment' in result['value']:
             del result['value']['comment']
+        # drop modification to qty
+        if 'product_uos_qty' in result['value']:
+            del result['value']['product_uos_qty']
+        # drop modification to qty
+        if 'product_uom_qty' in result['value']:
+            del result['value']['product_uom_qty']
 
         # Round up the quantity
         if qty:

@@ -109,6 +109,9 @@ class purchase_order(osv.osv):
         '''
         generate a po from the selected request for quotation
         '''
+        # Objects
+        line_obj = self.pool.get('purchase.order.line')
+
         # Some verifications
         if context is None:
             context = {}
@@ -120,6 +123,13 @@ class purchase_order(osv.osv):
         # copy the po with rfq_ok set to False
         data = self.read(cr, uid, ids[0], ['name'], context=context)
         new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False, 'origin': data['name']}, context=dict(context,keepOrigin=True))
+        # Remove lines with 0.00 as unit price
+        no_price_line_ids = line_obj.search(cr, uid, [
+            ('order_id', '=', new_po_id),
+            ('price_unit', '=', 0.00),
+        ], context=context)
+        line_obj.unlink(cr, uid, no_price_line_ids, context=context)
+
         data = self.read(cr, uid, new_po_id, ['name'], context=context)
         # log message describing the previous action
         self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.')%data['name'])
@@ -315,7 +325,8 @@ class purchase_order(osv.osv):
         'fnct_project_ref': fields.function(_get_project_ref, method=True, string='Project Ref.',
                                             type='char', size=256, store=False,),
         'dest_partner_ids': fields.many2many('res.partner', 'res_partner_purchase_order_rel', 'purchase_order_id', 'partner_id', 'Customers'),  # uf-2223
-        'dest_partner_names': fields.function(_get_dest_partner_names, type='string', string='Customers', method=True)  # uf-2223
+        'dest_partner_names': fields.function(_get_dest_partner_names, type='string', string='Customers', method=True),  # uf-2223
+        'split_po': fields.boolean('Created by split PO', readonly=True),
     }
 
     _defaults = {
@@ -333,6 +344,7 @@ class purchase_order(osv.osv):
         'is_a_counterpart': False,
         'parent_order_name': False,
         'canceled_end': False,
+        'split_po': False,
     }
 
     def _check_po_from_fo(self, cr, uid, ids, context=None):
@@ -954,6 +966,9 @@ stock moves which are already processed : '''
             if not po.split_po and not po.order_line:
                 raise osv.except_osv(_('Error !'), _('You can not validate a purchase order without Purchase Order Lines.'))
 
+            if po.amount_total == 0:  # UFTP-69
+                raise osv.except_osv(_('Error'), _('You can not validate a purchase order with a total amount of 0.'))
+
             for line in po.order_line:
                 if line.state=='draft':
                     todo.append(line.id)
@@ -999,17 +1014,20 @@ stock moves which are already processed : '''
             if not po.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             # for all lines, if the confirmed date is not filled, we copy the header value
-            lines_to_update = []
-            for line in po.order_line:
-                # Don't accept the confirmation of regular PO with 0.00 unit price lines
-                if is_regular and line.price_unit == 0.00:
-                    line_error.append(line.line_number)
-                elif not line.confirmed_delivery_date:
-                    lines_to_update.append(line.id)
+            if is_regular:
+                line_error = po_line_obj.search(cr, uid, [
+                    ('order_id', '=', po.id),
+                    ('price_unit', '=', 0.00),
+                    ], context=context)
 
             if len(line_error) > 0:
-                errors = ' / '.join(str(x) for x in line_error)
+                errors = ' / '.join(str(x['line_number']) for x in po_line_obj.read(cr, uid, line_error, ['line_number'], context=context))
                 raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line with a 0.00 Unit Price. Lines in exception : %s') % errors)
+
+            lines_to_update = po_line_obj.search(
+                cr, uid,
+                [('order_id', '=', po.id), ('confirmed_delivery_date', '=', False)],
+                context=context)
 
             po_line_obj.write(cr, uid, lines_to_update, {'confirmed_delivery_date': po.delivery_confirmed_date}, context=context)
         # MOVE code for COMMITMENT into wkf_approve_order
@@ -1056,6 +1074,7 @@ stock moves which are already processed : '''
                     'price_unit': l.price_unit,
                     'procurement_id': l.procurement_id and l.procurement_id.id or False,
                     'type': 'make_to_order',
+                    'supplier': l.order_id.partner_id.id,
                     'analytic_distribution_id': new_distrib,
                     'created_by_po': l.order_id.id,
                     'created_by_po_line': l.id,
@@ -1381,6 +1400,12 @@ stock moves which are already processed : '''
         setup = uf_config.get_config(cr, uid)
 
         for order in self.browse(cr, uid, ids):
+            if order.amount_total == 0:  # UFTP-69
+                # total amount could be set to 0 after it was Validated
+                # or no lines
+                # (after wkf_confirm_order total amount check)
+                raise osv.except_osv(_('Error'), _('You can not confirm a purchase order with a total amount of 0.'))
+
             # Create commitments for each PO only if po is "from picking"
             # UTP-114: No Commitment Voucher on PO that are 'purchase_list'!
             if (order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type not in ['in_kind', 'purchase_list'] and order.partner_id.partner_type != 'intermission') or (order.invoice_method == 'manual' and order.order_type == 'direct' and order.partner_id.partner_type == 'esc'):
@@ -1748,7 +1773,6 @@ stock moves which are already processed : '''
                         wf_service.trg_write(uid, 'stock.picking', line.procurement_id.move_id.picking_id.id, cr)
 
         self.pool.get('purchase.order.line').cancel_sol(cr, uid, line_ids, context=context)
-
         return self.write(cr, uid, ids, {'state':'cancel'}, context=context)
 
     def wkf_confirm_cancel(self, cr, uid, ids, context=None):
@@ -2190,7 +2214,7 @@ class purchase_order_line(osv.osv):
             # erase default code
             vals.update({'default_code':False})
             vals.update({'default_name':False})
-            
+
             if 'comment' in vals:
                 vals.update({'name':vals['comment']})
         # clear nomenclature filter values
@@ -2476,6 +2500,9 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         sol_to_update = {}
+        sol_not_to_delete_ids = []
+        ir_to_potentialy_cancel_ids = []
+        sol_of_po_line_resourced_ids = []
         for line in self.browse(cr, uid, ids, context=context):
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
             for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
@@ -2484,9 +2511,57 @@ class purchase_order_line(osv.osv):
                 sol_to_update[sol.id] += diff_qty
                 if line.has_to_be_resourced:
                     sol_obj.add_resource_line(cr, uid, sol, False, diff_qty, context=context)
+                    sol_of_po_line_resourced_ids.append(sol.id)
+                if sol.order_id.procurement_request:
+                    # UFTP-82: do not delete IR line, cancel it
+                    sol_not_to_delete_ids.append(sol.id)
+                    if sol.order_id.id not in ir_to_potentialy_cancel_ids:
+                        ir_to_potentialy_cancel_ids.append(sol.order_id.id)
 
         for sol in sol_to_update:
+            context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete_ids
             sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+        del context['update_or_cancel_line_not_delete']
+
+        # UFTP-82: IR and its PO is cancelled
+        # IR cancel all lines that have to be cancelled
+        # and cancel IR if all its lines cancelled
+        if ir_to_potentialy_cancel_ids:
+            for ir in self.pool.get('sale.order').browse(cr, uid, ir_to_potentialy_cancel_ids, context=context):
+                # new IR state:
+                # we change his state to 'cancel' if at least one line cancelled
+                # we change his state to 'done' if all lines cancelled and resourced
+                # else NO CHANGE
+                ir_new_state = 'cancel'
+                lines_to_cancel_ids = []
+                all_lines_resourced = True
+                one_line_not_cancelled = False
+
+                # check if at least one line is cancelled
+                # or all lines cancel and resourced
+                for irl in ir.order_line:
+                    line_cancelled = False
+                    if ir.is_ir_from_po_cancel and \
+                        (irl.state == 'cancel' or irl.state == 'exception'):
+                        # note PO sourced from IR, IR cancelled line can be in 'exception' as a 'cancelled' one
+                        line_cancelled = True
+                        if irl.id not in sol_of_po_line_resourced_ids:
+                            all_lines_resourced = False  # one cancelled line not resourced
+                        if irl.state == 'exception':
+                            lines_to_cancel_ids.append(irl.id)  # to be set to cancel
+                    if not line_cancelled:
+                        ir_new_state = False  # no cancelled line left, then no change
+                if ir_new_state and all_lines_resourced:
+                    # 'state change' flaged and all line resourced, state to done
+                    ir_new_state = 'done'
+
+                if lines_to_cancel_ids:
+                    self.pool.get('sale.order.line').write(cr, uid, lines_to_cancel_ids,
+                        {'state': ir_new_state if ir_new_state else 'cancel'},
+                        context=context)
+                if ir_new_state:
+                    self.pool.get('sale.order').write(cr, uid, ir.id,
+                        {'state':  ir_new_state}, context=context)
 
         return True
 

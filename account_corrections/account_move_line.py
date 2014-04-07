@@ -714,9 +714,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
             else:
                 cor_vals['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
             self.write(cr, uid, [correction_line_id], cor_vals, context=context, check=False, update_check=False)
+            # UF-2231: Remove the update to the statement line
             # Update register line if exists
-            if ml.statement_id:
-                self.update_account_on_st_line(cr, uid, [ml.id], new_account_id, context=context)
+            #if ml.statement_id:
+            #    self.update_account_on_st_line(cr, uid, [ml.id], new_account_id, context=context)
             # Inform old line that it have been corrected
             self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context, check=False, update_check=False)
             # Post the move

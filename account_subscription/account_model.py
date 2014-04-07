@@ -372,6 +372,21 @@ class account_model(osv.osv):
                 'context': context,
         }
 
-account_model()
+    def button_reset_distribution(self, cr, uid, ids, context=None):
+        """
+        Reset analytic distribution on all recurring lines.
+        To do this, just delete the analytic_distribution id link on each recurring line.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        recurring_obj = self.pool.get(self._name + '.line')
+        # Search recurring lines
+        to_reset = recurring_obj.search(cr, uid, [('model_id', 'in', ids)])
+        recurring_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
+        return True
 
+account_model()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

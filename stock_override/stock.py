@@ -20,19 +20,20 @@
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import time
-from operator import itemgetter
 from itertools import groupby
-
-from osv import fields, osv
-from tools.translate import _
-import netsvc
-import tools
-import decimal_precision as dp
 import logging
+from operator import itemgetter
 from os import path
+import time
 
+import netsvc
+from osv import fields, osv
+import tools
+from tools.translate import _
+
+import decimal_precision as dp
 from msf_partner import PARTNER_TYPE
+
 
 #----------------------------------------------------------
 # Procurement Order
@@ -268,7 +269,16 @@ class stock_picking(osv.osv):
                  'from_wkf': lambda *a: False,
                  'update_version_from_in_stock_picking': 0,
                  'fake_type': 'in',
+                 'shipment_ref':False
                  }
+
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        default.update(shipment_ref=False)
+        return super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
 
     def _check_active_product(self, cr, uid, ids, context=None):
         '''
@@ -1148,7 +1158,17 @@ class stock_move(osv.osv):
             if backmove_ids or move.product_qty == 0.00:
                 raise osv.except_osv(_('Error'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
             if (move.sale_line_id and move.sale_line_id.order_id) or (move.purchase_line_id and move.purchase_line_id.order_id and (move.purchase_line_id.order_id.po_from_ir or move.purchase_line_id.order_id.po_from_fo)):
-                wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, {'move_id': ids[0]}, context=context)
+                vals = {'move_id': ids[0]}
+                if 'from_int' in context:
+                    """UFTP-29: we are in a INT stock move - line by line cancel
+                    do not allow Cancel and Resource if move linked to a PO line
+                    => the INT is sourced from a PO-IN flow
+                    'It should only be possible to resource an INT created from the sourcing of an IR / FO from stock,
+                     but not an INT created by an incoming shipment (Origin field having a "PO" ref.)'
+                    """
+                    if move.purchase_line_id:
+                        vals['cancel_only'] = True
+                wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
 
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'stock.move.cancel.wizard',
@@ -1303,33 +1323,82 @@ class stock_move(osv.osv):
         '''
         Update the partner or the address according to the other
         '''
+        # Objects
+        prod_obj = self.pool.get('product.product')
+        data_obj = self.pool.get('ir.model.data')
+        loc_obj = self.pool.get('stock.location')
+        pick_obj = self.pool.get('stock.picking')
+        addr_obj = self.pool.get('res.partner.address')
+        partner_obj = self.pool.get('res.partner')
+
+        if context is None:
+            context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if not vals.get('address_id') and vals.get('partner_id2'):
-            for move in self.browse(cr, uid, ids, context=context):
-                if move.partner_id.id != vals.get('partner_id'):
-                    addr = self.pool.get('res.partner').address_get(cr, uid, vals.get('partner_id2'), ['delivery', 'default'])
-                    if not addr.get('delivery'):
-                        vals['address_id'] = addr.get('default')
-                    else:
-                        vals['address_id'] = addr.get('delivery')
+        product = None
+        pick_bro = None
+        id_cross = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
 
-        if not vals.get('partner_id2') and vals.get('address_id'):
+        if vals.get('product_id', False):
+            # complete hidden flags - needed if not created from GUI
+            product = prod_obj.browse(cr, uid, vals['product_id'], context=context)
+            vals.update({
+                'hidden_batch_management_mandatory': product.batch_management,
+                'hidden_perishable_mandatory': product.perishable,
+            })
+
+            if vals.get('picking_id'):
+                pick_bro = pick_obj.browse(cr, uid, vals['picking_id'], context=context)
+
+        if pick_bro and product and product.type == 'consu' and vals.get('location_dest_id') != id_cross:
+            id_nonstock = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')
+            if vals.get('sale_line_id'):
+                id_pack = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')
+                vals.update({
+                    'location_id': pick_bro.type == 'out' and id_cross or id_nonstock[1],
+                    'location_dest_id': id_pack[1],
+                })
+            elif pick_bro.type != 'out':
+                vals['location_dest_id'] = id_nonstock[1]
+
+        if vals.get('location_dest_id'):
+            dest_id = loc_obj.browse(cr, uid, vals['location_dest_id'], context=context)
+            if dest_id.usage == 'inventory' and not dest_id.virtual_location:
+                vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            if dest_id.scrap_location and not dest_id.virtual_location:
+                vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+            # if the source location and the destination location are the same, the state is done
+            if 'location_id' in vals and vals['location_dest_id'] == vals['location_id']:
+                vals['state'] = 'done'
+
+        addr = vals.get('address_id')
+        partner = vals.get('partner_id2')
+
+        cond1 = not addr and partner
+        cond2 = not partner and addr
+
+        if vals.get('date_expected') or vals.get('reason_type_id') or cond1 or cond2:
             for move in self.browse(cr, uid, ids, context=context):
-                if move.address_id.id != vals.get('address_id'):
-                    addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
+                if cond1 and move.partner_id.id != partner:
+                    addr = partner_obj.address_get(cr, uid, vals.get('partner_id2'), ['delivery', 'default'])
+                    vals['address_id'] = addr.get('delivery', False) or addr.get('default')
+
+                if cond2 and move.address_id.id != vals.get('address_id'):
+                    addr = addr_obj.browse(cr, uid, vals.get('address_id'), context=context)
                     vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
 
-        if vals.get('date_expected'):
-            for move in self.browse(cr, uid, ids, context=context):
-                if vals.get('state', move.state) not in ('done', 'cancel'):
+                if vals.get('date_expected') and vals.get('state', move.state) not in ('done', 'cancel'):
                     vals['date'] = vals.get('date_expected')
 
-        res = super(stock_move, self).write(cr, uid, ids, vals, context=context)
+                # Change the reason type of the picking if it is not the same
+                if 'reason_type_id' in vals:
+                    if move.picking_id and move.picking_id.reason_type_id.id != vals['reason_type_id']:
+                        other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+                        pick_obj.write(cr, uid, move.picking_id.id, {'reason_type_id': other_type_id}, context=context)
 
-        return res
+        return super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
     def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
         '''
@@ -1511,12 +1580,19 @@ class stock_move(osv.osv):
         if done:
             count += len(done)
 
+            done_ids = []
+            assigned_ids = []
             # If source location == dest location THEN stock move is done.
             for line in self.read(cr, uid, done, ['location_id', 'location_dest_id']):
                 if line.get('location_id') and line.get('location_dest_id') and line.get('location_id') == line.get('location_dest_id'):
-                    self.write(cr, uid, [line['id']], {'state': 'done'})
+                    done_ids.append(line['id'])
                 else:
-                    self.write(cr, uid, [line['id']], {'state': 'assigned'})
+                    assigned_ids.append(line['id'])
+
+            if done_ids:
+                self.write(cr, uid, done_ids, {'state': 'done'})
+            if assigned_ids:
+                self.write(cr, uid, assigned_ids, {'state': 'assigned'})
 
         if notdone:
             self.write(cr, uid, notdone, {'state': 'confirmed'})
@@ -2105,10 +2181,12 @@ class stock_move_cancel_wizard(osv.osv_memory):
 
     _columns = {
         'move_id': fields.many2one('stock.move', string='Move', required=True),
+        'cancel_only': fields.boolean('Just allow cancel only', invisible=True),
     }
 
     _defaults = {
         'move_id': lambda self, cr, uid, c: c.get('active_id'),
+        'cancel_only': False,
     }
 
     def just_cancel(self, cr, uid, ids, context=None):

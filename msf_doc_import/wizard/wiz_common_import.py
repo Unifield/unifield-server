@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -109,11 +109,16 @@ class wizard_common_import_line(osv.osv_memory):
         '''
         Open the wizard
         '''
-        context = context is None and {} or context
+        if context is None:
+            context = {}
 
-        wiz_id = self.create(cr, uid, {'parent_id': parent_id,
-                                       'parent_model': parent_model,
-                                       'line_model': line_model}, context=context)
+        vals = {
+            'parent_id': parent_id,
+            'parent_model': parent_model,
+            'line_model': line_model,
+            'search_default_not_restricted': 1 if 'search_default_not_restricted' in context else 0,
+        }
+        wiz_id = self.create(cr, uid, vals, context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': self._name,
@@ -129,6 +134,11 @@ class wizard_common_import_line(osv.osv_memory):
         'line_model': fields.char(size=128, string='Model of the line document'),
         'product_ids': fields.many2many('product.product', 'product_add_in_line_rel',
                                         'wiz_id', 'product_id', string='Products'),
+        'search_default_not_restricted': fields.integer('Search default not restricted', invisible=True),  # UFTP-15 (for context reinject in product_ids m2m for 'add multiple lines' button)
+    }
+
+    _defaults = {
+        'search_default_not_restricted': 0,
     }
 
     def fill_lines(self, cr, uid, ids, context=None):
@@ -150,7 +160,7 @@ class wizard_common_import_line(osv.osv_memory):
             product_ids = wiz['product_ids']
 
             line_obj.create_multiple_lines(cr, uid, parent_id, product_ids, context=context)
-                                        
+
         return {'type': 'ir.actions.act_window_close'}
 
 wizard_common_import_line()
@@ -178,7 +188,7 @@ class purchase_order_line(osv.osv):
                       'product_uom': p_data['uom_id'][0],
                       'price_unit': p_data['standard_price'],
                       'old_price_unit': p_data['standard_price'],}
- 
+
             values.update(self.product_id_on_change(cr, uid, False,
                                                     po_data['pricelist_id'][0], # Pricelist
                                                     values['product_id'], # Product
@@ -219,11 +229,14 @@ class purchase_order(osv.osv):
         order_id = self.browse(cr, uid, ids[0], context=context)
         context.update({'partner_id': order_id.partner_id.id,
                         'quantity': 0.00,
-                        'rfq_ok': False,
+                        'rfq_ok': order_id.rfq_ok,
                         'purchase_id': order_id.id,
                         'purchase_order': True,
                         'uom': False,
-                        'product_ids_domain': [('available_for_restriction', '=', order_id.partner_type)], 
+                        # UFTP-15: we active 'only not forbidden' filter as default
+                        'available_for_restriction': order_id.partner_type,
+                        'search_default_not_restricted': 1,
+                        'add_multiple_lines': True,
                         'partner_type': order_id.partner_type,
                         'pricelist_id': order_id.pricelist_id.id,
                         'pricelist': order_id.pricelist_id.id,
@@ -274,12 +287,18 @@ class tender(osv.osv):
         '''
         Open the wizard to open multiple lines
         '''
-        context = context is None and {} or context
+        if context is None:
+            context = {}
         ids = isinstance(ids, (int, long)) and [ids] or ids
-        
+
         tender = self.browse(cr, uid, ids[0], context=context)
-        context.update({'product_ids_domain': [('purchase_type', '=', tender.categ),
-                                               ('available_for_restriction', '=', 'tender')]})
+        context.update({
+            'product_ids_domain': [('purchase_type', '=', tender.categ)],
+            # UFTP-15: we active 'only not forbidden' filter as default
+            'available_for_restriction': 'tender',
+            'search_default_not_restricted': 1,
+            'add_multiple_lines': True,
+        })
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'tender', 'tender.line', context=context)
@@ -341,12 +360,36 @@ class sale_order(osv.osv):
         '''
         Open the wizard to add multiple lines
         '''
-        context = context is None and {} or context
+        if context is None:
+            context = {}
         ids = isinstance(ids, (int, long)) and [ids] or ids
-        
+
         order = self.browse(cr, uid, ids[0], context=context)
-        context.update({'product_ids_domain': [('purchase_type', '=', order.categ),
-                                               ('available_for_restriction', '=', order.procurement_request and 'consumption' or order.partner_type)]})
+        if order.procurement_request:
+            # UFTP-15: IR context available_for_restriction = 'consumption' (3.1.3.4 case (d))
+            context_update = {
+                'product_ids_domain': [('purchase_type', '=', order.categ)],
+                # UFTP-15: we active 'only not forbidden' filter as default
+                'available_for_restriction': 'consumption',
+                'search_default_not_restricted': 1,
+                'add_multiple_lines': True,
+            }
+        else:
+            # UFTP-15: FO context available_for_restriction = 'partner type'
+            context_update = {
+                'product_ids_domain': [('purchase_type', '=', order.categ)],
+                # UFTP-15: we active 'only not forbidden' filter as default
+                'available_for_restriction': order.partner_type,
+                'search_default_not_restricted': 1,
+                'add_multiple_lines': True,
+                # UFTP-15: we pass infos in context like for a FO line product m2o
+                'partner_id': order.partner_id.id,
+                'pricelist_id': order.pricelist_id.id,
+                'pricelist': order.pricelist_id.id,
+                'warehouse': order.warehouse_id.id,
+                'categ': order.categ,
+            }
+        context.update(context_update)
 
         return self.pool.get('wizard.common.import.line').\
                 open_wizard(cr, uid, ids[0], 'sale.order', 'sale.order.line', context=context)
@@ -371,7 +414,7 @@ class composition_item(osv.osv):
             values = {'item_kit_id': parent_id,
                       'item_product_id': p_data['id'],
                       'item_uom_id': p_data['uom_id'][0],}
-            
+
             values.update(self.on_product_change(cr, uid, False, values['item_product_id'], context=context).get('value', {}))
             # Set the quantity to 0.00
             values.update({'product_qty': 0.00})
@@ -533,7 +576,7 @@ stock_picking()
 
 class stock_warehouse_auto_supply_line(osv.osv):
     _inherit = 'stock.warehouse.automatic.supply.line'
-    
+
     def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
         '''
         Create lines according to product in list
@@ -552,7 +595,7 @@ class stock_warehouse_auto_supply_line(osv.osv):
             if not self.search(cr, uid, [('product_id', '=', p_data['id']), ('supply_id', '=', parent_id)], context=context):
                 self.create(cr, uid, values, context=dict(context, noraise=True))
 
-        return True        
+        return True
 
 stock_warehouse_auto_supply_line()
 
@@ -752,7 +795,7 @@ initial_stock_inventory_line()
 
 class initial_stock_inventory(osv.osv):
     _inherit = 'initial.stock.inventory'
-    
+
     def add_multiple_lines(self, cr, uid, ids, context=None):
         '''
         Open the wizard to open multiple lines

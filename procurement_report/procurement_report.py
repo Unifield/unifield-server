@@ -105,7 +105,8 @@ class procurement_rules_report(osv.osv):
                     stock_warehouse_automatic_supply_line swasl
                     LEFT JOIN
                         stock_warehouse_automatic_supply swas
-                    ON swasl.supply_id = swas.id)
+                    ON swasl.supply_id = swas.id
+                WHERE swas.active = True)
                 UNION
                 (SELECT
                     0 AS swas_ok,
@@ -118,7 +119,8 @@ class procurement_rules_report(osv.osv):
                     stock_warehouse_order_cycle_line ocpr
                     LEFT JOIN
                     stock_warehouse_order_cycle swoc
-                    ON ocpr.order_cycle_id = swoc.id))
+                    ON ocpr.order_cycle_id = swoc.id
+                    WHERE swoc.active=True))
                 UNION
                 (SELECT
                     0 AS swas_ok,
@@ -128,7 +130,7 @@ class procurement_rules_report(osv.osv):
                     swop.product_id AS product_id,
                     swop.location_id AS location_id
                 FROM
-                    stock_warehouse_orderpoint swop))
+                    stock_warehouse_orderpoint swop WHERE swop.active=True))
                 UNION
                 (SELECT
                     0 AS swas_ok,
@@ -141,25 +143,9 @@ class procurement_rules_report(osv.osv):
                     threshold_value_line swtvl
                     LEFT JOIN
                     threshold_value swtv
-                    ON swtvl.threshold_value_id = swtv.id))
-                UNION
-                    (SELECT 
-                        0 AS swas_ok,
-                        0 AS swoc_ok,
-                        0 AS swop_ok,
-                        0 AS swtv_ok,
-                        product.id AS product_id,
-                        null AS location_id
-                    FROM product_product product
-                    WHERE product.id NOT IN 
-                        (SELECT product_id FROM stock_warehouse_automatic_supply_line
-                        UNION
-                        SELECT product_id FROM stock_warehouse_order_cycle_line
-                        UNION
-                        SELECT product_id FROM stock_warehouse_orderpoint
-                        UNION
-                        SELECT product_id FROM threshold_value_line)
-                )) AS al
+                    ON swtvl.threshold_value_id = swtv.id
+                    WHERE swtv.active=True))
+                ) AS al
                 LEFT JOIN
                     product_product prod
                     ON al.product_id = prod.id

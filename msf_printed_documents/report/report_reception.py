@@ -26,9 +26,6 @@ class report_reception(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(report_reception, self).__init__(cr, uid, name, context=context)
         self.item = 0
-        self.kc = False
-        self.dg = False
-        self.np = False
         self.localcontext.update({
             'time': time,
             'enumerate': enumerate,
@@ -51,21 +48,33 @@ class report_reception(report_sxw.rml_parse):
             'getQtyIS': self.getQtyIS,
             'getWarning': self.getWarning,
             'getOriginRef': self.getOriginRef,
+            'getBatch': self.getBatch,
+            'getExpDate': self.getExpDate,
+            'getActualReceiptDate': self.getActualReceiptDate,
+            'getQtyBO': self.getQtyBO,
         })
 
     def getOriginRef(self,o):
         return o and o.purchase_id and o.purchase_id.origin or False
 
-    def getWarning(self,):
+    def getWarning(self, o):
+        # UTP-756: Check the option right here on move lines of this stock picking, remove the check in self.check because it's too late!
+        lines = o.move_lines
+        kc_flag = False
+        dg_flag = False
+        for line in lines:
+            if line.kc_check:
+                kc_flag = True
+            if line.dg_check:
+                dg_flag = True
+
         warn = ''
         tab = []
-        if self.kc or self.dg or self.np:
+        if kc_flag or dg_flag:
             warn += 'You are about to receive'
-        if self.kc :
-            tab.append('heat')
-        if self.np :
-            tab.append('sensitive')
-        if self.dg :
+        if kc_flag :
+            tab.append('heat sensitive')
+        if dg_flag :
             tab.append('dangerous')
         if len(tab) > 0 :
             if len(tab) ==1:
@@ -74,19 +83,45 @@ class report_reception(report_sxw.rml_parse):
                 warn += ' ' + tab[0] + ' and ' + tab[1]
             elif len(tab) == 3:
                 warn += ' ' + tab[0] + ', ' + tab[1] + ' and ' +  tab[2]
-        if self.kc or self.dg or self.np:
+        if warn:
             warn += ' goods products, please refer to the appropriate procedures'
         return warn
 
     def getQtyPO(self,line):
-        if line.picking_id:
-            for x in line.picking_id.move_lines:
-                if x.line_number == line.line_number:
-                    return x.product_qty
-        return False
+        # line amount from the PO, always the same on all INs for a given PO
+        val = line.purchase_line_id.product_qty if line.purchase_line_id else 0
+        return "{0:.2f}".format(val)
 
-    def getQtyIS(self,line):
-        return line.product_qty
+    def getQtyBO(self,line,o):
+        # Back Order amount = PO amount - all receipts
+
+        # get PO qty
+        qtyPO = line.purchase_line_id.product_qty if line.purchase_line_id else 0
+        # get received qty (current and previous INs)
+        cr, uid = self.cr, self.uid
+        val = 0.00
+        stock_move_obj = self.pool.get('stock.move')
+        closed_move_ids = stock_move_obj.search(cr, uid, [('purchase_line_id','=',line.purchase_line_id.id),('state','=','done'),('type','=','in')])
+        if closed_move_ids:
+            stock_moves = stock_move_obj.browse(cr, uid, closed_move_ids)
+            if stock_moves:
+                for move in stock_moves:
+                    val = val + move.product_qty
+
+        qtyBO = qtyPO - val
+        if qtyBO <= 0:
+            qtyBO = 0
+
+        return "{0:.2f}".format(qtyBO)
+
+    def getQtyIS(self,line,o):
+        # Amount received in this IN only
+        if o.state == 'assigned':
+            val = 0
+        else:
+            val = line.product_qty
+        return "{0:.2f}".format(val)
+
 
     def getProject(self,o):
         return o and o.purchase_id and o.purchase_id.dest_address_id and o.purchase_id.dest_address_id.name or False
@@ -128,19 +163,16 @@ class report_reception(report_sxw.rml_parse):
     def check(self,line,opt):
         if opt == 'kc':
             if line.kc_check:
-                self.kc = True
                 return 'X'
-            return ''
+            return ' '
         elif opt == 'dg':
             if line.dg_check:
-                self.dg = True
                 return 'X'
-            return ''
+            return ' '
         elif opt == 'np':
             if line.np_check:
-                self.np = True
                 return 'X'
-            return ''
+            return ' '
 
     def getNbItem(self, ):
         self.item += 1
@@ -149,6 +181,19 @@ class report_reception(report_sxw.rml_parse):
     def getDateCreation(self, o):
         return time.strftime('%d-%b-%Y', time.strptime(o.creation_date,'%Y-%m-%d %H:%M:%S'))
 
+    def getBatch(self, line):
+        return line.prodlot_id.name
+
+    def getExpDate(self, line):
+        return time.strftime('%d/%m/%Y', time.strptime(line.prodlot_id.life_date,'%Y-%m-%d'))
+
+
+    def getActualReceiptDate(self,o):
+        if o.state == 'assigned':
+          actual_receipt_date = ''
+        else:
+            actual_receipt_date = time.strftime('%d/%m/%Y', time.strptime(o.date,'%Y-%m-%d %H:%M:%S'))
+        return actual_receipt_date
 
     def get_lines(self, o):
         return o.move_lines

@@ -331,13 +331,15 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         Check if all lines have a quantity larger than 0.00
         '''
-        issue_ids = []
-        for order in self.read(cr, uid, ids, ['state'], context=context):
-            if order['state'] not in ['draft', 'cancel']:
-                issue_ids.append(order['id'])
+        # Objects
+        line_obj = self.pool.get('sale.order.line')
 
-        line_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', 'in', issue_ids),
-                                                                     ('product_uom_qty', '=', 0.00)], context=context)
+        line_ids = line_obj.search(cr, uid, [
+            ('order_id', 'in', ids),
+            ('order_id.state', 'not in', ['draft', 'cancel']),
+            ('order_id.import_in_progress', '=', False),
+            ('product_uom_qty', '<=', 0.00),
+        ], count=True, context=context)
 
         if line_ids:
             return False
@@ -1603,7 +1605,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 # when the line is sourced, we already get a procurement for the line
                 # when the line is confirmed, the corresponding procurement order has already been processed
                 # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
-                if line.state not in ['sourced', 'confirmed', 'done'] and not line.created_by_po_line and not line.procurement_id and line.product_id:
+                if line.state not in ['sourced', 'confirmed', 'done'] and not (line.created_by_po_line and line.procurement_id) and line.product_id:
                     proc_data = self._get_procurement_order_data(line, order, rts, context=context)
                     proc_id = proc_obj.create(cr, uid, proc_data, context=context)
                     # set the flag for log message
@@ -1794,8 +1796,17 @@ class sale_order_line(osv.osv):
             proc = line.procurement_id and line.procurement_id.id
             # Delete the line and the procurement
             self.write(cr, uid, [line.id], {'state': 'cancel'}, context=context)
-            self.unlink(cr, uid, [line.id], context=context)
-
+            # UFTP-82:
+            # do not delete cancelled IR line from PO cancelled
+            # see purchase_override/purchase.py 
+            # - purchase_order_cancel_wizard.cancel_po()
+            # - purchase_order_line.cancel_sol()
+            if not 'update_or_cancel_line_not_delete' in context \
+                or not context['update_or_cancel_line_not_delete']:
+                self.unlink(cr, uid, [line.id], context=context)
+            elif line.order_id.procurement_request:
+                # UFTP-82: flagging SO is an IR and its PO is cancelled
+                self.pool.get('sale.order').write(cr, uid, [line.order_id.id], {'is_ir_from_po_cancel': True}, context=context)
             if proc:
                 proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
                 proc_obj.action_cancel(cr, uid, [proc])
@@ -1859,7 +1870,15 @@ class sale_order_line(osv.osv):
         else:
             view_id = data_obj.get_object_reference(cr, uid, 'sale', 'view_order_form')[1]
         context.update({'view_id': view_id})
-        self.pool.get('sale.order').log(cr, uid, order_id, _('A line was added to the Field Order %s to re-source the canceled line.') % (order_name), context=context)
+ 
+        """UFTP-90
+        put a 'clean' context for 'log' without potential 'Enter a reason' wizard infos 
+        _terp_view_name, wizard_name, ..., these causes a wrong name of the FO/IR linked view
+        form was opened with 'Enter a Reason for Incoming cancellation' name
+        we just keep the view id (2 distincts ids for FO/IR)"""
+        self.pool.get('sale.order').log(cr, uid, order_id, 
+            _('A line was added to the Field Order %s to re-source the canceled line.') % (order_name),
+            context={'view_id': context.get('view_id', False)})
 
         return line_id
 
@@ -2050,7 +2069,11 @@ class sale_order_line(osv.osv):
 
         if not context.get('noraise') and not context.get('import_in_progress'):
             if ids and not 'product_uom_qty' in vals:
-                empty_lines = self.search(cr, uid, [('id', 'in', ids), ('product_uom_qty', '<=', 0.00)], count=True, context=context)
+                empty_lines = self.search(cr, uid, [
+                    ('id', 'in', ids),
+                    ('order_id.state', 'not in', ['draft', 'cancel']),
+                    ('product_uom_qty', '<=', 0.00),
+                ], count=True, context=context)
                 if empty_lines:
                         raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
 

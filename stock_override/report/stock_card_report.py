@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -30,7 +30,13 @@ class stock_card_report(report_sxw.rml_parse):
         super(stock_card_report, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'parse_origin': self._parse_origin,
         })
+
+    def _parse_origin(self, origin):
+        if origin:
+            return origin.replace(';', '; ').replace(':', ': ')  # force word wrap
+        return ''
 
 report_sxw.report_sxw('report.stock.card.report','stock.card.wizard','addons/stock_override/report/stock_card_report.rml',parser=stock_card_report, header='internal landscape')
 
@@ -42,8 +48,8 @@ def getIds(self, cr, uid, ids, context):
         table_obj = pooler.get_pool(cr.dbname).get(self.table)
         ids = table_obj.search(cr, uid, context.get('search_domain'), limit=5000)
     return ids
-    
-    
+
+
 
 class stock_card_report_xls(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):

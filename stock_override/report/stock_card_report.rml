@@ -163,7 +163,7 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="95.0,100.0,180.0,55.0,55.0,55.0,140.0,120.0" style="LineHeader" keepWithNext="1">
+        <blockTable colWidths="95.0,100.0,220.0,55.0,55.0,55.0,120.0,100.0" style="LineHeader" keepWithNext="1">
             <tr>
                 <td>
                     <para style="ParaLineHeader">Date</para>
@@ -218,7 +218,7 @@
             </tr>
         </blockTable>
         <section>
-            <blockTable colWidths="95.0,100.0,180.0,55.0,55.0,55.0,140.0,120.0" style="Lines">
+            <blockTable colWidths="95.0,100.0,220.0,55.0,55.0,55.0,120.0,100.0" style="Lines">
                 [[ repeatIn(o.card_lines, 'l') ]]
                 <tr>
                     <td>
@@ -228,7 +228,7 @@
                         <para style="ParaLinesLeft">[[ l.doc_ref ]]</para>
                     </td>
                     <td>
-                        <para style="ParaLinesLeft">[[ l.origin ]]</para>
+                        <para style="ParaLinesLeft">[[ parse_origin(l.origin) ]]</para>
                     </td>
                     <td>
                         <para style="ParaLines">[[ formatLang(l.qty_in) ]]</para>

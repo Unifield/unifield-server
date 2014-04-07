@@ -113,6 +113,22 @@ class purchase_order(osv.osv):
                 'context': context,
         }
 
+    def button_reset_distribution(self, cr, uid, ids, context=None):
+        """
+        Reset analytic distribution on all purchase order lines.
+        To do this, just delete the analytic_distribution id link on each purchase order line.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        purchase_obj = self.pool.get(self._name + '.line')
+        # Search purchase order lines
+        to_reset = purchase_obj.search(cr, uid, [('order_id', 'in', ids)])
+        purchase_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
+        return True
+
     def copy_data(self, cr, uid, p_id, default=None, context=None):
         """
         Copy global distribution and give it to new purchase.
@@ -323,6 +339,7 @@ class purchase_order_line(osv.osv):
 #                                     'analytic_account_project_intermission')[1]
 #         except ValueError:
 #             intermission_cc = 0
+        ana_dist_obj = self.pool.get('analytic.distribution')
         # Browse all given lines
         for line in self.browse(cr, uid, ids, context=context):
 #             is_intermission = False
@@ -339,7 +356,7 @@ class purchase_order_line(osv.osv):
                 if not account_id:
                     res[line.id] = 'invalid'
                     continue
-                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, po_distrib_id, account_id)
+                res[line.id] = ana_dist_obj._get_distribution_state(cr, uid, distrib_id, po_distrib_id, account_id)
 
                 # UTP-953: For intersection, the cc_intermission can also be used for all partner types, so the block below is removed
 #                if res[line.id] == 'valid' and not is_intermission:
