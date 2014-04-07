@@ -29,17 +29,17 @@ from sync_common import sync_log
 class message(osv.osv):
     _name = "sync.server.message"
     _rec_name = 'identifier'
-    
+
     _columns = {
         'identifier': fields.char('Identifier', size=128, select=True),
         'sent': fields.boolean('Sent to destination ?', select=True),
         'remote_call': fields.text('Method to call', required = True),
-        'arguments': fields.text('Arguments of the method', required = True), 
+        'arguments': fields.text('Arguments of the method', required = True),
         'destination': fields.many2one('sync.server.entity', string="Destination Instance", select=True),
-        'source': fields.many2one('sync.server.entity', string="Source Instance"), 
+        'source': fields.many2one('sync.server.entity', string="Source Instance"),
         'sequence': fields.integer('Sequence', required=True, select=True),
     }
-    
+
     _order = 'sequence asc'
 
     _defaults = {
@@ -70,10 +70,10 @@ class message(osv.osv):
             if not destination:
                 sync_log(self, 'destination %s does not exist' % data['dest'])
                 continue
-            
+
             #SP-135/UF-1617: Message unique key is from identifier PLUS destination: sending the same batch number and asset to different destinations
             ids = self.search(cr, uid, [('identifier', '=', data['id']), ('destination', '=', data['dest'])], context=context)
-            if ids: 
+            if ids:
                 sync_log(self, 'Message %s already in the server database' % data['id'])
                 #SP-135/UF-1617: Overwrite the message and set the sent to False
                 self.write(cr, uid, ids, {
@@ -84,7 +84,7 @@ class message(osv.osv):
                     'sent': False, # SP-135: Set the sent flag to become "not sent"
                     'source': entity.id,
                 }, context=context)
-                
+
                 continue
             self.create(cr, uid, {
                 'identifier': data['id'],
@@ -95,7 +95,7 @@ class message(osv.osv):
             }, context=context)
 
         return (True, "Message received")
-    
+
     def _get_destination(self, cr, uid, dest, context=None):
         """
             Private destination getter.
@@ -113,7 +113,7 @@ class message(osv.osv):
             return ids[0]
         else:
             return False
-        
+
     def get_message_packet(self, cr, uid, entity, size, context=None):
         """
             get_message_packet() is called by the XML RPC method get_message() when the client instance try to pull its
@@ -138,14 +138,14 @@ class message(osv.osv):
             message = {
                 'id': data.identifier,
                 'call': data.remote_call,
-                'args': data.arguments, 
+                'args': data.arguments,
                 'source': data.source.name,
                 'sequence' : data.sequence,
             }
             packet.append(message)
-             
+
         return packet
-    
+
     def set_message_as_received(self, cr, uid, entity, message_uuids, context=None):
         """
             Called by XML RPC method message_received when the client instance pull messages and it succeeds.
@@ -165,7 +165,7 @@ class message(osv.osv):
             self.write(cr, uid, ids, {'sent' : True}, context=context)
 
         return True
-        
+
     def recovery(self, cr, uid, entity, start_seq, context=None):
         """
             Mark all messages owned by the entity itself as not sent.
@@ -179,14 +179,15 @@ class message(osv.osv):
 
             @return : True or raise an error
         """
-        ids = self.search(cr, uid, [('sequence', '>', start_seq), ('destination', '=', entity.id)], context=context)
+        domain = [('sequence', '>', start_seq), ('destination', '=', entity.id), ('sent', '=', True)]
+        ids = self.search(cr, uid, domain, context=context)
+
         if ids:
-            self._logger.debug("recovery %s" % ids)
             self.write(cr, uid, ids, {'sent' : False}, context=context)
             self._logger.debug("These ids will be recovered: %s" % str(ids))
         else:
-            self._logger.debug("No ids to be recover! domain=%s" % str([('sequence', '>=', start_seq), ('destination', '=', entity.id)]))
+            self._logger.debug("No ids to recover! domain=%s" % domain)
         return True
-        
+
 message()
-    
+

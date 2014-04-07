@@ -115,7 +115,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 # get the logger
                 logger = context.get('logger')
                 make_log = logger is None
-                
+
                 # we have to make the log
                 if make_log:
                     # get a whole new logger from sync.monitor object
@@ -215,7 +215,7 @@ class Entity(osv.osv):
     """ OpenERP entity name and unique identifier """
     _name = "sync.client.entity"
     _description = "Synchronization Instance"
-    
+
     _logger = logging.getLogger('sync.client')
 
     def _auto_init(self,cr,context=None):
@@ -223,7 +223,7 @@ class Entity(osv.osv):
         if not self.search(cr, 1, [], context=context):
             self.create(cr, 1, {'identifier' : self.generate_uuid()}, context=context)
         return res
-    
+
     def _get_state(self, cr, uid, ids, name, arg, context=None):
         res = {}
         for entity in self.browse(cr, uid, ids, context=context):
@@ -244,40 +244,40 @@ class Entity(osv.osv):
             else:
                 res[entity.id] = 'corrupted'
         return res
-    
+
     def _get_nb_message_send(self, cr, uid, ids, name, arg, context=None):
         nb = self.pool.get('sync.client.message_to_send').search_count(cr, uid, [('sent', '=', False), ('generate_message', '=', False)], context=context)
         return self._encapsulate_in_dict(nb, ids)
-    
+
     def _get_nb_update_send(self, cr, uid, ids, name, arg, context=None):
         nb = self.pool.get('sync.client.update_to_send').search_count(cr, uid, [('sent', '=', False)], context=context)
         return self._encapsulate_in_dict(nb, ids)
-    
+
     def _encapsulate_in_dict(self, value, ids):
         res= {}
         for id in ids:
-            res[id] = value 
+            res[id] = value
         return res
-   
-    def _entity_unique(self,cr,uid,ids,context=None):     
+
+    def _entity_unique(self,cr,uid,ids,context=None):
         return self.search(cr, uid,[(1, '=', 1)],context=context,count=True) == 1
-    
+
     _columns = {
         'name':fields.char('Instance Name', size=64, readonly=True),
-        'identifier':fields.char('Identifier', size=64, readonly=True), 
+        'identifier':fields.char('Identifier', size=64, readonly=True),
         'parent':fields.char('Parent Instance', size=64, readonly=True),
         'update_last': fields.integer('Last update', required=True),
         'update_offset' : fields.integer('Update Offset', required=True, readonly=True),
         'message_last': fields.integer('Last message', required=True),
         'email' : fields.char('Contact Email', size=512, readonly=True),
-        
+
         'state' : fields.function(_get_state, method=True, string='State', type="char", readonly=True),
         'session_id' : fields.char('Push Session Id', size=128),
         'max_update' : fields.integer('Max Update Sequence', readonly=True),
         'message_to_send' : fields.function(_get_nb_message_send, method=True, string='Nb message to send', type='integer', readonly=True),
         'update_to_send' : fields.function(_get_nb_update_send, method=True, string='Nb update to send', type='integer', readonly=True),
     }
-    
+
     _constraints = [
         (_entity_unique,_('The Instance is unique, you cannot create a new one'), ['name','identifier'])
     ]
@@ -288,7 +288,7 @@ class Entity(osv.osv):
         'update_offset' : 0,
         'message_last' : 0,
     }
-    
+
     def get_entity(self, cr, uid, context=None):
         ids = self.search(cr, uid, [], context=context)
         return self.browse(cr, uid, ids, context=context)[0]
@@ -299,10 +299,10 @@ class Entity(osv.osv):
         """
         ids = self.search(cr, 1, [])
         return self.browse(cr, 1, ids)[0]
-    
+
     def generate_uuid(self):
         return str(uuid.uuid1())
-        
+
     def get_uuid(self, cr, uid, context=None):
         return self.get_entity(cr, uid, context=context).identifier
 
@@ -328,10 +328,10 @@ class Entity(osv.osv):
         logger = context.get('logger')
 
         entity = self.get_entity(cr, uid, context)
-        
-        if entity.state not in ('init', 'update_send', 'update_validate'): 
+
+        if entity.state not in ('init', 'update_send', 'update_validate'):
            raise SkipStep
-    
+
         cont = False
         if cont or entity.state == 'init':
             updates_count = self.create_update(cr, uid, context=context)
@@ -363,14 +363,14 @@ class Entity(osv.osv):
             if not res[0]:
                 raise Exception, res[1]
             self.pool.get('sync.client.rule').save(cr, uid, res[1], context=context)
-        
+
         def prepare_update(session):
             updates_count = 0
             for rule_id in self.pool.get('sync.client.rule').search(cr, uid, [('type', '!=', 'USB')], context=context):
                 updates_count += sum(updates.create_update(
                     cr, uid, rule_id, session, context=context))
             return updates_count
-        
+
         entity = self.get_entity(cr, uid, context)
         session = str(uuid.uuid1())
         set_rules(entity.identifier)
@@ -437,10 +437,10 @@ class Entity(osv.osv):
             raise Exception, res[1]
         updates.sync_finished(cr, uid, update_ids, context=context)
         self.write(cr, uid, entity.id, {'session_id' : ''}, context=context)
-        #state update validate => init 
+        #state update validate => init
         return res[1]
-    
-    
+
+
     """
         Pull update
     """
@@ -450,10 +450,10 @@ class Entity(osv.osv):
         logger = context.get('logger')
 
         entity = self.get_entity(cr, uid, context=context)
-        if entity.state not in ('init', 'update_pull'): 
+        if entity.state not in ('init', 'update_pull'):
             raise SkipStep
-        
-        if entity.state == 'init': 
+
+        if entity.state == 'init':
             self.set_last_sequence(cr, uid, context=context)
         max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
 
@@ -504,11 +504,11 @@ class Entity(osv.osv):
                 raise Exception, res[1]
             cr.commit()
 
-        self.write(cr, uid, entity.id, {'update_offset' : 0, 
-                                        'max_update' : 0, 
-                                        'update_last' : max_seq}, context=context) 
+        self.write(cr, uid, entity.id, {'update_offset' : 0,
+                                        'max_update' : 0,
+                                        'update_last' : max_seq}, context=context)
         cr.commit()
-        
+
         return updates_count
 
     def execute_updates(self, cr, uid, context=None):
@@ -531,7 +531,7 @@ class Entity(osv.osv):
         # Sort updates by rule_sequence
         whole = updates.browse(cr, uid, update_ids, context=context)
         update_groups = dict()
-        
+
         for update in whole:
             group_key = (update.sequence_number, update.rule_sequence)
             try:
@@ -588,10 +588,10 @@ class Entity(osv.osv):
         context = context or {}
         logger = context.get('logger')
         entity = self.get_entity(cr, uid, context)
-        
-        if entity.state not in ['init', 'msg_push']: 
+
+        if entity.state not in ['init', 'msg_push']:
             raise SkipStep
-        
+
         if entity.state == 'init':
             self.create_message(cr, uid, context=context)
             cr.commit()
@@ -600,7 +600,7 @@ class Entity(osv.osv):
         cr.commit()
 
         return True
-        
+
     def create_message(self, cr, uid, context=None):
         context = context or {}
         messages = self.pool.get(context.get('message_to_send_model', 'sync.client.message_to_send'))
@@ -611,15 +611,15 @@ class Entity(osv.osv):
         res = proxy.get_message_rule(uuid)
         if res and not res[0]: raise Exception, res[1]
         self.pool.get('sync.client.message_rule').save(cr, uid, res[1], context=context)
-        
+
         rule_obj = self.pool.get("sync.client.message_rule")
 
         messages_count = 0
         for rule in rule_obj.browse(cr, uid, rule_obj.search(cr, uid, [('type', '!=', 'USB')], context=context), context=context):
             messages_count += messages.create_from_rule(cr, uid, rule, context=context)
-            
+
         return messages_count
-    
+
     def send_message(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
@@ -651,9 +651,9 @@ class Entity(osv.osv):
 
         return messages_count
         #message_push => init
-        
-    
-    """ 
+
+
+    """
         Pull message
     """
     @sync_process('msg_pull')
@@ -672,7 +672,7 @@ class Entity(osv.osv):
         self.get_message(cr, uid, context=context)
         self.execute_message(cr, uid, context=context)
         return True
-        
+
     def get_message(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
@@ -702,7 +702,7 @@ class Entity(osv.osv):
                 logger.write()
 
         return messages_count
-            
+
     def execute_message(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
@@ -710,7 +710,10 @@ class Entity(osv.osv):
 
         # Get the whole list of messages to execute
         # Warning: order matters
-        message_ids = messages.search(cr, uid, [('run', '=', False)], order='id asc', context=context)
+        #UF-1830
+        entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
+        message_ids = messages.search(cr, uid, [('run','=',False),('source','!=',entity.name)], order='id asc', context=context)
+
         messages_count = len(message_ids)
         if messages_count == 0: return 0
 
@@ -738,7 +741,7 @@ class Entity(osv.osv):
 
 
     """
-        SYNC process : usefull for scheduling 
+        SYNC process : usefull for scheduling
     """
     def sync_threaded(self, cr, uid, recover=False, context=None):
         BackgroundProcess(cr, uid,
@@ -752,6 +755,9 @@ class Entity(osv.osv):
         Call both pull_all_data and recover_message functions - used in manual sync wizard
         """
         self.pull_update(cr, uid, recover=True, context=context)
+        if context is None:
+            context = {}
+        context['restore_flag'] = True
         self.pull_message(cr, uid, recover=True, context=context)
         return True
 
@@ -782,7 +788,7 @@ class Entity(osv.osv):
 
         if self.is_syncing():
             return "Syncing..."
-        
+
         monitor = self.pool.get("sync.monitor")
         last_log = monitor.last_status
         if last_log:
@@ -790,30 +796,30 @@ class Entity(osv.osv):
                 % (_(monitor.status_dict[last_log[0]]), last_log[1])
 
         return "Connected"
-   
+
 Entity()
 
 
 class Connection(osv.osv):
     """
         This class handle connection with the server of synchronization
-        Keep the username, uid on the synchronization 
-        
+        Keep the username, uid on the synchronization
+
         Question for security issue it's better to not keep the password in database
-           
+
         This class is also a singleton
-        
-    """     
+
+    """
 
     def _auto_init(self,cr,context=None):
         res = super(Connection, self)._auto_init(cr, context=context)
         if not self.search(cr, 1, [], context=context):
             self.create(cr, 1, {}, context=context)
         return res
-    
+
     def _is_connected(self):
         return getattr(self, '_uid', 0) > 0
-    
+
     is_connected = property(_is_connected)
 
     def _get_state(self, cr, uid, ids, name, arg, context=None):
@@ -858,13 +864,13 @@ class Connection(osv.osv):
         'max_size' : 500,
         'database' : 'SYNC_SERVER',
     }
-    
+
     def _get_connection_manager(self, cr, uid, context=None):
         ids = self.search(cr, uid, [], context=context)
         if not ids:
             raise osv.except_osv('Connection Error', "Connection manager not set!")
         return self.browse(cr, uid, ids, context=context)[0]
-    
+
     def connector_factory(self, con):
         if con.protocol == 'xmlrpc':
             connector = rpc.XmlRPCConnector(con.host, con.port)
@@ -883,7 +889,7 @@ class Connection(osv.osv):
     def connect(self, cr, uid, ids=None, context=None):
         if getattr(self, '_uid', False):
             return True
-        try: 
+        try:
             con = self._get_connection_manager(cr, uid, context=context)
             connector = self.connector_factory(con)
             if not getattr(self, '_password', False):
@@ -899,13 +905,13 @@ class Connection(osv.osv):
             raise
         except BaseException, e:
             raise osv.except_osv(_("Error"), _(unicode(e)))
-        
+
         return True
 
     def action_connect(self, cr, uid, ids, context=None):
         self.connect(cr, uid, ids, context=context)
         return {}
-    
+
     def get_connection(self, cr, uid, model, context=None):
         """
             @return: the proxy to call distant method specific to a model
@@ -926,7 +932,7 @@ class Connection(osv.osv):
             entity.sync_cursor.close()
         self._uid = False
         return True
-        
+
     def action_disconnect(self, cr, uid, ids, context=None):
         self.disconnect(cr, uid, context=context)
         return {}
@@ -937,7 +943,7 @@ class Connection(osv.osv):
         return super(Connection, self).write(*args, **kwargs)
 
     _sql_constraints = [
-        ('active', 'UNIQUE(active)', 'The connection parameter is unique; you cannot create a new one') 
+        ('active', 'UNIQUE(active)', 'The connection parameter is unique; you cannot create a new one')
     ]
 
 Connection()
