@@ -315,7 +315,7 @@ class wizard_cash_return(osv.osv_memory):
                             and invoice.number:
                             invoice_numbers.append(invoice.number)
                             context['po_op_advance_auto_add_invoice_id'] = invoice.id
-                            self.action_add_invoice(cr, uid, [id], context=context)
+                            self.action_add_invoice(cr, uid, [w_id], context=context)
                     msg = "This operational advance is linked to PO %s." % (st_line.cash_register_op_advance_po_id.name,)
                     if invoice_numbers:
                         msg += " Corresponding invoice lines have automatically been added:"
@@ -570,7 +570,7 @@ class wizard_cash_return(osv.osv_memory):
                         amount = abs(move_line.amount_currency) or 0.0
                     # Add this line to our wizard
                     new_lines.append((0, 0, {'document_date': date, 'reference': reference, 'communication': communication, 'partner_id': partner_id, \
-                        'account_id': account_id, 'amount': amount, 'wizard_id': wizard.id, 'invoice_id': invoice.id}))
+                        'account_id': account_id, 'amount': amount, 'invoice_id': invoice.id}))
                     # Add amount to total_amount
                     total += amount
             # Change display_invoice to True in order to show invoice lines
