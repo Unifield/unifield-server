@@ -712,6 +712,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                                                               'move_price_unit': 0.00,
                                                               'move_currenty_id': False,
                                                               'type_change': 'split',
+                                                              'error_msg': '',
                                                               'parent_line_id': in_line,
                                                               'move_id': False}, context=context)
                             err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
@@ -992,7 +993,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             # Product
             prod_id = False
             if (values[1] and values[1] == line.move_product_id.default_code):
-                write_vals['imp_product_id'] = line.move_product_id and line.move_product_id.id or False
+                prod_id = line.move_product_id and line.move_product_id.id or False
+                write_vals['imp_product_id'] = prod_id
             else:
                 prod_id = False
                 if values[1]:
@@ -1068,9 +1070,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     batch_ids = prodlot_obj.search(cr, uid, [('name', '=', str(batch_value)), ('product_id', '=', write_vals['imp_product_id'])], context=context)
                     if batch_ids:
                         write_vals['imp_batch_id'] = batch_ids[0]
-                    else:
-                        errors.append(_('Batch not found in database'))
-                        write_vals['imp_batch_id'] = False
                 else:
                     write_vals['imp_batch_id'] = batch_id
 
@@ -1095,10 +1094,54 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if write_vals.get('imp_exp_date') and write_vals.get('imp_batch_id'):
                     batch_exp_date = prodlot_obj.browse(cr, uid, write_vals.get('imp_batch_id'), context=context).life_date
                     if batch_exp_date != write_vals.get('imp_exp_date'):
-                        errors.append(_('The \'Expired date\' value doesn\'t match with the expired date of the Batch - The expired date of the Batch was kept.'))
+                        warnings.append(_('The \'Expired date\' value doesn\'t match with the expired date of the Batch - The expired date of the Batch was kept.'))
                         write_vals['imp_exp_date'] = batch_exp_date
             elif not exp_value and write_vals.get('imp_batch_id'):
                 write_vals['imp_exp_date'] = prodlot_obj.browse(cr, uid, write_vals.get('imp_batch_id'), context=context).life_date
+
+            if exp_check and not lot_check and write_vals.get('imp_exp_date') and batch_value and not write_vals.get('imp_batch_id'):
+                warnings.append(_('A batch is defined on the imported file but the batch is not found in database and the product doesn\'t require batch number - Batch ignored, expiry date kept'))
+
+            # If no batch defined, search batch corresponding with expired date or create a new one
+            if product and lot_check and not write_vals.get('imp_batch_id'):
+                exp_date = write_vals.get('imp_exp_date')
+
+                if batch_value and exp_date:
+                    # If a name and an expiry date for batch are defined, create a new batch
+                    prodlot_id = prodlot_obj.create(cr, uid, {
+                        'product_id': product.id,
+                        'name': str(batch_value),
+                        'life_date': exp_date,
+                    }, context=context)
+                    PRODLOT_NAME_ID[str(batch_value)] = prodlot_id
+                    write_vals['imp_batch_id'] = prodlot_id
+
+                # Comment the following block if you need to search a batch
+                # with only an expiry date (without name)
+                # If the block is not commented, a batch is returned only
+                # if a batch name and an expiry date are defined on file
+                if not write_vals.get('imp_batch_id'):
+                    errors.append(_('No batch found in database and you need to define a name AND an expiry date if you expect an automatic creation.'))
+                    write_vals['imp_batch_id'] = False
+
+                # Uncomment the following block and comment the preceding block 
+                # if you need creation of batch if we looking for a batch with
+                # only defined expiry date
+                #elif not batch_value and exp_date:
+                #    # Search batch with the same expired date with the same product if no batch name defined
+                #    prodlot_ids = prodlot_obj.search(cr, uid, [
+                #        ('product_id', '=', product.id),
+                #        ('life_date', '=', exp_date),
+                #    ], context=context)
+                #    if prodlot_ids:
+                #        write_vals['imp_batch_id'] = prodlot_ids[0]
+                
+                #if not write_vals.get('imp_batch_id') and batch_value:
+                #    errors.append(_('Batch %s not found in database and no expiry date defined on line.') % str(batch_value))
+                #    write_vals['imp_batch_id'] = False
+                #elif not write_vals.get('imp_batch_id') and exp_date:
+                #    errors.append(_('No batch found in database for the product and the expiry date of the line.'))
+                #    write_vals['imp_batch_id'] = False
 
             # Packing list
             write_vals['imp_packing_list'] = values[9]
@@ -1121,6 +1164,11 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if error_msg:
                     error_msg += ' - '
                 error_msg += err
+
+            for warn in warnings:
+                if error_msg:
+                    error_msg += ' - '
+                error_msg += warn
 
             write_vals['error_msg'] = error_msg
 
