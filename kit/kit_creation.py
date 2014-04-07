@@ -1285,9 +1285,6 @@ class stock_move(osv.osv):
                  'original_from_process_stock_move': False,
                  }
     
-    def write(self, cr, uid, ids, vals, context=None):
-        return super(stock_move, self).write(cr, uid, ids, vals, context=context)
-    
     def assign_to_kit(self, cr, uid, ids, context=None):
         '''
         open the assign to kit wizard

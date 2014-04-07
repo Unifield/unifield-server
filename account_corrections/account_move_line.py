@@ -58,7 +58,7 @@ class account_move_line(osv.osv):
             res[ml.id] = True
             # False if account type is transfer
             if ml.account_id.type_for_register in ['transfer', 'transfer_same']:
-               res[ml.id] = False
+                res[ml.id] = False
             # False if move is posted
             if ml.move_id.state != 'posted':
                 res[ml.id] = False
@@ -100,21 +100,21 @@ class account_move_line(osv.osv):
         return res
 
     _columns = {
-        'corrected': fields.boolean(string="Corrected?", readonly=True, 
+        'corrected': fields.boolean(string="Corrected?", readonly=True,
             help="If true, this line has been corrected by an accounting correction wizard"),
-        'corrected_line_id': fields.many2one('account.move.line', string="Corrected Line", readonly=True, 
+        'corrected_line_id': fields.many2one('account.move.line', string="Corrected Line", readonly=True,
             help="Line that have been corrected by this one."),
-        'reversal': fields.boolean(string="Reversal?", readonly=True, 
+        'reversal': fields.boolean(string="Reversal?", readonly=True,
             help="If true, this line is a reversal of another (This was done via a correction wizard)."),
-        'reversal_line_id': fields.many2one('account.move.line', string="Reversal Line", readonly=True, 
+        'reversal_line_id': fields.many2one('account.move.line', string="Reversal Line", readonly=True,
             help="Line that have been reversed by this one."),
-        'have_an_historic': fields.boolean(string="Display historic?", readonly=True, 
+        'have_an_historic': fields.boolean(string="Display historic?", readonly=True,
             help="If true, this implies that this line have historical correction(s)."),
-        'is_corrigible': fields.function(_is_corrigible, method=True, string="Is corrigible?", type='boolean', 
+        'is_corrigible': fields.function(_is_corrigible, method=True, string="Is corrigible?", type='boolean',
             readonly=True, help="This informs system if this item is corrigible. Criteria: the entry state should be posted, account should not be payable or \
-receivable, item have not been corrected, item have not been reversed and account is not the default one of the linked register (statement).", 
+receivable, item have not been corrected, item have not been reversed and account is not the default one of the linked register (statement).",
             store=False),
-        'corrected_st_line_id': fields.many2one('account.bank.statement.line', string="Corrected register line", readonly=True, 
+        'corrected_st_line_id': fields.many2one('account.bank.statement.line', string="Corrected register line", readonly=True,
             help="This register line is those which have been corrected last."),
     }
 
@@ -125,7 +125,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         'is_corrigible': lambda *a: True,
     }
 
-    def copy(self, cr, uid, id, default=None, context=None):
+    def copy(self, cr, uid, aml_id, default=None, context=None):
         """
         Copy a move line with draft state. Do not create a new analytic_distribution from line if we come from a correction.
         """
@@ -144,12 +144,12 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Add default date if no one given
         if not 'date' in default:
             default.update({'date': strftime('%Y-%m-%d')})
-        return super(account_move_line, self).copy(cr, uid, id, default, context=context)
+        return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 
     def get_corrections_history(self, cr, uid, ids, context=None):
         """
         Give for each line their history by using "corrected_line_id" field to browse lines
-        Return something like that: 
+        Return something like that:
             {id1: [line_id, another_line_id], id2: [a_line_id, other_line_id]}
         """
         # Verifications
@@ -159,7 +159,6 @@ receivable, item have not been corrected, item have not been reversed and accoun
             ids = [ids]
         # Prepare some values
         res = {}
-        move_obj = self.pool.get('account.move')
         # Browse all given lines
         for ml in self.browse(cr, uid, ids, context=context):
             upstream_line_ids = []
@@ -217,7 +216,6 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Prepare some values
         res = {}
         for ml in self.browse(cr, uid, ids, context=context):
-            upstream_line_ids = []
             # Get upstream move lines
             line = ml
             corrected_line_id = ml.corrected_line_id and ml.corrected_line_id
@@ -344,7 +342,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
 #                                        ('is_current_instance', '=', True)])
 #        j_extra_id = ej_ids and ej_ids[0] or False
 #        # Search attached period
-#        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
+#        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context,
 #            limit=1, order='date_start, name')
 #        # Browse move line
 #        for ml in self.browse(cr, uid, ids, context=context):
@@ -447,8 +445,6 @@ receivable, item have not been corrected, item have not been reversed and accoun
         j_obj = self.pool.get('account.journal')
         ana_j_obj = self.pool.get('account.analytic.journal')
         aal_obj = self.pool.get('account.analytic.line')
-        j_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                       ('is_current_instance', '=', True)], context=context)
         # Search correction journal
         j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
                                             ('is_current_instance', '=', True)], context=context)
@@ -460,7 +456,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                                              ('is_current_instance', '=', True)])
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
         # Search attached period
-        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
+        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context,
             limit=1, order='date_start, name')
         # Sort ids
         move_lines = self.browse(cr, uid, ids, context=context)
@@ -480,9 +476,9 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     is_inkind = True
             if not corrigible:
                 continue
-            
+
             # FIXME: verify that no lines come from a statement_id => should be corrected if necessary
-            
+
             # Retrieve right journal. Extra-accounting journal for donation account, otherwise correction journal.
             journal_id = j_corr_id
             if is_inkind:
@@ -491,7 +487,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
             elif not journal_id:
                 raise osv.except_osv(_('Error'), _('No correction journal found!'))
-            
+
             # Create a new move
             new_move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date, 'document_date': m.document_date}, context=context)
             # Search move line that have to be corrected.
@@ -633,7 +629,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                                              ('is_current_instance', '=', True)])
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
         # Search attached period
-        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], 
+        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)],
             context=context, limit=1, order='date_start, name')
         # Browse all given move line for correct them
         for ml in self.browse(cr, uid, ids, context=context):
@@ -718,9 +714,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
             else:
                 cor_vals['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
             self.write(cr, uid, [correction_line_id], cor_vals, context=context, check=False, update_check=False)
+            # UF-2231: Remove the update to the statement line
             # Update register line if exists
-            if ml.statement_id:
-                self.update_account_on_st_line(cr, uid, [ml.id], new_account_id, context=context)
+            #if ml.statement_id:
+            #    self.update_account_on_st_line(cr, uid, [ml.id], new_account_id, context=context)
             # Inform old line that it have been corrected
             self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context, check=False, update_check=False)
             # Post the move
@@ -779,7 +776,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                                              ('is_current_instance', '=', True)])
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
         # Search attached period
-        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], 
+        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)],
             context=context, limit=1, order='date_start, name')
         # Correct all given move lines
         for ml in self.browse(cr, uid, ids, context=context):
@@ -804,7 +801,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date}, context=context)
             # Search the new attached account_id
             partner_type = 'res.partner,%s' % partner_id
-            account_vals = self.pool.get('account.bank.statement.line').onchange_partner_type(cr, uid, [], partner_type, move_line.credit, 
+            account_vals = self.pool.get('account.bank.statement.line').onchange_partner_type(cr, uid, [], partner_type, move_line.credit,
                 move_line.debit, context=context)
             if not 'value' in account_vals and not account_vals.get('value').get('account_id', False):
                 raise osv.except_osv(_('Error'), _('No account found for this partner!'))
@@ -863,7 +860,7 @@ class account_move(osv.osv):
             ids = [ids]
         reversed_move = []
         for m in self.browse(cr, uid, ids):
-            res_ml_ids, res_move_ids = self.pool.get('account.move.line').reverse_move(cr, uid, [x.id for x in m.line_id], date=date, context=context)
+            res_ml_ids = self.pool.get('account.move.line').reverse_move(cr, uid, [x.id for x in m.line_id], date=date, context=context)
             if res_ml_ids:
                 reversed_move.append(m.id)
         return reversed_move

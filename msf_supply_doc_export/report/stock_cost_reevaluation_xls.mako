@@ -40,6 +40,16 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+    <Style ss:ID="lineNumber">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+        <Borders>
+          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+        <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
 </Styles>
 ## ==================================== we loop over the stock_cost_reevaluation so "objects" == stock_cost_reevaluation  ====================================================
 % for o in objects:
@@ -50,13 +60,15 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Cost')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
     </Row>
     ## we loop over the stock_cost_reevaluation_line
     % for line in o.reevaluation_line_ids:
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.average_cost or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="lineNumber" ><Data ss:Type="Number">${(line.average_cost or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${((line.currency_id and line.currency_id.name) or '')|x}</Data></Cell>
     </Row>
     % endfor
 </Table>

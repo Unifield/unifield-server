@@ -31,7 +31,7 @@ class wizard_transfer_with_change(osv.osv_memory):
     _columns = {
         'absl_id': fields.many2one('account.bank.statement.line', string='Register Line', required=True),
         'absl_amount': fields.float(string="Transfer amount", readonly=True),
-        'converted_amount': fields.float(string="Transfer amount valuation at system rate (automatic)", readonly=True, 
+        'converted_amount': fields.float(string="Transfer amount valuation at system rate (automatic)", readonly=True,
             help="Register line converted amount at standard rate (based on third party journal currency)"),
         'absl_currency': fields.many2one('res.currency', string="Register line currency", readonly=True, help="Register line currency"),
         'amount_from': fields.float(string='Transfer amount converted at real rate', readonly=True, states={'draft': [('readonly', False)]}),
@@ -54,16 +54,16 @@ class wizard_transfer_with_change(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        transfer_type = 'to'
+#         transfer_type = 'to'
         if 'absl_id' in vals:
             absl = self.pool.get('account.bank.statement.line').browse(cr, uid, vals.get('absl_id'), context=context)
             if absl and absl.amount:
-                if absl.amount >= 0:
-                    transfer_type = 'from'
+#                 if absl.amount >= 0:
+#                     transfer_type = 'from'
                 vals.update({'absl_amount': abs(absl.amount)})
                 if absl.transfer_journal_id and absl.currency_id:
                     context.update({'date': absl.date})
-                    converted_amount = self.pool.get('res.currency').compute(cr, uid, absl.currency_id.id, absl.transfer_journal_id.currency.id, 
+                    converted_amount = self.pool.get('res.currency').compute(cr, uid, absl.currency_id.id, absl.transfer_journal_id.currency.id,
                         abs(absl.amount), round=False, context=context)
                     if converted_amount:
                         vals.update({'converted_amount': converted_amount or 0.0})

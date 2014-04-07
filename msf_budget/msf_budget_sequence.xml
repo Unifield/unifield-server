@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+  <data noupdate="1">
+
+    <record id="seq_type_budget_import" model="ir.sequence.type">
+      <field name="name">Budget Import</field>
+      <field name="code">budget.import</field>
+    </record>
+
+
+    <record id="seq_budget_import" model="ir.sequence">
+      <field name="name">Budget Import</field>
+      <field name="code">budget.import</field>
+      <field name="padding">10</field>
+      <field name="implementation">psql</field>
+    </record>
+  </data>
+</openerp>

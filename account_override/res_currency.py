@@ -22,8 +22,6 @@
 #
 ##############################################################################
 from osv import osv
-from osv import fields
-from tools.misc import ustr
 
 class res_currency_rate(osv.osv):
     _name = 'res.currency.rate'

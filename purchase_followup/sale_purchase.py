@@ -76,6 +76,38 @@ class purchase_order(osv.osv):
             if name and len(name) > 1:
                 ids.extend(self.search(cr, uid, [('partner_ref', operator, name)], context=context))
             return self.name_get(cr, uid, ids, context=context)
+        elif context.get('from_followup2'):
+            # receive input name as a customer name, get customer ids by operator
+            # then search customer ids in PO
+            ids = []
+            if name and len(name) > 1:
+                # search for customer
+                customer_ids = self.pool.get('res.partner').search(cr, uid,
+                    [('name', operator, name)], context=context)
+                if customer_ids:
+                    # search for m2o 'dest_partner_id' dest_customer in PO (direct PO) 
+                    po1_ids = ids.extend(self.search(cr, uid,
+                        [('dest_partner_id', 'in', customer_ids)],
+                        context=context))
+                    # search for m2m 'dest_partner_ids' dest_customer in PO (sourcing PO)
+                    query = "SELECT purchase_order_id FROM res_partner_purchase_order_rel"
+                    query += " WHERE partner_id in (" + ",".join(map(str, customer_ids)) + ")"
+                    cr.execute(query)
+                    if cr.rowcount:
+                        po2_ids = cr.fetchall()
+                        if po1_ids:
+                            # po1_ids, po2_ids union
+                            for po_id in po1_ids:
+                                if po_id not in po2_ids:
+                                    po2_ids.append(po_id)
+                        ids = po2_ids
+                    if ids:
+                        domain = [
+                            ('rfq_ok', '=', False),
+                            ('id', 'in', ids),
+                        ]
+                        ids = self.search(cr, uid, domain, context=context)
+            return self.name_get(cr, uid, ids, context=context)
         else:
             return super(purchase_order, self).name_search(cr, uid, name, args, operator, context, limit)
 
@@ -92,6 +124,26 @@ class purchase_order(osv.osv):
                     res.append((r.id, '%s' % r.partner_ref))
                 else:
                     res.append((r.id, '%s' % r.name))
+            return res
+        elif context.get('from_followup2'):
+            res = []
+            for r in self.browse(cr, uid, ids, context=context):
+                name = r.name
+                customer_names = []
+                if r.dest_partner_id:
+                    # direct customer
+                    customer_names.append(r.dest_partner_id.name)
+                if r.dest_partner_ids:
+                    # customer from sourcing
+                    for customer in r.dest_partner_ids:
+                        if r.dest_partner_id and not customer.id == r.dest_partner_id.id:
+                            customer_names.append(customer.name)
+                        else:
+                            customer_names.append(customer.name)
+                if customer_names:
+                    # display PO and Customers
+                    name += " (%s)" % ("; ".join(customer_names),)
+                res.append((r.id, name))
             return res
         else:
             return super(purchase_order, self).name_get(cr, uid, ids, context=context)

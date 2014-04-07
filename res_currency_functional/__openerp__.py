@@ -21,12 +21,12 @@
 {
     "name": "Multi-Currency Management",
     "version": "1.0",
-    "depends": ["account_journal", "account_override", "analytic_distribution", "purchase", "register_accounting"],
+    "depends": ["account_journal", "finance", "analytic_distribution", "purchase", "register_accounting"],
     "category": "General/Standard",
     "description": """
     This module aims to only use a subset of currencies, and have them available
     for each accounting entry.
-    
+
     """,
     "init_xml": [
         'data/currency_data.xml',

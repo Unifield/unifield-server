@@ -205,8 +205,6 @@ class sale_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'inactive_product': False,
                             'inactive_error': ''}
-            if not line.procurement_request and line.comment:
-                res[line.id].update({'inactive_error': line.comment})
             if line.order_id and line.order_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
                 res[line.id] = {'inactive_product': True,
                                 'inactive_error': _('The product in line is inactive !')}

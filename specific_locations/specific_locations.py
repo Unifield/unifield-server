@@ -141,26 +141,6 @@ class stock_location(osv.osv):
 stock_location()
 
 
-class procurement_order(osv.osv):
-    _inherit = 'procurement.order'
-
-    def _do_create_proc_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        hook to update defaults data
-        '''
-        # call super
-        values = super(procurement_order, self)._do_create_proc_hook(cr, uid, ids, context=context, *args, **kwargs)
-        # as location, we take the input of the warehouse
-        op = kwargs.get('op', False)
-        assert op, 'missing op'
-        # update location value
-        values.update(location_id=op.warehouse_id.lot_input_id.id)
-        
-        return values
-
-procurement_order()
-
-
 class purchase_order(osv.osv):
     '''
     override purchase order

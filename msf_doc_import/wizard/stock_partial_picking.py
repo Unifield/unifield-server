@@ -330,7 +330,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
         for ln in line_numbers:
             move_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
                                                  ('line_number', '=', ln)],
-                                                order='quantity_ordered desc',
+                                                order='ordered_quantity desc',
                                                 context=context)
             
             line_ids = import_obj.search(cr, uid, [('wizard_id', '=', obj.id),
@@ -388,10 +388,10 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     for m in move_obj.browse(cr, uid, match_ids, context=context):
                         if not best_move:
                             best_move = m.id
-                            diff_qty = abs(m.quantity_ordered - l.quantity)
-                        if abs(m.quantity_ordered - l.quantity) < diff_qty:
+                            diff_qty = abs(m.ordered_quantity - l.quantity)
+                        if abs(m.ordered_quantity - l.quantity) < diff_qty:
                             best_move = m.id
-                            diff_qty = abs(m.quantity_ordered - l.quantity)
+                            diff_qty = abs(m.ordered_quantity - l.quantity)
                             
                     move_obj.write(cr, uid, [best_move], {'quantity': l.quantity,
                                                           'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
@@ -472,10 +472,10 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     for m in move_obj.browse(cr, uid, match_ids, context=context):
                         if not best_move:
                             best_move = m.id
-                            diff_qty = abs(m.quantity_ordered - l.quantity)
-                        if abs(m.quantity_ordered - l.quantity) < diff_qty:
+                            diff_qty = abs(m.ordered_quantity - l.quantity)
+                        if abs(m.ordered_quantity - l.quantity) < diff_qty:
                             best_move = m.id
-                            diff_qty = abs(m.quantity_ordered - l.quantity)
+                            diff_qty = abs(m.ordered_quantity - l.quantity)
                             
                     move_obj.write(cr, uid, [best_move], {'quantity': l.quantity,
                                                           'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
@@ -497,21 +497,21 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                         
                     # Search moves which can be split
                     match_ids = move_obj.search(cr, uid, [('id', 'in', move_ids),
-                                                          ('quantity_ordered', '>=', l.quantity),], order='quantity_ordered desc', context=context)
+                                                          ('ordered_quantity', '>=', l.quantity),], order='ordered_quantity desc', context=context)
                     
                     if not match_ids:
-                        match_ids = move_obj.search(cr, uid, [('id', 'in', already_treated)], order='quantity_ordered desc', context=context)
+                        match_ids = move_obj.search(cr, uid, [('id', 'in', already_treated)], order='ordered_quantity desc', context=context)
                     
                     ok = False
                     for m in move_obj.browse(cr, uid, match_ids, context=context):
                         # Split the move only if UoMs are compatible and if the quantity ordered is bigger than the line quantity
                         # or a quantity is already filled on this move
-                        if (m.quantity_ordered > l.quantity or m.quantity > 0) and m.product_uom.category_id.id == l.uom_id.category_id.id:
+                        if (m.ordered_quantity > l.quantity or m.quantity > 0) and m.product_uom.category_id.id == l.uom_id.category_id.id:
                             ok = True
                             # Split the line
                             wizard_values = move_obj.split(cr, uid, m.id, context)
                             wiz_context = wizard_values.get('context')
-                            qty_to_split = m.quantity_ordered - l.quantity < 1 and 1 or l.quantity
+                            qty_to_split = m.ordered_quantity - l.quantity < 1 and 1 or l.quantity
                             self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']],
                                                                             {'quantity': qty_to_split}, context=wiz_context)
                             try:
@@ -549,7 +549,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             complete_lines += 1
                             break
                         # Don't split the move if the quantity ordered is equal to the quantity of the line and the move quantity is not filled
-                        elif m.quantity_ordered == l.quantity and m.quantity == 0.00 and m.product_uom.category_id.id == l.uom_id.category_id.id:
+                        elif m.ordered_quantity == l.quantity and m.quantity == 0.00 and m.product_uom.category_id.id == l.uom_id.category_id.id:
                             ok = True
                             move_obj.write(cr, uid, [m.id], {'product_uom': l.uom_id.id,
                                                              'quantity': l.quantity,
@@ -575,7 +575,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 for l in postponed_lines:
                     # Search moves which can be split
                     match_ids = move_obj.search(cr, uid, [('id', 'in', move_ids),
-                                                          ('quantity_ordered', '>', 1), ('quantity', '=', 0.00)], order='quantity_ordered desc', context=context)
+                                                          ('ordered_quantity', '>', 1), ('quantity', '=', 0.00)], order='ordered_quantity desc', context=context)
                     
                     ok = False
                     for m in move_obj.browse(cr, uid, match_ids, context=context):
@@ -601,7 +601,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                         
                     if not match_ids:
                         match_ids = move_obj.search(cr, uid, [('id', 'in', move_ids),
-                                                              ('quantity_ordered', '>', 1)], order='quantity_ordered desc', context=context)
+                                                              ('ordered_quantity', '>', 1)], order='ordered_quantity desc', context=context)
                     
                         for m in move_obj.browse(cr, uid, match_ids, context=context):
                             # Split the move only if UoMs are compatible and if the quantity ordered is bigger than the line quantity
@@ -611,7 +611,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                 # Split the line
                                 wizard_values = move_obj.split(cr, uid, m.id, context)
                                 wiz_context = wizard_values.get('context')
-                                qty_to_split = m.quantity_ordered - l.quantity < 1 and 1 or l.quantity
+                                qty_to_split = m.ordered_quantity - l.quantity < 1 and 1 or l.quantity
                                 self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']],
                                                                                 {'quantity': qty_to_split}, context=wiz_context)
                                 try:
@@ -681,7 +681,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     while remaining_qty:
                         # In case where is no move available, add the remaining qty to the last move filled
                         if not match_ids:
-                            move_obj.write(cr, uid, [last_move.id], {'quantity': best_move.quantity_ordered + remaining_qty,
+                            move_obj.write(cr, uid, [last_move.id], {'quantity': best_move.ordered_quantity + remaining_qty,
                                                                      'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
                                                                      'expiry_date': l.expiry_date}, context=context)
                             break
@@ -692,15 +692,15 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                         for m in move_obj.browse(cr, uid, match_ids, context=context):
                             if not best_move:
                                 best_move = m
-                                diff_qty = abs(m.quantity_ordered - l.quantity)
-                            if abs(m.quantity_ordered - l.quantity) < diff_qty:
+                                diff_qty = abs(m.ordered_quantity - l.quantity)
+                            if abs(m.ordered_quantity - l.quantity) < diff_qty:
                                 best_move = m
-                                diff_qty = abs(m.quantity_ordered - l.quantity)
+                                diff_qty = abs(m.ordered_quantity - l.quantity)
                                 
-                        move_obj.write(cr, uid, [best_move.id], {'quantity': min(best_move.quantity_ordered, remaining_qty),
+                        move_obj.write(cr, uid, [best_move.id], {'quantity': min(best_move.ordered_quantity, remaining_qty),
                                                                  'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
                                                                  'expiry_date': l.expiry_date}, context=context)
-                        remaining_qty -= min(best_move.quantity_ordered, remaining_qty)
+                        remaining_qty -= min(best_move.ordered_quantity, remaining_qty)
                         last_move = best_move
                         match_ids.remove(best_move.id)
                         

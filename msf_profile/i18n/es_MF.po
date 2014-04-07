@@ -229,6 +229,9 @@ msgstr "21º"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_criteria_xls.mako:514
+#: code:addons/msf_budget/report/report_local_expenses.py:59
+#: code:addons/msf_budget/msf_budget.py:234
+#, python-format
 msgid "Breakdown:"
 msgstr "Desglose:"
 
@@ -3801,6 +3804,8 @@ msgstr "Formato incorrecto para la fecha: %s: %s"
 #. module: msf_budget
 #: selection:wizard.budget.criteria.export,breakdown:0
 #: selection:wizard.local.expenses,breakdown:0
+#: code:addons/msf_budget/report/report_budget_criteria.py:69
+#, python-format
 msgid "By month"
 msgstr "Por mes"
 
@@ -4134,7 +4139,7 @@ msgstr "button_restart - (procurement.order)"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:602
 #, python-format
-msgid "An error occured on invoice reconciliation: Invoice line not found."
+msgid "An error occurred on invoice reconciliation: Invoice line not found."
 msgstr "Se produjo un error en la conciliación de facturas: No se encuentra la línea de factura."
 
 #. module: object_query
@@ -4177,10 +4182,11 @@ msgstr "Líneas OC importadas"
 msgid "You have to define a valid product, i.e. not \"To be define\"."
 msgstr "Debe definir un producto válido, es decir, no puede dejar \"por definir\"."
 
-#. module: import_data
+#. modules: import_data, msf_budget
 #: selection:import_data,object:0
 #: selection:import_product,object:0
 #: selection:update_product,object:0
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 msgid "Budget"
 msgstr "Presupuestos"
 
@@ -4190,6 +4196,8 @@ msgstr "Presupuestos"
 #: report:msf.pdf.engagement:0
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: code:addons/msf_budget/report/report_budget_actual.py:57
+#, python-format
 msgid "Report date:"
 msgstr "Fecha del informe:"
 
@@ -6235,8 +6243,12 @@ msgstr "Las siguientes líneas no pudieron importarse:\n"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:182
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
+#: code:addons/msf_budget/report/report_budget_actual.py:61
+#: report:msf.pdf.budget.monthly:0
+#, python-format
 msgid "Mar"
-msgstr "Mar"
+msgstr "Marzo"
 
 #. module: base
 #: model:ir.actions.act_window,name:base.action_model_data
@@ -10109,7 +10121,7 @@ msgstr "Módulo para la definición de instancias propietarias, sus informacione
 #. module: msf_budget
 #: field:msf.budget.summary,balance_amount:0
 msgid "Balance Amount"
-msgstr "Balance Amount"
+msgstr "Importe de saldo"
 
 #. module: base
 #: view:partner.wizard.spam:0
@@ -13733,6 +13745,7 @@ msgstr "Confirmación de apertura de caja vacía"
 #. module: financing_contract
 #: selection:financing.contract.donor.reporting.line,line_type:0
 #: selection:financing.contract.format.line,line_type:0
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 msgid "Actual"
 msgstr "Real"
 
@@ -14917,15 +14930,6 @@ msgstr "Uid del servidor de sincronización"
 #: field:msf.instance,mission:0
 msgid "Mission"
 msgstr "Misión"
-
-#. modules: account, account_mcdb, account_hq_entries
-#: report:account.invoice2:0
-#: field:hq.entries.split.lines,account_id:0
-#: code:addons/account_mcdb/report/account_mcdb_export.py:61
-#: code:addons/account_mcdb/report/account_mcdb_export.py:252
-#, python-format
-msgid "Account"
-msgstr "Account"
 
 #. module: stock_forecast
 #: view:stock.forecast.line:0
@@ -16735,7 +16739,10 @@ msgstr "SIERRA LEONEAN LEONE"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:187
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 #: report:msf.pdf.budget.monthly:0
+#: code:addons/msf_budget/report/report_budget_actual.py:61
+#, python-format
 msgid "Aug"
 msgstr "Agosto"
 
@@ -23431,6 +23438,12 @@ msgstr "Mensajes"
 #: field:wizard.import.cheque.lines,account_id:0
 #: field:wizard.import.invoice.lines,account_id:0
 #: field:wizard.invoice.line,account_id:0
+#: code:addons/msf_budget/report/report_budget_actual.py:61
+#: report:account.invoice2:0
+#: field:hq.entries.split.lines,account_id:0
+#: code:addons/account_mcdb/report/account_mcdb_export.py:61
+#: code:addons/account_mcdb/report/account_mcdb_export.py:252
+#, python-format
 msgid "Account"
 msgstr "Cuenta"
 
@@ -23772,7 +23785,10 @@ msgstr "Delivery Address :"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:186
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 #: report:msf.pdf.budget.monthly:0
+#: code:addons/msf_budget/report/report_budget_actual.py:61
+#, python-format
 msgid "Jul"
 msgstr "Julio"
 
@@ -25565,6 +25581,7 @@ msgstr "Comprobar integridad"
 #. module: msf_budget
 #: field:msf.budget,decision_moment_id:0
 #: field:msf.budget.decision.moment,name:0
+#: view:msf.budget.decision.moment:0
 msgid "Decision Moment"
 msgstr "Momento de decisión"
 
@@ -27517,6 +27534,11 @@ msgstr "Pedido n °"
 #: report:addons/msf_budget/report/budget_criteria_xls.mako:550
 msgid "Total (Comm.)"
 msgstr "Total (Com.)"
+
+#. module: msf_budget
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
+msgid "Comm."
+msgstr "Com."
 
 #. module: consumption_calculation
 #: field:product.likely.expire.report.item,available_qty:0
@@ -29903,7 +29925,10 @@ msgstr "tender_cancel - (tender)"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:191
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 #: report:msf.pdf.budget.monthly:0
+#: code:addons/msf_budget/report/report_budget_actual.py:61
+#, python-format
 msgid "Dec"
 msgstr "Dic."
 
@@ -37343,7 +37368,10 @@ msgstr "Cantidades pedidas"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:180
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 #: report:msf.pdf.budget.monthly:0
+#: code:addons/msf_budget/report/report_budget_actual.py:61
+#, python-format
 msgid "Jan"
 msgstr "Ene"
 
@@ -39499,6 +39527,11 @@ msgstr "Importe del presupuesto del proyecto (valor)"
 #: report:msf.pdf.budget.monthly:0
 #: report:msf.pdf.budget.summary:0
 #: report:msf.pdf.engagement:0
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:458
+#: report:addons/msf_budget/report/budget_monthly_xls.mako:148
+#: code:addons/msf_budget/report/report_budget_actual.py:48
+#: code:addons/msf_budget/report/report_local_expenses.py:84
+#, python-format
 msgid "Fiscal year:"
 msgstr "Año fiscal:"
 
@@ -41261,6 +41294,12 @@ msgstr "wizard.budget.criteria.export"
 #: field:msf.budget.summary,code:0
 msgid "Budget Code"
 msgstr "Código del presupuesto"
+
+#. module: msf_budget
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:454
+#: report:addons/msf_budget/report/budget_monthly_xls.mako:141
+msgid "Budget code:"
+msgstr "Code du Budget:"
 
 #. module: account
 #: field:account.balance.report,display_account:0
@@ -46862,7 +46901,10 @@ msgstr "¡La lista de embalaje solo está disponible para los objetos de envío 
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:183
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 #: report:msf.pdf.budget.monthly:0
+#: code:addons/msf_budget/report/report_budget_actual.py:61
+#, python-format
 msgid "Apr"
 msgstr "Abril"
 
@@ -46886,7 +46928,10 @@ msgstr "Secuencia principal"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:188
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 #: report:msf.pdf.budget.monthly:0
+#: code:addons/msf_budget/report/report_budget_actual.py:61
+#, python-format
 msgid "Sep"
 msgstr "Septiembre"
 
@@ -49321,6 +49366,9 @@ msgstr "Se indica que se ha generado una factura "
 #: selection:report.stock.move,month:0
 #: selection:stock.frequence,yearly_choose_month:0
 #: selection:stock.frequence,yearly_choose_month_freq:0
+#: code:addons/msf_budget/report/report_budget_actual.py:61
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
+#, python-format
 msgid "May"
 msgstr "Mayo"
 
@@ -52317,6 +52365,11 @@ msgstr "El grupo que debe tener un usuario para tener la autorización para vali
 msgid "Currency table"
 msgstr "Tabla de divisas"
 
+#. module: msf_budget
+#: code:msf_budget/report/report_budget_actual.py:56
+msgid "Currency table:"
+msgstr "Tabla de divisas:"
+
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/hq_entries.py:122
 #, python-format
@@ -53294,6 +53347,13 @@ msgstr "Líneas recurrentes"
 #: report:msf.pdf.budget.summary:0
 msgid "Decision moment:"
 msgstr "Momento de decisión:"
+
+#. module: msf_budget
+#: model:ir.actions.act_window,name:msf_budget.action_msf_budget_decision_moment_tree
+#: model:ir.ui.menu,name:msf_budget.menu_action_msf_budget_decision_moment_tree
+#: view:msf.budget.decision.moment:0
+msgid "Decision Moments"
+msgstr "Momento de decisión"
 
 #. module: stock
 #: view:stock.move:0
@@ -54294,6 +54354,8 @@ msgstr "Catálogo de proveedor"
 #: code:addons/sales_followup/sale_followup.py:355
 #: code:addons/sales_followup/sale_followup.py:372
 #: selection:allocation.stock.setup,unallocated_ok:0
+#: code:addons/msf_budget/report/report_budget_criteria.py:63
+#: view:wizard.budget.summary.export:0
 #, python-format
 msgid "No"
 msgstr "No"
@@ -55451,7 +55513,7 @@ msgstr "Nombre de nuevos asientos"
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:589
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:652
 #, python-format
-msgid "An error has occured: The journal entries cannot be posted."
+msgid "An error has occurred: The journal entries cannot be posted."
 msgstr "Se ha producido un error: no se pueden contabilizar los asientos del diario."
 
 #. module: stock
@@ -56268,11 +56330,6 @@ msgstr "Madagascar"
 #: selection:sync.client.entity_manager,state:0
 msgid "Need Data"
 msgstr "Necesidad de datos"
-
-#. module: msf_budget
-#: report:msf.pdf.budget.monthly:0
-msgid "Mar"
-msgstr "Marzo"
 
 #. module: account_hq_entries
 #: help:hq.entries,account_changed:0
@@ -58538,7 +58595,10 @@ msgstr "Generate Button Access Rules"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:185
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 #: report:msf.pdf.budget.monthly:0
+#: code:addons/msf_budget/report/report_budget_actual.py:61
+#, python-format
 msgid "Jun"
 msgstr "Junio"
 
@@ -59430,7 +59490,13 @@ msgstr "¿Informe de reclamación de carga realizado? Sí / No"
 #. module: msf_budget
 #: field:wizard.local.expenses,end_period_id:0
 msgid "Period To"
-msgstr "Period To"
+msgstr "Period hasta"
+
+#. module: msf_budget
+#: code:addons/msf_budget/report/report_local_expenses.py:97
+#, python-format
+msgid "Period to:"
+msgstr "Period hasta:"
 
 #. module: msf_outgoing
 #: field:stock.picking,line_state:0
@@ -59936,6 +60002,12 @@ msgstr "Ubicación de salida"
 #: report:funding.pool:0
 #: report:financing.contract:0
 msgid "Cost center name"
+msgstr "Nombre del centro de coste"
+
+#. module: msf_budget
+#: code:addons/msf_budget/report/report_budget_actual.py:49
+#, python-format
+msgid "Cost center name:"
 msgstr "Nombre del centro de coste"
 
 #. module: register_accounting
@@ -60611,9 +60683,12 @@ msgstr "  día del mes: -1"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:190
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 #: report:msf.pdf.budget.monthly:0
+#: code:addons/msf_budget/report/report_budget_actual.py:61
+#, python-format
 msgid "Nov"
-msgstr "Nov"
+msgstr "Noviembre"
 
 #. module: consumption_calculation
 #: field:monthly.review.consumption.line,last_reviewed:0
@@ -72965,11 +73040,6 @@ msgstr "Marque esta opción para seleccionar lotes existentes en la lista de aba
 msgid "Restricted in the Country"
 msgstr "Limitado en el país"
 
-#. module: msf_budget
-#: view:msf.budget.decision.moment:0
-msgid "Decision Moment"
-msgstr "Decision Moment"
-
 #. modules: hr, register_accounting, msf_homere_interface
 #: constraint:hr.employee:0
 #: constraint:hr.employee:0
@@ -74577,6 +74647,12 @@ msgstr "Ya no puede cambiar la moneda predeterminada de los pedidos de terreno d
 msgid "Cost center code"
 msgstr "Código del centro de coste"
 
+#. module: msf_budget
+#: code:addons/msf_budget/report/report_budget_actual.py:50
+#, python-format
+msgid "Cost center code:"
+msgstr "Código del centro de coste"
+
 #. module: kit
 #: model:ir.model,name:kit.model_assign_to_kit
 msgid "assign.to.kit"
@@ -75010,7 +75086,10 @@ msgstr "Ref"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:181
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 #: report:msf.pdf.budget.monthly:0
+#: code:addons/msf_budget/report/report_budget_actual.py:61
+#, python-format
 msgid "Feb"
 msgstr "Febrero"
 
@@ -75399,9 +75478,12 @@ msgstr "Internacional"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_monthly_xls.mako:189
+#: report:addons/msf_budget/report/budget_criteria_xls.mako:503
 #: report:msf.pdf.budget.monthly:0
+#: code:addons/msf_budget/report/report_budget_actual.py:61
+#, python-format
 msgid "Oct"
-msgstr "Oct"
+msgstr "Octubre"
 
 #. module: msf_doc_import
 #: view:sale.order:0
@@ -76168,6 +76250,8 @@ msgstr "Ok"
 #. module: msf_budget
 #: selection:wizard.budget.criteria.export,breakdown:0
 #: selection:wizard.local.expenses,breakdown:0
+#: code:addons/msf_budget/report/report_budget_criteria.py:68
+#, python-format
 msgid "Total figure"
 msgstr "Total - Cifra"
 
@@ -77982,3 +78066,36 @@ msgstr "Asignación de efectivos"
 msgid "Validate Order"
 msgstr "Validar pedido"
 
+#. module: msf_budget
+#: view:msf.budget:0
+msgid "Parent accounts only"
+msgstr "Cuentas principales"
+
+#. module: msf_budget
+#: code:addons/msf_budget/report/report_budget_criteria.py:93
+#, python-format
+msgid "Parent Accounts only"
+msgstr "Cuentas principales"
+
+#. module: msf_budget
+#: code:addons/msf_budget/report/report_budget_criteria.py:89
+#, python-format
+msgid "Accounts and Destinations"
+msgstr "Cuentas y destinaciones"
+
+#. module: msf_budget
+#: view:msf.budget:0
+msgid "Accounts and destinations"
+msgstr "Cuentas y destinaciones"
+
+#. module: msf_budget
+#: code:addons/msf_budget/report/report_budget_actual.py:61
+#, python-format
+msgid "Total actual"
+msgstr "Total real"
+
+#. module: msf_budget
+#: code:addons/msf_budget/report/report_budget_actual.py:61
+#, python-format
+msgid "Total accrual"
+msgstr "Provisiones totales"

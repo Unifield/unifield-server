@@ -76,15 +76,15 @@ class account_destination_link(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         ret = {}
-        for id in ids:
-            ret[id] = id in used
+        for i in ids:
+            ret[i] = i in used
         return ret
 
     _columns = {
         'account_id': fields.many2one('account.account', "G/L Account", required=True, domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]", readonly=True),
         'destination_id': fields.many2one('account.analytic.account', "Analytical Destination Account", required=True, domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", readonly=True),
         'funding_pool_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_destinations', 'tuple_id', 'funding_pool_id', "Funding Pools"),
-        'name': fields.function(_get_tuple_name, method=True, type='char', size=254, string="Name", readonly=True, 
+        'name': fields.function(_get_tuple_name, method=True, type='char', size=254, string="Name", readonly=True,
             store={
                 'account.destination.link': (lambda self, cr, uid, ids, c={}: ids, ['account_id', 'destination_id'], 20),
                 'account.analytic.account': (_get_analytic_account_ids, ['code'], 10),
@@ -183,7 +183,7 @@ class account_destination_summary(osv.osv):
             cr.execute("ALTER TABLE funding_pool_associated_destinations ADD COLUMN id SERIAL")
 
         drop_view_if_exists(cr, 'account_destination_summary')
-        cr.execute(""" 
+        cr.execute("""
             CREATE OR REPLACE view account_destination_summary AS (
                 SELECT
                     min(d.id) AS id,
@@ -208,7 +208,7 @@ class account_account(osv.osv):
     _columns = {
         'user_type_code': fields.related('user_type', 'code', type="char", string="User Type Code", store=False),
         'user_type_report_type': fields.related('user_type', 'report_type', type="char", string="User Type Report Type", store=False),
-        'funding_pool_line_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_accounts', 'account_id', 'funding_pool_id', 
+        'funding_pool_line_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_accounts', 'account_id', 'funding_pool_id',
             string='Funding Pools'),
         'default_destination_id': fields.many2one('account.analytic.account', 'Default Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"),
         'destination_ids': many2many_notlazy('account.analytic.account', 'account_destination_link', 'account_id', 'destination_id', 'Destinations', readonly=True),
@@ -321,12 +321,28 @@ class account_move(osv.osv):
                 'context': context,
         }
 
+    def button_reset_distribution(self, cr, uid, ids, context=None):
+        """
+        Reset analytic distribution on all move lines.
+        To do this, just delete the analytic_distribution id link on each move line.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        move_obj = self.pool.get(self._name + '.line')
+        # Search move lines
+        to_reset = move_obj.search(cr, uid, [('move_id', 'in', ids)])
+        move_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
+        return True
+
     def button_validate(self, cr, uid, ids, context=None):
         """
         Check that analytic distribution is ok for all lines
         """
         if not context:
-           context = {}
+            context = {}
         for m in self.browse(cr, uid, ids):
             for ml in m.line_id:
                 if ml.account_id and ml.account_id.is_analytic_addicted:
@@ -338,7 +354,7 @@ class account_move(osv.osv):
                         # UF-2248: Improve the code by using a sql directly, and not a write -- make no impact on the validation, as it will be done in the call super.validate_button
                         #self.pool.get('account.move.line').write(cr, uid, [ml.id], {'analytic_distribution_id': new_distrib_id})
                         cr.execute('update account_move_line set analytic_distribution_id=%s where id=%s', (new_distrib_id, ml.id))
-                        
+
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
 
     def validate(self, cr, uid, ids, context=None):

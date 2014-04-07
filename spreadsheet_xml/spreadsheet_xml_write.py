@@ -7,11 +7,20 @@ from tools.misc import file_open
 from osv import osv
 from report_webkit.webkit_report import WebKitParser
 from report import report_sxw
-
+import os
+import netsvc
+import pooler
 from mako.template import Template
 from mako import exceptions
+from mako.runtime import Context
+
 from tools.misc import file_open
 import pooler
+import addons
+import time
+import zipfile
+import tempfile
+import codecs
 
 class SpreadsheetReport(WebKitParser):
     _fields_process = {
@@ -42,14 +51,73 @@ class SpreadsheetReport(WebKitParser):
         return default_name
 
     def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        if context is None:
+            context = {}
+        if report_xml.report_type != 'webkit':
+            return super(WebKitParser,self).create_single_pdf(cr, uid, ids, data, report_xml, context=context)
+
+        self.report_xml = report_xml
+        self.parser_instance = self.parser(cr, uid, self.name2, context=context)
+        self.pool = pooler.get_pool(cr.dbname)
+
+        if not context.get('splitbrowse'):
+            objs = self.getObjects(cr, uid, ids, context)
+        else:
+            objs = []
+            self.parser_instance.localcontext['ids'] = ids
+            self.parser_instance.localcontext['context'] = context
+        self.parser_instance.set_context(objs, data, ids, report_xml.report_type)
+
+        template = False
+        if report_xml.report_file:
+            path = addons.get_module_resource(report_xml.report_file)
+            if path and os.path.exists(path):
+                template = file(path).read()
+
         if self.tmpl:
             f = file_open(self.tmpl)
-            report_xml.report_webkit_data = f.read()
-            report_xml.report_file = None
-        report_xml.webkit_debug = 1
-        report_xml.header= " "
-        report_xml.webkit_header.html = "${_debug or ''|n}"
-        return super(SpreadsheetReport, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+            template = f.read()
+            f.close()
+
+        if not template:
+            raise osv.except_osv(_('Error!'), _('Webkit Report template not found !'))
+
+        self.localcontext.update({'lang': context.get('lang')})
+        self.parser_instance.localcontext.update({'setLang':self.setLang})
+        self.parser_instance.localcontext.update({'formatLang':self.formatLang})
+
+
+        null, tmpname = tempfile.mkstemp()
+        fileout = codecs.open(tmpname, 'wb', 'utf8')
+        body_mako_tpl = Template(template, input_encoding='utf-8', default_filters=['unicode'])
+        try:
+            mako_ctx = Context(fileout, _=self.translate_call, **self.parser_instance.localcontext)
+            body_mako_tpl.render_context(mako_ctx)
+            fileout.close()
+        except Exception, e:
+            msg = exceptions.text_error_template().render()
+            netsvc.Logger().notifyChannel('Webkit render', netsvc.LOG_ERROR, msg)
+            raise osv.except_osv(_('Webkit render'), msg)
+
+        # circular reference on parse_instance, force memory free
+        del self.parser_instance
+
+        if context.get('zipit'):
+            null1, tmpzipname = tempfile.mkstemp()
+            zf = zipfile.ZipFile(tmpzipname, 'w')
+            zf.write(tmpname, 'export_result.xls', zipfile.ZIP_DEFLATED)
+            zf.close()
+            out = file(tmpzipname, 'rb').read()
+            os.close(null1)
+            os.close(null)
+            os.unlink(tmpzipname)
+            os.unlink(tmpname)
+            return (out, 'zip')
+
+        out = file(tmpname, 'rb').read()
+        os.close(null)
+        os.unlink(tmpname)
+        return (out, 'xls')
 
     def getObjects(self, cr, uid, ids, context):
         table_obj = pooler.get_pool(cr.dbname).get(self.table)
@@ -64,7 +132,7 @@ class SpreadsheetReport(WebKitParser):
         # Cf. tools/tests_reports.py:89
         if context and context.get('from_yml', False) and context.get('from_yml') is True:
             return (a[0], 'foobar')
-        return (a[0], 'xls')
+        return a
 
 class SpreadsheetCreator(object):
     def __init__(self, title, headers, datas):

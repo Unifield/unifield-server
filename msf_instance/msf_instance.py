@@ -35,22 +35,28 @@ class msf_instance(osv.osv):
         return res
     
     def _get_top_cost_center(self, cr, uid, ids, fields, arg, context=None):
+        """
+        Search for top cost center from the given instance.
+        """
+        # Some checks
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+        # Default values
         res = dict.fromkeys(ids, False)
-        for instance in self.browse(cr, uid, ids, context=context):
-            if instance.target_cost_center_ids:
-                for target in instance.target_cost_center_ids:
-                    if target.is_top_cost_center:
-                        res[instance.id] = target.cost_center_id.id
+        # Search top cost center
+        for instance in self.read(cr, uid, ids, ['target_cost_center_ids', 'level'], context=context):
+            target_cc_ids = instance.get('target_cost_center_ids', False)
+            if target_cc_ids:
+                for target in self.pool.get('account.target.costcenter').read(cr, uid, target_cc_ids, ['is_top_cost_center', 'cost_center_id']):
+                    if target.get('is_top_cost_center', False):
+                        res[instance.get('id')] = target.get('cost_center_id', [False])[0]
                         break
-            elif instance.level == 'section':
+            elif instance.get('level', '') == 'section':
                 parent_cost_centers = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), ('parent_id', '=', '')], context=context)
                 if len(parent_cost_centers) > 0:
-                    res[instance.id] = parent_cost_centers[0]
+                    res[instance.get('id')] = parent_cost_centers[0]
         return res
     
     def _get_po_fo_cost_center(self, cr, uid, ids, fields, arg, context=None):

@@ -36,7 +36,7 @@ class hq_entries_validation(osv.osv_memory):
         'process_ids': fields.many2many('hq.entries', 'hq_entries_validation_process_rel', 'wizard_id', 'line_id', "Valid lines", help="Lines that would be processed", readonly=True),
     }
 
-    def create_move(self, cr, uid, ids, period_id=False, currency_id=False, date=None, journal=None, context=None):
+    def create_move(self, cr, uid, ids, period_id=False, currency_id=False, date=None, journal=None, orig_acct=None, context=None):
         """
         Create a move with given hq entries lines
         Return created lines (except counterpart lines)
@@ -80,10 +80,10 @@ class hq_entries_validation(osv.osv_memory):
             })
             total_debit = 0
             total_credit = 0
-            
+
             # Check if document_date is the same as all lines
-            for line in self.pool.get('hq.entries').read(cr, uid, ids, ['date', 'free_1_id', 'free_2_id', 'name', 'amount', 'account_id_first_value', 
-                'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id', 'destination_id', 'document_date', 
+            for line in self.pool.get('hq.entries').read(cr, uid, ids, ['date', 'free_1_id', 'free_2_id', 'name', 'amount', 'account_id_first_value',
+                'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id', 'destination_id', 'document_date',
                 'destination_id_first_value', 'ref']):
                 account_id = line.get('account_id_first_value', False) and line.get('account_id_first_value')[0] or False
                 if not account_id:
@@ -153,6 +153,8 @@ class hq_entries_validation(osv.osv_memory):
             account_ids = self.pool.get('account.account').search(cr, uid, [('id', '=', counterpart_account_id)])
             if account_ids:
                 counterpart_vals.update({'account_id': account_ids[0],})
+            if orig_acct:
+                counterpart_vals.update({'account_id': orig_acct,})
             # vals
             counterpart_vals.update({
                 'period_id': period_id,
@@ -182,13 +184,21 @@ class hq_entries_validation(osv.osv_memory):
         Create a journal entry with all split lines and a specific counterpart.
         Mark HQ Lines as user_validated.
         """
+        aml_obj = self.pool.get('account.move.line')
+
         # Checks
         if context is None:
             context = {}
         if not lines:
             return False
         # Prepare some values
+        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+        if user and user[0] and user[0].company_id:
+            comp_currency_id = user[0].company_id.currency_id.id
+        else:
+            comp_currency_id = False
         original_lines = set()
+        original_move_ids = []
         ana_line_obj = self.pool.get('account.analytic.line')
         od_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
         if not od_journal_ids:
@@ -209,23 +219,48 @@ class hq_entries_validation(osv.osv_memory):
         for line in original_lines:
             # PROCESS ORIGINAL LINES
             res_move = self.create_move(cr, uid, line.id, line.period_id.id, line.currency_id.id, date=line.date, context=context)
-            # Fetch journal move from which the new move line comes from
-            move_id = self.pool.get('account.move.line').browse(cr, uid, res_move[line.id]).move_id.id
+            original_move = aml_obj.browse(cr, uid, res_move[line.id])
+
+            move_id = original_move.move_id.id
+            original_move_ids.append(move_id)
             # Add split lines to "all lines"
             for sl in line.split_ids:
                 all_lines.add(sl.id)
             # PROCESS SPLIT LINES
             if any([x.account_changed for x in line.split_ids]):
-                # Reverse the given move
-                res_reverse = self.pool.get('account.move').reverse(cr, uid, move_id, date=line.date, context=context)
-                if not res_reverse:
-                    raise osv.except_osv(_('Error'), _('An unexpected error occured. Please contact an administrator.'))
-                new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id, line.currency_id.id, date=line.date, journal=od_journal_id)
+                # utp101 mark the original line as reversed
+                aml_obj.write(cr, uid, original_move.id, {'corrected': True, 'have_an_historic': True} , context=context)
+                original_account_id = original_move.account_id.id
+
+                new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id, line.currency_id.id, date=line.date, journal=od_journal_id, orig_acct=original_account_id)
+
                 # original move line
                 original_ml_result = res_move[line.id]
                 # Mark new journal items as corrections for the first one
                 new_expense_ml_ids = new_res_move.values()
-                self.pool.get('account.move.line').write(cr, uid, new_expense_ml_ids, {'corrected_line_id': original_ml_result}, context=context, check=False, update_check=False)
+                corr_name = 'COR1 - ' + original_move.name
+                aml_obj.write(cr, uid, new_expense_ml_ids, {'corrected_line_id': original_ml_result, 'name': corr_name }, context=context, check=False, update_check=False)
+
+                # get the move_id
+                corr_moves = aml_obj.browse(cr, uid, new_expense_ml_ids, context=context)
+                corr_move_id = corr_moves[0].move_id.id
+                original_account_id = original_move.account_id.id
+                # get the counterpart id
+                counterpart_id = aml_obj.search(cr, uid, ['&',('move_id','=',corr_move_id),('corrected_line_id','=',False)], context=context)
+                aml_obj.write(cr, uid, counterpart_id, {'reversal': True, 'name': 'REV - ' + original_move.name, 'account_id': original_account_id,
+                                                        'reversal_line_id':original_move.id}, context=context, check=False, update_check=False)
+                # create the analytic lines as a reversed copy of the original
+                initial_ana_ids = ana_line_obj.search(cr, uid, [('move_id.move_id', '=', move_id)])  # original move_id
+                res_reverse = ana_line_obj.reverse(cr, uid, initial_ana_ids, posting_date=line.date)
+                acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+                if not acor_journal_ids:
+                    raise osv.except_osv(_('Error'), _('No correction journal found!'))
+                acor_journal_id = acor_journal_ids[0]
+                if not acor_journal_id:
+                    raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
+                ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
+
+
                 # Mark new analytic items as correction for original line
                 # - take original move line
                 # - search linked analytic line
@@ -286,9 +321,15 @@ class hq_entries_validation(osv.osv_memory):
                         common_vals.update({'analytic_id': split_line.free_2_id.id,})
                         self.pool.get('free.2.distribution.line').create(cr, uid, common_vals, context=context)
                     # create analytic correction line
-                    cor_id = ana_line_obj.copy(cr, uid, initial_ana_ids[0], {'date': line.date, 'source_date': line.date, 'cost_center_id': split_line.cost_center_id.id, 
-                        'account_id': split_line.analytic_id.id, 'destination_id': split_line.destination_id.id, 'journal_id': acor_journal_id, 'last_correction_id': initial_ana_ids[0], 
-                        'name': split_line.name, 'ref': split_line.ref, 'amount_currency': -1 * split_line.amount,})
+                    # UFTP-37 calculation of correction line functional amount
+                    correction_line_amount_booking = -1 * split_line.amount
+                    context['date'] = split_line.date
+                    correction_line_fonctional_amount = self.pool.get('res.currency').compute(cr, uid,
+                        split_line.currency_id.id, comp_currency_id, correction_line_amount_booking, round=True, context=context)
+                    corr_name = 'COR1 - ' + split_line.name
+                    cor_id = ana_line_obj.copy(cr, uid, initial_ana_ids[0], {'date': line.date, 'source_date': line.date, 'cost_center_id': split_line.cost_center_id.id,
+                        'account_id': split_line.analytic_id.id, 'destination_id': split_line.destination_id.id, 'journal_id': acor_journal_id, 'last_correction_id': initial_ana_ids[0],
+                        'name': corr_name, 'ref': split_line.ref, 'amount_currency': correction_line_amount_booking, 'amount': correction_line_fonctional_amount, })
                     # update new ana line
                     ana_line_obj.write(cr, uid, cor_id, {'last_corrected_id': initial_ana_ids[0], 'move_id': move_line.id}, context=context)
                     # Add correction line to the list of them
@@ -304,8 +345,11 @@ class hq_entries_validation(osv.osv_memory):
                 cp_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, move_line.analytic_distribution_id.id, {})
                 ana_line_obj.write(cr, uid, initial_ana_ids, {'is_reallocated': True, 'distribution_id': cp_distrib_id})
         # Mark ALL lines as user_validated
+
         self.pool.get('hq.entries').write(cr, uid, list(all_lines), {'user_validated': True}, context=context)
-        return True
+        return original_move_ids
+
+
 
     def button_validate(self, cr, uid, ids, context=None):
         """
@@ -405,7 +449,7 @@ class hq_entries_validation(osv.osv_memory):
                 # create new lines
                 if not fp_old_lines: # UTP-546 - this have been added because of sync that break analytic lines generation
                     continue
-                cor_ids = ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 
+                cor_ids = ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id,
                     'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id, 'journal_id': acor_journal_id, 'last_correction_id': fp_old_lines[0]})
                 # update new ana line
                 ana_line_obj.write(cr, uid, cor_ids, {'last_corrected_id': fp_old_lines[0]})
@@ -416,7 +460,7 @@ class hq_entries_validation(osv.osv_memory):
                 # call correct_account with a new arg: new_distrib
                 corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
                         'cost_center_lines': [(0, 0, {
-                                'percentage': 100, 
+                                'percentage': 100,
                                 'analytic_id': line.cost_center_id.id,
                                 'currency_id': line.currency_id.id,
                                 'source_date': line.date,
@@ -433,12 +477,13 @@ class hq_entries_validation(osv.osv_memory):
                     })
                 self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id, corrected_distrib_id)
             # Do split lines process
-            self.process_split(cr, uid, split_change, context=context)
+            original_move_ids = self.process_split(cr, uid, split_change, context=context)
 
             # Return HQ Entries Tree View in current view
             action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_hq_entries', 'action_hq_entries_tree')
             res = self.pool.get('ir.actions.act_window').read(cr, uid, action_id[1], [], context=context)
             res['target'] = 'crush'
+
             return res
 
 hq_entries_validation()

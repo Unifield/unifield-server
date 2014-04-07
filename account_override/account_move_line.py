@@ -25,14 +25,12 @@ from osv import osv
 from osv import fields
 import re
 import decimal_precision as dp
-from time import strftime
-import logging
 from tools.translate import _
 from time import strftime
 
 class account_move_line(osv.osv):
-    _inherit = 'account.move.line'
     _name = 'account.move.line'
+    _inherit = 'account.move.line'
 
     # @@@override account>account_move_line.py>account_move_line>name_get
     def name_get(self, cr, uid, ids, context=None):
@@ -48,7 +46,7 @@ class account_move_line(osv.osv):
         """
         Add string @ begining of text like that:
             mystring1 - mysupertext
-        
+
         If mystring1 already exist, increment 1:
             mystring1 - mysupertext
         give:
@@ -98,13 +96,13 @@ class account_move_line(osv.osv):
                 continue
         return res
 
-    def _set_fake_reference(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context=None):
+    def _set_fake_reference(self, cr, uid, aml_id, name=None, value=None, fnct_inv_arg=None, context=None):
         """
         Just used to not break default OpenERP behaviour
         """
         if name and value:
             sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"
-            cr.execute(sql, (value, id))
+            cr.execute(sql, (value, aml_id))
         return True
 
     def _search_reference(self, cr, uid, obj, name, args, context):
@@ -165,7 +163,7 @@ class account_move_line(osv.osv):
                 for p in line.reconcile_partial_id.line_partial_ids:
                     res.append(p.id)
         return res
-    
+
     def _balance_currency(self, cr, uid, ids, name, arg, context=None):
         # UTP-31
         if context is None:
@@ -182,10 +180,10 @@ class account_move_line(osv.osv):
 
         cr.execute(sql, [tuple(ids)])
         result = dict(cr.fetchall())
-        for id in ids:
-            result.setdefault(id, 0.0)
+        for i in ids:
+            result.setdefault(i, 0.0)
         return result
-        
+
     def _balance_currency_search(self, cursor, user, obj, name, args, domain=None, context=None):
         # UTP-31
         if context is None:
@@ -229,7 +227,7 @@ class account_move_line(osv.osv):
 
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
-        'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Unposted'), ('posted', 'Posted')], 
+        'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Unposted'), ('posted', 'Posted')],
             help="This indicates the state of the Journal Entry."),
         'is_addendum_line': fields.boolean('Is an addendum line?', readonly=True,
             help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
@@ -244,7 +242,7 @@ class account_move_line(osv.osv):
                 store = {
                     'account.move': (_get_move_lines, ['date'], 20)
                 }, readonly=True),
-        'is_write_off': fields.boolean('Is a write-off line?', readonly=True, 
+        'is_write_off': fields.boolean('Is a write-off line?', readonly=True,
             help="This inform that no correction is possible for a line that come from a write-off!"),
         'reference': fields.char(string='Reference', size=64),
         'ref': fields.function(_get_reference, fnct_inv=_set_fake_reference, fnct_search=_search_reference, string='Reference', method=True, type='char', size=64, store=True, readonly=True),
@@ -263,6 +261,10 @@ class account_move_line(osv.osv):
         'is_reconciled': fields.function(_get_is_reconciled, fnct_search=_search_is_reconciled, type='boolean', method=True, string="Is reconciled", help="Is that line partially/totally reconciled?"),
         'balance_currency': fields.function(_balance_currency, fnct_search=_balance_currency_search, method=True, string='Balance Booking'),
         'line_number': fields.integer(string='Line Number'),
+        'invoice_partner_link': fields.many2one('account.invoice', string="Invoice partner link", readonly=True,
+            help="This link implies this line come from the total of an invoice, directly from partner account.", ondelete="cascade"),
+        'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line origin", readonly=True,
+            help="Invoice line which have produced this line.", ondelete="cascade"),
     }
 
     _defaults = {
@@ -298,6 +300,16 @@ class account_move_line(osv.osv):
         if isinstance(ids, list):
             res = res[0]
         return res
+
+    def _check_date(self, cr, uid, vals, context=None, check=True):
+        if 'date' in vals and vals['date'] is not False and 'account_id' in vals:
+            account_obj = self.pool.get('account.account')
+            account = account_obj.browse(cr, uid, vals['account_id'])
+            if vals['date'] < account.activation_date \
+            or (account.inactivation_date != False and \
+                vals['date'] >= account.inactivation_date):
+                raise osv.except_osv(_('Error !'), _('The selected account is not active: %s.') % (account.code or '',))
+        return super(account_move_line, self)._check_date(cr, uid, vals, context, check)
 
     def _check_document_date(self, cr, uid, ids, vals=None):
         """
@@ -391,6 +403,18 @@ class account_move_line(osv.osv):
         self._check_document_date(cr, uid, ids, vals)
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
         return res
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        """
+        Filtering regarding context
+        """
+        if not context:
+            context = {}
+        if context.get('currency_id'):
+            args.append(('currency_id', '=', context.get('currency_id')))
+        if context.get('move_state'):
+            args.append(('move_state', '=', context.get('move_state')))
+        return super(account_move_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
     def button_duplicate(self, cr, uid, ids, context=None):
         """

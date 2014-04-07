@@ -103,14 +103,28 @@ class report_project_expenses2(report_sxw.rml_parse):
         lines = {}
         pool = pooler.get_pool(self.cr.dbname)
         contract_obj = self.pool.get('financing.contract.contract')
+        format_line_obj = self.pool.get('financing.contract.format.line')
         contract_domain = contract_obj.get_contract_domain(self.cr, self.uid, contract, reporting_type=self.reporting_type)
         analytic_line_obj = self.pool.get('account.analytic.line')
         analytic_lines = analytic_line_obj.search(self.cr, self.uid, contract_domain, context=None)
 
+        # UFTP-16: First search in the triplet in format line, then in the second block below, search in quadruplet        
         for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines, context=None):
             ids_adl = self.pool.get('account.destination.link').search(self.cr, self.uid,[('account_id', '=', analytic_line.general_account_id.id),('destination_id','=',analytic_line.destination_id.id) ])
-            ids_fcfl = self.pool.get('financing.contract.format.line').search(self.cr, self.uid, [('account_destination_ids','in',ids_adl), ('format_id', '=', contract.format_id.id)])
-            for fcfl in self.pool.get('financing.contract.format.line').browse(self.cr, self.uid, ids_fcfl):
+            ids_fcfl = format_line_obj.search(self.cr, self.uid, [('account_destination_ids','in',ids_adl), ('format_id', '=', contract.format_id.id)])
+            for fcfl in format_line_obj.browse(self.cr, self.uid, ids_fcfl):
+                ana_tuple = (analytic_line, fcfl.code, fcfl.name)
+                if lines.has_key(fcfl.code):
+                    if not ana_tuple in lines[fcfl.code]:
+                        lines[fcfl.code] += [ana_tuple]
+                else:
+                    lines[fcfl.code] = [ana_tuple]
+
+        # UFTP-16: First search in the triplet in format line, then in the second block below, search in quadruplet        
+        for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines, context=None):
+            ids_adl = self.pool.get('financing.contract.account.quadruplet').search(self.cr, self.uid,[('account_id', '=', analytic_line.general_account_id.id),('account_destination_id','=',analytic_line.destination_id.id) ])
+            ids_fcfl = format_line_obj.search(self.cr, self.uid, [('account_quadruplet_ids','in',ids_adl), ('format_id', '=', contract.format_id.id)])
+            for fcfl in format_line_obj.browse(self.cr, self.uid, ids_fcfl):
                 ana_tuple = (analytic_line, fcfl.code, fcfl.name)
                 if lines.has_key(fcfl.code):
                     if not ana_tuple in lines[fcfl.code]:

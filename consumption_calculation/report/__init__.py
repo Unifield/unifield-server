@@ -21,5 +21,7 @@
 
 import expiry_report
 import consumption_report
+import expiry_calculation_report
+import weekly_forecast_report
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -12,7 +12,7 @@
                     <field name="move_id"/>
                     <field name="ref"/>
                     <field name="date"/>
-                    <field name="account_id" domain="[('type', '&lt;&gt;', 'view')]"/>
+                    <field name="account_id" domain="[('restricted_area', '=', 'correction_wizard')]"/>
                     <button name="button_analytic_distribution" type="object" icon="terp-stock_symbol-selection" string="Ana. Distri."/>
                     <field name="analytic_distribution_state"/>
                     <field name="debit_currency"/>

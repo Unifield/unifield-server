@@ -28,22 +28,32 @@ class wizard_budget_criteria_export(osv.osv_memory):
         'currency_table_id': fields.many2one('res.currency.table', 'Currency table'),
         'period_id': fields.many2one('account.period', 'Year-to-date'),
         'commitment': fields.boolean('Commitments'),
-        'breakdown': fields.selection([('month','By month'),
-                                       ('year','Total figure')], 'Breakdown', select=1, required=True),
-        'granularity': fields.selection([('all','By expense and destination'),
-                                         ('expense','By expense'),
-                                         ('view','By parent account')], 'Granularity', select=1, required=True),
+        'breakdown': fields.selection([
+            ('month','By month'),
+            ('year','Total figure')
+        ], 'Breakdown', select=1, required=True),
+        'granularity': fields.selection([
+            ('all','By expense and destination'),
+            ('expense','By expense'),
+            ('view','By parent account')
+        ], 'Granularity', select=1, required=True),
     }
-    
+
     _defaults = {
-            'commitment': lambda *a: True,
+        'commitment': lambda *a: True,
         'breakdown': lambda *a: 'year',
         'granularity': lambda *a: 'all',
         'period_id': lambda *a: False,
     }
 
-
     def button_create_budget_2(self, cr, uid, ids, context=None):
+        """
+        Take all criteria from wizard to the report.
+        Pay attention to have these criteria in context to display right lines:
+          - period_id
+          - currency_table_id
+          - granularity
+        """
         wizard = self.browse(cr, uid, ids[0], context=context)
         data = {}
         data['ids'] = context.get('active_ids', [])
@@ -60,9 +70,11 @@ class wizard_budget_criteria_export(osv.osv_memory):
                 data['form'].update({'currency_table_id': wizard.currency_table_id.id})
             if wizard.period_id:
                 data['form'].update({'period_id': wizard.period_id.id})
+        if not 'context' in data:
+            data['context']= {}
+        data['context'].update(data['form'])
 
         return {'type': 'ir.actions.report.xml', 'report_name': 'budget.criteria.2', 'datas': data}
-
 
 wizard_budget_criteria_export()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
