@@ -472,6 +472,8 @@ class weekly_forecast_report(osv.osv):
                     # Return the last from date of interval closest to date
                     def get_interval_by_date(date):
                         date = DateFrom(date)
+                        if date < now():
+                            date = now()
                         if report.interval_type == 'week':
                             st_day = now().day_of_week
                             last_date = date + RelativeDateTime(weekday=(st_day, 0))
@@ -512,7 +514,8 @@ class weekly_forecast_report(osv.osv):
                     for interval_name in interval_keys:
                         interval_values = inter.get(interval_name)
                         last_value = last_value - weekly_cons - interval_values['exp_qty'] + interval_values['pipe_qty']
-                        line_values += """<Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(value)s</Data></Cell>""" % {
+                        line_values += """<Cell ss:StyleID=\"%(line_style)s\" ss:Formula=\"\"><Data ss:Type=\"Number\">%(value)s</Data></Cell>""" % {
+                            'line_style': last_value >= 0.00 and 'line' or 'redline',
                             'value': last_value,
                         }
 
@@ -645,7 +648,7 @@ class weekly_forecast_report(osv.osv):
             prodlot_ids = lot_obj.search(cr, uid, [
                 ('product_id', '=', product['id']),
                 ('stock_available', '>', 0.00),
-                ('life_date', '>=', time.strftime('%Y-%m-%d')),
+#                ('life_date', '>=', time.strftime('%Y-%m-%d')),
                 ('life_date', '<=', report_end_date.strftime('%Y-%m-%d')),
             ], order='life_date', context=context)
 
