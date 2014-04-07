@@ -327,10 +327,6 @@ class incoming_shipment_xml(WebKitParser):
         a = super(incoming_shipment_xml, self).create(cr, uid, ids, data, context)
         return (a[0], 'xml')
 
-    def getObjects(self, cr, uid, ids, context):
-        table_obj = pooler.get_pool(cr.dbname).get(self.table)
-        return table_obj.browse(cr, uid, ids, list_class=report_sxw.browse_record_list, context=context, fields_process=_fields_process)
-
 incoming_shipment_xml('report.incoming.shipment.xml', 'stock.picking', 'addons/msf_supply_doc_export/report/report_incoming_shipment_xml.mako')
 
 
