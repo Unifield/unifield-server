@@ -570,12 +570,12 @@
 <Cell  ss:StyleID="s49">
 <Data ss:Type="String">${_('Total')}</Data>
 </Cell>
-<Cell  ss:StyleID="s49" ss:Formula="=${getFormula()}+R[-1]C">
-<Data ss:Type="Number"></Data>
+<Cell  ss:StyleID="s49">
+<Data ss:Type="Number">${getTotalBookAmt()}</Data>
 </Cell>
 <Cell  ss:StyleID="s49"></Cell>
-<Cell ss:StyleID="s49" ss:Formula="=${getFormula()}+R[-1]C">
-<Data ss:Type="Number"></Data>
+<Cell ss:StyleID="s49">
+<Data ss:Type="Number">${getTotalRptCurrency()}</Data>
 </Cell>
 <Cell  ss:StyleID="s49"></Cell>
 </Row>

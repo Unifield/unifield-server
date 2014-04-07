@@ -38,6 +38,8 @@ class report_project_expenses2(report_sxw.rml_parse):
         self.len1 = 0
         self.len2 = 0
         self.lines = {}
+        self.totalRptCurrency = 0
+        self.totalBookAmt = 0
         self.iter = []
         self.localcontext.update({
             'getLines':self.getLines,
@@ -49,6 +51,10 @@ class report_project_expenses2(report_sxw.rml_parse):
             'getLines2':self.getLines2,
             'getFormula':self.getFormula,
             'isDate':self.isDate,
+            'totalRptCurrency': self.totalRptCurrency,
+            'totalBookAmt':self.totalBookAmt,
+            'getTotalRptCurrency': self.getTotalRptCurrency,
+            'getTotalBookAmt': self.getTotalBookAmt,
         })
 
     def isDate(self,date):
@@ -69,7 +75,15 @@ class report_project_expenses2(report_sxw.rml_parse):
             rang = nb + 1
             formul += '+R[-'+str(rang)+']C'
             iters = self.iter[tour:]
+            
+        return self.totalRptCurrency
         return formul
+    
+    def getTotalBookAmt(self):
+        return self.totalBookAmt
+    
+    def getTotalRptCurrency(self):
+        return self.totalRptCurrency
 
     def getLines2(self,):
         return self.lines
@@ -84,11 +98,14 @@ class report_project_expenses2(report_sxw.rml_parse):
         self.len2 = 0
         return temp
 
+
     def getBookAm(self,contract,analytic_line):
         date_context = {'date': analytic_line.document_date,'currency_table_id': contract.currency_table_id and contract.currency_table_id.id or None}
         amount = self.pool.get('res.currency').compute(self.cr, self.uid, analytic_line.currency_id.id, contract.reporting_currency.id, analytic_line.amount_currency or 0.0, round=True, context=date_context)
         self.len1 += 1
         self.len2 += 1
+        self.totalBookAmt += analytic_line.amount_currency
+        self.totalRptCurrency += amount
         return amount
         
     def getAccountName(self,analytic_line):
@@ -144,6 +161,7 @@ class report_project_expenses2(report_sxw.rml_parse):
         for x in lines:
             self.iter.append(len(lines[x]))
         return lines
+
 
     def getCostCenter(self,obj):
         ccs = []
