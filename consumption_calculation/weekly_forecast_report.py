@@ -706,7 +706,7 @@ class weekly_forecast_report(osv.osv):
             FROM
             ((SELECT
                p.id AS product_id,
-               sum(s.product_qty/u1.factor/u2.factor) AS qty,
+               sum(-s.product_qty/u1.factor/u2.factor) AS qty,
                s.date AS date
             FROM
                stock_move s
@@ -749,9 +749,9 @@ class weekly_forecast_report(osv.osv):
         for r in cr.dictfetchall():
             res.setdefault(r['product_id'], {'total': 0.00})
             res[r['product_id']].setdefault(r['date'], 0.00)
-            res[r['product_id']][r['date']] = r['qty']
+            res[r['product_id']][r['date']] += r['qty']
             res[r['product_id']].setdefault('total', 0.00)
-            res[r['product_id']]['total'] = r['qty']
+            res[r['product_id']]['total'] += r['qty']
 
         return res
 
