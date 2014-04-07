@@ -752,6 +752,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     al_obj.write(cr, uid, search_ids, search_data[1])
             # Add this line to succeded lines
             success_move_line_ids.append(ml.id)
+            # Mark it as "corrected_upstream" if needed
+            self.corrected_upstream_marker(cr, uid, [ml.id], context=context)
         return success_move_line_ids
 
     def correct_partner_id(self, cr, uid, ids, date=None, partner_id=None, context=None):
@@ -849,6 +851,22 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Add this line to succeded lines
             success_move_line_ids.append(move_line.id)
         return success_move_line_ids
+
+    def corrected_upstream_marker(self, cr, uid, ids, context=None):
+        """
+        Check if we are in a COORDO / HQ instance. If yes, set move line(s) as corrected upstream.
+        """
+        # Some check
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        # Check if we come from COORDO/HQ instance
+        if company and company.instance_id and company.instance_id.level in ['section', 'coordo']:
+            cr.execute("UPDATE FROM account_move_line SET corrected_upstream = 't' WHERE id IN %s", (tuple(ids),))
+        return True
 
 account_move_line()
 
