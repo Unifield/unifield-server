@@ -24,7 +24,7 @@
 
 from report import report_sxw
 from osv import osv
-from report_webkit.webkit_report import WebKitParser
+from report_webkit.webkit_report import WebKitParser as OldWebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 
@@ -56,6 +56,13 @@ def getIds(self, cr, uid, ids, context):
         table_obj = pooler.get_pool(cr.dbname).get(self.table)
         ids = table_obj.search(cr, uid, context.get('search_domain'), limit=5000)
     return ids
+
+class WebKitParser(OldWebKitParser):
+
+    def getObjects(self, cr, uid, ids, context):
+        table_obj = pooler.get_pool(cr.dbname).get(self.table)
+        return table_obj.browse(cr, uid, ids, list_class=report_sxw.browse_record_list, context=context, fields_process=_fields_process)
+
 
 # FIELD ORDER == INTERNAL REQUEST== SALE ORDER they are the same object
 class sale_order_report_xls(WebKitParser):
@@ -136,10 +143,6 @@ class validated_purchase_order_report_xml(WebKitParser):
         ids = getIds(self, cr, uid, ids, context)
         a = super(validated_purchase_order_report_xml, self).create(cr, uid, ids, data, context)
         return (a[0], 'xml')
-
-    def getObjects(self, cr, uid, ids, context):
-        table_obj = pooler.get_pool(cr.dbname).get(self.table)
-        return table_obj.browse(cr, uid, ids, list_class=report_sxw.browse_record_list, context=context, fields_process=_fields_process)
 
 validated_purchase_order_report_xml('report.validated.purchase.order_xml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_validated_purchase_order_xml.mako', parser=parser_validated_purchase_order_report_xml)
 
