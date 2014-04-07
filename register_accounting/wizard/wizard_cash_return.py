@@ -601,11 +601,17 @@ class wizard_cash_return(osv.osv_memory):
         Clean content of invoice list and refresh view.
         """
         wizard = self.browse(cr, uid, ids[0], context=context)
-        # UTP-482: operation advance linked to a PO, force display_invoice
+        """above UTP-482 code desactivated in UFTP-24
+        point 3)4° of ticket
+        user can create expense lines in the advance
+        but we show a confirm message at wizard validation"""
+        display_invoice = False  
+        """UTP-482: operation advance linked to a PO, force display_invoice
         if wizard.advance_linked_po_auto_invoice:
             display_invoice = True
         else:
             display_invoice = False
+        """
 
         # Delete links to invoice_line_ids and inform wizard of that
         self.write(cr, uid, ids, {'display_invoice': display_invoice, 'invoice_line_ids': [(5,)]}, context=context)
