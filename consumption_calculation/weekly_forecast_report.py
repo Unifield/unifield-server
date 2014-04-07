@@ -47,7 +47,7 @@ class weekly_forecast_report(osv.osv):
     '''
     Weekly forecast report
     '''
-    _name  = 'weekly.forecast.report'
+    _name = 'weekly.forecast.report'
     _description = 'Stock forecast by week'
     _rec_name = 'id'
     _order = 'requestor_date desc, id'
@@ -95,7 +95,7 @@ class weekly_forecast_report(osv.osv):
             readonly=True,
         ),
         'progress': fields.float(
-            digits=(16,2),
+            digits=(16, 2),
             string='Progression',
             readonly=True,
         ),
@@ -193,7 +193,7 @@ class weekly_forecast_report(osv.osv):
 
         cr.commit()
         new_thread = threading.Thread(target=self._process_lines,
-                        args=(cr, uid, ids, context))
+                                      args=(cr, uid, ids, context))
         new_thread.start()
         new_thread.join(10.0)
         if new_thread.isAlive():
@@ -275,7 +275,6 @@ class weekly_forecast_report(osv.osv):
         if context is None:
             context = {}
 
-
         if report_brw.interval <= 0 or report_brw.interval > 20 or not report_brw.interval_type:
             raise osv.except_osv(
                 _('Error'),
@@ -322,7 +321,7 @@ class weekly_forecast_report(osv.osv):
 
         try:
             for report in self.browse(new_cr, uid, ids, context=context):
-                nb_products = product_obj.search(new_cr, uid, [('type', '=', 'product'),], count=True, context=context)
+                nb_products = product_obj.search(new_cr, uid, [('type', '=', 'product')], count=True, context=context)
                 # Process the products by group of 500
                 offset = 50.00
                 nb_offset = (nb_products / offset) + 1
@@ -383,8 +382,8 @@ class weekly_forecast_report(osv.osv):
                         Calculate the forecasted quantity by product and period: 0/%(nb_products)s
 
                     """ % {
-                            'treated_products': int(i*offset),
-                            'nb_products': nb_products,
+                        'treated_products': int(i*offset),
+                        'nb_products': nb_products,
                     }
                     self.write(new_cr, uid, [report.id], {
                         'status': 'in_progress',
@@ -621,6 +620,7 @@ class weekly_forecast_report(osv.osv):
         """
         # Objects
         lot_obj = self.pool.get('stock.production.lot')
+        uom_obj = self.pool.get('product.uom')
 
         if context is None:
             context = {}
@@ -657,9 +657,13 @@ class weekly_forecast_report(osv.osv):
                 l_expired_qty = 0.00
                 lot_days = Age(DateFrom(lot.life_date), last_expiry_date)
                 lot_coeff = (lot_days.years*365.0 + lot_days.months*30.0 + lot_days.days)/30.0
-                if lot_coeff >= 0.00: last_expiry_date = DateFrom(lot.life_date)
-                if lot_coeff < 0.00: lot_coeff = 0.00
-                lot_cons = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(lot_coeff*av_cons,2), lot.product_id.uom_id.id) + rest
+
+                if lot_coeff >= 0.00:
+                    last_expiry_date = DateFrom(lot.life_date)
+                if lot_coeff < 0.00:
+                    lot_coeff = 0.00
+
+                lot_cons = uom_obj._compute_qty(cr, uid, lot.product_id.uom_id.id, round(lot_coeff*av_cons, 2), lot.product_id.uom_id.id) + rest
                 if lot_cons > 0.00:
                     if lot_cons >= lot.stock_available:
                         already_cons += lot.stock_available
