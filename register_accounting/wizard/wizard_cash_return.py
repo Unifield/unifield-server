@@ -531,11 +531,18 @@ class wizard_cash_return(osv.osv_memory):
         if invoice:
             # Verify that the invoice is in the same currency as those of the register
             inv_currency = invoice.currency_id.id
-            st_currency = wizard.advance_st_line_id.statement_id.currency.id
+            if wizard.advance_st_line_id and wizard.advance_st_line_id.statement_id \
+                and wizard.advance_st_line_id.statement_id.currency:
+                st_currency = wizard.advance_st_line_id.statement_id.currency.id
+            else:
+                st_currency = False
             if st_currency and st_currency != inv_currency:
                 raise osv.except_osv(_('Error'), _('The choosen invoice is not in the same currency as those of the register.'))
             # Make a list of invoices that have already been added in this wizard
-            added_invoices = [x['invoice_id']['id'] for x in wizard.invoice_line_ids]
+            if wizard.invoice_line_ids:
+                added_invoices = [x['invoice_id']['id'] for x in wizard.invoice_line_ids]
+            else:
+                added_invoices = []
             # Do operations only if our invoice is not in our list
             if invoice.id not in added_invoices:
                 # Retrieve some variables
@@ -543,8 +550,9 @@ class wizard_cash_return(osv.osv_memory):
                 account_id = invoice.account_id.id
                 # recompute the total_amount
                 total = wizard.returned_amount or 0
-                for line in wizard.invoice_line_ids:
-                    total += line.amount
+                if wizard.invoice_line_ids:
+                    for line in wizard.invoice_line_ids:
+                        total += line.amount
                 # We search all move_line that results from an invoice (so they have the same move_id that the invoice)
                 line_ids = move_line_obj.search(cr, uid, [('move_id', '=', invoice.move_id.id), \
                     ('account_id', '=', account_id)], context=context)
