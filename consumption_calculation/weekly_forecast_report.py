@@ -37,8 +37,8 @@ LIKELY_EXPIRE_STATUS = [
     ('error', 'Error'),
 ]
 CONSUMPTION_TYPE = [
-    ('fmc', 'FMC -- Forecasted Monthly Consumption'), 
-    ('amc', 'AMC -- Average Monthly Consumption'), 
+    ('fmc', 'FMC -- Forecasted Monthly Consumption'),
+    ('amc', 'AMC -- Average Monthly Consumption'),
     ('rac', 'RAC -- Real Average Consumption'),
 ]
 
@@ -51,7 +51,7 @@ class weekly_forecast_report(osv.osv):
     _description = 'Stock forecast by week'
     _rec_name = 'id'
     _order = 'requestor_date desc, id'
-    
+
     _columns = {
         'location_id': fields.many2one(
             'stock.location',
@@ -104,7 +104,7 @@ class weekly_forecast_report(osv.osv):
             readonly=True,
         ),
     }
-    
+
     _defaults = {
         'requestor_id': lambda self, cr, uid, c={}: uid,
         'requestor_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -140,13 +140,13 @@ class weekly_forecast_report(osv.osv):
         })
 
         return super(weekly_forecast_report, self).copy(cr, uid, report_id, defaults, context=context)
-    
+
     def period_change(self, cr, uid, ids, consumption_from, consumption_to, consumption_type, context=None):
         """
         Get the first or last day of month
         """
         res = {}
-        
+
         if consumption_type == 'amc':
             if consumption_from:
                 res.update({
@@ -156,9 +156,9 @@ class weekly_forecast_report(osv.osv):
                 res.update({
                     'consumption_to': (DateFrom(consumption_to) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
                 })
-                
+
         return {'value': res}
-    
+
     def process_lines(self, cr, uid, ids, context=None):
         '''
         Create one line by product for the period
@@ -255,14 +255,14 @@ class weekly_forecast_report(osv.osv):
             'view_mode': 'tree,form',
             'context': context,
         }
-    
+
     def _check_report_values(self, report_brw, context=None):
         """
         Check if the consistency of the values of the report.
-        
+
         :param report_brw: browse_record of a weekly.forecast.report to check
         :param context: Context of the call (will be updated by this method)
-        
+
         :return True if all is ok, raise an error otherwise
         :rtype boolean
         """
@@ -271,11 +271,11 @@ class weekly_forecast_report(osv.osv):
                 _('Error'),
                 _('The parameter \'report_brw\' of the method _check_report_values() must be a browse_record instance'),
             )
-        
+
         if context is None:
             context = {}
-        
-                
+
+
         if report_brw.interval <= 0 or report_brw.interval > 20 or not report_brw.interval_type:
             raise osv.except_osv(
                 _('Error'),
@@ -290,19 +290,19 @@ class weekly_forecast_report(osv.osv):
 
         if report_brw.consumption_type in ('amc', 'rac'):
             context.update({'from': report_brw.consumption_from, 'to': report_brw.consumption_to})
-            
+
         return True
 
     def _process_lines(self, cr, uid, ids, context=None):
         """
         For each product of the DB, display the forecasted stock
         quantity value according to consumption, expired and in-pipe values.
-        
+
         :param cr: Cursor to the database
         :param uid: ID of the user that called this method
         :param ids: ID or list of ID of weekly.forecast.report to generate
         :param context: Context of the call
-        
+
         :return True if all is ok
         :rtype boolean
         """
@@ -310,29 +310,29 @@ class weekly_forecast_report(osv.osv):
         product_obj = self.pool.get('product.product')
         loc_obj = self.pool.get('stock.location')
         uom_obj = self.pool.get('product.uom')
-        
+
         if context is None:
             context = {}
-            
+
         if isinstance(ids, (int, long)):
             ids = [ids]
 
         # background cursor
         new_cr = pooler.get_db(cr.dbname).cursor()
- 
+
         try:
             for report in self.browse(new_cr, uid, ids, context=context):
                 nb_products = product_obj.search(new_cr, uid, [('type', '=', 'product'),], count=True, context=context)
                 # Process the products by group of 500
                 offset = 50.00
                 nb_offset = (nb_products / offset) + 1
-                
+
                 # Get all locations
                 location_ids = loc_obj.search(new_cr, uid, [
                     ('location_id', 'child_of', report.location_id.id),
                     ('quarantine_location', '=', False),
                 ], order='location_id', context=context)
-                
+
                 context.update({
                     'location_id': location_ids,
                     'location': location_ids,
@@ -352,10 +352,10 @@ class weekly_forecast_report(osv.osv):
                         interval_name = 'Month %s' % i
                         interval_from = now() + RelativeDateTime(months=i-1, hour=0, minute=0, second=0)
                         interval_to = now() + RelativeDateTime(months=i, days=-1, hour=23, minute=59, second=59)
-                    
+
                     intervals.append((interval_name, interval_from, interval_to))
                     dict_int_from.setdefault(interval_from.strftime('%Y-%m-%d'), interval_name)
-                
+
                 percent_completed = 0.00
                 progress_comment = ""
                 product_ids = []
@@ -402,14 +402,14 @@ class weekly_forecast_report(osv.osv):
                       <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Current Stock Qty</Data></Cell>
                       <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Pipeline Qty</Data></Cell>
                       <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Expiry Qty</Data></Cell>"""
-                
+
                 for interval in intervals:
                     line_values += """<Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%(interval_name)s</Data></Cell>""" % {
                         'interval_name': interval[0],
                     }
 
                 line_values += """</Row>"""
-                
+
                 context.update({
                     'from_date': False,
                     'to_date': False,
@@ -488,7 +488,7 @@ class weekly_forecast_report(osv.osv):
                                 return date + RelativeDateTime(day=st_day)
                             else:
                                 return date + RelativeDateTime(months=-1, day=st_day)
-                    
+
                     # Put expired quantity into the good interval
                     for exp_key, exp_val in exp_vals[product_id].iteritems():
                         if exp_key != 'total':
@@ -517,7 +517,7 @@ class weekly_forecast_report(osv.osv):
                             'value': last_value,
                         }
 
-                    # Ponderation of 50 percent on this part of the process 
+                    # Ponderation of 50 percent on this part of the process
                     percent_completed = (0.5 + ((float(j)/nb_products) * 0.50)) * 100.00
                     progress_comment = """
                             Calculation of consumption values by product: %(nb_products)s/%(nb_products)s
@@ -704,11 +704,11 @@ class weekly_forecast_report(osv.osv):
         cr.execute("""
             SELECT product_id, sum(qty) AS qty, date
             FROM
-            ((SELECT 
-               p.id AS product_id, 
-               sum(s.product_qty/u1.factor/u2.factor) AS qty, 
-               s.date AS date 
-            FROM 
+            ((SELECT
+               p.id AS product_id,
+               sum(s.product_qty/u1.factor/u2.factor) AS qty,
+               s.date AS date
+            FROM
                stock_move s
                LEFT JOIN product_product p ON p.id = s.product_id
                LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
@@ -718,15 +718,15 @@ class weekly_forecast_report(osv.osv):
                s.location_id IN %(location_ids)s
                AND
                s.product_id IN %(product_ids)s
-               AND 
+               AND
                s.state IN ('assigned', 'confirmed')
             GROUP BY p.id, s.date)
         UNION
-            (SELECT 
-               p.id AS product_id, 
-               sum(s.product_qty/u1.factor/u2.factor) AS qty, 
-               s.date AS date 
-            FROM 
+            (SELECT
+               p.id AS product_id,
+               sum(s.product_qty/u1.factor/u2.factor) AS qty,
+               s.date AS date
+            FROM
                stock_move s
                LEFT JOIN product_product p ON p.id = s.product_id
                LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
@@ -742,7 +742,7 @@ class weekly_forecast_report(osv.osv):
             AS subrequest
             GROUP BY product_id, date;
         """, {
-            'location_ids': tuple(location_ids), 
+            'location_ids': tuple(location_ids),
             'product_ids': tuple(product_ids)
         })
 
@@ -754,7 +754,7 @@ class weekly_forecast_report(osv.osv):
             res[r['product_id']]['total'] = r['qty']
 
         return res
-        
+
 weekly_forecast_report()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
