@@ -1203,6 +1203,7 @@
                                                                 required="1"
 								attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" context="{'contact_display':'partner'}" />
+							<field name="in_ref" readonly="True" />
 						</group>
 					</group>
 					<notebook colspan="4">

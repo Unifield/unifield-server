@@ -731,13 +731,13 @@ class wizard_cash_return(osv.osv_memory):
         if wizard.additional_amount > 0:
             # credit journal credit account
             journal_acc_id = register.journal_id.default_credit_account_id.id
-            addl_cr_move_line_id = self.create_move_line(cr, uid, ids, wizard.date, wizard.date, adv_closing_name, journal, register, False, wizard.advance_st_line_id.employee_id.id, journal_acc_id, \
+            self.create_move_line(cr, uid, ids, wizard.date, wizard.date, adv_closing_name, journal, register, False, wizard.advance_st_line_id.employee_id.id, journal_acc_id, \
                 0.0, wizard.additional_amount, wizard.reference, move_id, False, context=context)
             # debit account 13000 adv returns
             adv_acc_id = wizard.advance_st_line_id.account_id.id
             addl_dr_move_line_id = self.create_move_line(cr, uid, ids, wizard.date, wizard.date, adv_closing_name, journal, register, False, wizard.advance_st_line_id.employee_id.id, adv_acc_id, \
                 wizard.additional_amount, 0.0, wizard.reference, move_id, False, context=context)
-            adv_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, addl_dr_move_line_id, context=context)
+            self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, addl_dr_move_line_id, context=context)
 
 
 

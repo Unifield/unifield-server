@@ -46,8 +46,8 @@ class audittrail_view_log(osv.osv_memory):
         mod_obj = self.pool.get('ir.model.data')
         act_obj = self.pool.get('ir.actions.act_window')
         result = mod_obj._get_id(cr, uid, 'audittrail', 'action_audittrail_log_tree')
-        mid = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
-        result = act_obj.read(cr, uid, [mid], context=context)[0]
+        id = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
+        result = act_obj.read(cr, uid, [id], context=context)[0]
 
         #start Loop
         for datas in self.read(cr, uid, ids, context=context):

@@ -269,7 +269,16 @@ class stock_picking(osv.osv):
                  'from_wkf': lambda *a: False,
                  'update_version_from_in_stock_picking': 0,
                  'fake_type': 'in',
+                 'shipment_ref':False
                  }
+
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        default.update(shipment_ref=False)
+        return super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
 
     def _check_active_product(self, cr, uid, ids, context=None):
         '''

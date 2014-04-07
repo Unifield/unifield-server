@@ -70,9 +70,6 @@ class wizard_account_invoice(osv.osv):
           - we got an account.invoice with ID 2 that is linked to a PO (with purchase_ids field)
           - when you read wizard.account.invoice that have the same ID, it will return the same value of the purchase_ids field than account.invoice 2!
         """
-        multiple = False
-        if isinstance(ids, list):
-            multiple = True
         # Default behaviour
         res = super(wizard_account_invoice, self).read(cr, uid, ids, fields, context, load)
         # Fetch all many2many and all one2many fields
@@ -313,9 +310,6 @@ class wizard_account_invoice_line(osv.osv):
           - we got an account.invoice with ID 2 that is linked to a PO (with purchase_ids field)
           - when you read wizard.account.invoice that have the same ID, it will return the same value of the purchase_ids field than account.invoice 2!
         """
-        multiple = False
-        if isinstance(ids, list):
-            multiple = True
         # Default behaviour
         res = super(wizard_account_invoice_line, self).read(cr, uid, ids, fields, context, load)
         # Fetch all many2many and all one2many fields

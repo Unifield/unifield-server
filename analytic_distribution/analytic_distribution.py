@@ -114,49 +114,4 @@ class analytic_distribution(osv.osv):
         return res, info
 
 analytic_distribution()
-
-class distribution_line(osv.osv):
-    _name = "distribution.line"
-    _inherit = "distribution.line"
-
-    def create_analytic_lines(self, cr, uid, ids, move_line_id, date, document_date, source_date=False, name=False, context=None):
-        '''
-        Creates an analytic lines from a distribution line and an account.move.line
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        ret = {}
-        move_line = self.pool.get('account.move.line').browse(cr, uid, move_line_id)
-        company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
-
-        for line in self.browse(cr, uid, ids):
-            amount_cur = (move_line.credit_currency - move_line.debit_currency) * line.percentage / 100
-            ctx = {'date': source_date or date}
-            amount = self.pool.get('res.currency').compute(cr, uid, move_line.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
-            vals = {
-                'account_id': line.analytic_id.id,
-                'amount_currency': amount_cur,
-                'amount': amount,
-                'currency_id': move_line.currency_id.id,
-                'general_account_id': move_line.account_id.id,
-                'date': date,
-                'source_date': source_date,
-                'document_date': document_date,
-                'journal_id': move_line.journal_id and move_line.journal_id.analytic_journal_id and move_line.journal_id.analytic_journal_id.id or False,
-                'move_id': move_line.id,
-                'name': name or move_line.name,
-                'distrib_id': line.distribution_id.id,
-                'distrib_line_id': '%s,%s'%(self._name, line.id),
-            }
-            if self._name == 'funding.pool.distribution.line':
-                vals.update({
-                    'destination_id': line.destination_id and line.destination_id.id or False,
-                    'cost_center_id': line.cost_center_id and line.cost_center_id.id or False,
-                })
-            ret[line.id] = self.pool.get('account.analytic.line').create(cr, uid, vals)
-
-        return ret
-
-distribution_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

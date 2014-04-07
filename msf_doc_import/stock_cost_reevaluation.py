@@ -50,29 +50,39 @@ class stock_cost_reevaluation(osv.osv):
         if not obj.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
+        # get company default currency
+        comp_currency_name = ''
+        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
+        if user and user[0] and user[0].company_id:
+            comp_currency_id = user[0].company_id.currency_id.id
+            comp_currency_name = user[0].company_id.currency_id.name
+        else:
+            comp_currency_id = False
+        if not comp_currency_id:
+            raise osv.except_osv(_('Error'), _('Company currency is not defined'))
+
         product_cache = {}
 
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
 
         # iterator on rows
         reader = fileobj.getRows()
-        
+
         # ignore the first row
         reader.next()
         line_num = 1
         for row in reader:
             line_num += 1
             # Check length of the row
-            if len(row) != 3:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 3 columns in this order:
-Product Code*, Product Description*, Product Cost*"""))
+            if len(row) != 4:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 4 columns in this order:
+Product Code*, Product Description*, Product Cost*, Currency*"""))
 
             # default values
             product_id = False
             product_cost = 1.00
             product_code = False
             product_name = False
-            currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
 
             # Product code
             product_code = row.cells[0].data
@@ -121,24 +131,30 @@ Product Code*, Product Description*, Product Cost*"""))
                     product_cost = product_obj.browse(cr, uid, product_id).standard_price
                 else:
                     product_cost = 1.00
-                    
-           
+
+            # Currency
+            currency_name = row.cells[3].data
+            if not currency_name or currency_name != comp_currency_name:
+                raise osv.except_osv(_('Error'),
+                _("The Product [%s] %s is not in company currency. Company currency is '%s' and the product currency is '%s'.") % (
+                product_code or '', product_name or '', comp_currency_name, currency_name or '', ))
+
             to_write = {
                 'product_id': product_id,
                 'average_cost': product_cost,
-                'currency_id': currency_id,
+                'currency_id': comp_currency_id,
             }
-            
+
             vals['reevaluation_line_ids'].append((0, 0, to_write))
-            
+
         # write order line on Inventory
         vals.update({'file_to_import': False})
         self.write(cr, uid, ids, vals, context=context)
-        
+
         view_id = obj_data.get_object_reference(cr, uid, 'specific_rules','cost_reevaluation_form_view')[1]
-       
+
         return self.log(cr, uid, obj.id, msg_to_return, context={'view_id': view_id,})
-        
+
     def button_remove_lines(self, cr, uid, ids, context=None):
         '''
         Remove lines
@@ -155,6 +171,6 @@ Product Code*, Product Description*, Product Cost*"""))
                 vals['reevaluation_line_ids'].append((2, var.id))
             self.write(cr, uid, ids, vals, context=context)
         return True
-        
+
 stock_cost_reevaluation()
 

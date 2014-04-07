@@ -113,6 +113,22 @@ class purchase_order(osv.osv):
                 'context': context,
         }
 
+    def button_reset_distribution(self, cr, uid, ids, context=None):
+        """
+        Reset analytic distribution on all purchase order lines.
+        To do this, just delete the analytic_distribution id link on each purchase order line.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        purchase_obj = self.pool.get(self._name + '.line')
+        # Search purchase order lines
+        to_reset = purchase_obj.search(cr, uid, [('order_id', 'in', ids)])
+        purchase_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
+        return True
+
     def copy_data(self, cr, uid, p_id, default=None, context=None):
         """
         Copy global distribution and give it to new purchase.

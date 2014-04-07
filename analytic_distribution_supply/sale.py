@@ -83,6 +83,22 @@ class sale_order(osv.osv):
                 'context': context,
         }
 
+    def button_reset_distribution(self, cr, uid, ids, context=None):
+        """
+        Reset analytic distribution on all sale order lines.
+        To do this, just delete the analytic_distribution id link on each sale order line.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        sale_obj = self.pool.get(self._name + '.line')
+        # Search  lines
+        to_reset = sale_obj.search(cr, uid, [('order_id', 'in', ids)])
+        sale_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
+        return True
+
     def copy_data(self, cr, uid, s_id, default=None, context=None):
         """
         Copy global distribution and give it to new sale order.
