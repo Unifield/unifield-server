@@ -2526,7 +2526,9 @@ class purchase_order_line(osv.osv):
         for sol in sol_to_update:
             context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete_ids
             sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
-        del context['update_or_cancel_line_not_delete']
+
+        if context.get('update_or_cancel_line_not_delete', False):
+            del context['update_or_cancel_line_not_delete']
 
         # UFTP-82: IR and its PO is cancelled
         # IR cancel all lines that have to be cancelled
