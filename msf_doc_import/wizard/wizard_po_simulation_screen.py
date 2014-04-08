@@ -229,6 +229,8 @@ class wizard_import_po_simulation_screen(osv.osv):
                                               readonly=True),
         'imp_shipment_date': fields.date(string='Shipment date',
                                          readonly=True),
+        'imp_notes': fields.text(string='Header notes',
+                                 readonly=True),  # UFTP-59
         'imp_message_esc': fields.text(string='Message ESC Header',
                                        readonly=True),
         'imp_amount_untaxed': fields.function(_get_totals, method=True,
@@ -676,7 +678,8 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                             values_header_errors.append(err_msg)
 
                 # Line 17: Notes
-                # Nothing to do
+                # UFTP-59
+                header_values['imp_notes'] = values.get(17, [])[1]
 
                 # Line 18: Origin
                 # Nothing to do
@@ -992,11 +995,25 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
         try:
             for wiz in self.browse(cr, uid, ids, context=context):
-                po_vals = {'state': 'import_progress',
-                           'partner_ref': wiz.imp_supplier_ref or wiz.in_supplier_ref,
-                           'transport_type': wiz.imp_transport_mode or wiz.in_transport_mode,
-                           'ready_to_ship_date': wiz.imp_ready_to_ship_date or wiz.in_ready_to_ship_date}
-                self.write(cr, uid, [wiz.id], po_vals, context=context)
+                w_vals = {'state': 'import_progress',}
+                self.write(cr, uid, [wiz.id], w_vals, context=context)
+                
+                """
+                UFTP-59: import PO header
+                20/Mar/14 2:51 PM was asked to import only:
+                1)Supplier Ref, 2) RTS date, 3) Shipment date
+                just uncomment the 3 other fields if asked later
+                """
+                po_vals = {
+                    'partner_ref': wiz.imp_supplier_ref or wiz.in_supplier_ref,
+                    #'transport_type': wiz.imp_transport_mode or wiz.in_transport_mode,
+                    'ready_to_ship_date': wiz.imp_ready_to_ship_date or wiz.in_ready_to_ship_date,
+                    'shipment_date': wiz.imp_shipment_date or wiz.in_shipment_date,
+                    #'notes': wiz.imp_notes or wiz.in_notes,
+                    #'message_esc': wiz.imp_message_esc or wiz.in_message_esc,
+                }
+                self.pool.get('purchase.order').write(cr, uid, [wiz.order_id.id], po_vals, context=context)
+                
                 lines = [x.id for x in wiz.simu_line_ids]
                 line_obj.update_po_line(cr, uid, lines, context=context)
 
