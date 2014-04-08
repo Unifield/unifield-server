@@ -83,7 +83,7 @@ class finance_archive(finance_export.finance_archive):
                     # UFT-8 encoding
                     if isinstance(partner_name, unicode):
                         partner_name = partner_name.encode('utf-8')
-                    partner_ids = partner_obj.search(cr, uid, [('name', 'ilike', partner_name)])
+                    partner_ids = partner_obj.search(cr, uid, [('name', 'ilike', partner_name), ('active', 'in', ['t', 'f'])])
                     if partner_ids:
                         partner_id = partner_ids
             # If we get some ids, fetch the partner hash
