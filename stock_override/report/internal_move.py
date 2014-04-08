@@ -29,6 +29,7 @@ class internal_move(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'get_selec': self.get_selection,
+            'get_lines': self._get_lines,
         })
 
     def get_selection(self, o, field):
@@ -43,7 +44,12 @@ class internal_move(report_sxw.rml_parse):
             return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
         else:
             return res
-
+            
+    def _get_lines(self, picking):
+        if not picking or not picking.move_lines:
+            return []
+        return [l for l in picking.move_lines if l.state and l.state != 'cancel']
+ 
 report_sxw.report_sxw('report.internal.move','stock.picking','addons/stock_override/report/internal_move.rml',parser=internal_move, header=False)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

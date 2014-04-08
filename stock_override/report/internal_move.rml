@@ -197,7 +197,7 @@
                 </td>
             </tr>
             <tr>
-            [[ repeatIn(picking.move_lines, 'line', 'tr') ]]
+            [[ repeatIn(get_lines(picking), 'line', 'tr') ]]
                 <td>
                     <para style="Line">[[ line.line_number ]]</para>
                 </td>
