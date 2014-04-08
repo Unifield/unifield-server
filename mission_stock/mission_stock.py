@@ -45,6 +45,13 @@ class stock_mission_report(osv.osv):
     _name = 'stock.mission.report'
     _description = 'Mission stock report'
 
+#    REF-91: A try for mission stock report, but not commited
+#    def export_data(self, cr, uid, ids, fields_to_export, context=None):
+#        if not context:
+#            context = {}
+#        context['bin_size'] = True        
+#        return super(stock_mission_report, self).export_data(cr, uid, ids, fields_to_export, context=context)
+
     def _get_local_report(self, cr, uid, ids, field_name, args, context=None):
         '''
         Check if the mission stock report is a local report or not

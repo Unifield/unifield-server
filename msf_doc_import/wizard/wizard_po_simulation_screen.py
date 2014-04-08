@@ -1396,14 +1396,13 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             elif line.type_change == 'split' and line.parent_line_id:
                 # Call the split line wizard
                 po_line_id = False
-                orig_qty = 0.00
                 if line.parent_line_id and line.parent_line_id.po_line_id:
                     po_line_id = line.parent_line_id.po_line_id.id
-                    orig_qty = line.parent_line_id.in_qty + line.imp_qty
 
+                    # REF-97: Fixed the wrong quantity for the original line which got split
                     context['from_simu_screen'] = True
                     split_id = split_obj.create(cr, uid, {'purchase_line_id': po_line_id,
-                                                          'original_qty': orig_qty,
+                                                          'original_qty': line.parent_line_id.in_qty,
                                                           'new_line_qty': line.imp_qty}, context=context)
 
                     new_po_line_id = split_obj.split_line(cr, uid, split_id, context=context)
@@ -1460,7 +1459,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals['external_ref'] = line.imp_external_ref
 
                 line_obj.write(cr, uid, [line.po_line_id.id], line_vals, context=context)
-
+                line_obj.browse(cr, uid, line.po_line_id.id, context=context).product_qty
             simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)
             # Commit modifications
             cr.commit()
