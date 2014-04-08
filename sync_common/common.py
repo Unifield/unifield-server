@@ -67,6 +67,8 @@ MODELS_TO_IGNORE = [
                     'audittrail.log.line',
 
                     'res.widget',
+                    'product.likely.expire.report',
+                    'product.likely.expire.report.line',
                   ]
 
 MODELS_TO_IGNORE_DOMAIN = [

@@ -5,10 +5,11 @@ from tools.safe_eval import safe_eval as eval
 import logging
 import functools
 import types
+from datetime import date, datetime
 
 from sync_common import MODELS_TO_IGNORE, xmlid_to_sdref
 
-
+#import cProfile
 ## Helpers ###################################################################
 
 class DuplicateKey(KeyError):
@@ -49,6 +50,11 @@ def orm_method_overload(fn):
     @functools.wraps(fn)
     def wrapper(self, *args, **kwargs):
         if self.pool.get(extended_orm._name) is not None:
+            #datafn = '/tmp/' + self._name + fn.__name__ + ".profile" # Name the data file sensibly
+            #prof = cProfile.Profile()
+            #retval = prof.runcall(fn, self, original_method, *args, **kwargs)
+            #prof.dump_stats(datafn)
+            #return retval
             return fn(self, original_method, *args, **kwargs)
         else:
             return original_method(self, *args, **kwargs)
@@ -73,7 +79,7 @@ class extended_orm_methods:
         Check if records need to be pushed to the next synchronization process
         or not.
 
-        One of those conditions needs to match: 
+        One of those conditions needs to match:
             - sync_date < last_modification
             - sync_date is not set
 
@@ -217,7 +223,7 @@ SELECT res_id, touched
             for id, touched_fields
             in self.get_sd_ref(cr, uid, ids, field='touched', context=context).items())
 
-    def touch(self, cr, uid, ids, previous_values, synchronize,
+    def touch(self, cr, uid, ids, previous_values, synchronize, current_values=None,
             _previous_calls=None, context=None):
         """
         Touch the fields that has changed and/or mark the records to be
@@ -246,10 +252,6 @@ SELECT res_id, touched
         """
         if context is None:
             context = {}
-
-        # UF-2294: disable assert error
-        if context.get('offline_synchronization') and not synchronize and not previous_values:
-            return {}
 
         assert not self._name == 'ir.model.data', \
             "Can not call this method on object ir.model.data!"
@@ -280,10 +282,12 @@ SELECT res_id, touched
             data_base_values = {
                 'last_modification' : fields.datetime.now(),
             }
+        else:
+            data_base_values = {}
 
         def touch(data_ids, touched_fields):
             if synchronize:
-                data.write(cr, uid, data_ids, 
+                data.write(cr, uid, data_ids,
                     dict(data_base_values, touched=str(sorted(touched_fields))),
                     context=context)
 
@@ -293,17 +297,21 @@ SELECT res_id, touched
                     if isinstance(self._all_columns[f].column, fields.one2many)]
 
         # read current values
-        whole_fields = [x for x in self._all_columns if not self._all_columns[x].column._properties or self._all_columns[x].column._classic_write] \
-            if previous_values is None \
-            else previous_values[0].keys()
+        if previous_values is not None:
+            whole_fields = previous_values[0].keys()
+        elif current_values is not None:
+            whole_fields = current_values.values()[0].keys()
+        else:
+            whole_fields = [x for x in self._all_columns if not self._all_columns[x].column._properties or self._all_columns[x].column._classic_write]
         try:
             whole_fields.remove('id')
         except ValueError:
             pass
-        current_values = dict(
-            (d['id'], d)
-            for d in self.read(cr, uid, ids, whole_fields, context=context) )
 
+        if not current_values:
+            current_values = dict(
+                (d['id'], d)
+                for d in self.read(cr, uid, ids, whole_fields, context=context) )
         # touch things
         if previous_values is None:
             touch(
@@ -340,12 +348,13 @@ SELECT res_id, touched
                         modified.union(eval(touched) if touched else [])
                     ))
                 # handle one2many (because orm don't call write() on them)
-                for field, column in filter_o2m(whole_fields):
-                    self.pool.get(column._obj).touch(
-                        cr, uid, list(set(prev_rec[field] + next_rec[field])),
-                        None, data_base_values,
-                        _previous_calls=_previous_calls,
-                        context=context)
+                if synchronize:
+                    for field, column in filter_o2m(whole_fields):
+                        self.pool.get(column._obj).touch(
+                            cr, uid, list(set(prev_rec[field] + next_rec[field])),
+                            None, data_base_values,
+                            _previous_calls=_previous_calls,
+                            context=context)
 
         # store changes in the context
         if context is not None and 'changes' in context:
@@ -403,7 +412,7 @@ SELECT res_id, touched
         :param context: optional context arguments, like lang, time zone
         :type context: dictionary
         :return: dictionary with requested references
-        
+
         """
         result_iterable = hasattr(sdrefs, '__iter__')
         if not result_iterable: sdrefs = (sdrefs,)
@@ -435,36 +444,76 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
     def create(self, original_create, cr, uid, values, context=None):
         if context is None: context = {}
         id = original_create(self, cr, uid, values, context=context)
+
+        audit_rule_ids = self.check_audit(cr, uid, 'create')
+        audit_obj = self.pool.get('audittrail.rule')
+        funct_field = []
+        if audit_rule_ids:
+            funct_field = audit_obj.get_functionnal_fields(cr, 1, self._name, audit_rule_ids)
+
         to_be_synchronized = (
             self._name not in MODELS_TO_IGNORE and
             (not context.get('sync_update_execution') and
              not context.get('sync_update_creation')))
-        if to_be_synchronized or hasattr(self, 'on_create'):
+
+        if audit_rule_ids or to_be_synchronized or hasattr(self, 'on_create'):
+            current_values = dict((x['id'], x) for x in self.read(cr, uid, [id], values.keys()+funct_field, context=context))
+
+        if audit_rule_ids:
+            audit_obj.audit_log(cr, uid, audit_rule_ids, self, [id], 'create', current=current_values, context=context)
+
+        if to_be_synchronized:
             self.touch(cr, uid, [id], None,
-                to_be_synchronized, context=context)
-            if hasattr(self, 'on_create'):
-                self.on_create(cr, uid, id,
-                    self.read(cr, uid, [id], values.keys(), context=context)[0],
-                    context=context)
+                to_be_synchronized, current_values=current_values, context=context)
+        if hasattr(self, 'on_create'):
+            self.on_create(cr, uid, id,
+                current_values[id],
+                context=context)
         return id
+
+    def check_audit(self, cr, uid, method):
+        audit_obj = self.pool.get('audittrail.rule')
+        if audit_obj:
+            return self.pool.get('audittrail.rule').to_trace(cr, 1, self._name, method)
+        return False
 
     @orm_method_overload
     def write(self, original_write, cr, uid, ids, values, context=None):
         if context is None: context = {}
-        previous_values = self.read(cr, uid, ids, values.keys(), context=context)
-        result = original_write(self, cr, uid, ids, values,context=context)
+
+        audit_rule_ids = self.check_audit(cr, uid, 'write')
+        audit_obj = self.pool.get('audittrail.rule')
+        funct_field = []
+        if audit_rule_ids:
+            funct_field = audit_obj.get_functionnal_fields(cr, 1, self._name, audit_rule_ids)
+
         to_be_synchronized = (
             self._name not in MODELS_TO_IGNORE and
             (not context.get('sync_update_execution') and
              not context.get('sync_update_creation')))
+
+        if to_be_synchronized or hasattr(self, 'on_change') or audit_rule_ids:
+            # FIXME: add fields.function for track changes
+            previous_values = self.read(cr, uid, ids, values.keys()+funct_field, context=context)
+
+        result = original_write(self, cr, uid, ids, values,context=context)
+        current_values = dict((x['id'], x) for x in self.read(
+            cr, uid, isinstance(ids, (int, long)) and [ids] or ids,
+            values.keys()+funct_field, context=context)
+        )
+
+        if audit_rule_ids:
+            audit_obj.audit_log(cr, uid, audit_rule_ids, self, ids, 'write', previous_values, current_values, context=context)
+
         if to_be_synchronized or hasattr(self, 'on_change'):
             changes = self.touch(cr, uid, ids, previous_values,
-                to_be_synchronized, context=context)
+                to_be_synchronized, current_values=current_values, context=context)
             if hasattr(self, 'on_change'):
                 self.on_change(cr, uid, changes, context=context)
         return result
 
-    def message_unlink(self, cr, uid, source, unlink_info, context=None):
+    # BECAREFUL: This method is ONLY for deleting account.analytic.line by sync. NOT GENERIC!
+    def message_unlink_analytic_line(self, cr, uid, source, unlink_info, context=None):
         model_name = unlink_info.model
         xml_id =  unlink_info.xml_id
         if model_name != self._name:
@@ -474,38 +523,30 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if not res_id:
             return "Object %s %s does not exist in destination" % (model_name, xml_id)
 
+        # UF-2343: check if there is any data update with correction date is later than this delete message, if yes, ignore this message
+        # Check if the correction_date of this record is older than the one of delete message, then ignore this delete message
+        correction_date_in_db = self.pool.get('account.analytic.line').browse(cr, uid, res_id, context=context).correction_date
+        correction_date = unlink_info.correction_date
+
+        # UF-2343: to handle this if both time exists
+        if correction_date_in_db and correction_date:
+            date_in_db = datetime.strptime(correction_date_in_db, '%Y-%m-%d %H:%M:%S')
+            date_in_sync = datetime.strptime(correction_date, '%Y-%m-%d %H:%M:%S')
+
+            # If there is an update happening after the delete, then ignore this delete message
+            if date_in_db > date_in_sync:
+                return "The delete message is ignored as the analytic line got updated after this delete message."
+
         return self.unlink(cr, uid, [res_id], context=context)
-
-    def generate_message_for_destination(self, cr, uid, destination_name, sdref, instance_name, send_to_parent_instances):
-        instance_obj = self.pool.get('msf.instance')
-
-        if not destination_name:
-            return
-        if destination_name != instance_name:
-            message_data = {
-                    'identifier' : 'delete_%s_to_%s' % (sdref, destination_name),
-                    'sent' : False,
-                    'generate_message' : True,
-                    'remote_call': self._name + ".message_unlink",
-                    'arguments': "[{'model' :  '%s', 'xml_id' : '%s'}]" % (self._name, sdref),
-                    'destination_name': destination_name
-            }
-            self.pool.get("sync.client.message_to_send").create(cr, uid, message_data)
-
-        if destination_name != instance_name or send_to_parent_instances:
-            # generate message for parent instance
-            instance_ids = instance_obj.search(cr, uid, [("instance", "=", destination_name)])
-            if instance_ids:
-                instance_record = instance_obj.browse(cr, uid, instance_ids[0])
-                parent = instance_record.parent_id and instance_record.parent_id.instance or False
-                if parent:
-                    self.generate_message_for_destination(cr, uid, parent, sdref, instance_name, send_to_parent_instances)
 
     @orm_method_overload
     def unlink(self, original_unlink, cr, uid, ids, context=None):
         if not ids: return True
         context = context or {}
 
+        audit_rule_ids = self.check_audit(cr, uid, 'unlink')
+        if audit_rule_ids:
+            self.pool.get('audittrail.rule').audit_log(cr, uid, audit_rule_ids, self, ids, 'unlink', context=context)
         if context.get('sync_message_execution'):
             return original_unlink(self, cr, uid, ids, context=context)
 

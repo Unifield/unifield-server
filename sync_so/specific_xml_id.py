@@ -21,9 +21,9 @@ def get_valid_xml_name(*args):
     return u"_".join(map(lambda x: unicode(x), filter(None, args))).replace('.', '')
 
 class financing_contract_account_quadruplet(osv.osv):
-    
+
     _inherit = 'financing.contract.account.quadruplet'
-    
+
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         quadruplet = self.browse(cr, uid, res_id)
         contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', '=', quadruplet.format_id.id)])
@@ -37,39 +37,48 @@ class financing_contract_account_quadruplet(osv.osv):
                                   quadruplet.account_destination_id.destination_id.code,
                                   quadruplet.cost_center_id.code,
                                   quadruplet.funding_pool_id.code)
-    
+
 financing_contract_account_quadruplet()
 
+class sale_order(osv.osv):
+   _inherit = 'sale.order'
+
+   def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+       so = self.browse(cr, uid, res_id)
+       return get_valid_xml_name(uuid, table_name, so.name, res_id)
+
+sale_order()
+
 class fiscal_year(osv.osv):
-    
+
     _inherit = 'account.fiscalyear'
-    
+
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         fiscalyear = self.browse(cr, uid, res_id)
         return get_valid_xml_name(fiscalyear.code)
-    
+
 fiscal_year()
 
 class account_journal(osv.osv):
-    
+
     _inherit = 'account.journal'
-    
+
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         journal = self.browse(cr, uid, res_id)
         return get_valid_xml_name('journal', (journal.instance_id.code or 'noinstance'), (journal.code or 'nocode'), (journal.name or 'noname'))
-    
+
 account_journal()
 
 class bank_statement(osv.osv):
-    
+
     _inherit = 'account.bank.statement'
-    
+
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         bank = self.browse(cr, uid, res_id)
-        # to be unique, the journal xml_id must include also the period, otherwise no same name journal cannot be inserted for different periods! 
+        # to be unique, the journal xml_id must include also the period, otherwise no same name journal cannot be inserted for different periods!
         unique_journal = (bank.journal_id.code or 'nojournal') + '_' + (bank.period_id.name or 'noperiod')
         return get_valid_xml_name('bank_statement', (bank.instance_id.code or 'noinstance'), (bank.name or 'nobank'), unique_journal)
-    
+
     def update_xml_id_register(self, cr, uid, res_id, context):
         """
         Reupdate the xml_id of the register once the button Open got clicked. Because in draft state the period can be modified,
@@ -77,13 +86,13 @@ class bank_statement(osv.osv):
         """
         bank = self.browse(cr, uid, res_id) # search the fake xml_id
         model_data_obj = self.pool.get('ir.model.data')
-        
-        # This one is to get the prefix of the bank_statement for retrieval of the correct xml_id       
+
+        # This one is to get the prefix of the bank_statement for retrieval of the correct xml_id
         prefix = get_valid_xml_name('bank_statement', (bank.instance_id.code or 'noinstance'), (bank.name or 'nobank'))
-        
+
         data_ids = model_data_obj.search(cr, uid, [('model', '=', self._name), ('res_id', '=', res_id), ('name', 'like', prefix), ('module', '=', 'sd')], limit=1, context=context)
         xml_id = self.get_unique_xml_name(cr, uid, False, self._table, res_id)
-        
+
         existing_xml_id = False
         if data_ids:
             existing_xml_id = model_data_obj.read(cr, uid, data_ids[0], ['name'])['name']
@@ -95,7 +104,7 @@ class bank_statement(osv.osv):
         res = super(bank_statement, self).button_open_bank(cr, uid, ids, context=context)
         self.update_xml_id_register(cr, uid, ids[0], context)
         return res
-    
+
     def button_open_cheque(self, cr, uid, ids, context=None):
         res = super(bank_statement, self).button_open_cheque(cr, uid, ids, context=context)
         self.update_xml_id_register(cr, uid, ids[0], context)
@@ -103,49 +112,49 @@ class bank_statement(osv.osv):
 
     def button_open_cash(self, cr, uid, ids, context=None):
         """
-        The update of xml_id may be done when opening the register 
+        The update of xml_id may be done when opening the register
         --> set the value of xml_id based on the period as period is no more modifiable
         """
         res = super(bank_statement, self).button_open_cash(cr, uid, ids, context=context)
         self.update_xml_id_register(cr, uid, ids[0], context)
         return res
-    
+
 bank_statement()
 
 class account_period_sync(osv.osv):
-    
+
     _inherit = "account.period"
-    
+
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         period = self.browse(cr, uid, res_id)
         return get_valid_xml_name(period.fiscalyear_id.code+"/"+period.name, period.date_start)
-    
+
 account_period_sync()
 
 class res_currency_sync(osv.osv):
-    
+
     _inherit = 'res.currency'
-    
+
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         currency = self.browse(cr, uid, res_id)
         return get_valid_xml_name(currency.name, (currency.currency_table_id and currency.currency_table_id.name))
-    
+
 res_currency_sync()
 
 class product_pricelist(osv.osv):
-    
+
     _inherit = 'product.pricelist'
-    
+
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         pricelist = self.browse(cr, uid, res_id)
         return get_valid_xml_name(pricelist.name, pricelist.type)
-    
+
 product_pricelist()
 
 class hq_entries(osv.osv):
-    
+
     _inherit = 'hq.entries'
-    
+
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         if dest_field == 'cost_center_id':
             res = dict.fromkeys(ids, False)
@@ -170,9 +179,9 @@ hq_entries()
 
 
 class account_target_costcenter(osv.osv):
-    
+
     _inherit = 'account.target.costcenter'
-    
+
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         if dest_field == 'instance_id':
             res = dict.fromkeys(ids, False)
@@ -194,7 +203,7 @@ class account_target_costcenter(osv.osv):
                         res[target_line.id] = res_data
             return res
         return super(account_target_costcenter, self).get_destination_name(cr, uid, ids, dest_field, context=context)
-    
+
     def create(self, cr, uid, vals, context={}):
         res_id = super(account_target_costcenter, self).create(cr, uid, vals, context=context)
         # create lines in instance's children
@@ -209,11 +218,11 @@ class account_target_costcenter(osv.osv):
 account_target_costcenter()
 
 class account_analytic_account(osv.osv):
-    
+
     _inherit = 'account.analytic.account'
-    
+
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
-        # get all active project instance with the cost center in one of its target lines 
+        # get all active project instance with the cost center in one of its target lines
         if dest_field == 'category':
             if isinstance(ids, (long, int)):
                 ids = [ids]
@@ -230,19 +239,19 @@ class account_analytic_account(osv.osv):
                             res_temp.append(result[0])
                     res[id] = res_temp
             return res
-        
+
         return super(account_analytic_account, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         account = self.browse(cr, uid, res_id)
         return get_valid_xml_name(account.category, account.code, account.name)
- 
+
 account_analytic_account()
 
 class msf_instance(osv.osv):
-    
+
     _inherit = 'msf.instance'
-    
+
     def create(self, cr, uid, vals, context=None):
         res_id = super(msf_instance, self).create(cr, uid, vals, context=context)
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
@@ -251,10 +260,10 @@ class msf_instance(osv.osv):
             # touch cost centers and account_Target_cc lines in order to sync them
             target_ids = [x.id for x in instance.target_cost_center_ids]
             self.pool.get('account.target.costcenter').synchronize(cr, uid, target_ids, context=context)
-            
+
             cost_center_ids = [x.cost_center_id.id for x in instance.target_cost_center_ids]
             self.pool.get('account.analytic.account').synchronize(cr, uid, cost_center_ids, context=context)
-                
+
             # also touch parent instance and lines from parent, since those were already sent to other instances
             if instance.parent_id and instance.parent_id.target_cost_center_ids and instance.level == 'project':
                 parent_target_ids = [x.id for x in instance.parent_id.target_cost_center_ids]
@@ -266,7 +275,7 @@ class msf_instance(osv.osv):
                         if sibling != instance and sibling.state == 'active':
                             sibling_target_ids += [x.id for x in sibling.target_cost_center_ids]
                     self.pool.get('account.target.costcenter').synchronize(cr, uid, sibling_target_ids, context=context)
-        
+
         return res_id
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -280,10 +289,10 @@ class msf_instance(osv.osv):
                     # touch cost centers and account_Target_cc lines in order to sync them
                     target_ids = [x.id for x in instance.target_cost_center_ids]
                     self.pool.get('account.target.costcenter').synchronize(cr, uid, target_ids, context=context)
-                    
+
                     cost_center_ids = [x.cost_center_id.id for x in instance.target_cost_center_ids]
                     self.pool.get('account.analytic.account').synchronize(cr, uid, cost_center_ids, context=context)
-                        
+
                     # also touch parent instance and lines from parent, since those were already sent to other instances
                     if instance.parent_id and instance.parent_id.target_cost_center_ids and instance.level == 'project':
                         parent_target_ids = [x.id for x in instance.parent_id.target_cost_center_ids]
@@ -295,15 +304,19 @@ class msf_instance(osv.osv):
                                 if sibling != instance and sibling.state == 'active':
                                     sibling_target_ids += [x.id for x in sibling.target_cost_center_ids]
                             self.pool.get('account.target.costcenter').synchronize(cr, uid, sibling_target_ids, context=context)
-                        
+
         return super(msf_instance, self).write(cr, uid, ids, vals, context=context)
 
 msf_instance()
 
 class account_analytic_line(osv.osv):
-    
+
     _inherit = 'account.analytic.line'
-        
+
+    _columns = {
+        'correction_date': fields.datetime('Correction Date'), # UF-2343: Add timestamp when making the correction, to be synced
+    }
+
     def get_instance_name_from_cost_center(self, cr, uid, cost_center_id, context=None):
         if cost_center_id:
             target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_id),
@@ -313,7 +326,7 @@ class account_analytic_line(osv.osv):
                 target = self.pool.get('account.target.costcenter').browse(cr, uid, target_ids[0], context=context)
                 if target.instance_id and target.instance_id.instance:
                     return target.instance_id.instance
-                
+
             if current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
                 return current_instance.parent_id.instance
@@ -321,11 +334,29 @@ class account_analytic_line(osv.osv):
                 return False
         else:
             return False
-    
+
+    def get_instance_level_from_cost_center(self, cr, uid, cost_center_id, context=None):
+        if cost_center_id:
+            target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_id),
+                                                                                     ('is_target', '=', True)])
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+            if len(target_ids) > 0:
+                target = self.pool.get('account.target.costcenter').browse(cr, uid, target_ids[0], context=context)
+                if target.instance_id and target.instance_id.level:
+                    return target.instance_id.level
+
+            if current_instance.parent_id and current_instance.parent_id.level:
+                # Instance has a parent
+                return current_instance.parent_id.level
+            else:
+                return False
+        else:
+            return False
+
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         if not dest_field == 'cost_center_id':
             return super(account_analytic_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
-        
+
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         res = dict.fromkeys(ids, False)
         for line_data in self.browse(cr, uid, ids, context=context):
@@ -335,43 +366,75 @@ class account_analytic_line(osv.osv):
                 # Instance has a parent
                 res[line_data.id] = current_instance.parent_id.instance
         return res
-    
-    def write(self, cr, uid, ids, vals, context=None):
-        if not 'cost_center_id' in vals:
-            return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
 
-        if isinstance(ids, (long, int)):
-            ids = [ids]
-        
+    # Generate delete message for AJI at Project
+    def generate_delete_message_at_project(self, cr, uid, ids, vals, context):
+        # NEED REFACTORING FOR THIS METHOD, if the action write on Analytic.line happens often!
+        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
         instance_name = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context).name
         xml_ids = self.pool.get('ir.model.data').get(cr, uid, self, ids, context=context)
         line_data = self.read(cr, uid, ids, ['cost_center_id'], context=context)
         line_data = dict((data['id'], data) for data in line_data)
-        for i,  xml_id_record in enumerate(self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)):
+
+        for i, xml_id_record in enumerate(self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)):
             xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
             old_cost_center_id = line_data[ids[i]]['cost_center_id'] and line_data[ids[i]]['cost_center_id'][0] or False
-            
             new_cost_center_id = False
             if 'cost_center_id' in vals:
                 new_cost_center_id = vals['cost_center_id']
             else:
                 new_cost_center_id = old_cost_center_id
-            
-            old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
-            new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
-            
-            if not old_destination_name == new_destination_name:
-                # Send delete message, but not to parents of the current instance
-                self.generate_message_for_destination(cr, uid, old_destination_name, xml_id, instance_name, send_to_parent_instances=False)
-            
+
+            # UF-2342: only generate delete message if the instance is at Project level
+            old_destination_level = self.get_instance_level_from_cost_center(cr, uid, old_cost_center_id, context=context)
+            if old_destination_level == 'project':
+                old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
+                new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
+                if not old_destination_name == new_destination_name: # Create a delete message for this AJI to destination project, and store it into the queue for next synchronisation
+                    now = fields.datetime.now()
+                    message_data = {'identifier':'delete_%s_to_%s' % (xml_id, old_destination_name),
+                        'sent':False,
+                        'generate_message':True,
+                        'remote_call':self._name + ".message_unlink_analytic_line",
+                        'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
+                        'destination_name':old_destination_name}
+                    msg_to_send_obj.create(cr, uid, message_data)
+
+            # Check if the new code center belongs to a project that has *previously* a delete message for the same AJI created but not sent
+            # -> remove that delete message from the queue
+            new_destination_level = self.get_instance_level_from_cost_center(cr, uid, new_cost_center_id, context=context)
+            if new_destination_level == 'project': # Only concern Project (other level has no delete message)
+                new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
+                if new_destination_name and xml_id:
+                    identifier = 'delete_%s_to_%s' % (xml_id, new_destination_name)
+                    exist_ids = msg_to_send_obj.search(cr, uid, [('identifier', '=', identifier), ('sent', '=', False)])
+                    if exist_ids:
+                        msg_to_send_obj.unlink(cr, uid, exist_ids, context=context) # delete this unsent delete-message
+
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if not 'cost_center_id' in vals:
+            return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
+
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+
+        # Only set the correction date if data not come from sync
+        if not context.get('sync_update_execution', False):
+            vals['correction_date'] = fields.datetime.now() # This timestamp is used for the write, but need to set BEFORE
+        # call to generate delete message if the cost center is removed from a project
+        self.generate_delete_message_at_project(cr, uid, ids, vals, context)
 
         return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
+
 
 account_analytic_line()
 
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
-    
+
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         if not context:
             context = {}
@@ -384,18 +447,18 @@ class account_move_line(osv.osv):
                     invoice_ids.append(line.invoice.id)
             if self.pool.get('account.invoice').test_paid(cr, uid, invoice_ids):
                 self.pool.get('account.invoice').confirm_paid(cr, uid, invoice_ids)
-                
+
         return res
 
 account_move_line()
 
 class funding_pool_distribution_line(osv.osv):
     _inherit = 'funding.pool.distribution.line'
-    
+
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         if not dest_field == 'cost_center_id':
             return super(funding_pool_distribution_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
-        
+
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         res = dict.fromkeys(ids, False)
         for line_id in ids:
@@ -406,16 +469,16 @@ class funding_pool_distribution_line(osv.osv):
                 # Instance has a parent
                 res[line_id] = current_instance.parent_id.instance
         return res
-    
+
 funding_pool_distribution_line()
 
 class cost_center_distribution_line(osv.osv):
     _inherit = 'cost.center.distribution.line'
-    
+
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         if not dest_field == 'analytic_id':
             return super(cost_center_distribution_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
-        
+
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         res = dict.fromkeys(ids, False)
         for line_id in ids:
@@ -426,7 +489,7 @@ class cost_center_distribution_line(osv.osv):
                 # Instance has a parent
                 res[line_id] = current_instance.parent_id.instance
         return res
-    
+
 cost_center_distribution_line()
 
 class product_product(osv.osv):
@@ -437,31 +500,17 @@ class product_product(osv.osv):
         return get_valid_xml_name('product', product.xmlid_code) if product.xmlid_code else \
                super(product_product, self).get_unique_xml_name(cr, uid, uuid, table_name, res_id)
 
-    def create(self, cr, uid, vals, context=None):
-        id = super(product_product, self).create(cr, uid, vals, context=context)
-
-        prod = self.read(cr, uid, id, ['default_code'], context=context)['default_code']
-        if prod is not None and prod != 'XXX': # normal case, just return
-            return id
-
-        # if the default code is empty or XXX, then delete the relevant xmlid from the ir_model_data table
-        model_data_obj = self.pool.get('ir.model.data')
-        sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','=',id),('module','=','sd')])
-        if sdref_ids:
-            model_data_obj.unlink(cr, uid, sdref_ids,context=context)
-        return id
-
     # UF-2254: Treat the case of product with empty or XXX for default_code
     def write(self, cr, uid, ids, vals, context=None):
         res = super(product_product, self).write(cr, uid, ids, vals, context=context)
         if isinstance(ids, (long, int)):
             ids = [ids]
         res_id = ids[0]
-        
+
         prod = self.read(cr, uid, res_id, ['default_code'], context=context)['default_code']
         if prod is not None and prod != 'XXX': # normal case, do nothing
             return res
-        
+
         # if the default_code is empty or XXX, rebuild the xmlid
         model_data_obj = self.pool.get('ir.model.data')
         sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','=',res_id),('module','=','sd')])
@@ -480,31 +529,31 @@ class product_product(osv.osv):
         else:
             if prod == 'XXX': # if the system created automatically the xmlid in ir_model_data, just delete it!
                 model_data_obj.unlink(cr, uid, sdref_ids,context=context)
-        
+
         return res
 
 product_product()
 
 class product_asset(osv.osv):
-    
+
     _inherit = "product.asset"
-    
+
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         asset = self.browse(cr, uid, res_id)
         #UF-2148: use the xmlid_name for building the xml for this object
         return get_valid_xml_name('product_asset', (asset.partner_name or 'no_partner'), (asset.product_id.code or 'noprod'), (asset.xmlid_name or 'noname'))
-    
+
 product_asset()
 
 class batch_number(osv.osv):
     _inherit = "stock.production.lot"
-    
+
     #UF-1617: unique xml id for batch number with instance id
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         batch = self.browse(cr, uid, res_id)
         #UF-2148: use the xmlid_name for building the xml for this object
         return get_valid_xml_name('batch_numer', (batch.partner_name or 'no_partner'), (batch.product_id.code or 'noprod'), (batch.xmlid_name or 'noname'))
-    
+
 batch_number()
 
 class ir_model_access(osv.osv):
@@ -512,15 +561,15 @@ class ir_model_access(osv.osv):
     UF-2146 To allow synchronisation of ir.model.access, must have same sd ref across all instances
     """
     _inherit = "ir.model.access"
-    
+
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         ima = self.browse(cr, uid, res_id)
         return get_valid_xml_name(
-                  'ir_model_access', 
+                  'ir_model_access',
                   self.pool.get('ir.model').get_sd_ref(cr, uid, ima.model_id.id),
                   ima.name
                 )
-    
+
 ir_model_access()
 
 class ir_model(osv.osv):
@@ -528,7 +577,7 @@ class ir_model(osv.osv):
     UF-2146 sd ref for ir.model to be included in sd ref of ir.model.access
     """
     _inherit = 'ir.model'
-    
+
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         model = self.browse(cr, uid, res_id)
         return get_valid_xml_name('ir_model', model.model)

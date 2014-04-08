@@ -32,8 +32,6 @@ if not tools.config.options['logfile'] and tools.config.options['log_level'] <= 
         except:
             logger.exception()
         pdb.set_trace()
-        for f in ('patch_file','patch_file_name','patch_file_visible'):
-            print "Result", f, ":", self.pool.get('usb_synchronisation')._generate_patch_batch(cr, uid, 1, f, '', context)
 
         cr.rollback()
         return True

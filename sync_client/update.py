@@ -33,6 +33,7 @@ from sync_common import sync_log, \
     split_xml_ids_list, normalize_xmlid
 
 re_fieldname = re.compile(r"^\w+")
+re_subfield_separator = re.compile(r"[./]")
 
 class local_rule(osv.osv):
     _name = "sync.client.rule"
@@ -48,6 +49,7 @@ class local_rule(osv.osv):
         'can_delete': fields.boolean('Can delete record?', readonly=True, help='Propagate the delete of old unused records'),
         'active' : fields.boolean('Active', select=True),
         'type' : fields.char('Group Type', size=256),
+        'handle_priority': fields.boolean('Handle Priority'),
     }
 
     _defaults = {
@@ -118,6 +120,7 @@ class update_to_send(osv.osv):
         'fields':fields.text('Fields', size=128, readonly=True),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
         'force_recreation' : fields.boolean('Force record recreation', readonly=True),
+        'handle_priority': fields.boolean('Handle Priority'),
     }
     
     _defaults = {
@@ -169,6 +172,7 @@ class update_to_send(osv.osv):
                         'force_recreation' : force_recreation,
                         'fields' : ustr_export_fields,
                         'values' : tools.ustr(row),
+                        'handle_priority' : rule.handle_priority,
                     }, context=context)
                     update._logger.debug("Created 'normal' update model=%s id=%d (rule sequence=%d)" % (self._name, update_id, rule.id))
 
@@ -236,6 +240,7 @@ class update_to_send(osv.osv):
                     'owner' : update.owner,
                     'sdref' : update.sdref,
                     'force_recreation' : update.force_recreation,
+                    'handle_priority' : update.handle_priority,
                 })
             ids_in_package.append(update.id)
         data['load'] = values
@@ -280,6 +285,7 @@ class update_received(osv.osv):
         'run' : fields.boolean("Run", readonly=True, select=True),
         'log' : fields.text("Execution Messages", readonly=True),
         'fallback_values':fields.text('Fallback values'),
+        'handle_priority': fields.boolean('Handle Priority', readonly=True),
 
         'create_date':fields.datetime('Synchro date/time', readonly=True),
         'execution_date':fields.datetime('Execution date', readonly=True),
@@ -319,6 +325,7 @@ class update_received(osv.osv):
                     'owner' : load_item['owner_name'],
                     'sdref' : load_item['sdref'],
                     'force_recreation' : load_item['force_recreation'],
+                    'handle_priority' : load_item['handle_priority'],
                 })
                 self.create(cr, uid, data, context=context)
             return len(packet['load'])
@@ -343,8 +350,10 @@ class update_received(osv.osv):
             sync_log(self, e)
         return True
 
-    def execute_update(self, cr, uid, ids=None, context=None):
+    def execute_update(self, cr, uid, ids=None, priorities=None, context=None):
         context = dict(context or {}, sync_update_execution=True)
+        local_entity = self.pool.get('sync.client.entity').get_entity(
+            cr, uid, context=context)
 
         if ids is None:
             update_ids = self.search(cr, uid, [('run','=',False)], order='id asc', context=context)
@@ -352,6 +361,11 @@ class update_received(osv.osv):
             update_ids = ids
         if not update_ids:
             return ''
+
+        if priorities is None:
+            self._logger.warn(
+                "Executing update without having entity priorities... "
+                "this may results in a lost of modification to push")
 
         # Sort updates by rule_sequence
         whole = self.browse(cr, uid, update_ids, context=context)
@@ -420,8 +434,14 @@ class update_received(osv.osv):
                 logs.clear()
                 for sdref, version in versions.items():
                     try:
-                        self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-                            sdref, {'version': version, self._sync_field: fields.datetime.now()},
+                        self.pool.get('ir.model.data').update_sd_ref(
+                            cr, uid, sdref,
+                            {
+                                'version': version,
+                                self._sync_field: fields.datetime.now(),
+                                'force_recreation' : False,
+                                'touched' : '[]',
+                            },
                             context=context)
                     except ValueError:
                         self._logger.warning("Cannot find record %s during update execution process!" % update.sdref)
@@ -575,9 +595,58 @@ class update_received(osv.osv):
             updates = filter(lambda update: update.id not in deleted_update_ids or
                                             (not do_deletion and force_recreation),
                              updates)
-            if not updates: continue
+            if not updates:
+                continue
+            # ignore updates of instances that have lower priorities
+            if priorities is not None and not do_deletion:
+                assert local_entity.name in priorities, \
+                    "Oops! I don't even know my own priority."
+                import_fields = [
+                    re_subfield_separator.split(field)[0]
+                    for field in eval(updates[0].fields)
+                ]
+                sdref_res_id = obj.find_sd_ref(cr, uid,
+                    sdref_update_ids.keys(),
+                    context=context)
+                confilcting_ids = obj.need_to_push(cr, uid,
+                    sdref_res_id.values(), import_fields, context=context)
+                confilcting_updates = filter(
+                    lambda update: update.handle_priority and \
+                        update.sdref in sdref_res_id and \
+                        sdref_res_id[update.sdref] in confilcting_ids,
+                    updates)
+                updates_to_ignore = filter(
+                    lambda update: priorities[update.source] \
+                                   > priorities[local_entity.name],
+                    confilcting_updates)
+                for update in confilcting_updates:
+                    if update not in updates_to_ignore:
+                        self._logger.warn(
+                            "The update %d has overwritten your modification "
+                            "on record sd.%s because of higher priority "
+                            "(update source: %s > local instance: %s)"
+                            % (update.id, update.sdref,
+                               update.source, local_entity.name))
+                self.write(cr, uid,
+                    [update.id for update in updates_to_ignore],
+                    {
+                        'editable' : False,
+                        'run' : True,
+                        'log' : \
+                            "This update has been ignored because it " \
+                            "interfere with a local modification while the " \
+                            "origin instance has a lower priority.\n\n" \
+                            "(update source: %s < local instance: %s)" \
+                            % (update.source, local_entity.name),
+                    },
+                    context=context)
+                updates = filter(
+                    lambda update: update not in updates_to_ignore,
+                    updates)
             # Proceed
-            if do_deletion:
+            if not updates:
+                continue
+            elif do_deletion:
                 group_unlink_update_execution(obj, dict((update.sdref, update.id) for update in updates))
                 deleted += len(updates)
             else:

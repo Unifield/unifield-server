@@ -103,6 +103,7 @@ class entity(osv.osv):
     """ OpenERP entity name and unique identifier """
     _name = "sync.server.entity"
     _description = "Synchronization Instance"
+    _parent_store = True
 
     def __init__(self, *args, **kwargs):
         self._activity_pool = {}
@@ -130,7 +131,7 @@ class entity(osv.osv):
     _columns = {
         'name':fields.char('Instance Name', size=64, required=True, select=True),
         'identifier':fields.char('Identifier', size=64, readonly=True, select=True),
-        'parent_id':fields.many2one('sync.server.entity', 'Parent Instance', ondelete='set null', ),
+        'parent_id':fields.many2one('sync.server.entity', 'Parent Instance', ondelete='cascade'),
         'group_ids':fields.many2many('sync.server.entity_group', 'sync_entity_group_rel', 'entity_id', 'group_id', string="Groups"),
         'state' : fields.selection([('pending', 'Pending'), ('validated', 'Validated'), ('invalidated', 'Invalidated'), ('updated', 'Updated')], 'State'),
         'email':fields.char('Contact Email', size=512),
@@ -142,7 +143,16 @@ class entity(osv.osv):
 
         'activity' : fields.function(_get_activity, type='char', string="Activity", method=True),
         'last_activity' : fields.datetime("Date of last activity", readonly=True),
+
+        'parent_left' : fields.integer("Left Parent", select=1),
+        'parent_right' : fields.integer("Right Parent", select=1),
     }
+
+    def unlink(self, cr, uid, ids, context=None):
+        for rec in self.browse(cr, uid, ids, context=context):
+            if rec.parent_id:
+                raise osv.except_osv(_("Error!"), _("Can not delete an instance that have children!"))
+        return super(entity, self).unlink(cr, uid, ids, context=None)
    
     def get_security_token(self):
         return uuid.uuid4().hex
@@ -162,16 +172,10 @@ class entity(osv.osv):
         return _get_ancestor_rec(entity, [])
         
     def _get_all_children(self, cr, uid, id, context=None):
-        def _get_children_rec(entity, child_list):
-            if entity and entity.children_ids:
-                for child in entity.children_ids:
-                    child_list.append(child.id)
-                    _get_children_rec(child, child_list)
-            return child_list
+        res = self.search(cr, uid, [('id','child_of',[id])], context=context)
+        res.remove(id)
+        return res
 
-        entity = self.browse(cr, uid, id, context=context)
-        return _get_children_rec(entity, [])
-    
     def _check_children(self, cr, uid, entity, uuid_list, context=None):
         children_ids = self._get_all_children(cr, uid, entity.id)
         uuid_child = [child.identifier for child in self.browse(cr, uid, children_ids, context=context)]
@@ -475,7 +479,15 @@ class entity(osv.osv):
 
         visited_branch.remove(id)
         return True
-    
+
+    def get_entities_priorities(self, cr, uid, context=None):
+        return dict([
+            (rec.name, rec.parent_left)
+            for rec in self.browse(cr, uid,
+                self.search(cr, uid, [], context=context),
+                context=context)
+        ])
+
     _constraints = [
         (_check_recursion, 'Error! You cannot create cycle in entities structure.', ['parent_id']),
     ]

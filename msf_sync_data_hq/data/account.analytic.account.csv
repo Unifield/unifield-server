@@ -1,22 +1,14 @@
-"id","name","code","category","parent_id","type","date_start"
-"oca-mmr-coo","OCA-MMR-COO","MM101","Cost Center","OC","Normal","18-Mar-2012"
-"oca-mmr-prj","OCA-MMR-PRJ","MM201","Cost Center","OC","Normal","18-Mar-2012"
-"oca-uzb-coo","OCA-UZB-COO","UZ101","Cost Center","OC","Normal","18-Mar-2012"
-"oca-uzb-prj","OCA-UZB-PRJ","UZ201","Cost Center","OC","Normal","18-Mar-2012"
-"ocg-ken-coo","OCG-KEN-COO","KE101","Cost Center","OC","Normal","18-Mar-2012"
-"ocg-ken-prj","OCG-KEN-PRJ","KE201","Cost Center","OC","Normal","18-Mar-2012"
-"ocg-gui-coo","OCG-GUI-COO","GU101","Cost Center","OC","Normal","18-Mar-2012"
-"ocg-gui-prj","OCG-GUI-PRJ","GU201","Cost Center","OC","Normal","18-Mar-2012"
-"ocb-bdi-coo","OCB-BDI-COO","BD101","Cost Center","OC","Normal","18-Mar-2012"
-"ocb-bdi-prj","OCB-BDI-PRJ","BD201","Cost Center","OC","Normal","18-Mar-2012"
-"ocb-mwi-coo","OCB-MWI-COO","MW101","Cost Center","OC","Normal","18-Mar-2012"
-"ocb-mwi-prj","OCB-MWI-PRJ","MW201","Cost Center","OC","Normal","18-Mar-2012"
-"sup-oca-uzb-coo","SUP-OCA-UZB-COO","SP-UZ101","Cost Center","OC","Normal","18-Mar-2012"
-"sup-oca-uzb-prj","SUP-OCA-UZB-PRJ","SP-UZ201","Cost Center","OC","Normal","18-Mar-2012"
-"sup-ocg-gui-coo","SUP-OCG-GUI-COO","SP-GU101","Cost Center","OC","Normal","18-Mar-2012"
-"sup-ocg-gui-prj","SUP-OCG-GUI-PRJ","SP-GU201","Cost Center","OC","Normal","18-Mar-2012"
-"sup-ocb-mwi-coo","SUP-OCB-MWI-COO","SP-MW101","Cost Center","OC","Normal","18-Mar-2012"
-"sup-ocb-mwi-prj","SUP-OCB-MWI-PRJ","SP-MW201","Cost Center","OC","Normal","18-Mar-2012"
-"uf1191_coordo","UF1191_COORDO","UF11961_COORDO","Cost Center","OC","Normal","18-Sep-2012"
-"uf1191_project","UF1191_PROJECT","UF11961_PROJECT","Cost Center","OC","Normal","18-Sep-2012"
-"uf1191_project2","UF1191_PROJECT2","UF11961_PROJECT2","Cost Center","OC","Normal","18-Sep-2012"
+id,name,code,category,parent_id,type,date_start
+MW1,MALAWI MISSION,MW1,Cost Center,OC,View,1-Jan-13
+MW101,MW COORDINATION,MW101,Cost Center,MALAWI MISSION,Normal,1-Jan-13
+MW102,MW THYOLO HIV / AIDS,MW102,Cost Center,MALAWI MISSION,Normal,1-Jan-13
+MW107,MW EPREP,MW107,Cost Center,MALAWI MISSION,Normal,1-Jan-13
+MW109,MW ZONAL MENTORSHIP,MW109,Cost Center,MALAWI MISSION,Normal,1-Jan-13
+BI1,BURUNDI MISSION,BI1,Cost Center,OC,View,1-Jan-13
+BI101,BI COORDINATION,BI101,Cost Center,BURUNDI MISSION,Normal,1-Jan-13
+BI120,BI EPREP,BI120,Cost Center,BURUNDI MISSION,Normal,1-Jan-13
+BI133,BI CURGO,BI133,Cost Center,BURUNDI MISSION,Normal,1-Jan-13
+BI134,BI FISTULES,BI134,Cost Center,BURUNDI MISSION,Normal,1-Jan-13
+BI140,BI EXPLO MALARIA,BI140,Cost Center,BURUNDI MISSION,Normal,1-Jan-13
+BI196,BI ASSOCIATIF,BI196,Cost Center,BURUNDI MISSION,Normal,1-Jan-13
+BI199,BI DEPENSES BRUXELS,BI199,Cost Center,BURUNDI MISSION,Normal,1-Jan-13

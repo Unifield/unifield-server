@@ -16,6 +16,7 @@
           <field name="model"/>
           <field name="sdref"/>
           <field name="is_deleted"/>
+          <field name="handle_priority"/>
           <field name="create_date"/>
           <field name="execution_date"/>
           <field name="fancy_version"/>
@@ -42,15 +43,19 @@
               <field name="version"
                      attrs="{'invisible':[('is_deleted','=',True)]}"/>
             </group>
-            <field name="owner"/>
           </group>
-          <group col="4" colspan="2">
-            <separator string="Synchronization" colspan="4"/>
-            <field name="source" colspan="4"/>
+          <group col="2" colspan="2">
+            <separator string="Synchronization" colspan="2"/>
+            <field name="create_date" string="Fetched on"/>
+            <field name="source"/>
             <field name="sequence_number"/>
-            <field name="create_date"/>
-            <field name="execution_date"/>
-            <field name="run"/>
+            <field name="owner"/>
+            <group col="6" colspan="2">
+              <field name="handle_priority"
+                     attrs="{'invisible':[('is_deleted','=',True)]}"/>
+              <field name="run"/>
+              <field name="execution_date" string="Last execution"/>
+            </group>
           </group>
           <group colspan="4" col="3">
             <group colspan="1" col="1">
@@ -132,6 +137,7 @@
           <field name="model"/>
           <field name="sdref"/>
           <field name="is_deleted"/>
+          <field name="handle_priority"/>
           <field name="fancy_version"/>
           <field name="rule_id"/>
           <field name="sent"/>
@@ -163,7 +169,9 @@
             <field name="rule_id"/>
             <field name="session_id"/>
             <field name="owner"/>
-            <group colspan="2" col="6">
+            <group colspan="2" col="8">
+              <field name="handle_priority"
+                     attrs="{'invisible':[('is_deleted','=',True)]}"/>
               <field name="sent"/>
               <group colspan="4" col="2">
                 <field name="sent_date"/>

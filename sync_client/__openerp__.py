@@ -29,7 +29,7 @@ Synchronization Engine - Client Module
 """,
     'author': 'OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['sync_common', 'account'],
+    'depends': ['sync_common', 'account', 'analytic_distribution'],
     'init_xml': [],
     'data': [
         'sync_client_view.xml',
