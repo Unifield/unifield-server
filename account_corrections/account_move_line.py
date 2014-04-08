@@ -867,7 +867,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
         # Check if we come from COORDO/HQ instance
         if company and company.instance_id and company.instance_id.level in ['section', 'coordo']:
-            cr.execute("UPDATE account_move_line SET corrected_upstream = 't' WHERE id IN %s", (tuple(ids),))
+            self.write(cr, uid, ids, {'corrected_upstream': True})
         return True
 
 account_move_line()
