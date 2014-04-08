@@ -52,6 +52,8 @@ class account_move_line(osv.osv):
         # Search all accounts that are used in bank, cheque and cash registers
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', 'in', ['bank', 'cheque', 'cash'])])
         account_ids = []
+        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        level = company and company.instance_id and company.instance_id.level or ''
         for j in self.pool.get('account.journal').read(cr, uid, journal_ids, ['default_debit_account_id', 'default_credit_account_id']):
             if j.get('default_debit_account_id', False) and j.get('default_debit_account_id')[0] not in account_ids:
                 account_ids.append(j.get('default_debit_account_id')[0])
@@ -98,7 +100,7 @@ class account_move_line(osv.osv):
             if ml.account_id.id in account_ids:
                 res[ml.id] = False
             # False if "corrected_upstream" is True and that we come from project level
-            if ml.corrected_upstream and ml.instance_id.level == 'project':
+            if ml.corrected_upstream and level == 'project':
                 res[ml.id] = False
             # False if this line is a revaluation
             if ml.journal_id.type == 'revaluation':
@@ -865,7 +867,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
         # Check if we come from COORDO/HQ instance
         if company and company.instance_id and company.instance_id.level in ['section', 'coordo']:
-            cr.execute("UPDATE FROM account_move_line SET corrected_upstream = 't' WHERE id IN %s", (tuple(ids),))
+            cr.execute("UPDATE account_move_line SET corrected_upstream = 't' WHERE id IN %s", (tuple(ids),))
         return True
 
 account_move_line()
