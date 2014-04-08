@@ -120,6 +120,8 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         domain = [('line_id', '=', line.id)]
         items_ids = item_obj.search(self.cr, self.uid, domain,
                                     order='period_start')  # items ordered by date
+        if not items_ids:
+            return False
         return item_obj.browse(self.cr, self.uid, items_ids)
 
     def _get_month_item_lines_ids(self, report, month_date):

@@ -648,11 +648,23 @@ class product_likely_expire_report(osv.osv):
                 'target': 'dummy',
                 'context': context,
             }
+            
+    def _has_expiry(self, cr, uid, ids, context=None):
+        if not ids:
+            return False
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        pler = self.browse(cr, uid, ids[0], context=context)
+        if pler and pler.line_ids:
+            return True
+        return False
 
     def print_report_xls(self, cr, uid, ids, context=None):
         '''
         Print the report (Excel)
         '''
+        if not self._has_expiry(cr, uid, ids, context=context):
+            raise osv.except_osv(_("Warning"), _("There is not any product in expiry"))
         datas = {'ids': ids}
 
         return {
@@ -667,6 +679,8 @@ class product_likely_expire_report(osv.osv):
         '''
         Print the report (PDF)
         '''
+        if not self._has_expiry(cr, uid, ids, context=context):
+            raise osv.except_osv(_("Warning"), _("There is not any product in expiry"))
         datas = {'ids': ids}
 
         return {
