@@ -121,7 +121,12 @@ class purchase_order(osv.osv):
         # update price lists
         self.update_supplier_info(cr, uid, ids, context=context)
         # copy the po with rfq_ok set to False
-        data = self.read(cr, uid, ids[0], ['name'], context=context)
+        data = self.read(cr, uid, ids[0], ['name', 'amount_total'], context=context)
+        if not data.get('amount_total', 0.00):
+            raise osv.except_osv(
+                _('Error'),
+                _('Generation of PO aborted because no price defined on lines.'),
+            )
         new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False, 'origin': data['name']}, context=dict(context,keepOrigin=True))
         # Remove lines with 0.00 as unit price
         no_price_line_ids = line_obj.search(cr, uid, [
