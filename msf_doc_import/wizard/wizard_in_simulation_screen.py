@@ -20,25 +20,24 @@
 ##############################################################################
 
 # Module imports
-import threading
-import pooler
 import base64
-import time
-import xml.etree.ElementTree as ET
-
 from mx import DateTime
+import threading
+import time
 
-# Server imports
-from osv import osv
 from osv import fields
+from osv import osv
+import pooler
 from tools.translate import _
 
-# Addons imports
 from msf_order_date import TRANSPORT_TYPE
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+import xml.etree.ElementTree as ET
 
 
+# Server imports
+# Addons imports
 NB_OF_HEADER_LINES = 7
 NB_LINES_COLUMNS = 12
 
@@ -392,6 +391,7 @@ class wizard_import_in_simulation_screen(osv.osv):
 
             for wiz in self.browse(cr, uid, ids, context=context):
                 nb_treated_lines = 0
+                prodlot_cache = {}
                 # No file => Return to the simulation screen
                 if not wiz.file_to_import:
                     self.write(cr, uid, [wiz.id], {'message': _('No file to import'),
@@ -591,6 +591,25 @@ class wizard_import_in_simulation_screen(osv.osv):
                     # Qty
                     if vals[3]:
                         qty = float(vals[3])
+                        
+                    # Batch and expiry date
+                    # Put the batch + expiry date in a cache to create
+                    # the batch that don't exist only during the import
+                    # not at simulation time
+                    if vals[7] and vals[8]:
+                        exp_value = vals[8]
+                        if type(vals[8]) == type(DateTime.now()):
+                            exp_value = exp_value.strftime('%Y-%m-%d')
+                        elif vals[8] and isinstance(vals[8], str):
+                            try:
+                                time.strptime(vals[8], '%Y-%m-%d')
+                                exp_value = vals[8]
+                            except ValueError:
+                                exp_value = False
+                        
+                        if exp_value and not prodlot_cache.get(product_id, {}).get(str(vals[7])):
+                            prodlot_cache.setdefault(product_id, {})
+                            prodlot_cache[product_id].setdefault(str(vals[7]), exp_value)
 
                     file_lines[x] = (line_number, product_id, uom_id, qty)
 
@@ -701,7 +720,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                                                        'percent_completed': percent_completed}, context=context)
                         vals = values.get(file_line[0], [])
                         if file_line[1] == 'match':
-                            err_msg = wl_obj.import_line(cr, uid, in_line, vals, context=context)
+                            err_msg = wl_obj.import_line(cr, uid, in_line, vals, prodlot_cache, context=context)
                             if file_line[0] in not_ok_file_lines:
                                 wl_obj.write(cr, uid, [in_line], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                         elif file_line[1] == 'split':
@@ -712,10 +731,13 @@ class wizard_import_in_simulation_screen(osv.osv):
                                                               'move_price_unit': 0.00,
                                                               'move_currenty_id': False,
                                                               'type_change': 'split',
+                                                              'imp_batch_name': '',
+                                                              'imp_batch_id': False,
+                                                              'imp_exp_date': False,
                                                               'error_msg': '',
                                                               'parent_line_id': in_line,
                                                               'move_id': False}, context=context)
-                            err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
+                            err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, context=context)
                             if file_line[0] in not_ok_file_lines:
                                 wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                         # Commit modifications
@@ -740,7 +762,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                     new_wl_id = wl_obj.create(cr, uid, {'type_change': 'new',
                                                         'line_number': values.get(in_line, [''])[0] and int(values.get(in_line, [''])[0]) or False,
                                                         'simu_id': wiz.id}, context=context)
-                    err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
+                    err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, context=context)
                     if in_line in not_ok_file_lines:
                         wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[in_line]}, context=context)
 
@@ -951,6 +973,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                                        digits=(16, 2), string='Discre.', readonly=True, store=False),
         'imp_currency_id': fields.many2one('res.currency', string='Curr.', readonly=True),
         'imp_batch_id': fields.many2one('stock.production.lot', string='Batch Number', readonly=True),
+        'imp_batch_name': fields.char(size=128, string='Batch Number', readonly=True),
         'imp_exp_date': fields.date(string='Expiry date', readonly=True),
         'imp_packing_list': fields.char(size=256, string='Packing list', readonly=True),
         'message_esc1': fields.char(size=256, string='Message ESC 1', readonly=True),
@@ -973,7 +996,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         'integrity_status': 'empty',
     }
 
-    def import_line(self, cr, uid, ids, values, context=None):
+    def import_line(self, cr, uid, ids, values, prodlot_cache=None, context=None):
         '''
         Write the line with the values
         '''
@@ -983,6 +1006,12 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        if context is None:
+            context = {}
+            
+        if prodlot_cache is None:
+            prodlot_cache = {}
 
         errors = []
         warnings = []
@@ -1069,9 +1098,22 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if not batch_id or batch_id not in batch_ids:
                     batch_ids = prodlot_obj.search(cr, uid, [('name', '=', str(batch_value)), ('product_id', '=', write_vals['imp_product_id'])], context=context)
                     if batch_ids:
-                        write_vals['imp_batch_id'] = batch_ids[0]
-                else:
-                    write_vals['imp_batch_id'] = batch_id
+                        batch_id = batch_ids[0]
+                        PRODLOT_NAME_ID.setdefault(str(batch_value), batch_id)
+                    else:
+                        if lot_check and prodlot_cache.get(write_vals['imp_product_id'], {}).get(str(batch_value)):
+                            write_vals.update({
+                                'imp_batch_name': str(batch_value),
+                                'imp_exp_date': prodlot_cache[write_vals['imp_product_id']][str(batch_value)],
+                            })
+                        else:
+                            write_vals['imp_batch_name'] = str(batch_value)
+                
+                if batch_id:
+                    write_vals.update({
+                        'imp_batch_id': batch_id,
+                        'imp_batch_name': str(batch_value),
+                    })
 
             # Expired date
             exp_value = values[8]
@@ -1088,19 +1130,35 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         err_msg = _('Incorrect date value for field \'Expired date\'')
                         errors.append(err_msg)
                 elif exp_value:
-                     err_msg = _('Incorrect date value for field \'Expired date\'')
-                     errors.append(err_msg)
+                    err_msg = _('Incorrect date value for field \'Expired date\'')
+                    errors.append(err_msg)
 
-                if write_vals.get('imp_exp_date') and write_vals.get('imp_batch_id'):
+                if write_vals.get('imp_exp_date') and write_vals.get('imp_batch_id') and lot_check:
                     batch_exp_date = prodlot_obj.browse(cr, uid, write_vals.get('imp_batch_id'), context=context).life_date
                     if batch_exp_date != write_vals.get('imp_exp_date'):
                         warnings.append(_('The \'Expired date\' value doesn\'t match with the expired date of the Batch - The expired date of the Batch was kept.'))
                         write_vals['imp_exp_date'] = batch_exp_date
-            elif not exp_value and write_vals.get('imp_batch_id'):
+                elif write_vals.get('imp_exp_date') and write_vals.get('imp_batch_name') and lot_check:
+                    if prodlot_cache.get(write_vals['imp_product_id'], {}).get(write_vals['imp_batch_name'], False):
+                        if prodlot_cache.get(write_vals['imp_product_id'], {}).get(write_vals['imp_batch_name'], False) != write_vals['imp_exp_date']:
+                            warnings.append(_('The \'Expired date\' value doesn\'t match with the expired date of the Batch - The expired date of the Batch was kept.'))
+                            write_vals['imp_exp_date'] = prodlot_cache.get(write_vals['imp_product_id'], {}).get(write_vals['imp_batch_name'], False)
+            elif not exp_value and write_vals.get('imp_batch_id') and lot_check:
                 write_vals['imp_exp_date'] = prodlot_obj.browse(cr, uid, write_vals.get('imp_batch_id'), context=context).life_date
+            elif not exp_value and write_vals.get('imp_batch_name'):
+                if lot_check and prodlot_cache.get(write_vals['imp_product_id'], {}).get(write_vals['imp_batch_name'], False):
+                    warnings.append(_('The \'Expired date\' is not defined in file - The expired date of the Batch was put instead.'))
+                
 
-            if exp_check and not lot_check and write_vals.get('imp_exp_date') and batch_value and not write_vals.get('imp_batch_id'):
-                warnings.append(_('A batch is defined on the imported file but the batch is not found in database and the product doesn\'t require batch number - Batch ignored, expiry date kept'))
+            if exp_check and not lot_check and batch_value:
+                write_vals.update({
+                    'imp_batch_id': False,
+                    'imp_batch_name': False,
+                })
+                if write_vals.get('imp_exp_date'):
+                    warnings.append(_('A batch is defined on the imported file but the product doesn\'t require batch number - Batch ignored, expiry date kept'))
+                else:
+                    warnings.append(_('A batch is defined on the imported file but the product doesn\'t require batch number - Batch ignored'))
 
             # If no batch defined, search batch corresponding with expired date or create a new one
             if product and lot_check and not write_vals.get('imp_batch_id'):
@@ -1108,40 +1166,16 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
                 if batch_value and exp_date:
                     # If a name and an expiry date for batch are defined, create a new batch
-                    prodlot_id = prodlot_obj.create(cr, uid, {
-                        'product_id': product.id,
-                        'name': str(batch_value),
-                        'life_date': exp_date,
-                    }, context=context)
-                    PRODLOT_NAME_ID[str(batch_value)] = prodlot_id
-                    write_vals['imp_batch_id'] = prodlot_id
+                    prodlot_cache.setdefault(product.id, {})
+                    prodlot_cache[product.id].setdefault(str(batch_value), exp_date)
+                    write_vals.update({
+                        'imp_batch_name': str(batch_value),
+                        'imp_exp_date': exp_date,
+                    })    
 
-                # Comment the following block if you need to search a batch
-                # with only an expiry date (without name)
-                # If the block is not commented, a batch is returned only
-                # if a batch name and an expiry date are defined on file
-                if not write_vals.get('imp_batch_id'):
+                if not write_vals.get('imp_batch_id') and not write_vals.get('imp_batch_name'):
                     errors.append(_('No batch found in database and you need to define a name AND an expiry date if you expect an automatic creation.'))
                     write_vals['imp_batch_id'] = False
-
-                # Uncomment the following block and comment the preceding block 
-                # if you need creation of batch if we looking for a batch with
-                # only defined expiry date
-                #elif not batch_value and exp_date:
-                #    # Search batch with the same expired date with the same product if no batch name defined
-                #    prodlot_ids = prodlot_obj.search(cr, uid, [
-                #        ('product_id', '=', product.id),
-                #        ('life_date', '=', exp_date),
-                #    ], context=context)
-                #    if prodlot_ids:
-                #        write_vals['imp_batch_id'] = prodlot_ids[0]
-                
-                #if not write_vals.get('imp_batch_id') and batch_value:
-                #    errors.append(_('Batch %s not found in database and no expiry date defined on line.') % str(batch_value))
-                #    write_vals['imp_batch_id'] = False
-                #elif not write_vals.get('imp_batch_id') and exp_date:
-                #    errors.append(_('No batch found in database for the product and the expiry date of the line.'))
-                #    write_vals['imp_batch_id'] = False
 
             # Packing list
             write_vals['imp_packing_list'] = values[9]
@@ -1207,6 +1241,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         product = vals.get('imp_product_id') and product_obj.browse(cr, uid, vals['imp_product_id'], context=context) or False
         prodlot_id = vals.get('imp_batch_id') and prodlot_obj.browse(cr, uid, vals['imp_batch_id'], context=context) or False
         exp_date = vals.get('imp_exp_date')
+        prodlot_name = vals.get('imp_batch_name')
 
         if not product:
             return 'empty'
@@ -1216,7 +1251,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 return 'no_lot_needed'
 
         if product.batch_management:
-            if not prodlot_id:
+            if not prodlot_id and not prodlot_name:
                 return 'missing_lot'
 
             if prodlot_id and prodlot_id.type != 'standard':
@@ -1230,6 +1265,41 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 return 'wrong_lot_type_need_internal'
 
         return 'empty'
+    
+    def _get_lot_in_cache(self, cr, uid, lot_cache, product_id, name, exp_date, context=None):
+        '''
+        Get the lot from the cache or from the DB
+        '''
+        lot_obj = self.pool.get('stock.production.lot')
+        
+        if context is None:
+            context = {}
+            
+        lot_cache.setdefault(product_id, {})
+        lot_cache[product_id].setdefault(name, False)
+        
+        if lot_cache[product_id][name]:
+            print 'cache'
+            batch_id = lot_cache[product_id][name]
+        else:
+            lot_ids = lot_obj.search(cr, uid, [
+                ('product_id', '=', product_id),
+                ('name', '=', name),
+                ('life_date', '=', exp_date),
+            ], context=context)
+
+            if lot_ids:
+                batch_id = lot_ids[0]
+            else:
+                batch_id = lot_obj.create(cr, uid, {
+                    'product_id': product_id,
+                    'name': name,
+                    'life_date': exp_date,
+                }, context=context)
+            
+            lot_cache[product_id][name] = batch_id
+        
+        return batch_id
 
     def put_in_memory_move(self, cr, uid, ids, partial_id, context=None):
         '''
@@ -1242,6 +1312,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
         move_ids = []
         mem_move_ids = []
+        lot_cache = {}
         for line in self.browse(cr, uid, ids, context=context):
             if line.type_change in ('del', 'error', 'new'):
                 continue
@@ -1251,6 +1322,18 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 move = line.parent_line_id.move_id
             else:
                 move = line.move_id
+                
+            batch_id = line.imp_batch_id and line.imp_batch_id.id or False
+            if not batch_id and line.imp_batch_name and line.imp_exp_date:
+                batch_id = self._get_lot_in_cache(
+                    cr,
+                    uid,
+                    lot_cache,
+                    line.imp_product_id.id,
+                    line.imp_batch_name,
+                    line.imp_exp_date,
+                    context=context,
+                )
 
             vals = {'change_reason': '%s - %s' % (line.message_esc1, line.message_esc2),
                     'cost': line.imp_price_unit,
@@ -1258,7 +1341,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'expiry_date': line.imp_exp_date,
                     'line_number': line.line_number,
                     'move_id': move.id,
-                    'prodlot_id': line.imp_batch_id.id,
+                    'prodlot_id': batch_id,
                     'product_id': line.imp_product_id.id,
                     'uom_id': line.imp_uom_id.id,
                     'ordered_quantity': move.product_qty,
