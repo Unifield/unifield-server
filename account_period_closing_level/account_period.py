@@ -225,6 +225,19 @@ class account_period(osv.osv):
                 self.write(cr, uid, per_id, {'state': state, 'field_process': False}) #cr.execute('update account_period set state=%s where id=%s', (state, id))
         return True
 
+    def _get_payroll_ok(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Fetch elements from unifield setup configuration and return payroll_ok field value
+        """
+        res = {}
+        payroll = False
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        if setup and setup.payroll_ok:
+            payroll = True
+        for period_id in ids:
+            res[period_id] = payroll
+        return res
+
     _columns = {
         'name': fields.char('Period Name', size=64, required=True, translate=True),
         'special': fields.boolean('Opening/Closing Period', size=12,
@@ -234,6 +247,7 @@ class account_period(osv.osv):
         'number': fields.integer(string="Number for register creation", help="This number informs period's order. Should be between 1 and 15. If 16: have not been defined yet."),
         'field_process': fields.boolean('Is this period in Field close processing?', readonly=True),
         'state_sync_flag': fields.char('Sync Flag', required=True, size=64, help='Flag for controlling sync actions on the period state.'),
+        'payroll_ok': fields.function(_get_payroll_ok, method=True, type='boolean', store=False, string="Permit to know if payrolls are active", readonly=True),
     }
 
     _order = 'date_start, number'
@@ -469,7 +483,7 @@ class account_period(osv.osv):
         """
         Open all HQ entries from given period
         """
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -500,6 +514,25 @@ class account_period(osv.osv):
             'view_mode': 'tree,form',
             'view_type': 'form',
             'context': context,
+        }
+
+    def button_payrolls(self, cr, uid, ids, context=None):
+        """
+        Open payroll entries list
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return {
+            'name': _('Payroll entries'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'hr.payroll.msf',
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'context': context,
+            'domain': [('state', '=', 'draft'), ('period_id', 'in', ids), ('account_id.is_analytic_addicted', '=', True)]
         }
 
 account_period()
