@@ -43,6 +43,12 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
         a = super(stock_mission_report_xls_parser, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
-stock_mission_report_xls_parser('report.stock.mission.report_xls', 'mission.stock.wizard', 'mission_stock/report/stock_mission_report_xls.mako', parser=stock_mission_report_parser, header='internal')
+stock_mission_report_xls_parser(
+    'report.stock.mission.report_xls',
+    'mission.stock.wizard',
+    'mission_stock/report/stock_mission_report_xls.mako',
+    parser=stock_mission_report_parser,
+    header='internal',
+)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
