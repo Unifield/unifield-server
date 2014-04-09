@@ -416,42 +416,23 @@ class account_period(osv.osv):
             'domain': [('active', 'in', ['t', 'f'])],
         }
 
-    def button_hr(self, cr, uid, ids, context=None):
+    def button_hq(self, cr, uid, ids, context=None):
         """
-        Open all HR entries from given period
+        Open all HQ entries from given period
         """
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         return {
-            'name': 'HR entries',
+            'name': 'HQ entries',
             'type': 'ir.actions.act_window',
-            'res_model': 'account.move',
+            'res_model': 'hq.entries',
             'target': 'current',
             'view_mode': 'tree,form',
             'view_type': 'form',
             'context': context,
-            'domain': [('journal_id.type', '=', 'hr'), ('period_id', 'in', ids)]
-        }
-
-    def button_accruals(self, cr, uid, ids, context=None):
-        """
-        Open all accruals from given period
-        """
-        if not context:
-            context = {}
-        if not isinstance(ids, (int, long)):
-            ids = [ids]
-        return {
-            'name': 'Accruals',
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.move',
-            'target': 'current',
-            'view_mode': 'tree,form',
-            'view_type': 'form',
-            'context': context,
-            'domain': [('journal_id.type', '=', 'accrual'), ('period_id', 'in', ids)]
+            'domain': [('user_validated', '=', 'False'), ('period_id', 'in', ids)]
         }
 
     def button_recurring(self, cr, uid, ids, context=None):
