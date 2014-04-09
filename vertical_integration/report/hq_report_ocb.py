@@ -291,7 +291,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                     SELECT journal_id, account_id, SUM(col1) AS opening, SUM(col2) AS calculated, SUM(col3) AS closing
                     FROM (
                         (
-                            SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, ROUND(SUM(debit-credit), 2) as col1, 0.00 as col2, 0.00 as col3
+                            SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
                             FROM account_move_line AS aml 
                             LEFT JOIN account_journal j 
                                 ON aml.journal_id = j.id 
@@ -302,7 +302,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                         )
                     UNION
                         (
-                            SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, 0.00 as col1, ROUND(SUM(debit-credit), 2) as col2, 0.00 as col3
+                            SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, 0.00 as col1, ROUND(SUM(amount_currency), 2) as col2, 0.00 as col3
                             FROM account_move_line AS aml 
                             LEFT JOIN account_journal j 
                                 ON aml.journal_id = j.id 
@@ -313,7 +313,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                         )
                     UNION
                         (
-                            SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, 0.00 as col1, 0.00 as col2, ROUND(SUM(debit-credit), 2) as col3
+                            SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, 0.00 as col1, 0.00 as col2, ROUND(SUM(amount_currency), 2) as col3
                             FROM account_move_line AS aml 
                             LEFT JOIN account_journal j 
                                 ON aml.journal_id = j.id 
