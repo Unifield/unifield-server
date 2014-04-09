@@ -305,7 +305,56 @@ class account_period(osv.osv):
         context['state'] = 'done'
         return self.action_set_state(cr, uid, ids, context)
 
-    def invoice_view(self, cr, uid, ids, name='Invoices', domain=[], module='account', view_name='invoice_tree', context=None):
+    def register_view(self, cr, uid, ids, register_type='bank', context=None):
+        """
+        Open list of 'register_type' register from given period.
+        register_type is the type of register:
+          - bank
+          - cheque
+          - cash
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = self.pool.get('account.bank.statement').get_statement(cr, uid, [], register_type, context=None)
+        # Only display registers from given period
+        if res and res.get('domain', False):
+            domain = res.get('domain')
+            domain.append(('period_id', 'in', ids))
+            res.update({'domain': domain})
+        # Do not set default "draft" or "open" or "closed" button
+        if res and res.get('context', False):
+            ctx = res.get('context')
+            ctx.update({'search_default_draft': 0, 'search_default_open': 0, 'search_default_confirm': 0})
+            res.update({'context': ctx})
+        return res
+
+    def button_bank_registers(self, cr, uid, ids, context=None):
+        """
+        Open Bank registers
+        """
+        if context is None:
+            context = {}
+        return self.register_view(cr, uid, ids, 'bank', context=context)
+
+    def button_cheque_registers(self, cr, uid, ids, context=None):
+        """
+        Open Cheque registers
+        """
+        if context is None:
+            context = {}
+        return self.register_view(cr, uid, ids, 'cheque', context=context)
+
+    def button_cash_registers(self, cr, uid, ids, context=None):
+        """
+        Open Cash registers
+        """
+        if context is None:
+            context = {}
+        return self.register_view(cr, uid, ids, 'cash', context=context)
+
+    def invoice_view(self, cr, uid, ids, name=_('Invoices'), domain=[], module='account', view_name='invoice_tree', context=None):
         """
         Open an invoice tree view with the given domain for the period in ids
         """
@@ -406,7 +455,7 @@ class account_period(osv.osv):
         # Default buttons
         context.update({'search_default_active': 1})
         return {
-            'name': 'Curencies',
+            'name': _('Curencies'),
             'type': 'ir.actions.act_window',
             'res_model': 'res.currency',
             'target': 'current',
@@ -424,8 +473,10 @@ class account_period(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # Update context to set "To validate" button by default
+        context.update({'search_default_non_validated': 1})
         return {
-            'name': 'HQ entries',
+            'name': _('HQ entries'),
             'type': 'ir.actions.act_window',
             'res_model': 'hq.entries',
             'target': 'current',
@@ -442,41 +493,12 @@ class account_period(osv.osv):
         if not context:
             context = {}
         return {
-            'name': 'Reccuring lines',
+            'name': _('Reccuring lines'),
             'type': 'ir.actions.act_window',
             'res_model': 'account.model',
             'target': 'current',
             'view_mode': 'tree,form',
             'view_type': 'form',
-            'context': context,
-        }
-
-    def button_open_invoices(self, cr, uid, ids, context=None):
-        """
-        Open all Supplier invoices in given period
-        """
-        if not context:
-            context = {}
-        if not context.get('period_id', False):
-            raise osv.except_osv(_('Error'), _('No period found in context. Please contact a system administrator.'))
-        period = self.pool.get('account.period').browse(cr, uid, [context.get('period_id')])[0]
-        # Update context
-        context.update({'type':'in_invoice', 'journal_type': 'purchase'})
-        return {
-            'name': 'Supplier Invoices',
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.invoice',
-            'target': 'current',
-            'view_mode': 'tree,form',
-            'view_type': 'form',
-            'domain': [
-                ('state', '=', 'draft'),
-                ('type','=','in_invoice'),
-                ('register_line_ids', '=', False),
-                ('is_inkind_donation', '=', False),
-                ('is_debit_note', "=", False),
-                ('is_intermission', '=', False)
-            ],
             'context': context,
         }
 
