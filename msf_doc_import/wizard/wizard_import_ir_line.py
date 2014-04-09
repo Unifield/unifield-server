@@ -142,6 +142,11 @@ class wizard_import_ir_line(osv.osv_memory):
                         line_num -= 1
                         continue
                     # for each cell we check the value
+
+                    '''
+                        REF-94: BECAREFUL WHEN CHANGING THE ORDER OF CELLS IN THE IMPORT FILE!!!!!
+                    '''
+
                     # Cell 0: Product Code
                     p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'cost_price': p_value['cost_price'],
@@ -151,14 +156,14 @@ class wizard_import_ir_line(osv.osv_memory):
                     qty_value = check_line.quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
 
-                    # Cell 3: UoM
-                    uom_value = check_line.compute_uom_value(cr, uid, cell_nb=3, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
-                    to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
-
-                    # Cell 4: Cost Price
-                    price_value = check_line.compute_price_value(cell_nb=4, row=row, to_write=to_write, price='Cost Price', context=context)
+                    # Cell 3: Cost Price
+                    price_value = check_line.compute_price_value(cell_nb=3, row=row, to_write=to_write, price='Cost Price', context=context)
                     to_write.update({'cost_price': price_value['cost_price'], 'error_list': price_value['error_list'],
                                      'warning_list': price_value['warning_list']})
+
+                    # Cell 4: UoM
+                    uom_value = check_line.compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                    to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
                     # Check rounding of qty according to UoM
                     if qty_value['product_qty'] and uom_value['uom_id']:
