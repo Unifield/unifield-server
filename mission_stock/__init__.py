@@ -21,3 +21,4 @@
 
 import mission_stock
 import wizard
+import report

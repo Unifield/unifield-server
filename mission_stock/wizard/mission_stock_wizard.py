@@ -59,8 +59,9 @@ class mission_stock_wizard(osv.osv_memory):
         local_id = self.pool.get('stock.mission.report').search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
         if local_id:
             res['report_id'] = local_id[0]
-            res['last_update'] = self.pool.get('stock.mission.report').browse(cr, uid, local_id[0], context=context).last_update
-            res['export_ok'] = self.pool.get('stock.mission.report').browse(cr, uid, local_id[0], context=context).export_ok
+            report = self.pool.get('stock.mission.report').browse(cr, uid, local_id[0], context=context)
+            res['last_update'] = report.last_update
+            res['export_ok'] = report.export_ok
 
         return res
 
@@ -136,6 +137,16 @@ class mission_stock_wizard(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('You should choose a report to display.'))
         if not wiz_id.report_id.last_update:
             raise osv.except_osv(_('Error'), _('The generation of this report is in progress. You could open this report when the last update field will be filled. Thank you for your comprehension.'))
+
+
+        datas = {'ids': ids}
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'stock.mission.report_xls',
+            'datas': datas,
+            'nodestroy': True,
+            'context': context,
+        }
 
         # Get the good file according to parameters
         if wiz_id.split_stock == 'true' and wiz_id.with_valuation == 'true':
