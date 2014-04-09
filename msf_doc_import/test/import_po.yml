@@ -1,4 +1,14 @@
 -
+  Create a Service stock location for this test
+-
+  !record {model: stock.location, id: service_loc}:
+    name: Import Service LOC
+    location_id: stock.stock_location_locations_virtual
+    location_category: other
+    usage: inventory
+    chained_location_type: none
+    service_location: True
+-
   Create Purchase Order (PO1) in English
 - 
   !record {model: purchase.order, id: po1}:
@@ -37,7 +47,7 @@
             cell_data = first_row.cells[cell].data
             column_header.append(cell_data)
         break
-    expected_header = ['Product Code', 'Product Description', 'Quantity', 'UoM', 'Price', 'Delivery requested date', 'Currency', 'Comment']
+    expected_header = ['Product Code', 'Product Description', 'Quantity', 'UoM', 'Price', 'Delivery Request Date', 'Currency', 'Comment', 'Justification Code', 'Justification Coordination', 'HQ Remarks', 'Justification Y/N']
     assert column_header==expected_header, ("Wrong header, it should be %s and it is %s" % (expected_header, column_header))
     self.pool.get(res_model).cancel(cr, uid, wizard_values['res_id'], context)
 -

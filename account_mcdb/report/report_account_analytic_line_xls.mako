@@ -37,20 +37,30 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Borders>
 <NumberFormat ss:Format="Short Date" />
 </Style>
+<Style ss:ID="ssNumber">
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
+<NumberFormat ss:Format="#,##0.00"/>
+</Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
 <%
-    max = 18
+    max = 19
     if data and data.get('context') and data.get('context').get('display_fp'):
-        max = 20
+        max = 21
 %>
-<Table ss:ExpandedColumnCount="${max}" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
+<Table ss:ExpandedColumnCount="${max}" x:FullColumns="1"
 x:FullRows="1">
 % for x in range(0,max):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
 <Row>
-% for header in [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Document Date'), _('Posting Date'), _('Period'), _('G/L Account'), _('Ana. Account'), _('Third Party'), _('Book. Amount'), _('Book. Currency'), _('Func. Amount'), _('Func. Currency'), _('Out. Amount'), _('Out. Currency'), _('Reversal Origin')]:
+% for header in [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Document Date'), _('Posting Date'), _('Period'), _('G/L Account'), _('Ana. Account'), _('Third Party'), _('Book. Amount'), _('Book. Currency'), _('Func. Amount'), _('Func. Currency'), _('Output Amount'), _('Output Currency'), _('Reversal Origin'), _('Entry status')]:
     % if header == _('Ana. Account') and data.get('context') and data.get('context').get('display_fp'):
         <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Destination')}</Data></Cell>
         <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
@@ -69,7 +79,7 @@ x:FullRows="1">
         <Data ss:Type="String">${(o.journal_id and o.journal_id.code or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.move_id and o.move_id.move_id and o.move_id.move_id.name or '')|x}</Data>
+        <Data ss:Type="String">${(o.entry_sequence or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.name or '')|x}</Data>
@@ -99,7 +109,7 @@ x:FullRows="1">
         <Data ss:Type="String">${(o.period_id and o.period_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.general_account_id and o.general_account_id.code or '')|x}</Data>
+        <Data ss:Type="String">${"%s - %s" % (o.general_account_id and o.general_account_id.code or '', o.general_account_id and o.general_account_id.name or '')|x}</Data>
 </Cell>
 % if data and data.get('context') and data.get('context').get('display_fp'):
 <Cell ss:StyleID="ssBorder">
@@ -115,19 +125,19 @@ x:FullRows="1">
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.partner_txt or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder">
+<Cell ss:StyleID="ssNumber">
         <Data ss:Type="Number">${o.amount_currency or '0.0'}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.currency_id and o.currency_id.name or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder">
+<Cell ss:StyleID="ssNumber">
         <Data ss:Type="Number">${o.amount or '0.0'}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.company_id and o.company_id.currency_id and o.company_id.currency_id.name or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder">
+<Cell ss:StyleID="ssNumber">
         <Data ss:Type="Number">${o.output_amount or '0.0'}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
@@ -135,6 +145,9 @@ x:FullRows="1">
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.reversal_origin and o.reversal_origin.name or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${(o.move_state and getSel(o, 'move_state') or '')|x}</Data>
 </Cell>
 </Row>
 % endfor

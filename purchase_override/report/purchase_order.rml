@@ -3,12 +3,12 @@
 
     <template pageSize="(842.0,595.0)" title="Purchase Order" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
-            <frame id="first" x1="30.0" y1="0.0" width="772" height="520" />
+            <frame id="first" x1="30.0" y1="15.0" width="772" height="520" />
 
         <pageGraphics>
             <drawString x="35" y="560.0">PURCHASE ORDER ([[ getSel(objects[0], 'order_type') ]])</drawString>
             <fill color="blue"/>
-            <drawString x="35" y="540.0">[[ '%s %s %s' % (getSel(objects[0], 'order_type'), objects[0].name, getSel(objects[0], 'state')) ]]</drawString>
+            <drawString x="35" y="548.0">[[ '%s %s %s' % (getSel(objects[0], 'order_type'), objects[0].name, getSel(objects[0], 'state')) ]]</drawString>
             <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
@@ -22,6 +22,10 @@
     </template>
 
     <stylesheet>
+        <blockTableStyle id="Origin">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+        </blockTableStyle>
         <blockTableStyle id="OrderInformations">
             <blockAlignment value="LEFT" />
             <blockVAlign value="MIDDLE" />
@@ -87,9 +91,37 @@
     <story>
 
         <para style="Standard">[[ setLang(objects[0].partner_id.lang) ]]</para>
-        <para style="Standard">
-            <font color="white"> </font>
-        </para>
+
+        <blockTable colWidths="72.0,600.0,100.0" style="Origin">
+            <tr>
+                <td>
+                    <para style="TextInformation">Origin ref. :</para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ getOrigin(objects[0].origin, 5)[0] ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+            </tr>
+            <tr>
+                [[ repeatIn(getOrigin(objects[0].origin, 5)[1:], 'orig') ]]
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ orig ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td> </td>
+                <td> </td>
+                <td> </td>
+            </tr>
+        </blockTable>
 
         <blockTable colWidths="150.0,5.5,150.0,5.5,150.0,5.5,150.0,5.5,150.0" style="OrderInformations">
             <tr>
@@ -123,9 +155,6 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Origin ref. : [[ objects[0].origin ]]</para>
-                </td>
-                <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
@@ -136,6 +165,9 @@
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ objects[0].partner_address_id.name and objects[0].partner_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -518,7 +550,7 @@
         </blockTable>
 
         <blockTable colWidths="20.0,62.5,62.5,290.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
-            <tr>
+            <tr >
                 <td>
                     <para style="Lines"><i>Line</i></para>
                 </td>

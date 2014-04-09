@@ -22,8 +22,8 @@
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
       <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
-      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="16,-1"/>
-      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="16,-1" thickness="0.5"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="18,-1"/>
+      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="18,-1" thickness="0.5"/>
       <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
     </blockTableStyle>
     <initialize>
@@ -55,7 +55,7 @@
     <para style="P2">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="48.0,46.0,52.0,113.0,113.0,63.0,63.0,39.0,120.0,152.0,61.0,61.0,44.0,66.0,41.0,43.0,38.0" style="Tableau3">
+    <blockTable style="Tableau3">
       <tr>
         <td>
           <para style="P3">Proprietary Instance</para>
@@ -97,7 +97,10 @@
           <para style="P3">Book. Currency</para>
         </td>
         <td>
-          <para style="P3">Out. Amount</para>
+          <para style="P3">Output Debit</para>
+        </td>
+        <td>
+          <para style="P3">Output Credit</para>
         </td>
         <td>
           <para style="P3">Out. Currency</para>
@@ -118,28 +121,28 @@
           <para style="P3">[[ o.journal_id and o.journal_id.code or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ o.move_id and o.move_id.name or '' ]]</para>
+          <parawrap style="P5">[[ o.move_id and o.move_id.name or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.name or '' ]]</para>
+          <parawrap style="P3">[[ o.name or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.ref or '' ]]</para>
+          <parawrap style="P3">[[ o.ref or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ formatLang(o.document_date, date=True) or '']]</para>
+          <para style="P3">[[ formatLang(o.document_date, date=True) or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ formatLang(o.date, date=True) or '' ]]</para>
+          <para style="P3">[[ formatLang(o.date, date=True) or '']]</para>
         </td>
         <td>
           <para style="P3">[[ o.period_id and o.period_id.name or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ o.account_id and o.account_id.code or '' ]] [[ o.account_id and o.account_id.name or '']]</para>
+          <parawrap style="P3">[[ "%s - %s" % (o.account_id and o.account_id.code or '', o.account_id and o.account_id.name or '') ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.partner_txt or '' ]]</para>
+          <parawrap style="P3">[[ o.partner_txt or '' ]]</parawrap>
         </td>
         <td>
           <para style="P4">[[ o.debit_currency or '0.0' ]]</para>
@@ -151,7 +154,10 @@
           <para style="P3">[[ o.currency_id and o.currency_id.name or '' ]]</para>
         </td>
         <td>
-          <para style="P4">[[ o.output_amount or '0.0' ]]</para>
+          <para style="P4">[[ o.output_amount_debit or '0.0' ]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ o.output_amount_credit or '0.0' ]]</para>
         </td>
         <td>
           <para style="P3">[[ o.output_currency and o.output_currency.name or '' ]]</para>
@@ -160,7 +166,7 @@
           <para style="P3">[[ o.reconcile_total_partial_id and o.reconcile_total_partial_id.name or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[getSel(o, 'state')]]</para>
+          <para style="P3">[[ o.move_state and getSel(o, 'move_state') or '' ]]</para>
         </td>
       </tr>
     </blockTable>

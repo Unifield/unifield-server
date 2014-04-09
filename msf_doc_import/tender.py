@@ -77,23 +77,6 @@ class tender(osv.osv):
         (_check_active_product, "You cannot validate this tender because it contains a line with an inactive product", ['tender_line_ids', 'state'])
     ]
 
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        '''
-        Remove lines
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        vals = {}
-        vals['tender_line_ids'] = []
-        for line in self.browse(cr, uid, ids, context=context):
-            line_browse_list = line.tender_line_ids
-            for var in line_browse_list:
-                vals['tender_line_ids'].append((2, var.id))
-            self.write(cr, uid, ids, vals, context=context)
-        return True
-
 # UTP-113 THE METHOD BELOW WAS RETAKEN IN THE WIZARD
 #    def import_file(self, cr, uid, ids, context=None):
 #        '''
@@ -290,7 +273,7 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
                                     'to_correct_ok': True,
                                     'price_unit': 0.0, })
 
-    def onchange_uom(self, cr, uid, ids, product_id, product_uom, context=None):
+    def onchange_uom(self, cr, uid, ids, product_id, product_uom, product_qty=0.00, context=None):
         '''
         Check if the UoM is convertible to product standard UoM
         '''
@@ -300,10 +283,10 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
             uom_obj = self.pool.get('product.uom')
             product = product_obj.browse(cr, uid, product_id, context=context)
             uom = uom_obj.browse(cr, uid, product_uom, context=context)
-            if product.uom_id.category_id.id != uom.category_id.id:
-                warning = {'title': _('Wrong Product UOM !'),
-                           'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")}
-        return {'warning': warning}
+            if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, product_uom, context):
+                return {'warning': {'title': _('Wrong Product UOM !'),
+                                    'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")}}
+        return self.onchange_uom_qty(cr, uid, ids, product_uom, product_qty)
 
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
@@ -324,7 +307,7 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
             if vals.get('product_uom') and vals.get('product_id'):
                 product_id = vals.get('product_id')
                 product_uom = vals.get('product_uom')
-                res = self.onchange_uom(cr, uid, ids, product_id, product_uom, context)
+                res = self.onchange_uom(cr, uid, ids, product_id, product_uom, vals.get('product_qty', 0.00), context)
                 if res and res['warning']:
                     message += res['warning']['message']
             if message:
@@ -333,5 +316,20 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
                 vals['to_correct_ok'] = False
                 vals['text_error'] = False
         return super(tender_line, self).write(cr, uid, ids, vals, context=context)
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        message = ''
+        if not context.get('import_in_progress'):
+            if vals.get('product_uom') and vals.get('product_id'):
+                product_id = vals.get('product_id')
+                product_uom = vals.get('product_uom')
+                res = self.onchange_uom(cr, uid, False, product_id, product_uom, context=context)
+                if res and res['warning']:
+                    message += res['warning']['message']
+            if message:
+                raise osv.except_osv(_('Warning !'), _(message))
+        return super(tender_line, self).create(cr, uid, vals, context=context)
 
 tender_line()

@@ -60,6 +60,9 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Search Journal Items">
+                    <filter name="active" icon="terp-check" domain="[('analytic_state', '=', 'valid')]" string="Valid"/>
+                    <filter name="inactive" icon="gtk-dialog-error" domain="[('analytic_state', '!=', 'valid')]" string="Invalid"/>
+                    <separator orientation="vertical"/>
                     <field name="employee_id" select="1"/>
                     <field name="account_id" select="1"/>
                 </search>
@@ -109,7 +112,7 @@
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="view_hr_payroll_msf_tree"/>
             <field name="search_view_id" ref="view_hr_payroll_msf_filter"/>
-            <field name="domain">[('state', '=', 'draft'), ('account_id.user_type.code', '=', 'expense')]</field>
+            <field name="domain">[('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', True)]</field>
         </record>
 
         <record id="action_employee_allocation_tree" model="ir.actions.act_window">

@@ -43,6 +43,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
         # objects
         prod_obj = self.pool.get('product.product')
         lot_obj = self.pool.get('stock.production.lot')
+        uom_obj = self.pool.get('product.uom')
         # browse the object
         item = self.browse(cr, uid, id, context=context)
         # picking type
@@ -87,7 +88,8 @@ class stock_partial_move_memory_out(osv.osv_memory):
                 result = 'must_be_greater_than_0'
             # for internal or simple out, cannot process more than specified in stock move
             if picking_real_type in ['out', 'internal']:
-                if item.quantity > item.quantity_ordered:
+                proc_qty = uom_obj._compute_qty(cr, uid, item.product_uom.id, item.quantity, item.uom_ordered.id)
+                if proc_qty > item.ordered_quantity:
                     result = 'greater_than_available'
                 
         # we return the found result

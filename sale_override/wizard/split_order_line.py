@@ -66,7 +66,7 @@ class split_sale_order_line_wizard(osv.osv_memory):
                 # Change the qty of the old line
                 line_obj.write(cr, uid, [split.sale_line_id.id], {'product_uom_qty': split.original_qty - split.new_line_qty}, context=context)
                 # copy data
-                so_copy_data = {'parent_line_id': split.sale_line_id.id,
+                so_copy_data = {'is_line_split': True, # UTP-972: Indicate that the line is split
                                 'product_uom_qty': split.new_line_qty}
                 # following new sequencing policy, we check if resequencing occur (behavior 1).
                 # if not (behavior 2), the split line keeps the same line number as original line
@@ -82,9 +82,18 @@ class split_sale_order_line_wizard(osv.osv_memory):
         '''
         Update the old line qty according to the new line qty
         '''
-        res = {'old_line_qty': original_qty - new_line_qty}
+        result = {}
 
-        return {'value': res}
+        if ids:
+            line = self.browse(cr, uid, ids[0], context=context)
+            uom_id = line.sale_line_id.product_uom.id
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, new_line_qty, 'new_line_qty', result=result)
+            new_line_qty = result.get('value', {}).get('new_line_qty', new_line_qty)
+        
+        vals = {'old_line_qty': original_qty - new_line_qty}
+        result.setdefault('value', {}).update(vals)
+
+        return result
 
 split_sale_order_line_wizard()
 

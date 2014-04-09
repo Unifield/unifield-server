@@ -1,2 +1,3 @@
-import wizard_hq_report
-import wizard_import_mapping
+import account_chart
+import split_invoice
+import import_invoice

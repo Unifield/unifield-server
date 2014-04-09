@@ -32,10 +32,31 @@ class split_memory_move(osv.osv_memory):
     _description = "Split Memory Move"
     _columns = {
         'quantity': fields.float('Quantity',digits_compute=dp.get_precision('Product UOM')),
+        'uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
     }
-    _defaults = {
-        'quantity': lambda *x: 0,
-    }
+
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Get the UoM from the line
+        '''
+        if not context:
+            context = {}
+
+        res = super(split_memory_move, self).default_get(cr, uid, fields, context=context)
+
+        move_id = context.get('memory_move_ids', [])
+        if move_id:
+            res['uom_id'] = self.pool.get(context.get('class_name')).browse(cr, uid, move_id[0]).product_uom.id
+
+        res['quantity'] = 0.00
+        
+        return res
+
+    def change_uom(self, cr, uid, ids, uom_id, qty):
+        '''
+        Check the round of the qty according to the UoM
+        '''
+        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'quantity')
     
     def cancel(self, cr, uid, ids, context=None):
         '''
@@ -68,7 +89,7 @@ class split_memory_move(osv.osv_memory):
             
             # quantity from memory move
 
-            available_qty = memory_move.quantity_ordered
+            available_qty = memory_move.ordered_quantity
             available_qty_to_process = memory_move.quantity
             
             # leave quantity must be greater than zero
@@ -88,9 +109,9 @@ class split_memory_move(osv.osv_memory):
             
             # update the selected memory move
             if class_name == 'stock.move.memory.ppl':
-                values = {'quantity': new_qty, 'quantity_ordered': new_qty}
+                values = {'quantity': new_qty, 'ordered_quantity': new_qty}
             else:
-                values = {'quantity_ordered': new_qty}
+                values = {'ordered_quantity': new_qty}
 
             if available_qty_to_process > 0.0 and class_name != 'stock.move.memory.ppl':
                 if not context.get('import_in_progress'):
@@ -101,9 +122,10 @@ class split_memory_move(osv.osv_memory):
             # create new memory move - copy for memory is not implemented
             default_val = {'line_number': memory_move.line_number,
                            'product_id': memory_move.product_id.id,
-                           'quantity_ordered': leave_qty,
+                           'ordered_quantity': leave_qty,
                            'force_complete': memory_move.force_complete,
                            'product_uom': memory_move.product_uom.id,
+                           'uom_ordered': memory_move.product_uom.id,
                            'prodlot_id': memory_move.prodlot_id.id,
                            'move_id': memory_move.move_id.id,
                            'wizard_pick_id': memory_move.wizard_pick_id and memory_move.wizard_pick_id.id,

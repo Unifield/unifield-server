@@ -551,13 +551,34 @@ class composition_kit(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.composition_type == 'theoretical':
                 date = datetime.strptime(obj.composition_creation_date, db_date_format)
-                name = obj.composition_version + ' - ' + date.strftime(date_format)
+                version = obj.composition_version or 'no_version'
+                name = version + ' - ' + date.strftime(date_format)
             else:
                 name = obj.composition_combined_ref_lot
                 
             res += [(obj.id, name)]
         return res
-    
+
+    def _get_report_name(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj = self.browse(cr, uid, ids[0], context)
+        db_date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
+
+        data = {
+            'prodcode': obj.composition_product_id.code.replace('/',''),
+            'date': time.strftime(db_date_format).replace('/','_')
+        }
+        if obj.composition_type == 'theoretical':
+            data['version'] = obj.composition_version_txt or ''
+            name = 'TKL %(prodcode)s %(version)s %(date)s' % data
+        else:
+            data['ref'] = obj.composition_reference
+            data['version'] = obj.composition_version_id and obj.composition_version_id.composition_version_txt or ''
+            name = 'KCL %(prodcode)s %(version)s %(date)s %(ref)s' % data
+
+        return name
+
     def on_change_product_id(self, cr, uid, ids, product_id, context=None):
         '''
         when the product is changed, lot checks are updated - mandatory workaround for attrs use
@@ -858,6 +879,7 @@ class composition_item(osv.osv):
     kit composition items representing kit parts
     '''
     _name = 'composition.item'
+    _order = 'item_module'
     
     def _common_update(self, cr, uid, vals, context=None):
         '''
@@ -934,12 +956,23 @@ class composition_item(osv.osv):
                             }}
         if product_id:
             product = prod_obj.browse(cr, uid, product_id, context=context)
-            result['value']['item_uom_id'] = product.uom_po_id.id
+            result['value']['item_uom_id'] = product.uom_id.id
             result['value']['hidden_perishable_mandatory'] = product.perishable
             result['value']['hidden_batch_management_mandatory'] = product.batch_management
             result['value']['hidden_asset_mandatory'] = product.type == 'product' and product.subtype == 'asset'
             
         return result
+
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, qty):
+        '''
+        Check round of qty according to UoM
+        '''
+        res = {}
+
+        if qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'item_qty', result=res)
+
+        return res
     
     def on_lot_change(self, cr, uid, ids, product_id, prodlot_id, context=None):
         '''
@@ -973,6 +1006,7 @@ class composition_item(osv.osv):
         """
         if context is None:
             context = {}
+
         # call super
         result = super(composition_item, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         # columns depending on type
@@ -1137,9 +1171,15 @@ class composition_item(osv.osv):
                     raise osv.except_osv(_('Warning !'), _('Only Batch Number Mandatory or Expiry Date Mandatory can specify Expiry Date.'))
                 
         return True
-    
-    _constraints = [(_composition_item_constraint, 'Constraint error on Composition Item.', []),]
-    
+
+    def _uom_constraint(self, cr, uid, ids, context=None):
+        for obj in self.browse(cr, uid, ids, context=context):
+            if not self.pool.get('uom.tools').check_uom(cr, uid, obj.item_product_id.id, obj.item_uom_id.id, context):
+                raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
+        return True
+
+    _constraints = [(_composition_item_constraint, 'Constraint error on Composition Item.', []),
+                    (_uom_constraint, 'Constraint error on Uom', [])]
     
 composition_item()
 

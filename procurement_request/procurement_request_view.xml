@@ -47,19 +47,24 @@
                         <field name="delivery_requested_date" required="1" string="Requested date" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
                         <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
                         <field name="functional_currency_id" />
+                        <field name="fo_to_resource" invisible="1" />
+                        <field name="parent_order_name" attrs="{'invisible': [('fo_to_resource', '=', False)]}" />
                     </group>
                     <notebook colspan="5">
                         <page string="Products">
                             <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}">
                                 <tree string="Products" editable="top" >
                                     <field name="product_id" on_change="requested_product_id_change(product_id, comment)" 
+                                    context="available_for_restriction='consumption',search_default_not_restricted=1"
                                     attrs="{'required': [('product_ok', '=', False)]}" />
                                     <field name="comment" string="Comment instead of the product" on_change="comment_change(comment,product_id,nomen_manda_0)"
                                     attrs="{'required': [('comment_ok', '=', False)]}"/>
                                     <field name="name" invisible="1" />
                                     <field name="product_ok" invisible="1" />
                                     <field name="comment_ok" invisible="1" />
-                                    <field name="product_uom" />
+                                    <field name="product_uom" 
+                                           on_change="onchange_uom(product_id, product_uom, product_uom_qty)" 
+                                           domain="[('uom_by_product', '=', product_id)]" />
                                     <field name="nomen_manda_0" invisible="1" />
                                     <field name="nomen_manda_1" invisible="1" />
                                     <field name="nomen_manda_2" invisible="1" />
@@ -70,7 +75,7 @@
                                     type="object" 
                                     attrs="{'invisible': ['|', ('product_id_ok', '=', True), ('state', 'not in', ['draft', 'validated'])]}"
                                     icon="terp-go-week" />
-                                    <field name="product_uom_qty" />
+                                    <field name="product_uom_qty" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" />
                                     <field name="cost_price" string="Cost Price (FC)" />
                                     <field name="notes" />
                                     <field name="type" on_change="requested_type_change(product_id, type)"/>
@@ -103,7 +108,7 @@
                             </field>
                             <group colspan="4" col="6">
                                 <field name="state" />
-                                <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,validated" />
+                                <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,validated" context="{'noraise': True}" />
                                 <button name="procurement_validate" icon="terp-check" string="Validate" states="draft" />
                                 <button name="procurement_confirm" icon="gtk-execute" string="Confirm" states="validated" confirm="You are about to confirm the Internal Request without going through the sourcing tool. Are you sure?" />
                             </group>

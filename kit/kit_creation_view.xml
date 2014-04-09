@@ -12,7 +12,7 @@
             			<group col="4" colspan="4">
             				<field name="product_id_kit_creation" colspan="4" on_change="on_change_product_id(product_id_kit_creation)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
             				<field name="qty_kit_creation" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="2" />
-                        	<field name="uom_id_kit_creation" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="2" string="UoM" />
+                        	<field name="uom_id_kit_creation" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="2" string="UoM" domain="[('uom_by_product', '=', product_id_kit_creation)]"/>
             			</group>
                         <group col="4" colspan="2">
                         	<field name="name" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" />
@@ -77,7 +77,8 @@
                     					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_asset_check', '=', False)]}" />
                     				<field name="prodlot_id"
                     					context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
-	                    			  		'search_default_real': True}"
+                                                  'search_default_real': True}"
+                                        on_change="kol_prodlot_change(prodlot_id)"
                     					domain="[('product_id', '=', product_id),('check_type','=', True)]"
                     					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_exp_check', '=', False)],
                     							'required': [('hidden_exp_check', '=', True)]}" />
@@ -88,7 +89,8 @@
                     					domain="[('usage', '=', 'internal')]" />
                     				<field name="state" />
                     				<field name="lot_check" />
-	                   				<field name="exp_check" />
+                                    <field name="exp_check" />
+                                    <field name="kol_lot_manual" invisible="True" />
 	                   				<field name="hidden_perishable_mandatory" invisible="True" />
 	                   				<field name="hidden_exp_check" invisible="True" />
                     				<field name="hidden_state" invisible="True" />

@@ -38,9 +38,9 @@ class report_pdf_engagement(report_sxw.rml_parse):
             'isPos': self.isPos,
         })
         return
-    
+
     def isPos(self, nb):
-        if nb < 0: 
+        if nb < 0:
             return False
         return True
 
@@ -52,33 +52,33 @@ class report_pdf_engagement(report_sxw.rml_parse):
             fiscalyear = pool.get('account.fiscalyear').browse(self.cr, self.uid, fiscalyear_id, context={})
             return fiscalyear.name
         return False
-    
+
     def _add_purchase_order_amount(self, cr, uid, browse_po_line, browse_analytic_distribution, functional_currency_id, expense_account_id, value_list, value_list2):
 
         pool = pooler.get_pool(self.cr.dbname)
         for cc_line in browse_analytic_distribution.cost_center_lines:
 
-            if cc_line.analytic_id and cc_line.analytic_id.id not in value_list:
+            if cc_line.analytic_id and str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id) not in value_list:
                 value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)] = {}
                 value_list2[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)] = {}
             # convert amount to today's rate
             date_context = {'date': datetime.datetime.today()}
-            functional_amount = int(round(pool.get('res.currency').compute(self.cr,
-                                                                           self.uid,
-                                                                           browse_po_line.currency_id.id,
-                                                                           functional_currency_id, 
-                                                                           cc_line.percentage * browse_po_line.price_subtotal / 100.0,
-                                                                           round=True,
-                                                                           context=date_context)))
+            functional_amount = pool.get('res.currency').compute(self.cr,
+                                                                 self.uid,
+                                                                 browse_po_line.currency_id.id,
+                                                                 functional_currency_id,
+                                                                 cc_line.percentage * browse_po_line.price_subtotal / 100.0,
+                                                                 round=True,
+                                                                 context=date_context)
             expense_line = [0, 0, 0, functional_amount, -functional_amount]
             if expense_account_id not in value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)]:
                 value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id] = expense_line
             else:
-                value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id] = [sum(pair) for pair in zip(value_list[cc_line.analytic_id.id][expense_account_id], expense_line)]
+                value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id] = [sum(pair) for pair in zip(value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id], expense_line)]
             value_list2[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id] = cc_line.destination_id.code
 
         return
-    
+
     def check_distribution(self, purchase_order):
         # 3 cases:
         # 1. header distribution or distribution on all lines; return True
@@ -115,9 +115,9 @@ class report_pdf_engagement(report_sxw.rml_parse):
         cr = self.cr
         uid = self.uid
         context = {}
-            
+
         functional_currency_id = pool.get('res.users').browse(cr, uid, uid, context).company_id.currency_id.id
-        
+
         if purchase_order:
             for po_line in purchase_order.order_line:
                 expense_account_id = False
@@ -130,7 +130,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                     expense_account_id = po_line.product_id.categ_id.property_account_expense_categ.id
                 else:
                     continue
-                        
+
                 if po_line.analytic_distribution_id:
                     # a line has a distribution
                     self._add_purchase_order_amount(cr,
@@ -149,7 +149,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                                                     functional_currency_id,
                                                     expense_account_id,
                                                     temp_data,temp_data2)
-                
+
             # PO data is filled, now to the temp_data
             # Get the corresponding fiscal year (delivery confirmed date or delivery requested date)
             po_date = str(purchase_order.delivery_confirmed_date) or str(purchase_order.delivery_requested_date)
@@ -157,7 +157,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
             if fiscalyear_id:
                 fiscalyear = pool.get('account.fiscalyear').browse(cr, uid, fiscalyear_id, context=context)
                 cost_center_ids = temp_data.keys()
-                
+
                 # add by cost center
                 for cost_dest in cost_center_ids:
                     split = cost_dest.split('_')
@@ -173,7 +173,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                     actual_domain.append(('date', '<=', fiscalyear.date_stop))
                     # get only wanted accounts
                     actual_domain.append(('general_account_id', 'in', expense_account_ids))
-                
+
                     # get actual values
                     actuals = pool.get('msf.budget.tools')._get_actual_amounts(cr,
                                                                                uid,
@@ -182,11 +182,11 @@ class report_pdf_engagement(report_sxw.rml_parse):
                                                                                context=context)
                     # we only save the main accounts, not the destinations (new key: account id only)
                     actuals = dict([(item[0], actuals[item]) for item in actuals if item[1] is False])
-                    
+
                     for account_id in actuals.keys():
                         if account_id in expense_account_ids:
                             # sum the values, we only need the total
-                            total_actual = int(round(sum(actuals[account_id])))
+                            total_actual = sum(actuals[account_id])
                             # create the line to add
                             actual_line = [0, total_actual, -total_actual, 0, -total_actual]
                             temp_data[str(cost_center_id)+'_'+str(destination_id)][account_id] = [sum(pair) for pair in zip(temp_data[str(cost_center_id)+'_'+str(destination_id)][account_id], actual_line)]
@@ -202,13 +202,12 @@ class report_pdf_engagement(report_sxw.rml_parse):
                         # get the lines for the account ids
                         budget_line_ids = pool.get('msf.budget.line').search(cr, uid, [('budget_id', '=', cr.fetchall()[0][0]),
                                                                                        ('account_id', 'in', expense_account_ids)], context=context)
-                        budget_amounts = pool.get('msf.budget.line')._get_budget_amounts(cr, uid, budget_line_ids, context=context)
-                        # we only save the main accounts, not the destinations (new key: account id only)
-                        budget_amounts = dict([(item[0], budget_amounts[item]) for item in budget_amounts if item[1] is False])
-                        
+                        budget_data = pool.get('msf.budget.line').read(cr, uid, budget_line_ids, ['account_id', 'total'])
+                        budget_amounts = dict([(x.get('account_id', [])[0], x.get('total', 0.0)) for x in budget_data])
+
                         for account_id in budget_amounts.keys():
                             # sum the values, we only need the total
-                            total_budget = int(round(sum(budget_amounts[account_id])))
+                            total_budget = budget_amounts[account_id]
                             # create the line to add
                             budget_line = [total_budget, 0, total_budget, 0, total_budget]
                             temp_data[str(cost_center_id)+'_'+str(destination_id)][account_id] = [sum(pair) for pair in zip(temp_data[str(cost_center_id)+'_'+str(destination_id)][account_id], budget_line)]
@@ -216,7 +215,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                         # No budget found, fill the corresponding lines with "Budget Missing"
                         for account_id in temp_data[str(cost_center_id)+'_'+str(destination_id)].keys():
                             temp_data[str(cost_center_id)+'_'+str(destination_id)][account_id][0] = str('Budget missing')
-                            
+
             # Now we format the data to form the result
             total_values = [0, 0, 0, 0, 0]
             cost_center_ids = sorted(temp_data.keys())
@@ -248,7 +247,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                 # empty line between cost centers
                 res.append([''] * 7)
             # append formatted total
-            res.append(['TOTALS', ''] + total_values)
+            res.append(['TOTALS', ''] + map(int, map(round, total_values)))
         return res
 
 report_sxw.report_sxw('report.msf.pdf.engagement', 'purchase.order', 'addons/msf_budget/report/engagement.rml', parser=report_pdf_engagement, header=False)

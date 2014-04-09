@@ -16,7 +16,7 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 {
     "name" : "Purchase override",
@@ -29,8 +29,8 @@
     "website": "http://unifield.msf.org",
     "init_xml": [],
     "depends" : [
-        "purchase",
         "account_override",
+        "purchase",
         "stock_override",
         "stock",
         "purchase_double_validation",

@@ -22,50 +22,140 @@
 from osv import fields, osv
 from tools.translate import _
 import logging
+from account_period_closing_level import ACCOUNT_PERIOD_STATE_SELECTION
+
 
 class account_period(osv.osv):
     _name = "account.period"
     _inherit = "account.period"
-    
+
     # To avoid issues with existing OpenERP code (account move line for example),
     # the state are:
     #  - 'created' for Draft
     #  - 'draft' for Open
     #  - 'done' for HQ-Closed
-    def _get_state(self, cursor, user_id, context=None):
-        return (('created','Draft'), \
-                ('draft', 'Open'), \
-                ('field-closed', 'Field-Closed'), \
-                ('mission-closed', 'Mission-Closed'), \
-                ('done', 'HQ-Closed'))
-    
+        # 1 = state created as 'Draft' ('created') at HQ (update to state handled in create)
+        # 2 = state moves from 'Open' ('draft') -> any close at HQ (sync down)
+        # 3 =
+        # 3 = state reopened at HQ -> reopen at all levels
+
+
     def action_set_state(self, cr, uid, ids, context):
         """
         Change period state
         """
-        
+
         # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         # Prepare some elements
         reg_obj = self.pool.get('account.bank.statement')
         sub_obj = self.pool.get('account.subscription.line')
         curr_obj = self.pool.get('res.currency')
         curr_rate_obj = self.pool.get('res.currency.rate')
-        inv_obj = self.pool.get('account.invoice')
-        
+
+        # Ticket utp913 set state_sync_flag for conditional sync of state
+        # 'none' : no update to the state field via a sync (data is still sent but not updated in target instance)
+        # other values; state will be set to this value and then to 'none'
+        # note that 'draft' = 'Open' and 'created' = 'Draft' ... see ACCOUNT_PERIOD_STATE_SELECTION in init
+
+        if context.get('sync_update_execution') is None:
+            user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+            level = user.company_id.instance_id.level
+            ap_dict = self.read(cr, uid, ids)[0]
+            previous_state = ap_dict['state']
+
+            if level == 'section': # section = HQ
+                if previous_state == 'created' and context['state'] == 'draft':
+                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})
+                if previous_state == 'draft' and context['state'] == 'field-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})
+                if previous_state == 'field-closed' and context['state'] == 'mission-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})
+                if previous_state == 'mission-closed' and context['state'] == 'done':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})
+                if previous_state == 'mission-closed' and context['state'] == 'field-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})
+                if previous_state == 'field-closed' and context['state'] == 'draft':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})
+
+            if level == 'coordo':
+                if previous_state == 'created' and context['state'] == 'draft':
+                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})
+                if previous_state == 'draft' and context['state'] == 'field-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})
+                if previous_state == 'field-closed' and context['state'] == 'mission-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})
+                if previous_state == 'mission-closed' and context['state'] == 'done':
+                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})
+                if previous_state == 'mission-closed' and context['state'] == 'field-closed':
+                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})
+                if previous_state == 'field-closed' and context['state'] == 'draft':
+                    self.write(cr, uid, ids, {'state_sync_flag': context['state']})
+
+            if level == 'project':
+                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})
+
         # Do verifications for draft periods
         for period in self.browse(cr, uid, ids, context=context):
+            # Check state consistency about previous and next periods
             # UF-550: A period now can only be opened if all previous periods (of the same fiscal year) have been already opened
-            if period.state == 'created':
-                previous_period_ids = self.search(cr, uid, [('date_start', '<', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id)], context=context,)
-                for pp in self.browse(cr, uid, previous_period_ids, context=context):
-                    if pp.state == 'created':
-                        raise osv.except_osv(_('Warning'), _("Cannot open this period. All previous periods must be opened before opening this one."))
-            
+            # UTP-755: More global than the UF-550:
+            #       - A period now can only be set to the next state if all
+            #         previous periods (of the same fiscal year) are set at a
+            #         higher state,
+            #       - A period now can only be set to a previous state if all
+            #         next periods (of the same fiscal year) are set at a lower
+            #         state.
+            check_errors = {
+                'created': _(
+                    "Cannot open this period. "
+                    "All previous periods must be opened before opening this one."),
+                'draft': _(
+                    "Cannot close this period at the field level. "
+                    "All previous periods must be closed before closing this one."),
+                'field-closed': _(
+                    "Cannot close this period at the mission level. "
+                    "All previous periods must be closed before closing this one."),
+                'mission-closed': _(
+                    "Cannot close this period at the HQ level. "
+                    "All previous periods must be closed before closing this one."),
+            }
+            check_states = ['created', 'draft', 'field-closed', 'mission-closed', 'done']
+            if not context.get('state'):
+                raise osv.except_osv(
+                    _("Error"),
+                    _("Next state unknown"))
+            backward_asked = check_states.index(context['state']) < check_states.index(period.state)
+            # Forward operation, no check for 'created' state
+            if period.state in check_states[1:] and not backward_asked:
+                pp_ids = self.search(
+                    cr, uid,
+                    [('date_start', '<', period.date_start),
+                    ('fiscalyear_id', '=', period.fiscalyear_id.id)],
+                    context=context)
+                for pp in self.browse(cr, uid, pp_ids, context=context):
+                    if check_states.index(pp.state) <= check_states.index(period.state):
+                        raise osv.except_osv(_('Warning'), check_errors[period.state])
+            # For backward operation, all next periods have to be at the
+            # same state or higher than the current period
+            elif backward_asked:
+                np_ids = self.search(
+                    cr, uid,
+                    [('date_start', '>', period.date_start),
+                    ('fiscalyear_id', '=', period.fiscalyear_id.id)],
+                    context=context)
+                for np in self.browse(cr, uid, np_ids, context=context):
+                    if check_states.index(np.state) >= check_states.index(period.state):
+                        raise osv.except_osv(
+                            _('Warning'),
+                            _("Cannot backward the state of this period. "
+                              "All next periods must be at a lower state."))
+            # / Check state consistency
+
             if period.state == 'draft':
                 # first verify that all existent registers for this period are closed
                 reg_ids = reg_obj.search(cr, uid, [('period_id', '=', period.id)], context=context)
@@ -85,19 +175,19 @@ class account_period(osv.osv):
                 res = [x[0] for x in cr.fetchall()]
                 comp_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
                 # for each currency do a verification about fx rate
-                for id in res:
+                for period_id in res:
                     # search for company currency_id if ID is None
-                    if id == None or id == comp_curr_id:
+                    if period_id == None or period_id == comp_curr_id:
                         continue
-                    rate_ids = curr_rate_obj.search(cr, uid, [('currency_id', '=', id), ('name', '>=', period.date_start), 
+                    rate_ids = curr_rate_obj.search(cr, uid, [('currency_id', '=', period_id), ('name', '>=', period.date_start),
                         ('name', '<=', period.date_stop)], context=context)
                     # if no rate found
                     if not rate_ids:
-                        curr_name = curr_obj.read(cr, uid, id, ['name']).get('name', False)
+                        curr_name = curr_obj.read(cr, uid, period_id, ['name']).get('name', False)
                         raise osv.except_osv(_('Warning'), _("No FX rate found for currency '%s'") % curr_name)
 ## This block could be reused later
 #                # finally check supplier invoice for this period and display those of them that have due date to contened in this period
-#                inv_ids = inv_obj.search(cr, uid, [('state', 'in', ['draft', 'open']), ('period_id', '=', period.id), 
+#                inv_ids = inv_obj.search(cr, uid, [('state', 'in', ['draft', 'open']), ('period_id', '=', period.id),
 #                    ('type', 'in', ['in_invoice', 'in_refund'])], context=context)
 #                inv_to_display = []
 #                for inv in inv_obj.browse(cr, uid, inv_ids, context=context):
@@ -111,8 +201,8 @@ class account_period(osv.osv):
                 # Write changes
                 if not isinstance(ids, (int, long)):
                     ids = [ids]
-                for id in ids:
-                    self.write(cr, uid, id, {'state':'field-closed', 'field_process': False}, context=context)
+                for p_id in ids:
+                    self.write(cr, uid, p_id, {'state':'field-closed', 'field_process': False}, context=context)
                 return True
 
         # check if unposted move lines are linked to this period
@@ -129,20 +219,21 @@ class account_period(osv.osv):
                 journal_state = 'done'
             else:
                 journal_state = 'draft'
-            for id in ids:
-                cr.execute('update account_journal_period set state=%s where period_id=%s', (journal_state, id))
+            for per_id in ids:
+                cr.execute('update account_journal_period set state=%s where period_id=%s', (journal_state, per_id))
                 # Change cr.execute for period state by a self.write() because of Document Track Changes on Periods ' states
-                self.write(cr, uid, id, {'state': state, 'field_process': False}) #cr.execute('update account_period set state=%s where id=%s', (state, id))
+                self.write(cr, uid, per_id, {'state': state, 'field_process': False}) #cr.execute('update account_period set state=%s where id=%s', (state, id))
         return True
 
     _columns = {
         'name': fields.char('Period Name', size=64, required=True, translate=True),
         'special': fields.boolean('Opening/Closing Period', size=12,
             help="These periods can overlap.", readonly=True),
-        'state': fields.selection(_get_state, 'State', readonly=True,
+        'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State', readonly=True,
             help='HQ opens a monthly period. After validation, it will be closed by the different levels.'),
         'number': fields.integer(string="Number for register creation", help="This number informs period's order. Should be between 1 and 15. If 16: have not been defined yet."),
         'field_process': fields.boolean('Is this period in Field close processing?', readonly=True),
+        'state_sync_flag': fields.char('Sync Flag', required=True, size=64, help='Flag for controlling sync actions on the period state.'),
     }
 
     _order = 'date_start, number'
@@ -151,18 +242,68 @@ class account_period(osv.osv):
         if not context:
             context = {}
 
-        if context.get('update_mode') in ['init', 'update'] and 'state' not in vals:
-            logging.getLogger('init').info('Loading default draft state for account.period')
-            vals['state'] = 'draft'
+        if context.get('sync_update_execution') and 'state' not in vals:
+            logging.getLogger('init').info('Loading default draft - created - state for account.period')
+            vals['state'] = 'created'
 
         return super(account_period, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if not context:
+            context = {}
+        # control conditional push-down of state from HQ. Ticket UTP-913
+        if context.get('sync_update_execution'):
+            if vals['state_sync_flag'] != 'none':
+                vals['state'] = vals['state_sync_flag']
+                vals['state_sync_flag'] = 'none'
+            else:
+                vals['state_sync_flag'] = 'none'
+
+        return super(account_period, self).write(cr, uid, ids, vals, context=context)
 
     _defaults = {
         'state': lambda *a: 'created',
         'number': lambda *a: 16, # Because of 15 period in MSF, no period would use 16 number.
         'special': lambda *a: False,
         'field_process': lambda *a: False,
+        'state_sync_flag': lambda *a: 'none',
     }
+
+    def action_reopen_field(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context['state'] = 'draft'
+        return self.action_set_state(cr, uid, ids, context)
+
+    def action_reopen_mission(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context['state'] = 'field-closed'
+        return self.action_set_state(cr, uid, ids, context)
+
+    def action_open_period(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context['state'] = 'draft'
+        return self.action_set_state(cr, uid, ids, context)
+
+    def action_close_field(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context['state'] = 'field-closed'
+        return self.action_set_state(cr, uid, ids, context)
+
+    def action_close_mission(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context['state'] = 'mission-closed'
+        return self.action_set_state(cr, uid, ids, context)
+
+    def action_close_hq(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context['state'] = 'done'
+        return self.action_set_state(cr, uid, ids, context)
 
     def invoice_view(self, cr, uid, ids, name='Invoices', domain=[], module='account', view_name='invoice_tree', context=None):
         """
@@ -358,7 +499,5 @@ class account_period(osv.osv):
             'context': context,
         }
 
-
 account_period()
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

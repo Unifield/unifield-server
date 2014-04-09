@@ -31,12 +31,14 @@
                     <xpath expr="/form//group[@name='import']" position="before" >
                         <group name="partner_info" colspan="4" col="4">
                             <field name="po_from_ir" invisible="1" />
+                            <field name="po_from_fo" invisible="1" />
+                            <field name="canceled_end" invisible="1" />
                             <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}"
                                 domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', {'order_type':order_type, 'partner_id': partner_id}),  ('check_partner_rfq', '=', tender_id), ('partner_not_int', 'in', {'type':'po', 'ids':[active_id]})]"
                                 attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" />
                             <field name="partner_type"  />
                             <field name="partner_address_id"  attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
-                            <field name="origin" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                            <field name="origin" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" widget="char"/>
                             <field name="internal_type" string="Zone"  />
                             <field name="pricelist_id" string="Currency" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"
                             colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
@@ -77,10 +79,13 @@
 
                         <group colspan="4" col="16">
                             <field name="state" readonly="1"/>
+                            <field name="from_procurement" invisible="1" />
                             <button name="dpo_received" string="Validate the reception" icon="terp-camera_test"
                                 attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" />
-                            <button name="purchase_cancel" states="draft,confirmed,rfq_sent" string="Cancel" icon="gtk-cancel"/>
-                            <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', ('po_from_ir', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
+                            <button name="purchase_cancel"  type="object"
+                            attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'confirmed', 'rfq_sent']), '&amp;',('partner_type', '!=', 'external'), ('state', '=', 'confirmed')]}" 
+                            string="Cancel" icon="gtk-cancel"/>
+                            <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
                             <!-- UTP-469 − Remove the cancel button
                                  <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state','not in', ['approved','except_picking','except_invoice','wait'])]}"/> -->
                             <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_picking')]}"/>
@@ -90,8 +95,9 @@
                             <button name="purchase_confirm" states="draft" string="Validate" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft')]}" />
                             <button name="rfq_sent" type="object" states="draft" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft')]}" />
                             <button name="check_rfq_updated" type="object" states="rfq_sent" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'rfq_sent')]}" />
-                            <button name="generate_po_from_rfq" states="done" type="object" string="Generate Po" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated')]}" />
-                            <button name="rfq_done" states="rfq_updated" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated')]}" />
+                            <button name="generate_po_from_rfq" states="done" type="object" string="Generate Po" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated'), ('from_procurement', '=', True)]}" />
+                            <button name="rfq_done" states="rfq_updated" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated'), ('from_procurement', '=', True)]}" />
+                            <button name="rfq_done" states="rfq_updated" string="Continue sourcing" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated'), ('from_procurement', '=', False)]}" />
                         </group>
                     </xpath>
                     <xpath expr="/form//field[@name='pricelist_id']" position="replace">

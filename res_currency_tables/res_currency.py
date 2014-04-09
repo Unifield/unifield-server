@@ -73,14 +73,15 @@ class res_currency(osv.osv):
             context={}
         if context.get('currency_table_id', False):
             # A currency table is set, retrieve the correct currency ids
+            # UTP-894: use currency table rate or default rate if currency not in currency table
             new_from_currency_id = self._get_table_currency(cr, uid, from_currency_id, context['currency_table_id'], context=context)
+            if new_from_currency_id:
+                from_currency_id = new_from_currency_id
             new_to_currency_id = self._get_table_currency(cr, uid, to_currency_id, context['currency_table_id'], context=context)
-            # only use new currencies if both are defined in the table
-            if new_from_currency_id and new_to_currency_id:
-                return super(res_currency, self).compute(cr, uid, new_from_currency_id, new_to_currency_id, from_amount, round, context=context)
-        # Fallback case if no currency table or one currency not defined in the table
+            if new_to_currency_id:
+                to_currency_id = new_to_currency_id
         return super(res_currency, self).compute(cr, uid, from_currency_id, to_currency_id, from_amount, round, context=context)
-    
+        
     def create_associated_pricelist(self, cr, uid, currency_id, context=None):
         '''
         Create purchase and sale pricelists according to the currency
@@ -138,14 +139,13 @@ class res_currency(osv.osv):
         res = super(res_currency, self).create(cr, uid, values, context=context)
         
         # Create the corresponding pricelists
-        pricelist_create_context = dict(context, sync_update_execution=True)
-        self.create_associated_pricelist(cr, uid, res, context=pricelist_create_context)
+        self.create_associated_pricelist(cr, uid, res, context=context)
         
         # Check if currencies has no associated pricelists
         cr.execute('SELECT id FROM res_currency WHERE id NOT IN (SELECT currency_id FROM product_pricelist)')
         curr_ids = cr.fetchall()
         for cur_id in curr_ids:
-            self.create_associated_pricelist(cr, uid, cur_id[0], context=pricelist_create_context)
+            self.create_associated_pricelist(cr, uid, cur_id[0], context=context)
         
         return res
     
@@ -155,7 +155,6 @@ class res_currency(osv.osv):
         '''
         pricelist_obj = self.pool.get('product.pricelist')
         version_obj = self.pool.get('product.pricelist.version')
-        pricelist_write_context = dict(context, sync_update_execution=True)
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -167,10 +166,10 @@ class res_currency(osv.osv):
             pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids), ('active', 'in', ['t', 'f'])], context=context)
             if not pricelist_ids:
                 for cur_id in ids:
-                    pricelist_ids = self.create_associated_pricelist(cr, uid, cur_id, context=pricelist_write_context)
+                    pricelist_ids = self.create_associated_pricelist(cr, uid, cur_id, context=context)
             version_ids = version_obj.search(cr, uid, [('pricelist_id', 'in', pricelist_ids), ('active', 'in', ['t', 'f'])], context=context)
             # Update the pricelists and versions
-            pricelist_obj.write(cr, uid, pricelist_ids, {'active': values['active']}, context=pricelist_write_context)
+            pricelist_obj.write(cr, uid, pricelist_ids, {'active': values['active']}, context=context)
             version_obj.write(cr, uid, version_ids, {'active': values['active']}, context=context)
         
         return super(res_currency, self).write(cr, uid, ids, values, context=context)

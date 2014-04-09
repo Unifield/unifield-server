@@ -18,8 +18,12 @@
 							attrs="{'readonly': [('kit_mem_check', '=', False)]}" />
 					<field name="kit_mem_check" invisible="True" />
                     <field name="quantity_ordered"  readonly="True" />
-                    <field name="quantity" on_change="change_lot(prodlot_id, quantity, location_id)" />
-                    <field name="product_uom" readonly="True" string="UOM" />
+                    <field name="uom_ordered" readonly="True" />
+                    <field name="quantity" on_change="change_lot(prodlot_id, quantity, location_id, product_uom)" />
+                    <field name="uom_category" invisible="1" />
+                    <field name="product_uom" readonly="False" string="UOM" 
+                        domain="[('category_id', '=', uom_category)]" 
+                        on_change="onchange_uom_qty(product_uom, quantity)" />
                     <field name="prodlot_id" string="Batch Number"
                         domain="[('product_id', '=', product_id), ('check_type','=', True), ('stock_available', '>', 0.00)]"
                     		context="{'location_id': location_id, 'product_id': product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check}"
@@ -55,9 +59,10 @@
                     <field name="asset_id" readonly="True" />
                     <field name="composition_list_id" readonly="True" />
                     <field name="quantity_ordered" readonly="True" />
-                    <field name="product_uom" readonly="True" string="UOM" />
+                    <field name="uom_category" invisible="1" />
+                    <field name="product_uom" readonly="False" string="UOM" domain="[('category_id', '=', uom_category)]" />
                     <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]" />
-                    <field name="qty_to_return" />
+                    <field name="qty_to_return" on_change="onchange_uom_qty(product_uom, qty_to_return)" />
                     <field name="lot_check" />
                    	<field name="exp_check" />
                    	<field name="kc_check" />
@@ -135,7 +140,23 @@
                 </tree>
             </field>
         </record>
-        
+
+        <record id="stock_move_memory_shipment_additionalitems_tree" model="ir.ui.view">
+            <field name="name">stock.move.memory.shipment.additionalitems.tree</field>
+            <field name="model">stock.move.memory.shipment.additionalitems</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                    <tree string="Additional Items" editable="bottom">
+                        <field name="name"/>
+                        <field name="quantity" />
+                        <field name="uom" />
+                        <field name="comment"/>
+                        <field name="volume"/>
+                        <field name="weight" />
+                    </tree>
+            </field>
+        </record>
+
    		<record id="stock_move_memory_tree_shipment_returnpacks" model="ir.ui.view">
             <field name="name">stock.move.memory.shipment.returnpacks.tree</field>
             <field name="model">stock.move.memory.shipment.returnpacks</field>

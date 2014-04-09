@@ -23,12 +23,25 @@ from tools.translate import _
 
 # if you update a file in PO_COLUMNS_HEADER_FOR_INTEGRATION, check also NEW_COLUMNS_HEADER, you also need to modify the method export_po_integration, get_po_row_values and get_po_header_row_values.
 # in PO_COLUMNS_HEADER_FOR_INTEGRATION, you have all the importable columns possible
-PO_COLUMNS_HEADER_FOR_INTEGRATION=[
-('Line', 'number'), ('Product Code', 'string'), ('Product Description', 'string'), ('Quantity', 'number'), ('UoM', 'string'), ('Price', 'number'), ('Delivery Request Date', 'date'),
-('Delivery Confirmed Date', 'date'), ('Order Reference', 'string'), ('Delivery Confirmed Date (PO)', 'date'),
-('Comment', 'string'), ('Supplier Reference', 'string'), ('Origin', 'string'), ('Notes', 'string'), ('Est. Transport Lead Time', 'number'), ('Transport Mode', 'string'), 
-('Destination Partner', 'string'), ('Destination Address', 'string'), ('Invoicing Address', 'string'), ('Arrival Date in the country', 'string'),
-('Incoterm', 'string'), ('Notes (PO)', 'string')]
+PO_COLUMNS_HEADER_FOR_INTEGRATION = [
+    (_('Line'), 'number'),
+    (_('Ext. Ref.'), 'string'),
+    (_('Product Code'), 'string'),
+    (_('Product Description'), 'string'),
+    (_('Product Qty*'), 'number'),
+    (_('Product UoM*'), 'string'),
+    (_('Price Unit*'), 'number'),
+    (_('Currency*'), 'string'),
+    (_('Origin*'), 'string'),
+    (_('Delivery Reqd Date'), 'date'),
+    (_('Delivery Confd Date*'), 'date'),
+    (_('Nomen Name'), 'string'),
+    (_('Nomen Group'), 'string'),
+    (_('Nomen Family'), 'string'),
+    (_('Comment'), 'string'),
+    (_('Notes'), 'string'),
+    (_('Project Ref.*'), 'string'),
+]
 
 PO_COLUMNS_FOR_INTEGRATION = [x for (x, y) in PO_COLUMNS_HEADER_FOR_INTEGRATION]
 
@@ -42,13 +55,28 @@ NEW_COLUMNS_HEADER = [
 
 PO_COLUMNS_HEADER_FOR_IMPORT=[
 (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Price'), 'number'),
-(_('Delivery requested date'), 'date'), (_('Currency'), 'string'), (_('Comment'), 'string')]
+(_('Delivery Request Date'), 'date'), (_('Currency'), 'string'), (_('Comment'), 'string'), (_('Justification Code'), 'string'), (_('Justification Coordination'), 'string'), (_('HQ Remarks'), 'string'), (_('Justification Y/N'), 'string')]
 PO_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in PO_COLUMNS_HEADER_FOR_IMPORT]
 
 FO_COLUMNS_HEADER_FOR_IMPORT=[
 (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Price'), 'number'),
 (_('Delivery requested date'), 'date'), (_('Currency'), 'string'), (_('Comment'), 'string')]
 FO_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in FO_COLUMNS_HEADER_FOR_IMPORT]
+
+INT_COLUMNS_HEADER_FOR_IMPORT = [
+(_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Kit'), 'string'),
+(_('Asset'), 'string'), (_('Batch Number'), 'string'), (_('Expiry Date'), 'DateTime'), (_('Source Location'), 'string'), (_('Destination Location'), 'string')]
+INT_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in INT_COLUMNS_HEADER_FOR_IMPORT]
+
+IN_COLUMNS_HEADER_FOR_IMPORT = [
+(_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Kit'), 'string'),
+(_('Asset'), 'string'), (_('Batch Number'), 'string'), (_('Expiry Date'), 'DateTime'), (_('Source Location'), 'string'), (_('Destination Location'), 'string')]
+IN_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in IN_COLUMNS_HEADER_FOR_IMPORT]
+
+OUT_COLUMNS_HEADER_FOR_IMPORT = [
+(_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Kit'), 'string'),
+(_('Asset'), 'string'), (_('Batch Number'), 'string'), (_('Expiry Date'), 'DateTime'), (_('Source Location'), 'string'), (_('Destination Location'), 'string')]
+OUT_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in OUT_COLUMNS_HEADER_FOR_IMPORT]
 
 IR_COLUMNS_HEADER_FOR_IMPORT=[
 (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('Cost Price'), 'number'), (_('UoM'), 'string'),
@@ -60,12 +88,34 @@ TENDER_COLUMNS_HEADER_FOR_IMPORT=[
 (_('Price'), 'number'), (_('Delivery Requested Date'), 'DateTime')]
 TENDER_COLUMNS_FOR_IMPORT = [x for (x, y) in TENDER_COLUMNS_HEADER_FOR_IMPORT]
 
+AUTO_SUPPLY_COLUMNS_HEADER_FOR_IMPORT = [
+(_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('UoM'), 'string'), (_('Qty'), 'number')]
+AUTO_SUPPLY_LINE_COLUMNS_FOR_IMPORT = [x for (x,y) in AUTO_SUPPLY_COLUMNS_HEADER_FOR_IMPORT]
+
+ORDER_CYCLE_COLUMNS_HEADER_FOR_IMPORT = [
+(_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('UoM'), 'string'), (_('Safety stock'), 'number')]
+ORDER_CYCLE_LINE_COLUMNS_FOR_IMPORT = [x for (x,y) in ORDER_CYCLE_COLUMNS_HEADER_FOR_IMPORT]
+
+THRESHOLD_COLUMNS_HEADER_FOR_IMPORT = [
+(_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('UoM'), 'string'), (_('Product Qty'), 'number'), (_('Threshold value'), 'number')]
+THRESHOLD_LINE_COLUMNS_FOR_IMPORT = [x for (x,y) in THRESHOLD_COLUMNS_HEADER_FOR_IMPORT]
+
+PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT = [
+(_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Comment'), 'string')]
+PRODUCT_LIST_COLUMNS_FOR_IMPORT = [x for (x,y) in PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT]
 
 import wizard_import_po
 import stock_partial_picking
 import wizard_import_po_line
 import wizard_import_fo_line
 import wizard_import_ir_line
+import wizard_import_picking_line
 import wiz_common_import
 import wizard_import_tender_line
-
+import wizard_delete_lines
+import wizard_import_auto_supply_line
+import wizard_import_order_cycle_line
+import wizard_import_threshold_value_line
+import wizard_import_product_list
+import wizard_po_simulation_screen
+import wizard_in_simulation_screen

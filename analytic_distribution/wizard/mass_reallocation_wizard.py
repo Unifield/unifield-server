@@ -26,6 +26,7 @@ from osv import fields
 from tools.translate import _
 from collections import defaultdict
 from time import strftime
+from lxml import etree
 
 class mass_reallocation_verification_wizard(osv.osv_memory):
     _name = 'mass.reallocation.verification.wizard'
@@ -53,8 +54,8 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         'error_ids': fields.many2many('account.analytic.line', 'mass_reallocation_error_rel', 'wizard_id', 'analytic_line_id', string="Errors", readonly=True),
         'other_ids': fields.many2many('account.analytic.line', 'mass_reallocation_non_supported_rel', 'wizard_id', 'analytic_line_id', string="Non supported", readonly=True),
         'process_ids': fields.many2many('account.analytic.line', 'mass_reallocation_process_rel', 'wizard_id', 'analytic_line_id', string="Allocatable", readonly=True),
-        'nb_error': fields.function(_get_total, string="Lines in error", type='integer', method=True, store=False, multi="mass_reallocation_check"),
-        'nb_process': fields.function(_get_total, string="Allocatable lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
+        'nb_error': fields.function(_get_total, string="Items excluded from reallocation", type='integer', method=True, store=False, multi="mass_reallocation_check"),
+        'nb_process': fields.function(_get_total, string="Allocatable items", type='integer', method=True, store=False, multi="mass_reallocation_check"),
         'nb_other': fields.function(_get_total, string="Excluded lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
         'display_fp': fields.boolean('Display FP'),
     }
@@ -100,6 +101,9 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
                 lines[line.distribution_id.id].append(line)
             # Process each distribution
             for distrib_id in lines:
+                # UF-2205: fix problem with lines that does not have any distribution line or distribution id (INTL engagement lines)
+                if not distrib_id:
+                    continue
                 for line in lines[distrib_id]:
                     # Update distribution
                     self.pool.get('analytic.distribution').update_distribution_line_account(cr, uid, line.distrib_line_id.id, account_id, context=context)
@@ -114,12 +118,14 @@ class mass_reallocation_wizard(osv.osv_memory):
     _description = 'Mass Reallocation Wizard'
 
     _columns = {
-        'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True, domain="[('category', 'in', ['OC', 'FUNDING', 'FREE1', 'FREE2']), ('type', '!=', 'view')]"),
+        'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True),
         'date': fields.date('Posting date', required=True),
         'line_ids': fields.many2many('account.analytic.line', 'mass_reallocation_rel', 'wizard_id', 'analytic_line_id', 
             string="Analytic Journal Items", required=True),
         'state': fields.selection([('normal', 'Normal'), ('blocked', 'Blocked')], string="State", readonly=True),
         'display_fp': fields.boolean('Display FP'),
+        'other_ids': fields.many2many('account.analytic.line', 'mass_reallocation_other_rel', 'wizard_id', 'analytic_line_id', 
+            string="Non eligible analytic journal items", required=False, readonly=True),
     }
 
     _default = {
@@ -127,6 +133,28 @@ class mass_reallocation_wizard(osv.osv_memory):
         'display_fp': lambda *a: False,
         'date': lambda *a: strftime('%Y-%m-%d'),
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Change domain for mass reallocation wizard to filter free1/free2 if we are in this case.
+        Otherwise only accept OC/Dest/FP.
+        """
+        view = super(mass_reallocation_wizard, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type == 'form' and context and context.get('active_ids', False):
+            ids = context.get('active_ids')
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            first_line = self.pool.get('account.analytic.line').browse(cr, uid, ids)[0]
+            domain = "[('category', 'in', ['OC', 'FUNDING', 'DEST']), ('type', '!=', 'view')]"
+            for free in ['FREE1', 'FREE2']:
+                if first_line.account_id and first_line.account_id.category == free:
+                    domain = "[('category', '=', '" + free + "'), ('type', '!=', 'view')]"
+            tree = etree.fromstring(view['arch'])
+            fields = tree.xpath("/form/field[@name='account_id']")
+            for field in fields:
+                field.set('domain', domain)
+            view['arch'] = etree.tostring(tree)
+        return view
 
     def default_get(self, cr, uid, fields=None, context=None):
         """
@@ -145,6 +173,22 @@ class mass_reallocation_wizard(osv.osv_memory):
             res['account_id'] =  context['analytic_account_from']
         if context.get('active_ids', False) and context.get('active_model', False) == 'account.analytic.line':
             res['line_ids'] = context.get('active_ids')
+            # Search which lines are eligible
+            search_args = [
+                ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|',
+                ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
+                ('is_reversal', '=', True),
+                ('journal_id.type', 'in', ['engagement', 'revaluation']),
+                ('from_write_off', '=', True),
+                ('move_state', '=', 'draft'),
+                ('account_id.category', 'in', ['FREE1', 'FREE2'])
+            ]
+            search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, search_args, context=context)
+            # Process lines if exist
+            if search_ns_ids:
+                # add non eligible lines to the right field.
+                res['other_ids'] = search_ns_ids
+                res['line_ids'] = [x for x in context.get('active_ids') if x not in search_ns_ids]
         res['display_fp'] = context.get('display_fp', False)
         return res
 
@@ -160,7 +204,7 @@ class mass_reallocation_wizard(osv.osv_memory):
             context = {}
         if not date or not al_ids:
             if not al_ids:
-                raise osv.except_osv(_('Warning'), _('No line to be processed (So no one is compatible.)'))
+                raise osv.except_osv(_('Warning'), _('No items are eligible to be mass reallocated with the given analytic account.'))
             raise osv.except_osv(_('Error'), _('Some missing args in check_date method. Please contact an administrator.'))
         # Initialisation of Document Date and Posting Date
         dd = False
@@ -213,12 +257,14 @@ class mass_reallocation_wizard(osv.osv_memory):
             if wiz.account_id.category == 'OC':
                 account_field_name = 'cost_center_id'
             search_args = [
-                ('id', 'in', to_process), '|', '|', '|', '|', '|', '|',
+                ('id', 'in', to_process), '|', '|', '|', '|', '|', '|', '|',
                 (account_field_name, '=', account_id),
                 ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
-                ('is_reversal', '=', True), ('journal_id.type', '=', 'engagement'),
+                ('is_reversal', '=', True),
+                ('journal_id.type', '=', 'engagement'),
                 ('from_write_off', '=', True),
-                ('move_state', '=', 'draft')
+                ('move_state', '=', 'draft'),
+                ('account_id.category', 'in', ['FREE1', 'FREE2'])
             ]
             search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, search_args)
             if search_ns_ids:

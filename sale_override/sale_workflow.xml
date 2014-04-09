@@ -26,16 +26,22 @@
             <field name="act_to" ref="act_sale_order_validated" />
             <field name="signal">order_validated</field>
         </record>
-        
+
+        <record id="trans_draft_cancel" model="workflow.transition">
+            <field name="act_from" ref="act_sale_order_validated"/>
+            <field name="act_to" ref="sale.act_cancel"/>
+            <field name="signal">cancel</field>
+        </record>
+
         <record id="trans_sale_router_loan" model="workflow.transition">
             <field name="act_from" ref="sale.act_router" />
             <field name="act_to" ref="act_sale_loan" />
-            <field name="condition">order_type=='loan' and not loan_id</field>
+            <field name="condition">order_type=='loan' and not loan_id and not is_a_counterpart</field>
         </record>
         <record id="trans_sale_router_loan_done" model="workflow.transition">
             <field name="act_from" ref="sale.act_router" />
             <field name="act_to" ref="act_sale_loan_done" />
-            <field name="condition">order_type!='loan' or loan_id</field>
+            <field name="condition">order_type!='loan' or loan_id or is_a_counterpart</field>
         </record>
         <record id="trans_sale_loan_done" model="workflow.transition">
             <field name="act_from" ref="act_sale_loan"/>
@@ -52,7 +58,7 @@
             <field name="condition">(order_policy=='picking') or order_type!='regular' or (order_type=='regular' and partner_id.partner_type=='internal')</field>
         </record>
 
-        <record id="sale.act_ship_corrected" model="workflow.activity">
+        <!--<record id="sale.act_ship_corrected" model="workflow.activity">
             <field name="wkf_id" ref="sale.wkf_sale" />
             <field name="name">ship_corrected</field>
             <field name="kind">function</field>
@@ -61,14 +67,15 @@
 
         <record id="sale.trans_ship_except_ship_end" model="workflow.transition">
             <field name="act_from" ref="sale.act_ship_except" />
-            <field name="act_to" ref="sale.act_ship_corrected" />
-            <field name="signal">ship_corrected</field>
+            <field name="act_to" ref="sale.act_ship_corrected" />-->
+            <!--<field name="signal">ship_corrected</field>-->
+            <!--            <field name="signal" eval="False" />
         </record>
 
         <record id="sale.trans_ship_corrected_ship_end" model="workflow.transition">
             <field name="act_from" ref="sale.act_ship_corrected" />
             <field name="act_to" ref="sale.act_ship" />
-        </record>
+        </record>-->
         
         <!-- SPLIT STEP -->
         

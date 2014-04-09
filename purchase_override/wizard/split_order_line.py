@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -25,14 +25,10 @@ from product._common import rounding
 from tools.translate import _
 import netsvc
 
-from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
-import base64
-
-
 class split_purchase_order_line_wizard(osv.osv_memory):
     _name = 'split.purchase.order.line.wizard'
     _description = 'Split purchase order lines'
-    
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
@@ -42,10 +38,10 @@ class split_purchase_order_line_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         # objects
         sol_obj = self.pool.get('sale.order.line')
-        
+
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
@@ -93,13 +89,15 @@ class split_purchase_order_line_wizard(osv.osv_memory):
         po_line_obj = self.pool.get('purchase.order.line')
         so_line_obj = self.pool.get('sale.order.line')
         so_obj = self.pool.get('sale.order')
+        move_obj = self.pool.get('stock.move')
+        proc_obj = self.pool.get('procurement.order')
 
         # Some verifications
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         context.update({'split_line': True})
         context.update({'keepDateAndDistrib': True})
 
@@ -117,13 +115,15 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 # Change the qty of the old line
                 po_line_obj.write(cr, uid, [split.purchase_line_id.id], {'product_qty': split.original_qty - split.new_line_qty,
                                                                          'price_unit': split.purchase_line_id.price_unit,}, context=context)
-                
+
                 # we treat two different cases
                 # 1) the check box impact corresponding Fo is checked
                 #    we create a Fo line by copying related Fo line. we then execute procurement creation function, and process the procurement
                 #    the merge into the actual Po is forced
                 # if Internal Request, we do not update corresponding Internal Request
-                if split.corresponding_so_line_id_split_po_line_wizard and split.impact_so_split_po_line_wizard and not split.corresponding_so_id_split_po_line_wizard.procurement_request:
+                link_wiz = split.corresponding_so_line_id_split_po_line_wizard
+                external_ir = link_wiz and link_wiz.order_id and (not link_wiz.order_id.procurement_request or link_wiz.order_id.location_requestor_id.usage == 'customer')
+                if split.corresponding_so_line_id_split_po_line_wizard and split.impact_so_split_po_line_wizard and external_ir:
                     # copy the original sale order line, reset po_cft to 'po' (we don't want a new tender if any)
                     so_copy_data = {'line_number': split.corresponding_so_line_id_split_po_line_wizard.line_number, # the Fo is not draft anyway, following sequencing policy, split Fo line maintains original one
                                     'po_cft': 'po',
@@ -133,27 +133,57 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                                     'so_back_update_dest_pol_id_sale_order_line': split.purchase_line_id.id,
                                     }
                     new_so_line_id = so_line_obj.copy(cr, uid, split.corresponding_so_line_id_split_po_line_wizard.id, so_copy_data, context=dict(context, keepDateAndDistrib=True))
+                    # change the initial qty on the initial FO line
+                    so_line_obj.write(cr, uid, split.corresponding_so_line_id_split_po_line_wizard.id, {'product_uom_qty': split.original_qty - split.new_line_qty, 'product_uos_qty': split.original_qty - split.new_line_qty}, context=dict(context, keepDateAndDistrib=True))
                     # call the new procurement creation method
                     so_obj.action_ship_proc_create(cr, uid, [split.corresponding_so_id_split_po_line_wizard.id], context=context)
                     # run the procurement, the make_po function detects the link to original po
                     # and force merge the line to this po (even if it is not draft anymore)
                     # run the procurement, the make_po function detects the link to original po
                     # and force merge the line to this po (even if it is not draft anymore)
-                    new_data_so = so_line_obj.read(cr, uid, [new_so_line_id], ['procurement_id'], context=context)
+                    new_data_so = so_line_obj.read(cr, uid, [new_so_line_id], ['procurement_id', 'line_number'], context=context)
                     new_proc_id = new_data_so[0]['procurement_id'][0]
+
+                    if external_ir and split.purchase_line_id and split.purchase_line_id.move_dest_id:
+                        move = move_obj.browse(cr, uid, split.purchase_line_id.move_dest_id.id, context=context)
+                        proc_move_id = proc_obj.read(cr, uid, new_proc_id, ['move_id'], context=context)['move_id'][0]
+                        new_move_id = move.id
+
+                        if move.product_qty > split.new_line_qty:
+                            new_move_id = move_obj.copy(cr, uid, move.id, {'product_qty': split.new_line_qty,
+                                                                           'product_uos_qty': split.new_line_qty,
+                                                                           'line_number': new_data_so[0]['line_number'],
+                                                                           'sale_line_id': new_so_line_id}, context=context)
+                            move_obj.action_confirm(cr, uid, [new_move_id], context=context)
+
+                            move_obj.write(cr, uid, [move.id], {'product_qty': move.product_qty - split.new_line_qty,
+                                                                'product_uos_qty': move.product_qty - split.new_line_qty}, context=context)
+                        else:
+                            # No update of OUT when IN is received to avoid more qty than expected
+                            move_obj.write(cr, uid, [move.id], {'processed_stock_move': True}, context=context)
+
+                        move_obj.write(cr, uid, proc_move_id, {'state': 'draft'}, context=context)
+                        proc_obj.write(cr, uid, [new_proc_id], {'close_move': False, 'move_id': new_move_id}, context=context)
+                        move_obj.unlink(cr, uid, proc_move_id, context=context)
+
                     wf_service.trg_validate(uid, 'procurement.order', new_proc_id, 'button_check', cr)
                     # if original po line is confirmed, we action_confirm new line
                     if split.purchase_line_id.state == 'confirmed':
                         # the correct line number according to new line number policy is set in po_line_values_hook of order_line_number/order_line_number.py/procurement_order
                         new_po_ids = po_line_obj.search(cr, uid, [('procurement_id', '=', new_proc_id)], context=context)
                         po_line_obj.action_confirm(cr, uid, new_po_ids, context=context)
+                        if context.get('from_simu_screen'):
+                            return new_po_ids[0]
                 else:
                     # 2) the check box impact corresponding Fo is not check or does not apply (po from scratch or from replenishment),
                     #    a new line is simply created
                     # Create the new line
-                    po_copy_data = {'parent_line_id': split.purchase_line_id.id,
+                    po_copy_data = {'is_line_split': True, # UTP-972: Indicate only that the line is a split one
                                     'change_price_manually': split.purchase_line_id.change_price_manually,
                                     'price_unit': split.purchase_line_id.price_unit,
+                                    'move_dest_id': split.purchase_line_id.move_dest_id.id,
+                                    'sale_line_id': split.corresponding_so_line_id_split_po_line_wizard.id,
+                                    'procurement_id': split.corresponding_so_line_id_split_po_line_wizard.procurement_id and split.corresponding_so_line_id_split_po_line_wizard.procurement_id.id or False,
                                     'product_qty': split.new_line_qty}
                     # following new sequencing policy, we check if resequencing occur (behavior 1).
                     # if not (behavior 2), the split line keeps the same line number as original line
@@ -165,16 +195,27 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                     # if original po line is confirmed, we action_confirm new line
                     if split.purchase_line_id.state == 'confirmed':
                         po_line_obj.action_confirm(cr, uid, [new_line_id], context=context)
-                
+
+                    if context.get('from_simu_screen'):
+                        return new_line_id
+
+        if context.get('from_simu_screen'):
+            return False
+
         return {'type': 'ir.actions.act_window_close'}
 
     def line_qty_change(self, cr, uid, ids, original_qty, new_line_qty, context=None):
         '''
         Update the old line qty according to the new line qty
         '''
-        res = {'old_line_qty': original_qty - new_line_qty}
+        value = {'old_line_qty': original_qty - new_line_qty}
+        result = {'value': value}
 
-        return {'value': res}
+        if ids:
+            line = self.browse(cr, uid, ids[0], context=context)
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, line.purchase_line_id.product_uom.id, new_line_qty, 'new_line_qty', result=result)
+
+        return result
 
 split_purchase_order_line_wizard()
 

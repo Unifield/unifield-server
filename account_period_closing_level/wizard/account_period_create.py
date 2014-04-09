@@ -22,20 +22,19 @@
 import datetime
 from dateutil.relativedelta import relativedelta
 from osv import fields, osv
-import logging
 
 class account_period_create(osv.osv_memory):
     _name="account.period.create"
-    
+
     _columns = {
         'fiscalyear': fields.selection([('current', 'Current FY'), ('next', 'Next FY')], 'Fiscal year', required=True)
     }
-    
+
     _defaults = {
         'fiscalyear': 'current'
     }
-    
-    
+
+
     def account_period_create_periods(self, cr, uid, ids, context=None):
         data = self.read(cr, uid, ids, [], context=context)[0]
         if data['fiscalyear'] == 'next':
@@ -46,16 +45,16 @@ class account_period_create(osv.osv_memory):
             # First day of the current month
             start_date = datetime.date(datetime.date.today().year, datetime.date.today().month, 1)
             end_date = datetime.date(datetime.date.today().year, 12, 31)
-            
+
         fiscalyear_obj = self.pool.get('account.fiscalyear')
-        
+
         ds = start_date
         while ds < end_date:
             de = ds + relativedelta(months=1, days=-1)
 
             if de > end_date:
                 de = end_date
-                
+
             fiscalyear_id = fiscalyear_obj.find(cr, uid, ds, exception=False, context=context)
             if not fiscalyear_id:
                 fiscalyear_id = fiscalyear_obj.create(cr,uid, {
@@ -63,7 +62,7 @@ class account_period_create(osv.osv_memory):
                                     'code': 'FY%d' % (start_date.year),
                                     'date_start': ds,
                                     'date_stop': end_date})
-                
+
             if not self.pool.get('account.period').name_search(cr, uid, ds.strftime('%b %Y'), [('fiscalyear_id', '=', fiscalyear_id)]):
                 self.pool.get('account.period').create(cr, uid, {
                     'name': ds.strftime('%b %Y'),
@@ -74,7 +73,7 @@ class account_period_create(osv.osv_memory):
                     'number': int(ds.strftime('%m')),
                 })
             ds = ds + relativedelta(months=1)
-            
+
         fiscalyear_id = fiscalyear_obj.find(cr, uid, start_date, exception=False, context=context)
         for period_nb in (13, 14, 15):
             if not self.pool.get('account.period').name_search(cr, uid, 'Period %d' % (period_nb), [('fiscalyear_id', '=', fiscalyear_id)]):
@@ -87,7 +86,7 @@ class account_period_create(osv.osv_memory):
                     'special': True,
                     'number': period_nb,
                 })
-            
+
         return {'type': 'ir.actions.act_window_close'}
 
 account_period_create()

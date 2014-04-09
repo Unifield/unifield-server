@@ -2,7 +2,7 @@
 #-*- encoding:utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
+#    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
@@ -39,10 +39,10 @@
         "hr",
         "account_payment",
         "account_accountant",
-        "account_activable",
         "analytic_distribution",
         "purchase_override",
-        "analytic_distribution_invoice",
+        # As finance contains account_override and account_override has included account_activable, no need for account_override and account_activable
+        "finance",
         "msf_homere_interface",
     ],
     "init_xml" : [],
@@ -67,24 +67,26 @@
         'wizard/transfer_with_change.xml',
         'register_accounting_report.xml',
         'account_wizard.xml',
+        'wizard/wizard_register_import.xml',
     ],
     "demo_xml" : [],
     "test": [
-        'test/register_accounting_data.yml',
-        'test/account_cash_statement.yml',
-        'test/account_bank_statement.yml',
-        'test/account_cheque_register.yml',
-        'test/cash_and_bank_transfers.yml',
-        'test/operational_advance_management.yml',
-        'test/cashbox_balance.yml',
-        'test/direct_expense.yml',
-        'test/direct_invoice.yml',
-        'test/import_cheque_from_bank.yml',
-        'test/wizard_register_creation.yml',
-        'test/bug_closing_balance_on_cashbox.yml',
-        'test/import_invoice.yml',
-        'test/import_invoice_rate_before_import.yml',
-        'test/down_payments.yml',
+        'test/00_register_accounting_data.yml',
+        'test/10_account_cash_statement.yml',
+        'test/13_account_bank_statement.yml',
+        'test/16_account_cheque_register.yml',
+        'test/20_cash_and_bank_transfers.yml',
+        'test/25_operational_advance_management.yml',
+        'test/30_cashbox_balance.yml',
+        'test/35_direct_expense.yml',
+        'test/40_direct_invoice.yml',
+        'test/50_import_cheque_from_bank.yml',
+        'test/60_wizard_register_creation.yml',
+        'test/70_bug_closing_balance_on_cashbox.yml',
+        'test/80_import_invoice.yml',
+        'test/85_import_invoice_rate_before_import.yml',
+        'test/90_down_payments.yml',
+        'test/99_fully_report.yml',
     ],
     "installable": True,
     "active": False

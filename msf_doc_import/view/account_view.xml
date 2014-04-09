@@ -2,6 +2,17 @@
 <openerp>
     <data>
 
+        <record id="migration_accounting_import_error" model="ir.ui.view">
+            <field name="name">migration.accounting.import.errors</field>
+            <field name="model">msf.doc.import.accounting.errors</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Information">
+                    <field name="name" />
+                </tree>
+            </field>
+        </record>
+
     <!--
         Wizard
     -->
@@ -13,13 +24,20 @@
                 <form string="Import Migration Entries">
                     <label string="This will import Migration Entries from a XML file." colspan="4"/>
                     <newline/>
-                    <field name="file" filename="filename"/>
+                    <field name="file" filename="filename" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                     <field name="filename" invisible="1"/>
-                    <field name="date"/>
-                    <group colspan="4" col="2">
+                    <field name="date" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <field name="progression" widget="progressbar" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="4" />
+                    <field name="message" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}"/>
+                    <newline/>
+                    <button name="button_update" type="object" string="Update" icon="gtk-refresh" attrs="{'invisible': [('state', '!=', 'inprogress')]}"/>
+                    <newline />
+                    <field name="error_ids" nolabel="1" attrs="{'invisible': [('state', '!=', 'error')]}"/>
+                    <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'draft')]}">
                         <button string="Cancel" special="cancel" icon="gtk-cancel"/>
-                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                        <button name="button_validate" type="object" string="Import" icon="terp-camera_test"/>
                     </group>
+                    <field name="state" invisible="1"/>
                 </form>
             </field>
         </record>

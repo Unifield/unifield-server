@@ -100,6 +100,8 @@ class account_mcdb(osv.osv):
         'display_funding_pool': fields.boolean('Display funding pools?'),
         'display_cost_center': fields.boolean('Display cost centers?'),
         'display_destination': fields.boolean('Display destinations?'),
+        'display_free1': fields.boolean('Display Free 1?'),
+        'display_free2': fields.boolean('Display Free 2?'),
         'user': fields.many2one('res.users', "User"),
     }
 
@@ -202,6 +204,16 @@ class account_mcdb(osv.osv):
             res.update({'value': {'display_in_output_currency' : False}})
         return res
 
+    def onchange_analytic_axis(self, cr, uid, ids, analytic_axis, context=None):
+        """
+        Clean up Cost Center / Destination / Funding Pool / Free 1 and Free 2 frames
+        """
+        vals = {}
+        if not analytic_axis:
+            return {}
+        vals.update({'analytic_account_fp_ids': False, 'analytic_account_cc_ids': False, 'analytic_account_dest_ids': False, 'analytic_account_f1_ids': False, 'analytic_account_f2_ids': False})
+        return {'value': vals}
+
     def button_validate(self, cr, uid, ids, context=None):
         """
         Validate current forms and give result
@@ -298,8 +310,11 @@ class account_mcdb(osv.osv):
             if wiz.document_code and wiz.document_code != '':
                 document_code_field = 'move_id.name'
                 if res_model == 'account.analytic.line':
-                    document_code_field = 'move_id.move_id.name'
-                domain.append((document_code_field, 'ilike', '%%%s%%' % wiz.document_code))
+                    domain.append(('|'))
+                    domain.append(('move_id.move_id.name', 'ilike', '%%%s%%' % wiz.document_code))
+                    domain.append(('commitment_line_id.commit_id.name', 'ilike', '%%%s%%' % wiz.document_code))
+                else:
+                    domain.append((document_code_field, 'ilike', '%%%s%%' % wiz.document_code))
             if wiz.document_state and wiz.document_state != '':
                 domain.append(('move_id.state', '=', wiz.document_state))
             # DATE fields
@@ -334,11 +349,13 @@ class account_mcdb(osv.osv):
             # ANALYTIC AXIS FIELD
             if res_model == 'account.analytic.line':
                 if wiz.analytic_axis == 'fp':
-                    context.update({'display_fp': True})
+                    context.update({'display_fp': True, 'categ': 'FUNDING'})
                     domain.append(('account_id.category', '=', 'FUNDING'))
                 elif wiz.analytic_axis == 'f1':
+                    context.update({'categ': 'FREE1'})
                     domain.append(('account_id.category', '=', 'FREE1'))
                 elif wiz.analytic_axis == 'f2':
+                    context.update({'categ': 'FREE2'})
                     domain.append(('account_id.category', '=', 'FREE2'))
                 else:
                     raise osv.except_osv(_('Warning'), _('Display field is mandatory!'))
@@ -403,7 +420,9 @@ class account_mcdb(osv.osv):
             view_id = view_id and view_id[1] or False
             search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', search_view)
             search_view_id = search_view_id and search_view_id[1] or False
-            
+
+            context['target_filename_prefix'] = name
+
             return {
                 'name': name,
                 'type': 'ir.actions.act_window',
@@ -473,11 +492,13 @@ class account_mcdb(osv.osv):
             'target': 'crush',
         }
 
-    def _button_add(self, cr, uid, ids, obj=False, field=False, args=[], context=None):
+    def _button_add(self, cr, uid, ids, obj=False, field=False, args=None, context=None):
         """
         Search all elements of an object (obj) regarding criteria (args). Then return wizard and complete given field (field).
         NB: We consider field is always a MANY2ONE field! (no sense to add all elements of another field...)
         """
+        if args is None:
+            args = []
         # Some verifications
         if not context:
             context = {}

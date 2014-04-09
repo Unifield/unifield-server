@@ -7,6 +7,7 @@
                 id="msf_audittrail.report_log_line" 
                 model="audittrail.log.line" 
                 name="msf.log.line"
+                target_filename="${eval(_get_report_name)}"
                 rml="msf_audittrail/report/log_line.rml"
                 string="Log lines" />
 

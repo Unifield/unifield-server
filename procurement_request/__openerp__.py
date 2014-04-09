@@ -46,6 +46,7 @@
         'procurement_request_sequence.xml',
         'procurement_request_workflow.xml',
         'procurement_request_wizard.xml',
+        'procurement_request_report.xml',
         'wizard/wizard_import_list_view.xml',
     ],
     'demo_xml': [

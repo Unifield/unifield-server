@@ -20,8 +20,6 @@
 #
 ##############################################################################
 from osv import fields, osv
-import tools
-from tools.translate import _
 
 class account_bank_statement_line(osv.osv):
     _inherit = "account.bank.statement.line"
@@ -31,7 +29,7 @@ class account_bank_statement_line(osv.osv):
         """
         Return True for all element that correspond to some criteria:
          - The entry state is draft
-         - The account is an expense account
+         - The account is analytic-a-holic
         """
         res = {}
         for absl in self.browse(cr, uid, ids, context=context):
@@ -39,8 +37,8 @@ class account_bank_statement_line(osv.osv):
             # False if st_line is hard posted
             if absl.state == 'hard':
                 res[absl.id] = False
-            # False if account not an expense account
-            if absl.account_id.user_type.code not in ['expense']:
+            # False if account not allocatable
+            if not absl.account_id.is_analytic_addicted:
                 res[absl.id] = False
         return res
 
@@ -59,19 +57,21 @@ class account_bank_statement_line(osv.osv):
         # Prepare some values
         res = {}
         # Browse all given lines
-        for line in self.browse(cr, uid, ids, context=context):
-            if not line.analytic_distribution_id:
-                res[line.id] = 'none'
+        for line in self.read(cr, uid, ids, ['analytic_distribution_id', 'account_id'], context=context):
+            if not line.get('analytic_distribution_id', False):
+                res[line.get('id')] = 'none'
                 continue
-            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, False, line.account_id.id)
+            distribution_id = line.get('analytic_distribution_id')[0]
+            account_id = line.get('account_id', [False])[0]
+            res[line.get('id')] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distribution_id, False, account_id)
         return res
 
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
-        'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True, 
+        'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True,
             help="This informs system that we can display or not an analytic button", store=False),
-        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
     }
 

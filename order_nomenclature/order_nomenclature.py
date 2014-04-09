@@ -32,6 +32,28 @@ from osv.orm import browse_record, browse_null
 
 import product_nomenclature as pn
 
+def _order_nomenclature_get_product_code_name(module, cr, uid, ids, fieldname, args, context=None):
+    res = {}
+    if not ids:
+        return res
+    fields = {  # field to read /res field
+        'default_code': 'default_code',
+        'name': 'default_name',
+    }
+    if isinstance(ids, (int, long)):
+        ids = [ids]
+    for rpol in module.read(cr, uid, ids, ['product_id'], context=context):
+        res[rpol['id']] = {}
+        for f in fields:
+            res[rpol['id']][fields[f]] = ''
+        if rpol['product_id']:
+            rp = module.pool.get('product.product').read(cr, uid,
+                [rpol['product_id'][0]], fields.keys(), context=context)
+            if rp and rp[0]:
+                for f in fields:
+                   res[rpol['id']][fields[f]] = rp[0].get(f, '')
+    return res
+
 #
 # PO
 #
@@ -51,10 +73,10 @@ class purchase_order_line(osv.osv):
         result = super(purchase_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order, fiscal_position, date_planned,
             name, price_unit, notes)
-        
+
         # comment is cleared
         result['value'].update({'comment':False})
-        
+
         # change nomenclature_description to correspond to the product
         # for now simply clear nomenclature if a product has been selected
         if product:
@@ -69,9 +91,9 @@ class purchase_order_line(osv.osv):
         else:
             result['value'].update({'default_code':False})
             result['value'].update({'default_name':False})
-        
+
         return result
-    
+
     def product_uom_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
             name=False, price_unit=False, notes=False):
@@ -88,9 +110,12 @@ class purchase_order_line(osv.osv):
         # drop modification to comment attribute
         if 'comment' in result['value']:
             del result['value']['comment']
-            
+
+        if qty:
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'product_qty', result=result)
+
         return result
-    
+
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
             name=False, price_unit=False, notes=False, state=False, old_unit_price=False,
@@ -100,23 +125,31 @@ class purchase_order_line(osv.osv):
         '''
         if not context:
             context = {}
-        
+
         if not product and not comment and not nomen_manda_0 and qty != 0.00:
             return {}
-        
+
+        prod_context = context.copy()
+        if 'categ' in prod_context:
+            del prod_context['categ']
+
         result = self.product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order, fiscal_position, date_planned,
-            name, price_unit, notes, state, old_unit_price,nomen_manda_0,comment,context=context)
-        
+            name, price_unit, notes, state, old_unit_price,nomen_manda_0,comment,context=prod_context)
+
         # drop modification to name attribute
         if 'name' in result['value']:
             del result['value']['name']
         # drop modification to comment attribute
         if 'comment' in result['value']:
             del result['value']['comment']
-        
+
+        if qty:
+            uom = uom or result.get('value', {}).get('product_uom')
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'product_qty', result=result)
+
         return result
-    
+
     def _relatedFields(self, cr, uid, vals, context=None):
         '''
         related fields for create and write
@@ -128,7 +161,7 @@ class purchase_order_line(osv.osv):
             # update the name (comment) of order line
             # the 'name' is no more the get_name from product, but instead
             # the name of product
-            productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'])
+            productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
             vals.update({'name':productObj.name})
             vals.update({'default_code':productObj.default_code})
             vals.update({'default_name':productObj.name})
@@ -140,28 +173,28 @@ class purchase_order_line(osv.osv):
             # erase default code
             vals.update({'default_code':False})
             vals.update({'default_name':False})
-            
+
             if 'comment' in vals:
                 vals.update({'name':vals['comment']})
         # clear nomenclature filter values
         #self.pool.get('product.product')._resetNomenclatureFields(vals)
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         override create. don't save filtering data
         '''
         self._relatedFields(cr, uid, vals, context)
-        
+
         return super(purchase_order_line, self).create(cr, uid, vals, context=context)
-    
+
     def write(self, cr, uid, ids, vals, context=None):
         '''
         override write. don't save filtering data
         '''
         self._relatedFields(cr, uid, vals, context)
-            
+
         return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
-    
+
     def nomenChange(self, cr, uid, id, fieldNumber, nomenclatureId, nomenclatureType,
                     nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None, *optionalList):
         '''
@@ -170,7 +203,7 @@ class purchase_order_line(osv.osv):
         sale = self.pool.get('sale.order.line')
         return sale.nomenChange(cr, uid, id, fieldNumber, nomenclatureId, nomenclatureType,
                                 nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, *optionalList)
-    
+
     def codeChange(self, cr, uid, id, fieldNumber, code, nomenclatureType,
                    nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None, *optionalList):
         '''
@@ -179,16 +212,20 @@ class purchase_order_line(osv.osv):
         sale = self.pool.get('sale.order.line')
         return sale.codeChange(cr, uid, id, fieldNumber, code, nomenclatureType,
                    nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, *optionalList)
-    
-    
+
+    def _get_product_code_name(self, cr, uid, ids, fieldname, args, context=None):
+        return _order_nomenclature_get_product_code_name(self, cr, uid, ids, fieldname, args, context=context)
+
     # PO/SO - IDENTICAL
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=1024),
         'comment': fields.char('Comment', size=1024),
-        'default_code': fields.char('Product Code', size=1024),
-        'default_name': fields.char('Product Description', size=1024),
         'name': fields.char('Comment', size=1024, required=True),
-        
+        'default_code': fields.function(_get_product_code_name, type='char', size=1024,
+            method=True, string='Product Code', multi="product",),
+        'default_name': fields.function(_get_product_code_name, type='char', size=1024,
+            method=True, string='Product Description', multi="product",),
+
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
         # mandatory nomenclature levels -> not mandatory on screen here
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
@@ -208,10 +245,10 @@ class purchase_order_line(osv.osv):
         'nomenclature_description': fields.char('Nomenclature', size=1024),
     }
     ### END OF COPY
-    
+
     _defaults = {
     }
-    
+
     _inherit = 'purchase.order.line'
     _description = 'Purchase Order Line'
 
@@ -232,14 +269,19 @@ purchase_order_line()
 class purchase_order_merged_line(osv.osv):
     _name = 'purchase.order.merged.line'
     _inherit = 'purchase.order.merged.line'
-    
+
+    def _get_product_code_name(self, cr, uid, ids, fieldname, args, context=None):
+        return _order_nomenclature_get_product_code_name(self, cr, uid, ids, fieldname, args, context=context)
+
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=1024),
         'comment': fields.char('Comment', size=1024),
-        'default_code': fields.char('Product Code', size=1024),
-        'default_name': fields.char('Product Description', size=1024),
         'name': fields.char('Comment', size=1024, required=True),
-        
+        'default_code': fields.function(_get_product_code_name, type='char', size=1024,
+            method=True, string='Product Code', multi="product",),
+        'default_name': fields.function(_get_product_code_name, type='char', size=1024,
+            method=True, string='Product Description', multi="product",),
+
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
         # mandatory nomenclature levels -> not mandatory on screen here
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
@@ -258,7 +300,7 @@ class purchase_order_merged_line(osv.osv):
         # concatenation of nomenclature in a visible way
         'nomenclature_description': fields.char('Nomenclature', size=1024),
     }
-    
+
 purchase_order_merged_line()
 
 #
@@ -270,7 +312,7 @@ class sale_order_line(osv.osv):
        - nomenclature_id : contains the nomenclature id
        - nomenclature_code : contains the corresponding code
        - nomenclature_description : contains the corresponding description
-    ''' 
+    '''
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
         uom=False, qty_uos=0, uos=False, name='', partner_id=False,
         lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
@@ -280,10 +322,10 @@ class sale_order_line(osv.osv):
         result = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
             uom, qty_uos, uos, name, partner_id,
             lang, update_tax, date_order, packaging, fiscal_position, flag)
-        
+
         # comment is cleared
         result['value'].update({'comment':False})
-        
+
         # change nomenclature_description to correspond to the product
         # for now simply clear nomenclature if a product has been selected
         if product:
@@ -298,9 +340,9 @@ class sale_order_line(osv.osv):
         else:
             result['value'].update({'default_code':False})
             result['value'].update({'default_name':False})
-        
+
         return result
-    
+
     def product_uom_change(self, cr, uid, ids, pricelist, product, qty=0,
             uom=False, qty_uos=0, uos=False, name='', partner_id=False,
             lang=False, update_tax=True, date_order=False):
@@ -316,39 +358,54 @@ class sale_order_line(osv.osv):
         # drop modification to comment attribute
         if 'comment' in result['value']:
             del result['value']['comment']
-            
+
+        # Round up the quantity
+        if qty:
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'product_qty', result=result)
+
         return result
-    
+
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty=0,
         uom=False, qty_uos=0, uos=False, name='', partner_id=False,
         lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
         '''
-        interface product_id_change to avoid the reset of Comment field when the qty is changed 
+        interface product_id_change to avoid the reset of Comment field when the qty is changed
         '''
         result = self.product_id_change(cr, uid, ids, pricelist, product, qty,
                                         uom, qty_uos, uos, name, partner_id,
                                         lang, update_tax, date_order, packaging, fiscal_position, flag)
+
         # drop modification to name attribute
         if 'name' in result['value']:
             del result['value']['name']
         # drop modification to comment attribute
         if 'comment' in result['value']:
             del result['value']['comment']
-            
+        # drop modification to qty
+        if 'product_uos_qty' in result['value']:
+            del result['value']['product_uos_qty']
+        # drop modification to qty
+        if 'product_uom_qty' in result['value']:
+            del result['value']['product_uom_qty']
+
+        # Round up the quantity
+        if qty:
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, ['product_uom_qty', 'product_uos_qty'], result=result)
+
         return result
-    
+
     def product_packaging_change(self, cr, uid, ids, pricelist, product, qty=0,
         uom=False, qty_uos=0, uos=False, name='', partner_id=False,
         lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
         '''
-        interface product_id_change to avoid the reset of Comment field when the qty is changed 
+        interface product_id_change to avoid the reset of Comment field when the qty is changed
         '''
         result = self.product_qty_change(cr, uid, ids, pricelist, product, qty,
                                         uom, qty_uos, uos, name, partner_id,
                                         lang, update_tax, date_order, packaging, fiscal_position, flag)
-        
+
         return result
-    
+
     def _relatedFields(self, cr, uid, vals, context=None):
         '''
         related fields for create and write
@@ -360,7 +417,7 @@ class sale_order_line(osv.osv):
             # update the name (comment) of order line
             # the 'name' is no more the get_name from product, but instead
             # the name of product
-            productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'])
+            productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
             vals.update({'name':productObj.name})
             vals.update({'default_code':productObj.default_code})
             vals.update({'default_name':productObj.name})
@@ -371,37 +428,37 @@ class sale_order_line(osv.osv):
             # erase default code
             vals.update({'default_code':False})
             vals.update({'default_name':False})
-                        
+
             if 'comment' in vals:
                 vals.update({'name':vals['comment']})
         # clear nomenclature filter values
         #self.pool.get('product.product')._resetNomenclatureFields(vals)
-        
+
     def create(self, cr, uid, vals, context=None):
         '''
         override create. don't save filtering data
         '''
         self._relatedFields(cr, uid, vals, context)
-        
+
         return super(sale_order_line, self).create(cr, uid, vals, context=context)
-    
+
     def write(self, cr, uid, ids, vals, context=None):
         '''
         override write. don't save filtering data
         '''
         self._relatedFields(cr, uid, vals, context)
-            
+
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
-    
+
     def _setNomenclatureInfo(self, cr, uid, values, context=None):
         '''
         set nomenclature_description
         '''
         if not values:
             return {}
-        
+
         constants = self.pool.get('product.nomenclature')._returnConstants()
-        
+
         # the last selected level
         mandaDesc = ''
         levels = constants['levels']
@@ -409,20 +466,20 @@ class sale_order_line(osv.osv):
         if len(ids) > 0:
             id = values['nomen_manda_%i'%max(ids)]
             mandaDesc = self.pool.get('product.nomenclature').name_get(cr, uid, [id], context)[0][1]
-            
+
         description = [mandaDesc]
-        
+
         # add optional names
         sublevels = constants['sublevels']
         ids = filter(lambda x: ('nomen_sub_%i'%x in values) and (values['nomen_sub_%i'%x]), range(sublevels))
         ids = map(lambda x: values['nomen_sub_%i'%x], ids)
-        subNomenclatures = self.pool.get('product.nomenclature').browse(cr, uid, ids, context)
-        
+        subNomenclatures = self.pool.get('product.nomenclature').read(cr, uid, ids, ['name'], context=context)
+
         for n in subNomenclatures:
-            description.append(n.name)
+            description.append(n['name'])
 
         values.update({'nomenclature_description': ':'.join(description)})
-    
+
     def _productDomain(self, cr, uid, id, context=None):
         '''
         product the dynamic product's domain
@@ -431,25 +488,25 @@ class sale_order_line(osv.osv):
         # loop through these values
         # if the value is not False, create a new domain rule
         assert context, 'No context, error on function call'
-        
+
         # check and create domain dictionary
         if 'domain' in context['result']:
             domain = context['result']['domain']
         else:
             domain = {}
             context['result']['domain'] = domain
-        
+
         # empty product domain list
-        productList = []    
+        productList = []
         domain.update({'product_id': productList})
-        
-        
+
+
         values = context['result']['value']
         for k,v in values.items():
             if v:
                 newRule = (k, '=', v)
                 productList.append(newRule)
-    
+
     def nomenChange(self, cr, uid, id, fieldNumber, nomenclatureId, nomenclatureType,
                     nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None, *optionalList):
         '''
@@ -457,17 +514,17 @@ class sale_order_line(osv.osv):
         secondly complete dynamic domain
         '''
         assert context, 'No context, error on function call'
-        
+
         product = self.pool.get('product.product')
         product.nomenChange(cr, uid, id, fieldNumber, nomenclatureId, nomenclatureType,
                             nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, *optionalList)
         #self._productDomain(cr, uid, id, context)
         self._setNomenclatureInfo(cr, uid, context['result']['value'], context)
-        
+
         result = context['result']
-        
+
         return result
-        
+
     def codeChange(self, cr, uid, id, fieldNumber, code, nomenclatureType,
                    nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None, *optionalList):
         '''
@@ -475,25 +532,30 @@ class sale_order_line(osv.osv):
         secondly complete dynamic domain
         '''
         assert context, 'No context, error on function call'
-        
-        
+
+
         product = self.pool.get('product.product')
         product.codeChange(cr, uid, id, fieldNumber, code, nomenclatureType,
                            nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, *optionalList)
         #self._productDomain(cr, uid, id, context)
         self._setNomenclatureInfo(cr, uid, context['result']['value'], context)
-        
+
         result = context['result']
         return result
-        
+
+    def _get_product_code_name(self, cr, uid, ids, fieldname, args, context=None):
+        return _order_nomenclature_get_product_code_name(self, cr, uid, ids, fieldname, args, context=context)
+
     # PO/SO - IDENTICAL
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=1024),
         'comment': fields.char('Comment', size=1024),
-        'default_code': fields.char('Product Code', size=1024),
-        'default_name': fields.char('Product Description', size=1024),
         'name': fields.char('Comment', size=1024, required=True, select=True, readonly=True, states={'draft': [('readonly', False)]}),
-        
+        'default_code': fields.function(_get_product_code_name, type='char', size=1024,
+            method=True, string='Product Code', multi="product",),
+        'default_name': fields.function(_get_product_code_name, type='char', size=1024,
+            method=True, string='Product Description', multi="product",),
+
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
         # mandatory nomenclature levels -> not mandatory on screen here
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
@@ -513,13 +575,13 @@ class sale_order_line(osv.osv):
         'nomenclature_description': fields.char('Nomenclature', size=1024),
     }
     ### END OF COPY
-    
+
     _defaults = {
     }
-    
+
     _inherit = 'sale.order.line'
     _description = 'Sale Order Line'
-    
+
     def get_nomen(self, cr, uid, id, field):
         return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field)
 
@@ -550,5 +612,5 @@ class sale_order_line(osv.osv):
         return ret
 
 
-    
+
 sale_order_line()

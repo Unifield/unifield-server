@@ -212,7 +212,7 @@
       </tr>
       <tr>
         <td>
-          <para style="P13">Responsible: [[ o.user_id and o.user_id.name or '' ]]</para>
+          <para style="P13">Responsible: [[ o.responsible_ids and ', '.join([x.name for x in o.responsible_ids]) or '' ]]</para>
         </td>
         <td>
           <para style="P13">Period: [[ o.period_id and o.period_id.code or '' ]]</para>
@@ -292,7 +292,7 @@
                   <para style="P3">[[ line.number and line.number or '0' ]]</para>
                 </td>
                 <td>
-                  <para style="P3">[[ line.subtotal and line.subtotal or '0.0' ]]</para>
+                  <para style="P18">[[ line.subtotal and line.subtotal or '0.00' ]]</para>
                 </td>
               </tr>
             </blockTable>
@@ -310,7 +310,7 @@
                   <para style="P3">[[ line.number and line.number or '0' ]]</para>
                 </td>
                 <td>
-                  <para style="P3">[[ line.subtotal and line.subtotal or '0.0' ]]</para>
+                  <para style="P18">[[ line.subtotal and line.subtotal or '0.00' ]]</para>
                 </td>
               </tr>
             </blockTable>

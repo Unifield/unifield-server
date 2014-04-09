@@ -19,14 +19,10 @@
 #
 ##############################################################################
 
-import time
-
 from report import report_sxw
 import pooler
-import locale
 import csv
 import StringIO
-from tools.translate import _
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class report_cheque_inventory(report_sxw.report_sxw):
@@ -47,7 +43,7 @@ class report_cheque_inventory(report_sxw.report_sxw):
         lines = []
         # Create the header
         header = [['Register Name', 'Register Period', 'Register State', 'Document Date', 'Posting Date', 'Cheque Number', 'Sequence', 'Description', 'Reference', 'Account', 'Third Parties', 'Amount Out', 'Currency']]
-        
+
         # retrieve a big sql query with all information
         sql_posted_moves = """
             SELECT DISTINCT st.id, abs.name, ap.name, abs.state,
@@ -55,7 +51,7 @@ class report_cheque_inventory(report_sxw.report_sxw):
                    st.sequence_for_reference, st.name, st.ref,
                    ac.code || ' ' || ac.name as account_name,
                    COALESCE(tprp.name,tphe.name,tpabs.name,tpaj.name) as third_party,
-                   -st.amount as amount_out, rc.name as currency FROM 
+                   -st.amount as amount_out, rc.name as currency FROM
                 account_bank_statement_line st
                 LEFT JOIN account_bank_statement abs ON abs.id = st.statement_id
                 LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id
@@ -69,8 +65,8 @@ class report_cheque_inventory(report_sxw.report_sxw):
                 LEFT JOIN res_currency rc ON aj.currency = rc.id
                 LEFT JOIN account_bank_statement tpabs ON st.register_id = tpabs.id
                 LEFT JOIN account_journal tpaj ON st.transfer_journal_id = tpaj.id
-            WHERE 
-                aj.type = 'cheque' AND st.amount < 0.0 AND
+            WHERE
+                aj.type = 'cheque' AND
                 rel.move_id is not null AND ac.id = st.account_id
             ORDER BY st.date
         """
@@ -81,13 +77,13 @@ class report_cheque_inventory(report_sxw.report_sxw):
             if not pool.get('account.bank.statement.line')._get_reconciled_state(cr, uid, [statement_line_id])[statement_line_id]:
                 lines.append(statement_line[1:])
         res = header + map((lambda x: self.translate_state(cr, x)), lines)
-        
-        buffer = StringIO.StringIO()
-        writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
+
+        b = StringIO.StringIO()
+        writer = csv.writer(b, quoting=csv.QUOTE_ALL)
         for line in res:
             writer.writerow(line)
-        out = buffer.getvalue()    
-        buffer.close()
+        out = b.getvalue()
+        b.close()
         return (out, 'csv')
 
 report_cheque_inventory('report.cheque.inventory', 'account.bank.statement', False, parser=False)

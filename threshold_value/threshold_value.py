@@ -335,6 +335,65 @@ class threshold_value_line(osv.osv):
                 res[l.id] = True
                 
         return res.keys()
+        
+    def _get_data(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Compute some data
+        '''
+        product_obj = self.pool.get('product.product')
+        proc_obj = self.pool.get('procurement.order')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            # Stock values
+            location_id = line.threshold_value_id.location_id.id
+            stock_product = product_obj.browse(cr, uid, line.product_id.id, context=dict(context, location=location_id))
+            # Consumption values
+            from_date = line.threshold_value_id.consumption_period_from
+            to_date = line.threshold_value_id.consumption_period_to
+            consu_product = product_obj.browse(cr, uid, line.product_id.id, context=dict(context, from_date=from_date, to_date=to_date))
+            consu = 0.00
+            if line.threshold_value_id.consumption_method == 'amc':
+                consu = consu_product.product_amc
+            elif line.threshold_value_id.consumption_method == 'fmc':
+                consu = consu_product.reviewed_consumption
+            else:
+                consu = 0.00
+
+            # Expiry values
+            d_values = {'reviewed_consumption': line.threshold_value_id.consumption_method == 'fmc',
+                        'past_consumption': line.threshold_value_id.consumption_method == 'amc',
+                        'manual_consumption': 0.00,
+                        'consumption_period_from': line.threshold_value_id.consumption_period_from,
+                        'consumption_period_to': line.threshold_value_id.consumption_period_to,
+                        'leadtime': line.threshold_value_id.lead_time,
+                        'coverage': line.threshold_value_id.frequency,
+                        'safety_stock': 0.00,
+                        'safety_time': line.threshold_value_id.safety_month}
+            expiry_product_qty = product_obj.get_expiry_qty(cr, uid, line.product_id.id, location_id, False, d_values, context=dict(context, location=location_id, compute_child=True))
+
+            new_context = context.copy()
+            new_context.update({'from_date': from_date,
+                                'to_date': to_date,
+                                'get_data': True,
+                                'consumption_period_from': d_values['consumption_period_from'],
+                                'consumption_period_to': d_values['consumption_period_to'],})
+
+            qty_to_order, req_date = proc_obj._compute_quantity(cr, uid, False, line.product_id, line.threshold_value_id.location_id.id, d_values, context=new_context)
+
+            res[line.id] = {'consumption': consu,
+                            'real_stock': stock_product.qty_available,
+                            'available_stock': stock_product.virtual_available,
+                            'expiry_before': expiry_product_qty,
+                            'supplier_id': stock_product.seller_id.id,
+                            'required_date': req_date,
+                            }
+
+        return res
     
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
@@ -354,7 +413,13 @@ class threshold_value_line(osv.osv):
         'fixed_product_qty': fields.float(digits=(16,2), string='Quantity to order'),
         'fixed_threshold_value': fields.float(digits=(16,2), string='Threshold value'),
         'threshold_value_id': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True),
-        'threshold_value_id2': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True)
+        'threshold_value_id2': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True),
+        'consumption': fields.function(_get_data, method=True, type='float', digits=(16,3), string='AMC/FMC', multi='data', readonly=True),
+        'real_stock': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Real stock', multi='data', readonly=True),
+        'available_stock': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Available stock', multi='data', readonly=True),
+        'expiry_before': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Exp. before consumption', multi='data', readonly=True),
+        'supplier_id': fields.function(_get_data, method=True, type='many2one', relation='res.partner', string='Supplier', multi='data', readonly=True),
+        'required_date': fields.function(_get_data, method=True, type='date', string='Required by date', multi='data', readonly=True),
     }
     
     def _check_uniqueness(self, cr, uid, ids, context=None):
@@ -384,6 +449,9 @@ class threshold_value_line(osv.osv):
         '''
         if not context:
             context = {}
+
+        if line_id and isinstance(line_id, list):
+            line_id = line_id[0]
         
         cons = 0.00
         threshold_value = 0.00
@@ -420,7 +488,8 @@ class threshold_value_line(osv.osv):
 
     def onchange_product_id(self, cr, uid, ids, product_id, compute_method=False, consumption_method=False,
                                 consumption_period_from=False, consumption_period_to=False, frequency=False,
-                                safety_month=False, lead_time=False, supplier_lt=False, context=None):
+                                safety_month=False, lead_time=False, supplier_lt=False, fixed_tv=0.00, 
+                                fixed_qty=0.00, uom_id=False, field='product_id', context=None):
         """ Finds UoM for changed product.
         @param product_id: Changed id of product.
         @return: Dictionary of values.
@@ -433,14 +502,39 @@ class threshold_value_line(osv.osv):
                          'threshold_value': 0.00}}
         if product_id:
             prod = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
-            res['value'].update({'product_uom_id': prod.uom_id.id})
+            if field == 'product_id':
+                res['value'].update({'product_uom_id': prod.uom_id.id})
+            elif uom_id:
+                res['value'].update({'product_uom_id': uom_id})
             
             if compute_method:
                 tv = self._get_threshold_value(cr, uid, ids, prod, compute_method, consumption_method,
                                                consumption_period_from, consumption_period_to, frequency,
-                                               safety_month, lead_time, supplier_lt, prod.uom_id.id, context=context)['threshold_value']
+                                               safety_month, lead_time, supplier_lt, uom_id or prod.uom_id.id, context=context)['threshold_value']
                 res['value'].update({'fake_threshold_value': tv, 'threshold_value': tv})
-            
+
+                if prod.uom_id.id:
+                    res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id or prod.uom_id.id, tv, ['fixed_threshold_value', 'fixed_product_qty', 'threshold_value', 'fake_threshold_value'], result=res)
+                if prod.uom_id.id and fixed_tv:
+                    res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id or prod.uom_id.id, fixed_tv, ['fixed_threshold_value'], result=res)
+                if prod.uom_id.id and fixed_qty:
+                    res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id or prod.uom_id.id, fixed_tv, ['fixed_product_qty'], result=res)
+
         return res
-    
+
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, tv_qty, product_qty):
+        '''
+        Check round of qty according to UoM
+        '''
+        res = {}
+        uom_obj = self.pool.get('product.uom')
+
+        if tv_qty:
+            res = uom_obj._change_round_up_qty(cr, uid, uom_id, tv_qty, 'fixed_threshold_value', result=res)
+
+        if product_qty:
+            res = uom_obj._change_round_up_qty(cr, uid, uom_id, product_qty, 'fixed_product_qty', result=res)
+
+        return res
+
 threshold_value_line()

@@ -20,10 +20,12 @@
 #
 ##############################################################################
 
-from osv import fields, osv
+from osv import osv
+from osv import fields
 from tools.translate import _
 import time
-import netsvc
+
+
 
 class shipment_wizard(osv.osv_memory):
     _name = "shipment.wizard"
@@ -37,6 +39,7 @@ class shipment_wizard(osv.osv_memory):
         'product_moves_shipment_create' : fields.one2many('stock.move.memory.shipment.create', 'wizard_id', 'Pack Families'),
         'product_moves_shipment_returnpacks' : fields.one2many('stock.move.memory.shipment.returnpacks', 'wizard_id', 'Pack Families'),
         'product_moves_shipment_returnpacksfromshipment' : fields.one2many('stock.move.memory.shipment.returnpacksfromshipment', 'wizard_id', 'Pack Families'),
+        'product_moves_shipment_additionalitems' : fields.one2many('stock.move.memory.shipment.additionalitems', 'wizard_id', 'Additional Items'),
      }
 #     todo
 #    generic select all deselcted all based on fields_get
@@ -242,8 +245,15 @@ class shipment_wizard(osv.osv_memory):
 
                 <button name="%s" string="%s"
                     colspan="1" type="object" icon="gtk-go-forward" />
-            </group>
-        </form>"""%button
+            </group>"""%button
+        if step == 'create':
+            _moves_fields.update({
+                                'product_moves_shipment_additionalitems': {'relation': 'stock.move.memory.shipment.additionalitems', 'type' : 'one2many', 'string' : 'Additional Items'}, 
+                                })
+            _moves_arch_lst += """
+            <field name="product_moves_shipment_additionalitems" colspan="4" nolabel="1" mode="tree,form" string="Additional Items"></field>
+            """
+        _moves_arch_lst += """</form>"""
         
         result['arch'] = _moves_arch_lst
         result['fields'] = _moves_fields
@@ -385,6 +395,23 @@ class shipment_wizard(osv.osv_memory):
             for memory_move in getattr(wiz, field_name):
                 memory_move.write({'integrity_status': status,}, context=context)
     
+    def create_additionalitems(self, cr, uid, ids, context=None):
+        shipment_ids = context['active_ids']
+        additional_items_dict = {'additional_items_ids': []}
+        for shipment_wizard in self.read(cr, uid, ids, ['product_moves_shipment_additionalitems'], context):
+            additionalitems_ids = shipment_wizard['product_moves_shipment_additionalitems']
+            for additionalitem in self.pool.get('stock.move.memory.shipment.additionalitems').read(cr, uid, additionalitems_ids):
+                additionalitem.pop('wizard_id')
+                additionalitem['picking_id'] = additionalitem.get('picking_id', False) and additionalitem.get('picking_id', False)[0]
+                uom = additionalitem.get('uom', False)
+                if isinstance(uom, (int, long)):
+                    uom = [uom]
+                additionalitem['uom'] = uom and uom[0]
+                additionalitem['shipment_id'] = shipment_ids[0]
+                additional_items_dict['additional_items_ids'].append((0, 0, additionalitem))
+        context.update(additional_items_dict)
+        return context
+    
     def do_create_shipment(self, cr, uid, ids, context=None):
         '''
         gather data from wizard pass it to the do_create_shipment method of shipment class
@@ -392,6 +419,10 @@ class shipment_wizard(osv.osv_memory):
         # integrity check
         assert context, 'no context, method call is wrong'
         assert 'active_ids' in context, 'No shipment ids in context. Action call is wrong'
+        
+        context.update(self.create_additionalitems(cr, uid, ids, context))
+        
+#        context.update(self.update_additionalitems(cr, uid, ids, context))
         
         ship_obj = self.pool.get('shipment')
         # name of the wizard field for moves (one2many)
@@ -543,3 +574,40 @@ class shipment_wizard(osv.osv_memory):
     
 
 shipment_wizard()
+
+
+class memory_additionalitems(osv.osv_memory):
+    '''
+    view corresponding to additionalitems
+    
+    integrity constraint 
+    '''
+    _name = "memory.additionalitems"
+    _description="Additional Items"
+    
+    _columns = {'name': fields.char(string='Additional Item', size=1024, required=True),
+                'quantity': fields.float(digits=(16,2), string='Quantity', required=True),
+                'uom': fields.many2one('product.uom', string='UOM', required=True),
+                'comment': fields.char(string='Comment', size=1024),
+                'volume': fields.float(digits=(16,2), string='Volume[dm³]'),
+                'weight': fields.float(digits=(16,2), string='Weight[kg]', required=True),
+                'picking_id': fields.many2one('stock.picking', 'PPL', readonly=True),
+                'additional_item_id': fields.many2one('shipment.additionalitems', 'Additional item id', readonly=True),
+                }
+    
+memory_additionalitems()
+
+
+class stock_move_memory_shipment_additionalitems(osv.osv_memory):
+    '''
+    view corresponding to additionalitems
+    
+    integrity constraint 
+    '''
+    _inherit = "memory.additionalitems"
+    _name  = 'stock.move.memory.shipment.additionalitems'
+    _description="Additional Items"
+    _columns = {
+                'wizard_id' : fields.many2one('shipment.wizard', string="Wizard"),
+                }
+stock_move_memory_shipment_additionalitems()

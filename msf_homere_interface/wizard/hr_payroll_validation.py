@@ -41,7 +41,7 @@ class hr_payroll_validation(osv.osv_memory):
             context = {}
         res = super(hr_payroll_validation, self).fields_get(cr, uid, fields, context)
         hrp = self.pool.get('hr.payroll.msf')
-        search_lines_ids = hrp.search(cr, uid, [('account_id.user_type.code', '!=', 'expense'), ('state', '=', 'draft')])
+        search_lines_ids = hrp.search(cr, uid, [('account_id.is_analytic_addicted', '=', False), ('state', '=', 'draft')])
         for line in hrp.read(cr, uid, search_lines_ids, ['account_id']):
             # Add line description
             field_name = 'entry%s' % line.get('id')
@@ -86,7 +86,7 @@ class hr_payroll_validation(osv.osv_memory):
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
         Verify that all lines have an analytic distribution.
-        Create all non-expense lines to give a third parties
+        Create all non-analytic-a-holic lines to give a third parties
         """
         if not context:
             context = {}
@@ -94,14 +94,14 @@ class hr_payroll_validation(osv.osv_memory):
         # Verification and sorting lines as explained in UTP-342
         line_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft')], order='account_id, name')
         for line in self.pool.get('hr.payroll.msf').browse(cr, uid, line_ids):
-            if line.account_id and line.account_id.user_type.code == 'expense' and line.analytic_state != 'valid':
+            if line.account_id and line.account_id.is_analytic_addicted and line.analytic_state != 'valid':
                 raise osv.except_osv(_('Warning'), _('Some lines have analytic distribution problems!'))
         if view_type == 'form':
             form = ET.fromstring(res['arch'])
             field = form.find('.//label')
             parent = field.getparent()
             for el in self.pool.get('hr.payroll.msf').browse(cr, uid, line_ids):
-                if el.account_id and el.account_id.user_type.code != 'expense':
+                if el.account_id and not el.account_id.is_analytic_addicted:
                     third = 'third' + str(el.id)
                     fourth = 'fourth' + str(el.id)
                     fifth = 'fifth' + str(el.id)
@@ -114,7 +114,7 @@ class hr_payroll_validation(osv.osv_memory):
 
     def create(self, cr, uid, vals, context=None):
         """
-        Get non-expense lines
+        Get non-analytic-a-holic lines
         """
         if not context:
             context = {}
@@ -201,10 +201,10 @@ class hr_payroll_validation(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('No account found!'))
             account = self.pool.get('account.account').browse(cr, uid, account_id)
             # End of Note
-            # create new distribution (only for expense accounts)
+            # create new distribution (only for analytic-a-holic accounts)
             distrib_id = False
             # Note @JFB: this is a correction for UF-1356 that have been already done in another UF. This is the good one.
-            if account.user_type.code == 'expense':
+            if account.is_analytic_addicted:
             # End of Note
                 cc_id = line.get('cost_center_id', False) and line.get('cost_center_id')[0] or False
                 fp_id = line.get('funding_pool_id', False) and line.get('funding_pool_id')[0] or False

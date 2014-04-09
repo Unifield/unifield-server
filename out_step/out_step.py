@@ -40,9 +40,11 @@ class stock_picking(osv.osv):
         ('auto', 'Waiting'),
         ('confirmed', 'Confirmed'),
         ('assigned', 'Available'),
+        ('shipped', 'Available Shipped'),
         ('done', 'Closed'),
-        ('delivered', 'Delivered'),
         ('cancel', 'Cancelled'),
+        ('import', 'Import in progress'),
+        ('delivered', 'Delivered'),
     ]
 
     def _vals_get_out_step(self, cr, uid, ids, fields, arg, context=None):

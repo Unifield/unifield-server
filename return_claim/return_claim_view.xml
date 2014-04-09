@@ -99,7 +99,7 @@
                                     attrs="{'readonly': ['|', ('fake_state_return_claim', '=', 'done'), ('type_return_claim', '=', 'transport')]}" />
                             </page>
                             <page string="Products">
-                                <field name="default_src_location_id_return_claim" attrs="{'readonly': ['|', ('type_return_claim', 'not in', ['supplier', 'transport']), ('state', '!=', 'draft')]}" />
+                                <field name="default_src_location_id_return_claim" attrs="{'readonly': ['|', ('type_return_claim', 'not in', ['supplier', 'transport']), ('state', '!=', 'draft')]}" domain="[('usage', '!=', 'view')]" />
                                 <field name="product_line_ids_return_claim" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4"
                                     attrs="{'readonly': [('state', '!=', 'draft')]}" context="{'claim_type': type_return_claim, 'default_src': default_src_location_id_return_claim, 'claim_partner': partner_id_return_claim}">
                                     <tree string="Products" editable="top" colors="red:integrity_status_claim_product_line != 'empty'">
@@ -125,8 +125,8 @@
                                             domain="[('usage', '=', 'internal')]"
                                             on_change="on_change_location_id(src_location_id_claim_product_line,product_id_claim_product_line,lot_id_claim_product_line,uom_id_claim_product_line,context)"
                                             context="{'product_id':product_id_claim_product_line,'prodlot_id':lot_id_claim_product_line,'specific_rules_tree_view':True,'compute_child':False}" />
-                                        <field name="qty_claim_product_line" />
-                                        <field name="uom_id_claim_product_line" />
+                                        <field name="qty_claim_product_line" on_change="onchange_uom_qty(uom_id_claim_product_line, qty_claim_product_line)" />
+                                        <field name="uom_id_claim_product_line" on_change="onchange_uom_qty(uom_id_claim_product_line, qty_claim_product_line)" />
                                         <field name="hidden_stock_available_claim_product_line" invisible="False" />
                                         <field name="stock_move_id_claim_product_line" invisible="True" />
                                         

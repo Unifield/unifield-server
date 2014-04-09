@@ -30,7 +30,9 @@
     "author" : "TeMPO Consulting, MSF",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
-    "depends" : ["base", "account", 'res_currency_functional', 'analytic_distribution', 'account_override', 'account_journal', 'account_msf'],
+    # As account_msf was included in account_override, msf_partner and register_accounting, we just need register accounting
+    # Register_accounting depends on finance, and finance on account_override and account_override on account. So account and finance module are not needed as dependancies.
+    "depends" : ["base", 'res_currency_functional', 'analytic_distribution', 'account_journal', 'register_accounting'],
     "init_xml" : [],
     "update_xml" : [
         'account_view.xml',
@@ -38,8 +40,9 @@
     ],
     "demo_xml" : [],
     "test": [
-        'test/account_data.yml',
-        'test/invoice_correction.yml'
+        'test/10_account_data.yml',
+        'test/20_invoice_correction.yml',
+        'test/30_analytical_changes.yml'
     ],
     "installable": True,
     "active": False

@@ -27,6 +27,8 @@ import tools
 
 from tools.translate import _
 
+from account_override import ACCOUNT_RESTRICTED_AREA
+
 class account_journal(osv.osv):
     _inherit = "account.journal"
 
@@ -61,21 +63,22 @@ class account_journal(osv.osv):
                 ('correction','Correction'),
                 ('cur_adj', 'Currency Adjustement'),
                 ('depreciation', 'Depreciation'),
-                ('extra', 'OD-Extra Accounting'),
                 ('general', 'General'),
                 ('hq', 'HQ'),
                 ('hr', 'HR'),
                 ('inkind', 'In-kind Donation'),
                 ('intermission', 'Intermission'),
+                ('migration', 'Migration'),
+                ('extra', 'OD-Extra Accounting'),
                 ('situation', 'Opening/Closing Situation'),
                 ('purchase', 'Purchase'),
                 ('purchase_refund','Purchase Refund'),
+                ('revaluation', 'Revaluation'),
                 ('sale', 'Sale'),
                 ('sale_refund','Sale Refund'),
                 ('stock', 'Stock'),
-                ('migration', 'Migration'),
         ]
-    
+
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True),
         'code': fields.char('Code', size=10, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
@@ -124,14 +127,20 @@ class account_journal(osv.osv):
             analytic_cash_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CAS'),
                                                                           ('is_current_instance', '=', True)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cash_journal
+            value['domain']['default_debit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
+            value['domain']['default_credit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
         elif type == 'bank': 
             analytic_bank_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'BNK'),
                                                                           ('is_current_instance', '=', True)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_bank_journal
+            value['domain']['default_debit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
+            value['domain']['default_credit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
         elif type == 'cheque': 
             analytic_cheque_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CHK'),
                                                                             ('is_current_instance', '=', True)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cheque_journal
+            value['domain']['default_debit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
+            value['domain']['default_credit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
         elif type == 'cur_adj':
             debit_default_dom = [('type','<>','view'),('type','<>','consolidation')]
             credit_default_dom = [('type','<>','view'),('type','<>','consolidation')]
@@ -149,43 +158,78 @@ class account_journal(osv.osv):
             value['domain']['default_credit_account_id'] = credit_default_dom
         return value
 
-    def create(self, cr, uid, vals, context=None):
-        
-        # TODO: add default accounts
-       
+    def create_fiscalyear_sequence(self, cr, uid, fiscalyear, name, code, date, main_sequence=False, context=None):
+        """
+        Create a fiscalyear sequence between journal and fiscalyear.
+        """
+        # Some checks
         if context is None:
             context = {}
-
-        # Create associated sequence
-        seq_pool = self.pool.get('ir.sequence')
-        seq_typ_pool = self.pool.get('ir.sequence.type')
-        name = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.name
-        code = vals['code'].lower()
-        types = {
-            'name': name,
-            'code': code
-        }
-        seq_typ_pool.create(cr, uid, types)
+        if not fiscalyear:
+            raise osv.except_osv(_('Error'), _('Fiscalyear is missing'))
+        if not name:
+            raise osv.except_osv(_('Error'), _('Name is missing!'))
+        if not code:
+            raise osv.except_osv(_('Error'), _('Code is missing!'))
+        if not date:
+            raise osv.except_osv(_('Error'), _('Date is missing!'))
+        # create a new sequence
         seq = {
             'name': name,
             'code': code,
             'active': True,
-            # UF-433: sequence is now only the number, no more prefix
-            #'prefix': "%(year)s%(month)s-" + name + "-" + code + "-",
-            'prefix': "",
-            'padding': 6,
+            'prefix': "%s" % str(date)[2:4], # take last 2 number of year
+            'padding': 4,
             'number_increment': 1
         }
-        vals['sequence_id'] = seq_pool.create(cr, uid, seq)
-        
+        sequence_id = self.pool.get('ir.sequence').create(cr, uid, seq)
+        if not main_sequence:
+            main_sequence = sequence_id
+        self.pool.get('account.sequence.fiscalyear').create(cr, uid, {'sequence_id': sequence_id, 'fiscalyear_id': fiscalyear, 'sequence_main_id': main_sequence,})
+        return True
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Create the journal with its sequence, a sequence linked to the fiscalyear and some register if this journal type is bank, cash or cheque.
+        """
+        # Checks
+        if context is None:
+            context = {}
+        # Prepare some values
+        seq_pool = self.pool.get('ir.sequence')
+        seq_typ_pool = self.pool.get('ir.sequence.type')
+        seq_fiscal_pool = self.pool.get('account.sequence.fiscalyear')
+        name = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.name
+        code = vals['code'].lower()
+        fy_ids = self.pool.get('account.fiscalyear').search(cr, uid, [('state', '=', 'draft')])
+        types = {
+            'name': name,
+            'code': code
+        }
+        # Create main sequence
+        seq_typ_pool.create(cr, uid, types)
+        main_seq = {
+            'name': name,
+            'code': code,
+            'active': True,
+            # UF-433: sequence is now only the number, no more prefix
+            'prefix': "",
+            'padding': 4,
+            'number_increment': 1
+        }
+        vals['sequence_id'] = seq_pool.create(cr, uid, main_seq)
+        if fy_ids:
+            for fy in self.pool.get('account.fiscalyear').browse(cr, uid, fy_ids, context=context):
+                # Create associated sequence FY/JOURNAL
+                self.create_fiscalyear_sequence(cr, uid, fy.id, name, code, fy.date_start, main_sequence=vals['sequence_id'], context=context)
         # View is set by default, since every journal will display the same thing
         obj_data = self.pool.get('ir.model.data')
         data_id = obj_data.search(cr, uid, [('model','=','account.journal.view'), ('name','=','account_journal_view')])
         data = obj_data.browse(cr, uid, data_id[0], context=context)
         vals['view_id'] = data.res_id
         
-        # create journal
-        journal_obj = super(account_journal, self).create(cr, uid, vals, context)
+        # Create journal
+        journal_id = super(account_journal, self).create(cr, uid, vals, context)
         
         # Some verification for cash, bank, cheque and cur_adj type
         if vals['type'] in ['cash', 'bank', 'cheque', 'cur_adj']:
@@ -199,7 +243,7 @@ class account_journal(osv.osv):
             #  'prev_reg_id' mandatory field. This is because this register is the first register from this journal.
             context.update({'from_journal_creation': True})
             self.pool.get('account.bank.statement') \
-                .create(cr, uid, {'journal_id': journal_obj,
+                .create(cr, uid, {'journal_id': journal_id,
                                   'name': vals['name'],
                                   'period_id': self.get_current_period(cr, uid, context),
                                   'currency': vals.get('currency')}, \
@@ -211,7 +255,7 @@ class account_journal(osv.osv):
             user_type_code = self.pool.get('account.account').read(cr, uid, account_id, ['user_type_code']).get('user_type_code', False)
             if user_type_code != 'expense':
                 raise osv.except_osv(_('Warning'), _('Default Debit Account should be an expense account for Adjustement Journals!'))
-        return journal_obj
+        return journal_id
 
     def write(self, cr, uid, ids, vals, context=None):
         """

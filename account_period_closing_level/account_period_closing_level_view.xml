@@ -140,8 +140,8 @@
                         <field name="special"/>
                         <field name="state"/>
                         <field name="number" invisible="1"/>
-                        <button name="action_set_state" states="field-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" context="{'state': 'draft'}" colspan="1"/>
-                        <button name="action_set_state" states="created" confirm="Are you sure you want to open this period?" string="Open period" type="object" icon="gtk-go-forward" context="{'state': 'draft'}" colspan="1"/>
+                        <button name="action_reopen_field" states="field-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" colspan="1"/>
+                        <button name="action_open_period" states="created" confirm="Are you sure you want to open this period?" string="Open period" type="object" icon="gtk-go-forward" colspan="1"/>
                     </tree>
                 </tree>
             </field>

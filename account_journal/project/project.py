@@ -31,7 +31,7 @@ class account_analytic_journal(osv.osv):
     _description = 'Analytic Journal'
     _inherit = 'account.analytic.journal'
 
-    def get_journal_type(self, cr, uid, context={}):
+    def get_journal_type(self, cr, uid, context=None):
         """
         Get all analytic journal type
         """
@@ -40,21 +40,23 @@ class account_analytic_journal(osv.osv):
             ('correction', 'Correction'),
             ('cur_adj', 'Currency Adjustement'),
             ('engagement', 'Engagement'),
-            ('extra', 'OD-Extra Accounting'),
             ('general','General'),
             ('hq', 'HQ'),
             ('hr', 'HR'),
             ('inkind', 'In-kind Donation'),
             ('intermission', 'Intermission'),
+            ('migration', 'Migration'),
+            ('extra', 'OD-Extra Accounting'),
             ('purchase','Purchase'),
+            ('revaluation', 'Revaluation'),
             ('sale','Sale'),
             ('situation','Situation'),
-            ('migration', 'Migration'),
         ]
 
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True, help="Gives the type of the analytic journal. When it needs for a document \
 (eg: an invoice) to create analytic entries, OpenERP will look for a matching journal of the same type."),
+        'code': fields.char('Journal Code', size=8, required=True),
     }
 
     def name_get(self, cr, user, ids, context=None):

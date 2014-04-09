@@ -40,7 +40,7 @@ class account_commitment_line(osv.osv):
     _inherit = 'account.commitment.line'
 
     _columns = {
-        'purchase_order_line_ids': fields.many2many('purchase.order.line', 'purchase_line_commitment_rel', 'commitment_id', 'purchase_id', 
+        'purchase_order_line_ids': fields.many2many('purchase.order.line', 'purchase_line_commitment_rel', 'commitment_id', 'purchase_id',
             string="Purchase Order Lines", readonly=True),
     }
 
@@ -93,7 +93,7 @@ class account_commitment_line(osv.osv):
                     percentage = (total_amount / line.amount) * 100 or 0.0
                     vals.update({'percentage': percentage})
                     # create cost_center_line
-                    distrib_line_id = self.pool.get('cost.center.distribution.line').create(cr, uid, vals, context=context)
+                    self.pool.get('cost.center.distribution.line').create(cr, uid, vals, context=context)
                 # Create funding pool lines if needed
                 self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [distrib_id], line.account_id.id, context=context)
         return True

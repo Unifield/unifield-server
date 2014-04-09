@@ -106,6 +106,10 @@ class product_supplierinfo(osv.osv):
 
     }
 
+    _defaults = {
+        'product_uom': lambda *a: False,
+    }
+
     def onchange_supplier(self, cr, uid, ids, supplier_id):
         '''
         Set the Indicative delivery LT
@@ -150,7 +154,7 @@ class pricelist_partnerinfo(osv.osv):
     def default_get(self, cr, uid, fields, context=None):
         '''
         Set automatically the currency of the line with the default
-        purchase currency of the supplier
+        purchase currency of the supplier, and the uom with the uom of the product.supplierinfo.
         '''
         if not context:
             context = {}
@@ -161,6 +165,9 @@ class pricelist_partnerinfo(osv.osv):
             partner = self.pool.get('res.partner').browse(cr, uid, context.get('partner_id'), context=context)
             res['currency_id'] = partner.property_product_pricelist_purchase.currency_id.id
             res['partner_id'] = partner.id
+        if context.get('active_model', False) == 'product.supplierinfo' and context.get('active_id', False) and isinstance(context['active_id'], (int, long)):
+            read_partnerinfo = self.pool.get('product.supplierinfo').read(cr, uid, context['active_id'])
+            res['uom_id'] = read_partnerinfo['product_uom'][0]
         
         return res
     
@@ -205,10 +212,17 @@ class pricelist_partnerinfo(osv.osv):
         '''
         Check if the min_qty field is set
         '''
-        for line in self.browse(cr, uid, ids, context=context):
-            if line.min_quantity <= 0.00:
-                raise osv.except_osv(_('Error'), _('The line of product %s has a negative or zero min. quantity !') %line.suppinfo_id.product_id.name)
-                return False
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context is None:
+            context = {}
+
+        if not context.get('noraise'):
+            for line in self.browse(cr, uid, ids, context=context):
+                if line.min_quantity <= 0.00:
+                    raise osv.except_osv(_('Error'), _('The line of product %s has a negative or zero min. quantity !') %line.suppinfo_id.product_id.name)
+                    return False
             
         return True
 
@@ -240,9 +254,25 @@ class pricelist_partnerinfo(osv.osv):
                                         })
     }
 
-    _constraints = [
-        (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_quantity']),
-    ]
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Check the constraint
+        '''
+        res = super(pricelist_partnerinfo, self).create(cr, uid, vals, context=context)
+
+        self._check_min_quantity(cr, uid, res, context=context)
+
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Check the constraint
+        '''
+        res = super(pricelist_partnerinfo, self).write(cr, uid, ids, vals, context=context)
+
+        self._check_min_quantity(cr, uid, ids, context=context)
+
+        return res
 
 pricelist_partnerinfo()
 
@@ -313,6 +343,59 @@ class product_product(osv.osv):
                 res[product.id] = (False, 1.0, 1.0)
                         
         return not one_product and res or res[one_product]
+
+    def _get_catalogue_ids(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        Returns all catalogues where the product is in
+        '''
+        # Objects
+        line_obj = self.pool.get('supplier.catalogue.line')
+
+        context = context is None and {} or context
+
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+
+        res = {}
+
+        for product in self.browse(cr, uid, ids, context=context):
+            catalogue_ids = set()
+            catalogue_line_ids = line_obj.search(cr, uid, [('product_id', '=', product.id)], context=context)
+            for line in line_obj.read(cr, uid, catalogue_line_ids, ['catalogue_id'], context=context):
+                catalogue_ids.add(line['catalogue_id'])
+
+            res[product.id] = list(catalogue_ids)
+
+        return res
+                            
+    def _search_catalogue_ids(self, cr, uid, obj, name, args, context=None):
+        '''
+        Filter the search according to the args parameter
+        '''
+        # Objects
+        catalogue_obj = self.pool.get('supplier.catalogue')
+
+        context = context is None and {} or context
+        ids = set()
+
+        for arg in args:
+            if arg[0] == 'catalogue_ids' and arg[1] == '=' and arg[2]:
+                catalogue = catalogue_obj.browse(cr, uid, int(arg[2]), context=context)
+                for line in catalogue.line_ids:
+                    ids.add(line.product_id.id)
+            elif arg[0] == 'catalogue_ids' and arg[1] == 'in' and arg[2]:
+                for catalogue in catalogue_obj.browse(cr, uid, arg[2], context=context):
+                    for line in catalogue.line_ids:
+                        ids.add(line.product_id.id)
+            else:
+                return []
+
+        return [('id', 'in', list(ids))]
+
+    _columns = {
+        'catalogue_ids': fields.function(_get_catalogue_ids, fnct_search=_search_catalogue_ids,
+                                            type='many2many', relation='supplier.catalogue', method=True, string='Catalogues'),
+    }
     
 product_product()
 

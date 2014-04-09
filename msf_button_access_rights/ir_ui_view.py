@@ -1,33 +1,11 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-##############################################################################
-#
-#    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Max Mumford
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as
-#    published by the Free Software Foundation, either version 3 of the
-#    License, or (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-##############################################################################
 
 from osv import osv
 from osv import fields
 from osv import orm
-import psycopg2
 from lxml import etree
 import logging
-import unicodedata
 
 class ir_ui_view(osv.osv):
     """
@@ -35,7 +13,6 @@ class ir_ui_view(osv.osv):
     and add button access rules tab and reparse view tab to view
     """
 
-    _name = "ir.ui.view"
     _inherit = "ir.ui.view"
     
     def _get_button_access_rules(self, cr, uid, ids, field_name, arg, context):
@@ -51,25 +28,23 @@ class ir_ui_view(osv.osv):
         'button_access_rules_ref': fields.function(_get_button_access_rules, type='one2many', obj='msf_button_access_rights.button_access_rule', method=True, string='Button Access Rules'),
     }
 
-    def create(self, cr, uid, vals, context=None):
+    def generate_button_access_rules(self, cr, uid, view_id, context=None):
         """
-        Generate the button access rules for this view
+        Called by create method of ir.model.data after xml id is created for a view.
+        This method generates the first set of button access rules for a new view.
         """
-        view_id = super(ir_ui_view, self).create(cr, uid, vals, context=context)
         view = self.browse(cr, 1, view_id)
         model_id = self.pool.get('ir.model').search(cr, 1, [('model','=',view.model)])
-        if not model_id:
-            logging.getLogger(self._name).warn('No model found for model name %s, so cannot generate button access rules for view_id %s' % (view.model, view_id))
-        else:
+        buttons = None
+
+        if model_id:
             try:
-                buttons = self.parse_view(vals['arch'], model_id[0], view_id)
+                buttons = self.parse_view(view.arch, model_id[0], view_id)
             except (ValueError, etree.XMLSyntaxError) as e:
                 logging.getLogger(self._name).warn('Error when parsing view %s' % view_id)
                 print e
-                buttons = False
-                
             self._write_button_objects(cr, 1, buttons)
-        return view_id
+        return buttons
     
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -82,7 +57,7 @@ class ir_ui_view(osv.osv):
         model_pool = self.pool.get('ir.model')
         
         arch = vals.get('arch', False)
-        
+
         for i in ids:
             # get old view xml
             view = self.browse(cr, 1, i)
@@ -140,9 +115,6 @@ class ir_ui_view(osv.osv):
                         if rules_search.count(id):
                             rules_search.remove(id)
                     rules_pool.write(cr, 1, rules_search, {'active':0})
-                else:
-                    logging.getLogger(self._name).warn('No model found for model name %s, so cannot generate button access rules for view_id %s' % (view.model, view.id))
-        
         
         # perform the final writes to the views    
         return super(ir_ui_view, self).write(cr, uid, ids, vals, context=context) 
@@ -196,7 +168,5 @@ class ir_ui_view(osv.osv):
             existing_rule_search = rules_pool.search(cr, uid, [('name','=',button['name']), ('view_id','=',button['view_id'])])
             if not existing_rule_search:
                 rules_pool.create(cr, uid, button)
-            else:
-                logging.getLogger(self._name).warn('Existing Button Access Rule found for name %s and view %s' % (button['name'], button['view_id']))    
-    
+
 ir_ui_view()

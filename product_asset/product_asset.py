@@ -75,6 +75,7 @@ class product_asset(osv.osv):
             default = {}
         default.update({
             'name': self.pool.get('ir.sequence').get(cr, uid, 'product.asset'),
+            'partner_name': False,
         })
         # call to super
         return super(product_asset, self).copy(cr, uid, id, default, context=context)
@@ -87,6 +88,7 @@ class product_asset(osv.osv):
             default = {}
         default.update({
             'event_ids': [],
+            'partner_name': False,
         })
         return super(product_asset, self).copy_data(cr, uid, id, default, context=context)
 
@@ -114,8 +116,22 @@ class product_asset(osv.osv):
             productId = vals['product_id']
             # add readonly fields to vals
             vals.update(self._getRelatedProductFields(cr, uid, productId))
+        
+        # UF-1617: set the current instance into the new object if it has not been sent from the sync   
+        if 'partner_name' not in vals or not vals['partner_name']:
+            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+            if company and company.partner_id:
+                vals['partner_name'] = company.partner_id.name
+
+        # UF-2148: make the xmlid_name from the asset name for building xmlid if it is not given in the vals 
+        if 'xmlid_name' not in vals or not vals['xmlid_name']:
+            vals['xmlid_name'] = vals['name'] 
             
-        # save the data to db
+        exist = self.search(cr, uid, [('xmlid_name', '=', vals['xmlid_name']), ('partner_name', '=', vals['partner_name']), ('product_id', '=', vals['product_id'])], context=context)
+        if exist:
+            # but if the value exist for xml_name, then just add a suffix to differentiate them, no constraint unique required here
+            vals['xmlid_name'] = vals['xmlid_name'] + "_1"
+        
         return super(product_asset, self).create(cr, uid, vals, context)
         
     def onChangeProductId(self, cr, uid, ids, productId):
@@ -213,6 +229,10 @@ class product_asset(osv.osv):
                 'invo_certif_depreciation': fields.char('Certificate of Depreciation', size=128),
                 # event history
                 'event_ids': fields.one2many('product.asset.event', 'asset_id', 'Events'),
+                # UF-1617: field only used for sync purpose
+                'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=False),
+                'partner_name': fields.char('Partner', size=128, required=True),
+                'xmlid_name': fields.char('XML Code, hidden field', size=128, required=True),
     }
     
     _defaults = {
@@ -220,7 +240,8 @@ class product_asset(osv.osv):
                  'arrival_date': lambda *a: time.strftime('%Y-%m-%d'),
                  'receipt_place': 'Country/Project/Activity',
     }
-    _sql_constraints = [('name_uniq', 'unique(name)', 'Asset Code must be unique !'),
+    # UF-2148: use this constraint with 3 attrs: name, prod and instance 
+    _sql_constraints = [('asset_name_uniq', 'unique(name, product_id, partner_name)', 'Asset Code must be unique per instance and per product!'),
                         ]
     _order = 'name desc'
     
@@ -372,23 +393,6 @@ class product_product(osv.osv):
     _inherit = "product.product"
     _description = "Product"
     
-    def create(self, cr, uid, vals, context=None):
-        if vals.get('type',False) == 'service':
-            vals.update({'type': 'service_recep'})
-            vals['procure_method'] = 'make_to_order'
-        '''
-        if a product is not of type product, it is set to single subtype
-        '''
-        # fetch the product
-        if 'type' in vals and vals['type'] != 'product':
-            vals.update(subtype='single')
-#        if 'type' in vals and vals['type'] == 'consu':
-# Remove these two lines to display the warning message of the constraint
-#        if vals.get('type') == 'consu':
-#            vals.update(procure_method='make_to_order')
-        # save the data to db
-        return super(product_product, self).create(cr, uid, vals, context=context)
-    
     def write(self, cr, uid, ids, vals, context=None):
         '''
         if a product is not of type product, it is set to single subtype
@@ -396,6 +400,12 @@ class product_product(osv.osv):
         # fetch the product
         if 'type' in vals and vals['type'] != 'product':
             vals.update(subtype='single')
+            
+            
+        #UF-2170: remove the standard price value from the list if the value comes from the sync
+        if 'standard_price' in vals and context and context.get('sync_update_execution'):
+            del vals['standard_price']
+        
 #        if 'type' in vals and vals['type'] == 'consu':
 # Remove these two lines to display the warning message of the constraint
 #        if vals.get('type') == 'consu':
@@ -463,20 +473,6 @@ class stock_move(osv.osv):
                             raise osv.except_osv(_('Error!'),  _('You must assign an asset for the product %s.') % move.product_id.name)
         return True
     
-    def create(self, cr, uid, vals, context=None):
-        '''
-        override for adding subtype on creation if product is specified
-        '''
-        if context is None:
-            context = {}
-        if 'product_id' in vals:
-            prod = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
-            vals.update({'subtype': prod.product_tmpl_id.subtype})
-            
-        result = super(stock_move, self).create(cr, uid, vals, context=context)
-        
-        return result
-
     def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False,
                             loc_dest_id=False, address_id=False,parent_type=False,purchase_line_id=False,out=False):
         '''
@@ -491,6 +487,12 @@ class stock_move(osv.osv):
         if prod_id:
             prod = self.pool.get('product.product').browse(cr, uid, prod_id)
             result['value'].update({'subtype': prod.product_tmpl_id.subtype})
+
+            if parent_type and parent_type == 'internal' and loc_dest_id:
+                # Test the compatibility of the product with the location
+                result, test = self.pool.get('product.product')._on_change_restriction_error(cr, uid, prod_id, field_name='product_id', values=result, vals={'location_id': loc_dest_id})
+                if test:
+                    return result
             
         result['value'].update({'asset_id': False})
         

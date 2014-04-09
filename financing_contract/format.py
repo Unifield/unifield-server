@@ -22,9 +22,9 @@
 from osv import fields, osv
 
 class financing_contract_format(osv.osv):
-    
+
     _name = "financing.contract.format"
-    
+
     _columns = {
         'format_name': fields.char('Name', size=64, required=True),
         'reporting_type': fields.selection([('project','Total project only'),
@@ -40,13 +40,13 @@ class financing_contract_format(osv.osv):
         'funding_pool_ids': fields.one2many('financing.contract.funding.pool.line', 'contract_id', 'Funding Pools'),
         'cost_center_ids': fields.many2many('account.analytic.account', 'financing_contract_cost_center', 'contract_id', 'cost_center_id', string='Cost Centers'),
     }
-    
+
     _defaults = {
         'format_name': 'Format',
         'reporting_type': 'all',
         'overhead_type': 'cost_percentage',
     }
-    
+
     def name_get(self, cr, uid, ids, context=None):
         result = self.browse(cr, uid, ids, context=context)
         res = []
@@ -59,6 +59,7 @@ class financing_contract_format(osv.osv):
         ('date_overlap', 'check(eligibility_from_date < eligibility_to_date)', 'The "Eligibility Date From" should be sooner than the "Eligibility Date To".'),
     ]
 
+
 financing_contract_format()
 
 class account_destination_link(osv.osv):
@@ -66,15 +67,15 @@ class account_destination_link(osv.osv):
     _inherit = 'account.destination.link'
 
     def _get_used_in_contract(self, cr, uid, ids, field_name, arg, context=None):
-        res = {}
+        ids_to_exclude = {}
         if context is None:
             context = {}
         exclude = {}
 
         if not context.get('contract_id') and not context.get('donor_id'):
             for id in ids:
-                res[id] = False
-            return res
+                ids_to_exclude[id] = False
+            return ids_to_exclude
 
         if context.get('contract_id'):
             ctr_obj = self.pool.get('financing.contract.contract')
@@ -83,13 +84,20 @@ class account_destination_link(osv.osv):
             ctr_obj = self.pool.get('financing.contract.donor')
             id_toread = context['donor_id']
 
-        exclude = {}
+        active_id = context.get('active_id', False)
         for line in ctr_obj.browse(cr, uid, id_toread).actual_line_ids:
-            for account_destination in line.account_destination_ids:
-                exclude[account_destination.id] = True
+            if not active_id or line.id != active_id:
+                for account_destination in line.account_destination_ids: # exclude from other duplet format lines
+                    exclude[account_destination.id] = True
+                for account_quadruplet in line.account_quadruplet_ids: # exclude from other quadruplet format lines
+                    # UFTP-16: The list of all duplet acc/destination needs to be grey if one line of combination in the quad has been selected
+                    duplet_ids_to_exclude = self.search(cr, uid, [('account_id', '=', account_quadruplet.account_id.id),('destination_id','=',account_quadruplet.account_destination_id.id)])
+                    for item in duplet_ids_to_exclude:
+                        exclude[item] = True
+
         for id in ids:
-            res[id] = id in exclude
-        return res
+            ids_to_exclude[id] = id in exclude
+        return ids_to_exclude
 
     def _search_used_in_contract(self, cr, uid, obj, name, args, context=None):
         if not args:
@@ -109,8 +117,11 @@ class account_destination_link(osv.osv):
 
         exclude = {}
         for line in ctr_obj.browse(cr, uid, id_toread).actual_line_ids:
-            for account_destination in line.account_destination_ids:
-                exclude[account_destination.id] = True
+            if not context.get('active_id', False) or line.id != context['active_id']:
+                for account_destination in line.account_destination_ids:
+                    exclude[account_destination.id] = True
+                for account_quadruplet in line.account_quadruplet_ids:
+                    exclude[account_quadruplet.account_destination_id.id] = True
 
         return [('id', 'not in', exclude.keys())]
 
@@ -124,6 +135,7 @@ class account_destination_link(osv.osv):
         if view_type == 'tree' and (context.get('contract_id') or context.get('donor_id')) :
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'financing_contract', 'view_account_destination_link_for_contract_tree')[1]
         return super(account_destination_link, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+
 
 account_destination_link()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

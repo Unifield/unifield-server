@@ -33,6 +33,7 @@ from tools.translate import _
 from tools import config
 import time
 import sys
+from account_override import ACCOUNT_RESTRICTED_AREA
 
 class hr_payroll_import_period(osv.osv):
     _name = 'hr.payroll.import.period'
@@ -56,9 +57,10 @@ class hr_payroll_import(osv.osv_memory):
     _columns = {
         'file': fields.binary(string="File", filters="*.zip", required=True),
         'filename': fields.char(string="Imported filename", size=256),
+        'date_format': fields.selection([('%d/%m/%Y', 'dd/mm/yyyy'), ('%m-%d-%Y', 'mm-dd-yyyy'), ('%d-%m-%y', 'dd-mm-yy'), ('%d-%m-%Y', 'dd-mm-yyyy'), ('%d/%m/%y', 'dd/mm/yy')], "Date format", required=True, help="This is the date format used in the Homère file in order to recognize them."),
     }
 
-    def update_payroll_entries(self, cr, uid, data='', field='', context=None):
+    def update_payroll_entries(self, cr, uid, data='', field='', date_format='%d/%m/%Y', context=None):
         """
         Import payroll entries regarding all elements given in "data"
         """
@@ -88,7 +90,7 @@ class hr_payroll_import(osv.osv_memory):
         if not date and not date[0]:
             raise osv.except_osv(_('Warning'), _('A date is missing!'))
         try:
-            line_date = time.strftime('%Y-%m-%d', time.strptime(date[0], '%d/%m/%Y'))
+            line_date = time.strftime('%Y-%m-%d', time.strptime(date[0], date_format))
         except ValueError, e:
             raise osv.except_osv(_('Error'), _('Wrong format for date: %s') % date[0])
         period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
@@ -132,11 +134,17 @@ class hr_payroll_import(osv.osv_memory):
         is_counterpart = False
         if third and third[0] and third[0] != '':
             is_counterpart = True
-        # If expense type, fetch employee ID
-        if account.user_type.code == 'expense':
+
+        # For non counterpart lines, check expected accounts
+        if not is_counterpart:
+            if not self.pool.get('account.account').search(cr, uid, ACCOUNT_RESTRICTED_AREA['payroll_lines'] + [('id', '=', account.id)]):
+                raise osv.except_osv(_('Warning'), _('This account is not authorized: %s') % (account.code,))
+
+        # If account is analytic-a-holic, fetch employee ID
+        if account.is_analytic_addicted:
             # Add default destination from account
             if not account.default_destination_id:
-                raise osv.except_osv(_('Warning'), _('No default Destination defined for expense account: %s') % (account.code or '',))
+                raise osv.except_osv(_('Warning'), _('No default Destination defined for this account: %s') % (account.code or '',))
             destination_id = account.default_destination_id and account.default_destination_id.id or False
             if second_description and second_description[0] and not is_payroll_rounding:
                 if not is_counterpart:
@@ -150,10 +158,16 @@ class hr_payroll_import(osv.osv_memory):
                         raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (employee_identification_id,))
                     employee_id = employee_ids[0]
                 # Create description
-                name = 'Salary ' + str(time.strftime('%b %Y', time.strptime(date[0], '%d/%m/%Y')))
+                name = 'Salary ' + str(time.strftime('%b %Y', time.strptime(date[0], date_format)))
                 # Create reference
-                separator = str(time.strftime('%m/%Y', time.strptime(date[0], '%d/%m/%Y')))
-                ref = description and description[0] and ustr(description[0]).split(separator) and ustr(description[0]).split(separator)[1] or ''
+                date_format_separator = '/'
+                if '-' in date_format:
+                    date_format_separator = '-'
+                separator = str(time.strftime('%m' + date_format_separator + '%Y', time.strptime(date[0], date_format)))
+                try:
+                    ref = description and description[0] and ustr(description[0]).split(separator) and ustr(description[0]).split(separator)[1] or ''
+                except IndexError, e:
+                    ref = ''
         # Fetch description
         if not name:
             name = description and description[0] and ustr(description[0]) or ''
@@ -291,7 +305,7 @@ class hr_payroll_import(osv.osv_memory):
                     amount = 0.0
                     for line in reader:
                         processed += 1
-                        update, amount, nb_created = self.update_payroll_entries(cr, uid, line, field)
+                        update, amount, nb_created = self.update_payroll_entries(cr, uid, line, field, wiz.date_format)
                         res_amount += round(amount, 2)
                         if not update:
                             res = False

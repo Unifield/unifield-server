@@ -57,23 +57,24 @@ class wizard_down_payment(osv.osv_memory):
         if isinstance(po_id, list):
             po_id = po_id[0]
         # Prepare some values
-        po = self.pool.get('purchase.order').browse(cr, uid, po_id)
+        po_obj = self.pool.get('purchase.order')
+        po = po_obj.read(cr, uid, po_id, ['partner_id', 'down_payment_ids', 'amount_total'])
         absl = self.pool.get('account.bank.statement.line').browse(cr, uid, absl_id)
         # Verify that PO partner is the same as down payment partner
         if not absl.partner_id:
             raise osv.except_osv(_('Warning'), _('Third Party is mandatory for down payments!'))
-        if po.partner_id.id != absl.partner_id.id:
+        if po.get('partner_id', [False])[0] != absl.partner_id.id:
             raise osv.except_osv(_('Error'), _('Third party from Down payment and Purchase Order are different!'))
-        total = po.amount_total
-        for dp in po.down_payment_ids:
+        total = po.get('amount_total', 0.0)
+        for dp in po_obj.read(cr, uid, po.get('down_payment_ids', []), ['amount_currency', 'down_payment_amount']):
             move_ids = [x.id or None for x in absl.move_ids]
             operator = 'in'
             if len(move_ids) == 1:
                 operator = '='
             move_line_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', absl.account_id.id), 
                 ('move_id', operator, move_ids)])
-            if dp.id not in move_line_ids:
-                total -= (dp.amount_currency - dp.down_payment_amount)
+            if dp.get('id') not in move_line_ids:
+                total -= (dp.get('amount_currency', 0.0) - dp.get('down_payment_amount', 0.0))
         # Cut away open and paid invoice linked to this PO
         invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('purchase_ids', 'in', [po_id]), ('state', 'in', ['paid', 'open'])])
         for inv in self.pool.get('account.invoice').read(cr, uid, invoice_ids, ['amount_total']):
