@@ -103,7 +103,7 @@
               <para style="P4">[[ stock_picking.ppl_customize_label.requestor_order_reference and translate('Your Order:') or ' ' ]]</para>
             </td>
             <td>
-              <para style="P2">[[ stock_picking.ppl_customize_label.requestor_order_reference and stock_picking.sale_id.client_order_ref or ' ' ]]</para>
+              <parawrap style="P2">[[ stock_picking.ppl_customize_label.requestor_order_reference and stock_picking.sale_id.client_order_ref or ' ' ]]</parawrap>
             </td>
           </tr>
           <tr>
