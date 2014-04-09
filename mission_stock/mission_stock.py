@@ -134,10 +134,11 @@ class stock_mission_report(osv.osv):
     def update_newthread(self, cr, uid, ids=[], context=None):
         # Open a new cursor : Don't forget to close it at the end of method
         cr = pooler.get_db(cr.dbname).cursor()
-        a = time.strftime('%H-%M-%S')
         try:
             self.update(cr, uid, ids=[], context=None)
             cr.commit()
+        except Exception:
+            cr.rollback()
         finally:
             cr.close()
 
