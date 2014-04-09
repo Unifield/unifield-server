@@ -29,15 +29,33 @@ class mission_stock_wizard(osv.osv_memory):
     _name = 'mission.stock.wizard'
 
     _columns = {
-        'report_id': fields.many2one('stock.mission.report', string='Report'),
-        'with_valuation': fields.selection([('true', 'Yes'), ('false', 'No')], string='Display stock valuation ?',
-                                           required=True),
-        'split_stock': fields.selection([('true', 'Yes'), ('false', 'No')], string='Split the Warehouse stock qty. to Stock and Unallocated Stock.',
-                                           required=True),
-        'last_update': fields.datetime(string='Last update', readonly=True),
-        'export_ok': fields.boolean(string='XML Export ready'),
-        'export_file': fields.binary(string='XML File'),
-        'fname': fields.char('Filename',size=256),
+        'report_id': fields.many2one(
+            'stock.mission.report',
+            string='Report',
+        ),
+        'with_valuation': fields.selection(
+            [('true', 'Yes'), ('false', 'No')],
+            string='Display stock valuation ?',
+            required=True,
+        ),
+        'split_stock': fields.selection(
+            [('true', 'Yes'), ('false', 'No')],
+            string='Split the Warehouse stock qty. to Stock and Unallocated Stock.',
+            required=True),
+        'last_update': fields.datetime(
+            string='Last update',
+            readonly=True,
+        ),
+        'export_ok': fields.boolean(
+            string='XML Export ready',
+        ),
+        'export_file': fields.binary(
+            string='XML File',
+        ),
+        'fname': fields.char(
+            string='Filename',
+            size=256,
+        ),
     }
 
     _defaults = {
@@ -46,11 +64,11 @@ class mission_stock_wizard(osv.osv_memory):
         'fname': lambda *a: 'Mission stock report',
     }
 
-    def default_get(self, cr, uid, fields, context=None):
+    def default_get(self, cr, uid, fields_list, context=None):
         '''
         Choose the first local report as default
         '''
-        res = super(mission_stock_wizard, self).default_get(cr, uid, fields, context=context)
+        res = super(mission_stock_wizard, self).default_get(cr, uid, fields_list, context=context)
 
         instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
         if not instance_id:
@@ -88,16 +106,14 @@ class mission_stock_wizard(osv.osv_memory):
         if not context:
             context = {}
 
-        if not ids:
-            raise osv.except_osv(_('Error'), _('You should choose a report to display.'))
+        wiz_id = self._check_status(cr, uid, ids, context=context)
 
-        wiz_id = self.browse(cr, uid, ids, context=context)
-        if not wiz_id.report_id:
-            raise osv.except_osv(_('Error'), _('You should choose a report to display.'))
-        if not wiz_id.report_id.last_update:
-            raise osv.except_osv(_('Error'), _('The generation of this report is in progress. You could open this report when the last update field will be filled. Thank you for you comprehension.'))
         c = context.copy()
-        c.update({'mission_report_id': wiz_id.report_id.id, 'with_valuation': wiz_id.with_valuation == 'true' and True or False, 'split_stock': wiz_id.split_stock == 'true' and True or False})
+        c.update({
+            'mission_report_id': wiz_id.report_id.id,
+            'with_valuation': wiz_id.with_valuation == 'true' and True or False,
+            'split_stock': wiz_id.split_stock == 'true' and True or False,
+        })
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.mission.report.line',
@@ -119,6 +135,31 @@ class mission_stock_wizard(osv.osv_memory):
                 'target': 'new',
                 'context': context}
 
+    def _check_status(self, cr, uid, ids, context=None):
+        '''
+        Check if the wizard is linked to a report and if the report is available
+        '''
+        if not ids:
+            raise osv.except_osv(
+                _('Error'),
+                _('You should choose a report to display.'),
+            )
+
+        wiz_id = self.browse(cr, uid, ids, context=context)
+        if not wiz_id.report_id:
+            raise osv.except_osv(
+                _('Error'),
+                _('You should choose a report to display.'),
+            )
+        if not wiz_id.report_id.last_update:
+            raise osv.except_osv(
+                _('Error'),
+                _("""The generation of this report is in progress. You could open this
+report when the last update field will be filled. Thank you for your comprehension."""),
+                )
+
+        return wiz_id
+
     def open_xml_file(self, cr, uid, ids, context=None):
         '''
         Open the XML file
@@ -129,15 +170,7 @@ class mission_stock_wizard(osv.osv_memory):
         if not context:
             context = {}
 
-        if not ids:
-            raise osv.except_osv(_('Error'), _('You should choose a report to display.'))
-
-        wiz_id = self.browse(cr, uid, ids, context=context)
-        if not wiz_id.report_id:
-            raise osv.except_osv(_('Error'), _('You should choose a report to display.'))
-        if not wiz_id.report_id.last_update:
-            raise osv.except_osv(_('Error'), _('The generation of this report is in progress. You could open this report when the last update field will be filled. Thank you for your comprehension.'))
-
+        self._check_status(cr, uid, ids, context=context)
 
         datas = {'ids': ids}
         return {
@@ -147,30 +180,6 @@ class mission_stock_wizard(osv.osv_memory):
             'nodestroy': True,
             'context': context,
         }
-
-        # Get the good file according to parameters
-        if wiz_id.split_stock == 'true' and wiz_id.with_valuation == 'true':
-            report_file = wiz_id.report_id.s_v_file
-        elif wiz_id.split_stock == 'true' and wiz_id.with_valuation == 'false':
-            report_file = wiz_id.report_id.s_nv_file
-        elif wiz_id.split_stock == 'false' and wiz_id.with_valuation == 'true':
-            report_file = wiz_id.report_id.ns_v_file
-        else:
-            report_file = wiz_id.report_id.ns_nv_file
-
-        self.write(cr, uid, [wiz_id.id], {'export_file': report_file,
-                                          'fname': 'Stock_report_%s_%s.xls' % (wiz_id.report_id.name, wiz_id.report_id.last_update),
-                                          }, context=context)
-
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'mission_stock', 'mission_stock_wizard_open_file_view')[1]
-        return {'type': 'ir.actions.act_window',
-                'res_model': self._name,
-                'res_id': wiz_id.id,
-                'view_id': [view_id],
-                'target': 'new',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'context': context}
 
     def update(self, cr, uid, ids, context=None):
         ids = self.pool.get('stock.mission.report').search(cr, uid, [], context=context)
