@@ -5,6 +5,7 @@
     	<delete model="ir.actions.report.xml" id="stock.report_picking_list"/>
     	
     	<!-- shipment -->
+        <!-- remove in UFTP-30
         <report auto="False" 
                 id="report_pro_forma_invoice" 
                 model="shipment" 
@@ -12,6 +13,7 @@
                 header="False"
                 rml="addons/msf_outgoing/report/pro_forma_invoice.rml"
                 string="Pro Forma Invoice" />
+        -->
                 
         <report auto="False" 
                 id="report_invoice"
