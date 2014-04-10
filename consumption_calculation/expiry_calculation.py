@@ -845,8 +845,8 @@ class product_product(osv.osv):
         elif d_values.get('past_consumption', False):
             monthly_consumption = 'amc'
         else:
-            monthly_consumption = d_values.get('manual_consumption', 0.00)
-            context.update({'manual_consumption': monthly_consumption})
+            monthly_consumption_val = d_values.get('manual_consumption', 0.00)
+            context.update({'manual_consumption': monthly_consumption_val})
 
         product = self.browse(cr, uid, product_id, context=context)
         # Get the delivery lead time of the product if the leadtime is not defined in rule and no supplier found in product form
@@ -867,7 +867,7 @@ class product_product(osv.osv):
                        'consumption_from': d_values.get('consumption_period_from'),
                        'consumption_to': d_values.get('consumption_period_to'),
                        'location_id': location_id}
-
+        
         report_obj = self.pool.get('product.likely.expire.report')
         line_obj = self.pool.get('product.likely.expire.report.line')
 
