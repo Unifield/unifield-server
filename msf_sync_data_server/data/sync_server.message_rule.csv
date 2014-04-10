@@ -22,4 +22,3 @@ USB_purchase_order_close,TRUE,TRUE,['name'],"[('state','=','done')]",name,USB,pu
 USB_incoming_shipment_close,TRUE,TRUE,['name'],"[('state','=','done')]",name,USB,stock.picking.msg_close,stock.picking,[IN] close,1501
 USB_incoming_shipment_create_invoice,TRUE,TRUE,['name'],"[('state', '=', 'done'), ('invoice_state', '=', '2binvoiced')]",name,USB,stock.picking.msg_create_invoice,stock.picking,[IN] Create Invoice at CP,1502
 reset_ref_by_recovery_mode,TRUE,TRUE,"['name']","[('name', '=', False)]",partner_id,MISSION,sale.order.reset_ref_by_recovery_mode,sale.order,Reset Due to Recovery,1003
->>>>>>> MERGE-SOURCE
