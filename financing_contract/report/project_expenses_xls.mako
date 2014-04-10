@@ -571,7 +571,6 @@
 <Data ss:Type="String">${_('Total')}</Data>
 </Cell>
 <Cell  ss:StyleID="s49">
-<Data ss:Type="Number">${getTotalBookAmt()}</Data>
 </Cell>
 <Cell  ss:StyleID="s49"></Cell>
 <Cell ss:StyleID="s49">
