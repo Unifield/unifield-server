@@ -888,6 +888,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 curr_id = line.move_id.picking_id.purchase_id.pricelist_id.currency_id.id
             elif line.move_id and line.move_id.price_currency_id:
                 curr_id = line.move_id.price_currency_id
+            elif line.parent_line_id and line.parent_line_id.move_currency_id:
+                curr_id = line.parent_line_id.move_currency_id.id
             else:
                 curr_id = False
 
@@ -1079,11 +1081,13 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             # Currency
             currency_value = values[6]
-            if not line.move_currency_id or str(currency_value) == line.move_currency_id.name:
+            if not line.move_currency_id and line.parent_line_id and line.parent_line_id.move_currency_id:
+                    write_vals['imp_currency_id'] = line.parent_line_id.move_currency_id.id
+            else:
                 write_vals['imp_currency_id'] = line.move_currency_id.id
-            elif line.move_currency_id and line.move_currency_id.name:
-                err_msg = _('The currency on the Excel file is not the same as the currency of the IN line - You must have the same currency on both side - Currency of the initial line kept.')
-                errors.append(err_msg)
+                if str(currency_value) != line.move_currency_id.name:
+                    err_msg = _('The currency on the Excel file is not the same as the currency of the IN line - You must have the same currency on both side - Currency of the initial line kept.')
+                    errors.append(err_msg)
 
             # Batch
             batch_value = values[7]
