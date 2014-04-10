@@ -103,6 +103,26 @@ class weekly_forecast_report(osv.osv):
             string='Status of the progression',
             readonly=True,
         ),
+        'sublist_id': fields.many2one(
+            'product.list',
+            string='List/Sublist',
+        ),
+        'nomen_manda_0': fields.many2one(
+            'product.nomenclature',
+            'Main Type',
+        ),  
+        'nomen_manda_1': fields.many2one(
+            'product.nomenclature',
+            'Group',
+        ),
+        'nomen_manda_2': fields.many2one(
+            'product.nomenclature',
+            'Family',
+        ),
+        'nomen_manda_3': fields.many2one(
+            'product.nomenclature',
+            'Root',
+        ),
     }
 
     _defaults = {
@@ -321,7 +341,36 @@ class weekly_forecast_report(osv.osv):
 
         try:
             for report in self.browse(new_cr, uid, ids, context=context):
-                nb_products = product_obj.search(new_cr, uid, [('type', '=', 'product')], count=True, context=context)
+                product_domain = [('type', '=', 'product')]
+                product_ids = []
+                if report.nomen_manda_0:
+                    nom = False
+                    # Get all products for the defined nomenclature
+                    if report.nomen_manda_3:
+                        nom = report.nomen_manda_3.id
+                        field = 'nomen_manda_3'
+                    elif report.nomen_manda_2:
+                        nom = report.nomen_manda_2.id
+                        field = 'nomen_manda_2'
+                    elif report.nomen_manda_1:
+                        nom = report.nomen_manda_1.id
+                        field = 'nomen_manda_1'
+                    elif report.nomen_manda_0:
+                        nom = report.nomen_manda_0.id
+                        field = 'nomen_manda_0'
+
+                    if nom:
+                        product_domain.append((field, '=', nom))
+ 
+                if report.sublist_id:
+                    context.update({'search_default_list_ids': report.sublist_id.id})
+                    for line in report.sublist_id.product_ids:
+                        product_ids.append(line.name.id)
+ 
+                    if product_ids:
+                        product_domain.append(('id', 'in', product_ids))
+
+                nb_products = product_obj.search(new_cr, uid, product_domain, count=True, context=context)
                 # Process the products by group of 500
                 offset = 50.00
                 nb_offset = (nb_products / offset) + 1
@@ -362,7 +411,7 @@ class weekly_forecast_report(osv.osv):
                 in_pipe_vals = {}
                 exp_vals = {}
                 for i in range(int(nb_offset)):
-                    tmp_product_ids = product_obj.search(new_cr, uid, [('type', '=', 'product')], limit=offset, offset=i, context=context)
+                    tmp_product_ids = product_obj.search(new_cr, uid, product_domain, limit=offset, offset=i, context=context)
                     product_ids.extend(tmp_product_ids)
                     # Get consumption, in-pipe and expired quantities for each product
                     product_cons.update(self._get_product_consumption(new_cr, uid, tmp_product_ids, location_ids, report, context=context))
@@ -761,6 +810,32 @@ class weekly_forecast_report(osv.osv):
             res[r['product_id']]['total'] += r['qty']
 
         return res
+
+##############################################################################################################################
+# The code below aims to enable filtering products regarding their nomenclature.
+# NB: the difference with the other same kind of product filters (with nomenclature and sublist) is that here we are dealing with osv_memory
+##############################################################################################################################
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        res = self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
+        if nomen_manda_0:
+            res.setdefault('value', {}).setdefault('sublist_id', False)
+        return res
+    
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if vals.get('sublist_id',False):
+            vals.update({'nomen_manda_0':False,'nomen_manda_1':False,'nomen_manda_2':False,'nomen_manda_3':False})
+        if vals.get('nomen_manda_0',False):
+            vals.update({'sublist_id':False})
+        if vals.get('nomen_manda_1',False):
+            vals.update({'sublist_id':False})
+        ret = super(weekly_forecast_report, self).write(cr, uid, ids, vals, context=context)
+        return ret
+##############################################################################
+# END of the definition of the product filters and nomenclatures
+##############################################################################
 
 weekly_forecast_report()
 
