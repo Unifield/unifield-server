@@ -107,7 +107,7 @@ class sale_order_line(osv.osv):
     _description = 'Sales Order Line'
     _columns = {'line_number': fields.integer(string='Line', required=True),
                 }
-    _order = 'order_id, line_number, id'
+    _order = 'order_id desc, line_number, id'
 
     def create(self, cr, uid, vals, context=None):
         '''
