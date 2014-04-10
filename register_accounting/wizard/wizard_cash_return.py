@@ -315,7 +315,7 @@ class wizard_cash_return(osv.osv_memory):
                             and invoice.number:
                             invoice_numbers.append(invoice.number)
                             context['po_op_advance_auto_add_invoice_id'] = invoice.id
-                            self.action_add_invoice(cr, uid, [id], context=context)
+                            self.action_add_invoice(cr, uid, [w_id], context=context)
                     msg = "This operational advance is linked to PO %s." % (st_line.cash_register_op_advance_po_id.name,)
                     if invoice_numbers:
                         msg += " Corresponding invoice lines have automatically been added:"
@@ -531,11 +531,18 @@ class wizard_cash_return(osv.osv_memory):
         if invoice:
             # Verify that the invoice is in the same currency as those of the register
             inv_currency = invoice.currency_id.id
-            st_currency = wizard.advance_st_line_id.statement_id.currency.id
+            if wizard.advance_st_line_id and wizard.advance_st_line_id.statement_id \
+                and wizard.advance_st_line_id.statement_id.currency:
+                st_currency = wizard.advance_st_line_id.statement_id.currency.id
+            else:
+                st_currency = False
             if st_currency and st_currency != inv_currency:
                 raise osv.except_osv(_('Error'), _('The choosen invoice is not in the same currency as those of the register.'))
             # Make a list of invoices that have already been added in this wizard
-            added_invoices = [x['invoice_id']['id'] for x in wizard.invoice_line_ids]
+            if wizard.invoice_line_ids:
+                added_invoices = [x['invoice_id']['id'] for x in wizard.invoice_line_ids]
+            else:
+                added_invoices = []
             # Do operations only if our invoice is not in our list
             if invoice.id not in added_invoices:
                 # Retrieve some variables
@@ -543,8 +550,9 @@ class wizard_cash_return(osv.osv_memory):
                 account_id = invoice.account_id.id
                 # recompute the total_amount
                 total = wizard.returned_amount or 0
-                for line in wizard.invoice_line_ids:
-                    total += line.amount
+                if wizard.invoice_line_ids:
+                    for line in wizard.invoice_line_ids:
+                        total += line.amount
                 # We search all move_line that results from an invoice (so they have the same move_id that the invoice)
                 line_ids = move_line_obj.search(cr, uid, [('move_id', '=', invoice.move_id.id), \
                     ('account_id', '=', account_id)], context=context)
@@ -562,7 +570,7 @@ class wizard_cash_return(osv.osv_memory):
                         amount = abs(move_line.amount_currency) or 0.0
                     # Add this line to our wizard
                     new_lines.append((0, 0, {'document_date': date, 'reference': reference, 'communication': communication, 'partner_id': partner_id, \
-                        'account_id': account_id, 'amount': amount, 'wizard_id': wizard.id, 'invoice_id': invoice.id}))
+                        'account_id': account_id, 'amount': amount, 'invoice_id': invoice.id}))
                     # Add amount to total_amount
                     total += amount
             # Change display_invoice to True in order to show invoice lines
@@ -593,11 +601,22 @@ class wizard_cash_return(osv.osv_memory):
         Clean content of invoice list and refresh view.
         """
         wizard = self.browse(cr, uid, ids[0], context=context)
-        # UTP-482: operation advance linked to a PO, force display_invoice
+        """
+        above UTP-482 code desactivated in UFTP-24
+        point 3)4° of ticket
+        user can create expense lines in the advance
+        but we show a confirm message at wizard validation
+        """
+
+        display_invoice = False
+
+        """
+        UTP-482: operation advance linked to a PO, force display_invoice
         if wizard.advance_linked_po_auto_invoice:
             display_invoice = True
         else:
             display_invoice = False
+        """
 
         # Delete links to invoice_line_ids and inform wizard of that
         self.write(cr, uid, ids, {'display_invoice': display_invoice, 'invoice_line_ids': [(5,)]}, context=context)
