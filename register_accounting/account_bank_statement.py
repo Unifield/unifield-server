@@ -709,7 +709,7 @@ class account_bank_statement_line(osv.osv):
             # amount is negative, it should be in amount_out
             elif absl.amount < 0 and field_name == "amount_out":
                 res[absl.id] = abs(absl.amount)
-            # if no resultat, we display 0.0 (default amount)
+            # if no result, we display 0.0 (default amount)
             else:
                 res[absl.id] = default_amount
         return res
@@ -1299,9 +1299,9 @@ class account_bank_statement_line(osv.osv):
         if values:
             amount_in = values.get('amount_in', 0.0)
             amount_out = values.get('amount_out', 0.0)
-            if amount_in > 0 and amount_out == 0:
+            if amount_out == 0:
                 amount = amount_in
-            elif amount_in == 0 and amount_out > 0:
+            elif amount_in == 0:
                 amount = - amount_out
             else:
                 raise osv.except_osv(_('Error'), _('Please correct amount fields!'))
