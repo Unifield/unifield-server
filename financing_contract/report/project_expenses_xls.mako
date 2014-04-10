@@ -544,11 +544,9 @@
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="s49a"><Data ss:Type="String">${_('Sub-total')}</Data></Cell>
-<Cell ss:StyleID="s49a" ss:Formula="=SUM(R[-${getSub1()}]C:R[-1]C)">
-<Data ss:Type="Number"></Data>
-</Cell>
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="s49a"><Data ss:Type="String">${_('Sub-total')}</Data></Cell>
 <Cell ss:StyleID="s49a" ss:Formula="=SUM(R[-${getSub2()}]C:R[-1]C)">
 <Data ss:Type="Number"></Data>
 </Cell>
@@ -572,12 +570,11 @@
 <Cell  ss:StyleID="s49">
 <Data ss:Type="String">${_('Total')}</Data>
 </Cell>
-<Cell  ss:StyleID="s49" ss:Formula="=${getFormula()}+R[-1]C">
-<Data ss:Type="Number"></Data>
+<Cell  ss:StyleID="s49">
 </Cell>
 <Cell  ss:StyleID="s49"></Cell>
-<Cell ss:StyleID="s49" ss:Formula="=${getFormula()}+R[-1]C">
-<Data ss:Type="Number"></Data>
+<Cell ss:StyleID="s49">
+<Data ss:Type="Number">${getTotalRptCurrency()}</Data>
 </Cell>
 <Cell  ss:StyleID="s49"></Cell>
 </Row>
