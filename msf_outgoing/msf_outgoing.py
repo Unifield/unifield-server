@@ -1468,6 +1468,7 @@ class stock_picking(osv.osv):
             context.update({'picking_type': 'incoming_shipment'})
         else:
             context.update({'picking_type': 'internal_move'})
+            context.update({'_terp_view_name': 'Internal Moves'}) # REF-92: Update also the Form view name, otherwise Products to Process
 
         return super(stock_picking, self)._hook_picking_get_view(cr, uid, ids, context=context, *args, **kwargs)
 

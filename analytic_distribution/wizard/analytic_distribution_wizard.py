@@ -1325,7 +1325,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                             self.pool.get('account.commitment').create_analytic_lines(cr, uid, [wizard.commitment_id.id], context=context)
             elif wizard.register_line_id and wizard.register_line_id.state == 'temp':
                 # Update analytic lines
-                self.pool.get('account.bank.statement.line').update_analytic_lines(cr, uid, [wizard.register_line_id], distrib=distrib.id)
+                # REF-108: Fixed the wrong id passed to the method, just int, not list type
+                self.pool.get('account.bank.statement.line').update_analytic_lines(cr, uid, wizard.register_line_id, distrib=distrib.id)
         return True
 
 analytic_distribution_wizard()
