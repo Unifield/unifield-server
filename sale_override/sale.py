@@ -1868,6 +1868,11 @@ class sale_order_line(osv.osv):
         if line.order_id and line.order_id.procurement_request:
             view_id = data_obj.get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1]
         else:
+            resource_line_sync_id = self.read(cr, uid, line_id, ['sync_order_line_db_id'])['sync_order_line_db_id']
+            self.pool.get('sale.order.line.cancel').create(cr, uid, {'sync_order_line_db_id': line.sync_order_line_db_id,
+                                                                     'partner_id': line.order_id.partner_id.id,
+                                                                     'partner_type': line.order_id.partner_id.partner_type,
+                                                                     'resource_sync_line_db_id': resource_line_sync_id}, context=context)
             view_id = data_obj.get_object_reference(cr, uid, 'sale', 'view_order_form')[1]
         context.update({'view_id': view_id})
  
@@ -2145,6 +2150,21 @@ class sale_order_line(osv.osv):
         return res
 
 sale_order_line()
+
+
+class sale_order_line_cancel(osv.osv):
+    _name = 'sale.order.line.cancel'
+
+    _columns = {
+        'sync_order_line_db_id': fields.text(string='Sync order line DB ID', required=True),
+        'partner_id': fields.many2one('res.partner', string='Destination'),
+        'resource_ok': fields.boolean(string='Is resourced ?'),
+        'resource_sync_line_db_id': fields.text(string='DB ID of the line that resource the cancel line'),
+        'fo_sync_order_line_db_id': fields.text(string='DB ID of the FO/IR line that is resourced'),
+        'partner_type': fields.char(size=64, string='Partner type'),
+    }
+
+sale_order_line_cancel()
 
 
 class procurement_order(osv.osv):

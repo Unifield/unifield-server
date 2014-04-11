@@ -2596,7 +2596,8 @@ class purchase_order_line(osv.osv):
             if line.order_id.id not in purchase_ids:
                 purchase_ids.append(line.order_id.id)
 
-            self.cancel_sol(cr, uid, [line.id], context=context)
+            if not self.pool.get('sale.order.line.cancel').search(cr, uid, [('sync_order_line_db_id', '=', line.sync_order_line_db_id)], context=context):
+                self.cancel_sol(cr, uid, [line.id], context=context)
             # we want to skip resequencing because unlink is performed on merged purchase order lines
             tmp_Resequencing = context.get('skipResequencing', False)
             context['skipResequencing'] = True
