@@ -309,6 +309,7 @@ class wizard_cash_return(osv.osv_memory):
                     and st_line.cash_register_op_advance_po_id \
                     and st_line.cash_register_op_advance_po_id.order_type \
                     and st_line.cash_register_op_advance_po_id.order_type in ('regular', 'purchase_list', 'direct'):
+                    values = {'advance_linked_po_auto_invoice': True}  # flagged linked to an op advance
                     invoice_numbers = []
                     for invoice in st_line.cash_register_op_advance_po_id.invoice_ids:
                         if invoice.state and invoice.state == 'open' \
@@ -322,11 +323,8 @@ class wizard_cash_return(osv.osv_memory):
                         msg += "\nInvoice(s) number: " + ", ".join(invoice_numbers) + "."
                         msg += "\nYou can change selection by clicking on 'Clean invoices' then selecting invoice manually." \
                             " Entering a 100% cash return (advance return amount = initial advance amount) you will be able to close this advance without linking it to an invoice."
-                        values = {
-                            'advance_linked_po_auto_invoice': True,
-                            'comment': msg,
-                        }
-                        self.write(cr, uid, [w_id], values, context=context)
+                        values['comment'] = msg
+                    self.write(cr, uid, [w_id], values, context=context)
         return w_id
 
     def onchange_addl_amount(self, cr, uid, returned_amount, context=None):
