@@ -6,7 +6,7 @@
             <field name="name">weekly.forecast.report.waiting.view</field>
             <field name="model">weekly.forecast.report</field>
             <field name="type">form</field>
-            <field name="priority" eval="100" />
+            <field name="priority" eval="99" />
             <field name="arch" type="xml">
                 <form string="Status of the report" hide_new_button="1" hide_delete_button="1">
                     <label> </label>
@@ -32,7 +32,7 @@
         <record id="weekly_forecast_report_search_view" model="ir.ui.view">
             <field name="name">weekly.forecast.report.search.view</field>
             <field name="model">weekly.forecast.report</field>
-            <field name="type=">search</field>
+            <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Periodical forecast reports">
                     <field name="requestor_id" />
