@@ -971,8 +971,8 @@ stock moves which are already processed : '''
             if not po.split_po and not po.order_line:
                 raise osv.except_osv(_('Error !'), _('You can not validate a purchase order without Purchase Order Lines.'))
 
-            if po.amount_total == 0:  # UFTP-69
-                raise osv.except_osv(_('Error'), _('You can not validate a purchase order with a total amount of 0.'))
+            if po.order_type == 'purchase_list' and po.amount_total == 0:  # UFTP-69
+                raise osv.except_osv(_('Error'), _('You can not validate a purchase list with a total amount of 0.'))
 
             for line in po.order_line:
                 if line.state=='draft':
@@ -1405,11 +1405,11 @@ stock moves which are already processed : '''
         setup = uf_config.get_config(cr, uid)
 
         for order in self.browse(cr, uid, ids):
-            if order.amount_total == 0:  # UFTP-69
+            if order.order_type == 'purchase_list' and order.amount_total == 0:  # UFTP-69
                 # total amount could be set to 0 after it was Validated
                 # or no lines
                 # (after wkf_confirm_order total amount check)
-                raise osv.except_osv(_('Error'), _('You can not confirm a purchase order with a total amount of 0.'))
+                raise osv.except_osv(_('Error'), _('You can not confirm a purchase list with a total amount of 0.'))
 
             # Create commitments for each PO only if po is "from picking"
             # UTP-114: No Commitment Voucher on PO that are 'purchase_list'!
