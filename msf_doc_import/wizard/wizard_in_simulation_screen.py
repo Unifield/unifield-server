@@ -1081,11 +1081,15 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             # Currency
             currency_value = values[6]
-            if not line.move_currency_id and line.parent_line_id and line.parent_line_id.move_currency_id:
-                    write_vals['imp_currency_id'] = line.parent_line_id.move_currency_id.id
-            else:
-                write_vals['imp_currency_id'] = line.move_currency_id.id
-                if str(currency_value) != line.move_currency_id.name:
+            line_currency = False
+            if line.move_currency_id:
+                line_currency = line.move_currency_id
+            elif line.parent_line_id and line.parent_line_id.move_currency_id:
+                line_currency = line.parent_line_id.move_currency_id
+
+            if line_currency:
+                write_vals['imp_currency_id'] = line_currency.id
+                if str(currency_value) != line_currency.name:
                     err_msg = _('The currency on the Excel file is not the same as the currency of the IN line - You must have the same currency on both side - Currency of the initial line kept.')
                     errors.append(err_msg)
 
