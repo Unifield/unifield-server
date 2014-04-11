@@ -535,5 +535,36 @@ class account_period(osv.osv):
             'domain': [('state', '=', 'draft'), ('period_id', 'in', ids), ('account_id.is_analytic_addicted', '=', True)]
         }
 
+    def button_open_entries(self, cr, uid, ids, context=None):
+        """
+        Open G/L selector with some
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Search reconciliable accounts
+        account_ids = self.pool.get('account.account').search(cr, uid, [('reconcile', '=', True)],context=context)
+        # Create a filter for G/L selector
+        vals = {
+            'reconciled': 'unreconciled',
+            'display_account': True,
+            'account_ids': [(6, 0, account_ids)],
+            'description': _('Journal items that are on reconciliable accounts but that are not reconciled.'),
+            'display_period': True,
+            'period_ids': [(6, 0, ids)]
+        }
+        res_id = self.pool.get('account.mcdb').create(cr, uid, vals, context=context)
+        return {
+            'name': _('G/L Selector'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.mcdb',
+            'res_id': res_id,
+            'target': 'current',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'context': context,
+        }
+
 account_period()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
