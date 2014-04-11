@@ -322,6 +322,8 @@ class purchase_order_sync(osv.osv):
                             self.pool.get('procurement.order').write(cr, uid, [sol.procurement_id.id], {'purchase_id': po_id}, context=context)
                             line_obj.write(cr, uid, [line.id], {'procurement_id': sol.procurement_id.id}, context=context)
                             netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', [sol.procurement_id.id], 'purchase.order', [sol.procurement_id.purchase_id.id], po_id, cr)
+                        if not sol.procurement_request or sol.location_requestor_id.usage == 'customer':
+                            self.write(cr, uid, [po_id], {'cross_docking_ok': True}, context=context)
 
         # UTP-952: If the partner is intermission, then use the intermission CC to create a default AD
         if partner_type == 'intermission':
