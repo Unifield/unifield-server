@@ -51,7 +51,7 @@
                             <field name="imp_shipment_date" nolabel="1" />
                             <label> </label>
                             <group colspan="4" string="Header notes">
-                                <field name="in_notes" colspan="4" nolabel="1" />
+                                 <field name="imp_notes" colspan="4" nolabel="1" />
                             </group>
                             <group colspan="4" string="Message ESC Header">
                                 <field name="imp_message_esc" colspan="4" nolabel="1" />
