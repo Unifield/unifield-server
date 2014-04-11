@@ -578,7 +578,7 @@
             </field>
         </record>
 
-    <!--Bank Statement modification to change "Bank Statement" into "Bank Statement" -->
+    <!--Bank Statement modification to change "Bank Statement" into "Bank Registers" -->
         <record id="action_view_bank_statement_search" model="ir.actions.server">
           <field name="name">Bank Registers</field>
           <field name="model_id" ref="model_account_bank_statement"/>
