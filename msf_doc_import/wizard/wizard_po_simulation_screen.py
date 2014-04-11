@@ -667,7 +667,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 if shipment_date:
                     if type(shipment_date) == type(DateTime.now()):
                         shipment_date = shipment_date.strftime('%Y-%m-%d')
-                        header_values['imp_ready_to_ship_date'] = shipment_date
+                        header_values['imp_shipment_date'] = shipment_date
                     else:
                         try:
                             time.strptime(shipment_date, '%Y-%m-%d')
