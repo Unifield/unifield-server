@@ -38,7 +38,7 @@ class stock_card_report(report_sxw.rml_parse):
             return origin.replace(';', '; ').replace(':', ': ')  # force word wrap
         return ''
 
-report_sxw.report_sxw('report.stock.card.report','stock.card.wizard','addons/stock_override/report/stock_card_report.rml',parser=stock_card_report, header='internal landscape')
+report_sxw.report_sxw('report.stock.card.report','stock.card.wizard','addons/stock_override/report/stock_card_report.rml',parser=stock_card_report, header=False)
 
 
 def getIds(self, cr, uid, ids, context):
