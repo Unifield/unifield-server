@@ -566,5 +566,26 @@ class account_period(osv.osv):
             'context': context,
         }
 
+    def button_commitments(self, cr, uid, ids, context=None):
+        """
+        Open commitment list
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Update context to set "Except Done" button by default
+        context.update({'search_default_exceptdone': 1, 'search_default_draft': 0, 'search_default_open': 0, 'search_default_done': 0})
+        return {
+            'name': _('Commitments'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.commitment',
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'context': context,
+            'domain': [('state', 'in', ['draft', 'open']), ('period_id', 'in', ids)]
+        }
+
 account_period()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
