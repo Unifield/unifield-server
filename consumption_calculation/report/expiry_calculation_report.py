@@ -81,37 +81,16 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
     def _get_report_dates_with_expiry(self, report):
         dates = self.pool.get('product.likely.expire.report').get_report_dates_multi(report)
         res = []
-        
-        months_has_data = []
+        self._report_context['no_expiry_from_to'] = {}
         for dt_tuple in dates:
-            months_has_data.append(True if self._get_month_item_lines_ids(report, dt_tuple[0]) else False)
-        
-        # get index of last month with expiry qty
-        months_count = len(months_has_data)
-        last_month_with_expiry_index = 0
-        if months_has_data:
-            last_month_with_expiry_index = months_count - 1
-            while last_month_with_expiry_index >= 0:
-                if months_has_data[last_month_with_expiry_index]:
-                    break
-                last_month_with_expiry_index -= 1
- 
-        # months without expiry data info
-        if months_count > 1 and last_month_with_expiry_index >= 0 \
-            and last_month_with_expiry_index < months_count:
-            index = last_month_with_expiry_index + 1
-            self._report_context['no_expiry_from_to'] = "No expiry from %s to %s" % (dates[index][1], dates[months_count-1][1], )  # dates: [(mx_date, '01/14'),]
-        self._report_context['last_date'] = dates[last_month_with_expiry_index][1]
-        
-        for i in range(0, last_month_with_expiry_index + 1):
-            res.append(dates[i])  # dates: [(mx_date, '01/14'),]
+            if not self._get_month_item_lines_ids(report, dt_tuple[0]):
+                self._report_context['no_expiry_from_to'][dt_tuple[1]] = "No expiry for %s" % (dt_tuple[1], )
+            res.append(dt_tuple)
         return res
 
     def _get_report_no_expiry_from_to(self, date):
         if date:
-            last_date = self._report_context.get('last_date', False)
-            if last_date and last_date == date:
-                return self._report_context.get('no_expiry_from_to', '')
+            return self._report_context.get('no_expiry_from_to', {}).get(date)
         return False
 
     def _get_lines(self, report, type='all'):
