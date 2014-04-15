@@ -653,7 +653,7 @@ class stock_picking(osv.osv):
                     compute_average = False
                     if values.get('location_dest_id', False):
                         dest_loc = loc_obj.browse(cr, uid, values['location_dest_id'], context=context)
-                        compute_average = picking.type == 'in' and line.product_id.cost_method == 'average' and dest_loc.cross_docking_location_ok
+                        compute_average = picking.type == 'in' and line.product_id.cost_method == 'average' and not dest_loc.cross_docking_location_ok
 
                     if compute_average:
                         average_values = self._compute_average_values(cr, uid, move, line, product_availability, context=context)
