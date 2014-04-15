@@ -104,16 +104,15 @@
                                             <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                             <field name="overhead_percentage" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                         </group>
+                                  
                                         <field name="is_quadruplet" attrs="{'invisible': [('line_type', '=', 'view')]}"/>
                                         <field name="account_destination_ids" colspan="4" string="Account/Destination" nolabel="1"
                                                context="context" 
-                                               attrs="{'invisible': [('|'), ('line_type', '=', 'view'), ('is_quadruplet', '=', True)]}">
-                                        </field>
+                                               attrs="{'invisible': [('|'), ('line_type', '=', 'view'), ('is_quadruplet', '=', True)]}"/>
                                         <field name="account_quadruplet_ids" colspan="4" string="Account/Destination/Funding Pool/Cost Centre" nolabel="1"
                                                context="context" 
-                                               attrs="{'invisible': [('|'), ('line_type' '=', 'view'), ('is_quadruplet', '!=', True)]}"
-                                               domain="[('can_be_used','=',True)]">
-                                        </field>
+                                               domain="[('can_be_used','=',True)]"
+                                               attrs="{'invisible': [('|'), ('line_type' '=', 'view'), ('is_quadruplet', '!=', True)]}"/>
                                     </form>
                                 </field>
                             </page>
@@ -155,7 +154,7 @@
                 <field name="model">financing.contract.account.quadruplet</field>
                 <field name="type">tree</field>
                 <field name="arch" type="xml">
-                    <tree string="Account/Destination/Funding Pool/Cost Centre" colors="grey:used_in_contract" notselectable="used_in_contract">
+                    <tree string="Account/Destination/Funding Pool/Cost Centre" colors="grey:used_in_contract" notselectable="used_in_contract" editable="top" noteditable="1">
                         <field name="can_be_used" invisible="1"/>
                         <field name="account_destination_name"/>
                         <field name="funding_pool_id"/>

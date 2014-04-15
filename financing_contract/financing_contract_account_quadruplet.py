@@ -179,6 +179,9 @@ class financing_contract_account_quadruplet(osv.osv):
                 for account_quadruplet in line.account_quadruplet_ids:
                     exclude.append(account_quadruplet.id)
         return [('id', 'not in', exclude)]
+    
+    
+
 
     #columns for view
     _columns = {
