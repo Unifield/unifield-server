@@ -570,6 +570,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Objects
         order_obj = self.pool.get('sale.order')
         product_obj = self.pool.get('product.product')
+        data_obj = self.pool.get('ir.model.data')
+        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
@@ -612,6 +614,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # UFTP-11: if make_to_order can not have a location
         if vals.get('type', False) == 'make_to_order':
             vals['location_id'] = False
+
+        # UFTP-139: if make_to_stock and no location, put Stock as location
+        if vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
+            stock_loc = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+            vals['location_id'] = stock_loc
 
         # Create the new sale order line
         res = super(sale_order_line, self).create(cr, uid, vals, context=context)
@@ -821,6 +828,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         """
         # Objects
         product_obj = self.pool.get('product.product')
+        data_obj = self.pool.get('ir.model.data')
 
         if not context:
             context = {}
@@ -864,7 +872,17 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         if vals.get('type', False) == 'make_to_order':
             vals['location_id'] = False
 
-        result = super(sale_order_line, self).write(cr, uid, ids, vals, context)
+        # UFTP-139: if make_to_stock and no location, put Stock as location
+        if 'type' in vals and  vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
+            # Define Stock as location_id for each line without location_id
+            for line in self.read(cr, uid, ids, ['location_id'], context=context):
+                line_vals = vals.copy()
+                if not line['location_id'] and not vals.get('location_id', False):
+                    stock_loc = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+                    line_vals['location_id'] = stock_loc
+                result = super(sale_order_line, self).write(cr, uid, [line['id']], line_vals, context)
+        else:
+            result = super(sale_order_line, self).write(cr, uid, ids, vals, context)
 
         f_to_check = ['type', 'order_id', 'po_cft', 'product_id', 'supplier', 'state', 'location_id']
         for f in f_to_check:
@@ -943,6 +961,18 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product,
                     the supplier must be either in 'Internal', 'Inter-Section' or 'Intermission' type.
                     """))
+
+        stock_no_loc = self.search(cr, uid, [
+            ('id', 'in', ids),
+            ('type', '=', 'make_to_stock'),
+            ('location_id', '=', False),
+        ], count=True, context=context)
+        
+        if stock_no_loc:
+            raise osv.except_osv(
+                _('Warning'),
+                _('A location must be chosen before sourcing the line.'),
+            )
 
         order_to_check = {}
         for line in self.read(cr, uid, ids, ['order_id', 'estimated_delivery_date'], context=context):
