@@ -129,8 +129,8 @@
                             name="unreconciled"/>
                         <separator orientation="vertical"/>
                         <newline/>
-                        <field name="document_date"/>
-                        <field name="date" select='1'/>
+                        <field name="document_date" colspan="5"/>
+                        <field name="date" select='1' colspan="5"/>
                         <newline/>
                         <field name="move_id" select="1"/>
                         <field name="ref" select="1" string="Reference"/>

@@ -158,8 +158,8 @@
                     </xpath>
                     <xpath expr="//field[@name='date']" position="replace">
                         <newline/>
-                        <field name="document_date" select="1"/>
-                        <field name="date" select="1"/>
+                        <field name="document_date" select="1" colspan="5"/>
+                        <field name="date" select="1" colspan="5"/>
                     </xpath>
                 </data>
             </field>
@@ -187,8 +187,8 @@
                     </xpath>
                     <xpath expr="//field[@name='date']" position="replace">
                         <newline/>
-                        <field name="document_date" select="1"/>
-                        <field name="date" select="1"/>
+                        <field name="document_date" select="1" colspan="5"/>
+                        <field name="date" select="1" colspan="5"/>
                         <newline/>
                     </xpath>
                     <xpath expr="//field[@name='partner_id']" position="replace">
