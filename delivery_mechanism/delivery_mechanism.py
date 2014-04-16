@@ -475,7 +475,6 @@ class stock_picking(osv.osv):
             qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.product_id.uom_id.id)
 
         product_availability.setdefault(line.product_id.id, line.product_id.qty_available)
-        product_availability[line.product_id.id] += qty
 
         if qty > 0.00:
             new_price = line.cost
@@ -650,10 +649,10 @@ class stock_picking(osv.osv):
                         continue
 
                     # Check if we must re-compute the price of the product
-                    compute_average = False
+                    compute_average = picking.type == 'in' and line.product_id.cost_method and not move.location_dest_id.cross_docking_location_ok
                     if values.get('location_dest_id', False):
                         dest_loc = loc_obj.browse(cr, uid, values['location_dest_id'], context=context)
-                        compute_average = picking.type == 'in' and line.product_id.cost_method == 'average' and dest_loc.cross_docking_location_ok
+                        compute_average = picking.type == 'in' and line.product_id.cost_method == 'average' and not dest_loc.cross_docking_location_ok
 
                     if compute_average:
                         average_values = self._compute_average_values(cr, uid, move, line, product_availability, context=context)
