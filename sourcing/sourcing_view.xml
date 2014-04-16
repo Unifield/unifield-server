@@ -133,9 +133,9 @@
 				
 					<!-- <filter name="need_sourcing" string="Need Sourcing" icon="gtk-indent" domain="[('display_confirm_button', '=', True)]" /> -->
                     <filter name="need_sourcing" string="Need Sourcing" icon="terp-stock_zoom" domain="[('need_sourcing', '=', True)]" />
-                    <filter name="in_progress" string="In Progress" icon="gtk-refresh" domain="[('state', '!=', 'draft'), ('sale_order_state', '=', 'validated')]" />
+                    <filter name="in_progress" string="In Progress" icon="gtk-refresh" domain="[('in_progress', '=', True)]" />
 					<filter name="sourced" string="Sourced" icon="terp-camera_test" 
-					domain="[('sale_order_state', 'in', ['manual','progress', 'sourced', 'split_so'])]" />
+					domain="[('sale_order_state', 'in', ['manual','progress', 'sourced', 'split_so']), '|', ('type', '=', 'make_to_stock'), ('procurement_id.state', '!=', 'confirmed')]" />
 					<separator orientation="vertical"/>
 					<field name="order_id" string="Order" />
 					<field name="priority" />
