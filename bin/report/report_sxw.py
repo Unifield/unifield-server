@@ -260,6 +260,8 @@ class rml_parse(object):
             return ''
 
     def setLang(self, lang):
+        if not lang:
+            return
         self.localcontext['lang'] = lang
         self.lang_dict_called = False
         for obj in self.objects:
