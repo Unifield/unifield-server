@@ -222,7 +222,7 @@ class account_move_line(osv.osv):
                 GROUP BY m.id
                 ORDER BY m.id;"""
             cr.execute(sql, (tuple(ids),))
-            move_ids += cr.fetchall()
+            move_ids += [x and x[0] for x in cr.fetchall()]
             # Search analytic lines
             ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', ids)])
             self.pool.get('account.analytic.line').unlink(cr, uid, ana_ids)
