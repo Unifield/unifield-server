@@ -475,7 +475,6 @@ class stock_picking(osv.osv):
             qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.product_id.uom_id.id)
 
         product_availability.setdefault(line.product_id.id, line.product_id.qty_available)
-        product_availability[line.product_id.id] += qty
 
         if qty > 0.00:
             new_price = line.cost
