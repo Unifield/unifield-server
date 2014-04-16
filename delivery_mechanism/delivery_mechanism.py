@@ -886,7 +886,7 @@ class stock_picking(osv.osv):
             # corresponding sale ids to be manually corrected after purchase workflow trigger
             sale_ids = []
             for move in obj.move_lines:
-                data_back = self.create_data_back(move)
+                data_back = move_obj.create_data_back(move)
                 diff_qty = -data_back['product_qty']
                 # update corresponding out move - no move created, no need to handle line sequencing policy
                 out_move_id = self._update_mirror_move(cr, uid, ids, data_back, diff_qty, out_move=False, context=context)
