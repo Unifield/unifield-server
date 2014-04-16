@@ -142,8 +142,8 @@ class res_currency(osv.osv):
         if not values.get('currency_table_id', False):
             self.create_associated_pricelist(cr, uid, res, context=context)
 
-            # Check if currencies has no associated pricelists
-            cr.execute('SELECT id FROM res_currency WHERE id NOT IN (SELECT currency_id FROM product_pricelist)')
+            # Check if currencies has no associated pricelists
+            cr.execute('SELECT id FROM res_currency WHERE id NOT IN (SELECT currency_id FROM product_pricelist) AND currency_table_id IS NULL')
             curr_ids = cr.fetchall()
             for cur_id in curr_ids:
                 self.create_associated_pricelist(cr, uid, cur_id[0], context=context)
