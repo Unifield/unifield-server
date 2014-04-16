@@ -115,7 +115,7 @@ class account_partner_balance_tree(osv.osv):
             query += "ac.type = '" + account_type + "'" \
             " AND am.state IN " + move_state + ""
         if where:
-            query += " AND " + where + ""
+            query += " AND " + where + "" 
         cr.execute(query)
         res = cr.fetchall()
         if res:
@@ -163,16 +163,20 @@ class account_partner_balance_tree(osv.osv):
             context = {}
         context['data'] = data
         self._delete_previous_data(cr, uid, context=context)
+        
+        if type(data) is tuple:
+            data = data[0]
 
         comp_currency_id = self._get_company_currency(cr, uid, context=context)
         output_currency_id = data['form'].get('output_currency', comp_currency_id)
 
         res = self._execute_query_partners(cr, uid, data)
 
-        for r in res:
+        for r in res[0]:
             if not r.get('partner_name', False):
-                r.update({'partner_name': _('Unknown Partner')})
-
+                 partner_name = r['partner_name']
+                 r.update({'partner_name': _('Unknown Partner')})
+            #r = rs[0]
             vals = {
                 'uid': uid,
                 'build_ts': data['build_ts'],
@@ -397,7 +401,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.partner.balance',
-            'datas': data,
+            'datas': data[0],
         }
 
     def print_xls(self, cr, uid, ids, context=None):
@@ -410,7 +414,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.partner.balance.tree_xls',
-            'datas': data,
+            'datas': data[0],
         }
 
     def remove_journals(self, cr, uid, ids, context=None):
