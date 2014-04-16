@@ -650,7 +650,7 @@ class stock_picking(osv.osv):
                         continue
 
                     # Check if we must re-compute the price of the product
-                    compute_average = False
+                    compute_average = picking.type == 'in' and line.product_id.cost_method and not move.location_dest_id.cross_docking_location_ok
                     if values.get('location_dest_id', False):
                         dest_loc = loc_obj.browse(cr, uid, values['location_dest_id'], context=context)
                         compute_average = picking.type == 'in' and line.product_id.cost_method == 'average' and not dest_loc.cross_docking_location_ok
