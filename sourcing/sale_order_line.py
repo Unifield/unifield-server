@@ -872,7 +872,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             vals['location_id'] = False
 
         # UFTP-139: if make_to_stock and no location, put Stock as location
-        if 'type' in vals and  vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
+        if ids and 'type' in vals and  vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
             # Define Stock as location_id for each line without location_id
             for line in self.read(cr, uid, ids, ['location_id'], context=context):
                 line_vals = vals.copy()
