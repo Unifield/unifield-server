@@ -554,6 +554,7 @@
    </Row>
    <% list_lines = gen_line_link(o) %>
    % for num, line in enumerate(o.tender_line_ids):
+   <% list_line_product = list_lines.get(line.product_id.id, False) %>
    <Row ss:Height="30">
     <Cell ss:StyleID="s67"><Data ss:Type="Number">${num+1}</Data></Cell>
     <Cell ss:StyleID="s67"><Data ss:Type="String">${line.product_id.code|x}</Data></Cell>
@@ -563,8 +564,8 @@
 
       % for supplier in o.supplier_ids:
     <Cell ss:StyleID="s87"><Data ss:Type="String">${supplier.name|x}</Data></Cell>
-    <Cell ss:StyleID="s88"><Data ss:Type="Number">${list_lines[line.product_id.id][supplier.id].get('price_unit', '')}</Data></Cell>
-    <Cell ss:StyleID="s89"><Data ss:Type="String">${list_lines[line.product_id.id][supplier.id].get('notes','') or ''|x}</Data></Cell>
+    <Cell ss:StyleID="s88"><Data ss:Type="Number">${list_line_product and list_line_product.get('price_unit', '') or ''}</Data></Cell>
+    <Cell ss:StyleID="s89"><Data ss:Type="String">${list_line_product and list_line_product.get('notes','') or ''|x}</Data></Cell>
       % endfor
 
     <Cell ss:StyleID="s91"><Data ss:Type="String">${line.supplier_id and line.supplier_id.name or ''|x}</Data></Cell>
