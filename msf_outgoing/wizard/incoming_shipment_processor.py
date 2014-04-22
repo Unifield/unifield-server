@@ -84,7 +84,19 @@ class stock_incoming_processor(osv.osv):
         picking = picking_obj.browse(cr, uid, vals.get('picking_id'), context=context)
 
         if not vals.get('dest_type', False):
-            if not picking.backorder_id:
+            cd_move = False
+            in_move = False
+            for move in picking.move_lines:
+                if not in_move and move.location_dest_id.input_ok:
+                    in_move = True
+                elif not cd_move and move.location_dest_id.cross_docking_location_ok:
+                    cd_move = True
+                if in_move and cd_move:
+                    break
+
+            if cd_move and in_move:
+                vals['dest_type'] = 'default'
+            elif not picking.backorder_id:
                 if picking.purchase_id and picking.purchase_id.cross_docking_ok:
                     vals['dest_type'] = 'to_cross_docking'
                 elif picking.purchase_id:
