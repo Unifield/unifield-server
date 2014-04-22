@@ -608,7 +608,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     ('order_id', '=', order.id),
                     ('type', '!=', 'make_to_stock'),
                 ], context=context)
-                line_obj.write(cr, uid, non_mts_line, {'type': 'make_to_stock'}, context=context)
+                if non_mts_line:
+                    line_obj.write(cr, uid, non_mts_line, {'type': 'make_to_stock'}, context=context)
 
             # 4/ Check if the currency of the order is compatible with the currency of the partner
             pricelist_ids = pricelist_obj.search(cr, uid, [('in_search', '=', order.partner_id.partner_type)], context=context)
