@@ -74,6 +74,7 @@ class stock_incoming_processor(osv.osv):
         """
         # Objects
         picking_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
 
         if not vals.get('picking_id', False):
             raise osv.except_osv(
@@ -84,15 +85,14 @@ class stock_incoming_processor(osv.osv):
         picking = picking_obj.browse(cr, uid, vals.get('picking_id'), context=context)
 
         if not vals.get('dest_type', False):
-            cd_move = False
-            in_move = False
-            for move in picking.move_lines:
-                if not in_move and move.location_dest_id.input_ok:
-                    in_move = True
-                elif not cd_move and move.location_dest_id.cross_docking_location_ok:
-                    cd_move = True
-                if in_move and cd_move:
-                    break
+            cd_move = move_obj.search(cr, uid, [
+                ('picking_id', '=', picking.id),
+                ('location_dest_id.cross_docking_location_ok', '=', True),
+            ], count=True, context=context)
+            in_move = move_obj.search(cr, uid, [
+                ('picking_id', '=', picking.id),
+                ('location_dest_id.input_ok', '=', True),
+            ], count=True, context=context)
 
             if cd_move and in_move:
                 vals['dest_type'] = 'default'
@@ -101,9 +101,9 @@ class stock_incoming_processor(osv.osv):
                     vals['dest_type'] = 'to_cross_docking'
                 elif picking.purchase_id:
                     vals['dest_type'] = 'to_stock'
-            elif picking.cd_from_bo:
+            elif picking.cd_from_bo or (cd_move and not in_move):
                 vals['dest_type'] = 'to_cross_docking'
-            elif not picking.cd_from_bo:
+            elif not picking.cd_from_bo or (in_move and not cd_move):
                 vals['dest_type'] = 'to_stock'
 
         if not vals.get('source_type', False):
