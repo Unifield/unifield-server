@@ -448,7 +448,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'fnct_params': [('account.analytic.account', 'type', 2)],
                 },
             {
-                'headers': ['CCY code', 'CCY name', 'Rate', 'Month'],
+                'headers': ['CCY name', 'CCY code', 'Rate', 'Month'],
                 'filename': instance_name + '_' + year + month + '_FX rates.csv',
                 'key': 'fxrate',
                 'query_params': (first_day_of_last_fy, last_day_of_period),
