@@ -29,6 +29,7 @@ import pooler
 import zipfile
 from tempfile import NamedTemporaryFile
 import os
+from hashlib import md5
 
 class finance_archive():
     """
@@ -100,7 +101,10 @@ class finance_archive():
           - dbname
           - ids
           - model
+        Then create a md5
         """
+        # Prepare some values
+        md5sum = md5()
         is_list = False
         if not ids or not model:
             return ''
@@ -117,7 +121,8 @@ class finance_archive():
             # And we want this: [2, 4, 6, 8]
             # So we do some process on this list
             res_ids = [int(x) for x in ids]
-        return ','.join([name, model, str(res_ids)])
+        md5sum.update(','.join([name, model, str(res_ids)]))
+        return md5sum.hexdigest()
 
     def postprocess_selection_columns(self, cr, uid, data, changes, column_deletion=False):
         """
