@@ -224,11 +224,12 @@ class account_move_line(osv.osv):
             cr.execute(sql, (tuple(ids),))
             move_ids += [x and x[0] for x in cr.fetchall()]
             # Search analytic lines
-            ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', ids)])
-            self.pool.get('account.analytic.line').unlink(cr, uid, ana_ids)
-            # Revalidate move
-            self.pool.get('account.move').validate(cr, uid, move_ids)
-        return super(account_move_line, self).unlink(cr, uid, ids, context=context, check=check)
+            ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', ids)], context=context)
+            self.pool.get('account.analytic.line').unlink(cr, uid, ana_ids, context=context)
+        res = super(account_move_line, self).unlink(cr, uid, ids, context=context, check=check)
+        # Revalidate move
+        self.pool.get('account.move').validate(cr, uid, move_ids, context=context)
+        return res
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
