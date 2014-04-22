@@ -294,6 +294,11 @@ class ppl_family_processor(osv.osv):
     _defaults = {
         'integrity_status': 'empty',
     }
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'weight' in vals:
+            vals['integrity_status'] = 'empty' if (vals['weight'] and vals['weight'] > 0) else 'missing_weight'
+        super(ppl_family_processor, self).write(cr, uid, ids, vals, context=context)
 
     """
     Controller methods
