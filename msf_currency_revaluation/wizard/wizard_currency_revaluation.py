@@ -413,10 +413,13 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         if revaluation_account.user_type.code in ['expense', 'income']:
             destination_id = model_data_obj.get_object_reference(
                 cr, uid, 'analytic_distribution', 'analytic_account_destination_support')[1]
-            cost_center_id = account_ana_obj.search(
-                cr, uid, [('for_fx_gain_loss', '=', True)], context=context)[0]
-            funding_pool_id = model_data_obj.get_object_reference(
-                cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+                
+            # UFTP-189: Show warning message when the fx gain/loss is missing to select (before it was fix for me)
+            cc_list = account_ana_obj.search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)
+            if len(cc_list) == 0:
+                raise osv.except_osv(_('Warning'), _('Please activate an analytic account with "For FX gain/loss" to allow revaluation!'))
+            cost_center_id = cc_list[0]
+            funding_pool_id = model_data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
             distribution_id = distrib_obj.create(cr, uid, {}, context=context)
             cc_distrib_obj.create(
                 cr, uid,
