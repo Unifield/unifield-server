@@ -174,11 +174,15 @@ class hr_payroll_validation(osv.osv_memory):
             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         except ValueError:
             msf_fp_id = 0
-        # Create a move
+        # Create a move (use one of the line to fetch the date)
+        a_line_among_all = self.pool.get('hr.payroll.msf').read(cr, uid, line_ids[0], ['date'])
+        move_date = a_line_among_all.get('date', False)
+        if not move_date:
+            raise osv.except_osv(_('Warning'), _('No posting date found for the journal entry. Please contact a developer.'))
         move_vals= {
             'journal_id': journal_id,
             'period_id': period_id,
-            'date': self.pool.get('account.period').get_date_in_period(cr, uid, current_date, period_id) or False,
+            'date': self.pool.get('account.period').get_date_in_period(cr, uid, move_date, period_id) or False,
             'ref': 'Salaries' + ' ' + field,
         }
         move_id = self.pool.get('account.move').create(cr, uid, move_vals, context=context)
