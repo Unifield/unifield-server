@@ -194,8 +194,10 @@ class wizard_import_po_line(osv.osv_memory):
                         price_unit_defined=price_value['price_unit_defined'])
 
                     # Cell 5: Delivery Request Date
+                    # for Rfq 'Delivery requested date' tolerated (5th column)
+                    cell_nb = header_index[_('Delivery Request Date')] if _('Delivery Request Date') in header_index else 5                       
                     date_value = check_line.compute_date_value(
-                        cell_nb=header_index[_('Delivery Request Date')], row=row, to_write=to_write, context=context)
+                        cell_nb=cell_nb, row=row, to_write=to_write, context=context)
                     to_write.update(
                         date_planned=date_value['date_planned'],
                         error_list=date_value['error_list'])
@@ -339,7 +341,8 @@ Importation completed in %s!
                     cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
                 context.update({'po_id': po_id, 'header_index': header_index})
                 res, res1 = wiz_common_import.check_header_values(
-                    cr, uid, ids, context, header_index, columns_for_po_line_import)
+                    cr, uid, ids, context, header_index, columns_for_po_line_import,
+                    origin='PO')
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
             except osv.except_osv as osv_error:
