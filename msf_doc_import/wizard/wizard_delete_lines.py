@@ -518,18 +518,12 @@ class wizard_delete_lines(osv.osv_memory):
             res['linked_field_name'] = DOCUMENT_DATA.get(context.get('active_model'))[1]
             res['qty_field'] = DOCUMENT_DATA.get(context.get('active_model'))[3]
 
-        if 'active_id' in context and 'active_model' in context and context.get('active_model') in DOCUMENT_DATA:
-            line_field = DOCUMENT_DATA.get(context.get('active_model'))[2]
-            lines = self.pool.get(res['initial_doc_type']).read(cr, uid, res['initial_doc_id'], [line_field], context=context)
-            res['line_ids'] = lines[line_field]
+#        if 'active_id' in context and 'active_model' in context and context.get('active_model') in DOCUMENT_DATA:
+#            line_field = DOCUMENT_DATA.get(context.get('active_model'))[2]
+#            lines = self.pool.get(res['initial_doc_type']).read(cr, uid, res['initial_doc_id'], [line_field], context=context)
+#            res['line_ids'] = lines[line_field]
 
         return res
-
-    def remove_empty_lines(self, cr, uid, ids, context=None):
-        '''
-        Remove only empty lines
-        '''
-        return self.remove_all_lines(cr, uid, ids, context=context, remove_only_empty=True)
 
     def remove_selected_lines(self, cr, uid, ids, context=None):
         '''
@@ -553,26 +547,41 @@ class wizard_delete_lines(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
-    def remove_all_lines(self, cr, uid, ids, context=None, remove_only_empty=False):
+    def select_empty_lines(self, cr, uid, ids, context=None):
         '''
-        Remove all lines of the initial document
+        Add empty lines
+        '''
+        return self.select_all_lines(cr, uid, ids, context=context, select_only_empty=True)
+
+    def select_all_lines(self, cr, uid, ids, context=None, select_only_empty=False):
+        '''
+        Select all lines of the initial document
         '''
         context = context is None and {} or context
         if isinstance(ids, (int, long)):
             ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
-            if remove_only_empty and not wiz.qty_field:
-                raise osv.except_osv(_('Error'), _('The remove empty lines is not available for this document'))
+            if select_only_empty and not wiz.qty_field:
+                raise osv.except_osv(_('Error'), _('The select empty lines is not available for this document'))
 
             line_obj = self.pool.get(wiz.to_remove_type)
-            if remove_only_empty:
+            if select_only_empty:
                 line_ids = line_obj.search(cr, uid, [(wiz.linked_field_name, '=', wiz.initial_doc_id), (wiz.qty_field, '=', 0.00)], context=context)
             else:
                 line_ids = line_obj.search(cr, uid, [(wiz.linked_field_name, '=', wiz.initial_doc_id)], context=context)
-            line_obj.unlink(cr, uid, line_ids, context=context)
 
-        return {'type': 'ir.actions.act_window_close'}
+            self.write(cr, uid, [wiz.id], {'line_ids': line_ids}, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': ids and wiz.id or False,
+            'context': context,
+            'target': 'new',
+        }
 
     def fields_get(self, cr, uid, fields=None, context=None):
         '''
