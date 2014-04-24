@@ -32,7 +32,27 @@ class picking_ticket(report_sxw.rml_parse):
             'self': self,
             'cr': cr,
             'uid': uid,
+            'getWarningMessage': self.get_warning,
         })
+
+    def get_warning(self, picking):
+        kc = ''
+        dg = ''
+        and_msg = ''
+
+        for m in picking.move_lines:
+            if m.kc_check:
+                kc = 'heat sensitive'
+            if m.dg_check:
+                dg = 'dangerous goods'
+            if kc and dg:
+                and_msg = ' and '
+                break
+
+        if kc or dg:
+            return _('You are about to pick %s%s%s products, please refer to the appropriate procedures') % (kc, and_msg, dg)
+
+        return False
         
     def set_context(self, objects, data, ids, report_type=None):
         '''
