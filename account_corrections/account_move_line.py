@@ -595,7 +595,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not account_id:
-            raise osv.except_osv(_('Error'), _('No account_id given. update_account_on_st_line() could not works.'))
+            raise osv.except_osv(_('Warning'), _('No account_id given. No update on account will be done.'))
         # Prepare some values
         absl_obj = self.pool.get('account.bank.statement.line')
         # Update lines
@@ -729,6 +729,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
             self.write(cr, uid, [correction_line_id], cor_vals, context=context, check=False, update_check=False)
             # UF-2231: Remove the update to the statement line
             # Update register line if exists
+            
+            # UFTP-119: Reverted a code that has been commented out in UF-2231 without explanation, and which caused the problem of updating back the Reg line
             if ml.statement_id:
                 self.update_account_on_st_line(cr, uid, [ml.id], new_account_id, context=context)
             # Inform old line that it have been corrected
