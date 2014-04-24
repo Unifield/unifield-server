@@ -153,7 +153,7 @@ class wizard_import_ir_line(osv.osv_memory):
                                      'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
 
                     # Cell 2: Quantity
-                    qty_value = check_line.quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
+                    qty_value = check_line.quantity_value(cell_nb=2, product_obj=product_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
 
                     # Cell 3: Cost Price

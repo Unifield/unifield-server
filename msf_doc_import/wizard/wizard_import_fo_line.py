@@ -141,6 +141,10 @@ class wizard_import_fo_line(osv.osv_memory):
                         line_num-=1
                         total_line_num -= 1
                         continue
+                        
+                    """
+                        REF-94: BECAREFUL WHEN CHANGING THE ORDER OF CELLS IN THE IMPORT FILE!!!!!
+                    """
     
                     # Cell 0: Product Code
                     p_value = {}
@@ -150,12 +154,12 @@ class wizard_import_fo_line(osv.osv_memory):
     
                     # Cell 2: Quantity
                     qty_value = {}
-                    qty_value = check_line.quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
+                    qty_value = check_line.quantity_value(cell_nb=2, product_obj=product_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
     
                     # Cell 3: UOM
                     uom_value = {}
-                    uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                    uom_value = check_line.compute_uom_value( cr, uid, cell_nb=3, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
                     # Check round of qty according to UoM
@@ -167,13 +171,13 @@ class wizard_import_fo_line(osv.osv_memory):
     
                     # Cell 4: Price
                     price_value = {}
-                    price_value = check_line.compute_price_value(row=row, to_write=to_write, price='Field Price', context=context)
+                    price_value = check_line.compute_price_value(cell_nb=4, row=row, to_write=to_write, price='Field Price', context=context)
                     to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list'],
                                      'warning_list': price_value['warning_list']})
     
                     # Cell 5: Date
                     date_value = {}
-                    date_value = check_line.compute_date_value(row=row, to_write=to_write, context=context)
+                    date_value = check_line.compute_date_value(cell_nb=5, row=row, to_write=to_write, context=context)
                     to_write.update({'date_planned': date_value['date_planned'], 'error_list': date_value['error_list'],
                                      'warning_list': date_value['warning_list']})
     
