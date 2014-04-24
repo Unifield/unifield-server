@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -43,21 +43,23 @@ are a tuple with information in this order :
     * field with the quantity for the line
     * domain to apply on lines (e.g. : only draft stock moves on picking)
 """
-DOCUMENT_DATA = {'product.list': ('product.list.line', 'list_id', 'product_ids', '', ''),
-                 'return.claim': ('claim.product.line', 'claim_id_claim_product_line', 'product_line_ids_return_claim', 'qty_claim_product_line', ''),
-                 'composition.kit': ('composition.item', 'item_kit_id', 'composition_item_ids', 'item_qty', ''),
-                 'purchase.order': ('purchase.order.line', 'order_id', 'order_line', 'product_qty', ''),
-                 'tender': ('tender.line', 'tender_id', 'tender_line_ids', 'qty', ''),
-                 'sale.order': ('sale.order.line', 'order_id', 'order_line', 'product_uom_qty', ''),
-                 'supplier.catalogue': ('supplier.catalogue.line', 'catalogue_id', 'line_ids', 'min_qty', ''),
-                 'stock.picking': ('stock.move', 'picking_id', 'move_lines', 'product_qty', '(\'state\', \'=\', \'draft\')'),
-                 'stock.warehouse.automatic.supply': ('stock.warehouse.automatic.supply.line', 'supply_id', 'line_ids', 'product_qty', ''),
-                 'stock.warehouse.order.cycle': ('stock.warehouse.order.cycle.line', 'order_cycle_id', 'product_ids', 'safety_stock', ''),
-                 'threshold.value': ('threshold.value.line', 'threshold_value_id', 'line_ids', '', ''),
-                 'stock.inventory': ('stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty', ''),
-                 'initial.stock.inventory': ('initial.stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty', ''),
-                 'real.average.consumption': ('real.average.consumption.line', 'rac_id', 'line_ids', 'consumed_qty', ''),
-                 'monthly.review.consumption': ('monthly.review.consumption.line', 'mrc_id', 'line_ids', 'fmc', ''),}
+DOCUMENT_DATA = {
+    'product.list': ('product.list.line', 'list_id', 'product_ids', '', ''),
+    'return.claim': ('claim.product.line', 'claim_id_claim_product_line', 'product_line_ids_return_claim', 'qty_claim_product_line', ''),
+    'composition.kit': ('composition.item', 'item_kit_id', 'composition_item_ids', 'item_qty', ''),
+    'purchase.order': ('purchase.order.line', 'order_id', 'order_line', 'product_qty', ''),
+    'tender': ('tender.line', 'tender_id', 'tender_line_ids', 'qty', ''),
+    'sale.order': ('sale.order.line', 'order_id', 'order_line', 'product_uom_qty', ''),
+    'supplier.catalogue': ('supplier.catalogue.line', 'catalogue_id', 'line_ids', 'min_qty', ''),
+    'stock.picking': ('stock.move', 'picking_id', 'move_lines', 'product_qty', '(\'state\', \'=\', \'draft\')'),
+    'stock.warehouse.automatic.supply': ('stock.warehouse.automatic.supply.line', 'supply_id', 'line_ids', 'product_qty', ''),
+    'stock.warehouse.order.cycle': ('stock.warehouse.order.cycle.line', 'order_cycle_id', 'product_ids', 'safety_stock', ''),
+    'threshold.value': ('threshold.value.line', 'threshold_value_id', 'line_ids', '', ''),
+    'stock.inventory': ('stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty', ''),
+    'initial.stock.inventory': ('initial.stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty', ''),
+    'real.average.consumption': ('real.average.consumption.line', 'rac_id', 'line_ids', 'consumed_qty', ''),
+    'monthly.review.consumption': ('monthly.review.consumption.line', 'mrc_id', 'line_ids', 'fmc', ''),
+}
 
 
 def brl(self, cr, uid, ids, context=None):
@@ -74,9 +76,11 @@ def brl(self, cr, uid, ids, context=None):
         if not obj[DOCUMENT_DATA.get(self._name)[2]]:
             raise osv.except_osv(_('Error'), _('No line to remove'))
 
-    context.update({'active_id': ids[0],
-                    'from_delete_wizard': True,
-                    'active_model': self._name,})
+    context.update({
+        'active_id': ids[0],
+        'from_delete_wizard': True,
+        'active_model': self._name,
+    })
 
     # Return the wizard to display lines to remove
     return {'type': 'ir.actions.act_window',
@@ -87,7 +91,7 @@ def brl(self, cr, uid, ids, context=None):
             'context': context}
 
 """
-All the following documents will call the same button_remove_lines method 
+All the following documents will call the same button_remove_lines method
 to remove some or all lines on documents.
 
 Documents which inherit from document.remove.line:
@@ -106,6 +110,7 @@ Documents which inherit from document.remove.line:
     * Real consumption report
     * Monthly consumption report
 """
+
 
 class product_list(osv.osv):
     _name = 'product.list'
@@ -130,7 +135,11 @@ class purchase_order(osv.osv):
     def button_remove_lines(self, cr, uid, ids, context=None):
         for order in self.browse(cr, uid, ids, context=context):
             if order.rfq_ok and order.tender_id:
-                raise osv.except_osv(_('Warning'), _('You cannot remove lines on a RfQ created by a tender. Leave the lines with Unit price = 0.00 if you dont\'t have answer for them.'))
+                raise osv.except_osv(
+                    _('Warning'),
+                    _('You cannot remove lines on a RfQ created by a tender. '
+                      'Leave the lines with Unit price = 0.00 if you dont\'t have answer for them.'),
+                )
 
         return brl(self, cr, uid, ids, context=context)
 
@@ -281,6 +290,7 @@ Documents:
 
 """
 
+
 def delete_fields_view_get(self, cr, uid, view_id, view_type, context=None):
     '''
     Check if a view exist for the object (self) and the view type (view_type)
@@ -302,10 +312,11 @@ def delete_fields_view_get(self, cr, uid, view_id, view_type, context=None):
         view = data_obj.get_object_reference(cr, uid, 'msf_doc_import', view_name)
         if view:
             res = view[1]
-    except ValueError as e:
+    except ValueError:
         res = None
 
     return res
+
 
 def noteditable_fields_view_get(res, view_type, context=None):
     '''
@@ -541,7 +552,7 @@ class wizard_delete_lines(osv.osv_memory):
             for line in wiz.line_ids:
                 for l in line[2]:
                     line_ids.append(l)
-            
+
             context['noraise'] = True
             line_obj.unlink(cr, uid, line_ids, context=context)
 
@@ -586,7 +597,7 @@ class wizard_delete_lines(osv.osv_memory):
     def fields_get(self, cr, uid, fields=None, context=None):
         '''
         On this fields_get method, we build the line_ids field.
-        The line_ids field is defined as a text field but, for users, this 
+        The line_ids field is defined as a text field but, for users, this
         field should be displayed as a many2many that allows us to select
         lines of document to remove.
         The line_ids field is changed to a many2many field according to the
@@ -603,13 +614,13 @@ class wizard_delete_lines(osv.osv_memory):
                 domain = "[('%s', '=', initial_doc_id)]" % ddata[1]
             else:
                 domain = "[%s, ('%s', '=', initial_doc_id)]" % (ddata[4], ddata[1])
-            res.update(line_ids={'related_columns': ['wiz_id', 'line_id'], 
-                                 'relation': line_obj, 
-                                 'string': 'Lines to remove', 
-                                 'context': context, 
-                                 'third_table': '%sto_remove' % line_obj.replace('.', '_'), 
-                                 'selectable': True, 
-                                 'type': 'many2many', 
+            res.update(line_ids={'related_columns': ['wiz_id', 'line_id'],
+                                 'relation': line_obj,
+                                 'string': 'Lines to remove',
+                                 'context': context,
+                                 'third_table': '%sto_remove' % line_obj.replace('.', '_'),
+                                 'selectable': True,
+                                 'type': 'many2many',
                                  'domain': "%s" % domain})
 
         return res
