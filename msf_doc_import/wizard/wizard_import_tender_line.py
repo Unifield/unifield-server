@@ -125,6 +125,11 @@ class wizard_import_tender_line(osv.osv_memory):
                         line_num-=1
                         total_line_num -= 1
                         continue
+                        
+                    """
+                        REF-94: BECAREFUL WHEN CHANGING THE ORDER OF CELLS IN THE IMPORT FILE!!!!!
+                    """
+                    
                     # for each cell we check the value
                     # Cell 0: Product Code
                     p_value = {}
@@ -133,12 +138,12 @@ class wizard_import_tender_line(osv.osv_memory):
     
                     # Cell 2: Quantity
                     qty_value = {}
-                    qty_value = check_line.quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
+                    qty_value = check_line.quantity_value(cell_nb=2, product_obj=product_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'qty': qty_value['product_qty'], 'error_list': qty_value['error_list'], 'warning_list': qty_value['warning_list']})
     
                     # Cell 3: UoM
                     uom_value = {}
-                    uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                    uom_value = check_line.compute_uom_value(cr, uid, cell_nb=3, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
                     # Check rounding of qty according to UoM
@@ -147,7 +152,7 @@ class wizard_import_tender_line(osv.osv_memory):
                         if round_qty.get('warning', {}).get('message'):
                             to_write.update({'qty': round_qty['value']['product_qty']})
                             message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
-    
+                    
                     to_write.update({
                         'to_correct_ok': any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
                         'text_error': '\n'.join(to_write['error_list']),
