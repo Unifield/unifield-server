@@ -243,13 +243,13 @@
 
     <!-- UF-1715 -->
     <report id="account_partner_balance_tree_xls"
-        auto="False" 
+        auto="False"
         menu="False"
         header="False"
         model="account.partner.balance.tree"
         name="account.partner.balance.tree_xls"
         file="account_override/report/account_partner_balance_tree_xls.mako"
-        report_type="webkit" 
+        report_type="webkit"
         string="Partner Balance"/>
 
     <record id="account.action_account_moves_all_a" model="ir.actions.act_window">

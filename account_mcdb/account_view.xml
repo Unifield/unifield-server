@@ -12,9 +12,9 @@
                     <field name="instance_id"/>
                     <field name="is_corrigible" invisible="1"/>
                     <field name="have_an_historic" invisible="1"/>
-                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard" 
+                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard"
                         attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
-                    <button name="button_open_corrections" type="object" string="Open corrections history" 
+                    <button name="button_open_corrections" type="object" string="Open corrections history"
                         attrs="{'invisible': [('have_an_historic', '=', False)]}" icon="terp-mail-"/>
                     <field name="journal_id"/>
                     <field name="move_id"/>
@@ -59,7 +59,7 @@
                     <field name="is_reversal" invisible="1"/>
                     <field name="journal_type" invisible="1"/>
                     <field name="is_corrigible" invisible="1"/>
-                    <button name="button_corrections" type="object" string="Accounting info/correction" 
+                    <button name="button_corrections" type="object" string="Accounting info/correction"
                         attrs="{'invisible': ['|', '|', '|', ('is_reallocated', '=', True), ('is_reversal', '=', True), ('journal_type', '=', 'engagement'), ('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
                     <button string="Have been reallocated?" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2" name="button_open_analytic_corrections" type="object"/>
                     <field name="journal_id"/>
@@ -99,7 +99,7 @@
                         <field name="is_reversal" invisible="1"/>
                         <field name="journal_type" invisible="1"/>
                         <field name="is_corrigible" invisible="1"/>
-                        <button name="button_corrections" type="object" string="Accounting info/correction" 
+                        <button name="button_corrections" type="object" string="Accounting info/correction"
                             attrs="{'invisible': ['|', '|', '|', ('is_reallocated', '=', True), ('is_reversal', '=', True), ('journal_type', '=', 'engagement'), ('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
                         <field name="is_reallocated" invisible="1"/>
                         <field name="last_corrected_id" invisible="1"/>
@@ -116,7 +116,7 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Search Journal Items">
-                    <group col='10' colspan='4'>
+                    <group>
                         <filter icon="terp-document-new" string="Unbalanced" domain="[('state','=','draft')]" help="Unbalanced Journal Items"/>
                         <separator orientation="vertical"/>
                         <filter icon="terp-document-new" string="Unposted" domain="[('move_id.state','=','draft')]" help="Unposted Journal Items"/>
@@ -127,40 +127,43 @@
                             string="Unreconciled"
                             domain="[('reconcile_id','=',False), ('account_id.reconcile','=',True)]" help="Unreconciled Journal Items"
                             name="unreconciled"/>
-                        <separator orientation="vertical"/>
-                        <newline/>
-                        <field name="document_date" colspan="5"/>
-                        <field name="date" select='1' colspan="5"/>
-                        <newline/>
+                        <field name="document_date"/>
+                        <field name="date" select='1'/>
+                        <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
+                    </group>
+                    <newline/>
+                    <group>
                         <field name="move_id" select="1"/>
                         <field name="ref" select="1" string="Reference"/>
                         <field name="account_id" select='1'/>
                         <field name="name" select="1"/>
-                        <newline/>
+                    </group>
+                    <newline/>
+                    <group>
                         <field name="partner_id" select='1' string="3RD Party Partner"/>
                         <field name="employee_id" select='1' string="3RD Party Employee"/>
                         <field name="transfer_journal_id" select='1' string="3RD Party Journal"/>
                         <field name="is_reconciled" select='1'/>
                         <field name="reconcile_total_partial_id" select='1'/>
+                        <newline/>
                     </group>
                     <newline/>
-                    <group col="10" colspan="4">
+                    <group>
                         <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
                         <field name="journal_id_fake" context="{'journal_id':self, 'visible_id':self, 'normal_view':False}"/>
                         <field name="journal_type"/>
-                        <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
                     </group>
                     <newline/>
-                    <group col="10" colspan="4">
+                    <group col="2" colspan="4">
                         <field name="balance" string="Debit/Credit Fonctional" select='1'/>
                         <field name="balance_currency" string="Debit/Credit Booking" select='1'/>
                     </group>
                     <newline/>
-                    <group expand="0" string="Extended Filters...">
+                    <group expand="0" string="Extended Filters..." col="20" colspan="6">
                         <field name="narration" select="1"/>
                     </group>
                     <newline/>
-                    <group expand="0" string="Group By..." colspan="12" col="10">
+                    <group expand="0" string="Group By..." colspan="4" col="20">
                         <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
                         <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
                         <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id'}"/>
@@ -226,6 +229,6 @@
             <field eval="'ir.actions.server,%d'%action_analytic_account_mass_reallocation_search" name="value"/>
             <field eval="True" name="object"/>
         </record>
-            
+
     </data>
 </openerp>
