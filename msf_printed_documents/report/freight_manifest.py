@@ -72,13 +72,13 @@ class freight_manifest(report_sxw.rml_parse):
         return self.voltot and self.voltot or '0.0'
 
     def getTotValue(self):
-        return self.valtot and self.valtot or '0.0'
+        return self.formatLang(self.valtot and self.valtot or 0.)
 
     def getTotParce(self):
         return self.parcetot and self.parcetot or '0.0'
 
     def getTotKg(self):
-        return self.kgtot and self.kgtot or '0.0'
+        return self.formatLang(self.kgtot and self.kgtot or 0.)
 
     def get_lines(self, o): 
         return o[0].pack_family_memory_ids
@@ -161,7 +161,7 @@ class freight_manifest(report_sxw.rml_parse):
         return self.getadditional_items_kgtot and self.getadditional_items_kgtot or '0.0'
 
     def getallTotKg(self):
-        return self.getadditional_items_kgtot + self.kgtot or '0.0'
+        return self.formatLang(self.getadditional_items_kgtot + self.kgtot or 0.)
 
 report_sxw.report_sxw('report.msf.freight_manifest', 'shipment', 'addons/msf_printed_documents/report/freight_manifest.rml', parser=freight_manifest, header=False,)
 
