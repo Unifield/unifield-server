@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="change_dest_location_form_view" model="ir.ui.view">
+            <field name="name">change.dest.location.form.view</field>
+            <field name="model">change.dest.location</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Change destination location">
+                    <separator colspan="4" string="Internal move" />
+                    <field name="picking_id" colspan="4" readonly="1" />
+                    <separator colspan="4" string="New destination location" />
+                    <field name="dest_location_id" colspan="4" domain="[('usage', '!=', 'view')]" attrs="{'readonly': [('state', '=', 'end')]}" />
+                    <field name="state" invisible="1" />
+                    <group colspan="4" col="4" attrs="{'invisible': [('state', '=', 'start')]}">
+                        <field name="warn_msg" colspan="4" nolabel="1" readonly="1" />
+                    </group>
+                    <group colspan="4" col="3">
+                        <button special="cancel" icon="gtk-cancel" string="Cancel" states="start" />
+                        <button name="close_window" icon="gtk-cancel" string="Close" states="end" type="object" />
+                        <button name="change_dest_location" type="object" icon="gtk-execute" string="Change location" states="start" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

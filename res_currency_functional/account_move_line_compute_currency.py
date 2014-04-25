@@ -82,9 +82,11 @@ class account_move_line_compute_currency(osv.osv):
         addendum_line_credit_account_id = journal.default_credit_account_id.id
         addendum_line_debit_account_default_destination_id = journal.default_debit_account_id.default_destination_id.id
         addendum_line_credit_account_default_destination_id = journal.default_credit_account_id.default_destination_id.id
-        # Create analytic distribution if this account is an expense account
+        # Create analytic distribution if this account is an analytic-a-holic account
         distrib_id = False
-        if journal.default_debit_account_id.user_type.code == 'expense':
+        different_currency = False
+        prev_curr = False
+        if journal.default_debit_account_id.is_analytic_addicted:
             ## Browse all lines to fetch some values
             partner_id = employee_id = transfer_journal_id = False
             oldiest_date = False
@@ -94,6 +96,12 @@ class account_move_line_compute_currency(osv.osv):
                 employee_id = (rline.employee_id and rline.employee_id.id) or False
                 transfer_journal_id = (rline.transfer_journal_id and rline.transfer_journal_id.id) or False
                 currency_id = (rline.currency_id and rline.currency_id.id) or False
+                # Check if lines are in different currencies
+                if not prev_curr:
+                    prev_curr = rline.currency_id.id
+                if rline.currency_id.id != prev_curr:
+                    different_currency = True
+                prev_curr = rline.currency_id.id
                 if not oldiest_date:
                     oldiest_date = rline.date or False
                 if rline.date > oldiest_date:
@@ -129,9 +137,9 @@ class account_move_line_compute_currency(osv.osv):
                 partner_cr = addendum_db = abs(total)
                 addendum_line_account_id = addendum_line_debit_account_id
                 addendum_line_account_default_destination_id = addendum_line_debit_account_default_destination_id
-            # create an analytic distribution if addendum_line_account_id is an expense account
+            # create an analytic distribution if addendum_line_account_id is an analytic-a-holic account
             account = self.pool.get('account.account').browse(cr, uid, addendum_line_account_id)
-            if account and account.user_type and account.user_type.code == 'expense':
+            if account and account.is_analytic_addicted:
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context={})
                 # add a cost center for analytic distribution
                 distrib_line_vals = {
@@ -173,6 +181,10 @@ class account_move_line_compute_currency(osv.osv):
                 'currency_id': currency_id,
                 #'functional_currency_id': functional_currency_id,
             }
+            # UTP-494: use functional currency as currency for addendum line
+            if different_currency:
+                functional_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+                vals.update({'currency_id': functional_currency_id})
             # Create partner line
             vals.update({'account_id': account_id, 'debit': partner_db or 0.0, 'credit': partner_cr or 0.0,})
             partner_line_id = self.create(cr, uid, vals, context=context)
@@ -196,7 +208,7 @@ class account_move_line_compute_currency(osv.osv):
         Update addendum line for reconciled lines
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -276,6 +288,17 @@ class account_move_line_compute_currency(osv.osv):
                     continue
                 total = self._accounting_balance(cr, uid, reconciled_line_ids, context=context)[0]
                 if total != 0.0:
+                    # UTP-752: Do not make FX Adjustement line (addendum line) if the reconciliation comes from a multi instance and that we are in synchronization
+                    multi_instance = reconciled.is_multi_instance
+                    from_sync = context.get('sync_update_execution', False) and context.get('sync_update_execution') is True or False
+                    from_another_instance = False
+                    reconciliation_instance = reconciled.instance_id and reconciled.instance_id.id or False
+                    current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id
+                    if reconciliation_instance and reconciliation_instance != current_instance:
+                        from_another_instance = True
+                    if multi_instance and (from_sync or from_another_instance):
+                        continue
+                    # If no exception, do main process about new addendum lines
                     partner_line_id = self.create_addendum_line(cr, uid, reconciled_line_ids, total)
                     # Add it to reconciliation (same that other lines)
                     reconcile_txt = ''
@@ -367,7 +390,7 @@ class account_move_line_compute_currency(osv.osv):
         if 'period_id' in vals and 'date' in vals:
             period = self.pool.get('account.period').read(cr, uid, vals['period_id'], ['name', 'date_start', 'date_stop'])
             if vals['date'] < period.get('date_start') or vals['date'] > period.get('date_stop'):
-                raise osv.except_osv(_('Warning !'), _('Posting date is outside of defined period: %s!') % (period.get('name') or '',))
+                raise osv.except_osv(_('Warning !'), _('Posting date (%s) is outside of defined period: %s!') % (vals.get('date'), period.get('name') or '',))
 
     def _update_amount_bis(self, cr, uid, vals, currency_id, curr_fun, date=False, source_date=False, debit_currency=False, credit_currency=False):
         newvals = {}
@@ -415,10 +438,14 @@ class account_move_line_compute_currency(osv.osv):
         """
         # Some verifications
         self.check_date(cr, uid, vals)
+        date_to_compute = False
         if not 'date' in vals:
-            logger = netsvc.Logger()
-            logger.notifyChannel("warning", netsvc.LOG_WARNING, "No date for new account_move_line!")
-            traceback.print_stack()
+            if vals.get('move_id'):
+                date_to_compute = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['date'])['date']
+            else:
+                logger = netsvc.Logger()
+                logger.notifyChannel("warning", netsvc.LOG_WARNING, "No date for new account_move_line!")
+                traceback.print_stack()
         if not context:
             context = {}
         
@@ -448,7 +475,7 @@ class account_move_line_compute_currency(osv.osv):
                 newvals['currency_id'] = curr_fun
         # Don't update values for addendum lines that come from a reconciliation
         if not newvals.get('is_addendum_line', False):
-            newvals.update(self._update_amount_bis(cr, uid, vals, newvals['currency_id'], curr_fun))
+            newvals.update(self._update_amount_bis(cr, uid, vals, newvals['currency_id'], curr_fun, date=date_to_compute))
         return super(account_move_line_compute_currency, self).create(cr, uid, newvals, context, check=check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
@@ -500,6 +527,24 @@ class account_move_line_compute_currency(osv.osv):
     def _store_journal_account_type(self, cr, uid, ids, context=None):
         return self.pool.get('account.move.line').search(cr, uid, [('account_id.user_type', 'in', ids)])
 
+    def _search_reconcile_total_partial(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Search either total reconciliation name or partial reconciliation name
+        """
+        if context is None:
+            context = {}
+        arg = []
+        for x in args:
+            if x[0] == 'reconcile_total_partial_id' and x[1] in ['=','ilike','like'] and x[2]:
+                arg.append('|')
+                arg.append(('reconcile_id', x[1], x[2]))
+                arg.append(('reconcile_partial_id', x[1], x[2]))
+            elif x[0] == 'reconcile_total_partial_id':
+                raise osv.except_osv(_('Error'), _('Operator not supported!'))
+            else:
+                arg.append(x)
+        return arg
+
     _columns = {
         'debit_currency': fields.float('Book. Debit', digits_compute=dp.get_precision('Account')),
         'credit_currency': fields.float('Book. Credit', digits_compute=dp.get_precision('Account')),
@@ -513,7 +558,7 @@ class account_move_line_compute_currency(osv.osv):
                     'account.account.type': (_store_journal_account_type, ['name'], 10),
                 }
             ),
-        'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
+        'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, fnct_search=_search_reconcile_total_partial, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
     }
 
     _defaults = {

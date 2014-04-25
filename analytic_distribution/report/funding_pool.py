@@ -22,9 +22,6 @@
 from report import report_sxw
 import locale
 import pooler
-import datetime
-from tools.translate import _
-from osv import osv
 import time
 
 class funding(report_sxw.rml_parse):

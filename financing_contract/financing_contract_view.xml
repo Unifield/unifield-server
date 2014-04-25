@@ -11,7 +11,8 @@
                         <field name="code" colspan="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <field name="name" colspan="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <field name="donor_id" colspan="2" on_change="onchange_donor_id(donor_id, format_id, actual_line_ids)"
-                               attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                            attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <field name="instance_id" colspan="1" domain="[('level','=','coordo')]" attrs="{'readonly': [('state','in',('soft_closed','hard_closed'))]}" /> 
                         <field name="reporting_type" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <separator string="Dates"/>
                         <field name="eligibility_from_date" on_change="onchange_date(eligibility_from_date, eligibility_to_date)"
@@ -56,7 +57,7 @@
                                 </field>
                             </page>
                             <page string="Reporting lines">
-                                <field name="format_id" invisible="1"/>
+                                <field name="format_id" invisible="1" required="0"/>
                                 <field colspan="4" name="actual_line_ids" nolabel="1" context="{'reporting_type': reporting_type, 'contract_id': active_id}" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}">
                                     <tree string="Reporting lines" colors="blue:line_type in ('view')">
                                         <field name="code"/>
@@ -103,9 +104,15 @@
                                             <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                             <field name="overhead_percentage" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                         </group>
-                                        <field name="account_destination_ids" colspan="4" string="Account/Destination"
+                                        <field name="is_quadruplet" attrs="{'invisible': [('line_type', '=', 'view')]}"/>
+                                        <field name="account_destination_ids" colspan="4" string="Account/Destination" nolabel="1"
                                                context="context" 
-                                               attrs="{'invisible': [('line_type', '=', 'view')]}">
+                                               attrs="{'invisible': [('|'), ('line_type', '=', 'view'), ('is_quadruplet', '=', True)]}">
+                                        </field>
+                                        <field name="account_quadruplet_ids" colspan="4" string="Account/Destination/Funding Pool/Cost Centre" nolabel="1"
+                                               context="context" 
+                                               attrs="{'invisible': [('|'), ('line_type' '=', 'view'), ('is_quadruplet', '!=', True)]}"
+                                               domain="[('can_be_used','=',True)]">
                                         </field>
                                     </form>
                                 </field>
@@ -142,6 +149,51 @@
                         </tree>
                 </field>
             </record>
+    
+            <record id="view_financing_contract_account_quadruplet_tree" model="ir.ui.view">
+                <field name="name">financing.contract.account.quadruplet.tree</field>
+                <field name="model">financing.contract.account.quadruplet</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree string="Account/Destination/Funding Pool/Cost Centre" colors="grey:used_in_contract" notselectable="used_in_contract">
+                        <field name="can_be_used" invisible="1"/>
+                        <field name="account_destination_name"/>
+                        <field name="funding_pool_id"/>
+                        <field name="cost_center_id"/>
+                        <field name="used_in_contract" invisible="1"/>
+                    </tree>
+                </field>
+            </record>
+            
+            <record id="view_financing_contract_account_quadruplet_form" model="ir.ui.view">
+                <field name="name">financing.contract.account.quadruplet.form</field>
+                <field name="model">financing.contract.account.quadruplet</field>
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <form>
+                        <field name="account_destination_name" readonly="1" />
+                        <field name="account_destination_id"/>
+                        <field name="funding_pool_id" domain="[('category', '=', 'FUNDING')]"/>
+                        <field name="cost_center_id" domain="[('category', '=', 'OC')]"/>
+                        <!-- UTP-908 FIXME hiding format_id pre-filled with 'Format' (click on m2o gives let me fix) -->
+                        <field name="format_id" invisible="1"/>
+                        <field name="used_in_contract" invisible='1'/>
+                    </form>
+                </field>
+            </record>
+	
+	        <record id="view_financing_contract_account_quadruplet_search" model="ir.ui.view">
+	            <field name="name">financing.contract.account.quadruplet.search</field>
+	            <field name="model">financing.contract.account.quadruplet</field>
+	            <field name="type">search</field>
+	            <field name="arch" type="xml">
+	                <search string="Search Account/Destination/Funding Pool/Cost Centre">
+                        <field name="account_destination_id" string="Account"/>
+                        <field name="funding_pool_id" domain="[('category', '=', 'FUNDING')]"/>
+                        <field name="cost_center_id" domain="[('category', '=', 'OC')]"/>
+	                </search>
+	            </field>
+	        </record>
 
             <record id="view_financing_contract_contract_tree" model="ir.ui.view">
                 <field name="name">financing.contract.contract.tree</field>
@@ -169,12 +221,14 @@
                 <field name="arch" type="xml">
                     <search string="Search Fiscalyear">
                         <group>
-                            <filter name="active" icon="terp-check" string="Active"
-                                    domain="[('eligibility_from_date', '&lt;=', datetime.date.today().strftime('%%Y-%%m-%%d')),
-                                             ('eligibility_to_date', '&gt;', datetime.date.today().strftime('%%Y-%%m-%%d'))]"/>
+                            <filter string="Draft" name="draft" icon="terp-document-new" domain="[('state', '=', 'draft')]"/>
+                            <filter string="Open" name="open" icon="terp-camera_test" domain="[('state', '=', 'open')]"/>
+                            <filter string="Soft closed" name="soft_closed" icon="terp-gtk-media-pause" domain="[('state', '=', 'soft_closed')]"/>
+                            <filter string="Hard closed" name="hard_closed" icon="terp-dialog-close" domain="[('state', '=', 'hard_closed')]"/>
                             <separator orientation="vertical"/>
                             <field name="code"/>
                             <field name="name"/>
+                            <newline/>
                             <field name="hq_grant_reference"/>
                             <field name="donor_id"/>
                             <field name="reporting_currency"/>
@@ -207,7 +261,7 @@
                         <separator string="Dates"/>
                         <notebook colspan="4">
                             <page string="Reporting lines">
-                                <field name="format_id" invisible="1"/>
+                                <field name="format_id" invisible="1" required="0"/>
                                 <field colspan="4" name="actual_line_ids" nolabel="1" context="{'donor_id': active_id}">
                                     <tree string="Reporting lines" colors="black:line_type in ('normal');blue:line_type in ('view')">
                                         <field name="code"/>
@@ -259,7 +313,9 @@
                     <search string="Search Fiscalyear">
                         <group>
                             <filter name="active" icon="terp-check" string="Active"
-                                    domain="[('active', '=', True)]"/>
+                                domain="[('active', '=', True)]"/>
+                            <filter name="inactive" icon="gtk-dialog-error" string="Inactive"
+                                domain="[('active', '=', False)]"/>
                             <separator orientation="vertical"/>
                             <field name="code"/>
                             <field name="name"/>
@@ -273,6 +329,7 @@
                 <field name="res_model">financing.contract.donor</field>
                 <field name="view_type">form</field>
                 <field name="view_mode">tree,form</field>
+                <field name="domain">[('active', 'in', ['t', 'f'])]</field>
             </record>
             <menuitem id="donor_reporting_menu" name="Grant Management" parent="account.menu_finance" sequence="12"/>
             <menuitem action="action_financing_contract_contract_form" id="menu_action_financing_contract_contract_form" parent="donor_reporting_menu"/>

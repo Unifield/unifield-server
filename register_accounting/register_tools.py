@@ -23,7 +23,6 @@
 
 from osv import osv
 from tools.translate import _
-from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=None):
     """
@@ -36,7 +35,7 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=No
             res[st_line.id]['partner_type'] = {'options': [('hr.employee', 'Employee')], 'selection': 'hr.employee,%s' % st_line.employee_id.id}
         elif st_line.transfer_journal_id:
             res[st_line.id] = {'third_parties': 'account.journal,%s' % st_line.transfer_journal_id.id}
-            res[st_line.id]['partner_type'] = {'options': [('account.journal', 'Journal')], 
+            res[st_line.id]['partner_type'] = {'options': [('account.journal', 'Journal')],
                 'selection': 'account.journal,%s' % st_line.transfer_journal_id.id}
         elif st_line.partner_id:
             res[st_line.id] = {'third_parties': 'res.partner,%s' % st_line.partner_id.id}
@@ -45,7 +44,6 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=No
             res[st_line.id] = {'third_parties': False}
             if st_line.account_id:
                 # Prepare some values
-                acc_obj = self.pool.get('account.account')
                 third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
                 third_selection = 'res.partner,'
                 acc_type = st_line.account_id.type_for_register
@@ -58,7 +56,7 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=No
                 res[st_line.id]['partner_type'] = {'options': third_type, 'selection': third_selection}
     return res
 
-def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context=None):
+def _set_third_parties(self, cr, uid, obj_id, name=None, value=None, fnct_inv_arg=None, context=None):
     """
     Set some fields in function of "Third Parties" field
     """
@@ -78,11 +76,11 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
         elif element == 'account.journal':
             tra_val = fields[1] or 'Null'
         sql += "employee_id = %s, partner_id = %s, transfer_journal_id = %s " % (emp_val, par_val, tra_val)
-        sql += "WHERE id = %s" % id
+        sql += "WHERE id = %s" % obj_id
         cr.execute(sql)
     # Delete values for Third Parties if no value given
     elif name == 'partner_type' and not value:
-        cr.execute("UPDATE %s SET employee_id = Null, partner_id = Null, transfer_journal_id = Null WHERE id = %s" % (self._table, id))
+        cr.execute("UPDATE %s SET employee_id = Null, partner_id = Null, transfer_journal_id = Null WHERE id = %s" % (self._table, obj_id))
     return True
 
 def _get_third_parties_name(self, cr, uid, vals, context=None):
@@ -123,31 +121,18 @@ def open_register_view(self, cr, uid, register_id, context=None):
     Return the necessary object in order to return on the register we come from
     """
     st_type = self.pool.get('account.bank.statement').browse(cr, uid, register_id).journal_id.type
-    module = 'account'
-    mod_action = 'action_view_bank_statement_tree'
-    mod_obj = self.pool.get('ir.model.data')
-    act_obj = self.pool.get('ir.actions.act_window')
-    if st_type:
-        if st_type == 'cash':
-            mod_action = 'action_view_bank_statement_tree'
-        elif st_type == 'bank':
-            mod_action = 'action_bank_statement_tree'
-        elif st_type == 'cheque':
-            mod_action = 'action_cheque_register_tree'
-            module = 'register_accounting'
-    result = mod_obj._get_id(cr, uid, module, mod_action)
-    id = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
-    result = act_obj.read(cr, uid, [id], context=context)[0]
+    # Get act_window info
+    result = self.pool.get('account.bank.statement').get_statement(cr, uid, [register_id], st_type=st_type, context=context)
+    # Adapt it to our case
     result['res_id'] = register_id
-    result['view_mode'] = 'form,tree,graph'
-    views_id = {}
-    for (num, typeview) in result['views']:
-        views_id[typeview] = num
-    result['views'] = []
-    for typeview in ['form','tree','graph']:
-        if views_id.get(typeview):
-            result['views'].append((views_id[typeview], typeview))
     result['target'] = 'crush'
+    result['view_mode'] = 'form,tree,graph'
+    # Sort views by first letter (form, then tree). this permit to show form instead tree view
+    result['views'] = sorted(result['views'], cmp=lambda x,y: cmp(x[1][0:1], y[1][0:1]))
+    # Take right ID to display form view
+    for view in result['views']:
+        if view[1] and view[1] == 'form':
+            result['view_id'] = [view[0]]
     return result
 
 def _get_date_in_period(self, cr, uid, date=None, period_id=None, context=None):
@@ -179,17 +164,17 @@ def previous_period_id(self, cr, uid, period_id, context=None):
     # Search period and previous one
     period = p_obj.browse(cr, uid, [period_id], context=context)[0]
     first_period_id = p_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id)], order='date_start', limit=1, context=context)[0]
-    previous_period_ids = p_obj.search(cr, uid, [('date_start', '<=', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id), 
+    previous_period_ids = p_obj.search(cr, uid, [('date_start', '<=', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id),
         ('id', '!=', period_id), ('number', '<=', 12.0)], order='number desc', context=context)
-    if period_id == first_period_id: 
+    if period_id == first_period_id:
         # if the current period is the first period of fiscalyear we have to search the last period of previous fiscalyear
-        previous_fiscalyear = self.pool.get('account.fiscalyear').search(cr, uid, [('date_start', '<', period.fiscalyear_id.date_start)], 
+        previous_fiscalyear = self.pool.get('account.fiscalyear').search(cr, uid, [('date_start', '<', period.fiscalyear_id.date_start)],
             order="date_start desc", context=context)
         if not previous_fiscalyear:
-            raise osv.except_osv(_('Error'), 
+            raise osv.except_osv(_('Error'),
                 _('No previous fiscalyear found. Is your period the first one of a fiscalyear that have no previous fiscalyear ?'))
-        previous_period_ids = p_obj.search(cr, uid, [('fiscalyear_id', '=', previous_fiscalyear[0]), ('id', '!=', period_id), ('number', '<=', 12.0)], 
-            order='number desc') # this work only for msf because of the last period name which is "Period 13", "Period 14" 
+        previous_period_ids = p_obj.search(cr, uid, [('fiscalyear_id', '=', previous_fiscalyear[0]), ('id', '!=', period_id), ('number', '<=', 12.0)],
+            order='number desc') # this work only for msf because of the last period name which is "Period 13", "Period 14"
             # and "Period 15"
     if previous_period_ids:
         return previous_period_ids[0]
@@ -203,13 +188,12 @@ def previous_register_id(self, cr, uid, period_id, journal_id, context=None):
      - fiscalyear_id: current fiscalyear
     """
     # TIP - Use this postgresql query to verify current registers:
-    # select s.id, s.state, s.journal_id, j.type, s.period_id, s.name, c.name 
-    # from account_bank_statement as s, account_journal as j, res_currency as c 
+    # select s.id, s.state, s.journal_id, j.type, s.period_id, s.name, c.name
+    # from account_bank_statement as s, account_journal as j, res_currency as c
     # where s.journal_id = j.id and j.currency = c.id;
 
     # Prepare some values
     st_obj = self.pool.get('account.bank.statement')
-    prev_period_id = False
     # Search journal_ids that have the type we search
     prev_period_id = previous_period_id(self, cr, uid, period_id, context=context)
     previous_reg_ids = st_obj.search(cr, uid, [('journal_id', '=', journal_id), ('period_id', '=', prev_period_id)], context=context)
@@ -230,8 +214,8 @@ def previous_register_is_closed(self, cr, uid, ids, context=None):
         # if no previous register (case where register is the first register) we don't need to close unexistent register
         if reg.prev_reg_id:
             if reg.prev_reg_id.state not in ['partial_close', 'confirm']:
-                raise osv.except_osv(_('Error'), 
-                    _('The previous register "%s" for period "%s" has not been closed properly.') % 
+                raise osv.except_osv(_('Error'),
+                    _('The previous register "%s" for period "%s" has not been closed properly.') %
                         (reg.prev_reg_id.name, reg.prev_reg_id.period_id.name))
     return True
 

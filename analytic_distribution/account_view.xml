@@ -49,12 +49,13 @@
                 <data>
                     <xpath expr="//field[@name='user_type']" position="replace">
                         <field name="user_type_code" invisible="1"/>
+                        <field name="is_analytic_addicted" invisible="1"/>
                         <field name="user_type" on_change="onchange_user_type(user_type)"/>
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='General Information']" position="after">
                         <page string="Analytical Destination">
                             <field name="default_destination_id" colspan="2" 
-                                attrs="{'required': [('user_type_code', '=', 'expense')], 'readonly': [('user_type_code', '!=', 'expense')]}"/>
+                                attrs="{'required': [('is_analytic_addicted', '=', True)], 'readonly': [('is_analytic_addicted', '!=', True)]}"/>
                             <label string="" colspan="2"/>
                             <field name="destination_ids" nolabel="1" colspan="4" domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]">
                                 <tree string="Destinations">
@@ -79,11 +80,15 @@
             <field name="arch" type="xml">
               <data>
                     <xpath expr="/form/notebook" position="before">
-                        <group colspan="6" col="3">
-                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="2" attrs="{'invisible': ['|', ('analytic_distribution_id', '=', False), ('status', '=', 'sys')]}"/>
-                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="2" attrs="{'invisible': ['|', ('analytic_distribution_id', '!=', False), ('status', '=', 'sys')]}"/>
-                            <field name="analytic_distribution_id" invisible="1"/>
+                        <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
+                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                            <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" attrs="{'invisible': ['|', ('status', '!=', 'manu'), ('state', '!=', 'draft')]}"/>
                         </group>
+                        <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
+                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                            <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" attrs="{'invisible': ['|', ('status', '!=', 'manu'), ('state', '!=', 'draft')]}"/>
+                        </group>
+                        <field name="analytic_distribution_id" invisible="1"/>
                     </xpath>
                     <xpath expr="/form//tree" position="attributes">
                         <attribute name="colors">blue:state in ('draft') and analytic_distribution_state in ('valid', 'none');black:state in ('valid') and analytic_distribution_state in ('valid', 'none');red:analytic_distribution_state in ('invalid') or state in ('draft')</attribute>

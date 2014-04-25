@@ -31,12 +31,14 @@
     'init_xml': [],
     'update_xml': [
         'security/ir.model.access.csv',
+        'msf_budget_sequence.xml',
         'msf_budget_report.xml',
         'msf_budget_view.xml',
         'msf_budget_workflow.xml',
         'data/msf_budget_decision_moment_data.xml',
         'wizard/wizard_budget_criteria_export_view.xml',
         'wizard/wizard_actual_export_view.xml',
+        'wizard/wizard_budget_summary.xml',
     ],
     'test': [
         'test/budget_test.yml'

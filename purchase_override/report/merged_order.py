@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,14 +15,12 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
 import time
 from report import report_sxw
-from osv import osv
-import pooler
 
 class merged_order(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -31,18 +29,45 @@ class merged_order(report_sxw.rml_parse):
             'time': time,
             'to_time': self.str_to_time,
             'enumerate': enumerate,
+            'getOrigin': self._get_origin,
         })
-        
+
+    def _get_origin(self, origin, number=5):
+        res = []
+        if origin:
+            split_orig = origin.split(';')
+        else:
+            split_orig = []
+        i = 0
+        tmp_orig = ''
+        while i < len(split_orig):
+            tmp_orig += split_orig[i]
+            i += 1
+
+            if i != len(split_orig):
+                tmp_orig += ';'
+
+            if i % number == 0:
+                res.append(tmp_orig)
+                tmp_orig = ''
+
+        if len(split_orig) < number:
+            res.append(tmp_orig)
+            tmp_orig = ''
+
+        return res
+
+
     def str_to_time(self, time):
         if isinstance(time, str):
             if time == 'False':
                 time = False
-                
+
         if time:
             return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, datetime=time)
-        
+
         return ''
-            
+
 
 report_sxw.report_sxw('report.purchase.order.merged','purchase.order','addons/purchase_override/report/merged_order.rml',parser=merged_order, header=False)
 

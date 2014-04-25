@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 MSF, TeMPO Consulting
 #
@@ -15,49 +15,67 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
-from osv import osv
 from osv import fields
-
+from osv import osv
 from tools.translate import _
+
+from sourcing.sale_order_line import _SELECTION_PO_CFT
 
 _SELECTION_TYPE = [
     ('make_to_stock', 'from stock'),
-    ('make_to_order', 'on order'),]
-
-_SELECTION_PO_CFT = [
-    ('po', 'Purchase Order'),
-    ('dpo', 'Direct Purchase Order'),
-    ('cft', 'Tender'),]
+    ('make_to_order', 'on order'), ]
 
 
 class multiple_sourcing_wizard(osv.osv_memory):
     _name = 'multiple.sourcing.wizard'
 
     _columns = {
-        'line_ids': fields.many2many('sourcing.line', 'source_sourcing_line_rel', 'line_id', 'wizard_id',
-                                     string='Sourcing lines'),
-        'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', required=True),
-        'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT'),
-        'supplier': fields.many2one('res.partner', 'Supplier', help='If you have choose lines coming from Field Orders, only External/ESC suppliers will be available.'),
-        'company_id': fields.many2one('res.company', 'Current company'),
-        'error_on_lines': fields.boolean('If there is line without need sourcing on selected lines'),
+        'line_ids': fields.many2many(
+            'sale.order.line',
+            'source_sourcing_line_rel',
+            'line_id',
+            'wizard_id',
+            string='Sourcing lines',
+        ),
+        'type': fields.selection(
+            _SELECTION_TYPE,
+            string='Procurement Method',
+            required=True,
+        ),
+        'po_cft': fields.selection(
+            _SELECTION_PO_CFT,
+            string='PO/CFT',
+        ),
+        'supplier': fields.many2one(
+            'res.partner',
+            string='Supplier',
+            help="If you have choose lines coming from Field Orders, only External/ESC suppliers will be available.",
+        ),
+        'company_id': fields.many2one(
+            'res.company',
+            string='Current company',
+        ),
+        'error_on_lines': fields.boolean(
+            string='Error',
+            help="If there is line without need sourcing on selected lines",
+        ),
     }
 
-    def default_get(self, cr, uid, fields, context=None):
-        '''
+    def default_get(self, cr, uid, fields_list, context=None):
+        """
         Set lines with the selected lines to source
-        '''
+        """
         if not context:
             context = {}
 
         if not context.get('active_ids') or len(context.get('active_ids')) < 2:
             raise osv.except_osv(_('Error'), _('You should select at least two lines to process.'))
 
-        res = super(multiple_sourcing_wizard, self).default_get(cr, uid, fields, context=context)
+        res = super(multiple_sourcing_wizard, self).default_get(cr, uid, fields_list, context=context)
 
         res['line_ids'] = []
         res['error_on_lines'] = False
@@ -66,7 +84,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         # Ignore all lines which have already been sourced, if there are some alredy sourced lines, a message
         # will be displayed at the top of the wizard
-        for line in self.pool.get('sourcing.line').browse(cr, uid, context.get('active_ids'), context=context):
+        for line in self.pool.get('sale.order.line').browse(cr, uid, context.get('active_ids'), context=context):
             if line.state == 'draft' and line.sale_order_state == 'validated':
                 res['line_ids'].append(line.id)
             else:
@@ -76,7 +94,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('No non-sourced lines are selected. Please select non-sourced lines'))
 
         res['company_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
-        
+
         return res
 
     def save_lines(self, cr, uid, ids, context=None):
@@ -86,7 +104,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if not context:
             context = {}
 
-        line_obj = self.pool.get('sourcing.line')
+        line_obj = self.pool.get('sale.order.line')
 
         for wiz in self.browse(cr, uid, ids, context=context):
             if wiz.type == 'make_to_order':
@@ -97,19 +115,19 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
             errors = {}
             for line in wiz.line_ids:
-                if line.sale_order_id.procurement_request and wiz.po_cft == 'dpo':
+                if line.order_id.procurement_request and wiz.po_cft == 'dpo':
                     err_msg = 'You cannot choose Direct Purchase Order as method to source Internal Request lines.'
                     errors.setdefault(err_msg, [])
-                    errors[err_msg].append((line.id, '%s of %s' % (line.line_number, line.sale_order_id.name)))
+                    errors[err_msg].append((line.id, '%s of %s' % (line.line_number, line.order_id.name)))
                 else:
                     try:
-                        line_obj.write(cr, uid, [line.id], {'type': wiz.type, 
-                                                            'po_cft': wiz.po_cft, 
+                        line_obj.write(cr, uid, [line.id], {'type': wiz.type,
+                                                            'po_cft': wiz.po_cft,
                                                             'supplier': wiz.supplier and wiz.supplier.id or False}, context=context)
                     except osv.except_osv, e:
                         errors.setdefault(e.value, [])
-                        errors[e.value].append((line.id, '%s of %s' % (line.line_number, line.sale_order_id.name)))
-                        
+                        errors[e.value].append((line.id, '%s of %s' % (line.line_number, line.order_id.name)))
+
             if errors:
                 error_msg = ''
                 for e in errors:
@@ -131,16 +149,24 @@ class multiple_sourcing_wizard(osv.osv_memory):
         '''
         Confirm all lines
         '''
+        # Objects
+        line_obj = self.pool.get('sale.order.line')
+
         if not context:
             context = {}
 
-        line_obj = self.pool.get('sourcing.line')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        lines_to_confirm = []
 
         for wiz in self.browse(cr, uid, ids, context=context):
             for line in wiz.line_ids:
-                if line.sale_order_id.procurement_request and wiz.po_cft == 'dpo':
+                if line.order_id.procurement_request and wiz.po_cft == 'dpo':
                     raise osv.except_osv(_('Error'), _('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
-                line_obj.confirmLine(cr, uid, [line.id], context=context)
+                lines_to_confirm.append(line.id)
+
+        line_obj.confirmLine(cr, uid, lines_to_confirm, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -156,12 +182,11 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
-
-    def change_type(self, cr, uid, ids, type, context=None):
+    def change_type(self, cr, uid, ids, l_type, context=None):
         '''
         Unset the other fields if the type is 'from stock'
         '''
-        if type == 'make_to_stock':
+        if l_type == 'make_to_stock':
             return {'value': {'po_cft': False, 'supplier': False}}
 
         return {}
@@ -177,42 +202,4 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
 multiple_sourcing_wizard()
 
-
-#############################################################
-#                                                           #
-# This modification on res.partner avoid the selection      #
-# of internal/inter-section/intermission partners           #
-# if a line on multiple sourcing wizard coming from a FO    #
-#                                                           #
-#############################################################
-class res_partner(osv.osv):
-    _name = 'res.partner'
-    _inherit = 'res.partner'
-
-    def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
-        res = {}
-        for id in ids:
-            res[id] = True
-
-        return res
-
-    def _src_contains_fo(self, cr, uid, obj, name, args, context=None):
-        res = []
-        for arg in args:
-            if arg[0] == 'line_contains_fo':
-                if type(arg[2]) == type(list()):
-                    for line in self.pool.get('sourcing.line').browse(cr, uid, arg[2][0][2], context=context):
-                        if not line.procurement_request:
-                            res.append(('partner_type', 'in', ['external', 'esc']))
-
-        return res
-
-    _columns = {
-        'line_contains_fo': fields.function(_get_dummy, fnct_search=_src_contains_fo, method=True, string='Lines contains FO', type='boolean', store=False),
-    }
-
-res_partner()
-
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

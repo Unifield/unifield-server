@@ -1,28 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        
+
         <report id="cash_inventory"
         string="Cash Inventory"
+        target_filename="Cash Inventory_${name}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="cash.inventory"
         rml="register_accounting/report/cash_inventory.rml"
         auto="False"
         menu="True"
         header="False"/>
-        
+
         <report id="bank_reconciliation"
         string="Bank Reconciliation"
+        target_filename="Bank Reconciliation_${name}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="bank.reconciliation"
         rml="register_accounting/report/bank_reconciliation.rml"
         auto="False"
         menu="True"
         header="False"/>
-        
+
         <report
-       	id="cheque_inventory_2"
+        id="cheque_inventory_2"
         string="Cheque Inventory"
+        target_filename="Cheque Inventory_${name}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="cheque.inventory.2"
         file="register_accounting/report/cheque_inventory_xls.mako"
@@ -31,21 +34,23 @@
         auto="False"
         menu="True"
          />
-        
-	<report
-	id="open_advances_2"
-	string="Open Advances"
-	model="account.bank.statement"
-	name="open.advances.2"
-	file="register_accounting/report/open_advances_xls.mako"
-	report_type="webkit"
-	header="False"
-	auto="False"
-	menu="True"
-	 />
+
+        <report
+        id="open_advances_2"
+        string="Open Advances"
+        target_filename="Open Advances_${instance_id.code}_%(year)s%(month)s%(day)s"
+        model="account.bank.statement"
+        name="open.advances.2"
+        file="register_accounting/report/open_advances_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="True"
+         />
 
         <report id="liquidity_position"
         string="Liquidity Position"
+        target_filename="Liquidity Position_${instance_id.code}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="liquidity.position.2"
         file="register_accounting/report/liquidity_position_xls.mako"
@@ -53,7 +58,18 @@
         header="False"
         auto="False"
         menu="True"/>
-        
+
+        <report id="fully_report"
+        string="Full Report"
+        target_filename="Full Report_${name}_${period_id.name}_%(year)s%(month)s%(day)s"
+        model="account.bank.statement"
+        name="fully.report"
+        file="register_accounting/report/fully_report_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="True"/>
+
     </data>
 </openerp>
 

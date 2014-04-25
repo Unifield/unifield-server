@@ -31,7 +31,7 @@ def get_xml(value):
     new_value = []
     for v in list(value):
         if v == '&':
-            v='&amp;'
+            v = '&amp;'
         elif v == '<':
             v = '&lt;'
         elif v == '>':
@@ -110,6 +110,7 @@ def compute_asset_value(cr, uid, **kwargs):
     product_id = kwargs['to_write'].get('product_id', False)
     cell_nb = kwargs['cell_nb']
     asset_id = None
+    asset_name = None
     msg = ''
     if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
         if row.cells[cell_nb].type == 'str':
@@ -122,9 +123,121 @@ def compute_asset_value(cr, uid, **kwargs):
                     error_list.append('The Asset "%s" does not exist for this product.' % asset_name)
         else:
             msg = 'The Asset Name has to be a string.'
-        if not asset_id:
+        if not asset_name:
             error_list.append(msg or 'The Asset was not valid.')
     return {'asset_id': asset_id, 'error_list': error_list}
+
+
+def compute_batch_value(cr, uid, **kwargs):
+    """
+    Retrieves prodlot_id from Excel file
+    """
+    row = kwargs['row']
+    prodlot_obj = kwargs['prodlot_obj']
+    error_list = kwargs['to_write']['error_list']
+    product_id = kwargs['to_write'].get('product_id', False)
+    cell_nb = kwargs['cell_nb']
+    prodlot_id = None
+    expired_date = False
+    msg = ''
+    if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
+        if row.cells[cell_nb].type == 'str':
+            prodlot_name = row.cells[cell_nb].data.strip()
+            if prodlot_name and product_id:
+                prodlot_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_name), ('product_id', '=', product_id)])
+                if prodlot_ids:
+                    prodlot_id = prodlot_ids[0]
+                    expired_date = prodlot_obj.browse(cr, uid, prodlot_id).life_date
+                else:
+                    error_list.append('The Batch Number "%s" does not exist for this product.' % prodlot_name)
+        else:
+            msg = 'The Batch Number has to be string.'
+        if not prodlot_id:
+            error_list.append(msg or 'The Batch Number was not valid.')
+    return {'prodlot_id': prodlot_id, 'expired_date': expired_date, 'error_list': error_list}
+
+
+def compute_kit_value(cr, uid, **kwargs):
+    """
+    Retrieves kit_id from Excel file
+    """
+    row = kwargs['row']
+    kit_obj = kwargs['kit_obj']
+    error_list = kwargs['to_write']['error_list']
+    product_id = kwargs['to_write'].get('product_id', False)
+    cell_nb = kwargs['cell_nb']
+    kit_id = None
+    kit_name = None
+    msg = ''
+    if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
+        if row.cells[cell_nb].type == 'str':
+            kit_name = row.cells[cell_nb].data.strip()
+            if kit_name and product_id:
+                kit_ids = kit_obj.search(cr, uid, [('composition_type', '=', 'real'),
+                                                   ('composition_reference', '=', kit_name), 
+                                                   ('composition_product_id', '=', product_id)])
+                if kit_ids:
+                    kit_id = kit_ids[0]
+                else:
+                    error_list.append(_('The Kit "%s" does not exist for this product.') % (kit_name,))
+        else:
+            msg = _('The Kit Name has to be a string')
+        if not kit_name:
+            error_list.append(msg or _('The kit was not valid.'))
+    return {'kit_id': kit_id, 'error_list': error_list}
+
+
+def compute_location_value(cr, uid, **kwargs):
+    """
+    Retrieves location_id and location_dest_id from Excel file
+    """
+    row = kwargs['row']
+    loc_obj = kwargs['loc_obj']
+    error_list = kwargs['to_write']['error_list']
+    cell_nb = kwargs['cell_nb']
+    check_type = kwargs.get('check_type')
+    product_id = kwargs.get('product_id')
+    pick_type = kwargs.get('pick_type')
+    pick_subtype = kwargs.get('pick_subtype')
+    loc_id = None
+    loc_name = None
+    msg = ''
+    if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
+        if row.cells[cell_nb].type == 'str':
+            loc_name = row.cells[cell_nb].data.strip()
+            if loc_name:
+                domain = [('name', '=ilike', loc_name)]
+                if check_type and product_id and check_type == 'src' and pick_type == 'internal':
+                    domain.extend([('internal_src', '=', product_id), ('usage', '!=', 'view')])
+                elif check_type and product_id and check_type == 'dest' and pick_type == 'internal':
+                    domain.extend([('internal_dest', '=', product_id), ('usage', '!=', 'view')])
+                elif check_type and product_id and check_type == 'src' and pick_type == 'in':
+                    domain.extend([('usage', '=', 'supplier')])
+                elif check_type and product_id and check_type == 'dest' and pick_type == 'in':
+                    domain.extend([('incoming_dest', '=', product_id), ('usage', '!=', 'view')])
+                elif check_type and product_id and check_type == 'src' and pick_type == 'out' and pick_subtype == 'standard':
+                    domain.extend([('outgoing_src', '=', product_id), ('usage', '!=', 'view')])
+                elif check_type and product_id and check_type == 'dest' and pick_type == 'out' and pick_subtype == 'standard':
+                    domain.extend(['|', ('output_ok', '=', True), ('usage', '=', 'customer')])
+                elif check_type and product_id and check_type == 'src' and pick_type == 'out' and pick_subtype == 'picking':
+                    domain.extend([('picking_ticket_src', '=', product_id)])
+                elif check_type and product_id and check_type == 'dest' and pick_type == 'out' and pick_subtype == 'picking':
+                    pack_loc_id = loc_obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
+                    domain.extend([('id', '=', pack_loc_id)])
+
+                loc_ids = loc_obj.search(cr, uid, domain)
+                if loc_ids:
+                    loc_id = loc_ids[0]
+                elif loc_obj.search(cr, uid, [('name', '=ilike', loc_name)]):
+                    error_list.append(_('The Location "%s" is not compatible with the product of the stock move.') % loc_name)
+                else:
+                    error_list.append(_('The Location "%s" does not exist on this instance.') % loc_name)
+
+        else:
+            msg = _('The Location Name has to be string.')
+        if not loc_name:
+            error_list.append(msg or _('The location was not valid.'))
+    return {'location_id': loc_id, 'error_list': error_list}
 
 
 def product_value(cr, uid, **kwargs):
@@ -153,15 +266,16 @@ def product_value(cr, uid, **kwargs):
             product_code = row.cells[cell_nb].data
             if product_code and row.cells[cell_nb].type == 'str':
                 product_code = product_code.strip()
-                p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)], context=context)
+                p_ids = product_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
                 if not p_ids:
                     comment += _(' Code: %s') % (product_code)
                     msg = _('Product code doesn\'t exist in the DB.')
                 else:
                     default_code = p_ids[0]
-                    proc_type = product_obj.browse(cr, uid, [default_code])[0].procure_method
-                    price_unit = product_obj.browse(cr, uid, [default_code])[0].list_price
-                    cost_price = product_obj.browse(cr, uid, [default_code])[0].standard_price
+                    product = product_obj.browse(cr, uid, default_code)
+                    proc_type = product.procure_method
+                    price_unit = product.list_price
+                    cost_price = product.standard_price
             else:
                 msg = _('The Product Code has to be a string.')
         if not default_code or default_code == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]:
@@ -189,9 +303,6 @@ def quantity_value(**kwargs):
     cell_nb = kwargs.get('cell_nb', 2)
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
-    cell_nb = kwargs.get('cell_nb', False)
-    if not cell_nb:
-        cell_nb = 2
     try:
         if not row.cells[cell_nb]:
             warning_list.append(_('The Product Quantity was not set. It is set to 1 by default.'))
@@ -200,6 +311,9 @@ def quantity_value(**kwargs):
                 product_qty = row.cells[cell_nb].data
             else:
                 error_list.append(_('The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default.'))
+            if product_qty <= 0.00:
+                error_list.append(_('The Product Quantity is required to be greater than 0, it is set to 1 by default'))
+                product_qty = 1.00
     # if the cell is empty
     except IndexError:
         warning_list.append(_('The Product Quantity was not set. It is set to 1 by default.'))
@@ -220,14 +334,13 @@ def compute_uom_value(cr, uid, **kwargs):
     uom_id = kwargs['to_write'].get('uom_id', False)
     # The tender line may have a default UOM if it is not found
     obj_data = kwargs['obj_data']
-    cell_nb = kwargs.get('cell_nb', 3)
+    cell_nb = kwargs.get('cell_nb', 4)
     msg = ''
-    cell_nb = kwargs.get('cell_nb', 3)
     try:
         if row.cells[cell_nb] and row.cells[cell_nb].data is not None:
             if row.cells[cell_nb].type == 'str':
                 uom_name = row.cells[cell_nb].data.strip()
-                uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
+                uom_ids = uom_obj.search(cr, uid, [('name', '=ilike', uom_name)], context=context)
                 if uom_ids:
                     uom_id = uom_ids[0]
                     # check the uom category consistency
@@ -270,7 +383,7 @@ def compute_price_value(**kwargs):
     warning_list = kwargs['to_write']['warning_list']
     price = kwargs['price'] or 'Price'
     price_unit_defined = False
-    cell_nb = kwargs.get('cell_nb', 4)
+    cell_nb = kwargs.get('cell_nb', 3)
     try:
         if not row.cells[cell_nb] or not row.cells[cell_nb].data:
             if default_code:
@@ -315,22 +428,57 @@ def compute_date_value(**kwargs):
     return {'date_planned': date_planned, 'error_list': error_list, 'warning_list': warning_list}
 
 
-def compute_expiry_date_value(**kwargs):
+def compute_batch_expiry_value(cr, uid, **kwargs):
     """
-    Retrieves Date from Excel file or take the one from the parent
+    Retrives Batch number and expiry date from Excel file
     """
     row = kwargs['row']
-    cell_nb = kwargs['cell_nb']
+    bn_cell_nb = kwargs['bn_cell_nb']
+    ed_cell_nb = kwargs['ed_cell_nb']
+    bn_obj = kwargs['bn_obj']
+    product_id = kwargs['product_id']
+    date_format = kwargs['date_format']
     error_list = kwargs['to_write']['error_list']
+    warning_list = kwargs['to_write']['warning_list']
+    batch_name = None
     expiry_date = None
-    try:
-        if row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime' and row.cells[cell_nb].data:
-            expiry_date = row.cells[cell_nb].data
-        else:
-            error_list.append('The date format was not correct.')
-    except IndexError:
-        pass
-    return {'expiry_date': expiry_date, 'error_list': error_list}
+    batch_number = None
+    bn_ids = []
+
+    # Get batch number
+    if row.cells[bn_cell_nb] and row.cells[bn_cell_nb].type in ('int', 'str') and row.cells[bn_cell_nb].data:
+        batch_name = row.cells[bn_cell_nb].data
+
+    if row.cells[ed_cell_nb] and row.cells[ed_cell_nb].type == 'datetime' and row.cells[ed_cell_nb].data:
+        expiry_date = row.cells[ed_cell_nb].data
+
+    if not bn_ids and product_id and batch_name and expiry_date:
+        bn_ids = bn_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch_name), ('life_date', '=', expiry_date)])
+        if bn_ids:
+            batch_number = bn_ids[0]
+
+    if not bn_ids and product_id and batch_name:
+        bn_ids = bn_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch_name)])
+        if bn_ids:
+            batch_number = bn_ids[0]
+
+        # Set an error message for non matching between BN and Expiry date
+        if expiry_date:
+            warning_list.append(_('The expiry date %s not corresponding to the expiry date of the Batch Number %s − The expiry date of the batch has been set instead.') % (expiry_date.strftime(date_format), batch_name))
+
+        # Set expiry date with the life date of the BN
+        expiry_date = bn_obj.browse(cr, uid, batch_number).life_date
+
+    if not bn_ids and product_id and expiry_date:
+        bn_ids = bn_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry_date.strftime('%Y-%m-%d'))])
+        if bn_ids:
+            batch_number = bn_ids[0]
+
+    if (batch_name or expiry_date) and not bn_ids:
+        error_list.append(_('The Batch number was not found.'))
+
+    return {'prodlot_id': batch_number, 'expired_date': expiry_date, 'error_list': error_list, 'warning_list': warning_list}
+
 
 
 def compute_currency_value(cr, uid, **kwargs):

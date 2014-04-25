@@ -440,10 +440,13 @@
 <Data ss:Type="String">${_('Analytic Journal')}</Data>
 </Cell>
 <Cell ss:StyleID="s31">
-<Data ss:Type="String">${_('Reference')}</Data>
+<Data ss:Type="String">${_('Sequence number')}</Data>
 </Cell>
 <Cell ss:StyleID="s31">
 <Data ss:Type="String">${_('Description')}</Data>
+</Cell>
+<Cell ss:StyleID="s31">
+<Data ss:Type="String">${_('Reference')}</Data>
 </Cell>
 <Cell ss:StyleID="s31">
 <Data ss:Type="String">${_('Financing contract line code')}</Data>
@@ -477,8 +480,8 @@
 </Cell>
 </Row>
 
-
-% for code in getLines(o):
+<!-- UF-2150: Sort lines by code -->
+% for code in sorted(getLines(o)):
 % for line in getLines2()[code]:
 
 <Row>
@@ -489,10 +492,13 @@
 <Data ss:Type="String">${( line[0] and line[0].journal_id and line[0].journal_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="s36">
-<Data ss:Type="String">${( line[0] and line[0].ref or '')|x}</Data>
+<Data ss:Type="String">${( line[0] and line[0].move_id and line[0].move_id.move_id and line[0].move_id.move_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="s36">
 <Data ss:Type="String">${( line[0] and line[0].name or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="s36">
+<Data ss:Type="String">${( line[0] and line[0].ref or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="s36">
 <Data ss:Type="String">${( line[1] or '')|x}</Data>
@@ -537,11 +543,10 @@
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="s49a"><Data ss:Type="String">${_('Sub-total')}</Data></Cell>
-<Cell ss:StyleID="s49a" ss:Formula="=SUM(R[-${getSub1()}]C:R[-1]C)">
-<Data ss:Type="Number"></Data>
-</Cell>
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="s49a"><Data ss:Type="String">${_('Sub-total')}</Data></Cell>
 <Cell ss:StyleID="s49a" ss:Formula="=SUM(R[-${getSub2()}]C:R[-1]C)">
 <Data ss:Type="Number"></Data>
 </Cell>
@@ -561,15 +566,15 @@
 <Cell  ss:StyleID="s49"></Cell>
 <Cell  ss:StyleID="s49"></Cell>
 <Cell  ss:StyleID="s49"></Cell>
+<Cell  ss:StyleID="s49"></Cell>
 <Cell  ss:StyleID="s49">
 <Data ss:Type="String">${_('Total')}</Data>
 </Cell>
-<Cell  ss:StyleID="s49" ss:Formula="=${getFormula()}+R[-1]C">
-<Data ss:Type="Number"></Data>
+<Cell  ss:StyleID="s49">
 </Cell>
 <Cell  ss:StyleID="s49"></Cell>
-<Cell ss:StyleID="s49" ss:Formula="=${getFormula()}+R[-1]C">
-<Data ss:Type="Number"></Data>
+<Cell ss:StyleID="s49">
+<Data ss:Type="Number">${getTotalRptCurrency()}</Data>
 </Cell>
 <Cell  ss:StyleID="s49"></Cell>
 </Row>

@@ -45,15 +45,63 @@ class stock_production_lot(osv.osv):
         return calc_date
     # @@@end
 
+    # UF-1617: Handle the instance in the batch number object
+    def copy(self, cr, uid, id, default=None, context=None):
+        if not default:
+            default = {}
+        default.update({
+            'partner_name': False,
+        })
+        return super(stock_production_lot, self).copy(cr, uid, id, default, context=context)
+    
+    # UF-1617: Handle the instance in the batch number object
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        do not copy asset events
+        '''
+        if not default:
+            default = {}
+        default.update({
+            'partner_name': False,
+        })
+        return super(stock_production_lot, self).copy_data(cr, uid, id, default, context=context)
+
+    # UF-1617: Handle the instance in the batch number object
+    def create(self, cr, uid, vals, context=None):
+        '''
+        override create method to set the instance id to the current instance if it has not been provided
+        '''
+        if 'partner_name' not in vals or not vals['partner_name']:
+            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+            if company and company.partner_id:
+                vals['partner_name'] = company.partner_id.name
+
+        
+        # UF-2148: make the xmlid_name from batch name for building xmlid if the value is not given in vals
+        if 'xmlid_name' not in vals or not vals['xmlid_name']:
+            vals['xmlid_name'] = vals['name'] 
+            
+        exist = self.search(cr, uid, [('xmlid_name', '=', vals['xmlid_name']), ('partner_name', '=', vals['partner_name']), ('product_id', '=', vals['product_id'])], context=context)
+        if exist:
+            # but if the value exist for xmlid_name, then add a suffix to differentiate, no constraint unique required here  
+            vals['xmlid_name'] = vals['xmlid_name'] + "_1"
+        
+        return super(stock_production_lot, self).create(cr, uid, vals, context)
+
     _columns = {
-                # renamed from End of Life Date
-                'life_date': fields.date('Expiry Date',
-                    help='The date on which the lot may become dangerous and should not be consumed.', required=True),
-                'use_date': fields.date('Best before Date',
-                    help='The date on which the lot starts deteriorating without becoming dangerous.'),
-                'removal_date': fields.date('Removal Date',
-                    help='The date on which the lot should be removed.'),
-                'alert_date': fields.date('Alert Date', help="The date on which an alert should be notified about the production lot."),
+        # renamed from End of Life Date
+        'life_date': fields.date('Expiry Date',
+            help='The date on which the lot may become dangerous and should not be consumed.', required=True),
+        'use_date': fields.date('Best before Date',
+            help='The date on which the lot starts deteriorating without becoming dangerous.'),
+        'removal_date': fields.date('Removal Date',
+            help='The date on which the lot should be removed.'),
+        'alert_date': fields.date('Alert Date', help="The date on which an alert should be notified about the production lot."),
+
+        # UF-1617: field only used for sync purpose
+        'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=False),
+        'partner_name': fields.char('Partner', size=128, required=True),
+        'xmlid_name': fields.char('XML Code, hidden field', size=128, required=True), # UF-2148, this field is used only for xml_id
     }
 
     _defaults = {
@@ -62,5 +110,9 @@ class stock_production_lot(osv.osv):
         'removal_date': _get_date('removal_time'),
         'alert_date': _get_date('alert_time'),
     }
+    
+    # UF-2148: Removed the name unique constraint in specific_rules and use only this constraint with 3 attrs: name, prod and instance 
+    _sql_constraints = [('batch_name_uniq', 'unique(name, product_id, partner_name)', 'Batch name must be unique per instance and product!'),]
+    
 stock_production_lot()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

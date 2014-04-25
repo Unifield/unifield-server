@@ -35,8 +35,8 @@ class purchase_order(osv.osv):
         Return fake data for down_payment_filter field
         """
         res = {}
-        for id in ids:
-            res[id] = False
+        for i in ids:
+            res[i] = False
         return res
 
     def _search_po_for_down_payment(self, cr, uid, obj, name, args, context=None):
@@ -47,7 +47,7 @@ class purchase_order(osv.osv):
         - the currency should be the same as given currency in args
         - the partner should be the same as given partner in args
         - DO NOT display PO that ar inkind donation, donation expiry, loan, donation_st
-        
+
         To be 100% invoiced, a PO should have some linked invoiced that are validated ('open' state or 'paid' state) and that sum of amount is greater or equal to PO total amount. So to find PO that are not 100% invoiced, you should find those from which all invoice are not created or which amount is inferior to PO total amount.
         """
         # Create default result
@@ -80,17 +80,17 @@ class purchase_order(osv.osv):
 
     _columns = {
         'down_payment_ids': fields.one2many('account.move.line', 'down_payment_id', string="Down Payments", readonly=True),
-        'down_payment_filter': fields.function(_get_fake, fnct_search=_search_po_for_down_payment, type="many2one", method=True, string="PO for Down Payment"),
+        'down_payment_filter': fields.function(_get_fake, fnct_search=_search_po_for_down_payment, type="many2one", relation='purchase.order', method=True, string="PO for Down Payment"),
     }
 
-    def copy(self, cr, uid, id, default=None, context=None):
+    def copy(self, cr, uid, p_id, default=None, context=None):
         """
         Remove down_payment_ids field on new purchase.order
         """
         if not default:
             default = {}
         default.update({'down_payment_ids': False})
-        return super(purchase_order, self).copy(cr, uid, id, default, context=context)
+        return super(purchase_order, self).copy(cr, uid, p_id, default, context=context)
 
 purchase_order()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -25,14 +25,12 @@ from osv import osv
 from osv import fields
 import re
 import decimal_precision as dp
-from time import strftime
-import logging
 from tools.translate import _
 from time import strftime
 
 class account_move_line(osv.osv):
-    _inherit = 'account.move.line'
     _name = 'account.move.line'
+    _inherit = 'account.move.line'
 
     # @@@override account>account_move_line.py>account_move_line>name_get
     def name_get(self, cr, uid, ids, context=None):
@@ -48,7 +46,7 @@ class account_move_line(osv.osv):
         """
         Add string @ begining of text like that:
             mystring1 - mysupertext
-        
+
         If mystring1 already exist, increment 1:
             mystring1 - mysupertext
         give:
@@ -98,13 +96,13 @@ class account_move_line(osv.osv):
                 continue
         return res
 
-    def _set_fake_reference(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context=None):
+    def _set_fake_reference(self, cr, uid, aml_id, name=None, value=None, fnct_inv_arg=None, context=None):
         """
         Just used to not break default OpenERP behaviour
         """
         if name and value:
             sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"
-            cr.execute(sql, (value, id))
+            cr.execute(sql, (value, aml_id))
         return True
 
     def _search_reference(self, cr, uid, obj, name, args, context):
@@ -166,9 +164,70 @@ class account_move_line(osv.osv):
                     res.append(p.id)
         return res
 
+    def _balance_currency(self, cr, uid, ids, name, arg, context=None):
+        # UTP-31
+        if context is None:
+            context = {}
+        c = context.copy()
+        c['initital_bal'] = True
+        sql = """SELECT l2.id, SUM(l1.debit_currency-l1.credit_currency)
+                    FROM account_move_line l1, account_move_line l2
+                    WHERE l2.account_id = l1.account_id
+                      AND l1.id <= l2.id
+                      AND l2.id IN %s AND """ + \
+                self._query_get(cr, uid, obj='l1', context=c) + \
+                " GROUP BY l2.id"
+
+        cr.execute(sql, [tuple(ids)])
+        result = dict(cr.fetchall())
+        for i in ids:
+            result.setdefault(i, 0.0)
+        return result
+
+    def _balance_currency_search(self, cursor, user, obj, name, args, domain=None, context=None):
+        # UTP-31
+        if context is None:
+            context = {}
+        if not args:
+            return []
+        where = ' AND '.join(map(lambda x: '(abs(sum(debit_currency-credit_currency))'+x[1]+str(x[2])+')',args))
+        cursor.execute('SELECT id, SUM(debit_currency-credit_currency) FROM account_move_line \
+                     GROUP BY id, debit_currency, credit_currency having '+where)
+        res = cursor.fetchall()
+        if not res:
+            return [('id', '=', '0')]
+        return [('id', 'in', [x[0] for x in res])]
+
+    def _get_is_reconciled(self, cr, uid, ids, field_names, args, context=None):
+        """
+        If reconcile_partial_id or reconcile_id present, then line is reconciled.
+        """
+        if context is None:
+            context = {}
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = False
+            if line.reconcile_partial_id or line.reconcile_id:
+                res[line.id] = True
+        return res
+
+    def _search_is_reconciled(self, cr, uid, obj, name, args, context):
+        """
+        Give lines that have a partial or total reconciliation.
+        """
+        if not context:
+            context = {}
+        if not args:
+            return []
+        if args[0][2] and args[0][2] == True:
+            return ['|', ('reconcile_partial_id', '!=', False), ('reconcile_id', '!=', False)]
+        elif args[0] and args[0][2] in [False, 0]:
+            return [('reconcile_partial_id', '=', False), ('reconcile_id', '=', False)]
+        return []
+
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
-        'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Draft'), ('posted', 'Posted')], 
+        'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Unposted'), ('posted', 'Posted')],
             help="This indicates the state of the Journal Entry."),
         'is_addendum_line': fields.boolean('Is an addendum line?', readonly=True,
             help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
@@ -183,7 +242,7 @@ class account_move_line(osv.osv):
                 store = {
                     'account.move': (_get_move_lines, ['date'], 20)
                 }, readonly=True),
-        'is_write_off': fields.boolean('Is a write-off line?', readonly=True, 
+        'is_write_off': fields.boolean('Is a write-off line?', readonly=True,
             help="This inform that no correction is possible for a line that come from a write-off!"),
         'reference': fields.char(string='Reference', size=64),
         'ref': fields.function(_get_reference, fnct_inv=_set_fake_reference, fnct_search=_search_reference, string='Reference', method=True, type='char', size=64, store=True, readonly=True),
@@ -199,6 +258,13 @@ class account_move_line(osv.osv):
                 'account.move.line': (_get_reconciled_move_lines, ['reconcile_id', 'reconcile_partial_id', 'debit', 'credit'], 10),
             }
         ),
+        'is_reconciled': fields.function(_get_is_reconciled, fnct_search=_search_is_reconciled, type='boolean', method=True, string="Is reconciled", help="Is that line partially/totally reconciled?"),
+        'balance_currency': fields.function(_balance_currency, fnct_search=_balance_currency_search, method=True, string='Balance Booking'),
+        'line_number': fields.integer(string='Line Number'),
+        'invoice_partner_link': fields.many2one('account.invoice', string="Invoice partner link", readonly=True,
+            help="This link implies this line come from the total of an invoice, directly from partner account.", ondelete="cascade"),
+        'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line origin", readonly=True,
+            help="Invoice line which have produced this line.", ondelete="cascade"),
     }
 
     _defaults = {
@@ -207,6 +273,7 @@ class account_move_line(osv.osv):
         'document_date': lambda self, cr, uid, c: c.get('document_date', False) or strftime('%Y-%m-%d'),
         'date': lambda self, cr, uid, c: c.get('date', False) or strftime('%Y-%m-%d'),
         'exported': lambda *a: False,
+        'line_number': lambda *a: 0,
     }
 
     _order = 'move_id DESC'
@@ -234,22 +301,48 @@ class account_move_line(osv.osv):
             res = res[0]
         return res
 
-    def _check_document_date(self, cr, uid, ids):
+    def _check_date(self, cr, uid, vals, context=None, check=True):
+        if 'date' in vals and vals['date'] is not False and 'account_id' in vals:
+            account_obj = self.pool.get('account.account')
+            account = account_obj.browse(cr, uid, vals['account_id'])
+            if vals['date'] < account.activation_date \
+            or (account.inactivation_date != False and \
+                vals['date'] >= account.inactivation_date):
+                raise osv.except_osv(_('Error !'), _('The selected account is not active: %s.') % (account.code or '',))
+        return super(account_move_line, self)._check_date(cr, uid, vals, context, check)
+
+    def _check_document_date(self, cr, uid, ids, vals=None):
         """
         Check that document's date is done BEFORE posting date
         """
+        if not vals:
+            vals = {}
         for aml in self.browse(cr, uid, ids):
-            if aml.document_date and aml.date and aml.date < aml.document_date:
+            dd = aml.document_date
+            date = aml.date
+            if vals.get('document_date', False):
+                dd = vals.get('document_date')
+            if vals.get('date', False):
+                date = vals.get('date')
+            if date < dd:
                 raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
         return True
 
-    def _check_date_validity(self, cr, uid, ids):
+    def _check_date_validity(self, cr, uid, ids, vals=None):
         """
         Check that date is contained between period ' starting date and ending's date
         """
+        if not vals:
+            vals = {}
         for aml in self.browse(cr, uid, ids):
-            if aml.date < aml.move_id.period_id.date_start or aml.date > aml.move_id.period_id.date_stop:
-                raise osv.except_osv(_('Warning'), _('Given date [%s] is outside defined period: %s') % (aml.date, aml.move_id and aml.move_id.period_id and aml.move_id.period_id.name or ''))
+            date = aml.date
+            if vals.get('date', False):
+                date = vals.get('date')
+            period = aml.move_id.period_id
+            if vals.get('period_id', False):
+                period = self.pool.get('account.period').browse(cr, uid, [vals.get('period_id')])[0]
+            if date < period.date_start or date > period.date_stop:
+                raise osv.except_osv(_('Warning'), _('Given date [%s] is outside defined period: %s') % (date, period and period.name or ''))
         return True
 
     def create(self, cr, uid, vals, context=None, check=True):
@@ -258,6 +351,14 @@ class account_move_line(osv.osv):
         """
         if not context:
             context = {}
+        # Create new line number with account_move sequence
+        if 'move_id' in vals:
+            move = self.pool.get('account.move').browse(cr, uid, vals['move_id'])
+            if move and move.sequence_id:
+                sequence = move.sequence_id
+                line = sequence.get_id(code_or_id='id', context=context)
+                vals.update({'line_number': line})
+        # Some checks
         if not vals.get('document_date') and vals.get('date'):
             vals.update({'document_date': vals.get('date')})
         if vals.get('document_date', False) and vals.get('date', False) and vals.get('date') < vals.get('document_date'):
@@ -270,7 +371,13 @@ class account_move_line(osv.osv):
             if m and m.date:
                 vals.update({'date': m.date})
                 context.update({'date': m.date})
-        return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
+        res = super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
+        # UTP-317: Check partner (if active or not)
+        if res and not context.get('sync_update_execution', False): #UF-2214: Not for the case of sync
+            aml = self.browse(cr, uid, [res], context)
+            if aml and aml[0] and aml[0].partner_id and not aml[0].partner_id.active:
+                raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (aml[0].partner_id.name or '',))
+        return res
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         """
@@ -283,7 +390,7 @@ class account_move_line(osv.osv):
                 if ml.move_id and ml.move_id.status == 'sys':
                     raise osv.except_osv(_('Warning'), _('You cannot change Journal Items that comes from the system!'))
             # Check date validity with period
-            self._check_date_validity(cr, uid, ids)
+            self._check_date_validity(cr, uid, ids, vals)
             if 'move_id' in vals:
                 m = self.pool.get('account.move').browse(cr, uid, vals.get('move_id'))
                 if m and m.document_date:
@@ -292,9 +399,22 @@ class account_move_line(osv.osv):
                 if m and m.date:
                     vals.update({'date': m.date})
                     context.update({'date': m.date})
+        # Note that _check_document_date HAVE TO be BEFORE the super write. If not, some problems appears in ournal entries document/posting date changes at the same time!
+        self._check_document_date(cr, uid, ids, vals)
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
-        self._check_document_date(cr, uid, ids)
         return res
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        """
+        Filtering regarding context
+        """
+        if not context:
+            context = {}
+        if context.get('currency_id'):
+            args.append(('currency_id', '=', context.get('currency_id')))
+        if context.get('move_state'):
+            args.append(('move_state', '=', context.get('move_state')))
+        return super(account_move_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
     def button_duplicate(self, cr, uid, ids, context=None):
         """

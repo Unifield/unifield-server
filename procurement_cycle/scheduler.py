@@ -23,6 +23,7 @@ from osv import osv
 from datetime import datetime
 from tools.translate import _
 from mx.DateTime import RelativeDate
+from mx.DateTime import RelativeDateTime
 from mx.DateTime import now
 from mx.DateTime import Parser
 
@@ -80,7 +81,7 @@ class procurement_order(osv.osv):
                 for line in cycle.product_ids:
                     # Update the safety stock according to the safety stock defined in the line
                     d_values.update({'safety_stock': line.safety_stock})
-                    proc_id = self.create_proc_cycle(cr, uid, cycle, line.product_id.id, location_id, d_values)
+                    proc_id = self.create_proc_cycle(cr, uid, cycle, line.product_id.id, location_id, d_values, line)
 
                     if proc_id:
                         created_proc.append(proc_id)
@@ -132,7 +133,7 @@ Created documents : \n'''
             
         return {}
     
-    def create_proc_cycle(self, cr, uid, cycle, product_id, location_id, d_values=None, context=None):
+    def create_proc_cycle(self, cr, uid, cycle, product_id, location_id, d_values=None, line=None, context=None):
         '''
         Creates a procurement order for a product and a location
         '''
@@ -160,8 +161,11 @@ Created documents : \n'''
             context.update({'from_date': d_values.get('consumption_period_from'), 'to_date': d_values.get('consumption_period_to')})
         
         product = product_obj.browse(cr, uid, product_id[0], context=context)
-            
-        newdate = datetime.today()
+
+        newdate = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        if line and line.required_date:
+            newdate = line.required_date
+
         quantity_to_order = self._compute_quantity(cr, uid, cycle, product, location_id, d_values, context=context)
             
         # Create a procurement only if the quantity to order is more than 0.00
@@ -171,7 +175,7 @@ Created documents : \n'''
             proc_id = proc_obj.create(cr, uid, {
                                     'name': _('Procurement cycle: %s') % (cycle.name,),
                                     'origin': cycle.name,
-                                    'date_planned': newdate.strftime('%Y-%m-%d %H:%M:%S'),
+                                    'date_planned': newdate,
                                     'product_id': product.id,
                                     'product_qty': quantity_to_order,
                                     'product_uom': product.uom_id.id,
@@ -195,7 +199,7 @@ Created documents : \n'''
         '''
         if d_values is None:
             d_values = {}
-        
+
         # Get the delivery lead time of the product if the leadtime is not defined in rule and no supplier found in product form
         delivery_leadtime = product.procure_delay and round(int(product.procure_delay)/30.0, 2) or 1
         # Get the leadtime of the rule if defined
@@ -223,9 +227,21 @@ Created documents : \n'''
         available_qty = self.get_available(cr, uid, product.id, location_id, monthly_consumption, d_values)
         
         qty_to_order = (delivery_leadtime * monthly_consumption) + (order_coverage * monthly_consumption) - available_qty
-        
-        return round(self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, qty_to_order, product.uom_id.id), 2)
-        
+
+        if not context.get('get_data', False):
+            res = round(self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, qty_to_order, product.uom_id.id), 2)
+        else:
+            delta = 0
+            if monthly_consumption:
+                delta = available_qty / monthly_consumption * 30
+
+            if delta <= 0.00:
+                req_date = now().strftime('%Y-%m-%d')
+            else:
+                req_date = (now() + RelativeDateTime(days=delta)).strftime('%Y-%m-%d')
+            res = round(self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, qty_to_order, product.uom_id.id), 2), req_date
+
+        return res
         
     def get_available(self, cr, uid, product_id, location_id, monthly_consumption, d_values=None, context=None):
         '''

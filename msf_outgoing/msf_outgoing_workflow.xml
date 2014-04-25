@@ -17,5 +17,17 @@
             <field name="signal">return_cancel</field>
         </record>
 
+        <record id="trans_assigned_draft" model="workflow.transition">
+            <field name="act_from" ref="stock.act_assigned" />
+            <field name="act_to" ref="stock.act_draft" />
+            <field name="signal">convert_to_picking_ticket</field>
+        </record>
+
+        <record id="trans_confiremd_draft" model="workflow.transition">
+            <field name="act_from" ref="stock.act_confirmed" />
+            <field name="act_to" ref="stock.act_draft" />
+            <field name="signal">convert_to_picking_ticket</field>
+        </record>
+
     </data>
 </openerp>

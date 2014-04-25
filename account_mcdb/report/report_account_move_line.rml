@@ -166,7 +166,7 @@
           <para style="P3">[[ o.reconcile_total_partial_id and o.reconcile_total_partial_id.name or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[getSel(o, 'state')]]</para>
+          <para style="P3">[[ o.move_state and getSel(o, 'move_state') or '' ]]</para>
         </td>
       </tr>
     </blockTable>

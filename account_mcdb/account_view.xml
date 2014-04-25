@@ -8,8 +8,14 @@
             <field name="model">account.move.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Account Entries" min_rows="100" hide_new_button="1">
+                <tree string="Account Entries" min_rows="100" hide_new_button="1" hide_delete_button="1">
                     <field name="instance_id"/>
+                    <field name="is_corrigible" invisible="1"/>
+                    <field name="have_an_historic" invisible="1"/>
+                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard" 
+                        attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
+                    <button name="button_open_corrections" type="object" string="Open corrections history" 
+                        attrs="{'invisible': [('have_an_historic', '=', False)]}" icon="terp-mail-"/>
                     <field name="journal_id"/>
                     <field name="move_id"/>
                     <field name="name"/>
@@ -47,10 +53,15 @@
             <field name="model">account.analytic.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Analytic Line" min_rows="100" editable="bottom" noteditable="1" hide_delete_button="1" hide_new_button="1">
+                <tree string="Analytic Journal Items" min_rows="100" editable="bottom" noteditable="1" hide_delete_button="1" hide_new_button="1">
                     <field name="is_reallocated" invisible="1"/>
-                    <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2"/>
                     <field name="instance_id"/>
+                    <field name="is_reversal" invisible="1"/>
+                    <field name="journal_type" invisible="1"/>
+                    <field name="is_corrigible" invisible="1"/>
+                    <button name="button_corrections" type="object" string="Accounting info/correction" 
+                        attrs="{'invisible': ['|', '|', '|', ('is_reallocated', '=', True), ('is_reversal', '=', True), ('journal_type', '=', 'engagement'), ('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
+                    <button string="Have been reallocated?" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2" name="button_open_analytic_corrections" type="object"/>
                     <field name="journal_id"/>
                     <field name="entry_sequence"/>
                     <field name="name"/>
@@ -72,6 +83,29 @@
                     <field name="reversal_origin"/>
                     <field name="user_id" invisible="1"/>
                 </tree>
+            </field>
+        </record>
+
+    <!-- Account analytic line tree view -->
+        <record model="ir.ui.view" id="account_analytic_line_default">
+            <field name="name">account.analytic.line.default</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
+            <field name="priority" eval="40"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='journal_id']" position="before">
+                        <field name="is_reversal" invisible="1"/>
+                        <field name="journal_type" invisible="1"/>
+                        <field name="is_corrigible" invisible="1"/>
+                        <button name="button_corrections" type="object" string="Accounting info/correction" 
+                            attrs="{'invisible': ['|', '|', '|', ('is_reallocated', '=', True), ('is_reversal', '=', True), ('journal_type', '=', 'engagement'), ('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
+                        <field name="is_reallocated" invisible="1"/>
+                        <field name="last_corrected_id" invisible="1"/>
+                        <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False), ('last_corrected_id', '=', False)]}" icon="terp-mail-" colspan="2" name="button_open_analytic_corrections" type="object"/>
+                   </xpath>
+                </data>
             </field>
         </record>
 
@@ -106,6 +140,8 @@
                         <field name="partner_id" select='1' string="3RD Party Partner"/>
                         <field name="employee_id" select='1' string="3RD Party Employee"/>
                         <field name="transfer_journal_id" select='1' string="3RD Party Journal"/>
+                        <field name="is_reconciled" select='1'/>
+                        <field name="reconcile_total_partial_id" select='1'/>
                     </group>
                     <newline/>
                     <group col="10" colspan="4">
@@ -115,9 +151,13 @@
                         <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
                     </group>
                     <newline/>
+                    <group col="10" colspan="4">
+                        <field name="balance" string="Debit/Credit Fonctional" select='1'/>
+                        <field name="balance_currency" string="Debit/Credit Booking" select='1'/>
+                    </group>
+                    <newline/>
                     <group expand="0" string="Extended Filters...">
                         <field name="narration" select="1"/>
-                        <field name="balance" string="Debit/Credit" select='1'/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="12" col="10">
@@ -186,6 +226,6 @@
             <field eval="'ir.actions.server,%d'%action_analytic_account_mass_reallocation_search" name="value"/>
             <field eval="True" name="object"/>
         </record>
-
+            
     </data>
 </openerp>

@@ -28,6 +28,7 @@ import time
 from msf_doc_import import check_line
 from msf_doc_import.wizard import IR_COLUMNS_FOR_IMPORT as columns_for_ir_line_import
 
+
 class wizard_import_ir_line(osv.osv_memory):
     _name = 'wizard.import.ir.line'
     _description = 'Import IR Lines from Excel sheet'
@@ -66,7 +67,7 @@ class wizard_import_ir_line(osv.osv_memory):
         else:
             cr = dbname
 
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         wiz_common_import = self.pool.get('wiz.common.import')
         context.update({'import_in_progress': True, 'noraise': True})
@@ -83,14 +84,14 @@ class wizard_import_ir_line(osv.osv_memory):
         for wiz_browse in self.browse(cr, uid, ids, context):
             fo_browse = wiz_browse.fo_id
             fo_id = fo_browse.id
-            
+
             ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
             line_ignored_num = []
             error_list = []
             error_log = ''
             message = ''
             header_index = context['header_index']
-            
+
             file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
             # iterator on rows
             rows = file_obj.getRows()
@@ -113,20 +114,20 @@ class wizard_import_ir_line(osv.osv_memory):
                     'price_unit': 1,  # in case that the product is not found and we do not have price
                     'cost_price': 0,
                     'product_qty': 1,
-                    'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
-                    'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
-                    'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
-                    'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
+#                    'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
+#                    'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
+#                    'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
+#                    'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
                     'proc_type': 'make_to_order',
                     'default_code': False,
                     'confirmed_delivery_date': False,
                 }
-    
+
                 line_num += 1
                 col_count = len(row)
                 template_col_count = len(header_index.items())
                 if col_count != template_col_count:
-                    message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join([_(f) for f in columns_for_ir_line_import]))
+                    message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count, ','.join([_(f) for f in columns_for_ir_line_import]))
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
@@ -138,28 +139,29 @@ class wizard_import_ir_line(osv.osv_memory):
                     if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
                         percent_completed = float(line_num)/float(total_line_num-1)*100.0
                         self.write(cr, uid, ids, {'percent_completed': percent_completed})
-                        line_num-=1
+                        line_num -= 1
                         continue
                     # for each cell we check the value
+
+                    '''
+                        REF-94: BECAREFUL WHEN CHANGING THE ORDER OF CELLS IN THE IMPORT FILE!!!!!
+                    '''
+
                     # Cell 0: Product Code
-                    p_value = {}
                     p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'cost_price': p_value['cost_price'],
                                      'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
-    
+
                     # Cell 2: Quantity
-                    qty_value = {}
                     qty_value = check_line.quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
-    
+
                     # Cell 3: Cost Price
-                    price_value = {}
                     price_value = check_line.compute_price_value(cell_nb=3, row=row, to_write=to_write, price='Cost Price', context=context)
                     to_write.update({'cost_price': price_value['cost_price'], 'error_list': price_value['error_list'],
                                      'warning_list': price_value['warning_list']})
-    
+
                     # Cell 4: UoM
-                    uom_value = {}
                     uom_value = check_line.compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
@@ -169,15 +171,13 @@ class wizard_import_ir_line(osv.osv_memory):
                         if round_qty.get('warning', {}).get('message'):
                             to_write.update({'product_uom_qty': round_qty['value']['product_qty']})
                             message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
-    
+
                     # Cell 5: Currency
-                    curr_value = {}
                     curr_value = check_line.compute_currency_value(cr, uid, cell_nb=5, browse_sale=fo_browse,
                                                         currency_obj=currency_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
-    
+
                     # Cell 6: Comment
-                    c_value = {}
                     c_value = check_line.comment_value(row=row, cell_nb=6, to_write=to_write, context=context)
                     to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
                     to_write.update({
@@ -192,13 +192,17 @@ class wizard_import_ir_line(osv.osv_memory):
                     sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
 
                     if to_write.get('product_uom_qty', 0.00) <= 0.00:
-                        error_log += _("Line %s in the Excel file was ignored. Details: %s") % (line_num, _('Product Quantity must be greater than zero.'))
+                        error_log += _("Line %s in the Excel file was ignored. Details: %s") % (line_num, _('Product Quantity must be greater than zero.\n'))
                         line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                         ignore_lines += 1
                         line_ignored_num.append(line_num)
                         percent_completed = float(line_num)/float(total_line_num-1)*100.0
                         cr.rollback()
                         continue
+
+                    # Check product restrictions
+                    if p_value.get('default_code'):
+                        product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'constraints': ['consumption']}, context=dict(context, noraise=False))
 
                     # write order line on FO
                     vals['order_line'].append((0, 0, to_write))
@@ -213,6 +217,15 @@ class wizard_import_ir_line(osv.osv_memory):
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
+                    percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                    cr.rollback()
+                    continue
+                except osv.except_osv as osv_error:
+                    osv_value = osv_error.value
+                    osv_name = osv_error.name
+                    message += _("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
+                    ignore_lines += 1
+                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     percent_completed = float(line_num)/float(total_line_num-1)*100.0
                     cr.rollback()
                     continue
@@ -234,7 +247,7 @@ Importation completed in %s!
 %s
 
 %s
-''') % (total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
+''') % (total_time, complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
             wizard_vals = {'message': final_message, 'state': 'done'}
             if line_with_error:
                 file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
@@ -274,7 +287,7 @@ Importation completed in %s!
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
             # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
-            sale_obj.write(cr, uid, fo_id, {'state': 'done'}, context)
+            sale_obj.write(cr, uid, fo_id, {'state': 'done', 'import_in_progress': True}, context)
         if not context.get('yml_test'):
             thread = threading.Thread(target=self._import_internal_req, args=(cr.dbname, uid, ids, context))
             thread.start()
@@ -304,7 +317,7 @@ Otherwise, you can continue to use Unifield.""")
         I come back on the home page. Here, I come back on the object on which I opened the wizard.
         '''
         if isinstance(ids, (int, long)):
-            ids=[ids]
+            ids = [ids]
         for wiz_obj in self.read(cr, uid, ids, ['fo_id']):
             fo_id = wiz_obj['fo_id']
         return {'type': 'ir.actions.act_window',
@@ -321,7 +334,7 @@ Otherwise, you can continue to use Unifield.""")
         Return to the initial view
         '''
         if isinstance(ids, (int, long)):
-            ids=[ids]
+            ids = [ids]
         for wiz_obj in self.read(cr, uid, ids, ['fo_id']):
             fo_id = wiz_obj['fo_id']
         return {'type': 'ir.actions.act_window',

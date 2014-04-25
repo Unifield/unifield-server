@@ -19,11 +19,9 @@
 #
 ##############################################################################
 
-from osv import osv, fields
-from tools.translate import _
+from osv import osv
 import base64
 from os.path import join as opj
-from os.path import exists
 import tools
 
 class ir_model_data(osv.osv):
@@ -31,7 +29,7 @@ class ir_model_data(osv.osv):
     _name = 'ir.model.data'
 
     def _update(self,cr, uid, model, module, values, xml_id=False, store=True, noupdate=False, mode='init', res_id=False, context=None):
-        """ 
+        """
             Store in context that we came from _update
         """
         if not context:
@@ -55,7 +53,7 @@ class account_installer(osv.osv_memory):
     _defaults = {
         'charts': 'msf_chart_of_account',
     }
-    
+
     # Fix for UF-768: correcting fiscal year and name
     def execute(self, cr, uid, ids, context=None):
         super(account_installer, self).execute(cr, uid, ids, context=context)
@@ -114,7 +112,7 @@ class base_setup_company(osv.osv_memory):
                 ret['currency'] = company.currency_id.id
             elif cur:
                 ret['currency'] = cur[0]
-                
+
             fp = tools.file_open(opj('msf_profile', 'data', 'msf.jpg'), 'rb')
             ret['logo'] = base64.encodestring(fp.read())
             fp.close()
@@ -130,6 +128,8 @@ class res_users(osv.osv):
         config_lang = self.pool.get('unifield.setup.configuration').get_config(cr, uid).lang_id
         if config_lang:
             return config_lang
+        if self.pool.get('res.lang').search(cr, uid, [('translatable','=',True), ('code', '=', 'en_MF')]):
+            return 'en_MF'
         return 'en_US'
 
     _defaults = {

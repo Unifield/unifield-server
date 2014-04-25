@@ -30,15 +30,112 @@
                     <field name="code" position="replace"/>
                     <field name="company_id" position="replace"/>
                     <button name="action_draft" position="replace">
-                        <group>
-                            <label string="" colspan="1"/>
-                            <button name="action_set_state" states="field-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" context="{'state': 'draft'}" colspan="1"/>
-                            <button name="action_set_state" states="mission-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Mission)" type="object" icon="gtk-go-back" context="{'state': 'field-closed'}" colspan="1"/>
-                            <button name="action_set_state" states="created" confirm="Are you sure you want to open this period?" string="Open period" type="object" icon="gtk-go-forward" context="{'state': 'draft'}" colspan="1"/>
-                            <button name="action_set_state" states="draft" confirm="Are you sure you want to close this period?" string="Close period (Field)" type="object" icon="gtk-go-forward" context="{'state': 'field-closed'}" colspan="1"/>
-                            <button name="action_set_state" states="field-closed" confirm="Are you sure you want to close this period?" string="Close period (Mission)" type="object" icon="gtk-go-forward" context="{'state': 'mission-closed'}" colspan="1"/>
-                            <button name="action_set_state" states="mission-closed" confirm="Are you sure you want to close this period?" string="Close period (HQ)" type="object" icon="gtk-go-forward" context="{'state': 'done'}" colspan="1"/>
+                        <newline/>
+                        <group colspan="4" col="2" attrs="{'invisible': [('state', '=', 'done')]}">
+                            <separator string="Actions" colspan="4"/>
                         </group>
+                        <newline/>
+                        <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'created')]}">
+                            <label string="" colspan="1"/>
+                            <button name="action_open_period" confirm="Are you sure you want to open this period?" string="Open period" type="object" icon="gtk-go-forward" colspan="1"/>
+                        </group>
+                        <group colspan="4" col="2" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('field_process', '=', True)]}">
+                            <label string="" colspan="1"/>
+                            <button name="button_close_field_period" string="Do closing period (Field) process" type="object" icon="gtk-go-forward" colspan="1"/>
+                        </group>
+                        <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'field-closed')]}">
+                            <button name="action_reopen_field" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" colspan="1"/>
+
+                            <button name="action_close_mission" confirm="Are you sure you want to close this period?" string="Close period (Mission)" type="object" icon="gtk-go-forward" colspan="1"/>
+                        </group>
+                        <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'mission-closed')]}">
+                            <button name="action_close_field" confirm="Are you sure you want to re-open this period?" string="Re-open period (Mission)" type="object" icon="gtk-go-back" colspan="1"/>
+                            <button name="action_close_hq" confirm="Are you sure you want to close this period?" string="Close period (HQ)" type="object" icon="gtk-go-forward" colspan="1"/>
+                        </group>
+                        <newline/>
+                        <group attrs="{'invisible': [('field_process', '!=', True)]}" colspan="6" col="2">
+                            <!-- Registers -->
+                            <group col="6" colspan="4">
+                                <label string="Did you close all your registers?" colspan="2" align="0.0"/>
+                                <label string="" colspan="4"/>
+                                <group colspan="6" col="6">
+                                    <button string="Bank registers" name="button_bank_registers" type="object" icon="terp-dolar" colspan="2"/>
+                                    <button string="Cheque registers" name="button_cheque_registers" type="object" icon="terp-dolar" colspan="2"/>
+                                    <button string="Cash registers" name="button_cash_registers" type="object" icon="terp-dolar" colspan="2"/>
+                                </group>
+                            </group>
+
+                            <!-- Recurring entries -->
+                            <group col="4" colspan="4">
+                                <label string="Did you generate and post all recurring entries?" colspan="2" align="0.0"/>
+                                <button string="Recurring entries" name="button_recurring" type="object" icon="terp-stage"/>
+                            </group>
+
+                            <!-- Payrolls -->
+                            <group col="4" colspan="4" attrs="{'invisible': [('payroll_ok', '!=', True)]}">
+                                <label string="Did you import and validate all payroll entries?" colspan="2" align="0.0"/>
+                                <button string="Payroll entries" name="button_payrolls" type="object" icon="terp-personal"/>
+                            </group>
+
+                            <!-- G/L Selector: Open entries (not reconciled, on reconciliable accounts) -->
+                            <group col="4" colspan="4">
+                                <label string="Did you check open entries booked on accounts that can be reconciled?" colspan="2" align="0.0"/>
+                                <button string="Unreconciled entries" name="button_open_entries" type="object" icon="gtk-new"/>
+                            </group>
+
+                            <!-- Currencies -->
+                            <group col="4" colspan="4">
+                                <label string="Did you check that exchange rates have been updated for the period?" colspan="2" align="0.0"/>
+                                <button string="Currencies" name="button_fx_rate" type="object" icon="terp-stock_format-default"/>
+                            </group>
+
+                            <!-- HQ Entries -->
+                            <group col="4" colspan="4">
+                                <label string="Did you import and validate HQ entries (ONLY FOR COORDO)?" colspan="2" align="0.0"/>
+                                <button string="HQ entries" name="button_hq" type="object" icon="terp-personal"/>
+                            </group>
+
+                            <!-- Commitments -->
+                            <group col="4" colspan="4">
+                                <label string="Did you validate all the draft commitment vouchers?" colspan="2" align="0.0"/>
+                                <button string="Commitments" name="button_commitments" type="object" icon="terp-go-month"/>
+                            </group>
+
+                            <!-- Other questions -->
+                            <separator string="" colspan="4"/>
+                            <label string="Did you produce all the reports required in the monthly closing procedure?" colspan="4" align="0.0"/>
+
+                            <!-- Invoices -->
+                            <separator string="" colspan="4"/>
+                            <group col="6" colspan="4">
+                                <label string="Did you check draft and open customer documents?" colspan="6" align="0.0"/>
+                                <group colspan="6" col="6">
+                                    <button string="Stock transfer vouchers" name="button_stock_transfer_vouchers" type="object" icon="gtk-dnd" colspan="2"/>
+                                    <button string="Customer Refunds" name="button_customer_refunds" type="object" icon="gtk-dnd" colspan="2"/>
+                                    <button string="Debit Note" name="button_debit_note" type="object" icon="gtk-dnd" colspan="2"/>
+                                    <button string="Intermission Voucher OUT" name="button_intermission_out" type="object" icon="gtk-dnd" colspan="2"/>
+                                </group>
+                                <label string="Did you check draft and open supplier documents?" colspan="6" align="0.0"/>
+                                <group colspan="6" col="6">
+                                    <button string="Supplier invoices" name="button_supplier_invoices" type="object" icon="gtk-dnd" colspan="2"/>
+                                    <button string="Supplier refunds" name="button_supplier_refunds" type="object" icon="gtk-dnd" colspan="2"/>
+                                    <button string="Supplier direct invoices" name="button_supplier_direct_invoices" type="object" icon="gtk-dnd" colspan="2"/>
+                                    <button string="Donation" name="button_donation" type="object" icon="gtk-dnd" colspan="2"/>
+                                    <button string="Intermission Voucher IN" name="button_intermission_in" type="object" icon="gtk-dnd" colspan="2"/>
+                                </group>
+                            </group>
+                            <separator string="" colspan="4"/>
+                            <newline/>
+                            <label string="" colspan="4" align="0.0"/>
+                        </group>
+                        <newline/>
+                        <group attrs="{'invisible': [('field_process', '!=', True)]}" colspan="4" col="2">
+                            <label string="" colspan="1"/>
+                            <button name="action_close_field" states="draft" confirm="Are you sure you want to close this period?" string="Close period (Field)" type="object" icon="gtk-go-forward" colspan="1"/>
+                        </group>
+                        <newline/>
+                        <field name="field_process" invisible="1"/>
+                        <field name="payroll_ok" invisible="1"/>
                     </button>
                 </data>
             </field>
@@ -70,8 +167,8 @@
                         <field name="special"/>
                         <field name="state"/>
                         <field name="number" invisible="1"/>
-                        <button name="action_set_state" states="field-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" context="{'state': 'draft'}" colspan="1"/>
-                        <button name="action_set_state" states="created" confirm="Are you sure you want to open this period?" string="Open period" type="object" icon="gtk-go-forward" context="{'state': 'draft'}" colspan="1"/>
+                        <button name="action_reopen_field" states="field-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" colspan="1"/>
+                        <button name="action_open_period" states="created" confirm="Are you sure you want to open this period?" string="Open period" type="object" icon="gtk-go-forward" colspan="1"/>
                     </tree>
                 </tree>
             </field>
@@ -90,41 +187,6 @@
             id="account.menu_action_account_period_close_tree"
             parent="account.menu_account_end_year_treatments"
             sequence="0"/>
-
-    <!-- closing period confirmation wizard -->
-        <record model="ir.ui.view" id="wizard_confirm_closing_period_form">
-            <field name='name'>wizard.confirm.closing.period.form</field>
-            <field name='model'>wizard.confirm.closing.period</field>
-            <field name='type'>form</field>
-            <field name='arch' type='xml'>
-                <form string="Closing Period">
-                    <html>
-                        <head>
-                            <title>Some title</title>
-                        </head>
-                        <body style="border:0; margin: 0;">
-                            <p style="width: 700px; margin: 15px 0 25px 5px;">You have to verify manually:<br/>
-                            - Check that fx rates have been updated for the period to close<br/>
-                            - Check that HR entries from the Homere interface have been imported<br/>
-                            - Check list of monthly accruals (all records, by account)<br/>
-                            - Check list of recurring entries for the period (check that they have been generated)<br/>
-                            - P&amp;L in local currency and in functional currency<br/>
-                            - Balances and aged balances of all third party accounts, grouped by partners (ie check list of all open invoices)<br />
-                            - Calculation for unrealized gain / loss has run
-                            </p>
-                        </body>
-                    </html>
-
-                    <newline/>
-                    <label string="" colspan="4" align="0.0"/>
-                    <group col="4" colspan="4">
-                        <label string="" colspan="2"/>
-                        <button string='No' special='cancel' icon='gtk-cancel'/>
-                        <button name="button_confirm" type="object" string="Yes" icon="gtk-ok" confirm="Have you really do all verifications given at screen?"/>
-                    </group>
-                </form>
-            </field>
-        </record>
 
         <delete model="ir.values" id="account.action_idea_post_vote_values"/>
 

@@ -262,7 +262,7 @@
         <tr>
           <td>
             <para style="Parcel">FO ref:</para>
-            <para style="Parcel">[[ pack_family.sale_order_id.name ]]</para>
+            <parawrap style="Parcel">[[ pack_family.sale_order_id and pack_family.sale_order_id.name or '' ]]</parawrap>
           </td>
           <td>
             <para style="Parcel">PPL ref:</para>

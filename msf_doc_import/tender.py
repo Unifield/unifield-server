@@ -77,23 +77,6 @@ class tender(osv.osv):
         (_check_active_product, "You cannot validate this tender because it contains a line with an inactive product", ['tender_line_ids', 'state'])
     ]
 
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        '''
-        Remove lines
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        vals = {}
-        vals['tender_line_ids'] = []
-        for line in self.browse(cr, uid, ids, context=context):
-            line_browse_list = line.tender_line_ids
-            for var in line_browse_list:
-                vals['tender_line_ids'].append((2, var.id))
-            self.write(cr, uid, ids, vals, context=context)
-        return True
-
 # UTP-113 THE METHOD BELOW WAS RETAKEN IN THE WIZARD
 #    def import_file(self, cr, uid, ids, context=None):
 #        '''
@@ -324,7 +307,7 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
             if vals.get('product_uom') and vals.get('product_id'):
                 product_id = vals.get('product_id')
                 product_uom = vals.get('product_uom')
-                res = self.onchange_uom(cr, uid, ids, product_id, product_uom, context)
+                res = self.onchange_uom(cr, uid, ids, product_id, product_uom, vals.get('product_qty', 0.00), context)
                 if res and res['warning']:
                     message += res['warning']['message']
             if message:

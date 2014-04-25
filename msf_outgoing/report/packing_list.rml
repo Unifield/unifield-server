@@ -84,6 +84,54 @@
       <lineStyle kind="LINEBELOW" colorName="#000000" start="2,-1" stop="2,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="3,-1" stop="3,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="4,-1" stop="4,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="5,-1"/>
+    </blockTableStyle>
+      <blockTableStyle id="Table10">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="LINEBEFORE" colorName="#e6e6e6" start="0,0" stop="0,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="0,0" stop="0,0"/>
+      <lineStyle kind="LINEBEFORE" colorName="#e6e6e6" start="1,0" stop="1,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="1,0" stop="1,0"/>
+      <lineStyle kind="LINEBEFORE" colorName="#e6e6e6" start="2,0" stop="2,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="2,0" stop="2,0"/>
+      <lineStyle kind="LINEBEFORE" colorName="#e6e6e6" start="3,0" stop="3,-1"/>
+      <lineStyle kind="LINEAFTER" colorName="#e6e6e6" start="3,0" stop="3,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="3,0" stop="3,0"/>
+      <lineStyle kind="LINEAFTER" colorName="#e6e6e6" start="4,0" stop="4,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="4,0" stop="4,0"/>
+      <lineStyle kind="LINEAFTER" colorName="#e6e6e6" start="5,0" stop="5,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="5,0" stop="5,0"/>
+      <lineStyle kind="LINEAFTER" colorName="#e6e6e6" start="6,0" stop="6,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="6,0" stop="6,0"/>
+      <lineStyle kind="LINEAFTER" colorName="#e6e6e6" start="7,0" stop="7,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="7,0" stop="7,0"/>
+      <lineStyle kind="LINEAFTER" colorName="#e6e6e6" start="8,0" stop="8,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="8,0" stop="8,0"/>
+      
+      
+      
+      <lineStyle kind="LINEBEFORE" colorName="#e6e6e6" start="0,1" stop="0,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="0,-1" stop="0,-1"/>
+      <lineStyle kind="LINEBEFORE" colorName="#e6e6e6" start="1,1" stop="1,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="1,-1" stop="1,-1"/>
+      <lineStyle kind="LINEBEFORE" colorName="#e6e6e6" start="2,1" stop="2,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="2,-1" stop="2,-1"/>
+      <lineStyle kind="LINEBEFORE" colorName="#e6e6e6" start="3,1" stop="3,-1"/>
+      <lineStyle kind="LINEAFTER" colorName="#e6e6e6" start="3,1" stop="3,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="3,-1" stop="3,-1"/>
+      <lineStyle kind="LINEAFTER" colorName="#e6e6e6" start="4,1" stop="4,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="4,-1" stop="4,-1"/>
+      <lineStyle kind="LINEAFTER" colorName="#e6e6e6" start="5,1" stop="5,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="5,-1" stop="5,-1"/>
+      <lineStyle kind="LINEAFTER" colorName="#e6e6e6" start="6,1" stop="6,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="6,-1" stop="6,-1"/>
+      <lineStyle kind="LINEAFTER" colorName="#e6e6e6" start="7,1" stop="7,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="7,-1" stop="7,-1"/>
+      <lineStyle kind="LINEAFTER" colorName="#e6e6e6" start="8,1" stop="8,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="8,-1" stop="8,-1"/>
+      
+      
     </blockTableStyle>
     <blockTableStyle id="Table2">
       <blockAlignment value="LEFT"/>
@@ -93,6 +141,7 @@
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="2,-1" stop="2,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="3,-1" stop="3,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="4,-1" stop="4,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="5,-1" stop="5,-1"/>
     </blockTableStyle>
     <initialize>
       <paraStyle name="all" alignment="justify"/>
@@ -111,6 +160,8 @@
     <paraStyle name="P12" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="6.0" spaceAfter="6.0"/>
     <paraStyle name="P13" fontName="Helvetica" fontSize="6.0" leading="8" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P14" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+        <paraStyle name="P15" fontName="Helvetica-Bold" fontSize="6.0" leading="8" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="8.0" leading="10" spaceBefore="12.0" spaceAfter="6.0"/>
@@ -164,7 +215,8 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <para style="terp_header">Packing List - [[ time.strftime('%d/%m/%Y') ]]</para>
+    <para style="terp_header">Packing List - [[ time.strftime('%d/%m/%Y') ]]    [[ shipment.state == 'draft' and (shipment.state).upper()  or '']]</para>
+    <para style="terp_header"></para>
     <blockTable colWidths="132.0,134.0,135.0,135.0" style="Table4">
       <tr>
         <td>
@@ -172,7 +224,7 @@
         </td>
         <td>
           <para style="terp_default_8">
-            <font color="white"> </font>
+            <paraStyle name="P13" fontName="Helvetica" fontSize="6.0" leading="8" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
           </para>
         </td>
         <td>
@@ -241,7 +293,7 @@
     <blockTable colWidths="132.0,134.0,135.0,135.0" style="Table7">
       <tr>
         <td>
-          <para style="P3">Number of Parcels</para>
+          <para style="P3">Number of Packs</para>
         </td>
         <td>
           <para style="terp_default_8">[[ shipment.num_of_packs ]]</para>
@@ -278,34 +330,43 @@
     <para style="P8">Parcels details</para>
     <section>
       <para style="P13">[[repeatIn(shipment.pack_family_memory_ids,'pack_family')]]</para>
-      <blockTable colWidths="100.0,70.0,36.0,48.0,35.0,80.0,75.0,66.0,66.0" style="Table8">
+      <blockTable colWidths="125.0,75.0,36.0,38.0,35.0,80.0,65.0,66.0,56.0" style="Table10">
         <tr>
           <td>
-            <para style="terp_default_9">FO ref: [[ pack_family.sale_order_id.name ]]</para>
+            <para style="P15">FO ref</para>
+            <para style="P13">[[ pack_family.sale_order_id.name ]]</para>
           </td>
           <td>
-            <para style="P10">PPL ref: [[ pack_family.ppl_id.name ]]</para>
+            <para style="P15">PPL ref </para>
+            <para style="P13">[[ pack_family.ppl_id.name ]]</para>
           </td>
           <td>
-            <para style="P10">#Packs: [[ pack_family.num_of_packs ]]</para>
+            <para style="P15">Packs</para>
+            <para style="P13">[[ pack_family.num_of_packs ]]</para>   
           </td>
           <td>
-            <para style="P10">From p: [[ pack_family.from_pack ]]</para>
+            <para style="P15">From p </para>
+            <para style="P13">[[ pack_family.from_pack ]]</para>    
           </td>
           <td>
-            <para style="P10">To p: [[ pack_family.to_pack ]]</para>
+            <para style="P15">To p </para>
+            <para style="P13">[[ pack_family.to_pack ]]</para>     
           </td>
           <td>
-            <para style="P10">Pack Wt [kg]: [[ pack_family.weight ]]</para>
+            <para style="P15">Pack Wt [kg] </para>
+            <para style="P13">[[ pack_family.weight ]]</para>    
           </td>
           <td>
-            <para style="terp_default_Right_9">Tot Wt [kg]: [[ pack_family.total_weight ]]</para>
+            <para style="P15">Tot Wt [kg] </para>
+            <para style="P13"> [[ pack_family.total_weight ]]</para>    
           </td>
           <td>
-            <para style="terp_default_Right_9">Pack Val: [[ pack_family.amount ]] [[ pack_family.currency_id.name ]]</para>
+            <para style="P15">Pack Val </para>
+            <para style="P13"> [[ pack_family.amount ]] [[ pack_family.currency_id.name ]]</para>   
           </td>
           <td>
-            <para style="terp_default_Right_9">Tot Val: [[ pack_family.total_amount ]][[ pack_family.currency_id.name ]]</para>
+            <para style="P15">Tot Val </para>
+            <para style="P13">[[ pack_family.total_amount ]][[ pack_family.currency_id.name ]]</para>
           </td>
         </tr>
       </blockTable>
@@ -357,5 +418,66 @@
         </para>
       </section>
     </section>
+
+
+    <para style="Standard">
+      <font color="white"> </font>
+    </para>
+    <para style="P8" >[[ shipment.additional_items_ids and 'Additional Items' or removeParentNode('para')]] </para>
+    <section>
+      [[ shipment.additional_items_ids or removeParentNode('section') ]]
+    <section>
+      [[ shipment.additional_items_ids or removeParentNode('section') ]]
+      <blockTable colWidths="117.0,50.0,60.0,181.0,60.0,50.0" repeatRows="1" style="Table9">
+        <tr>
+          <td>
+            <para style="terp_tblheader_Details">Additional Items</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_Details">Quantity</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_Details">UOM</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_Details">Comment</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_Details">Volume</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_Details">Weight</para>
+          </td>
+        </tr>
+      </blockTable>
+     </section>
+     <section>
+        [[ shipment.additional_items_ids or removeParentNode('section') ]]
+        <para style="P14">[[repeatIn(shipment.additional_items_ids,'line')]] </para>
+        <blockTable colWidths="117.0,50.0,60.0,181.0,60.0,50.0" style="Table2">
+          <tr>
+            <td>
+              <para style="P10">[[ line.name ]]</para>
+            </td>
+            <td>
+              <para style="P10">[[ line.quantity ]]</para>
+            </td>
+            <td>
+              <para style="P10">[[ line.uom.name ]]</para>
+            </td>
+            <td>
+              <para style="P10">[[ line.comment ]]</para>
+            </td>
+            <td>
+              <para style="P10">[[ line.volume ]]</para>
+            </td>
+            <td>
+              <para style="P10">[[ line.weight ]]</para>
+            </td>
+          </tr>
+        </blockTable>
+      </section>
+      </section>
+    
   </story>
 </document>

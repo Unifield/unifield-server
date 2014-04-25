@@ -22,11 +22,8 @@
 from osv import osv, fields
 from tools.translate import _
 import base64
-from os.path import join as opj
-import tools
 
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from msf_doc_import.check_line import *
 
 RESULT_MODELS_SELECTION = [('group', 'Group'), ('user', 'User'), ('menu', 'Menu')]
 RESULT_TYPES_SELECTION = [('error', 'Error'), ('warning', 'Warning'), ('created', 'Created'), ('activated', 'Activated'), ('deactivated', 'Deactivated')]
@@ -37,7 +34,7 @@ class user_access_configurator(osv.osv_memory):
     _columns = {'file_to_import_uac': fields.binary(string='File to import', filters='*.xml', help='You can use the template of the export for the format that you need to use. \n The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : Product Code*, Product Description*, Initial Average Cost, Location*, Batch, Expiry Date, Quantity'),
                 'number_of_non_group_columns_uac': fields.integer(string='Number of columns not containing group name')}
     _defaults = {'number_of_non_group_columns_uac': 4}
-    
+
 
     def _row_is_empty(self, cr, uid, ids, context=None, *args, **kwargs):
         """
@@ -45,7 +42,7 @@ class user_access_configurator(osv.osv_memory):
         """
         row = kwargs['row']
         return all([not cell.data for cell in row.cells])
-    
+
     def _cell_is_true(self, cr, uid, ids, context=None, *args, **kwargs):
         """
         return True if row is empty
@@ -54,7 +51,7 @@ class user_access_configurator(osv.osv_memory):
         if cell.data and cell.data.upper() == 'YES':
             return True
         return False
-    
+
     def _get_ids_from_group_names(self, cr, uid, context=None, *args, **kwargs):
         '''
         return ids corresponding to group names
@@ -67,13 +64,13 @@ class user_access_configurator(osv.osv_memory):
         additional_criterias = kwargs.get('additional_criterias', [])
         if not isinstance(group_names, list):
             group_names = [group_names]
-        
+
         # add additional criterias
         criterias = [('name', 'in', group_names)]
         criterias.extend(additional_criterias)
         group_ids = group_obj.search(cr, uid, criterias, context=context)
         return group_ids
-    
+
     def _get_all_access_objects_ids(self, cr, uid, context=None, *args, **kwargs):
         '''
         return ids of object which need full access even if originally admin rights only
@@ -83,23 +80,23 @@ class user_access_configurator(osv.osv_memory):
         # group names
         all_access_group_names = self._get_all_access_objects_name(cr, uid, context=context)
         all_access_group_ids = model_obj.search(cr, uid, [('model', 'in', all_access_group_names)], context=context)
-        
+
         return all_access_group_ids
-    
+
     def _get_all_access_objects_name(self, cr, uid, context=None, *args, **kwargs):
         '''
         return names of object which need full access even if originally admin rights only
         '''
         all_access_object_names = ['ir.model.data']
         return all_access_object_names
-    
+
     def _get_admin_user_rights_group_name(self, cr, uid, context=None, *args, **kwargs):
         '''
         return admin_user_rights_group
         '''
         admin_user_rights_group = 'Administration / Access Rights'
         return admin_user_rights_group
-    
+
     def _get_admin_user_rights_group_id(self, cr, uid, context=None, *args, **kwargs):
         '''
         return admin_user_rights_group id
@@ -107,21 +104,21 @@ class user_access_configurator(osv.osv_memory):
         admin_group_name = self._get_admin_user_rights_group_name(cr, uid, context=context)
         admin_group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=[admin_group_name])
         return admin_group_ids[0]
-    
+
     def _get_DNCGL_name(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         return do not change groups
         '''
         group_immunity_list = [u'Useability / No One', u'Useability / Multi Companies']
         return group_immunity_list
-    
+
     def _get_DNCGL_ids(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         return do not change groups ids
         '''
         group_names = self._get_DNCGL_name(cr, uid, ids, context=context)
         return self._get_ids_from_group_names(cr, uid, context=context, group_names=group_names)
-    
+
     def _get_IGL_name(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         return immunity groups
@@ -129,9 +126,9 @@ class user_access_configurator(osv.osv_memory):
         group_immunity_list = [u'Administration / Access Rights']
         # CNCGL names are temporarily added as non active groups are considered to be part of no groups, and therefore always displayed?
 #        group_immunity_list.extend(self._get_DNCGL_name(cr, uid, ids, context=context))
-        
+
         return group_immunity_list
-    
+
     def _group_name_is_immunity(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         return True if group_name is immune
@@ -139,18 +136,18 @@ class user_access_configurator(osv.osv_memory):
         group_immunity_list = self._get_IGL_name(cr, uid, ids, context=context)
         group_name = kwargs['group_name']
         return group_name in group_immunity_list
-        
+
     def _remove_group_immune(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         clear groups of immune groups
         '''
         group_names = kwargs['group_names']
         return [group_name for group_name in group_names if not self._group_name_is_immunity(cr, uid, ids, context=context, group_name=group_name)]
-    
+
     def _import_data_uac(self, cr, uid, ids, context=None):
         '''
         import data and generate data structure
-        
+
         {id: {
               'group_name_list': [group_names],
               'menus_groups': {'menu_id': [group_names]}, - we only take the group_name into account if True - if the same group is defined multiple times, it will be deleted at the end of import function
@@ -164,10 +161,10 @@ class user_access_configurator(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         # data structure returned with processed data from file
         data_structure = {}
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             # data structure returned with processed data from file
             data_structure.update({obj.id: {'group_name_list': [],
@@ -177,12 +174,12 @@ class user_access_configurator(osv.osv_memory):
                                             'menu': {'warning': [], 'error': []},
                                             }})
             # file to process
-            file = obj.file_to_import_uac
+            f = obj.file_to_import_uac
             # file is mandatory for import process
-            if not file:
+            if not f:
                 raise osv.except_osv(_('Warning'), _('No File Selected.'))
             # load the selected file according to XML OUTPUT
-            fileobj = SpreadsheetXML(xmlstring=base64.decodestring(file))
+            fileobj = SpreadsheetXML(xmlstring=base64.decodestring(f))
             # iterator on rows
             rows = fileobj.getRows()
             # first row flag
@@ -192,7 +189,7 @@ class user_access_configurator(osv.osv_memory):
                 # skip empty lines
                 if self._row_is_empty(cr, uid, ids, context=context, row=row):
                     continue
-                
+
                 # first row, gather group names
                 if first_row:
                     first_row = False
@@ -218,11 +215,11 @@ class user_access_configurator(osv.osv_memory):
                         # menu is in the file but not in the database
                         data_structure[obj.id]['menu']['error'].append('The menu %s (%s.%s) is defined in the file but is missing in the database.'%(row.cells[3], row.cells[0], row.cells[1]))
                         continue
-                    
+
                     # test if a menu is defined multiple times
                     if menu_id in data_structure[obj.id]['menus_groups']:
                         data_structure[obj.id]['menu']['warning'].append('The menu %s (%s.%s) is defined multiple times. Groups from all these rows are aggregated (OR function).'%(row.cells[3], row.cells[0], row.cells[1]))
-                    
+
                     # skip information rows - find related groups
                     for i in range(obj.number_of_non_group_columns_uac, len(row)):
                         # name of group
@@ -233,50 +230,47 @@ class user_access_configurator(osv.osv_memory):
                             # if the column is defined multiple times, we only add one time the name, but the access selection is aggregated from all related columns
                             if group_name not in menu_group_list:
                                 menu_group_list.append(group_name)
-            
+
             # all rows have been treated, the order of group_name_list is not important anymore, we can now exclude groups which are defined multiple times
             data_structure[obj.id]['group_name_list'] = list(set(data_structure[obj.id]['group_name_list']))
-                    
+
         return data_structure
-    
+
     def _activate_immunity_groups(self, cr, uid, ids, context=None):
         '''
         activate immunity groups
-        
+
         return immunity group
         '''
-        # objects
-        group_obj = self.pool.get('res.groups')
-        
         group_immunity_name_list = self._get_IGL_name(cr, uid, ids, context=context)
         return self._set_active_group_name(cr, uid, ids, context=context, group_names=group_immunity_name_list, active_value=True)
-    
+
     def _set_active_group_name(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         activate groups names
-        
+
         return activated groups names
         '''
         # objects
         group_obj = self.pool.get('res.groups')
         # data structure
         data_structure = context['data_structure']
-        
+
         group_names = kwargs['group_names']
         active_value = kwargs['active_value']
         set_active_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=group_names, additional_criterias=[('visible_res_groups', '=', not active_value)])
         group_obj.write(cr, uid, set_active_ids, {'visible_res_groups': active_value}, context=context)
-        
+
         # info logging - activated/deactivated groups
         set_active_names = [x['name'] for x in group_obj.read(cr, uid, set_active_ids, ['name'], context=context)]
-        for id in ids:
+        for i in ids:
             if active_value:
-                data_structure[id]['group']['activated'].extend(set_active_names)
+                data_structure[i]['group']['activated'].extend(set_active_names)
             else:
-                data_structure[id]['group']['deactivated'].extend(set_active_names)
-        
+                data_structure[i]['group']['deactivated'].extend(set_active_names)
+
         return group_names
-    
+
     def _process_groups_uac(self, cr, uid, ids, context=None):
         '''
         create / active / deactivate groups according to policy defined in the file
@@ -286,7 +280,7 @@ class user_access_configurator(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         # objects
         group_obj = self.pool.get('res.groups')
         # data structure
@@ -295,10 +289,10 @@ class user_access_configurator(osv.osv_memory):
         group_ids = group_obj.search(cr, uid, [], context=context)
         group_names = group_obj.read(cr, uid, group_ids, ['name'], context=context)
         group_names = [x['name'] for x in group_names]
-        
+
         # IGL groups are activated
         self._activate_immunity_groups(cr, uid, ids, context=context)
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             # work copy of groups present in the file - will represent the missing groups to be created
             missing_group_names = list(data_structure[obj.id]['group_name_list'])
@@ -314,52 +308,52 @@ class user_access_configurator(osv.osv_memory):
                 elif not self._group_name_is_immunity(cr, uid, ids, context=context, group_name=group_name):
                     # the group from database is not immune and not in the file
                     deactivate_group_names.append(group_name)
-            
+
             # create the new groups from the file
             for missing_group_name in missing_group_names:
-                new_group_id = group_obj.create(cr, uid, {'name': missing_group_name, 'from_file_import_res_groups': True}, context=context)
+                group_obj.create(cr, uid, {'name': missing_group_name, 'from_file_import_res_groups': True}, context=context)
                 # info logging - created groups
                 data_structure[obj.id]['group']['created'].append(missing_group_name)
-                
+
             # deactivate the groups not present in the file
             # UF-1996 : Don't deactivate groups not present in the file
             #self._set_active_group_name(cr, uid, ids, context=context, group_names=deactivate_group_names, active_value=False)
-        
+
         return True
-    
+
     def _set_active_user_ids(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         change active value of user ids
-        
+
         return modified user ids
         '''
         # objects
         user_obj = self.pool.get('res.users')
         # data structure
         data_structure = context['data_structure']
-    
+
         user_ids = kwargs['user_ids']
         active_value = kwargs['active_value']
         # only with active not active_value
         set_active_ids = user_obj.search(cr, uid, [('id', 'in', user_ids), ('active', '=', not active_value)], context=context)
         user_obj.write(cr, uid, set_active_ids, {'active': active_value}, context=context)
-        
+
         # info logging - activated/deactivated users
         set_active_names = [x['name'] for x in user_obj.read(cr, uid, set_active_ids, ['name'], context=context)]
-        for id in ids:
+        for i in ids:
             if active_value:
-                data_structure[id]['user']['activated'].extend(set_active_names)
+                data_structure[i]['user']['activated'].extend(set_active_names)
             else:
-                data_structure[id]['user']['deactivated'].extend(set_active_names)
-        
+                data_structure[i]['user']['deactivated'].extend(set_active_names)
+
         return set_active_ids
-    
+
     def _process_users_uac(self, cr, uid, ids, context=None):
         '''
         create user corresponding to file groups if not already present
-        
+
         default values for users
-        
+
         res_user:
         'groups_id': fields.many2many('res.groups', 'res_groups_users_rel', 'uid', 'gid', 'Groups'),
         '''
@@ -368,14 +362,14 @@ class user_access_configurator(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         # objects
         user_obj = self.pool.get('res.users')
         # data structure
         data_structure = context['data_structure']
         # default password value
         default_password_value = 'temp'
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             # get admin user id
             admin_ids = user_obj.search(cr, uid, [('login', '=', 'admin')], context=context)
@@ -401,7 +395,7 @@ class user_access_configurator(osv.osv_memory):
                                                                       'date': False}, context=context)]
                     # info logging - created users
                     data_structure[obj.id]['user']['created'].append(group_name)
-        
+
                 else:
                     # we make sure that the user name is up to date, as Manager gives the same login name as mAnAgER.
                     user_obj.write(cr, uid, user_ids, {'name': group_name}, context=context)
@@ -412,9 +406,9 @@ class user_access_configurator(osv.osv_memory):
                 group_ids_list.extend(group_ids)
                 # keep user_id for deactivate users not present in the file
                 user_ids_list.extend(user_ids)
-                
+
             # get all users
-            all_user_ids = user_obj.search(cr, uid, [], context=context)
+            #all_user_ids = user_obj.search(cr, uid, [], context=context)
             # deactivate user not present in the file and not ADMIN
             # UF-1996 : Don't deactivate user not present in the file
             #deactivate_user_ids = [x for x in all_user_ids if x not in user_ids_list]
@@ -425,13 +419,13 @@ class user_access_configurator(osv.osv_memory):
             group_ids_list.append(self._get_admin_user_rights_group_id(cr, uid, context=context))
             # for admin user, set all unifield groups + admin group (only user to have this group)
             user_obj.write(cr, uid, admin_ids, {'groups_id': [(6, 0, group_ids_list)]}, context=context)
-        
+
         return True
-    
+
     def _process_menus_uac(self, cr, uid, ids, context=None):
         '''
         set menus group relation as specified in file
-        
+
         ir.ui.menu: groups_id
         '''
         # Some verifications
@@ -439,7 +433,7 @@ class user_access_configurator(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         # objects
         menu_obj = self.pool.get('ir.ui.menu')
         # data structure
@@ -448,7 +442,7 @@ class user_access_configurator(osv.osv_memory):
         all_menus_context = dict(context)
         all_menus_context.update({'ir.ui.menu.full_list': True})
         db_menu_ids = menu_obj.search(cr, uid, [], context=all_menus_context)
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             # check each menus from database
             for db_menu_id in db_menu_ids:
@@ -475,17 +469,17 @@ class user_access_configurator(osv.osv_memory):
                 # link the menu to selected group ids
                 if group_ids:
                     menu_obj.write(cr, uid, [db_menu_id], {'groups_id': [(6, 0, group_ids)]}, context=context)
-        
+
         return True
-    
+
     def _process_objects_uac(self, cr, uid, context=None):
         '''
         reset ACL lines
-        
-        
+
+
         ir.model:
         'access_ids': fields.one2many('ir.model.access', 'model_id', 'Access'),
-        
+
         ir.model.access:
         'model_id': fields.many2one('ir.model', 'Object', required=True, domain=[('osv_memory','=', False)], select=True, ondelete='cascade'),
         'group_id': fields.many2one('res.groups', 'Group', ondelete='cascade', select=True),
@@ -528,6 +522,9 @@ class user_access_configurator(osv.osv_memory):
                                              }
         # create one line for all objects no linked to admin
         no_linked_to_admin_ids = [x for x in model_ids if x not in two_lines_ids.keys()]
+        # we add the ir.values in the list "no_linked_to_admin_ids" because we want the user to be able to add "default" values (utp-457)
+        ir_values_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'ir.values')], context=context)[0]
+        no_linked_to_admin_ids.append(ir_values_id)
         model_obj.write(cr, uid, no_linked_to_admin_ids, {'access_ids' : [(0, 0, acl_one_line_read_no_group_values)]}, context=context)
         # first line, for admin group, all access
         acl_admin_values = {'name': 'admin',
@@ -547,9 +544,9 @@ class user_access_configurator(osv.osv_memory):
         # create lines for theses models with deletion of existing ACL
         # [(0, 0, {'field_name':field_value_record1, ...}), (0, 0, {'field_name':field_value_record2, ...})]
         model_obj.write(cr, uid, two_lines_ids.keys(), {'access_ids' : [(0, 0, acl_admin_values), (0, 0, acl_read_values)]}, context=context)
-        
+
         return True
-    
+
     def _process_record_rules_uac(self, cr, uid, context=None):
         '''
         drop all
@@ -557,14 +554,14 @@ class user_access_configurator(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        
+
         # objects
         rule_obj = self.pool.get('ir.rule')
         all_ids = rule_obj.search(cr, uid, [], context=context)
         rule_obj.unlink(cr, uid, all_ids, context=context)
-        
+
         return False
-    
+
     def _do_process_uac(self, cr, uid, ids, context=None):
         '''
         private method, used in the yaml tests to get data_structure
@@ -574,7 +571,7 @@ class user_access_configurator(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         # we need to take inactive groups and users into acount, in order to reactivate them and avoid creation of the same group multiple time
         context=dict(context, active_test=False)
         # gather data structure corresponding to selected file
@@ -591,7 +588,7 @@ class user_access_configurator(osv.osv_memory):
         # process rules
         self._process_record_rules_uac(cr, uid, context=context)
         return data_structure
-    
+
     def do_process_uac(self, cr, uid, ids, context=None):
         '''
         main function called from wizard
@@ -601,7 +598,7 @@ class user_access_configurator(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         data_structure = self._do_process_uac(cr, uid, ids, context=context)
         # data
         name = _("Results from User Rights Import")
@@ -612,11 +609,11 @@ class user_access_configurator(osv.osv_memory):
         res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context,
                                                                                                 data_structure=data_structure))
         return res
-    
+
     def do_update_after_module_install(self, cr, uid, mode, context=None):
         '''
         special method called after module install
-        
+
         reset data potentially reset to default values
         '''
         if mode == 'init':
@@ -640,7 +637,7 @@ class user_access_configurator(osv.osv_memory):
                 m_obj = self.pool.get(model)
                 cr.execute('''select m.id from '''+ m_obj._table+''' m
                     left join ir_model_data d on d.res_id = m.id and d.model = %s
-                    where module not in ('sd', 'sync_client')
+                    where module not in ('sd', 'sync_client', 'sync_server', 'sync_common', 'sync_so', 'update_client', 'update_server')
                 ''', (model,))
                 ids_to_del = [x[0] for x in cr.fetchall()]
                 if ids_to_del:
@@ -657,7 +654,7 @@ class user_access_results(osv.osv_memory):
                 'user_ids_user_access_results': fields.one2many('user.access.results.users.line', 'wizard_id_user_access_results_line', string='Users Info'),
                 'menu_ids_user_access_results': fields.one2many('user.access.results.menus.line', 'wizard_id_user_access_results_line', string='Menus Info'),
                 }
-    
+
     def default_get(self, cr, uid, fields, context=None):
         '''
         fill the lines with default create_values
@@ -665,8 +662,6 @@ class user_access_results(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        # objects
-        move_obj = self.pool.get('stock.move')
         # data structure
         data_structure = context['data_structure']
         # super
@@ -682,24 +677,24 @@ class user_access_results(osv.osv_memory):
             # type
             for type_t in RESULT_TYPES_SELECTION:
                 # type
-                type = type_t[0]
+                tmp_type = type_t[0]
                 # fill groups data
-                if type in data_structure[wizard_id][model]:
-                    datas = data_structure[wizard_id][model][type]
+                if tmp_type in data_structure[wizard_id][model]:
+                    datas = data_structure[wizard_id][model][tmp_type]
                     # errors
                     for value in datas:
                         create_values  = {'model_user_access_results_line': model,
-                                          'type_user_access_results_line': type,
+                                          'type_user_access_results_line': tmp_type,
                                           'value_user_access_results_line': value}
                         result.append(create_values)
-            
+
             # add to one2many
             # kit list
             if '%s_ids_user_access_results'%model in fields:
                 res.update({'%s_ids_user_access_results'%model: result})
-                     
+
         return res
-    
+
     def close_results_uar(self, cr, uid, ids, context=None):
         '''
         close wizard
@@ -711,7 +706,7 @@ user_access_results()
 
 class user_access_results_groups_line(osv.osv_memory):
     _name = 'user.access.results.groups.line'
-    
+
     def _vals_get_user_access_results_line(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
@@ -721,7 +716,7 @@ class user_access_results_groups_line(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
@@ -734,9 +729,9 @@ class user_access_results_groups_line(osv.osv_memory):
             elif obj.type_user_access_results_line in ['warning', 'error']:
                 string_value = '%s.'%(obj.value_user_access_results_line)
             result[obj.id].update({'name': string_value})
-            
+
         return result
-    
+
     _columns = {'wizard_id_user_access_results_line': fields.many2one('user.access.results', string='Wizard'),
                 'name': fields.function(_vals_get_user_access_results_line, method=True, type='char', size=1024, string='Name', multi='get_vals_user_access_results_line', readonly=True),
                 'model_user_access_results_line': fields.selection(RESULT_MODELS_SELECTION, string='Model', readonly=True),
@@ -750,14 +745,14 @@ user_access_results_groups_line()
 class user_access_results_users_line(osv.osv_memory):
     _name = 'user.access.results.users.line'
     _inherit = 'user.access.results.groups.line'
-    
+
 user_access_results_users_line()
 
 
 class user_access_results_menus_line(osv.osv_memory):
     _name = 'user.access.results.menus.line'
     _inherit = 'user.access.results.groups.line'
-    
+
 user_access_results_menus_line()
 
 
@@ -766,12 +761,16 @@ class res_groups(osv.osv):
     add an active column
     '''
     _inherit = 'res.groups'
-    _columns = {'visible_res_groups': fields.boolean('Visible', readonly=False),
-                'from_file_import_res_groups': fields.boolean('From file Import', readonly=True),
-                }
-    _defaults = {'visible_res_groups': True,
-                 'from_file_import_res_groups': False,
-                 }
+    _columns = {
+        'visible_res_groups': fields.boolean('Visible', readonly=False),
+        'from_file_import_res_groups': fields.boolean('From file Import', readonly=True),
+        'is_an_admin_profile': fields.boolean('Is an admin profile', help="User group members allowed to set default value for all users."),
+    }
+    _defaults = {
+        'visible_res_groups': True,
+        'from_file_import_res_groups': False,
+        'is_an_admin_profile': False,
+    }
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         '''
@@ -827,21 +826,21 @@ class res_groups(osv.osv):
             if extended_ids and extended_ids[0] in ids:
                 raise osv.except_osv(_('Error'), _('You cannot remove or inactive the Useability / Extended View group'))
 
-            for id in ids:
+            for i in ids:
                 # Remove the link between groups and users
-                user_ids = user_obj.search(cr, uid, [('groups_id', '=', id)], context=context)
-                user_obj.write(cr, uid, user_ids, {'groups_id': [(3, id)]}, context=context)
+                user_ids = user_obj.search(cr, uid, [('groups_id', '=', i)], context=context)
+                user_obj.write(cr, uid, user_ids, {'groups_id': [(3, i)]}, context=context)
 
                 # Remove the link between groups and menu
                 # Change the context because of the filtering of top menus
                 # in base module (i.e. : addons/base/ir/ir_ui_menu.py:115)
                 menu_context = context.copy()
                 menu_context.update({'ir.ui.menu.full_list': True})
-                menu_ids = menu_obj.search(cr, uid, [('groups_id', '=', id)], context=menu_context)
-                # If the removing of group in menus give back public access of 
+                menu_ids = menu_obj.search(cr, uid, [('groups_id', '=', i)], context=menu_context)
+                # If the removing of group in menus give back public access of
                 # the menu, add Admin groups on menus accesses
                 for menu in menu_obj.browse(cr, uid, menu_ids, context=context):
-                    menu_vals = {'groups_id': [(3, id)]}
+                    menu_vals = {'groups_id': [(3, i)]}
                     if menu.id == hidden_menu_id:
                         menu_vals['groups_id'].append((6, 0, no_one_id))
                     elif len(menu.groups_id) == 1:
@@ -849,12 +848,12 @@ class res_groups(osv.osv):
                     menu_obj.write(cr, uid, [menu.id], menu_vals, context=context)
 
                 # Remove the field access rules associated to this group
-                far_ids = far_obj.search(cr, uid, [('group_ids', '=', id), ('active', 'in', ('t', 'f'))], context=context)
-                far_obj.write(cr, uid, far_ids, {'group_ids': [(3, id)]}, context=context)
+                far_ids = far_obj.search(cr, uid, [('group_ids', '=', i), ('active', 'in', ('t', 'f'))], context=context)
+                far_obj.write(cr, uid, far_ids, {'group_ids': [(3, i)]}, context=context)
 
                 # Remove the button access rules associated to this group
-                bar_ids = bar_obj.search(cr, uid, [('group_ids', '=', id)], context=context)
-                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(3, id)]}, context=context)
+                bar_ids = bar_obj.search(cr, uid, [('group_ids', '=', i)], context=context)
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(3, i)]}, context=context)
 
             # Remove the control list lines associated to this group
             acl_ids = acl_obj.search(cr, uid, [('group_id', 'in', ids)], context=context)
@@ -894,34 +893,44 @@ res_groups()
 class res_users(osv.osv):
     _inherit = 'res.users'
 
+    def get_admin_profile(self, cr, uid, context=None):
+        """
+        It is called from the web.
+        It enables to display certain fields if the user belongs to a group profiled 'admin'.
+        """
+        for user in self.browse(cr, uid, [uid], context=context):
+            for group in user.groups_id:
+                if group.is_an_admin_profile:
+                    return True
+        return False
+
     _defaults = {
         'groups_id': lambda *a: [],
     }
-
 res_users()
 
 
 class ir_model_access(osv.osv):
     _inherit = 'ir.model.access'
-    
+
     def _ir_model_access_check_groups_hook(self, cr, uid, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the check_groups method from server/bin/addons/base/ir>ir_model.py>ir_model_access
-        
+
         - allow to modify the criteria for group display
         '''
         if context is None:
             context = {}
-        
+
         never_displayed_groups = {'group_multi_company': 'base',
                                   'group_no_one': 'base',
                                   'group_product_variant': 'product'}
-        
+
         # original criteria is not used at all -> no link with groups of the user as groups= stay in original openERP modules - only call if some // modifications are executed by the hooks
         super(ir_model_access, self)._ir_model_access_check_groups_hook(cr, uid, context=context, *args, **kwargs)
         group = kwargs['group']
-        
+
         grouparr  = group.split('.')
         if not grouparr:
             return False
@@ -930,5 +939,25 @@ class ir_model_access(osv.osv):
         if grouparr[1] in never_displayed_groups.keys() and grouparr[0] == never_displayed_groups[grouparr[1]]:
             return False
         return True
-    
+
 ir_model_access()
+
+class ir_values(osv.osv):
+    _inherit = 'ir.values'
+    _name = 'ir.values'
+
+    def delete_default(self, cr, uid, ids, model, field, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        is_admin = self.pool.get('res.users').get_admin_profile(cr, uid, context)
+        dom = [('id', 'in', ids), ('key', '=', 'default'), ('model', '=', model), ('name', '=', field)]
+        if not is_admin:
+            dom.append(('user_id', '=', uid))
+        else:
+            dom.append(('user_id', 'in', [uid, False]))
+        new_ids = self.search(cr, uid, dom)
+        if new_ids:
+            self.unlink(cr, 1, new_ids)
+        return True
+
+ir_values()

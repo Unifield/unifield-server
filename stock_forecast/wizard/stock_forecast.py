@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
@@ -33,28 +32,29 @@ PREFIXES = {'sale.order': 'so_',
             'tender': 'tend_',
             }
 
+
 class stock_forecast_line(osv.osv_memory):
     '''
     view corresponding to pack families
-    
-    integrity constraint 
+
+    integrity constraint
     '''
     _name = "stock.forecast.line"
     _rec_name = 'date'
-    
+
     def _get_selection(self, cr, uid, field, objects, context=None):
         '''
         get selection related of specified objects, and modify keys on the fly
         '''
         result = []
-        
+
         for obj in objects:
             tuples = self.pool.get(obj)._columns[field].selection
             for tuple in tuples:
                 result.append((PREFIXES[obj] + tuple[0], tuple[1]))
-        
+
         return result
-    
+
     def _get_states(self, cr, uid, context=None):
         '''
         get states of specified objects, and modify keys on the fly
@@ -62,7 +62,7 @@ class stock_forecast_line(osv.osv_memory):
         field = 'state'
         objects = ['sale.order', 'purchase.order', 'procurement.order', 'stock.picking', 'tender',]
         return self._get_selection(cr, uid, field, objects, context=context)
-    
+
     def _get_order_type(self, cr, uid, context=None):
         '''
         get order_type of specified objects, and modify keys on the fly
@@ -70,7 +70,7 @@ class stock_forecast_line(osv.osv_memory):
         field = 'order_type'
         objects = ['sale.order', 'purchase.order']
         return self._get_selection(cr, uid, field, objects, context=context)
-    
+
     _columns = {
         'date' : fields.date(string="Date"),
         'doc' : fields.char('Doc', size=1024,),
@@ -87,30 +87,30 @@ class stock_forecast_line(osv.osv_memory):
     _defaults = {
         'first': lambda *a: 'z',
     }
-    
+
     _order = 'date asc, first asc'
-    
+
 stock_forecast_line()
 
 
 class stock_forecast(osv.osv_memory):
     _name = "stock.forecast"
     _description = "Stock Level Forecast"
-    
+
     def _get_selection(self, cr, uid, field, objects, text, context=None):
         '''
         get selection related of specified objects, and modify keys on the fly
         '''
         result = []
-        
+
         for obj in objects:
             tuples = self.pool.get(obj)._columns[field].selection
             for tuple in tuples:
                 if tuple[0] == text:
                     return tuple[1]
-        
+
         return text
-    
+
     def _get_info(self, cr, uid, ids, fields, arg, context=None):
         '''
         get info concerning the selected product
@@ -130,28 +130,29 @@ class stock_forecast(osv.osv_memory):
                 values['product_family_info_id'] = wiz.product_id.nomen_manda_2.id
                 values['procurement_method'] = wiz.product_id.procure_method
                 values['supply_method'] = wiz.product_id.supply_method
-                values['keep_cool'] = wiz.product_id.heat_sensitive_item
+                if wiz.product_id.heat_sensitive_item:
+                    values['keep_cool'] = True
                 values['short_shelf_life'] = wiz.product_id.short_shelf_life
                 values['dangerous_goods'] = wiz.product_id.dangerous_goods
                 values['justification_code_id'] = wiz.product_id.justification_code_id.id
         return result
-    
+
     _columns = {
-                'product_id': fields.many2one('product.product', 'Product'),
-                'warehouse_id' : fields.many2one('stock.warehouse', 'Warehouse'),
-                'product_uom_id': fields.many2one('product.uom', 'Product UoM'),
-                'qty' : fields.float('Quantity', digits=(16,2), readonly=True),
-                'product_family_id': fields.many2one('product.nomenclature', 'Product Family', domain=[('level', '=', 2)]), # not used
-                'stock_forecast_lines': fields.one2many('stock.forecast.line', 'wizard_id', 'Stock Forecasts'),
-                'product_family_info_id': fields.function(_get_info, type='many2one', relation='product.nomenclature', method=True, string='Product Family', multi='get_info',),
-                'procurement_method': fields.function(_get_info, type='selection', selection=[('make_to_stock','Make to Stock'),('make_to_order','Make to Order')], method=True, string='Procurement Method', multi='get_info',),
-                'supply_method': fields.function(_get_info, type='selection', selection=[('produce','Produce'),('buy','Buy')], method=True, string='Supply Method', multi='get_info',),
-                'keep_cool': fields.function(_get_info, type='boolean', method=True, string='Keep Cool', multi='get_info',),
-                'short_shelf_life': fields.function(_get_info, type='boolean', method=True, string='Short Shelf Life', multi='get_info',),
-                'dangerous_goods': fields.function(_get_info, type='boolean', method=True, string='Dangerous Goods', multi='get_info',),
-                'justification_code_id': fields.function(_get_info, type='many2one', relation='product.justification.code', method=True, string='Justification Code', multi='get_info',),
-                }
-    
+        'product_id': fields.many2one('product.product', 'Product'),
+        'warehouse_id' : fields.many2one('stock.warehouse', 'Warehouse'),
+        'product_uom_id': fields.many2one('product.uom', 'Product UoM'),
+        'qty' : fields.float('Quantity', digits=(16,2), readonly=True),
+        'product_family_id': fields.many2one('product.nomenclature', 'Product Family', domain=[('level', '=', 2)]), # not used
+        'stock_forecast_lines': fields.one2many('stock.forecast.line', 'wizard_id', 'Stock Forecasts'),
+        'product_family_info_id': fields.function(_get_info, type='many2one', relation='product.nomenclature', method=True, string='Product Family', multi='get_info',),
+        'procurement_method': fields.function(_get_info, type='selection', selection=[('make_to_stock','Make to Stock'),('make_to_order','Make to Order')], method=True, string='Procurement Method', multi='get_info',),
+        'supply_method': fields.function(_get_info, type='selection', selection=[('produce','Produce'),('buy','Buy')], method=True, string='Supply Method', multi='get_info',),
+        'keep_cool': fields.function(_get_info, type='boolean', method=True, string='Keep Cool', multi='get_info',),
+        'short_shelf_life': fields.function(_get_info, type='boolean', method=True, string='Short Shelf Life', multi='get_info',),
+        'dangerous_goods': fields.function(_get_info, type='boolean', method=True, string='Dangerous Goods', multi='get_info',),
+        'justification_code_id': fields.function(_get_info, type='many2one', relation='product.justification.code', method=True, string='Justification Code', multi='get_info',),
+    }
+
     def start_forecast(self, cr, uid, ids, context=None):
         '''
         create forecast wizard object and execute do_forecast method before
@@ -164,36 +165,36 @@ class stock_forecast(osv.osv_memory):
         wizard_id = self.create(cr, uid, {}, context=context)
         # call do forecast on the created wizard
         self.do_forecast(cr, uid, [wizard_id], context=context)
-        
+
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.forecast',
                 'view_type': 'form',
                 'view_mode': 'form',
-                'target': 'popup',
+                'target': 'new',
                 'res_id': wizard_id,
-                'context': dict(context),
+                'context': context,
                 }
-    
+
     def onchange(self, cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context=None):
         '''
         onchange function, trigger the value update of quantity
         '''
         if context is None:
             context = {}
-            
+
         product_obj = self.pool.get('product.product')
-        
+
         # get values from facade onchange functions
         values = context.get('values', {})
-            
+
         product_list = []
         if product_id:
             product_list.append(product_id)
-            
+
         if product_family_id:
             product_ids = product_obj.search(cr, uid, [('nomen_manda_2', '=', product_family_id)], context=context)
             product_list.extend(product_ids)
-            
+
         c = context.copy()
         # if you remove the coma after done, it will no longer work properly
         c.update({'states': ('done',),
@@ -201,22 +202,22 @@ class stock_forecast(osv.osv_memory):
                   'to_date': time.strftime('%Y-%m-%d %H:%M:%S'),
                   'warehouse': warehouse_id,
                   'uom': product_uom_id})
-        
+
         qty = product_obj.get_product_available(cr, uid, product_list, context=c)
         overall_qty = sum(qty.values())
         values.update(qty=overall_qty)
-        
+
         return {'value': values}
-    
+
     def do_print(self, cr, uid, ids, context=None):
         '''
         Print the report as PDF file
         '''
         if context is None:
             context = {}
-            
+
         product_obj = self.pool.get('product.product')
-        
+
         # data gathered on screen made available for the report
         product_name = 'n/a'
         product_code = 'n/a'
@@ -224,17 +225,13 @@ class stock_forecast(osv.osv_memory):
         product_uom_name = 'n/a'
         product_family_name = 'n/a'
         product_family_info = 'n/a'
-        
+
         procurement_method = 'n/a'
         supply_method = 'n/a'
-        
-        keep_cool = False
-        short_shelf_life = False
-        dangerous_goods = False
-        
+
         qty = False
         date = time.strftime('%Y-%m-%d')
-        
+
         # gather the wizard data
         for wizard in self.browse(cr, uid, ids, context=context):
             # product
@@ -244,23 +241,23 @@ class stock_forecast(osv.osv_memory):
                 product_name = wizard.product_id.name
                 product_code = wizard.product_id.default_code
                 product_family_info = wizard.product_family_info_id.name
-                
+
                 procurement_method = self._get_selection(cr, uid, 'procure_method', ['product.template',], wizard.procurement_method, context=context)
                 supply_method = self._get_selection(cr, uid, 'supply_method', ['product.template',], wizard.supply_method, context=context)
-                
-                keep_cool = str(bool(wizard.keep_cool)) 
-                short_shelf_life = str(wizard.short_shelf_life)
-                dangerous_goods = str(wizard.dangerous_goods)
+
+                keep_cool = 'Yes' if wizard.keep_cool else 'No'
+                short_shelf_life = 'Yes' if wizard.short_shelf_life else 'No'
+                dangerous_goods = 'Yes' if wizard.dangerous_goods else 'No'
                 justification_code = wizard.justification_code_id and wizard.justification_code_id.name_get()[0][1] or 'n/a'
-                
+
             else:
                 raise osv.except_osv(_('Warning !'), _('No product selected.'))
-                
+
             if wizard.product_family_id:
                 product_ids = product_obj.search(cr, uid, [('nomen_manda_2', '=', wizard.product_family_id.id)], context=context)
                 product_list.extend(product_ids)
                 product_family_name = wizard.product_family_id.name
-                
+
             # compute the overall_qty
             c = context.copy()
             # if you remove the coma after done, it will no longer work properly
@@ -271,14 +268,14 @@ class stock_forecast(osv.osv_memory):
                       'uom': wizard.product_uom_id.id})
             qty = product_obj.get_product_available(cr, uid, product_list, context=c)
             overall_qty = sum(qty.values())
-                
+
             # warehouse
             if wizard.warehouse_id:
                 warehouse_name = wizard.warehouse_id.name
             # product uom
             if wizard.product_uom_id:
                 product_uom_name = wizard.product_uom_id.name
-        
+
             data = {'product_name': product_name,
                     'product_code': product_code,
                     'warehouse_name': warehouse_name,
@@ -294,11 +291,11 @@ class stock_forecast(osv.osv_memory):
                     'dangerous_goods': dangerous_goods,
                     'justification_code': justification_code,
                     }
-           
+
             line_ids = [x.id for x in wizard.stock_forecast_lines]
             if not line_ids:
                 raise osv.except_osv(_('Warning !'), _('Your search did not match with any moves'))
-        
+
             datas = {'ids': line_ids,
                      'model': 'stock.forecast.line',
                      'form': data}
@@ -306,7 +303,7 @@ class stock_forecast(osv.osv_memory):
             return {'type': 'ir.actions.report.xml',
                     'report_name': 'stock.forecast.report',
                     'datas': datas}
-    
+
     def do_export(self, cr, uid, ids, context=None):
         '''
         call the export action
@@ -315,9 +312,8 @@ class stock_forecast(osv.osv_memory):
             context = {}
         # create stock.forecast.export object
         export_obj = self.pool.get('stock.forecast.export')
-        
+
         return export_obj.export_to_csv(cr, uid, ids, context=dict(context, stock_forecast_id=ids))
-        
 
     def reset_fields(self, cr, uid, ids, context=None):
         '''
@@ -326,11 +322,11 @@ class stock_forecast(osv.osv_memory):
         self.write(cr, uid, ids, {'product_id': False,
                                   'warehouse_id': False,
                                   'product_uom_id': False,}, context=context)
-        
+
         line_obj = self.pool.get('stock.forecast.line')
         line_ids = line_obj.search(cr, uid, [('wizard_id', 'in', ids)], context=context)
         line_obj.unlink(cr, uid, line_ids, context=context)
-        
+
         return {
                 'name': _('Stock Level Forecast'),
                 'view_mode': 'form',
@@ -344,7 +340,7 @@ class stock_forecast(osv.osv_memory):
                 'domain': '[]',
                 'context': context,
                 }
-        
+
     def do_graph(self, cr, uid, ids, context=None):
         '''
         void
@@ -361,14 +357,14 @@ class stock_forecast(osv.osv_memory):
                 'domain': '[("wizard_id", "in", %s)]'%ids,
                 'context': context,
                 }
-        
+
     def do_forecast(self, cr, uid, ids, context=None):
         '''
         generate the corresponding values
         '''
         if context is None:
             context = {}
-            
+
         # line object
         line_obj = self.pool.get('stock.forecast.line')
         # objects
@@ -381,35 +377,35 @@ class stock_forecast(osv.osv_memory):
         move_obj = self.pool.get('stock.move')
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
-        
+
         # clear existing lines
         line_ids = line_obj.search(cr, uid, [('wizard_id', 'in', ids)], context=context)
         line_obj.unlink(cr, uid, line_ids, context=context)
-        
+
         # current date
         today = time.strftime('%Y-%m-%d %H:%M:%S')
-        
+
         for wizard in self.browse(cr, uid, ids, context=context):
             prod = wizard.product_id
             product_family = wizard.product_family_id
             warehouse_id = wizard.warehouse_id.id
             product_uom_id = wizard.product_uom_id.id
-            
+
             if not prod:
                 raise osv.except_osv(_('Warning !'), _('You must select a product'))
-            
+
             # the list of lines which will be created according to date order - [{},]
             line_to_create = []
             # list of product ids
             product_list = []
-            
+
             if prod:
                 product_list.append(prod.id)
-                
+
             if product_family:
                 product_ids = product_obj.search(cr, uid, [('nomen_manda_2', '=', product_family.id)], context=context)
                 product_list.extend(product_ids)
-                
+
             # qty of all products
             c = context.copy()
             # if you remove the coma after done, it will no longer work properly
@@ -420,19 +416,19 @@ class stock_forecast(osv.osv_memory):
                       'uom': product_uom_id})
             qty = product_obj.get_product_available(cr, uid, product_list, context=c)
             overall_qty = sum(qty.values())
-            
+
             for product in product_obj.browse(cr, uid, product_list, context=context):
                 # UOM to use - either selected one or product one
                 uom_to_use = product.uom_id
                 if  wizard.product_uom_id:
                     uom_to_use = wizard.product_uom_id
-                
+
                 # SALE ORDERS - negative
                 # list all sale order lines corresponding to selected product
                 #so_list = so_obj.search(cr, uid, [()], context=context)
                 sol_list = sol_obj.search(cr, uid, [('state', 'in', ('procurement', 'progress', 'draft')),
                                                     ('product_id', '=', product.id)], order='date_planned', context=context)
-                
+
                 for sol in sol_obj.browse(cr, uid, sol_list, context=context):
                     # create lines corresponding to so
                     values = {'date': sol.order_id.ready_to_ship_date and (len(sol.order_id.ready_to_ship_date.split(' ')) > 1 and sol.order_id.ready_to_ship_date.split(' ')[0] or sol.order_id.ready_to_ship_date) or '',
@@ -446,14 +442,14 @@ class stock_forecast(osv.osv_memory):
                               'wizard_id': wizard.id,}
                     if sol.procurement_request:
                         values.update(doc='ISR')
-                        
+
                     line_to_create.append(values)
-                
+
                 # PURCHASE ORDERS - positive
                 pol_list = pol_obj.search(cr, uid, [('order_state', 'in', ('draft', 'confirmed',)),
                                                     ('tender_id', '=', False),
                                                     ('product_id', '=', product.id)], order='date_planned', context=context)
-                
+
                 for pol in pol_obj.browse(cr, uid, pol_list, context=context):
                     # create lines corresponding to po
                     line_to_create.append({'date': pol.confirmed_delivery_date or len(pol.date_planned.split(' ')) > 1 and pol.date_planned.split(' ')[0] or pol.date_planned,
@@ -465,17 +461,17 @@ class stock_forecast(osv.osv_memory):
                                            'qty':  uom_obj._compute_qty_obj(cr, uid, pol.product_uom, pol.product_qty, uom_to_use, context=context),
                                            'stock_situation': False,
                                            'wizard_id': wizard.id,})
-                    
+
                 # TENDERS - positive
                 ids_list = tenderl_obj.search(cr, uid, [('state', 'not in', ('done',)),
                                                         ('product_id', '=', product.id)], order='date_planned', context=context)
-                
+
                 for obj in tenderl_obj.browse(cr, uid, ids_list, context=context):
                     # Get the sale order as origin of the Tender if exists
                     origin = False
                     if obj.tender_id.sale_order_id:
                         origin = obj.tender_id.sale_order_id.name
-                        
+
                     line_to_create.append({'date': len(obj.date_planned.split(' ')) > 1 and obj.date_planned.split(' ')[0] or obj.date_planned,
                                            'doc': 'TENDER',
                                            'order_type': False,
@@ -486,11 +482,11 @@ class stock_forecast(osv.osv_memory):
                                            'stock_situation': False,
                                            'wizard_id': wizard.id,
                                            })
-                
+
                 # PROCUREMENT ORDERS
                 pro_list = pro_obj.search(cr, uid, [('state', 'in', ('exception',)),
                                                     ('product_id', '=', product.id)], order='date_planned', context=context)
-                
+
                 for pro in pro_obj.browse(cr, uid, pro_list, context=context):
                     # create lines corresponding to po
                     line_to_create.append({'date': pro.date_planned.split(' ')[0],
@@ -503,13 +499,13 @@ class stock_forecast(osv.osv_memory):
                                            'qty': uom_obj._compute_qty_obj(cr, uid, pro.product_uom, pro.product_qty, uom_to_use, context=context),
                                            'stock_situation': False,
                                            'wizard_id': wizard.id,})
-                    
+
                 # STOCK MOVES - in positive - out negative
                 moves_list = move_obj.search(cr, uid, [('state', 'not in', ('done', 'cancel')),
                                                        ('product_qty', '!=', 0.0), # dont take empty draft picking tickets into account if empty
                                                        ('picking_subtype', 'not in', ('ppl', 'packing')), # dont take into account moves that are out of STOCK location
                                                        ('product_id', '=', product.id)], order='date_expected', context=context)
-                
+
                 for move in move_obj.browse(cr, uid, moves_list, context=context):
                     if move.picking_id.type in ('in', 'out',):
                         # create lines corresponding to po
@@ -525,12 +521,12 @@ class stock_forecast(osv.osv_memory):
                                   'wizard_id': wizard.id,}
                         if move.picking_id.type == 'out':
                             values.update(doc='OUT', qty=uom_obj._compute_qty_obj(cr, uid, move.product_uom, -move.product_qty, uom_to_use, context=context))
-                        
+
                         line_to_create.append(values)
-                
+
             # sort the lines according to date, and then doc
             line_to_create = sorted(line_to_create, key=itemgetter('date', 'doc'))
-            
+
             # create the first line with overall qty
             line_obj.create(cr, uid, {'date': today.split(' ')[0],
                                       'doc': False,
@@ -542,31 +538,31 @@ class stock_forecast(osv.osv_memory):
                                       'stock_situation': overall_qty,
                                       'first': 'a',
                                       'wizard_id': wizard.id,}, context=context)
-            
+
             # create the lines
             for line in line_to_create:
                 # update the stock situation, cannot be done before the list is actually ordered
                 overall_qty += line['qty']
                 line.update(stock_situation=overall_qty)
                 line_obj.create(cr, uid, line, context=context)
-            
+
             return True # popup policy
-    
+
     def default_get(self, cr, uid, fields, context=None):
         """ For now no special initial values to load at wizard opening
-        
+
          @return: A dictionary which of fields with values.
         """
         if context is None:
             context = {}
-            
+
         product_obj = self.pool.get('product.product')
-        
+
         res = super(stock_forecast, self).default_get(cr, uid, fields, context=context)
-        
+
         if context.get('active_ids', []):
             active_id = context.get('active_ids')[0]
-            
+
             if 'product_id' in fields:
                 res.update(product_id=active_id)
                 # update quantity
@@ -578,24 +574,24 @@ class stock_forecast(osv.osv_memory):
                               'to_date': time.strftime('%Y-%m-%d %H:%M:%S'),
                               'warehouse': False,
                               'uom': False})
-                    
+
                     qty = product_obj.get_product_available(cr, uid, [active_id], context=c)
                     res.update(qty=qty[active_id])
-                    
+
                 if 'product_uom_id' in fields:
                     res.update(product_uom_id=product_obj.browse(cr, uid, active_id, context=context).uom_id.id)
-                    
+
         return res
-    
+
     def onchange_product(self, cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context=None):
         '''
         product changed
         '''
         if context is None:
             context = {}
-            
+
         product_obj = self.pool.get('product.product')
-            
+
         values = {}
         context.update(values=values)
         # if product family is filled, we empty it
@@ -607,14 +603,14 @@ class stock_forecast(osv.osv_memory):
             if product_id:
                 values.update(product_uom_id=product_obj.browse(cr, uid, product_id, context=context).uom_id.id)
             return self.onchange(cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context)
-        
+
     def onchange_nomen(self, cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context=None):
         '''
         product family changed
         '''
         if context is None:
             context = {}
-        
+
         values = {}
         context.update(values=values)
         # if product family is filled, we empty it
@@ -623,13 +619,13 @@ class stock_forecast(osv.osv_memory):
             return self.onchange(cr, uid, ids, False, product_family_id, warehouse_id, product_uom_id, context)
         else:
             return self.onchange(cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context)
-        
+
     def onchange_warehouse(self, cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context=None):
         '''
         warehouse changed
         '''
         return self.onchange(cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context)
-        
+
     def onchange_uom(self, cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context=None):
         '''
         uom changed
@@ -641,7 +637,7 @@ stock_forecast()
 
 class purchase_order_line(osv.osv):
     '''
-    add order_state columns    
+    add order_state columns
     '''
     _inherit = 'purchase.order.line'
     STATE_SELECTION = [
@@ -659,7 +655,7 @@ class purchase_order_line(osv.osv):
                        ]
     _columns = {'order_state': fields.related('order_id', 'state', string='Purchase Order State', type='selection', selection=STATE_SELECTION,),
                 }
-    
+
 purchase_order_line()
 
 
@@ -670,5 +666,5 @@ class stock_move(osv.osv):
     _inherit = 'stock.move'
     _columns = {'picking_subtype': fields.related('picking_id', 'subtype', string='Picking Subtype', type='selection', selection=[('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')],),
                 }
-    
+
 stock_move()

@@ -35,22 +35,28 @@ class msf_instance(osv.osv):
         return res
     
     def _get_top_cost_center(self, cr, uid, ids, fields, arg, context=None):
+        """
+        Search for top cost center from the given instance.
+        """
+        # Some checks
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+        # Default values
         res = dict.fromkeys(ids, False)
-        for instance in self.browse(cr, uid, ids, context=context):
-            if instance.target_cost_center_ids:
-                for target in instance.target_cost_center_ids:
-                    if target.is_top_cost_center:
-                        res[instance.id] = target.cost_center_id.id
+        # Search top cost center
+        for instance in self.read(cr, uid, ids, ['target_cost_center_ids', 'level'], context=context):
+            target_cc_ids = instance.get('target_cost_center_ids', False)
+            if target_cc_ids:
+                for target in self.pool.get('account.target.costcenter').read(cr, uid, target_cc_ids, ['is_top_cost_center', 'cost_center_id']):
+                    if target.get('is_top_cost_center', False):
+                        res[instance.get('id')] = target.get('cost_center_id', [False])[0]
                         break
-            elif instance.level == 'section':
+            elif instance.get('level', '') == 'section':
                 parent_cost_centers = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), ('parent_id', '=', '')], context=context)
                 if len(parent_cost_centers) > 0:
-                    res[instance.id] = parent_cost_centers[0]
+                    res[instance.get('id')] = parent_cost_centers[0]
         return res
     
     def _get_po_fo_cost_center(self, cr, uid, ids, fields, arg, context=None):
@@ -97,6 +103,7 @@ class msf_instance(osv.osv):
     
     _defaults = {
         'state': 'draft',
+        'current_instance_level': 'section', # UTP-941 set the default value to section, otherwise all fields in the new form are readonly
     }
 
     def button_cost_center_wizard(self, cr, uid, ids, context=None):
@@ -214,11 +221,15 @@ class msf_instance(osv.osv):
     ]
     
     def name_get(self, cr, user, ids, context=None):
+        if context is None:
+            context = {}
         result = self.browse(cr, user, ids, context=context)
         res = []
         for rs in result:
             txt = rs.code
             res += [(rs.id, txt)]
+            context['level'] = rs.level
+        
         return res
 
     def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):
@@ -243,5 +254,49 @@ class msf_instance(osv.osv):
         self.write(cr, uid, ids, {'state': 'inactive'}, context=context)
         return True
     
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        '''
+        Override the tree view to display historical prices according to context
+        '''
+        if context is None:
+            context = {}
+        res = super(msf_instance, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        
+        if user.company_id and user.company_id.instance_id:
+            current_instance_level = user.company_id.instance_id.current_instance_level
+            
+            if current_instance_level != 'section':
+                if 'hide_new_button="PROP_INSTANCE_HIDE_BUTTON"' in res['arch']:
+                    res['arch'] = res['arch'].replace('hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"', 'hide_duplicate_button="1"')
+                    res['arch'] = res['arch'].replace('hide_delete_button="PROP_INSTANCE_HIDE_BUTTON"', 'hide_delete_button="1"')
+                    res['arch'] = res['arch'].replace('hide_new_button="PROP_INSTANCE_HIDE_BUTTON"', 'hide_new_button="1" noteditable="1" notselectable="0"')
+                    
+                if 'target_cost_center_ids' in res['fields']:
+                    arch = res['fields']['target_cost_center_ids']['views']['tree']['arch']
+                    if 'hide_delete_button="PROP_INSTANCE_HIDE_BUTTON' in arch:
+                        res['fields']['target_cost_center_ids']['views']['tree']['arch'] = arch.replace('hide_delete_button="PROP_INSTANCE_HIDE_BUTTON', 'noteditable="1" hide_delete_button="1')
+            else:
+                if res['type'] == 'form' and 'hide_new_button="PROP_INSTANCE_HIDE_BUTTON"' in res['arch']:
+                    res['arch'] = res['arch'].replace('hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"', '')
+                    res['arch'] = res['arch'].replace('hide_delete_button="PROP_INSTANCE_HIDE_BUTTON"', '')
+                    res['arch'] = res['arch'].replace('hide_new_button="PROP_INSTANCE_HIDE_BUTTON"', '')
+                if 'target_cost_center_ids' in res['fields']:
+                    arch = res['fields']['target_cost_center_ids']['views']['tree']['arch']
+                    if 'hide_delete_button="PROP_INSTANCE_HIDE_BUTTON' in arch:
+                        res['fields']['target_cost_center_ids']['views']['tree']['arch'] = arch.replace('PROP_INSTANCE_HIDE_BUTTON', '0')
+                    
+        return res
+    
+    
 msf_instance()
+
+class res_users(osv.osv):
+    _inherit = 'res.users'
+    _name = 'res.users'
+
+    def get_browse_user_instance(self, cr, uid, context=None):
+        current_user = self.browse(cr, uid, uid, context=context)
+        return current_user and current_user.company_id and current_user.company_id.instance_id or False
+res_users()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

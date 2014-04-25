@@ -117,7 +117,7 @@ class wizard_import_cheque(osv.osv_memory):
                     'transfer_journal_id': line.transfer_journal_id and line.transfer_journal_id.id or None,
                 }
                 new_lines.append((0, 0, vals))
-        
+
         # Add lines to the imported_lines, flush them from the first tree and change state of the wizard
         self.write(cr, uid, ids, {'state': 'open', 'line_ids': [(6, 0, [])], 'imported_lines_ids': new_lines, 'date': '', 'document_date': '',}, context=context)
         # Refresh wizard to display changes
@@ -145,7 +145,6 @@ class wizard_import_cheque(osv.osv_memory):
         # Prepare some values
         wizard = self.browse(cr, uid, ids[0], context=context)
         absl_obj = self.pool.get('account.bank.statement.line')
-        move_line_obj = self.pool.get('account.move.line')
         curr_date = strftime('%Y-%m-%d')
         # Process lines
         absl_lines = []
@@ -175,7 +174,7 @@ class wizard_import_cheque(osv.osv_memory):
         if not len(absl_lines):
             raise osv.except_osv(_('Warning'), _('No line created!'))
 
-        return { 'type': 'ir.actions.act_window_close', 'st_line_ids': absl_lines}
+        return { 'type': 'ir.actions.act_window_close', 'st_line_ids': absl_lines, 'o2m_refresh': 'line_ids'}
 
 wizard_import_cheque()
 

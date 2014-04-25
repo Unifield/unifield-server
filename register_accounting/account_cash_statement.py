@@ -2,7 +2,7 @@
 #-*- encoding:utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
+#    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
@@ -35,11 +35,6 @@ class account_cash_statement(osv.osv):
         'state': lambda *a: 'draft',
     }
 
-#    Remove this block because it has been modified and moved to the sync module
-#    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
-#        bank = self.browse(cr, uid, res_id)
-#        return bank.name + '_' +bank.journal_id.code
-
     def _get_starting_balance(self, cr, uid, ids, context=None):
         """ Find starting balance
         @param name: Names of fields.
@@ -58,7 +53,7 @@ class account_cash_statement(osv.osv):
                     amount_total+= line.pieces * line.number
             else:
                 amount_total = statement.prev_reg_id.msf_calculated_balance
-            
+
             res[statement.id] = {
                 'balance_start': amount_total
             }
@@ -77,8 +72,8 @@ class account_cash_statement(osv.osv):
                 for start in vals.get('starting_details_ids'):
                     dict_val = start[2]
                     for end in open_close['end']:
-                       if end[2]['pieces'] == dict_val['pieces']:
-                           end[2]['number'] += dict_val['number']
+                        if end[2]['pieces'] == dict_val['pieces']:
+                            end[2]['number'] += dict_val['number']
             vals.update({
 #                'ending_details_ids': open_close['start'],
                 'starting_details_ids': open_close['end'],
@@ -110,7 +105,7 @@ class account_cash_statement(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids] # Calculate the starting balance
-            
+
         res = self._get_starting_balance(cr, uid, ids)
         for rs in res:
             self.write(cr, uid, [rs], res.get(rs)) # Verify that the starting balance is superior to 0 only if this register has prev_reg_id to False
@@ -142,7 +137,7 @@ class account_cash_statement(osv.osv):
 
         # Prepare some values
         st = self.browse(cr, uid, ids)[0]
-                
+
         # Complete closing balance with all elements of starting balance
         cashbox_line_obj = self.pool.get('account.cashbox.line')
         # Search lines from current register starting balance
@@ -158,7 +153,7 @@ class account_cash_statement(osv.osv):
                 'number': 0.0,
             }
             cashbox_line_obj.create(cr, uid, vals, context=context)
-        # Give a Cash Register Name with the following composition : 
+        # Give a Cash Register Name with the following composition :
         #+ Cash Journal Name
         if st.journal_id and st.journal_id.name:
             return self.write(cr, uid, ids, {'state' : 'open', 'name': st.journal_id.name})
@@ -244,12 +239,12 @@ class account_cash_statement(osv.osv):
         if not ids:
             return res
         # Complete those that have no result
-        for id in ids:
-            res[id] = 0.0
+        for i in ids:
+            res[i] = 0.0
         # COMPUTE amounts
         cr.execute("""
-        SELECT statement_id, SUM(amount) 
-        FROM account_bank_statement_line 
+        SELECT statement_id, SUM(amount)
+        FROM account_bank_statement_line
         WHERE statement_id in %s
         GROUP BY statement_id""", (tuple(ids,),))
         sql_res = cr.fetchall()
@@ -259,17 +254,17 @@ class account_cash_statement(osv.osv):
 
     _columns = {
             'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance'),
-            'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), 
+            'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')),
                 readonly="True", string='State'),
             'name': fields.char('Register Name', size=64, required=False, readonly=True, states={'draft': [('readonly', False)]}),
             'period_id': fields.many2one('account.period', 'Period', required=True, states={'draft':[('readonly', False)]}, readonly=True),
-            'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines', 
+            'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines',
                 states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft':[('readonly', True)]}),
             'open_advance_amount': fields.float('Unrecorded Advances'),
             'unrecorded_expenses_amount': fields.float('Unrecorded expenses'),
             'closing_gap': fields.function(_gap_compute, method=True, string='Gap'),
             'comments': fields.char('Comments', size=64, required=False, readonly=False),
-            'msf_calculated_balance': fields.function(_msf_calculated_balance_compute, method=True, readonly=True, string='Calculated Balance', 
+            'msf_calculated_balance': fields.function(_msf_calculated_balance_compute, method=True, readonly=True, string='Calculated Balance',
                 help="Opening balance + Cash Transaction"),
             # Because of UTP-382, need to change store=True to FALSE for total_entry_encoding (which do not update fields at register line deletion/copy)
             'total_entry_encoding': fields.function(_get_sum_entry_encoding, method=True, store=False, string="Cash Transaction", help="Total cash transactions"),
@@ -331,10 +326,62 @@ class account_cash_statement(osv.osv):
 
 account_cash_statement()
 
-class account_cashbox_line(osv.osv):
 
+class account_cashbox_line(osv.osv):
     _inherit = "account.cashbox.line"
     _order = "pieces"
-    
+
 account_cashbox_line()
+
+
+class account_bank_statement_line(osv.osv):
+    _inherit = 'account.bank.statement.line'
+
+    _columns = {
+        # UTP-482 linked confirmed PO for an operational advance in cache register
+        'cash_register_op_advance_po_id': fields.many2one('purchase.order', 'OPE ADV - LINK TO PO', required=False, help='Operational advance purchase order'),
+    }
+
+    def check_is_cash_register_op_advance_po_available(self, cr, uid, ids, context=None):
+        """
+            cash_register_op_advance_po_id m2o allowed
+            for an Operational advance type for specific treatment account
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for o in self.browse(cr, uid, ids, context=context):
+            if o.cash_register_op_advance_po_id:
+                if o.account_id and o.account_id.type_for_register != 'advance':
+                    return False
+        return True
+
+    _constraints = [
+        (check_is_cash_register_op_advance_po_available, 'You can only link to a purchase order for an Operation advance', ['account_id', 'cash_register_op_advance_po_id']),
+    ]
+
+    def create(self, cr, uid, values, context=None):
+        if 'cash_register_op_advance_po_id' in values:
+            if values['cash_register_op_advance_po_id']:
+                domain = [
+                    ('cash_register_op_advance_po_id', '=', values['cash_register_op_advance_po_id'])
+                ]
+                linked_po_ids = self.search(cr, uid, domain, context=context)
+                if linked_po_ids:
+                    raise osv.except_osv(_("Warning"),_("Selected 'OPE ADV - LINK TO PO' purchase order is already linked to another register line."))
+        return super(account_bank_statement_line, self).create(cr, uid, values, context=context)
+
+    def write(self, cr, uid, ids, values, context=None):
+        if 'cash_register_op_advance_po_id' in values:
+            if values['cash_register_op_advance_po_id']:
+                domain = [
+                    ('id', 'not in', ids),
+                    ('cash_register_op_advance_po_id', '=', values['cash_register_op_advance_po_id'])
+                ]
+                linked_po_ids = self.search(cr, uid, domain, context=context)
+                if linked_po_ids:
+                    raise osv.except_osv(_("Warning"),_("Selected 'OPE ADV - LINK TO PO' purchase order is already linked to another register line."))
+        return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
+
+account_bank_statement_line()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

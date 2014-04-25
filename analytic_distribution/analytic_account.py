@@ -20,12 +20,12 @@
 ##############################################################################
 
 import datetime
-from dateutil.relativedelta import relativedelta
-from osv import fields, osv
+from osv import fields
+from osv import osv
 from tools.translate import _
-from lxml import etree
+from destination_tools import many2many_sorted
+from destination_tools import many2many_notlazy
 from tools.misc import flatten
-from destination_tools import many2many_sorted, many2many_notlazy
 
 class analytic_account(osv.osv):
     _name = "account.analytic.account"
@@ -48,25 +48,29 @@ class analytic_account(osv.osv):
                 res[a.id] = False
         return res
 
-    def _search_filter_active(self, cr, uid, ids, name, args, context=None):
+    def is_blocked_by_a_contract(self, cr, uid, ids):
         """
-        UTP-410: Add the search on active/inactive CC
+        Return ids (analytic accounts) that are blocked by a contract (just FP1)
         """
-        arg = []
-        cmp_date = datetime.date.today().strftime('%Y-%m-%d')
-        if context.get('date', False):
-            cmp_date = context.get('date')
-        for x in args:
-            if x[0] == 'filter_active' and x[2] == True:
-                arg.append(('date_start', '<=', cmp_date))
-                arg.append('|')
-                arg.append(('date', '>', cmp_date))
-                arg.append(('date', '=', False))
-            elif x[0] == 'filter_active' and x[2] == False:
-                arg.append('|')
-                arg.append(('date_start', '>', cmp_date))
-                arg.append(('date', '<=', cmp_date))
-        return arg
+        # Some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = []
+        for aa in self.browse(cr, uid, ids):
+            # Only check funding pool accounts
+            if aa.category != 'FUNDING':
+                continue
+            link_ids = self.pool.get('financing.contract.funding.pool.line').search(cr, uid, [('funding_pool_id', '=', aa.id)])
+            format_ids = []
+            for link in self.pool.get('financing.contract.funding.pool.line').browse(cr, uid, link_ids):
+                if link.contract_id:
+                    format_ids.append(link.contract_id.id)
+            contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', 'in', format_ids)])
+            for contract in self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids):
+                if contract.state in ['soft_closed', 'hard_closed']:
+                    res.append(aa.id)
+        return res
 
     def _search_closed_by_a_fp(self, cr, uid, ids, name, args, context=None):
         """
@@ -92,158 +96,11 @@ class analytic_account(osv.osv):
                     res = [('id', 'not in', aa_ids)]
         return res
 
-    def _get_fake(self, cr, uid, ids, *a, **b):
-        return {}.fromkeys(ids, False)
-
-    def _search_intermission_restricted(self, cr, uid, ids, name, args, context=None):
-        if not args:
-            return []
-        newargs = []
-        for arg in args:
-            if arg[1] != '=':
-                raise osv.except_osv(_('Error'), _('Operator not supported on field intermission_restricted!'))
-            if not isinstance(arg[2], (list, tuple)):
-                raise osv.except_osv(_('Error'), _('Operand not supported on field intermission_restricted!'))
-            if arg[2] and (arg[2][0] or arg[2][1]):
-                try:
-                    intermission = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                            'analytic_account_project_intermission')[1]
-                except ValueError:
-                    pass
-                if arg[2][2] == 'intermission':
-                    newargs.append(('id', '=', intermission))
-                else:
-                    newargs.append(('id', '!=', intermission))
-        return newargs
-    
     _columns = {
-        'name': fields.char('Name', size=128, required=True, translate=1),
-        'code': fields.char('Code', size=24),
-        'type': fields.selection([('view','View'), ('normal','Normal')], 'Type', help='If you select the View Type, it means you won\'t allow to create journal entries using that account.'),
-        'date_start': fields.date('Active from', required=True),
-        'date': fields.date('Inactive from', select=True),
-        'category': fields.selection([('OC','Cost Center'),
-            ('FUNDING','Funding Pool'),
-            ('FREE1','Free 1'),
-            ('FREE2','Free 2'),
-            ('DEST', 'Destination')], 'Category', select=1),
-        'cost_center_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_cost_centers', 'funding_pool_id', 'cost_center_id', string='Cost Centers', domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"),
-        'for_fx_gain_loss': fields.boolean(string="For FX gain/loss", help="Is this account for default FX gain/loss?"),
         'destination_ids': many2many_notlazy('account.account', 'account_destination_link', 'destination_id', 'account_id', 'Accounts'),
         'tuple_destination_account_ids': many2many_sorted('account.destination.link', 'funding_pool_associated_destinations', 'funding_pool_id', 'tuple_id', "Account/Destination"),
-        'tuple_destination_summary': fields.one2many('account.destination.summary', 'funding_pool_id', 'Destination by accounts'),
-        'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active analytic accounts",),
         'hide_closed_fp': fields.function(_get_active, fnct_search=_search_closed_by_a_fp, type="boolean", method=True, store=False, string="Linked to a soft/hard closed contract?"),
-        'intermission_restricted': fields.function(_get_fake, fnct_search=_search_intermission_restricted, type="boolean", method=True, store=False, string="Domain to restrict intermission cc"),
     }
-
-    _defaults ={
-        'date_start': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
-        'for_fx_gain_loss': lambda *a: False,
-    }
-
-    def _check_unicity(self, cr, uid, ids, context=None):
-        if not context:
-            context = {}
-        for account in self.browse(cr, uid, ids, context=context):
-            bad_ids = self.search(cr, uid, [('category', '=', account.category),('|'),('name', '=ilike', account.name),('code', '=ilike', account.code)])
-            if len(bad_ids) and len(bad_ids) > 1:
-                return False
-        return True
-
-    def _check_gain_loss_account_unicity(self, cr, uid, ids, context=None):
-        """
-        Check that no more account is "for_fx_gain_loss" available.
-        """
-        if not context:
-            context = {}
-        search_ids = self.search(cr, uid, [('for_fx_gain_loss', '=', True)])
-        if search_ids and len(search_ids) > 1:
-            return False
-        return True
-
-    def _check_gain_loss_account_type(self, cr, uid, ids, context=None):
-        """
-        Check account type for fx_gain_loss_account: should be Normal type and Cost Center category
-        """
-        if not context:
-            context = {}
-        for account in self.browse(cr, uid, ids, context=context):
-            if account.for_fx_gain_loss == True and (account.type != 'normal' or account.category != 'OC'):
-                return False
-        return True
-    
-    def _check_default_destination(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if not ids:
-            return True
-        cr.execute('''select a.code, a.name, d.name from
-            '''+self._table+''' d
-            left join account_account a on a.default_destination_id = d.id
-            left join account_destination_link l on l.destination_id = d.id and l.account_id = a.id
-            where a.default_destination_id is not null and l.destination_id is null and d.id in %s ''', (tuple(ids),)
-        )
-        error = []
-        for x in cr.fetchall():
-            error.append(_('"%s" is the default destination for the G/L account "%s %s", you can\'t remove it.')%(x[2], x[0], x[1]))
-        if error:
-            raise osv.except_osv(_('Warning !'), "\n".join(error))
-        return True
-
-    _constraints = [
-        (_check_unicity, 'You cannot have the same code or name between analytic accounts in the same category!', ['code', 'name', 'category']),
-        (_check_gain_loss_account_unicity, 'You can only have one account used for FX gain/loss!', ['for_fx_gain_loss']),
-        (_check_gain_loss_account_type, 'You have to use a Normal account type and Cost Center category for FX gain/loss!', ['for_fx_gain_loss']),
-        (_check_default_destination, "You can't delete an account which has this destination as default", []),
-    ]
-
-    def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
-        account = self.browse(cr, uid, id, context=context)
-        if not default:
-            default = {}
-        default = default.copy()
-        default['code'] = (account['code'] or '') + '(copy)'
-        default['name'] = (account['name'] or '') + '(copy)'
-        default['tuple_destination_summary'] = []
-        # code is deleted in copy method in addons
-        new_id = super(analytic_account, self).copy(cr, uid, id, default, context=context)
-        self.write(cr, uid, new_id, {'code': '%s(copy)' % (account['code'] or '')})
-        return new_id
-
-    def set_funding_pool_parent(self, cr, uid, vals):
-        if 'category' in vals and \
-           'code' in vals and \
-            vals['category'] == 'FUNDING' and \
-            vals['code'] != 'FUNDING':
-            # for all accounts except the parent one
-            funding_pool_parent = self.search(cr, uid, [('category', '=', 'FUNDING'), ('parent_id', '=', False)])[0]
-            vals['parent_id'] = funding_pool_parent
-
-    def _check_date(self, vals):
-        if 'date' in vals and vals['date'] is not False:
-            if vals['date'] <= datetime.date.today().strftime('%Y-%m-%d'):
-                # validate the date (must be > today)
-                raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
-            elif 'date_start' in vals and not vals['date_start'] < vals['date']:
-                # validate that activation date 
-                raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
-
-    def create(self, cr, uid, vals, context=None):
-        """
-        Some verifications before analytic account creation
-        """
-        self._check_date(vals)
-        self.set_funding_pool_parent(cr, uid, vals)
-        return super(analytic_account, self).create(cr, uid, vals, context=context)
-
-    def write(self, cr, uid, ids, vals, context=None):
-        """
-        Some verifications before analytic account write
-        """
-        self._check_date(vals)
-        self.set_funding_pool_parent(cr, uid, vals)
-        return super(analytic_account, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         """
@@ -258,7 +115,9 @@ class analytic_account(osv.osv):
             for arg in args2:
                 ids.append(arg[1])
             args.append(('id', 'in', ids))
-        
+        # UF-1713: Active/inactive functionnality was missing.
+        if context and 'filter_inactive' in context and context['filter_inactive']:
+            args.append(('filter_active', '=', context['filter_inactive']))
         # Tuple Account/Destination search
         for i, arg in enumerate(args):
             if arg[0] and arg[0] == 'tuple_destination':
@@ -268,146 +127,7 @@ class analytic_account(osv.osv):
                     fp_ids.append(adl.get('funding_pool_ids'))
                 fp_ids = flatten(fp_ids)
                 args[i] = ('id', 'in', fp_ids)
-        res = super(analytic_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
-        return res
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        if not context:
-            context = {}
-        view = super(analytic_account, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        try:
-            oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]
-        except ValueError:
-            oc_id = 0
-        if view_type=='form':
-            tree = etree.fromstring(view['arch'])
-            fields = tree.xpath('/form/field[@name="cost_center_ids"]')
-            for field in fields:
-                field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s])]" % oc_id)
-            view['arch'] = etree.tostring(tree)
-        return view
-
-    def on_change_category(self, cr, uid, id, category):
-        if not category:
-            return {}
-        res = {'value': {}, 'domain': {}}
-        parent = self.search(cr, uid, [('category', '=', category), ('parent_id', '=', False)])[0]
-        res['value']['parent_id'] = parent
-        res['domain']['parent_id'] = [('category', '=', category), ('type', '=', 'view')]
-        return res
-
-    def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):
-        if not args:
-            args=[]
-        if context is None:
-            context={}
-        if context.get('hide_inactive', False):
-            args.append(('filter_active', '=', True))
-        if context.get('current_model') == 'project.project':
-            cr.execute("select analytic_account_id from project_project")
-            project_ids = [x[0] for x in cr.fetchall()]
-            return self.name_get(cr, uid, project_ids, context=context)
-        account = self.search(cr, uid, ['|', ('code', 'ilike', '%%%s%%' % name), ('name', 'ilike', '%%%s%%' % name)]+args, limit=limit, context=context)
-        return self.name_get(cr, uid, account, context=context)
-
-    def name_get(self, cr, uid, ids, context={}):
-        """
-        Get name for analytic account with analytic account code.
-        Example: For an account OC/Project/Mission, we have something like this:
-          MIS-001 (OC-015/PROJ-859)
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some value
-        res = []
-        # Browse all accounts
-        for account in self.browse(cr, uid, ids, context=context):
-#            data = []
-#            acc = account
-#            while acc:
-#                data.insert(0, acc.code)
-#                acc = acc.parent_id
-#            data = ' / '.join(data[1:-1])
-#            display = "%s" % (account.code)
-#            if len(data) and len(data) > 0:
-#                display = "%s (%s)" % (account.code, data)
-#            res.append((account.id, display))
-            res.append((account.id, account.code))
-        return res
-
-    def unlink(self, cr, uid, ids, context=None):
-        """
-        Delete some analytic account is forbidden!
-        """
-        # Some verification
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        analytic_accounts = []
-        # Search OC CC
-        try:
-            oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]
-        except ValueError:
-            oc_id = 0
-        analytic_accounts.append(oc_id)
-        # Search Funding Pool
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_funding_pool')[1]
-        except ValueError:
-            fp_id = 0
-        analytic_accounts.append(fp_id)
-        # Search Free 1
-        try:
-            f1_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_free_1')[1]
-        except ValueError:
-            f1_id = 0
-        analytic_accounts.append(f1_id)
-        # Search Free 2
-        try:
-            f2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_free_2')[1]
-        except ValueError:
-            f2_id = 0
-        analytic_accounts.append(f2_id)
-        # Search MSF Private Fund
-        try:
-            msf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            msf_id = 0
-        analytic_accounts.append(msf_id)
-        # Accounts verification
-        for id in ids:
-            if id in analytic_accounts:
-                raise osv.except_osv(_('Error'), _('You cannot delete this Analytic Account!'))
-        return super(analytic_account, self).unlink(cr, uid, ids, context=context)
-
-    def is_blocked_by_a_contract(self, cr, uid, ids):
-        """
-        Return ids (analytic accounts) that are blocked by a contract (just FP1)
-        """
-        # Some verifications
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        res = []
-        for aa in self.browse(cr, uid, ids):
-            # Only check funding pool accounts
-            if aa.category != 'FUNDING':
-                continue
-            link_ids = self.pool.get('financing.contract.funding.pool.line').search(cr, uid, [('funding_pool_id', '=', aa.id)])
-            format_ids = []
-            for link in self.pool.get('financing.contract.funding.pool.line').browse(cr, uid, link_ids):
-                if link.contract_id:
-                    format_ids.append(link.contract_id.id)
-            contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', 'in', format_ids)])
-            for contract in self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids):
-                if contract.state in ['soft_closed', 'hard_closed']:
-                    res.append(aa.id)
-        return res
+        return super(analytic_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

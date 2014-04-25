@@ -19,8 +19,6 @@
 #
 ##############################################################################
 
-import time
-
 from report import report_sxw
 
 class bank_reconciliation(report_sxw.rml_parse):

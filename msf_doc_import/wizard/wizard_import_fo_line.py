@@ -115,10 +115,10 @@ class wizard_import_fo_line(osv.osv_memory):
                     'functional_currency_id': fo_browse.pricelist_id.currency_id.id,
                     'price_unit': 1,  # in case that the product is not found and we do not have price
                     'product_qty': 1,
-                    'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
-                    'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
-                    'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
-                    'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
+#                    'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
+#                    'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
+#                    'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
+#                    'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
                     'proc_type': 'make_to_order',
                     'default_code': False,
                     'confirmed_delivery_date': False,
@@ -205,6 +205,10 @@ class wizard_import_fo_line(osv.osv_memory):
                         cr.rollback()
                         continue
 
+                    # Check product restrictions
+                    if p_value.get('default_code') and fo_browse.partner_id:
+                        product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'partner_id': fo_browse.partner_id.id}, context=dict(context, noraise=False))
+ 
                     # write order line on FO
                     vals['order_line'].append((0, 0, to_write))
                     if sale_obj._check_service(cr, uid, fo_id, vals, context=context):

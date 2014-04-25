@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+        
+        <!-- Account type @ sprint1 -->
+        <record id="account.account_type_root" model="account.account.type">
+            <field name="name">View</field>
+            <field name="code">view</field>
+            <field name="close_method">none</field>
+        </record>
+        
+        <record id="account.account_type_asset" model="account.account.type">
+            <field name="name">Asset</field>
+            <field name="code">asset</field>
+            <field name="report_type">asset</field>
+            <field name="close_method">none</field>
+        </record>
+        
+        <record id="account_type_stock" model="account.account.type">
+            <field name="name">Stock</field>
+            <field name="code">stock</field>
+            <field name="report_type">asset</field>
+            <field name="close_method">none</field>
+        </record>
+        
+        <record id="account.account_type_receivable" model="account.account.type">
+            <field name="name">Receivables</field>
+            <field name="code">receivables</field>
+            <field name="report_type">asset</field>
+            <field name="close_method">none</field>
+            <field name="not_correctible" eval="True"/>
+        </record>
+        
+        <record id="account.account_type_cash_moves" model="account.account.type">
+            <field name="name">Cash</field>
+            <field name="code">cash</field>
+            <field name="report_type">asset</field>
+            <field name="close_method">none</field>
+        </record>
+        
+        <record id="account_type_capital" model="account.account.type">
+            <field name="name">Capital</field>
+            <field name="code">capital</field>
+            <field name="report_type">asset</field>
+            <field name="close_method">none</field>
+        </record>
+        
+        <record id="account.account_type_cash_equity" model="account.account.type">
+            <field name="name">Equity</field>
+            <field name="code">equity</field>
+            <field name="report_type">asset</field>
+            <field name="close_method">none</field>
+        </record>
+        
+        <record id="account_type_debt" model="account.account.type">
+            <field name="name">Debt</field>
+            <field name="code">debt</field>
+            <field name="report_type">asset</field>
+            <field name="close_method">none</field>
+        </record>
+        
+        <record id="account.account_type_payable" model="account.account.type">
+            <field name="name">Payables</field>
+            <field name="code">payables</field>
+            <field name="report_type">asset</field>
+            <field name="close_method">none</field>
+            <field name="not_correctible" eval="True"/>
+        </record>
+        
+        <record id="account.account_type_expense" model="account.account.type">
+            <field name="name">Expense</field>
+            <field name="code">expense</field>
+            <field name="report_type">expense</field>
+            <field name="close_method">none</field>
+        </record>
+        
+        <record id="account.account_type_expense_no_pl" model="account.account.type">
+            <field name="name">Extra-accounting expenses</field>
+            <field name="code">expense</field>
+            <field name="report_type">none</field>
+            <field name="close_method">none</field>
+        </record>
+        
+        <record id="account.account_type_income" model="account.account.type">
+            <field name="name">Income</field>
+            <field name="code">income</field>
+            <field name="report_type">income</field>
+            <field name="close_method">none</field>
+        </record>
+    
+    </data>
+</openerp>

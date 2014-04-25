@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from account_override import ACCOUNT_RESTRICTED_AREA
 
 class res_partner(osv.osv):
     _name = "res.partner"
@@ -32,7 +33,7 @@ class res_partner(osv.osv):
     def _search_property_account(self, cr, uid, obj, name, args, context=None):
         """
         Search account that are used
-        NB: 
+        NB:
         # Search the default account in ir_property (which have "property_account_payable in fields_id and res_id is null
         #        select res_id, value_reference from ir_property where fields_id in (1218,1221) and res_id is null
         # Search elements that have a particular account_id
@@ -51,14 +52,13 @@ class res_partner(osv.osv):
         # Prepare some values
         res = []
         field = args[0][0]
-        field_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'res.partner'), 
+        field_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'res.partner'),
             ('name', '=', field)], context=context)
         # Prepare sql queries
-        operator = '='
         if len(field_ids) > 1:
             field_ids_str = '('
-            for id in field_ids:
-                string = "%s," % str(id)
+            for i in field_ids:
+                string = "%s," % str(i)
                 field_ids_str += string
             field_ids_str += ')'
             # sql query for particulars partner
@@ -113,7 +113,7 @@ class res_partner(osv.osv):
             string="Account Payable",
             method=True,
             view_load=True,
-            domain="[('type', '=', 'payable')]",
+            domain=ACCOUNT_RESTRICTED_AREA['partner_payable'],
             help="This account will be used instead of the default one as the payable account for the current partner",
             required=True,
             fnct_search=_search_property_account),
@@ -124,7 +124,7 @@ class res_partner(osv.osv):
             string="Account Receivable",
             method=True,
             view_load=True,
-            domain="[('type', '=', 'receivable')]",
+            domain=ACCOUNT_RESTRICTED_AREA['partner_receivable'],
             help="This account will be used instead of the default one as the receivable account for the current partner",
             required=True,
             fnct_search=_search_property_account),

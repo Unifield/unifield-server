@@ -18,7 +18,7 @@ class report_project_expenses(report_sxw.report_sxw):
         # Context updated with wizard's value
         contract_id = data['id']
         reporting_type = 'project'
-        
+
         csv_data = obj._get_expenses_data(cr, uid, contract_id, reporting_type, context=context)
 
         return obj._create_csv(csv_data)
@@ -28,11 +28,18 @@ report_project_expenses('report.financing.project.expenses', 'financing.contract
 
 class report_project_expenses2(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
+        if not context:
+            context={}
         super(report_project_expenses2, self).__init__(cr, uid, name, context=context)
-        self.reporting_type = 'project'
+        if 'reporting_type' in context:
+            self.reporting_type = context['reporting_type']
+        else:
+            self.reporting_type = 'project'
         self.len1 = 0
         self.len2 = 0
         self.lines = {}
+        self.totalRptCurrency = 0
+        self.totalBookAmt = 0
         self.iter = []
         self.localcontext.update({
             'getLines':self.getLines,
@@ -44,6 +51,10 @@ class report_project_expenses2(report_sxw.rml_parse):
             'getLines2':self.getLines2,
             'getFormula':self.getFormula,
             'isDate':self.isDate,
+            'totalRptCurrency': self.totalRptCurrency,
+            'totalBookAmt':self.totalBookAmt,
+            'getTotalRptCurrency': self.getTotalRptCurrency,
+            'getTotalBookAmt': self.getTotalBookAmt,
         })
 
     def isDate(self,date):
@@ -64,7 +75,15 @@ class report_project_expenses2(report_sxw.rml_parse):
             rang = nb + 1
             formul += '+R[-'+str(rang)+']C'
             iters = self.iter[tour:]
+
+        return self.totalRptCurrency
         return formul
+
+    def getTotalBookAmt(self):
+        return self.totalBookAmt
+
+    def getTotalRptCurrency(self):
+        return self.totalRptCurrency
 
     def getLines2(self,):
         return self.lines
@@ -79,13 +98,16 @@ class report_project_expenses2(report_sxw.rml_parse):
         self.len2 = 0
         return temp
 
+
     def getBookAm(self,contract,analytic_line):
         date_context = {'date': analytic_line.document_date,'currency_table_id': contract.currency_table_id and contract.currency_table_id.id or None}
         amount = self.pool.get('res.currency').compute(self.cr, self.uid, analytic_line.currency_id.id, contract.reporting_currency.id, analytic_line.amount_currency or 0.0, round=True, context=date_context)
         self.len1 += 1
         self.len2 += 1
+        self.totalBookAmt += analytic_line.amount_currency
+        self.totalRptCurrency += amount
         return amount
-        
+
     def getAccountName(self,analytic_line):
         name = ''
         if analytic_line.general_account_id and analytic_line.general_account_id.code:
@@ -98,27 +120,48 @@ class report_project_expenses2(report_sxw.rml_parse):
         lines = {}
         pool = pooler.get_pool(self.cr.dbname)
         contract_obj = self.pool.get('financing.contract.contract')
+        format_line_obj = self.pool.get('financing.contract.format.line')
         contract_domain = contract_obj.get_contract_domain(self.cr, self.uid, contract, reporting_type=self.reporting_type)
         analytic_line_obj = self.pool.get('account.analytic.line')
         analytic_lines = analytic_line_obj.search(self.cr, self.uid, contract_domain, context=None)
 
+        # list of analytic journal_ids which are in the engagement journals
+        exclude_journal_ids = self.pool.get('account.analytic.journal').search(self.cr, self.uid, [('type','=','engagement')])
+        exclude_line_ids = []
         for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines, context=None):
-            ids_adl = self.pool.get('account.destination.link').search(self.cr, self.uid,[('account_id', '=', analytic_line.general_account_id.id),('destination_id','=',analytic_line.general_account_id.default_destination_id.id) ])
-            temp = [analytic_line.general_account_id.default_destination_id.id]
-            ids_fcfl = self.pool.get('financing.contract.format.line').search(self.cr, self.uid, [('account_destination_ids','in',ids_adl)])
-            for fcfl in self.pool.get('financing.contract.format.line').browse(self.cr, self.uid, ids_fcfl):
+            if analytic_line.journal_id.id in exclude_journal_ids:
+                exclude_line_ids.append(analytic_line.id)
+        analytic_lines = [x for x in analytic_lines if x not in exclude_line_ids]
+
+        # UFTP-16: First search in the triplet in format line, then in the second block below, search in quadruplet
+        for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines, context=None):
+            ids_adl = self.pool.get('account.destination.link').search(self.cr, self.uid,[('account_id', '=', analytic_line.general_account_id.id),('destination_id','=',analytic_line.destination_id.id) ])
+            ids_fcfl = format_line_obj.search(self.cr, self.uid, [('account_destination_ids','in',ids_adl), ('format_id', '=', contract.format_id.id)])
+            for fcfl in format_line_obj.browse(self.cr, self.uid, ids_fcfl):
                 ana_tuple = (analytic_line, fcfl.code, fcfl.name)
                 if lines.has_key(fcfl.code):
                     if not ana_tuple in lines[fcfl.code]:
                         lines[fcfl.code] += [ana_tuple]
                 else:
                     lines[fcfl.code] = [ana_tuple]
-        
+
+        # UFTP-16: First search in the triplet in format line, then in the second block below, search in quadruplet
+        for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines, context=None):
+            ids_adl = self.pool.get('financing.contract.account.quadruplet').search(self.cr, self.uid,[('account_id', '=', analytic_line.general_account_id.id),('account_destination_id','=',analytic_line.destination_id.id) ])
+            ids_fcfl = format_line_obj.search(self.cr, self.uid, [('account_quadruplet_ids','in',ids_adl), ('format_id', '=', contract.format_id.id)])
+            for fcfl in format_line_obj.browse(self.cr, self.uid, ids_fcfl):
+                ana_tuple = (analytic_line, fcfl.code, fcfl.name)
+                if lines.has_key(fcfl.code):
+                    if not ana_tuple in lines[fcfl.code]:
+                        lines[fcfl.code] += [ana_tuple]
+                else:
+                    lines[fcfl.code] = [ana_tuple]
+
         self.lines = lines
         for x in lines:
             self.iter.append(len(lines[x]))
-
         return lines
+
 
     def getCostCenter(self,obj):
         ccs = []
@@ -128,9 +171,7 @@ class report_project_expenses2(report_sxw.rml_parse):
 
 class report_project_expenses3(report_project_expenses2):
     def __init__(self, cr, uid, name, context=None):
-        report_project_expenses2.__init__(self, cr, uid, name, context=None)
-        super(report_project_expenses3, self).__init__(cr, uid, name, context=context)
-        self.reporting_type = 'allocated'
+        super(report_project_expenses3, self).__init__(cr, uid, name, context={'reporting_type': 'allocated'})
 
 SpreadsheetReport('report.financing.project.expenses.2','financing.contract.contract','addons/financing_contract/report/project_expenses_xls.mako', parser=report_project_expenses2)
 
