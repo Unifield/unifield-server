@@ -650,7 +650,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         o_type = line.order_id and line.order_id.order_type == 'loan' or False
 
         if l_type and o_state and ctx_cond and o_type:
-            return _('You can\'t source a loan \'from stock\'.')
+            return _('You can\'t source a loan \'on order\'.')
 
         return False
 
