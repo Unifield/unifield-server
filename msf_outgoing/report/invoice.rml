@@ -153,12 +153,7 @@
     <blockTable colWidths="531.0" style="Table1">
       <tr>
         <td>
-          <para style="P2">
-            <font color="white"> </font>
-          </para>
-          <para style="P1">
-            <font color="white"> </font>
-          </para>
+          <image width="150" height="50">[[ company.logo or removeParentNode('image') ]]</image>
         </td>
       </tr>
     </blockTable>
