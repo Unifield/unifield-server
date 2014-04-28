@@ -210,13 +210,13 @@
       </tr>
       <tr>
         <td>
-          <para style="terp_default_8">[[ user.name ]]</para>
+          <para style="terp_default_8">[[ company.partner_id.name]]</para>
           <para style="terp_default_8">[[ user.address_id.street ]],</para>
           <para style="terp_default_8">[[ user.address_id.city ]],</para>
           <para style="terp_default_8">[[ user.address_id.country_id.name ]]</para>
         </td>
         <td>
-          <para style="terp_default_8">[[ shipment.partner_id.name ]]</para>
+          <para style="terp_default_8">[[ shipment.partner_id2.name ]]</para>
           <para style="terp_default_8">[[ shipment.address_id.street ]],</para>
           <para style="terp_default_8">[[ shipment.address_id.city ]],</para>
           <para style="terp_default_8">[[ shipment.address_id.country_id.name ]]</para>
