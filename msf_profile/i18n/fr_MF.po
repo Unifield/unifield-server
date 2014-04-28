@@ -47093,7 +47093,7 @@ msgstr "Le formulaire de la liste de Piquage est créé dès que la commande ter
 
 #. module: stock
 #: view:stock.inventory:0
-msgid "General Informations"
+msgid "General Information"
 msgstr "Informations Générales"
 
 #. module: msf_budget

@@ -727,7 +727,7 @@ msgstr "Línea de pedido"
 
 #. module: stock
 #: view:stock.inventory:0
-msgid "General Informations"
+msgid "General Information"
 msgstr "Informaciones generales"
 
 #. modules: msf_budget, account, reason_types_moves, resource, product_attributes, financing_contract, msf_instance, product, sale, analytic, base, stock, analytic_distribution
