@@ -551,3 +551,20 @@ def comment_value(**kwargs):
     except IndexError:
         warning_list.append(_("No comment was defined"))
     return {'comment': comment, 'warning_list': warning_list}
+    
+def check_all_currency(rows, ccy_col_index, ccy_expected_code):
+    """
+    check rows currency
+    :param ccy_col_index: currency column index
+    :param ccy_expected_code: currency code expected in all rows
+    :return if any ccy is not wished, return False
+    """
+    for row in rows:
+        if row.cells:
+            cell = row.cells[ccy_col_index]
+            if cell.type == 'str':
+                if str(cell) != ccy_expected_code:
+                    return False
+            else:
+                return False
+    return True
