@@ -1013,6 +1013,8 @@ class Form(SecuredController):
 
         domain = params.domain or []
         context = params.context or {}
+        if not context and rpc.session.context:
+            context['lang'] = rpc.session.context.get('lang')
         action = {}
 
         if data.get('datas'):

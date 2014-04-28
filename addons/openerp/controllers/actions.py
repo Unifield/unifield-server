@@ -209,7 +209,7 @@ def execute_report(name, **data):
         cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
         report_type = val['format']
 
-        cherrypy.response.headers['Content-Disposition'] = 'filename="' + report_name + '.' + report_type + '"'
+        cherrypy.response.headers['Content-Disposition'] = 'filename="' + report_name.decode('utf-8') + '.' + report_type + '"'
 
         return _print_data(val)
 

@@ -61,9 +61,6 @@ class Sidebar(TinyWidget):
                     del newctx[to_del]
             for relate in self.relates:
                 relate['context'] = newctx
-            for action in self.actions:
-                action['context'] = newctx
-
 
         action = 'client_action_multi'
         if self.view_type == 'form':
