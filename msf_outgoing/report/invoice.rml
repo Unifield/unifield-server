@@ -122,7 +122,8 @@
     <paraStyle name="terp_header" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="terp_default_8" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_Bold_8" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="terp_default_Bold_9" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="terp_default_Bold_8" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="terp_default_Bold_Right_8" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_9" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_tblheader_General" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
     <paraStyle name="terp_tblheader_General_Centre" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
@@ -254,34 +255,27 @@
     <para style="P8">Parcels details</para>
     <section>
       <para style="P13">[[repeatIn(shipment.pack_family_memory_ids,'pack_family')]]</para>
-      <blockTable colWidths="41.0,81.0,40.0,33.0,33.0,104.0,68.0,68.0,68.0" style="Table8">
+      <blockTable colWidths="200.0,200.0,136.0" style="Table8">
         <tr>
           <td>
-            <para style="terp_default_9">Order ref: [[ pack_family.sale_order_id.name ]]</para>
+            <parawrap style="terp_default_Bold_8">Order ref</parawrap>
           </td>
           <td>
-            <para style="P10">PPL ref: [[ pack_family.ppl_id.name ]]</para>
+            <parawrap style="terp_default_Bold_8">PPL ref</parawrap>
           </td>
           <td>
-            <para style="P10">#Packs: [[ pack_family.num_of_packs ]]</para>
+            <parawrap style="terp_default_Bold_Right_8">Total value</parawrap>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <parawrap style="terp_default_9">[[ pack_family.sale_order_id.name ]]</parawrap>
           </td>
           <td>
-            <para style="P10">From p: [[ pack_family.from_pack ]]</para>
+            <parawrap style="terp_default_9">[[ pack_family.ppl_id.name ]]</parawrap>
           </td>
           <td>
-            <para style="P10">To p: [[ pack_family.to_pack ]]</para>
-          </td>
-          <td>
-            <para style="P10">Pack Weight [kg]: [[ pack_family.weight ]]</para>
-          </td>
-          <td>
-            <para style="terp_default_Right_9">Total Weight [kg]: [[ pack_family.total_weight ]]</para>
-          </td>
-          <td>
-            <para style="terp_default_Right_9">Pack Value: [[ pack_family.amount ]] [[ pack_family.currency_id.name ]]</para>
-          </td>
-          <td>
-            <para style="terp_default_Right_9">Total value: [[ pack_family.total_amount ]][[ pack_family.currency_id.name ]]</para>
+            <parawrap style="terp_default_Right_9">[[ pack_family.total_amount ]] [[ pack_family.currency_id.name ]]</parawrap>
           </td>
         </tr>
       </blockTable>
