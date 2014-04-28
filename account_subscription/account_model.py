@@ -21,8 +21,6 @@
 ##############################################################################
 from osv import fields, osv
 import time
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
 from tools.translate import _
 
 class account_model_line(osv.osv):
@@ -156,7 +154,6 @@ class account_model_line(osv.osv):
         if not ids:
             raise osv.except_osv(_('Error'), _('No model line given. Please save your model line before.'))
         model_line = self.browse(cr, uid, ids[0], context=context)
-        distrib_id = False
         amount = abs(model_line.debit - model_line.credit)
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         currency = model_line.model_id and  model_line.model_id.currency_id and  model_line.model_id.currency_id.id or company_currency
