@@ -107,9 +107,12 @@ class wizard_import_ir_line(osv.osv_memory):
             CCY COL INDEX: 5
             """
             order_currency_code = fo_browse.functional_currency_id.name
+            currency_index = 5
             rows = file_obj.getRows()
-            rows.next()
-            if not check_line.check_all_currency(rows, 5, order_currency_code):
+            rows.next()  # skip header line
+            lines_to_correct = check_line.check_lines_currency(rows,
+                currency_index, order_currency_code)
+            if lines_to_correct > 0:
                 msg = "You can not import this file because it contains" \
                     " line(s) with currency not of the order currency (%s)" % (
                     order_currency_code, )
