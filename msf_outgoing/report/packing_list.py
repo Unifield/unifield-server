@@ -29,7 +29,29 @@ class packing_list(report_sxw.rml_parse):
         super(packing_list, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'getPackingList': self._get_packing_list,
         })
+
+    def _get_packing_list(self, shipment):
+        '''
+        Return a list of PPL with, for each of them, the list of pack family
+        that are linked.
+
+        :param shipment: browse_record of a shipment
+
+        :return: A list of tuples with the pre-packing list as first element and
+                 the list of linked pack-family as second element
+        :rtype: list
+        '''
+        res = {}
+        for pf in shipment.pack_family_memory_ids:
+            res.setdefault(pf.ppl_id.name, {
+                'ppl': pf.ppl_id,
+                'pf': [],
+            })
+            res[pf.ppl_id.name]['pf'].append(pf)
+
+        return res.values()
         
     def set_context(self, objects, data, ids, report_type=None):
         '''
