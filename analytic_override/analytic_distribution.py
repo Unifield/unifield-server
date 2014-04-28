@@ -260,13 +260,16 @@ class distribution_line(osv.osv):
 
         ret = {}
         move_line = self.pool.get('account.move.line').browse(cr, uid, move_line_id)
-        company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        company_currency_id = company.currency_id.id
+        instance_id = company.instance_id.id
 
         for line in self.browse(cr, uid, ids):
             amount_cur = (move_line.credit_currency - move_line.debit_currency) * line.percentage / 100
             ctx = {'date': source_date or date}
             amount = self.pool.get('res.currency').compute(cr, uid, move_line.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
             vals = {
+                'instance_id': instance_id,
                 'account_id': line.analytic_id.id,
                 'amount_currency': amount_cur,
                 'amount': amount,
@@ -280,6 +283,7 @@ class distribution_line(osv.osv):
                 'name': name or move_line.name,
                 'distrib_id': line.distribution_id.id,
                 'distrib_line_id': '%s,%s'%(self._name, line.id),
+                'ref': move_line.move_id.name,
             }
             if self._name == 'funding.pool.distribution.line':
                 vals.update({
