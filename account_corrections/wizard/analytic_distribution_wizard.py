@@ -276,7 +276,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, ret[ret_id]) )
             # UFTP-194: Set missing entry sequence for created analytic lines
             if have_been_created:
-                cr.execute('update account_analytic_line set entry_sequence = %s where id in %s', (entry_seq, tuple(have_been_created)))
+                cr.execute('update account_analytic_line set entry_sequence = %s, last_corrected_id = %s where id in %s', (entry_seq, to_reverse_ids[0], tuple(have_been_created)))
 
         #####
         ## FP: TO OVERRIDE
