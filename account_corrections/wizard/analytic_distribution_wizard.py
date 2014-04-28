@@ -198,9 +198,11 @@ class analytic_distribution_wizard(osv.osv_memory):
             # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
             # But regarding UFTP-194, we should set this date to the wizard date when we have some reveral + correction
             create_date = orig_date
+            name = False
             if to_reverse:
                 create_date = wizard.date
-            created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date,context=context)
+                name = self.pool.get('account.analytic.line').join_without_redundancy(ml.name, 'COR')
+            created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date, name=name, context=context)
             # Set right analytic correction journal to these lines
             self.pool.get('account.analytic.line').write(cr, uid, created_analytic_line_ids[new_distrib_line], {'journal_id': correction_journal_id})
             have_been_created.append(created_analytic_line_ids[new_distrib_line])
