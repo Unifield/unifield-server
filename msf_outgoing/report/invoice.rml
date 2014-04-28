@@ -238,37 +238,13 @@
     <para style="P8">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="132.0,134.0,135.0,135.0" style="Table7">
-      <tr>
-        <td>
-          <para style="P3">Number of Parcels</para>
-        </td>
-        <td>
-          <para style="terp_default_8">[[ shipment.num_of_packs ]]</para>
-        </td>
-        <td>
-          <para style="P3">
-            <font color="white"> </font>
-          </para>
-        </td>
-        <td>
-          <para style="terp_default_8">
-            <font color="white"> </font>
-          </para>
-        </td>
-      </tr>
-      <tr>
+    <blockTable colWidths="132.0,134.0" style="Table7">
+       <tr>
         <td>
           <para style="P3">Total Amount</para>
         </td>
         <td>
           <para style="terp_default_8">[[ shipment.total_amount ]] [[ shipment.currency_id.name ]]</para>
-        </td>
-        <td>
-          <para style="P3">Total Weight</para>
-        </td>
-        <td>
-          <para style="terp_default_8">[[ shipment.total_weight ]] kg</para>
         </td>
       </tr>
     </blockTable>
