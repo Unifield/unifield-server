@@ -558,6 +558,7 @@ def check_lines_currency(rows, ccy_col_index, ccy_expected_code):
     :param ccy_col_index: currency column index
     :param ccy_expected_code: currency code expected in all rows
     :return count of bad ccy lines or 0 if OK
+    :rtype int
     """
     res = 0
     for row in rows:
