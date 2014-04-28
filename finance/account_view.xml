@@ -248,7 +248,7 @@
         header="False"
         model="account.partner.balance.tree"
         name="account.partner.balance.tree_xls"
-        file="account_override/report/account_partner_balance_tree_xls.mako"
+        file="finance/report/account_partner_balance_tree_xls.mako"
         report_type="webkit" 
         string="Partner Balance"/>
 
