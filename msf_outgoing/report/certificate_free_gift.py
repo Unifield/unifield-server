@@ -48,7 +48,6 @@ class certificate_free_gift(report_sxw.rml_parse):
                 res['city'] = company.partner_id.address[0].street
                 res['country'] = company.partner_id.address[0].country_id and company.partner_id.address[0].country_id.name or False
 
-        print res
         return res
 
 
