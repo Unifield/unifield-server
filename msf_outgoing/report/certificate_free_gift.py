@@ -29,8 +29,29 @@ class certificate_free_gift(report_sxw.rml_parse):
         super(certificate_free_gift, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'getCompany': self._get_company(),
         })
-        
+
+    def _get_company(self):
+        '''
+        Return information about the company.
+        '''
+        company = self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id
+
+        res = {}
+        if company:
+            res['partner'] = company.partner_id and company.partner_id.name or False
+            if company.partner_id and len(company.partner_id.address):
+                res['street'] = company.partner_id.address[0].street
+                res['street2'] = company.partner_id.address[0].street
+                res['zip'] = company.partner_id.address[0].street
+                res['city'] = company.partner_id.address[0].street
+                res['country'] = company.partner_id.address[0].country_id and company.partner_id.address[0].country_id.name or False
+
+        print res
+        return res
+
+
     def set_context(self, objects, data, ids, report_type=None):
         '''
         opening check
@@ -38,7 +59,7 @@ class certificate_free_gift(report_sxw.rml_parse):
         for obj in objects:
             if not obj.backshipment_id:
                 raise osv.except_osv(_('Warning !'), _('Free Gift Certificate is only available for Shipment Objects (not draft)!'))
-        
+
         return super(certificate_free_gift, self).set_context(objects, data, ids, report_type=report_type)
 
 report_sxw.report_sxw('report.certificate.free.gift', 'shipment', 'addons/msf_outgoing/report/certificate_free_gift.rml', parser=certificate_free_gift, header="external")
