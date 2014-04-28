@@ -184,6 +184,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         #####
         ## FP: TO CREATE
         ###
+        have_been_created = []
         for line in to_create:
             # create the new distrib line
             new_distrib_line = self.pool.get('funding.pool.distribution.line').create(cr, uid, {
@@ -202,6 +203,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date,context=context)
             # Set right analytic correction journal to these lines
             self.pool.get('account.analytic.line').write(cr, uid, created_analytic_line_ids[new_distrib_line], {'journal_id': correction_journal_id})
+            have_been_created.append(created_analytic_line_ids[new_distrib_line])
 
         #####
         ## FP: TO DELETE
@@ -272,6 +274,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             for ret_id in ret:
                 self.pool.get('account.analytic.line').write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence })
                 cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (entry_seq, ret[ret_id]) )
+            # UFTP-194: Set missing entry sequence for created analytic lines
+            if have_been_created:
+                cr.execute('update account_analytic_line set entry_sequence = %s where id in %s', (entry_seq, tuple(have_been_created)))
 
         #####
         ## FP: TO OVERRIDE
