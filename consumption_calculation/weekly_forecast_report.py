@@ -156,9 +156,8 @@ class weekly_forecast_report(osv.osv):
             'progress': 0.00,
             'progress_comment': '',
             'xml_data': '',
-            'requestor_date': time.strftime('%Y-%d-%m %H:%M:%S'),
+            'requestor_date': time.strftime('%Y-%m-%d %H:%M:%S'), # Fixed the wrong typo date format
         })
-
         return super(weekly_forecast_report, self).copy(cr, uid, report_id, defaults, context=context)
 
     def period_change(self, cr, uid, ids, consumption_from, consumption_to, consumption_type, context=None):
@@ -421,6 +420,16 @@ class weekly_forecast_report(osv.osv):
                 product_ids = []
                 for row in new_cr.dictfetchall():
                     product_ids.append(row['product_id'])                
+
+                ##### We still need to get the list of products with AMC and FMC > 0
+                fmc_line_obj = self.pool.get('monthly.review.consumption.line')
+                amc_fmc_product_ids = fmc_line_obj.search(new_cr, uid, ['|', ('amc', '>', 0), ('fmc', '>', 0)], context=context)
+                if len(amc_fmc_product_ids) > 0:
+                    amc_fmc_product_ids = fmc_line_obj.read(new_cr, uid, amc_fmc_product_ids, ['name',], context=context) # read the name, which is product_id
+                    for temp in amc_fmc_product_ids:
+                        if temp['name'] and temp['name'][0]:
+                            product_ids.append(temp['name'][0])
+                    product_ids = list(set(product_ids))
 
                 ##### Now, from this list, perform calculation for consumption, in-pipeline and expired quantity
                 nb_products = len(product_ids) # reupdate the number of real products to calculate
