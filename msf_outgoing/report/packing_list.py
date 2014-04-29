@@ -51,12 +51,19 @@ class packing_list(report_sxw.rml_parse):
             res.setdefault(pf.ppl_id.name, {
                 'ppl': pf.ppl_id,
                 'pf': [],
-                'last': i == nb_pack,
-                'index': i,
+                'last': False,
             })
             res[pf.ppl_id.name]['pf'].append(pf)
 
-        return res.values()
+        sort_keys = sorted(res.keys())
+
+        result = []
+        for key in sort_keys:
+            result.append(res.get(key))
+
+        result[-1]['last'] = True
+
+        return result
 
     def set_context(self, objects, data, ids, report_type=None):
         '''
