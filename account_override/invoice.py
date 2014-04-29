@@ -887,6 +887,7 @@ class account_invoice_line(osv.osv):
             readonly=True, help="This informs system if this item have been corrected in analytic lines. Criteria: the invoice line is linked to a journal items that have analytic item which is reallocated.",
             store=False),
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
+        'reference': fields.char(string="Reference", size=64),
     }
 
     _defaults = {

@@ -1948,9 +1948,14 @@ class account_bank_statement_line(osv.osv):
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
                 absl = self.browse(cr, uid, absl.id, context=context)
             if absl.state in ('draft','temp') and absl.direct_invoice and postype != 'hard':
-                self.create_move_from_st_line(cr, uid, absl, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
+                move_id = self.create_move_from_st_line(cr, uid, absl, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
                 absl = self.browse(cr, uid, absl.id, context=context)
+                
+                # update the reference field from account_invoice_line
+                account_move_line = self.pool.get('account.move.line')
+                move_line_ids = account_move_line.search(cr, uid, [('move_id','=',move_id)], context=context)
+                
 
             if postype == 'temp' and absl.direct_invoice:  #utp-917
                 # Optimization on write() for this field
@@ -1980,7 +1985,7 @@ class account_bank_statement_line(osv.osv):
                 # update the invoice 'name' (ref)  TODO - does this need to be set to "/" ?
                 self.pool.get('account.invoice').read(cr, uid, absl.invoice_id.id, ['number'])['number']
                 # self.write(cr, uid, [absl.id], {'name': "/"})
-                account_move_line_ids = account_move_line.search(cr, uid, [('move_id', '=', absl.invoice_id.move_id.id)])
+    
                 # Optimization: Do check=True and update_check=True because it was out from previous lines.
                 account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'}, context=context, check=True, update_check=True)
 

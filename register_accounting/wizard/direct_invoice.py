@@ -148,7 +148,13 @@ class wizard_account_invoice(osv.osv):
         amount = 0
         if inv['invoice_line']:
             for line in self.pool.get('wizard.account.invoice.line').read(cr, uid, inv['invoice_line'],
-                ['product_id','account_id', 'account_analytic_id', 'quantity', 'price_unit','price_subtotal','name', 'uos_id','analytic_distribution_id']):
+                ['product_id','account_id', 'account_analytic_id', 'quantity', 'price_unit','price_subtotal','name', 'uos_id','analytic_distribution_id','reference']):
+                # line level reference overrides header level reference
+                line_reference = False
+                if line['reference']:
+                    line_reference = line['reference']
+                elif inv['reference']:
+                    line_reference = inv['reference']
                 vals['invoice_line'].append( (0, 0,
                     {
                         'product_id': line['product_id'] and line['product_id'][0] or False,
@@ -160,7 +166,7 @@ class wizard_account_invoice(osv.osv):
                         'price_subtotal': line['price_subtotal'],
                         'name': line['name'],
                         'uos_id': line['uos_id'] and line['uos_id'][0] or False,
-                        'ref': inv['reference'] and inv['reference'] or False,
+                        'reference': line_reference,
                     }
                 ))
                 amount += line['price_subtotal']
@@ -204,7 +210,7 @@ class wizard_account_invoice(osv.osv):
             'partner_type': 'res.partner,%d'%(vals['partner_id'], ),
             'statement_id': inv['register_id'][0],
             'name': 'Direct Invoice',
-            'ref': inv['reference'] and inv['reference'] or False,
+            'ref': inv['reference'] and inv['reference'] or False,     # register line always takes header reference
         })
 
         # Temp post the line
@@ -215,6 +221,27 @@ class wizard_account_invoice(osv.osv):
 
         # Do reconciliation
         # Moved since UF-1471. This is now down when you hard post the linked register line.
+        
+        # fix the reference UFTP-167
+        # 1. find the moves associated with the invoice - account_invoice.move_id
+        move_id = inv_obj.browse(cr, uid, inv_id, context=context).move_id.id
+        # 2. get all the move_lines for that move_id with an account_move_line.invoice_line_id <> null
+        aml_obj = self.pool.get('account.move.line')
+        ail_obj = self.pool.get('account.invoice.line')
+        aal_obj = self.pool.get('account.analytic.line')
+        aml_ids = aml_obj.search(cr, uid, [('move_id', '=', move_id),('invoice_line_id','!=',False)], context=context)
+        move_lines = aml_obj.browse(cr, uid, aml_ids, context=context)
+        # 3. get the corresponding invoice_line
+        # 4. if the ref is not blank than update it
+        for move_line in move_lines:
+            ail = ail_obj.browse(cr, uid, move_line.invoice_line_id.id, context=context)
+            if ail.reference:
+                # must write to 'reference' to have 'ref' update: very confusing.
+                aml_obj.write(cr, uid, move_line.id, {'reference': ail.reference}, context=context)
+                # update analytic lines. move_id is actually move_line_id
+                aal_ids = aal_obj.search(cr, uid, [('move_id','=',move_line.id)], context=context)
+                aal_obj.write(cr, uid, aal_ids, {'reference': ail.reference}, context=context)
+
 
         # Delete the wizard
         self.unlink(cr, uid, ids, context=context)
@@ -226,6 +253,7 @@ class wizard_account_invoice(osv.osv):
         view['o2m_refresh'] = 'line_ids'
         view['type'] = 'ir.actions.act_window_close'
         return view
+    
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """

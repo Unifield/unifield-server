@@ -259,6 +259,8 @@ class account_invoice(osv.osv):
             account_bank_statement_line.write(cr, uid, [absl.id], {'document_date': direct_invoice.document_date, \
                                                                    'partner_id': direct_invoice.partner_id.id },     \
                                                                    context=context)
+        if (direct_invoice.reference != absl.ref):         
+            account_bank_statement_line.write(cr, uid, [absl.id], {'ref': direct_invoice.reference }, context=context)
         # Delete moves
         # existing seqnums are saved into context here. utp917
         account_bank_statement_line.unlink_moves(cr, uid, [absl.id], context=context)
@@ -268,6 +270,7 @@ class account_invoice(osv.osv):
         # remove seqnums from context
         context.pop("seqnums",None)
         return True
+    
 
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """
