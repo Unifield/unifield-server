@@ -210,24 +210,26 @@ class account_move_line(osv.osv):
         """
         if not context:
             context = {}
-        # Search manual moves to revalidate
         move_ids = []
-        sql = """
-            SELECT m.id
-            FROM account_move_line AS ml, account_move AS m
-            WHERE ml.move_id = m.id
-            AND m.status = 'manu'
-            AND ml.id IN %s
-            GROUP BY m.id
-            ORDER BY m.id;"""
-        cr.execute(sql, (tuple(ids),))
-        move_ids += cr.fetchall()
+        if ids:
+            # Search manual moves to revalidate
+            sql = """
+                SELECT m.id
+                FROM account_move_line AS ml, account_move AS m
+                WHERE ml.move_id = m.id
+                AND m.status = 'manu'
+                AND ml.id IN %s
+                GROUP BY m.id
+                ORDER BY m.id;"""
+            cr.execute(sql, (tuple(ids),))
+            move_ids += [x and x[0] for x in cr.fetchall()]
         # Search analytic lines
-        ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', ids)])
-        self.pool.get('account.analytic.line').unlink(cr, uid, ana_ids)
+        ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', ids)], context=context)
+        self.pool.get('account.analytic.line').unlink(cr, uid, ana_ids, context=context)
+        res = super(account_move_line, self).unlink(cr, uid, ids, context=context, check=check)
         # Revalidate move
-        self.pool.get('account.move').validate(cr, uid, move_ids)
-        return super(account_move_line, self).unlink(cr, uid, ids, context=context, check=check)
+        self.pool.get('account.move').validate(cr, uid, move_ids, context=context)
+        return res
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
