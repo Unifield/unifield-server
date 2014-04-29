@@ -44,15 +44,20 @@ class packing_list(report_sxw.rml_parse):
         :rtype: list
         '''
         res = {}
+        i = 0
+        nb_pack = len(shipment.pack_family_memory_ids)
         for pf in shipment.pack_family_memory_ids:
+            i += 1
             res.setdefault(pf.ppl_id.name, {
                 'ppl': pf.ppl_id,
                 'pf': [],
+                'last': i == nb_pack,
+                'index': i,
             })
             res[pf.ppl_id.name]['pf'].append(pf)
 
         return res.values()
-        
+
     def set_context(self, objects, data, ids, report_type=None):
         '''
         opening check
@@ -60,7 +65,7 @@ class packing_list(report_sxw.rml_parse):
         #for obj in objects:
             #if not obj.backshipment_id:
                 #raise osv.except_osv(_('Warning !'), _('Packing List is only available for Shipment Objects (not draft)!'))
-        
+
         return super(packing_list, self).set_context(objects, data, ids, report_type=report_type)
 
 report_sxw.report_sxw('report.packing.list', 'shipment', 'addons/msf_outgoing/report/packing_list.rml', parser=packing_list, header="external")
