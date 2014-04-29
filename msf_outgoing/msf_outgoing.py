@@ -386,7 +386,7 @@ class shipment(osv.osv):
 
             shipment_number = sequence.get_id(code_or_id='id', context=context)
             shipment_name = '%s-%s' % (shipment.name, shipment_number)
-            source_shipment_address_id = shipment.address_id.id
+            source_shipment_address_id = shipment.address_id.id if shipment.address_id else False
 
             ship_val = {
                 'name': shipment_name,
@@ -401,7 +401,8 @@ class shipment(osv.osv):
             shipment_id = self.create(cr, uid, ship_val, context=context)
 
             context['shipment_id'] = shipment_id
-            context['source_shipment_address_id'] = source_shipment_address_id
+            if source_shipment_address_id:
+                context['source_shipment_address_id'] = source_shipment_address_id
 
             for add_line in wizard.additional_line_ids:
                 line_vals = {
@@ -939,7 +940,7 @@ class shipment(osv.osv):
             # update actual ship date (shipment_actual_date) to today + time
             today = time.strftime(db_datetime_format)
             vals = {'shipment_actual_date': today,}
-            if 'source_shipment_address_id' in context and context['source_shipment_address_id']:
+            if context.get('source_shipment_address_id', False):
                 vals['address_id'] = context['source_shipment_address_id']
             shipment.write(vals)
             # corresponding packing objects
