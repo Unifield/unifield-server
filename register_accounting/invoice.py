@@ -269,6 +269,31 @@ class account_invoice(osv.osv):
         account_bank_statement_line.button_temp_posting(cr, uid, [absl.id], context=context)
         # remove seqnums from context
         context.pop("seqnums",None)
+        
+        # fix the reference UFTP-167
+        # 1. find the moves associated with the invoice - account_invoice.move_id
+        inv_obj = self.pool.get('account.invoice')
+        inv_id = ids[0]
+        move_id = inv_obj.browse(cr, uid, inv_id, context=context).move_id.id
+        # 2. get all the move_lines for that move_id with an account_move_line.invoice_line_id <> null
+        aml_obj = self.pool.get('account.move.line')
+        ail_obj = self.pool.get('account.invoice.line')
+        aal_obj = self.pool.get('account.analytic.line')
+        aml_ids = aml_obj.search(cr, uid, [('move_id', '=', move_id),('invoice_line_id','!=',False)], context=context)
+        move_lines = aml_obj.browse(cr, uid, aml_ids, context=context)
+        # 3. get the corresponding invoice_line
+        # 4. if the ref is not blank than update it
+        for move_line in move_lines:
+            ail = ail_obj.browse(cr, uid, move_line.invoice_line_id.id, context=context)
+            if ail.reference:
+                # must write to 'reference' to have 'ref' update: very confusing.
+                aml_obj.write(cr, uid, move_line.id, {'reference': ail.reference}, context=context)
+                # update analytic lines. move_id is actually move_line_id
+                aal_ids = aal_obj.search(cr, uid, [('move_id','=',move_line.id)], context=context)
+                aal_obj.write(cr, uid, aal_ids, {'reference': ail.reference}, context=context)
+        
+        
+        
         return True
     
 
