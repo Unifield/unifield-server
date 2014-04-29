@@ -971,7 +971,8 @@ class _rml_template(object):
         self.doc = doc
         self.image=[]
         pts = node.findall('pageTemplate')
-        for pt in pts:
+        for pt in utils._child_get(pts, self):
+        #for pt in pts:
             frames = []
             for frame_el in pt.findall('frame'):
                 frame = platypus.Frame( **(utils.attr_get(frame_el, ['x1','y1', 'width','height', 'leftPadding', 'rightPadding', 'bottomPadding', 'topPadding'], {'id':'str', 'showBoundary':'bool'})) )
