@@ -5,35 +5,17 @@
     <template pageSize="(842.0,595.0)" title="Packing-List" author="Unifield,MSF" allowSplitting="20">
 
         <pageTemplate id="first">
-            <frame id="first" x1="0.0" y1="0.0" width="842" height="560" />
+            <frame id="first" x1="0.0" y1="0.0" width="842" height="575" />
 
             <pageGraphics>
                 <setFont name="Helvetica-Bold" size="13.0"/>
                 <drawString x="35" y="570.0">PACKING LIST</drawString>
                 <fill color="blue"/>
-                <drawString x="35" y="556.0">[[ getPackingList(objects[0])[0]['ppl'].name ]]</drawString>
                 <image x="720.0" y="540.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
                 <setFont name="Helvetica" size="8" />
                 <fill color="black" />
-                <drawString x="20.0" y="450.0">Page : <pageNumber /> / </drawString>
-                <drawString x="62.0" y="450.0"><pageCount /></drawString>
-            </pageGraphics>
-        </pageTemplate>
-
-        <pageTemplate id="second">
-            [[ repeatIn(getPackingList(objects[0]), 'p', 'pageTemplate') ]]
-            [[ setTag('pageTemplate', 'pageTemplate', {'id': '%s-second' % str(p['ppl'].id)}) ]]
-            <frame id="second" x1="0.0" y1="0.0" width="842" height="540" />
-            <pageGraphics>
-                <setFont name="Helvetica-Bold" size="13.0"/>
-                <drawString x="35" y="570.0">PACKING LIST</drawString>
-                <fill color="blue"/>
-                <drawString x="35" y="556.0">[[ p['ppl'].name ]]</drawString>
-                <image x="720.0" y="540.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
-                <setFont name="Helvetica" size="8" />
-                <fill color="black" />
-                <drawString x="20.0" y="538.0">Page : <pageNumber /> / </drawString>
-                <drawString x="62.0" y="538.0"><pageCount /></drawString>
+                <drawString x="23.0" y="538.0">Page : <pageNumber /> / </drawString>
+                <drawString x="65.0" y="538.0"><pageCount /></drawString>
             </pageGraphics>
         </pageTemplate>
 
@@ -67,6 +49,8 @@
             <lineStyle kind="OUTLINE" colorName="grey" start="1,0" stop="-2,-1" />
         </blockTableStyle>
 
+        <paraStyle name="Title" fontName="Helvetica-Bold" fontSize="13" textColor="blue" />
+
         <paraStyle name="HeaderInfosTitle" fontName="Helvetica" fontSize="8.0" />
         <paraStyle name="HeaderInfosValue" fontName="Helvetica" fontSize="8.0" textColor="blue" />
 
@@ -84,214 +68,242 @@
     <!-- Document -->
     <story>
         <section>
-        [[ repeatIn(getPackingList(objects[0]), 'p') ]]
-
-            <!-- Empty line -->
-            <para style="HeaderInfosTitle">
-                <font color="white"> </font>
-            </para>
-
-            <!-- Shipment header values -->
-            <blockTable colWidths="80.0,150.0,140.0,150.0,140.0,150.0" style="HeaderInfos">
-                <tr>
-                    <td>
-                        <para style="HeaderInfosTitle">Our Ref.:</para>
-                        <para style="HeaderInfosTitle">FO Date:</para>
-                        <para style="HeaderInfosTitle">Your Ref.:</para>
-                        <para style="HeaderInfosTitle">Packing date:</para>
-                        <para style="HeaderInfosTitle">RTS date:</para>
-                        <para style="HeaderInfosTitle">Transport mode:</para>
-                        <para style="HeaderInfosTitle"><font color="white"> </font></para>
-                        <para style="HeaderInfosTitle"><font color="blue"> </font></para>
-                    </td>
-                    <td>
-                        <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.name or '' ]]</para>
-                        <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.date_order or '' ]]</para>
-                        <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.client_order_ref or '' ]]</para>
-                        <para style="HeaderInfosValue">[[ p['ppl'].date[0:10] ]]</para>
-                        <para style="HeaderInfosValue">[[ objects[0].shipment_expected_date[0:10] ]]</para>
-                        <para style="HeaderInfosValue">[[ getSel(objects[0], 'transport_type') ]]</para>
-                    </td>
-                    <td>
-                        <para style="HeaderInfosTitle">Shipper:</para>
-                        <para style="HeaderInfosValue">[[ objects[0].shipper_name or '' ]]</para>
-                        <para style="HeaderInfosValue">[[ objects[0].shipper_address or '' ]]</para>
-                        <para style="HeaderInfosValue">[[ objects[0].shipper_phone or '' ]]</para>
-                        <para style="HeaderInfosValue">[[ objects[0].shipper_other or '' ]]</para>
-                    </td>
-                    <td>
-                        <para style="HeaderInfosTitle">Consignee:</para>
-                        <para style="HeaderInfosValue">[[ objects[0].consignee_name or '' ]]</para>
-                        <para style="HeaderInfosValue">[[ objects[0].consignee_address or '' ]]</para>
-                        <para style="HeaderInfosValue">[[ objects[0].consignee_phone or '' ]]</para>
-                        <para style="HeaderInfosValue">[[ objects[0].consignee_other or '' ]]</para>
-                    </td>
-                    <td>
-                        <para style="HeaderInfosTitle">Dispatch:</para>
-                        <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_id.name or '' ]]</para>
-                        <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.name or '' ]]</para>
-                        <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.street or '' ]]</para>
-                        <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.street2 or '' ]]</para>
-                        <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.zip or '' ]] [[ p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.city or '' ]]</para>
-                        <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.country_id and p['ppl'].sale_id.partner_shipping_id.country_id.name or '' ]]</para>
-                        <para style="HeaderInfosValue">[[ p['ppl'].sale_id and (p['ppl'].sale_id.partner_shipping_id.phone or p['ppl'].sale_id.partner_shipping_id.mobile) or '' ]]</para>
-                    </td>
-                    <td>
-                        <para style="HeaderInfosTitle">Invoice to:</para>
-                        <para style="HeaderInfosValue"></para>
-                    </td>
-                </tr>
-            </blockTable>
-
-            <!-- Parcels values -->
-            <section>
-                [[ repeatIn(p['pf'], 'pf') ]]
-                <!-- Empty line -->
+        [[ repeatIn(getPackingList(objects[0]), 'p', 'section') ]]
+            <pto>
+                <pto_header>
+                    <blockTable colWidths="13.0,150.0,647.0" style="HeaderInfos">
+                        <tr>
+                            <td></td>
+                            <td>
+                                <para style="Title">
+                                    [[ p['ppl'].name ]]
+                                </para>
+                            </td>
+                            <td></td>
+                        </tr>
+                    </blockTable>
+                    <para style="HeaderInfosTitle">
+                        <font color="white"> </font>
+                    </para>
+                </pto_header>
+                <!-- Empty lines -->
+                <blockTable colWidths="13.0,150.0,647.0" style="HeaderInfos">
+                    <tr>
+                        <td></td>
+                        <td>
+                            <para style="Title">
+                                [[ p['ppl'].name ]]
+                            </para>
+                        </td>
+                        <td></td>
+                    </tr>
+                </blockTable>
                 <para style="HeaderInfosTitle">
                     <font color="white"> </font>
                 </para>
 
-                <blockTable colWidths="110.0,150.0,150.0,170.0,230.0" style="ParcelHeaderGrey" keepWithNext="1">
+                <!-- Shipment header values -->
+                <blockTable colWidths="80.0,150.0,140.0,150.0,140.0,150.0" style="HeaderInfos">
                     <tr>
                         <td>
-                            <para style="ParcelInfos">Parcel No: [[ pf.from_pack ]] to [[ pf.to_pack ]]</para>
+                            <para style="HeaderInfosTitle">Our Ref.:</para>
+                            <para style="HeaderInfosTitle">FO Date:</para>
+                            <para style="HeaderInfosTitle">Your Ref.:</para>
+                            <para style="HeaderInfosTitle">Packing date:</para>
+                            <para style="HeaderInfosTitle">RTS date:</para>
+                            <para style="HeaderInfosTitle">Transport mode:</para>
+                            <para style="HeaderInfosTitle"><font color="white"> </font></para>
+                            <para style="HeaderInfosTitle"><font color="blue"> </font></para>
                         </td>
                         <td>
-                            <para style="ParcelInfos">[[ pf.num_of_packs ]] Parcel[[ pf.num_of_packs > 1 and 's' or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.name or '-' ]]</para>
+                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.date_order or '-' ]]</para>
+                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.client_order_ref or '-' ]]</para>
+                            <para style="HeaderInfosValue">[[ p['ppl'].date[0:10] ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].shipment_expected_date[0:10] ]]</para>
+                            <para style="HeaderInfosValue">[[ getSel(objects[0], 'transport_type') ]]</para>
                         </td>
                         <td>
-                            <para style="ParcelInfos">Total weight [[ formatLang(pf.total_weight or 0.00) ]] kg</para>
+                            <para style="HeaderInfosTitle">Shipper:</para>
+                            <para style="HeaderInfosValue">[[ objects[0].shipper_name or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].shipper_address or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].shipper_phone or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].shipper_other or '' ]]</para>
                         </td>
                         <td>
-                            <para style="ParcelInfos">Total volume [[ formatLang(pf.total_volume or 0.00) ]] dm³</para>
+                            <para style="HeaderInfosTitle">Consignee:</para>
+                            <para style="HeaderInfosValue">[[ objects[0].consignee_name or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].consignee_address or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].consignee_phone or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ objects[0].consignee_other or '' ]]</para>
                         </td>
                         <td>
-                            <para style="ParcelInfosRight">Containing:</para>
-                        </td>
-                    </tr>
-                </blockTable>
-                <blockTable colWidths="30.0,80.0,210.0,210.0,85.0,70.0,65.0,20.0,20.0,20.0" style="ParcelLineHeader" keepWithNext="1">
-                    <tr>
-                        <td>
-                            <para style="ParcelLineTitle">Item</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineTitle">Code</para>
+                            <para style="HeaderInfosTitle">Dispatch:</para>
+                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_id.name or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.name or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.street or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.street2 or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.zip or '' ]] [[ p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.city or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.country_id and p['ppl'].sale_id.partner_shipping_id.country_id.name or '' ]]</para>
+                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and (p['ppl'].sale_id.partner_shipping_id.phone or p['ppl'].sale_id.partner_shipping_id.mobile) or '' ]]</para>
                         </td>
                         <td>
-                            <para style="ParcelLineTitle">Description</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineTitle">Comment</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineTitle">Total Qty.</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineTitle">Batch</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineTitle">Exp. Date</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineTitle">KC</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineTitle">DG</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineTitle">NP</para>
-                        </td>
-                    </tr>
-                    <tr>
-                        [[ repeatIn(pf.move_lines,'m') ]]
-                        <td>
-                            <para style="ParcelLineValue">[[ m.line_number or '' ]]</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineValue">[[ m.product_id.default_code ]]</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineValue">[[ m.product_id.name ]]</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineValue">[[ m.sale_line_id and m.sale_line_id.notes or '' ]]</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineValue">[[ formatLang(m.product_qty or 0.00) ]] [[ m.product_uom.name ]]</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineValue">[[ m.prodlot_id.name ]]</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineValue">[[ formatLang(m.prodlot_id.life_date, date=True) ]]</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineValue">[[ m.kc_check and 'X' or ' ' ]]</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineValue">[[ m.dg_check and 'X' or ' ' ]]</para>
-                        </td>
-                        <td>
-                            <para style="ParcelLineValue">[[ m.np_check and 'X' or ' ' ]]</para>
+                            <para style="HeaderInfosTitle">Invoice to:</para>
+                            <para style="HeaderInfosValue"></para>
                         </td>
                     </tr>
                 </blockTable>
 
-                <setNextTemplate name="second">
-                    [[ setTag('setNextTemplate', 'setNextTemplate', {'name': '%s-second' % str(p['ppl'].id), 'id': '%s-second' % str(p['ppl'].id)}) ]]
-                </setNextTemplate>
+                <!-- Parcels values -->
+                <section>
+                    [[ repeatIn(p['pf'], 'pf') ]]
+                    <!-- Empty line -->
+                    <para style="HeaderInfosTitle">
+                        <font color="white"> </font>
+                    </para>
 
-            </section>
+                    <blockTable colWidths="110.0,150.0,150.0,170.0,230.0" style="ParcelHeaderGrey" keepWithNext="1">
+                        <tr>
+                            <td>
+                                <para style="ParcelInfos">Parcel No: [[ pf.from_pack ]] to [[ pf.to_pack ]]</para>
+                            </td>
+                            <td>
+                                <para style="ParcelInfos">[[ pf.num_of_packs ]] Parcel[[ pf.num_of_packs > 1 and 's' or '' ]]</para>
+                            </td>
+                            <td>
+                                <para style="ParcelInfos">Total weight [[ formatLang(pf.total_weight or 0.00) ]] kg</para>
+                            </td>
+                            <td>
+                                <para style="ParcelInfos">Total volume [[ formatLang(pf.total_volume or 0.00) ]] dm³</para>
+                            </td>
+                            <td>
+                                <para style="ParcelInfosRight">Containing:</para>
+                            </td>
+                        </tr>
+                    </blockTable>
+                    <blockTable colWidths="30.0,80.0,210.0,210.0,85.0,70.0,65.0,20.0,20.0,20.0" style="ParcelLineHeader" keepWithNext="1">
+                        <tr>
+                            <td>
+                                <para style="ParcelLineTitle">Item</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineTitle">Code</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineTitle">Description</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineTitle">Comment</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineTitle">Total Qty.</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineTitle">Batch</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineTitle">Exp. Date</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineTitle">KC</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineTitle">DG</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineTitle">NP</para>
+                            </td>
+                        </tr>
+                        <tr>
+                            [[ repeatIn(pf.move_lines,'m') ]]
+                            <td>
+                                <para style="ParcelLineValue">[[ m.line_number or '' ]]</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineValue">[[ m.product_id.default_code ]]</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineValue">[[ m.product_id.name ]]</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineValue">[[ m.sale_line_id and m.sale_line_id.notes or '' ]]</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineValue">[[ formatLang(m.product_qty or 0.00) ]] [[ m.product_uom.name ]]</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineValue">[[ m.prodlot_id.name ]]</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineValue">[[ formatLang(m.prodlot_id.life_date, date=True) ]]</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineValue">[[ m.kc_check and 'X' or ' ' ]]</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineValue">[[ m.dg_check and 'X' or ' ' ]]</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineValue">[[ m.np_check and 'X' or ' ' ]]</para>
+                            </td>
+                        </tr>
+                    </blockTable>
 
-            <nextFrame>[[ p['last'] and removeParentNode('nextFrame') ]]</nextFrame>
+                </section>
+
+            </pto>
+
+            <nextFrame>
+                [[ p['last'] and removeParentNode('nextFrame') ]]
+            </nextFrame>
+
+            <!-- Empty line -->
+            <para style="HeaderInfosTitle">
+                [[ not p['last'] and removeParentNode('para') ]]
+                <font color="white"> </font>
+            </para>
+
+            <blockTable rowHeights="10.0" colWidths="250.0,170.0,170.0,230.0" style="Totals">
+                [[ not p['last'] and removeParentNode('blockTable') ]]
+                <tr>
+                    <td></td>
+                    <td>
+                        <para style="TotalInfos">Qty of parcels:</para>
+                    </td>
+                    <td>
+                        <para style="TotalInfosRight">[[ objects[0].num_of_packs or '0' ]] total</para>
+                    </td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>
+                        <para style="TotalInfos">Total volume:</para>
+                    </td>
+                    <td>
+                        <para style="TotalInfosRight">[[ formatLang(objects[0].total_volume or 0.00) ]] total m³</para>
+                    </td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>
+                        <para style="TotalInfos">Total weight:</para>
+                    </td>
+                    <td>
+                        <para style="TotalInfosRight">[[ formatLang(objects[0].total_weight or 0.00) ]] total kg</para>
+                    </td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </blockTable>
 
         </section>
-
-        <!-- Empty line -->
-        <para style="HeaderInfosTitle">
-            <font color="white"> </font>
-        </para>
-
-        <blockTable rowHeights="10.0" colWidths="250.0,170.0,170.0,230.0" style="Totals">
-            <tr>
-                <td></td>
-                <td>
-                    <para style="TotalInfos">Qty of parcels:</para>
-                </td>
-                <td>
-                    <para style="TotalInfosRight">[[ objects[0].num_of_packs or '0' ]] total</para>
-                </td>
-                <td></td>
-            </tr>
-            <tr>
-                <td></td>
-                <td>
-                    <para style="TotalInfos">Total volume:</para>
-                </td>
-                <td>
-                    <para style="TotalInfosRight">[[ formatLang(objects[0].total_volume or 0.00) ]] total m³</para>
-                </td>
-                <td></td>
-            </tr>
-            <tr>
-                <td></td>
-                <td>
-                    <para style="TotalInfos">Total weight:</para>
-                </td>
-                <td>
-                    <para style="TotalInfosRight">[[ formatLang(objects[0].total_weight or 0.00) ]] total kg</para>
-                </td>
-                <td></td>
-            </tr>
-            <tr>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-            </tr>
-        </blockTable>
-
     </story>
 
 </document>
