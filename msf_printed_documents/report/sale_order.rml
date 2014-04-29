@@ -91,7 +91,11 @@
             <font color="white"> </font>
         </para>
 
+        <!-- 
+        VERSION WITH 'INVOICE TO BOX' (kept in case of asked back)
         <blockTable colWidths="150.0,5.5,150.0,5.5,150.0,5.5,150.0,5.5,150.0" style="OrderInformations">
+        -->
+        <blockTable colWidths="188.375,5.5,188.375,5.5,188.375,5.5,188.375" style="OrderInformations">
             <tr>
                 <td>
                     <para style="TextInformation">Project : [[ objects[0].partner_id and objects[0].partner_id.name or '' ]]</para>
@@ -114,12 +118,12 @@
                 <td>
                     <para style="TextInformation"><u>Ship to[[ objects[0].incoterm and ' (%s)' % objects[0].incoterm.name or '' ]] :</u></para>
                 </td>
-                <td>
+                <!-- <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"><u>Invoice to :</u></para>
-                </td>
+                </td> -->
             </tr>
             <tr>
                 <td>
@@ -143,12 +147,12 @@
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
-                <td>
+                <!-- <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
-                </td>
+                </td> -->
             </tr>
             <tr>
                 <td>
@@ -172,12 +176,12 @@
                 <td>
                     <para style="TextInformation">[[ objects[0].partner_shipping_id.name or objects[0].partner_id.name ]]</para>
                 </td>
-                <td>
+                <!-- <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation">[[ objects[0].partner_invoice_id.name or objects[0].partner_id.name ]] </para>
-                </td>
+                </td> -->
             </tr>
             <tr>
                 <td>
@@ -201,12 +205,12 @@
                 <td>
                     <para style="TextInformation">[[ objects[0].partner_shipping_id.street ]]</para>
                 </td>
-                <td>
+                <!-- <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation">[[ objects[0].partner_invoice_id.street ]]</para>
-                </td>
+                </td> -->
             </tr>
             <tr>
                 <td>
@@ -230,12 +234,12 @@
                 <td>
                     <para style="TextInformation">[[ objects[0].partner_shipping_id.street2 ]]</para>
                 </td>
-                <td>
+                <!-- <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation">[[ objects[0].partner_invoice_id.street2 ]]</para>
-                </td>
+                </td> -->
             </tr>
             <tr>
                 <td>
@@ -259,12 +263,12 @@
                 <td>
                     <para style="TextInformation">[[ objects[0].partner_shipping_id.zip ]] [[ objects[0].partner_shipping_id.city ]]</para>
                 </td>
-                <td>
+                <!-- <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation">[[ objects[0].partner_invoice_id.zip ]] [[ objects[0].partner_invoice_id.city ]]</para>
-                </td>
+                </td> -->
             </tr>
             <tr>
                 <td>
@@ -288,12 +292,12 @@
                 <td>
                     <para style="TextInformation">[[ objects[0].partner_shipping_id.country_id and objects[0].partner_shipping_id.country_id.name or '' ]]</para>
                 </td>
-                <td>
+                <!-- <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation">[[ objects[0].partner_invoice_id.country_id and objects[0].partner_invoice_id.country_id.name or '' ]]</para>
-                </td>
+                </td> -->
             </tr>
             <tr>
                 <td>
@@ -317,12 +321,12 @@
                 <td>
                     <para style="TextInformation">[[ objects[0].partner_shipping_id.phone ]]</para>
                 </td>
-                <td>
+                <!-- <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation">[[ objects[0].partner_invoice_id.phone ]]</para>
-                </td>
+                </td> -->
             </tr>
             <tr>
                 <td>
@@ -346,12 +350,12 @@
                 <td>
                     <para style="TextInformation">[[ objects[0].partner_shipping_id.email ]]</para>
                 </td>
-                <td>
+                <!-- <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation">[[ objects[0].partner_invoice_id.email ]]</para>
-                </td>
+                </td> -->
             </tr>
             <tr>
                 <td>
@@ -375,12 +379,12 @@
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
-                <td>
+                <!-- <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
-                </td>
+                </td> -->
             </tr>
             <tr>
                 <td>
@@ -405,12 +409,12 @@
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
-                <td>
+                <!-- <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
-                </td>
+                </td> -->
             </tr>
             <tr>
                 <td>
@@ -434,12 +438,12 @@
                 <td>
                     <para style="TextInformation">Requested delivery date : </para>
                 </td>
-                <td>
+                <!-- <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation">Dated before :</para>
-                </td>
+                </td> -->
             </tr>
             <tr>
                 <td>
@@ -466,12 +470,12 @@
                     <para style="TextInformation">[[ to_time(objects[0].delivery_requested_date) ]]</para>
                     <para style="TextInformation"> </para>
                 </td>
-                <td>
+                <!-- <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
-                </td>
+                </td> -->
             </tr>
         </blockTable>
 
