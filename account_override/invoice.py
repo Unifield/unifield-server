@@ -510,6 +510,7 @@ class account_invoice(osv.osv):
         """
         if not context:
             context = {}
+        local_ctx = context.copy()
         # Prepare some values
         # Search donation view and return it
         try:
@@ -519,7 +520,8 @@ class account_invoice(osv.osv):
             intermission_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_intermission_form')
             supplier_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_supplier_form')
             customer_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_form')
-        except ValueError:
+            supplier_direct_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'direct_supplier_invoice_form')
+        except ValueError, e:
             return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, context)
         debit_view_id = debit_res and debit_res[1] or False
         debit_note_ctx = {'view_id': debit_view_id, 'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}
@@ -539,20 +541,25 @@ class account_invoice(osv.osv):
                 if m and m.groups():
                     message = re.sub(pattern, el[1], message, 1)
                     message_changed = True
-                context.update(el[2])
+                local_ctx.update(el[2])
         # UF-1112: Give all customer invoices a name as "Stock Transfer Voucher".
         if not message_changed and self.read(cr, uid, inv_id, ['type']).get('type', False) == 'out_invoice':
             message = re.sub(pattern, 'Stock Transfer Voucher', message, 1)
 
-            context.update(customer_ctx)
+            local_ctx.update(customer_ctx)
         # UF-1307: for supplier invoice log (from the incoming shipment), the context was not
         # filled with all the information; this leaded to having a "Sale" journal in the supplier
         # invoice if it was saved after coming from this link. Here's the fix.
-        if (not context.get('journal_type', False) and context.get('type', False) == 'in_invoice'):
-            supplier_view_id = supplier_invoice_res and supplier_invoice_res[1] or False
-            context.update({'journal_type': 'purchase',
-                            'view_id': supplier_view_id})
-        return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, context)
+        if local_ctx.get('type', False) == 'in_invoice':
+            if not local_ctx.get('journal_type', False):
+                supplier_view_id = supplier_invoice_res and supplier_invoice_res[1] or False
+                local_ctx.update({'journal_type': 'purchase',
+                                'view_id': supplier_view_id})
+            elif local_ctx.get('journal_type', False) == 'purchase': # UFTP-166: The wrong context saved in log
+                supplier_view_id = supplier_direct_invoice_res and supplier_direct_invoice_res[1] or False
+                local_ctx = {'journal_type': 'purchase',
+                             'view_id': supplier_view_id}
+        return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, local_ctx)
 
     def invoice_open(self, cr, uid, ids, context=None):
         """

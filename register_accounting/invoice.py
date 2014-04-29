@@ -257,7 +257,8 @@ class account_invoice(osv.osv):
         absl = direct_invoice.register_line_ids[0]
         if (direct_invoice.document_date != absl.document_date) or (direct_invoice.partner_id != absl.partner_id):
             account_bank_statement_line.write(cr, uid, [absl.id], {'document_date': direct_invoice.document_date, \
-                                                                   'partner_id': direct_invoice.partner_id.id },     \
+                                                                   'partner_id': direct_invoice.partner_id.id , \
+                                                                   'account_id': direct_invoice.account_id.id}, # UFTP-166: Saved also the account change to reg line
                                                                    context=context)
         # Delete moves
         # existing seqnums are saved into context here. utp917

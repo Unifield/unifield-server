@@ -19253,12 +19253,6 @@ msgstr "Stock"
 msgid "Ghana"
 msgstr "Ghana"
 
-#. module: account_corrections
-#: code:addons/account_corrections/account_move_line.py:549
-#, python-format
-msgid "No account_id given. update_account_on_st_line() could not works."
-msgstr "No account_id given. update_account_on_st_line() could not works."
-
 #. modules: mission_stock, supplier_catalogue, product, reason_types_moves
 #: view:stock.mission.report.line:0
 #: view:product.product:0
@@ -38273,7 +38267,7 @@ msgstr "Inventaire (pertes & profits)"
 #. module: account_corrections
 #: code:addons/account_corrections/wizard/journal_items_corrections.py:332
 #, python-format
-msgid "You're just allowed to change ONE field amoungst Account, Third Party or Analytical Distribution"
+msgid "You're just allowed to change ONE field amongst Account, Third Party or Analytical Distribution"
 msgstr "Vous ne pouvez changer qu'UN champ parmi:  Compte, Tiers, Allocation Analytique"
 
 #. modules: account, account_voucher
