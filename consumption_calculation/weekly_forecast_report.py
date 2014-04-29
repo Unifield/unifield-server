@@ -374,7 +374,16 @@ class weekly_forecast_report(osv.osv):
                     ('location_id', 'child_of', report.location_id.id),
                     ('quarantine_location', '=', False),
                 ], order='location_id', context=context)
-
+                
+                #UFTP-225: If the location is from Stock/MED/LOG, take also the Input location for the report
+                stock_ids = loc_obj.search(new_cr, uid, [('location_category', '=', 'stock')], context=context)
+                for loc in location_ids:
+                    if loc in stock_ids:
+                        # search for Input location, and add it into the location list
+                        input_stock_ids = loc_obj.search(new_cr, uid, [('location_category', '=', 'transition'), ('name', '=', 'Input')], context=context)
+                        location_ids.extend(input_stock_ids)
+                        break
+                    
                 context.update({
                     'location_id': location_ids,
                     'location': location_ids,
