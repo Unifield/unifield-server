@@ -127,7 +127,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Origin ref. : [[ objects[0].origin ]]</para>
+                    <para style="TextInformation">Origin ref. : [[ objects[0].client_order_ref or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
