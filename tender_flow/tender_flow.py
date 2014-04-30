@@ -1096,7 +1096,11 @@ class procurement_order(osv.osv):
                 pricelist_id = supplier.property_product_pricelist_purchase.id
                 address_id = partner_obj.address_get(cr, uid, [supplier.id], ['default'])['default']
                 if not address_id:
-                    raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!')%(supplier.name,))
+                    self.write(cr, uid, [proc.id], {
+                        'state': 'exception',
+                        'message': _('The supplier "%s" has no address defined!')%(supplier.name,),
+                    }, context=context)
+                    continue
 
                 context['rfq_ok'] = True
                 rfq_id = rfq_obj.create(cr, uid, {'sale_order_id': sale_order.id,
