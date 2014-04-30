@@ -41,20 +41,20 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Supplier Invoice
     #+ Direct Invoice
     #+ Supplier refund
-    'in_invoice': [
+   'in_invoice': [
         ('type', '!=', 'view'),
         # Either Payable/Payables accounts or Regular / Debt accounts
-        '|', '&', ('type', '=', 'payable'), ('user_type_code', '=', 'payables'), '&', ('type', '=', 'other'), ('user_type_code', '=', 'debt'),
-        ('type_for_register', '!=', 'donation'),
+        '|', '&', ('type', '=', 'payable'), ('user_type_code', '=', 'payables'), '&', ('type', '=', 'other'), ('user_type_code', 'in', ['debt','cash']),
+        ('type_for_register', '!=', 'donation'), 
     ],
     # HEADER OF:
     #+ Stock Transfer Voucher
-    #+ Customer Refund
+    #+ Customer Refund    
     #+ Debit Notes
     'out_invoice': [
         ('type', '!=', 'view'),
         # Either Receivable/Receivables accounts or Regular / Cash accounts
-        '|', '&', ('type', '=', 'receivable'), ('user_type_code', '=', 'receivables'), '&', ('type', '=', 'other'), ('user_type_code', '=', 'cash'),
+        '|', '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables','cash']), '&', ('type', '=', 'other'), ('user_type_code', '=', 'cash'),
     ],
     # HEADER OF donation
     'donation_header': [
@@ -155,14 +155,15 @@ ACCOUNT_RESTRICTED_AREA = {
     # PARTNER - PAYABLE DEFAULT ACCOUNT
     'partner_payable': [
         ('type', '!=', 'view'),
-        ('type', '=', 'payable'),
-        ('user_type_code', 'in', ['payables', 'tax']),
+        ('type', 'in', ['payable','other']),
+        ('user_type_code', 'in', ['payables', 'tax','cash']),
         ('type_for_register', '!=', 'donation'),
     ],
     # PARTNER - RECEIVABLE DEFAULT ACCOUNT
     'partner_receivable': [
         ('type', '!=', 'view'),
-        ('type', '=', 'receivable'),
+        # Either Receivable accounts or Regular / Cash accounts
+        '|', ('type', '=', 'receivable'), '&', ('type', '=', 'other'), ('user_type_code', '=', 'cash'),
     ],
     # PRODUCT - DONATION ACCOUNT
     'product_donation': [
