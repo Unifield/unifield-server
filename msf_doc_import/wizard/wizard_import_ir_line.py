@@ -83,6 +83,8 @@ class wizard_import_ir_line(osv.osv_memory):
 
         for wiz_browse in self.browse(cr, uid, ids, context):
             fo_browse = wiz_browse.fo_id
+            if not fo_browse.functional_currency_id:
+                raise osv.except_osv(_("Error!"), _("Order currency not found!"))
             fo_id = fo_browse.id
 
             ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
@@ -93,147 +95,167 @@ class wizard_import_ir_line(osv.osv_memory):
             header_index = context['header_index']
 
             file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
-            # iterator on rows
-            rows = file_obj.getRows()
-            # ignore the first row
-            rows.next()
+
             line_num = 0
             to_write = {}
             total_line_num = len([row for row in file_obj.getRows()])
             percent_completed = 0
-            for row in rows:
-                # default values
-                to_write = {
-                    'error_list': [],
-                    'warning_list': [],
-                    'to_correct_ok': False,
-                    'show_msg_ok': False,
-                    'comment': '',
-                    'date_planned': fo_browse.delivery_requested_date,
-                    'functional_currency_id': fo_browse.pricelist_id.currency_id.id,
-                    'price_unit': 1,  # in case that the product is not found and we do not have price
-                    'cost_price': 0,
-                    'product_qty': 1,
-#                    'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
-#                    'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
-#                    'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
-#                    'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
-                    'proc_type': 'make_to_order',
-                    'default_code': False,
-                    'confirmed_delivery_date': False,
-                }
 
-                line_num += 1
-                col_count = len(row)
-                template_col_count = len(header_index.items())
-                if col_count != template_col_count:
-                    message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count, ','.join([_(f) for f in columns_for_ir_line_import]))
-                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
-                    ignore_lines += 1
-                    line_ignored_num.append(line_num)
-                    percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
-                    continue
-                try:
-                    # if you open and save an xml file in LibreOffice, it will add blank lines
-                    if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
+            """
+            1st path: check currency in lines in phasis with document
+            REF-94: BECAREFUL WHEN CHANGING THE ORDER OF CELLS IN THE IMPORT FILE!!!!!
+            CCY COL INDEX: 5
+            """
+            order_currency_code = fo_browse.functional_currency_id.name
+            currency_index = 5
+            rows = file_obj.getRows()
+            rows.next()  # skip header line
+            lines_to_correct = check_line.check_lines_currency(rows,
+                currency_index, order_currency_code)
+            if lines_to_correct > 0:
+                msg = "You can not import this file because it contains" \
+                    " line(s) with currency not of the order currency (%s)" % (
+                    order_currency_code, )
+                error_list.append(msg)
+
+            if not error_list:
+                # iterator on rows
+                rows = file_obj.getRows()
+                # ignore the first row
+                rows.next()
+                for row in rows:
+                    # default values
+                    to_write = {
+                        'error_list': [],
+                        'warning_list': [],
+                        'to_correct_ok': False,
+                        'show_msg_ok': False,
+                        'comment': '',
+                        'date_planned': fo_browse.delivery_requested_date,
+                        'functional_currency_id': fo_browse.pricelist_id.currency_id.id,
+                        'price_unit': 1,  # in case that the product is not found and we do not have price
+                        'cost_price': 0,
+                        'product_qty': 1,
+    #                    'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
+    #                    'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
+    #                    'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
+    #                    'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
+                        'proc_type': 'make_to_order',
+                        'default_code': False,
+                        'confirmed_delivery_date': False,
+                    }
+
+                    line_num += 1
+                    col_count = len(row)
+                    template_col_count = len(header_index.items())
+                    if col_count != template_col_count:
+                        message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count, ','.join([_(f) for f in columns_for_ir_line_import]))
+                        line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                        ignore_lines += 1
+                        line_ignored_num.append(line_num)
                         percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                        self.write(cr, uid, ids, {'percent_completed': percent_completed})
-                        line_num -= 1
+                        self.write(cr, uid, ids, {'percent_completed':percent_completed})
                         continue
-                    # for each cell we check the value
+                    try:
+                        # if you open and save an xml file in LibreOffice, it will add blank lines
+                        if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
+                            percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                            self.write(cr, uid, ids, {'percent_completed': percent_completed})
+                            line_num -= 1
+                            continue
+                        # for each cell we check the value
 
-                    '''
-                        REF-94: BECAREFUL WHEN CHANGING THE ORDER OF CELLS IN THE IMPORT FILE!!!!!
-                    '''
+                        '''
+                            REF-94: BECAREFUL WHEN CHANGING THE ORDER OF CELLS IN THE IMPORT FILE!!!!!
+                        '''
 
-                    # Cell 0: Product Code
-                    p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
-                    to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'cost_price': p_value['cost_price'],
-                                     'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
+                        # Cell 0: Product Code
+                        p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                        to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'cost_price': p_value['cost_price'],
+                                         'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
 
-                    # Cell 2: Quantity
-                    qty_value = check_line.quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
-                    to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
+                        # Cell 2: Quantity
+                        qty_value = check_line.quantity_value(cell_nb=2, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                        to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
 
-                    # Cell 3: Cost Price
-                    price_value = check_line.compute_price_value(cell_nb=3, row=row, to_write=to_write, price='Cost Price', context=context)
-                    to_write.update({'cost_price': price_value['cost_price'], 'error_list': price_value['error_list'],
-                                     'warning_list': price_value['warning_list']})
+                        # Cell 3: Cost Price
+                        price_value = check_line.compute_price_value(cell_nb=3, row=row, to_write=to_write, price='Cost Price', context=context)
+                        to_write.update({'cost_price': price_value['cost_price'], 'error_list': price_value['error_list'],
+                                         'warning_list': price_value['warning_list']})
 
-                    # Cell 4: UoM
-                    uom_value = check_line.compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
-                    to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
+                        # Cell 4: UoM
+                        uom_value = check_line.compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                        to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
-                    # Check rounding of qty according to UoM
-                    if qty_value['product_qty'] and uom_value['uom_id']:
-                        round_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_value['uom_id'], qty_value['product_qty'], 'product_qty')
-                        if round_qty.get('warning', {}).get('message'):
-                            to_write.update({'product_uom_qty': round_qty['value']['product_qty']})
-                            message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
+                        # Check rounding of qty according to UoM
+                        if qty_value['product_qty'] and uom_value['uom_id']:
+                            round_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_value['uom_id'], qty_value['product_qty'], 'product_qty')
+                            if round_qty.get('warning', {}).get('message'):
+                                to_write.update({'product_uom_qty': round_qty['value']['product_qty']})
+                                message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
 
-                    # Cell 5: Currency
-                    curr_value = check_line.compute_currency_value(cr, uid, cell_nb=5, browse_sale=fo_browse,
-                                                        currency_obj=currency_obj, row=row, to_write=to_write, context=context)
-                    to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
+                        # Cell 5: Currency
+                        curr_value = check_line.compute_currency_value(cr, uid, cell_nb=5, browse_sale=fo_browse,
+                                                            currency_obj=currency_obj, row=row, to_write=to_write, context=context)
+                        to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
 
-                    # Cell 6: Comment
-                    c_value = check_line.comment_value(row=row, cell_nb=6, to_write=to_write, context=context)
-                    to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
-                    to_write.update({
-                        'to_correct_ok': any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
-                        'show_msg_ok': any(to_write['warning_list']),  # the lines with show_msg_ok=True won't change color, it is just info
-                        'order_id': fo_id,
-                        'text_error': '\n'.join(to_write['error_list'] + to_write['warning_list']),
-                    })
-                    # we check consistency on the model of on_change functions to call for updating values
-                    sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
-                    # write order line on FO
-                    sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
+                        # Cell 6: Comment
+                        c_value = check_line.comment_value(row=row, cell_nb=6, to_write=to_write, context=context)
+                        to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
+                        to_write.update({
+                            'to_correct_ok': any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
+                            'show_msg_ok': any(to_write['warning_list']),  # the lines with show_msg_ok=True won't change color, it is just info
+                            'order_id': fo_id,
+                            'text_error': '\n'.join(to_write['error_list'] + to_write['warning_list']),
+                        })
+                        # we check consistency on the model of on_change functions to call for updating values
+                        sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
+                        # write order line on FO
+                        sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
 
-                    if to_write.get('product_uom_qty', 0.00) <= 0.00:
-                        error_log += _("Line %s in the Excel file was ignored. Details: %s") % (line_num, _('Product Quantity must be greater than zero.\n'))
+                        if to_write.get('product_uom_qty', 0.00) <= 0.00:
+                            error_log += _("Line %s in the Excel file was ignored. Details: %s") % (line_num, _('Product Quantity must be greater than zero.\n'))
+                            line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                            ignore_lines += 1
+                            line_ignored_num.append(line_num)
+                            percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                            cr.rollback()
+                            continue
+
+                        # Check product restrictions
+                        if p_value.get('default_code'):
+                            product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'constraints': ['consumption']}, context=dict(context, noraise=False))
+
+                        # write order line on FO
+                        vals['order_line'].append((0, 0, to_write))
+                        if sale_obj._check_service(cr, uid, fo_id, vals, context=context):
+                            sale_line_obj.create(cr, uid, to_write, context=context)
+                            if to_write['error_list']:
+                                lines_to_correct += 1
+                            percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                            complete_lines += 1
+                    except IndexError, e:
+                        error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
                         line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                         ignore_lines += 1
                         line_ignored_num.append(line_num)
                         percent_completed = float(line_num)/float(total_line_num-1)*100.0
                         cr.rollback()
                         continue
-
-                    # Check product restrictions
-                    if p_value.get('default_code'):
-                        product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'constraints': ['consumption']}, context=dict(context, noraise=False))
-
-                    # write order line on FO
-                    vals['order_line'].append((0, 0, to_write))
-                    if sale_obj._check_service(cr, uid, fo_id, vals, context=context):
-                        sale_line_obj.create(cr, uid, to_write, context=context)
-                        if to_write['error_list']:
-                            lines_to_correct += 1
+                    except osv.except_osv as osv_error:
+                        osv_value = osv_error.value
+                        osv_name = osv_error.name
+                        message += _("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
+                        ignore_lines += 1
+                        line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                         percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                        complete_lines += 1
-                except IndexError, e:
-                    error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
-                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
-                    ignore_lines += 1
-                    line_ignored_num.append(line_num)
-                    percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                    cr.rollback()
-                    continue
-                except osv.except_osv as osv_error:
-                    osv_value = osv_error.value
-                    osv_name = osv_error.name
-                    message += _("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
-                    ignore_lines += 1
-                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
-                    percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                    cr.rollback()
-                    continue
-                finally:
-                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
-                    if not context.get('yml_test', False):
-                        cr.commit()
-            sale_obj._check_service(cr, uid, ids, vals, context=context)
+                        cr.rollback()
+                        continue
+                    finally:
+                        self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                        if not context.get('yml_test', False):
+                            cr.commit()
+                sale_obj._check_service(cr, uid, ids, vals, context=context)
             error_log += '\n'.join(error_list)
             if error_log:
                 error_log = _("Reported errors for ignored lines : \n") + error_log
