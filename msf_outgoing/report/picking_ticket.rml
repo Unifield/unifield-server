@@ -8,15 +8,15 @@
             
             <pageGraphics>
                 <setFont name="Helvetica-Bold" size="13.0"/>
-                <drawString x="8.0" y="570.0">PICKING TICKET ([[ getSel(objects[0], 'state') ]])</drawString>
+                <drawString x="12.0" y="555.0">PICKING TICKET ([[ getSel(objects[0], 'state') ]])</drawString>
                 <fill color="blue"/>                                                
-                <drawString x="8.0" y="556.0">[[ objects[0].name ]]</drawString>                                                
-                <image x="730.0" y="540.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+                <drawString x="12.0" y="541.0">[[ objects[0].name ]]</drawString>                                                
+                <image x="730.0" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
                 <setFont name="Helvetica" size="8" />
                 <fill color="black" />
-                <drawString x="8.0" y="535.0">Page : <pageNumber /> / </drawString>
-                <drawString x="50.0" y="535.0"><pageCount /></drawString>
-                <drawString x="8.0" y="525.0">Date [[ formatLang(time.strftime('%Y-%m-%d'), date=True) ]]</drawString>
+                <drawString x="8.0" y="520.0">Page : <pageNumber /> / </drawString>
+                <drawString x="50.0" y="520.0"><pageCount /></drawString>
+                <drawString x="8.0" y="520.0">Date [[ formatLang(time.strftime('%Y-%m-%d'), date=True) ]]</drawString>
             </pageGraphics>
         </pageTemplate>
     </template>
@@ -110,9 +110,9 @@
                     <para style="HeaderInfosTitle">Total items:</para>
                 </td>
                 <td>
-                    <para style="HeaderInfosTitle">[[ pt.sale_id and pt.sale_id.name or ' ' ]]</para>
-                    <para style="HeaderInfosTitle">[[ pt.origin or ' ' ]]</para>
-                    <para style="HeaderInfosTitle">[[ pt.order_category and getSel(pt, 'order_category') or ' ' ]]</para>
+                    <para style="HeaderInfosTitle">[[ pt.sale_id and pt.sale_id.name or '-' ]]</para>
+                    <para style="HeaderInfosTitle">[[ pt.sale_id and pt.sale_id.origin or '-' ]]</para>
+                    <para style="HeaderInfosTitle">[[ pt.sale_id and getSel(pt.sale_id, 'order_category') or '-' ]]</para>
                     <para style="HeaderInfosTitle">[[ len(pt.move_lines) or 0 ]]</para>
                 </td>
                 <td>
@@ -125,10 +125,10 @@
                     <para style="HeaderInfosTitle">RTS Date:</para>
                 </td>
                 <td>
-                    <para style="HeaderInfosTitle"> ??? </para>
-                    <para style="HeaderInfosTitle"> ??? </para>
-                    <para style="HeaderInfosTitle"> ??? </para>
-                    <para style="HeaderInfosTitle"> [[ pt.min_date[0:10] or ' ' ]]</para>
+                    <para style="HeaderInfosTitle">[[ pt.sale_id and pt.sale_id.details or '-' ]]</para>
+                    <para style="HeaderInfosTitle">[[ pt.sale_id and getSel(pt.sale_id, 'transport_type') or '-' ]]</para>
+                    <para style="HeaderInfosTitle">[[ pt.sale_id and getSel(pt.sale_id, 'priority') or '-' ]]</para>
+                    <para style="HeaderInfosTitle">[[ pt.min_date[0:10] or '-' ]]</para>
                 </td>
                 <td>
                     <para style="HeaderInfosTitle"></para>
@@ -136,8 +136,8 @@
                 <td>
                     <para style="HeaderInfosTitle">To:</para>
                     <para style="HeaderInfosTitle">[[ pt.partner_id and pt.partner_id.name or ' ' ]]</para>
-                    <para style="HeaderInfosTitle">[[ pt.address_id and '%s %s %s %s' % (pt.address_id.street, pt.address_id.zip, pt.address_id.city, pt.address_id.country_id and pt.address_id.country_id.name or ' ') or ' ' ]]</para>
-                    <para style="HeaderInfosTitle"></para>
+                    <para style="HeaderInfosTitle">[[ pt.address_id and '%s %s %s' % (pt.address_id.street, pt.address_id.zip, pt.address_id.city) or ' ' ]]</para>
+                    <para style="HeaderInfosTitle">[[ pt.address_id and p.address_id.country_id and p.address_id.country_id.name or ' ' ]]</para>
                 </td>
                 <td>
                     <para style="HeaderInfosTitle"></para>
@@ -260,10 +260,10 @@
                         <para style="LineValue">[[ m.line_number ]]</para>
                     </td>
                     <td>
-                        <para style="LineValueLeft">[[ m.product_id.default_code ]]</para>
+                        <para style="LineValueLeft">[[ m.sale_line_id and m.sale_line_id.product_id.default_code or m.product_id.default_code ]]</para>
                     </td>
                     <td>
-                        <para style="LineValueLeft">[[ m.product_id.name ]]</para>
+                        <para style="LineValueLeft">[[ m.sale_line_id and m.sale_line_id.product_id.name or m.product_id.name ]]</para>
                     </td>
                     <td>
                         <para style="LineValue">[[ m.product_id.qty_available ]]</para>
@@ -272,10 +272,10 @@
                         <para style="LineValue">[[ m.product_uom.name ]]</para>
                     </td>
                     <td>
-                        <para style="LineValue">[[ m.product_qty ]]</para>
+                        <para style="LineValue">[[ formatLang(m.sale_line_id and m.sale_line_id.product_uom_qty or m.product_qty) ]]</para>
                     </td>
                     <td>
-                        <para style="LineValue"> ??? </para>
+                        <para style="LineValue"> </para>
                     </td>
                     <td>
                         <para style="LineValue">[[ m.prodlot_id and m.prodlot_id.name or '' ]]</para>
@@ -298,10 +298,10 @@
                         <para style="LineValue"></para>
                     </td>
                     <td>
-                        <para style="LineValueLeft"> ??? </para>
+                        <para style="LineValueLeft">[[ m.sale_line_id and m.sale_line_id.note or '' ]]</para>
                     </td>
                     <td>
-                        <para style="LineValueLeft"> ??? </para>
+                        <para style="LineValueLeft">[[ m.sale_line_id and m.sale_line_id.product_id != m.product_id and '[%s] %s' % (m.product_id.default_code, m.product_id.name) or '' ]]</para>
                     </td>
                     <td>
                         <para style="LineValue"></para>
