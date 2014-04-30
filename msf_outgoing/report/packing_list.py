@@ -30,6 +30,7 @@ class packing_list(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'getPackingList': self._get_packing_list,
+            'getParcel': self._get_parcel,
         })
 
     def _get_packing_list(self, shipment):
@@ -44,16 +45,19 @@ class packing_list(report_sxw.rml_parse):
         :rtype: list
         '''
         res = {}
-        i = 0
-        nb_pack = len(shipment.pack_family_memory_ids)
         for pf in shipment.pack_family_memory_ids:
-            i += 1
             res.setdefault(pf.ppl_id.name, {
                 'ppl': pf.ppl_id,
                 'pf': [],
                 'last': False,
+                'total_volume': 0.00,
+                'total_weight': 0.00,
+                'nb_parcel': 0,
             })
             res[pf.ppl_id.name]['pf'].append(pf)
+            res[pf.ppl_id.name]['total_volume'] += pf.total_volume
+            res[pf.ppl_id.name]['total_weight'] += pf.total_weight
+            res[pf.ppl_id.name]['nb_parcel'] += pf.num_of_packs
 
         sort_keys = sorted(res.keys())
 
@@ -64,6 +68,18 @@ class packing_list(report_sxw.rml_parse):
         result[-1]['last'] = True
 
         return result
+
+    def _get_parcel(self, list_of_parcels):
+        '''
+        Return an ordered list of parcel.
+
+        :param list_of_parcel: list of browse_record of pack.family.memory
+
+        :return: An ordered list of browse_record of pack.family.memory
+        :rtype: list
+        '''
+        list_of_parcels.sort(key=lambda p: p.from_pack)
+        return list_of_parcels
 
     def set_context(self, objects, data, ids, report_type=None):
         '''
