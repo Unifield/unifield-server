@@ -3,15 +3,6 @@
 	<data >
 
 		<record model="product.status" id="status_1">
-			<field name="code">preparation</field>
-			<field name="name">Preparation</field>
-            <field name="no_external" eval="True" />
-            <field name="no_esc" eval="True" />
-            <field name="no_internal" eval="True" />
-            <field name="no_consumption" eval="True" />
-            <field name="no_storage" eval="True" />
-		</record>
-		<record model="product.status" id="status_2">
 			<field name="code">valid</field>
 			<field name="name">Valid</field>
             <field name="no_external" eval="False" />
@@ -20,7 +11,7 @@
             <field name="no_consumption" eval="False" />
             <field name="no_storage" eval="False" />
 		</record>
-		<record model="product.status" id="status_3">
+		<record model="product.status" id="status_2">
 			<field name="code">phase_out</field>
 			<field name="name">Phase Out</field>
             <field name="no_external" eval="True" />
@@ -29,7 +20,7 @@
             <field name="no_consumption" eval="False" />
             <field name="no_storage" eval="False" />
 		</record>
-		<record model="product.status" id="status_4">
+		<record model="product.status" id="status_3">
 			<field name="code">stopped</field>
 			<field name="name">Stopped</field>
             <field name="no_external" eval="True" />
@@ -38,7 +29,7 @@
             <field name="no_consumption" eval="False" />
             <field name="no_storage" eval="False" />
 		</record>
-		<record model="product.status" id="status_5">
+		<record model="product.status" id="status_4">
 			<field name="code">archived</field>
 			<field name="name">Archived</field>
             <field name="no_external" eval="True" />
@@ -47,7 +38,7 @@
             <field name="no_consumption" eval="True" />
             <field name="no_storage" eval="True" />
 		</record>
-		<record model="product.status" id="status_6">
+		<record model="product.status" id="status_5">
 			<field name="code">status1</field>
 			<field name="name">Status 1</field>
             <field name="no_external" eval="False" />
@@ -56,7 +47,7 @@
             <field name="no_consumption" eval="False" />
             <field name="no_storage" eval="False" />
 		</record>
-		<record model="product.status" id="status_7">
+		<record model="product.status" id="status_6">
 			<field name="code">status2</field>
 			<field name="name">Status 2</field>
             <field name="no_external" eval="False" />
