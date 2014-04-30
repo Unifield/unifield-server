@@ -679,7 +679,7 @@ class account_invoice(osv.osv):
                 raise osv.except_osv(_('Error'), _('No period found for this posting date: %s') % (i.date_invoice))
             for period in period_obj.browse(cr, uid, period_ids):
                 if period.state != 'draft':
-                    raise osv.except_osv(_('Warning'), _('You cannot open this document in the given period: %s because it\'s not open. Change the date of the document or open the period.') % (period.name))
+                    raise osv.except_osv(_('Warning'), _('You cannot validate this document in the given period: %s because it\'s not open. Change the date of the document or open the period.') % (period.name))
         # Posting date should not be done BEFORE document date
         self._check_document_date(cr, uid, ids)
         return res
