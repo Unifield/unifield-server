@@ -105,9 +105,9 @@
                 <blockTable colWidths="80.0,150.0,140.0,150.0,140.0,150.0" style="HeaderInfos">
                     <tr>
                         <td>
+                            <para style="HeaderInfosTitle">Your Ref.:</para>
                             <para style="HeaderInfosTitle">Our Ref.:</para>
                             <para style="HeaderInfosTitle">FO Date:</para>
-                            <para style="HeaderInfosTitle">Your Ref.:</para>
                             <para style="HeaderInfosTitle">Packing date:</para>
                             <para style="HeaderInfosTitle">RTS date:</para>
                             <para style="HeaderInfosTitle">Transport mode:</para>
@@ -115,14 +115,15 @@
                             <para style="HeaderInfosTitle"><font color="blue"> </font></para>
                         </td>
                         <td>
+                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.client_order_ref or '-' ]]</para>
                             <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.name or '-' ]]</para>
                             <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.date_order or '-' ]]</para>
-                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.client_order_ref or '-' ]]</para>
                             <para style="HeaderInfosValue">[[ formatLang(p['ppl'].date[0:10], date=True) ]]</para>
                             <para style="HeaderInfosValue">[[ formatLang(objects[0].shipment_expected_date[0:10], date=True) ]]</para>
                             <para style="HeaderInfosValue">[[ getSel(objects[0], 'transport_type') ]]</para>
                         </td>
                         <td>
+                            <para style="HeaderInfosTitle"><br /></para>
                             <para style="HeaderInfosTitle">Shipper:</para>
                             <para style="HeaderInfosValue">[[ objects[0].shipper_name or '' ]]</para>
                             <para style="HeaderInfosValue">[[ objects[0].shipper_address or '' ]]</para>
@@ -130,6 +131,7 @@
                             <para style="HeaderInfosValue">[[ objects[0].shipper_other or '' ]]</para>
                         </td>
                         <td>
+                            <para style="HeaderInfosTitle"><br /></para>
                             <para style="HeaderInfosTitle">Consignee:</para>
                             <para style="HeaderInfosValue">[[ objects[0].consignee_name or '' ]]</para>
                             <para style="HeaderInfosValue">[[ objects[0].consignee_address or '' ]]</para>
@@ -137,6 +139,7 @@
                             <para style="HeaderInfosValue">[[ objects[0].consignee_other or '' ]]</para>
                         </td>
                         <td>
+                            <para style="HeaderInfosTitle"><br /></para>
                             <para style="HeaderInfosTitle">Dispatch:</para>
                             <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_id.name or '' ]]</para>
                             <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.name or '' ]]</para>
@@ -147,6 +150,7 @@
                             <para style="HeaderInfosValue">[[ p['ppl'].sale_id and (p['ppl'].sale_id.partner_shipping_id.phone or p['ppl'].sale_id.partner_shipping_id.mobile) or '' ]]</para>
                         </td>
                         <td>
+                            <para style="HeaderInfosTitle"> </para>
                             <para style="HeaderInfosTitle">Invoice to:</para>
                             <para style="HeaderInfosValue"></para>
                         </td>
