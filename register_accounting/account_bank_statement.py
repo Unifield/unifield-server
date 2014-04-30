@@ -919,6 +919,10 @@ class account_bank_statement_line(osv.osv):
             res[line.id] = ''
             if len(line.move_ids) > 0:
                 res[line.id] = line.move_ids[0].name
+            else:
+                # UFTP-201: If there is no move linked to this reg line, get the current value of ref
+                res[line.id] = line.sequence_for_reference
+
         return res
 
     def _get_bank_statement_line_ids(self, cr, uid, ids, context=None):
@@ -1112,23 +1116,26 @@ class account_bank_statement_line(osv.osv):
 
         for absl in self.browse(cr, uid, ids):
             if absl.state == 'temp' and absl.direct_invoice == True:
-
                 # Find all moves lines linked to this register line
                 # first, via the statement
                 move_ids = [x.id for x in absl.move_ids]
                 if move_ids:
                     am1 = account_move.browse(cr, uid, move_ids)[0]
                     seqnums[am1.journal_id.id] = am1.name
+                else:
+                    # UFTP-201: If there is no move linked to this reg line, get the current value of ref
+                    seqnums[absl.statement_id.journal_id.id] = absl.sequence_for_reference
 
                 # then via the direct invoice
                 ai = account_invoice.browse(cr, uid, [absl.invoice_id.id])[0]
-                move_id = ai.move_id.id
-
-                if move_id:
-                    move_ids.append(move_id)
+                if ai.move_id.id:
+                    move_ids.append(ai.move_id.id)
                     seqnums[ai.move_id.journal_id.id] = ai.move_id.name
                     account_invoice.write(cr, uid, [ai.id],{'move_id': False}, context=context)
-
+                else:
+                    # UFTP-201: If there is no move linked to this invoice, retrieve the current value
+                    if absl.invoice_id.journal_id and absl.invoice_id.journal_id.id: # not needed but just to be sure 
+                        seqnums[absl.invoice_id.journal_id.id] = absl.invoice_id.internal_number
 
                 # TODO: Needs to be fixed during refactoring. The field move_id on account.analytic.line
                 # is actually account_move_line.id, not account_move.id
