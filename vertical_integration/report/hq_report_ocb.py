@@ -34,6 +34,71 @@ class finance_archive(finance_export.finance_archive):
     Extend existing class with new methods for this particular export.
     """
 
+    def postprocess_partners(self, cr, uid, data, column_deletion=False):
+        """
+        Add XML_ID of each element.
+        """
+        # Prepare some values
+        new_data = []
+        pool = pooler.get_pool(cr.dbname)
+        for line in data:
+            tmp_line = list(line)
+            p_id = line[0]
+            tmp_line[0] = self.get_hash(cr, uid, [p_id], 'res.partner')
+            new_data.append(self.line_to_utf8(tmp_line))
+        return self.postprocess_selection_columns(cr, uid, new_data, [('res.partner', 'partner_type', 3)], column_deletion=column_deletion)
+
+    def postprocess_add_db_id(self, cr, uid, data, model, column_deletion=False):
+        """
+        Change first column for the DB ID composed of:
+          - database name
+          - model
+          - id
+        """
+        # Prepare some values
+        new_data = []
+        dbname = cr.dbname
+        pool = pooler.get_pool(dbname)
+        column_number = 0
+        partner_obj = pool.get('res.partner')
+        partner_name_column_number = 10
+        partner_id_column_number = 20
+        for line in data:
+            tmp_line = list(line)
+            line_ids = str(line[column_number])
+            tmp_line[column_number] = self.get_hash(cr, uid, line_ids, model)
+            # Check if we have a partner_id in last column
+            partner_id_present = False
+            partner_id = False
+            partner_hash = ''
+            if len(tmp_line) > (partner_id_column_number - 1):
+                partner_id = tmp_line[partner_id_column_number - 1]
+                if partner_id:
+                    partner_id_present = True
+            # If not partner_id, then check 'Third Party' column to search it by name
+            if not partner_id_present:
+                partner_name = tmp_line[partner_name_column_number - 1]
+                # Search only if partner_name is not empty
+                if partner_name:
+                    # UFT-8 encoding
+                    if isinstance(partner_name, unicode):
+                        partner_name = partner_name.encode('utf-8')
+                    partner_ids = partner_obj.search(cr, uid, [('name', 'ilike', partner_name), ('active', 'in', ['t', 'f'])])
+                    if partner_ids:
+                        partner_id = partner_ids
+            # If we get some ids, fetch the partner hash
+            if partner_id:
+                if isinstance(partner_id, (int, long)):
+                    partner_id = [partner_id]
+                partner_hash = self.get_hash(cr, uid, partner_id, 'res.partner')
+            # Complete last column with partner_hash
+            if not partner_id_present:
+                tmp_line.append('')
+            tmp_line[partner_id_column_number - 1] = partner_hash
+            # Add result to new_data
+            new_data.append(self.line_to_utf8(tmp_line))
+        return self.postprocess_selection_columns(cr, uid, new_data, [], column_deletion=column_deletion)
+
     def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False):
         """
         Use current SQL result (data) to fetch IDs and mark lines as used.
@@ -59,9 +124,9 @@ class finance_archive(finance_export.finance_archive):
         sqlmark = """UPDATE account_move_line SET exporting_sequence = %s WHERE id in %s;"""
         cr.execute(sqlmark, (seq, tuple(ids),))
         # Do right request
-        sqltwo = """SELECT '' AS "DB ID", i.code, j.code, j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS "entry_sequence", 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END AS "debit", CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as "credit", c.name AS "booking_currency", CASE WHEN req.func_total > 0 THEN req.func_total ELSE 0.0 END AS "func_debit", CASE WHEN req.func_total < 0 THEN ABS(req.func_total) ELSE 0.0 END AS "func_credit"
+        sqltwo = """SELECT req.concat AS "DB ID", i.code, j.code, j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS "entry_sequence", 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END AS "debit", CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as "credit", c.name AS "booking_currency", CASE WHEN req.func_total > 0 THEN req.func_total ELSE 0.0 END AS "func_debit", CASE WHEN req.func_total < 0 THEN ABS(req.func_total) ELSE 0.0 END AS "func_credit"
             FROM (
-                SELECT aml.instance_id, aml.period_id, aml.journal_id, aml.currency_id, aml.account_id, SUM(amount_currency) AS total, SUM(debit - credit) AS func_total
+                SELECT aml.instance_id, aml.period_id, aml.journal_id, aml.currency_id, aml.account_id, SUM(amount_currency) AS total, SUM(debit - credit) AS func_total, array_to_string(array_agg(aml.id), ',') AS concat
                 FROM account_move_line AS aml, account_journal AS j
                 WHERE aml.exporting_sequence = %s
                 AND aml.journal_id = j.id
@@ -82,6 +147,8 @@ class finance_archive(finance_export.finance_archive):
         for line in datatwo:
             tmp_line = list(line)
             tmp_line.append(company_currency)
+            line_ids = tmp_line[0]
+            tmp_line[0] = self.get_hash(cr, uid, line_ids, 'account.move.line')
             new_data.append(tmp_line)
         # mark lines as exported
         sqlmarktwo = """UPDATE account_move_line SET exported = 't', exporting_sequence = Null WHERE id in %s;"""
@@ -151,6 +218,8 @@ class hq_report_ocb(report_sxw.report_sxw):
         period_name = period.name
         selection = form.get('selection', False)
         to_export = ['f'] # Default export value for exported field on analytic/move lines
+        year = '%s' % (strptime(first_day_of_period, '%Y-%m-%d').tm_year)
+        month = '%02d' % (strptime(first_day_of_period, '%Y-%m-%d').tm_mon)
         if not selection:
             raise osv.except_osv(_('Error'), _('No selection value for lines to select.'))
         if selection == 'all':
@@ -167,7 +236,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         # - value: the SQL request to use
         sqlrequests = {
             'partner': """
-                SELECT name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active
+                SELECT id, name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active
                 FROM res_partner
                 WHERE partner_type != 'internal';
                 """,
@@ -179,7 +248,8 @@ class hq_report_ocb(report_sxw.report_sxw):
             'journal': """
                 SELECT i.name, j.code, j.name, j.type, c.name
                 FROM account_journal AS j LEFT JOIN res_currency c ON j.currency = c.id, msf_instance AS i
-                WHERE j.instance_id = i.id;
+                WHERE j.instance_id = i.id
+                AND j.instance_id in %s;
                 """,
             'costcenter': """
                 SELECT name, code, type, CASE WHEN date_start < %s AND (date IS NULL OR date > %s) THEN 'Active' ELSE 'Inactive' END AS Status
@@ -200,6 +270,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                     AND p.date_stop >= r.name
                     AND r.currency_id IS NOT NULL
                     AND rc.active = 't'
+                    AND p.number NOT IN (13, 14, 15)
                     ORDER BY rc.name
                 ) AS req
                 WHERE req.date >= %s
@@ -214,15 +285,62 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND p.id = %s
                 ORDER BY st.name, p.number;
                 """,
+            'liquidity': """
+                SELECT i.code AS instance, j.code, j.name, %s AS period, req.opening, req.calculated, req.closing
+                FROM (
+                    SELECT journal_id, account_id, SUM(col1) AS opening, SUM(col2) AS calculated, SUM(col3) AS closing
+                    FROM (
+                        (
+                            SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
+                            FROM account_move_line AS aml 
+                            LEFT JOIN account_journal j 
+                                ON aml.journal_id = j.id 
+                            WHERE j.type IN ('cash', 'bank', 'cheque')
+                            AND aml.date < %s
+                            AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
+                            GROUP BY aml.journal_id, aml.account_id
+                        )
+                    UNION
+                        (
+                            SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, 0.00 as col1, ROUND(SUM(amount_currency), 2) as col2, 0.00 as col3
+                            FROM account_move_line AS aml 
+                            LEFT JOIN account_journal j 
+                                ON aml.journal_id = j.id 
+                            WHERE j.type IN ('cash', 'bank', 'cheque')
+                            AND aml.period_id = %s
+                            AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
+                            GROUP BY aml.journal_id, aml.account_id
+                        )
+                    UNION
+                        (
+                            SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, 0.00 as col1, 0.00 as col2, ROUND(SUM(amount_currency), 2) as col3
+                            FROM account_move_line AS aml 
+                            LEFT JOIN account_journal j 
+                                ON aml.journal_id = j.id 
+                            WHERE j.type IN ('cash', 'bank', 'cheque')
+                            AND aml.date <= %s
+                            AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
+                            GROUP BY aml.journal_id, aml.account_id
+                        )
+                    ) AS ssreq
+                    GROUP BY journal_id, account_id
+                    ORDER BY journal_id, account_id
+                ) AS req, account_journal j, msf_instance i
+                WHERE req.journal_id = j.id
+                AND j.instance_id = i.id
+                AND j.instance_id IN %s;
+            """,
             'contract': """
                 SELECT c.name, c.code, d.code, c.grant_amount, rc.name, c.state
                 FROM financing_contract_contract AS c, financing_contract_donor AS d, res_currency AS rc
                 WHERE c.donor_id = d.id
-                AND c.reporting_currency = rc.id;
+                AND c.reporting_currency = rc.id
+                AND c.instance_id in %s
+                AND c.state != 'draft';
                 """,
             # Pay attention to take analytic line that are not on HQ and MIGRATION journals.
             'rawdata': """
-                SELECT al.id, '' AS "DB ID", i.code, j.code, al.entry_sequence, al.name, al.ref, al.document_date, al.date, a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS debit, CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS credit, c.name AS "booking_currency", CASE WHEN al.amount < 0 THEN ABS(al.amount) ELSE 0.0 END AS debit, CASE WHEN al.amount > 0 THEN al.amount ELSE 0.0 END AS credit, cc.name AS "functional_currency"
+                SELECT al.id, i.code, aj.code, al.entry_sequence, al.name, al.ref, al.document_date, al.date, a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS debit, CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS credit, c.name AS "booking_currency", CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS debit, CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS credit, cc.name AS "functional_currency", aml.partner_id
                 FROM account_analytic_line AS al, account_account AS a, account_analytic_account AS aa, account_analytic_account AS aa2, account_analytic_account AS aa3, res_currency AS c, res_company AS e, res_currency AS cc, account_analytic_journal AS j, account_move_line AS aml, account_journal AS aj, msf_instance AS i
                 WHERE al.destination_id = aa.id
                 AND al.cost_center_id = aa2.id
@@ -239,7 +357,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND al.date >= %s
                 AND al.date <= %s
                 AND j.type not in %s
-                AND al.exported in %s;
+                AND al.exported in %s
+                AND al.instance_id in %s;
                 """,
             # Exclude lines that come from a HQ or MIGRATION journal
             # Take all lines that are on account that is "shrink_entries_for_hq" which will make a consolidation of them (with a second SQL request)
@@ -253,12 +372,13 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND j.type not in %s
                 AND aa.shrink_entries_for_hq = 't'
                 AND aml.id not in (SELECT amla.id FROM account_move_line amla, account_analytic_line al WHERE al.move_id = amla.id)
-                AND aml.exported in %s;
+                AND aml.exported in %s
+                AND aml.instance_id in %s;
                 """,
             # Do not take lines that come from a HQ or MIGRATION journal
             # Do not take journal items that have analytic lines because they are taken from "rawdata" SQL request
             'bs_entries': """
-                SELECT aml.id, m.name || '-' || aml.line_number, i.code, j.code, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code, aml.partner_txt, '', '', '', aml.debit_currency, aml.credit_currency, c.name, aml.debit, aml.credit, cc.name
+                SELECT aml.id, i.code, j.code, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code, aml.partner_txt, '', '', '', aml.debit_currency, aml.credit_currency, c.name, aml.debit, aml.credit, cc.name, aml.partner_id
                 FROM account_move_line AS aml, account_account AS a, res_currency AS c, account_move AS m, res_company AS e, account_journal AS j, res_currency AS cc, msf_instance AS i
                 WHERE aml.account_id = a.id
                 AND aml.id not in (
@@ -276,6 +396,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND a.shrink_entries_for_hq != 't'
                 AND j.type not in %s
                 AND aml.exported in %s
+                AND aml.instance_id in %s
                 ORDER BY aml.id;
                 """,
         }
@@ -298,72 +419,78 @@ class hq_report_ocb(report_sxw.report_sxw):
         instance_name = instance.code[0:3] # Take only 3 first digits
         processrequests = [
             {
-                'headers': ['Name', 'Reference', 'Partner type', 'Active/inactive'],
-                'filename': instance_name + '_%(year)s%(month)s_Partners.csv',
+                'headers': ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive'],
+                'filename': instance_name + '_' + year + month + '_Partners.csv',
                 'key': 'partner',
-                'function': 'postprocess_selection_columns',
-                'fnct_params': [('res.partner', 'partner_type', 2)],
+                'function': 'postprocess_partners',
                 },
             {
                 'headers': ['Name', 'Identification No', 'Active', 'Employee type'],
-                'filename': instance_name + '_%(year)s%(month)s_Employees.csv',
+                'filename': instance_name + '_' + year + month + '_Employees.csv',
                 'key': 'employee',
+                'function': 'postprocess_selection_columns',
+                'fnct_params': [('hr.employee', 'employee_type', 3)],
                 },
             {
                 'headers': ['Instance', 'Code', 'Name', 'Journal type', 'Currency'],
-                'filename': instance_name + '_%(year)s%(month)s_Journals.csv',
+                'filename': instance_name + '_' + year + month + '_Journals.csv',
                 'key': 'journal',
+                'query_params': (tuple(instance_ids),),
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('account.journal', 'type', 3)],
                 },
             {
                 'headers': ['Name', 'Code', 'Type', 'Status'],
-                'filename': instance_name + '_%(year)s%(month)s_Cost Centres.csv',
+                'filename': instance_name + '_' + year + month + '_Cost Centres.csv',
                 'key': 'costcenter',
                 'query_params': (last_day_of_period, last_day_of_period, tuple(instance_ids)),
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('account.analytic.account', 'type', 2)],
                 },
             {
-                'headers': ['CCY code', 'CCY name', 'Rate', 'Month'],
-                'filename': instance_name + '_%(year)s%(month)s_FX rates.csv',
+                'headers': ['CCY name', 'CCY code', 'Rate', 'Month'],
+                'filename': instance_name + '_' + year + month + '_FX rates.csv',
                 'key': 'fxrate',
                 'query_params': (first_day_of_last_fy, last_day_of_period),
                 },
             {
-                'headers': ['Instance', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance', 'State', 'Journal code'],
-                'filename': instance_name + '_%(year)s%(month)s_Liquidity Balances.csv',
-                'key': 'register',
-                'query_params': tuple([period.id]),
-                'function': 'postprocess_register',
+                'headers': ['Instance', 'Code', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance'],
+                'filename': instance_name + '_' + year + month + '_Liquidity Balances.csv',
+                'key': 'liquidity',
+                'query_params': (tuple([period.code]), first_day_of_period, period.id, last_day_of_period, tuple(instance_ids)),
                 },
             {
                 'headers': ['Name', 'Code', 'Donor code', 'Grant amount', 'Reporting CCY', 'State'],
-                'filename': instance_name + '_%(year)s%(month)s_Financing contracts.csv',
+                'filename': instance_name + '_' + year + month + '_Financing contracts.csv',
                 'key': 'contract',
+                'query_params': (tuple(instance_ids),),
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('financing.contract.contract', 'state', 5)],
                 },
             {
-                'headers': ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit', 'Functional CCY'],
-                'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
+                'headers': ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit', 'Functional CCY', 'Partner DB ID'],
+                'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
                 'key': 'rawdata',
-                'query_params': (first_day_of_period, last_day_of_period, tuple(excluded_journal_types), tuple(to_export)),
+                'function': 'postprocess_add_db_id', # to take analytic line IDS and make a DB ID with
+                'fnct_params': 'account.analytic.line',
+                'query_params': (first_day_of_period, last_day_of_period, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.analytic.line',
                 },
             {
-                'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
+                'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
                 'key': 'bs_entries_consolidated',
-                'query_params': (period.id, tuple(excluded_journal_types), tuple(to_export)),
+                'query_params': (period.id, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'function': 'postprocess_consolidated_entries',
                 'fnct_params': excluded_journal_types,
                 },
             {
-                'filename': instance_name + '_%(year)s%(month)s_Monthly Export.csv',
+                'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
                 'key': 'bs_entries',
-                'query_params': (period.id, tuple(excluded_journal_types), tuple(to_export)),
+                'function': 'postprocess_add_db_id', # to take analytic line IDS and make a DB ID with
+                'fnct_params': 'account.move.line',
+                'query_params': (period.id, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.move.line',
