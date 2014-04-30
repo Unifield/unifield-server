@@ -77,6 +77,7 @@
         <paraStyle name="HeaderBlue" textColor="blue" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="35.0" />
 		<!-- Information font style -->
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformationWrap" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="12.0" spaceBefore="1.0" spaceAfter="1.0" />
         <!-- Lines font style -->
         <paraStyle name="Lines" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="7.0" />
         <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
@@ -125,7 +126,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Origin ref. : [[ objects[0].client_order_ref or '' ]]</para>
+                    <parawrap style="TextInformationWrap">Origin ref. : [[ objects[0].client_order_ref or '' ]]</parawrap>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
