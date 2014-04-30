@@ -8,15 +8,15 @@
             
             <pageGraphics>
                 <setFont name="Helvetica-Bold" size="13.0"/>
-                <drawString x="12.0" y="555.0">PICKING TICKET ([[ getSel(objects[0], 'state') ]])</drawString>
+                <drawString x="20.0" y="555.0">PICKING TICKET ([[ getSel(objects[0], 'state') ]])</drawString>
                 <fill color="blue"/>                                                
-                <drawString x="12.0" y="541.0">[[ objects[0].name ]]</drawString>                                                
-                <image x="730.0" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+                <drawString x="20.0" y="541.0">[[ objects[0].name ]]</drawString>                                                
+                <image x="725.0" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
                 <setFont name="Helvetica" size="8" />
                 <fill color="black" />
-                <drawString x="8.0" y="520.0">Page : <pageNumber /> / </drawString>
-                <drawString x="50.0" y="520.0"><pageCount /></drawString>
-                <drawString x="8.0" y="520.0">Date [[ formatLang(time.strftime('%Y-%m-%d'), date=True) ]]</drawString>
+                <drawString x="20.0" y="525.0">Page : <pageNumber /> / </drawString>
+                <drawString x="62.0" y="525.0"><pageCount /></drawString>
+                <drawString x="20.0" y="510.0">Date [[ formatLang(time.strftime('%Y-%m-%d'), date=True) ]]</drawString>
             </pageGraphics>
         </pageTemplate>
     </template>
@@ -60,6 +60,9 @@
             <blockValign value="MIDDLE" />
             <lineStyle kind="GRID" colorName="#c0c0c0" />
             <lineStyle kind="LINEABOVE" colorName="black" start="0,0" stop="-1,0" />
+            <lineStyle kind="LINEBELOW" colorName="black" start="0,-1" stop="-1,-1" />
+            <lineStyle kind="LINEBEFORE" colorName="black" start="0,0" stop="0,-1" />
+            <lineStyle kind="LINEAFTER" colorName="black" start="-1,0" stop="-1,-1" />
             <blockSpan start="0,0" stop="0,-1" />
             <blockSpan start="3,0" stop="3,-1" />
             <blockSpan start="4,0" stop="4,-1" />
@@ -98,7 +101,7 @@
 
         <!-- Picking Ticket header values -->
 
-        <blockTable colWidths="10.0,60.0,135.0,5.0,80.0,120.0,5.0,242.0,190.0" style="HeaderInfos">
+        <blockTable colWidths="20.0,60.0,135.0,5.0,80.0,120.0,5.0,242.0,180.0" style="HeaderInfos">
             <tr>
                 <td>
                     <para style="HeaderInfosTitle"></para>
@@ -110,10 +113,10 @@
                     <para style="HeaderInfosTitle">Total items:</para>
                 </td>
                 <td>
-                    <para style="HeaderInfosTitle">[[ pt.sale_id and pt.sale_id.name or '-' ]]</para>
-                    <para style="HeaderInfosTitle">[[ pt.sale_id and pt.sale_id.origin or '-' ]]</para>
-                    <para style="HeaderInfosTitle">[[ pt.sale_id and getSel(pt.sale_id, 'order_category') or '-' ]]</para>
-                    <para style="HeaderInfosTitle">[[ len(pt.move_lines) or 0 ]]</para>
+                    <para style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.name or '-' ]]</para>
+                    <para style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.origin or '-' ]]</para>
+                    <para style="HeaderInfosValue">[[ pt.sale_id and getSel(pt.sale_id, 'order_category') or '-' ]]</para>
+                    <para style="HeaderInfosValue">[[ len(pt.move_lines) or 0 ]]</para>
                 </td>
                 <td>
                     <para style="HeaderInfosTitle"></para>
@@ -125,19 +128,19 @@
                     <para style="HeaderInfosTitle">RTS Date:</para>
                 </td>
                 <td>
-                    <para style="HeaderInfosTitle">[[ pt.sale_id and pt.sale_id.details or '-' ]]</para>
-                    <para style="HeaderInfosTitle">[[ pt.sale_id and getSel(pt.sale_id, 'transport_type') or '-' ]]</para>
-                    <para style="HeaderInfosTitle">[[ pt.sale_id and getSel(pt.sale_id, 'priority') or '-' ]]</para>
-                    <para style="HeaderInfosTitle">[[ pt.min_date[0:10] or '-' ]]</para>
+                    <para style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.details or '-' ]]</para>
+                    <para style="HeaderInfosValue">[[ pt.sale_id and getSel(pt.sale_id, 'transport_type') or '-' ]]</para>
+                    <para style="HeaderInfosValue">[[ pt.sale_id and getSel(pt.sale_id, 'priority') or '-' ]]</para>
+                    <para style="HeaderInfosValue">[[ pt.min_date[0:10] or '-' ]]</para>
                 </td>
                 <td>
                     <para style="HeaderInfosTitle"></para>
                 </td>
                 <td>
                     <para style="HeaderInfosTitle">To:</para>
-                    <para style="HeaderInfosTitle">[[ pt.partner_id and pt.partner_id.name or ' ' ]]</para>
-                    <para style="HeaderInfosTitle">[[ pt.address_id and '%s %s %s' % (pt.address_id.street, pt.address_id.zip, pt.address_id.city) or ' ' ]]</para>
-                    <para style="HeaderInfosTitle">[[ pt.address_id and p.address_id.country_id and p.address_id.country_id.name or ' ' ]]</para>
+                    <para style="HeaderInfosValue">[[ pt.partner_id and pt.partner_id.name or ' ' ]]</para>
+                    <para style="HeaderInfosValue">[[ pt.address_id and '%s %s' % (pt.address_id.street, pt.address_id.street2) or ' ' ]]</para>
+                    <para style="HeaderInfosValue">[[ pt.address_id and '%s %s' % (pt.address_id.zip, pt.address_id.city) or ' ' ]][[ pt.address_id and pt.address_id.country_id and ', %s' % pt.address_id.country_id.name or ' ' ]]</para>
                 </td>
                 <td>
                     <para style="HeaderInfosTitle"></para>
@@ -151,7 +154,7 @@
         </para>
         
         <!-- Warning message -->
-        <blockTable colWidths="842.0" style="WarningTable">
+        <blockTable colWidths="810.0" style="WarningTable">
             <tr>
                 <td>
                     <para style="WarningMessage">[[ getWarningMessage(pt) or removeParentNode('blockTable') ]]</para>
@@ -165,14 +168,14 @@
         </para>
         
         <!-- Lines -->
-        <blockTable colWidths="842.0" style="LinesHeader">
+        <blockTable colWidths="810.0" style="LinesHeader">
             <tr>
                 <td>
                     <para style="LineHeaderItem">Items :</para>
                 </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="30.0,130.0,242.0,55.0,55.0,55.0,55.0,85.0,75.0,20.0,20.0,20.0" style="LinesHeader" keepWithNext="1">
+        <blockTable colWidths="30.0,120.0,240.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" style="LinesHeader" keepWithNext="1">
             <tr>
                 <td>
                     <para style="LineHeader">Item</para>
@@ -253,7 +256,7 @@
         
         <section>
             <!-- Lines -->
-            <blockTable colWidths="30.0,130.0,242.0,55.0,55.0,55.0,55.0,85.0,75.0,20.0,20.0,20.0" style="LinesValues">
+            <blockTable colWidths="30.0,120.0,240.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" style="LinesValues">
                 [[ repeatIn(pt.move_lines, 'm') ]]
                 <tr>
                     <td>
@@ -266,7 +269,7 @@
                         <para style="LineValueLeft">[[ m.sale_line_id and m.sale_line_id.product_id.name or m.product_id.name ]]</para>
                     </td>
                     <td>
-                        <para style="LineValue">[[ m.product_id.qty_available ]]</para>
+                        <para style="LineValue">[[ formatLang(m.product_id.qty_available or 0.00) ]]</para>
                     </td>
                     <td>
                         <para style="LineValue">[[ m.product_uom.name ]]</para>
