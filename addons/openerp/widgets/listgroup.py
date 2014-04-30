@@ -229,6 +229,11 @@ class ListGroup(List):
             self.pager = Pager(ids=self.ids, offset=self.offset, limit=self.limit, count=self.count)
             self.pager._name = self.name
 
+        # Display only the lines according to pager
+        start_index = self.offset
+        end_index = self.offset + self.limit
+        self.grp_records = self.grp_records[start_index:end_index]
+
 
 class MultipleGroup(List):
 
