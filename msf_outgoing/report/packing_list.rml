@@ -5,17 +5,17 @@
     <template pageSize="(842.0,595.0)" title="Packing-List" author="Unifield,MSF" allowSplitting="20">
 
         <pageTemplate id="first">
-            <frame id="first" x1="0.0" y1="0.0" width="842" height="575" />
+            <frame id="first" x1="0.0" y1="0.0" width="842" height="560" />
 
             <pageGraphics>
                 <setFont name="Helvetica-Bold" size="13.0"/>
-                <drawString x="35" y="570.0">PACKING LIST</drawString>
+                <drawString x="35" y="555.0">PACKING LIST</drawString>
                 <fill color="blue"/>
-                <image x="720.0" y="540.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+                <image x="720.0" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
                 <setFont name="Helvetica" size="8" />
                 <fill color="black" />
-                <drawString x="23.0" y="538.0">Page : <pageNumber /> / </drawString>
-                <drawString x="65.0" y="538.0"><pageCount /></drawString>
+                <drawString x="23.0" y="523.0">Page : <pageNumber /> / </drawString>
+                <drawString x="65.0" y="523.0"><pageCount /></drawString>
             </pageGraphics>
         </pageTemplate>
 
