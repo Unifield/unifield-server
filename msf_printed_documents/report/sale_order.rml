@@ -453,13 +453,14 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ to_time(objects[0].validated_date) ]]</para>
+                    <para style="TextInformation">[[ to_time(objects[0].date_order) ]]</para>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
+                    <para style="TextInformation">[[ to_time(objects[0].date_order) ]]</para>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
