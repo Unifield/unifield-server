@@ -409,9 +409,9 @@ class product_attributes(osv.osv):
                                              'product.international.status': (_get_international_status, ['no_storage'], 10),}),
         'available_for_restriction': fields.function(_get_dummy, fnct_search=_src_available_for_restriction, method=True, type='boolean',
                                                  store=False, string='Available for the partner', readonly=True),
-        'form_value': fields.text(string='Form', translatable=True),
-        'fit_value': fields.text(string='Form', translatable=True),
-        'function_value': fields.text(string='Form', translatable=True),
+        'form_value': fields.text(string='Form', translate=True),
+        'fit_value': fields.text(string='Form', translate=True),
+        'function_value': fields.text(string='Form', translate=True),
         'standard_ok': fields.boolean(string='Standard'),
     }
 

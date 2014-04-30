@@ -147,26 +147,21 @@
                             </group>
                         </page>
                         <page string="Miscellaneous">
-                            <group colspan="2" col="2">
+                            <group colspan="4" col="4">
                                 <separator string="Information" colspan="2"/>
-                                <field name="criticism" colspan="2"/>
-                                <field name="abc_class" colspan="2"/>
-                                <field name="standard_ok" colspan="2" />
-                            </group>
-                            <group colspan="2" col="2">
                                 <separator string="Form" colspan="2" />
-                                <field name="form_value" nolabel="1" />
-                            </group>
-                            <group colspan="2" col="2">
+                                <group colspan="2" col="2">
+                                    <field name="criticism" colspan="2"/>
+                                    <field name="abc_class" colspan="2"/>
+                                    <field name="standard_ok" colspan="2" />
+                                </group>
+                                <field name="form_value" nolabel="1" colspan="2" />
                                 <separator string="Fit" colspan="2" />
-                                <field name="fit_value" nolabel="1" />
-                            </group>
-                            <group colspan="2" col="2">
                                 <separator string="Function" colspan="2" />
-                                <field name="function_value" nolabel="1" />
-                            </group>
-                            <group colspan="2" col="2">
+                                <field name="fit_value" nolabel="1" colspan="2" />
+                                <field name="function_value" nolabel="1" colspan="2" />
                                 <separator string="Lists/Sublists" colspan="2"/>
+                                <separator string="Code remarks section" colspan="2"/>
                                 <field name="list_ids" colspan="2" nolabel="1" mode="tree">
                                     <tree string="Lists/Sublists">
                                         <field name="type" />
@@ -174,9 +169,6 @@
                                         <field name="ref" />
                                     </tree>
                                 </field>
-                            </group>
-                            <group colspan="2" col="2">
-                                <separator string="Code remarks section" colspan="2"/>
                                 <field name="supply_source_ids" colspan="2" nolabel="1" context="{'from_product':True}">
 					                <tree>
                                         <field name="source" />
