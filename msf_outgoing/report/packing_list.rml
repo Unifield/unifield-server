@@ -67,8 +67,7 @@
 
     <!-- Document -->
     <story>
-        <section>
-        [[ repeatIn(getPackingList(objects[0]), 'p', 'section') ]]
+        [[ repeatIn(getPackingList(objects[0]), 'p', 'story') ]]
             <pto>
                 <pto_header>
                     <blockTable colWidths="13.0,150.0,647.0" style="HeaderInfos">
@@ -156,7 +155,7 @@
 
                 <!-- Parcels values -->
                 <section>
-                    [[ repeatIn(p['pf'], 'pf') ]]
+                    [[ repeatIn(getParcel(p['pf']), 'pf') ]]
                     <!-- Empty line -->
                     <para style="HeaderInfosTitle">
                         <font color="white"> </font>
@@ -253,25 +252,19 @@
 
             </pto>
 
-            <nextFrame>
-                [[ p['last'] and removeParentNode('nextFrame') ]]
-            </nextFrame>
-
             <!-- Empty line -->
             <para style="HeaderInfosTitle">
-                [[ not p['last'] and removeParentNode('para') ]]
                 <font color="white"> </font>
             </para>
 
             <blockTable rowHeights="10.0" colWidths="250.0,170.0,170.0,230.0" style="Totals">
-                [[ not p['last'] and removeParentNode('blockTable') ]]
                 <tr>
                     <td></td>
                     <td>
                         <para style="TotalInfos">Qty of parcels:</para>
                     </td>
                     <td>
-                        <para style="TotalInfosRight">[[ objects[0].num_of_packs or '0' ]] total</para>
+                        <para style="TotalInfosRight">[[ p['nb_parcel'] or '0' ]] total</para>
                     </td>
                     <td></td>
                 </tr>
@@ -281,7 +274,7 @@
                         <para style="TotalInfos">Total volume:</para>
                     </td>
                     <td>
-                        <para style="TotalInfosRight">[[ formatLang(objects[0].total_volume or 0.00) ]] total m³</para>
+                        <para style="TotalInfosRight">[[ formatLang(p['total_volume'] or 0.00) ]] total m³</para>
                     </td>
                     <td></td>
                 </tr>
@@ -291,7 +284,7 @@
                         <para style="TotalInfos">Total weight:</para>
                     </td>
                     <td>
-                        <para style="TotalInfosRight">[[ formatLang(objects[0].total_weight or 0.00) ]] total kg</para>
+                        <para style="TotalInfosRight">[[ formatLang(p['total_weight'] or 0.00) ]] total kg</para>
                     </td>
                     <td></td>
                 </tr>
@@ -303,7 +296,6 @@
                 </tr>
             </blockTable>
 
-        </section>
     </story>
 
 </document>
