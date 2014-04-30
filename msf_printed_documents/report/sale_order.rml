@@ -14,9 +14,7 @@
             <fill color="black"/>
             <drawString x="730" y="520.0">Page : <pageNumber /></drawString>
             <drawString x="765" y="520.0">/</drawString>
-            <!-- 
-            Wait OEB-148
-            <drawString x="770" y="520.0"><pageCount /> </drawString>-->
+            <drawString x="770" y="520.0"><pageCount /> </drawString>
         </pageGraphics>
 
     </pageTemplate>
