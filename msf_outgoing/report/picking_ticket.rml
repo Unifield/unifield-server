@@ -19,6 +19,22 @@
                 <drawString x="20.0" y="510.0">Date [[ formatLang(time.strftime('%Y-%m-%d'), date=True) ]]</drawString>
             </pageGraphics>
         </pageTemplate>
+
+        <pageTemplate id="second">
+            <frame id="second" x1="0.0" y1="0.0" width="842" height="520" />
+            
+            <pageGraphics>
+                <setFont name="Helvetica-Bold" size="13.0"/>
+                <drawString x="20.0" y="555.0">PICKING TICKET ([[ getSel(objects[0], 'state') ]])</drawString>
+                <fill color="blue"/>                                                
+                <drawString x="20.0" y="541.0">[[ objects[0].name ]]</drawString>                                                
+                <image x="725.0" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+                <setFont name="Helvetica" size="8" />
+                <fill color="black" />
+                <drawString x="20.0" y="525.0">Page : <pageNumber /> / </drawString>
+                <drawString x="62.0" y="525.0"><pageCount /></drawString>
+            </pageGraphics>
+        </pageTemplate>
     </template>
 
     <!-- Styles -->
@@ -166,6 +182,8 @@
         <para style="HeaderInfosTitle">
             <font color="white"> </font>
         </para>
+
+    	<setNextTemplate name="second" />
         
         <!-- Lines -->
         <blockTable colWidths="810.0" style="LinesHeader">
@@ -175,7 +193,7 @@
                 </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="30.0,120.0,240.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" style="LinesHeader" keepWithNext="1">
+        <blockTable colWidths="30.0,120.0,240.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" style="LinesHeader">
             <tr>
                 <td>
                     <para style="LineHeader">Item</para>
@@ -254,10 +272,91 @@
             </tr>
         </blockTable>
         
-        <section>
+	    <pto>
+            <pto_header>
+                <blockTable colWidths="30.0,120.0,240.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" style="LinesHeader">
+                    <tr>
+                        <td>
+                            <para style="LineHeader">Item</para>
+                        </td>
+                        <td>
+                            <para style="LineHeaderLeft">Code</para>
+                        </td>
+                        <td>
+                            <para style="LineHeaderLeft">Description</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader">Qty in stock</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader">Unit of Measure</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader">Qty to Pick</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader">Qty Picked</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader">Batch / Serial number</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader">Expiry Date</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader">KC</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader">DG</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader">NP</para>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeaderLeft">Comment</para>
+                        </td>
+                        <td>
+                            <para style="LineHeaderLeft">Changed article</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                    </tr>
+                </blockTable>
+            </pto_header>
+        
             <!-- Lines -->
             <blockTable colWidths="30.0,120.0,240.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" style="LinesValues">
-                [[ repeatIn(pt.move_lines, 'm') ]]
+                [[ repeatIn(pt.move_lines, 'm', 'blockTable') ]]
                 <tr>
                     <td>
                         <para style="LineValue">[[ m.line_number ]]</para>
@@ -335,7 +434,7 @@
                     </td>
                 </tr>
             </blockTable>
-        </section>
+        </pto>
         
     </story>
 
