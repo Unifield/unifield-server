@@ -620,13 +620,13 @@
 	    <field name="model">product.status</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Status" editable="top" hide_new_button="1" hide_delete_button="1">
+                <tree string="Status" noteditable="True" editable="top" hide_new_button="1" hide_delete_button="1">
                     <field name="name" />
-                    <field name="no_external" readonly="True" />
-                    <field name="no_esc" readonly="True" />
-                    <field name="no_internal" readonly="True" />
-                    <field name="no_consumption" readonly="True" />
-                    <field name="no_storage" readonly="True" />
+                    <field name="no_external" />
+                    <field name="no_esc" />
+                    <field name="no_internal" />
+                    <field name="no_consumption" />
+                    <field name="no_storage" />
                 </tree>
             </field>
         </record>
