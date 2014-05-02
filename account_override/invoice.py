@@ -668,8 +668,9 @@ class account_invoice(osv.osv):
     def action_date_assign(self, cr, uid, ids, *args):
         """
         Check Document date.
-        Add it if we come from a YAML test.
         """
+        # Prepare some values
+        period_obj = self.pool.get('account.period')
         # Default behaviour to add date
         res = super(account_invoice, self).action_date_assign(cr, uid, ids, args)
         # Process invoices
@@ -677,10 +678,15 @@ class account_invoice(osv.osv):
             if not i.date_invoice:
                 self.write(cr, uid, i.id, {'date_invoice': strftime('%Y-%m-%d')})
                 i = self.browse(cr, uid, i.id) # This permit to refresh the browse of this element
-            if not i.document_date and i.from_yml_test:
-                self.write(cr, uid, i.id, {'document_date': i.date_invoice})
-            if not i.document_date and not i.from_yml_test:
+            if not i.document_date:
                 raise osv.except_osv(_('Warning'), _('Document Date is a mandatory field for validation!'))
+            # UFTP-105: Search period and raise an exeception if this one is not open
+            period_ids = period_obj.get_period_from_date(cr, uid, i.date_invoice)
+            if not period_ids:
+                raise osv.except_osv(_('Error'), _('No period found for this posting date: %s') % (i.date_invoice))
+            for period in period_obj.browse(cr, uid, period_ids):
+                if period.state != 'draft':
+                    raise osv.except_osv(_('Warning'), _('You cannot validate this document in the given period: %s because it\'s not open. Change the date of the document or open the period.') % (period.name))
         # Posting date should not be done BEFORE document date
         self._check_document_date(cr, uid, ids)
         return res
