@@ -24,7 +24,6 @@ import re
 from tools.translate import _
 from lxml import etree
 import logging
-import re
 import tools
 from os import path
 
@@ -1007,6 +1006,19 @@ class product_attributes(osv.osv):
     ]
 
 product_attributes()
+
+
+class product_template(osv.osv):
+    _inherit = 'product.template'
+
+    _columns = {
+        'volume': fields.float('Volume', digits=(16,5), help="The volume in m3."),
+        'weight': fields.float('Gross weight', digits=(16,5), help="The gross weight in Kg."),
+        'weight_net': fields.float('Net weight', digits=(16,5), help="The net weight in Kg."),
+    }
+
+product_template()
+
 
 class product_deactivation_error(osv.osv_memory):
     _name = 'product.deactivation.error'

@@ -90,8 +90,8 @@
 
                             <group colspan="2" col="2">
                                 <separator string="Weights" colspan="2"/>
-                                <field digits="(14, 3)" name="volume" attrs="{'readonly':[('type','=','service')]}"/>
-                                <field digits="(14, 3)" name="weight" attrs="{'readonly':[('type','=','service')]}"/>
+                                <field name="volume" attrs="{'readonly':[('type','=','service')]}"/>
+                                <field name="weight" attrs="{'readonly':[('type','=','service')]}"/>
                                 <!-- uf-1544
                                 <field digits="(14, 3)" name="weight_net" attrs="{'readonly':[('type','=','service')]}"/>
                                  -->
