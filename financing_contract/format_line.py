@@ -147,6 +147,14 @@ class financing_contract_format_line(osv.osv):
             result += total_cost
         return result
 
+    def button_delete_all_quads(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'account_quadruplet_ids':[(6, 0, [])]}, context=context )
+        return True
+
+    def button_delete_all_couples(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'account_destination_ids':[(6, 0, [])]}, context=context )
+        return True
+
     # Get the list of accounts for both duplet and quadruplet
     def _get_accounts_couple_and_quadruplets(self, browse_line):
         account_destination_result = []

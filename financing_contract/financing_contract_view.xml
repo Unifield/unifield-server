@@ -104,16 +104,20 @@
                                             <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                             <field name="overhead_percentage" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                         </group>
+                                        <button name="button_delete_all_quads" type="object" string="Remove all quads" icon="gtk-clear" colspan="1"
+                                                attrs="{'invisible': [('is_quadruplet', '=', False)]}" />
+                                        <button name="button_delete_all_couples" type="object" string="Remove all couples" icon="gtk-clear" colspan="1"
+                                                attrs="{'invisible': [('is_quadruplet', '=', True)]}" />
                                         <field name="is_quadruplet" attrs="{'invisible': [('line_type', '=', 'view')]}"/>
                                         <field name="account_destination_ids" colspan="4" string="Account/Destination" nolabel="1"
-                                               context="context" 
-                                               attrs="{'invisible': ['|', ('line_type', '=', 'view'), ('is_quadruplet', '=', True)]}">
+                                               context="context"
+                                               attrs="{'invisible': [('|'), ('line_type', '=', 'view'), ('is_quadruplet', '=', True)]}">
                                         </field>
-                                        <group attrs="{'invisible': ['|', ('is_quadruplet', '=', False), ('line_type', '=', 'view')]}" colspan="4">
-                                            <field name="account_quadruplet_ids" colspan="4" string="Account/Destination/Funding Pool/Cost Centre" nolabel="1"
-                                               context="context" domain="[('can_be_used','=',True)]">
-                                            </field>
-                                        </group>
+                                        <field name="account_quadruplet_ids" colspan="4" string="Account/Destination/Funding Pool/Cost Centre" nolabel="1"
+                                               context="context"
+                                               attrs="{'invisible': [('|'), ('line_type', '=', 'view'), ('is_quadruplet', '!=', True)]}"
+                                               domain="[('can_be_used','=',True)]">
+                                        </field>
                                     </form>
                                 </field>
                             </page>
@@ -155,7 +159,7 @@
                 <field name="model">financing.contract.account.quadruplet</field>
                 <field name="type">tree</field>
                 <field name="arch" type="xml">
-                    <tree string="Account/Destination/Funding Pool/Cost Centre" colors="grey:used_in_contract" notselectable="used_in_contract">
+                    <tree string="Account/Destination/Funding Pool/Cost Centre" colors="grey:used_in_contract" notselectable="used_in_contract" editable="top" noteditable="1">
                         <field name="can_be_used" invisible="1"/>
                         <field name="account_destination_name"/>
                         <field name="funding_pool_id"/>
@@ -188,7 +192,7 @@
 	            <field name="type">search</field>
 	            <field name="arch" type="xml">
 	                <search string="Search Account/Destination/Funding Pool/Cost Centre">
-                        <field name="account_destination_id" string="Account"/>
+                        <field name="account_destination_name" string="Account"/>
                         <field name="funding_pool_id" domain="[('category', '=', 'FUNDING')]"/>
                         <field name="cost_center_id" domain="[('category', '=', 'OC')]"/>
 	                </search>
