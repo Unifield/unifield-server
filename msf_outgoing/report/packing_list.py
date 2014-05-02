@@ -101,7 +101,7 @@ class packing_list(report_sxw.rml_parse):
             
             addr = company.address[0]
 
-            if field == 'name':
+            if field == 'addr_name':
                 return addr.name
             elif field == 'street':
                 return addr.street
