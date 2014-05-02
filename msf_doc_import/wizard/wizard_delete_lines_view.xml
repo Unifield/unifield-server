@@ -16,7 +16,7 @@
                     <separator colspan="4" string="Lines to remove" />
                     <button name="select_all_lines" type="object" icon="gtk-go-down" string="Select all lines" colspan="2" />
                     <button name="select_empty_lines" type="object" icon="gtk-go-down" string="Select Qty=0 lines" attrs="{'invisible': [('qty_field', '=', False)]}" colspan="2" />
-                    <field name="line_ids" colspan="4" nolabel="1" context="{'from_delete_wizard': True}" mode="tree" />
+                    <field name="line_ids" colspan="4" nolabel="1" context="{'from_delete_wizard': True, 'initial_doc_id': initial_doc_id, 'initial_doc_type': initial_doc_type}" mode="tree" />
                     <separator colspan="4" string="Actions" />
                     <group colspan="4" col="4" >
                         <button special="cancel" icon="gtk-cancel" string="Close window" colspan="2" />

@@ -330,6 +330,10 @@ def noteditable_fields_view_get(res, view_type, context=None):
         fields = root.xpath('/tree')
         for field in fields:
             root.set('noteditable', 'True')
+            if context.get('procurement_request'):
+                root.set('string', 'Internal request lines')
+            if context.get('rfq_ok'):
+                root.set('string', 'RfQ lines')
         res['arch'] = etree.tostring(root)
 
     return res
@@ -357,6 +361,12 @@ class purchase_order_line(osv.osv):
     _inherit = 'purchase.order.line'
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+
+        if context.get('initial_doc_id', False) and context.get('initial_doc_type', False) == 'purchase.order':
+            rfq_ok = self.pool.get('purchase.order').browse(cr, uid, context.get('initial_doc_id'), context=context).rfq_ok
+            context['rfq_ok'] = rfq_ok
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
         res = super(purchase_order_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         return noteditable_fields_view_get(res, view_type, context)
@@ -384,6 +394,13 @@ class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+
+        if context.get('initial_doc_id', False) and context.get('initial_doc_type', False) == 'sale.order':
+            proc_request = self.pool.get('sale.order').browse(cr, uid, context.get('initial_doc_id'), context=context).procurement_request
+            context['procurement_request'] = proc_request
+
         view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
         res = super(sale_order_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         return noteditable_fields_view_get(res, view_type, context)
