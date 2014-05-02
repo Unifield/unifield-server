@@ -9,13 +9,14 @@
                 <setFont name="Helvetica-Bold" size="13.0"/>
                 <drawString x="230" y="800">FREE GIFT CERTIFICATE</drawString>
                 <image x="30" y="780" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
-            </pageGraphics>
-        </pageTemplate>
-        <pageTemplate id="second">
-            <frame id="second" x1="0.0" y1="0.0" width="590" height="785" />
 
-            <pageGraphics>
-                <image x="30" y="780" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+                <setFont name="Helvetica" size="7.00"/>
+                <lineMode width="0.5" />
+                <lines>2.9cm 1.4cm 17.7cm 1.4cm</lines>
+                <drawString x="85" y="30">Médecins sans Frontières declares that no exchange of foreign currency between the country of destination and the country of origin</drawString>
+                <drawString x="85" y="20">is involved in connection with this shipment and that the goods belonging to this shipment will be used for humanitarian purposes only.</drawString>
+                <lines>2.9cm 0.5cm 17.7cm 0.5cm</lines>
+
             </pageGraphics>
         </pageTemplate>
     </template>
@@ -46,8 +47,6 @@
     <story>
 
         <para style="terp_default_8">[[repeatIn(objects,'s')]]</para>
-
-        <setNextTemplate name="second" />
 
         <blockTable colWidths="120.0,440.0" style="NoBorder">
             <tr>
