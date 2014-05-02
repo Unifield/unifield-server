@@ -341,6 +341,7 @@ class weekly_forecast_report(osv.osv):
             for report in self.browse(new_cr, uid, ids, context=context):
                 product_domain = [('type', '=', 'product')]
                 product_ids = []
+                nomen_name_for_loc = None
                 if report.nomen_manda_0:
                     nom = False
                     # Get all products for the defined nomenclature
@@ -356,6 +357,7 @@ class weekly_forecast_report(osv.osv):
                     elif report.nomen_manda_0:
                         nom = report.nomen_manda_0.id
                         field = 'nomen_manda_0'
+                        nomen_name_for_loc = report.nomen_manda_0.name
 
                     if nom:
                         product_domain.append((field, '=', nom))
@@ -374,6 +376,14 @@ class weekly_forecast_report(osv.osv):
                     ('location_id', 'child_of', report.location_id.id),
                     ('quarantine_location', '=', False),
                 ], order='location_id', context=context)
+                
+                if location_ids:
+                    loc_name = loc_obj.read(new_cr, uid, location_ids[0], ['name',], context=context)
+                    if loc_name:
+                        loc_name = loc_name['name']
+                        if loc_name in ['LOG', 'MED'] and loc_name != nomen_name_for_loc:
+                            nomen_id = self.pool.get('product.nomenclature').search(new_cr, uid, [('level', '=', 0), ('name', '=', loc_name)], context=context)[0]
+                            product_domain.append(('nomen_manda_0', '=', nomen_id))
                 
                 #UFTP-225: If the location is from Stock/MED/LOG, take also the Input location for the report
                 stock_ids = loc_obj.search(new_cr, uid, [('location_category', '=', 'stock')], context=context)
@@ -415,34 +425,38 @@ class weekly_forecast_report(osv.osv):
                 exp_vals = {}
                 
                 ##### First, get the list of product_id
-                t = 0
-                jump = 100
-                while t < nb_products:
-                    tmp_product_ids = product_obj.search(new_cr, uid, product_domain, t, jump, context=context)
-                    tmp_product_ids = list(set(tmp_product_ids))
-                    product_ids.extend(tmp_product_ids)
-                    t = t + jump
-                product_ids = list(set(product_ids)) # just to make sure that the list is duplicate-free
+                product_ids = product_obj.search(new_cr, uid, product_domain, context=context)
+                product_ids = list(set(product_ids))
                 
-                ##### UFTP-220: Filter this list of products for those only appeared in the selected location of the report, not all product
-                new_cr.execute("select distinct product_id from report_stock_inventory where location_id in %s and product_id in %s", (tuple(location_ids),tuple(product_ids),) )
-                product_ids = []
-                for row in new_cr.dictfetchall():
-                    product_ids.append(row['product_id'])                
+                if len(product_ids) > 0:
+                    ##### UFTP-220: Filter this list of products for those only appeared in the selected location of the report, not all product
+                    new_cr.execute("select distinct product_id from report_stock_inventory where location_id in %s and product_id in %s", (tuple(location_ids),tuple(product_ids),) )
+                    product_ids = []
+                    for row in new_cr.dictfetchall():
+                        product_ids.append(row['product_id'])                
+                    product_ids = list(set(product_ids)) # just to make sure that the list is duplicate-free
 
                 ##### We still need to get the list of products with AMC and FMC > 0
                 fmc_line_obj = self.pool.get('monthly.review.consumption.line')
+                tmp_product_ids = []
                 amc_fmc_product_ids = fmc_line_obj.search(new_cr, uid, ['|', ('amc', '>', 0), ('fmc', '>', 0)], context=context)
                 if len(amc_fmc_product_ids) > 0:
                     amc_fmc_product_ids = fmc_line_obj.read(new_cr, uid, amc_fmc_product_ids, ['name',], context=context) # read the name, which is product_id
                     for temp in amc_fmc_product_ids:
                         if temp['name'] and temp['name'][0]:
-                            product_ids.append(temp['name'][0])
-                    product_ids = list(set(product_ids))
+                            tmp_product_ids.append(temp['name'][0])
+
+                temp_domain = product_domain
+                temp_domain.append(('id', 'in', tmp_product_ids))
+                tmp_product_ids = product_obj.search(new_cr, uid, temp_domain, context=context) # search with domain again
+
+                product_ids.extend(tmp_product_ids)
+                product_ids = list(set(product_ids)) # just to make sure that the list is duplicate-free
 
                 ##### Now, from this list, perform calculation for consumption, in-pipeline and expired quantity
                 nb_products = len(product_ids) # reupdate the number of real products to calculate
                 t = 0
+                jump = 100
                 while t < nb_products:
                     # Get consumption, in-pipe and expired quantities for each product
                     product_cons.update(self._get_product_consumption(new_cr, uid, product_ids, location_ids, report, context=context))
