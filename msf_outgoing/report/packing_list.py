@@ -31,6 +31,7 @@ class packing_list(report_sxw.rml_parse):
             'time': time,
             'getPackingList': self._get_packing_list,
             'getParcel': self._get_parcel,
+            'getCompany': self._get_company_info,
         })
 
     def _get_packing_list(self, shipment):
@@ -80,6 +81,40 @@ class packing_list(report_sxw.rml_parse):
         '''
         list_of_parcels.sort(key=lambda p: p.from_pack)
         return list_of_parcels
+
+    def _get_company_info(self, field):
+        '''
+        Return info from instance's company.
+
+        :param field: Field to read
+
+        :return: Information of the company
+        :rtype: str
+        '''
+        company = self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.partner_id
+
+        if field == 'name':
+            return company.name
+        else:
+            if not company.address:
+                return ''
+            
+            addr = company.address[0]
+
+            if field == 'name':
+                return addr.name
+            elif field == 'street':
+                return addr.street
+            elif field == 'street2':
+                return addr.street2
+            elif field == 'city':
+                return '%s %s' % (addr.zip, addr.city)
+            elif field == 'country':
+                return addr.country_id and addr.country_id.name or ''
+            elif field == 'phone':
+                return addr.phone or addr.mobile or ''
+
+        return ''
 
     def set_context(self, objects, data, ids, report_type=None):
         '''
