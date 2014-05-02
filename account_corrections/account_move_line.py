@@ -867,7 +867,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
         company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
         # Check if we come from COORDO/HQ instance
         if company and company.instance_id and company.instance_id.level in ['section', 'coordo']:
-            self.write(cr, uid, ids, {'corrected_upstream': True})
+            # UF-1746: Set also all other move lines as corrected upstream to disallow projet user to correct any move line of this move.
+            move_ids = [x and x.get('move_id', False) and x.get('move_id')[0] for x in self.read(cr, uid, ids, ['move_id'], context=context)]
+            ml_ids = self.search(cr, uid, [('move_id', 'in', move_ids)])
+            self.write(cr, uid, ml_ids, {'corrected_upstream': True}, context=context)
         return True
 
 account_move_line()
