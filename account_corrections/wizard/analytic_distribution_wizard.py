@@ -279,7 +279,17 @@ class analytic_distribution_wizard(osv.osv_memory):
             # UFTP-169: Use the wizard date in case we are correcting a line that is itself a correction of another line.
             date_to_use = orig_date
             if ml.corrected_line_id:
+                # UFTP-169: If the wizard date is before the reversal one, raise an error.
+                reversal_ids = self.pool.get('account.analytic.line').search(cr, uid, [('reversal_origin', '=', ml.corrected_line_id.id)])
+                reversal_date = False
+                for reversal in self.pool.get('account.analytic.line').read(cr, uid, reversal_ids, ['date']):
+                    if reversal.get('date', False):
+                        reversal_date = reversal.get('date')
+                        break
                 date_to_use = wizard.date
+                if reversal_date:
+                    if reversal_date > wizard.date:
+                        raise osv.except_osv(_('Warning'), _('Posting date (%s) should be after the reversal one (%s).') % (wizard.date, reversal_date))
             self.pool.get('account.analytic.line').write(cr, uid, to_override_ids, {
                     'account_id': line.analytic_id.id,
                     'cost_center_id': line.cost_center_id.id,
