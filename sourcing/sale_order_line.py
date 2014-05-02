@@ -650,7 +650,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         o_type = line.order_id and line.order_id.order_type == 'loan' or False
 
         if l_type and o_state and ctx_cond and o_type:
-            return _('You can\'t source a loan \'from stock\'.')
+            return _('You can\'t source a loan \'on order\'.')
 
         return False
 
@@ -872,7 +872,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             vals['location_id'] = False
 
         # UFTP-139: if make_to_stock and no location, put Stock as location
-        if 'type' in vals and  vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
+        if ids and 'type' in vals and  vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
             # Define Stock as location_id for each line without location_id
             for line in self.read(cr, uid, ids, ['location_id'], context=context):
                 line_vals = vals.copy()
