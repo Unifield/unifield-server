@@ -128,12 +128,10 @@
                                 <field name="single_use" colspan="2"/>
                                 <field name="narcotic" colspan="2"/>
                                 <field name="controlled_substance" colspan="2"/>
-                                <separator string="Transport" colspan="2"/>
-                                <field name="dangerous_goods" colspan="2"/>
-                                <field name="un_code" colspan="2"/>
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Diffusion" colspan="2"/>
+                                <field name="standard_ok" colspan="2" />
                                 <field name="justification_code_id" colspan="2" widget="selection" />
                                 <!-- uf-1544
                                 <field name="med_device_class" colspan="2" />
@@ -145,21 +143,32 @@
                                 <field name="restricted_country" colspan="2"/>
                                 <field name="country_restriction" colspan="2" widget="selection" attrs="{'readonly':[('restricted_country','=',False)]}"/>
                             </group>
+                            <group colspan="2" col="2">
+                                <separator string="Transport" colspan="2"/>
+                                <field name="dangerous_goods" colspan="2"/>
+                                <field name="un_code" colspan="2"/>
+                            </group>
+                            <group colspan="2" col="2">
+                                <separator string="Form" colspan="2" />
+                                <field name="form_value" nolabel="1" colspan="2" />
+                            </group>
+                            <group colspan="2" col="2">
+                                <separator string="Fit" colspan="2" />
+                                <field name="fit_value" nolabel="1" colspan="2" />
+                            </group>
+                            <group colspan="2" col="2">
+                                <separator string="Function" colspan="2" />
+                                <field name="function_value" nolabel="1" colspan="2" />
+                            </group>
                         </page>
                         <page string="Miscellaneous">
                             <group colspan="4" col="4">
-                                <separator string="Information" colspan="2"/>
-                                <separator string="Form" colspan="2" />
                                 <group colspan="2" col="2">
+                                    <separator string="Information" colspan="2"/>
                                     <field name="criticism" colspan="2"/>
                                     <field name="abc_class" colspan="2"/>
-                                    <field name="standard_ok" colspan="2" />
                                 </group>
-                                <field name="form_value" nolabel="1" colspan="2" />
-                                <separator string="Fit" colspan="2" />
-                                <separator string="Function" colspan="2" />
-                                <field name="fit_value" nolabel="1" colspan="2" />
-                                <field name="function_value" nolabel="1" colspan="2" />
+                                <newline />
                                 <separator string="Lists/Sublists" colspan="2"/>
                                 <separator string="Code remarks section" colspan="2"/>
                                 <field name="list_ids" colspan="2" nolabel="1" mode="tree">
