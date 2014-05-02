@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            id="report_sale_follow_up_xls"
+            name="sale_order_followup_xls"
+            model="sale.order.followup"
+            string="Field Order Follow Up Excel Export"
+            file="sale_follow_up_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+    </data>
+
+    <data>
+        <report
+            id="report_sale_follow_up"
+            name="sale_order_followup"
+            model="sale.order.followup"
+            string="Field Order Follow Up PDF Export"
+            rml="sale_follow_up_report.rml"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+    </data>
+</openerp>

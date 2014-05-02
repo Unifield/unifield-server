@@ -42,6 +42,7 @@
     ],
     "update_xml": [
         "sale_followup_view.xml",
+        "report/sale_follow_up_report.xml",
     ],
     "demo_xml": [
     ],

@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 from tools.translate import _
+import datetime
 import time
 
 class sale_order_followup_test(osv.osv_memory):
@@ -336,8 +337,63 @@ class sale_order_followup(osv.osv_memory):
         
         return tender_ids
         
+    def export_get_file_name(self, cr, uid, ids, prefix='FO_Follow_Up', context=None):
+        """
+        UFTP-56: get export file name
+        :param prefix: prefix of the file (POV for PO Validated, etc)
+        :return POV_14_OC_MW101_PO00060_YYYY_MM_DD.xls or POV_14_OC_MW101_PO00060_YYYY_MM_DD.xml
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if len(ids) != 1:
+            return False
+        foup = self.browse(cr, uid, ids[0], context=context)
+        if not foup or not foup.order_id or not foup.order_id.name:
+            return False
+        dt_now = datetime.datetime.now()
+        po_name = "%s_%s_%d_%02d_%02d" % (prefix,
+            foup.order_id.name.replace('/', '_'),
+            dt_now.year, dt_now.month, dt_now.day)
+        return po_name
+        
+    def export_xls(self, cr, uid, ids, context=None):
+        """
+        Print the report (Excel)
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        datas = {'ids': ids}
+        file_name = self.export_get_file_name(cr, uid, ids, context=context)
+        if file_name:
+            datas['target_filename'] = file_name
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'sale_order_followup_xls',
+            'datas': datas,
+            'context': context,
+            'nodestroy': True,
+        }
+                
+    def export_pdf(self, cr, uid, ids, context=None):
+        """
+        Print the report (PDF)
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        datas = {'ids': ids}
+        file_name = self.export_get_file_name(cr, uid, ids, context=context)
+        if file_name:
+            datas['target_filename'] = file_name
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'sale_order_followup',
+            'datas': datas,
+            'context': context,
+            'nodestroy': True,
+        }
     
 sale_order_followup()
+
 
 class sale_order_line_followup(osv.osv_memory):
     _name = 'sale.order.line.followup'
