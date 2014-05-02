@@ -156,9 +156,8 @@ class weekly_forecast_report(osv.osv):
             'progress': 0.00,
             'progress_comment': '',
             'xml_data': '',
-            'requestor_date': time.strftime('%Y-%d-%m %H:%M:%S'),
+            'requestor_date': time.strftime('%Y-%m-%d %H:%M:%S'), # Fixed the wrong typo date format
         })
-
         return super(weekly_forecast_report, self).copy(cr, uid, report_id, defaults, context=context)
 
     def period_change(self, cr, uid, ids, consumption_from, consumption_to, consumption_type, context=None):
@@ -338,11 +337,11 @@ class weekly_forecast_report(osv.osv):
 
         # background cursor
         new_cr = pooler.get_db(cr.dbname).cursor()
-
         try:
             for report in self.browse(new_cr, uid, ids, context=context):
                 product_domain = [('type', '=', 'product')]
                 product_ids = []
+                nomen_name_for_loc = None
                 if report.nomen_manda_0:
                     nom = False
                     # Get all products for the defined nomenclature
@@ -358,28 +357,42 @@ class weekly_forecast_report(osv.osv):
                     elif report.nomen_manda_0:
                         nom = report.nomen_manda_0.id
                         field = 'nomen_manda_0'
+                        nomen_name_for_loc = report.nomen_manda_0.name
 
                     if nom:
                         product_domain.append((field, '=', nom))
- 
+
                 if report.sublist_id:
                     context.update({'search_default_list_ids': report.sublist_id.id})
                     for line in report.sublist_id.product_ids:
                         product_ids.append(line.name.id)
- 
+
                     if product_ids:
                         product_domain.append(('id', 'in', product_ids))
 
                 nb_products = product_obj.search(new_cr, uid, product_domain, count=True, context=context)
-                # Process the products by group of 500
-                offset = 50.00
-                nb_offset = (nb_products / offset) + 1
-
                 # Get all locations
                 location_ids = loc_obj.search(new_cr, uid, [
                     ('location_id', 'child_of', report.location_id.id),
                     ('quarantine_location', '=', False),
                 ], order='location_id', context=context)
+
+                if location_ids:
+                    loc_name = loc_obj.read(new_cr, uid, location_ids[0], ['name',], context=context)
+                    if loc_name:
+                        loc_name = loc_name['name']
+                        if loc_name in ['LOG', 'MED'] and loc_name != nomen_name_for_loc:
+                            nomen_id = self.pool.get('product.nomenclature').search(new_cr, uid, [('level', '=', 0), ('name', '=', loc_name)], context=context)[0]
+                            product_domain.append(('nomen_manda_0', '=', nomen_id))
+
+                #UFTP-225: If the location is from Stock/MED/LOG, take also the Input location for the report
+                stock_ids = loc_obj.search(new_cr, uid, [('location_category', '=', 'stock')], context=context)
+                for loc in location_ids:
+                    if loc in stock_ids:
+                        # search for Input location, and add it into the location list
+                        input_stock_ids = loc_obj.search(new_cr, uid, [('location_category', '=', 'transition'), ('name', '=', 'Input')], context=context)
+                        location_ids.extend(input_stock_ids)
+                        break
 
                 context.update({
                     'location_id': location_ids,
@@ -410,15 +423,47 @@ class weekly_forecast_report(osv.osv):
                 product_cons = {}
                 in_pipe_vals = {}
                 exp_vals = {}
-                for i in range(int(nb_offset)):
-                    tmp_product_ids = product_obj.search(new_cr, uid, product_domain, limit=offset, offset=i, context=context)
-                    product_ids.extend(tmp_product_ids)
+
+                ##### First, get the list of product_id
+                product_ids = product_obj.search(new_cr, uid, product_domain, context=context)
+                product_ids = list(set(product_ids))
+
+                if len(product_ids) > 0:
+                    ##### UFTP-220: Filter this list of products for those only appeared in the selected location of the report, not all product
+                    new_cr.execute("select distinct product_id from report_stock_inventory where location_id in %s and product_id in %s", (tuple(location_ids),tuple(product_ids),) )
+                    product_ids = []
+                    for row in new_cr.dictfetchall():
+                        product_ids.append(row['product_id'])
+                    product_ids = list(set(product_ids)) # just to make sure that the list is duplicate-free
+
+                ##### We still need to get the list of products with AMC and FMC > 0
+                fmc_line_obj = self.pool.get('monthly.review.consumption.line')
+                tmp_product_ids = []
+                amc_fmc_product_ids = fmc_line_obj.search(new_cr, uid, ['|', ('amc', '>', 0), ('fmc', '>', 0)], context=context)
+                if len(amc_fmc_product_ids) > 0:
+                    amc_fmc_product_ids = fmc_line_obj.read(new_cr, uid, amc_fmc_product_ids, ['name',], context=context) # read the name, which is product_id
+                    for temp in amc_fmc_product_ids:
+                        if temp['name'] and temp['name'][0]:
+                            tmp_product_ids.append(temp['name'][0])
+
+                temp_domain = product_domain
+                temp_domain.append(('id', 'in', tmp_product_ids))
+                tmp_product_ids = product_obj.search(new_cr, uid, temp_domain, context=context) # search with domain again
+
+                product_ids.extend(tmp_product_ids)
+                product_ids = list(set(product_ids)) # just to make sure that the list is duplicate-free
+
+                ##### Now, from this list, perform calculation for consumption, in-pipeline and expired quantity
+                nb_products = len(product_ids) # reupdate the number of real products to calculate
+                t = 0
+                jump = 100
+                while t < nb_products:
                     # Get consumption, in-pipe and expired quantities for each product
-                    product_cons.update(self._get_product_consumption(new_cr, uid, tmp_product_ids, location_ids, report, context=context))
-                    in_pipe_vals.update(self._get_in_pipe_vals(new_cr, uid, tmp_product_ids, location_ids, report, context=context))
+                    product_cons.update(self._get_product_consumption(new_cr, uid, product_ids, location_ids, report, context=context))
+                    in_pipe_vals.update(self._get_in_pipe_vals(new_cr, uid, product_ids, location_ids, report, context=context))
                     exp_vals.update(self._get_expiry_batch(new_cr, uid, product_cons, location_ids, report, context=context))
 
-                    percent_completed = (((i*offset)/nb_products) * 0.50) * 100
+                    percent_completed = (t/nb_products) * 100
                     progress_comment = """
                         Calculation of consumption values by product: %(treated_products)s/%(nb_products)s
 
@@ -431,7 +476,7 @@ class weekly_forecast_report(osv.osv):
                         Calculate the forecasted quantity by product and period: 0/%(nb_products)s
 
                     """ % {
-                        'treated_products': int(i*offset),
+                        'treated_products': t,
                         'nb_products': nb_products,
                     }
                     self.write(new_cr, uid, [report.id], {
@@ -440,6 +485,7 @@ class weekly_forecast_report(osv.osv):
                         'progress_comment': progress_comment,
                     }, context=context)
                     new_cr.commit()
+                    t = t + jump
 
                 line_values = """<Row></Row><Row>
                       <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Product Code</Data></Cell>
@@ -457,11 +503,8 @@ class weekly_forecast_report(osv.osv):
                     }
 
                 line_values += """</Row>"""
+                context.update({'from_date': False, 'to_date': False,})
 
-                context.update({
-                    'from_date': False,
-                    'to_date': False,
-                })
                 stock_products = product_obj.read(new_cr, uid, product_ids, [
                     'qty_available',
                     'default_code',
@@ -471,19 +514,18 @@ class weekly_forecast_report(osv.osv):
                 ], context=context)
 
                 j = 0
+                # UFTP-220: get a list of rules that has either one of 3 columns yes, and add the product_ids of these lines for checking it.
+                rule_prod_ids = []
+                new_cr.execute("select distinct product_id from procurement_rules_report where auto_supply_ok = 'yes' or order_cycle_ok = 'yes' or min_max_ok = 'yes' or threshold_ok = 'yes'")
+                for row in new_cr.dictfetchall():
+                    rule_prod_ids.append(row['product_id'])
+
                 for product in stock_products:
                     product_id = product['id']
                     j += 1
                     cons = product_cons[product_id][1]
                     if not cons and not product['qty_available']:
-                        proc_rules = self.pool.get('procurement.rules.report').search(new_cr, uid, [
-                            ('product_id', '=', product_id),
-                            '|', ('auto_supply_ok', '=', 'yes'),
-                            '|', ('order_cycle_ok', '=', 'yes'),
-                            '|', ('min_max_ok', '=', 'yes'),
-                            ('threshold_ok', '=', 'yes'),
-                        ], context=context)
-                        if not proc_rules:
+                        if product_id not in rule_prod_ids:
                             continue
 
                     weekly_cons = cons
@@ -563,6 +605,9 @@ class weekly_forecast_report(osv.osv):
                     for interval_name in interval_keys:
                         interval_values = inter.get(interval_name)
                         last_value = last_value - weekly_cons - interval_values['exp_qty'] + interval_values['pipe_qty']
+                        # UFTP-225: if the value of week is negative, just set it as 0 in display
+                        if last_value < 0:
+                            last_value = 0
                         line_values += """<Cell ss:StyleID=\"%(line_style)s\" ss:Formula=\"\"><Data ss:Type=\"Number\">%(value)s</Data></Cell>""" % {
                             'line_style': last_value >= 0.00 and 'line' or 'redline',
                             'value': last_value,
