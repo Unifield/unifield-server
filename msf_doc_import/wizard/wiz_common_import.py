@@ -74,13 +74,19 @@ class wiz_common_import(osv.osv_memory):
             header_dict.update({self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context): cell_nb})
         return header_dict
 
-    def check_header_values(self, cr, uid, ids, context, header_index, real_columns):
+    def check_header_values(self, cr, uid, ids, context, header_index,
+        real_columns, origin=False):
         """
         Check that the columns in the header will be taken into account.
         """
         translated_headers = [_(f) for f in real_columns]
         for k,v in header_index.items():
             if k not in translated_headers:
+                if origin:
+                    # special case from document origin
+                    if origin == 'PO' and k == 'Delivery requested date' \
+                        and 'Delivery Request Date' in real_columns:
+                        continue  # 'Delivery requested date' tolerated (for Rfq vs 'Delivery Requested Date' of PO_COLUMNS_HEADER_FOR_IMPORT)
                 vals = {'state': 'draft',
                         'message': _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s'
                                      ) % (k, ','.join(translated_headers))}
