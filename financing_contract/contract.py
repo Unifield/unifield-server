@@ -38,6 +38,23 @@ class financing_contract_funding_pool_line(osv.osv):
         'total_project': True,
     }
 
+    def check_fp(self, cr, uid, ids, context=None):
+        """
+        See all other funding pool lines and check that the FP is not used yet.
+        If used, raise an error.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for line in self.browse(cr, uid, ids):
+            fp_id = line.funding_pool_id.id
+            # Search other lines
+            other_same_fp_ids = self.search(cr, uid, [('contract_id', '=', line.contract_id.id), ('id', '!=', line.id), ('funding_pool_id', '=', fp_id)])
+            if other_same_fp_ids:
+                raise osv.except_osv(_('Error'), _('This FP is already in use: %s') % (line.funding_pool_id.name))
+        return True
+
     def create(self, cr, uid, vals, context=None):
         result = super(financing_contract_funding_pool_line, self).create(cr, uid, vals, context=context)
         # when a new funding pool is added to contract, then add all of the cost centers to the cost center tab, unless
@@ -64,7 +81,19 @@ class financing_contract_funding_pool_line(osv.osv):
             cc_ids = list(set(cc_ids).union(quad_cc_ids))
             # replace the associated cc list -NOT WORKING
             format_obj.write(cr, uid, vals['contract_id'],{'cost_center_ids':[(6,0,cc_ids)]}, context=context)
+        # UFTP-121: Check that FP is not used yet.
+        self.check_fp(cr, uid, result)
         return result
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check that no previous funding pool account is used yet.
+        """
+        if context is None:
+            context = {}
+        res = super(financing_contract_funding_pool_line, self).write(cr, uid, ids, vals, context=context)
+        self.check_fp(cr, uid, ids)
+        return res
 
 financing_contract_funding_pool_line()
 

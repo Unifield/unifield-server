@@ -242,7 +242,7 @@ class account_invoice(osv.osv):
         return res
 
     def onchange_partner_id(self, cr, uid, ids, ctype, partner_id,\
-        date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False, is_intermission=False):
+        date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False, is_intermission=False, is_debit_note=False, is_direct_invoice=False):
         """
         Update fake_account_id field regarding account_id result.
         Get default donation account for Donation invoices.
@@ -265,20 +265,22 @@ class account_invoice(osv.osv):
             res['value'].update({'fake_account_id': res['value'].get('account_id')})
         if partner_id and ctype:
             p = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            ai_direct_invoice = False
             if ids: #utp917
                 ai = self.browse(cr, uid, ids)[0]
+                ai_direct_invoice = ai.is_direct_invoice
             if p:
                 c_id = False
                 if ctype in ['in_invoice', 'out_refund'] and p.property_product_pricelist_purchase:
                     c_id = p.property_product_pricelist_purchase.currency_id.id
                 elif ctype in ['out_invoice', 'in_refund'] and p.property_product_pricelist:
                     c_id = p.property_product_pricelist.currency_id.id
-                if ids:
-                    if c_id and not ai.is_direct_invoice:   #utp917
-                        if not res.get('value', False):
-                            res['value'] = {'currency_id': c_id}
-                        else:
-                            res['value'].update({'currency_id': c_id})
+                # UFTP-121: regarding UTP-917, we have to change currency when changing partner, but not for direct invoices
+                if c_id and (not is_direct_invoice or not ai_direct_invoice):
+                    if not res.get('value', False):
+                        res['value'] = {'currency_id': c_id}
+                    else:
+                        res['value'].update({'currency_id': c_id})
         return res
 
     def _check_document_date(self, cr, uid, ids):
