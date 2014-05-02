@@ -1365,7 +1365,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         if not partner.address:
             result['warning'] = {
                 'title': _('Warning'),
-                'message': _('The choosen partner has no address defined. Please defined an address before continue.'),
+                'message': _('The chosen partner has no address. Please define an address before continuing.'),
             }
 
         # If the selected partner belongs to product->suppliers, we take that delay (from supplierinfo)
