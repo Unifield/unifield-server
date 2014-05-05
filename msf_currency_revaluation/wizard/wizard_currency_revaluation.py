@@ -134,8 +134,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             
          # Period
         period_date = datetime.date.today()
-        if period_date.month > 1:
-            period_date = period_date - relativedelta(months=1)
+        #if period_date.month > 1:
+        #    period_date = period_date - relativedelta(months=1)
         # NOTE: the method 'get_period_from_date()' supplied by the
         #       'account_tools' module is used here
         period_ids = period_obj.get_period_from_date(
@@ -167,7 +167,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         if not self.pool.get('res.company').check_revaluation_default_account_has_sup_destination(cr, uid, cp, context=context):
             raise osv.except_osv(_('Settings Error!'),_('The default revaluation account must have a default destination SUP'))
         # Entry period
-        res['result_period_id'] = False
+        res['result_period_id'] = None
         if res['fiscalyear_id']:
             period_ids = period_obj.search(
                 cr, uid,
@@ -175,7 +175,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                  ('fiscalyear_id', '=', res['fiscalyear_id']),
                  ('state', '!=', 'created')],
                 context=context)
-            res['result_period_id'] = period_ids and period_ids[0] or False
+            res['result_period_id'] = period_ids and period_ids[0] or res['period_id']
         # Posting date
         res['posting_date'] = False
         if res['period_id']:
@@ -189,7 +189,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         """'on_change' method for the 'revaluation_method', 'fiscalyear_id' and
         'period_id' fields.
         """
-        if not method or not fiscalyear_id:
+        if not method or not fiscalyear_id or not period_id:
             return {}
         value = {}
         warning = {}
