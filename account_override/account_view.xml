@@ -152,10 +152,5 @@
             menu="False"
          />
 
-      <!--
-          Menu
-      -->
-        <delete model='ir.ui.menu' id="account.account_template_folder"/>
-
     </data>
 </openerp>
