@@ -11,12 +11,13 @@
             <field name="arch" type="xml">
                 <form string="Supplier Invoice">
                     <group colspan="4" col="6">
+                        <field name="is_direct_invoice" invisible="1"/>
                         <field name="journal_id" domain="[('is_current_instance','=',True),('type','=','purchase')]" on_change="onchange_journal_id(journal_id)" widget="selection"/>
                         <field name="number" readonly="1" />
                         <field name="type" invisible="1"/>
                         <field name="currency_id" readonly="1" />
                         <newline/>
-                        <field name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1"/>
+                        <field name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,is_direct_invoice)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1"/>
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1"/>
                         <newline/>
                         <field name="document_date" required="1"/>
@@ -132,7 +133,7 @@
         </record>
 
     <!--
-        Supplier Direct Invoice Pop-up for Registers 
+        Supplier Direct Invoice Pop-up when editing a register line that comes from a direct invoice
     -->
         <record model="ir.ui.view" id="direct_supplier_invoice_form">
             <field name="name">direct_supplier.invoice.form</field>
@@ -150,7 +151,7 @@
                         <field name="currency_id" invisible="1" />
                         <field name="fake_currency_id" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
                         <newline/>
-                        <field name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
+                        <field name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,is_direct_invoice)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
 
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
                         <newline/>

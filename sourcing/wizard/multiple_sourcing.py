@@ -200,6 +200,24 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         return {}
 
+    def change_supplier(self, cr, uid, ids, supplier, context=None):
+        '''
+        Check if the partner has an address.
+        '''
+        partner_obj = self.pool.get('res.partner')
+
+        result = {}
+
+        if supplier:
+            partner = partner_obj.browse(cr, uid, supplier, context)
+            # Check if the partner has addresses
+            if not partner.address:
+                result['warning'] = {
+                    'title': _('Warning'),
+                    'message': _('The chosen partner has no address. Please define an address before continuing.'),
+                }
+        return result
+
 multiple_sourcing_wizard()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

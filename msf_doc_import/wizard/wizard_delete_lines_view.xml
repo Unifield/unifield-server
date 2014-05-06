@@ -14,13 +14,13 @@
                     <field name="linked_field_name" invisible="True" />
                     <field name="qty_field" invisible="True" />
                     <separator colspan="4" string="Lines to remove" />
-                    <field name="line_ids" colspan="4" nolabel="1" context="{'from_delete_wizard': True}" mode="tree" />
+                    <button name="select_all_lines" type="object" icon="gtk-go-down" string="Select all lines" colspan="2" />
+                    <button name="select_empty_lines" type="object" icon="gtk-go-down" string="Select Qty=0 lines" attrs="{'invisible': [('qty_field', '=', False)]}" colspan="2" />
+                    <field name="line_ids" colspan="4" nolabel="1" context="{'from_delete_wizard': True, 'initial_doc_id': initial_doc_id, 'initial_doc_type': initial_doc_type}" mode="tree" />
                     <separator colspan="4" string="Actions" />
                     <group colspan="4" col="4" >
-                        <button special="cancel" icon="gtk-cancel" string="Close window" />
-                        <button name="remove_selected_lines" type="object" icon="gtk-execute" string="Remove selected lines" />
-                        <button name="remove_all_lines" type="object" icon="gtk-execute" string="Remove all lines" confirm="Are you sure that you want to remove all lines?" />
-                        <button name="remove_empty_lines" type="object" icon="gtk-execute" string="Remove Qty=0 lines" attrs="{'invisible': [('qty_field', '=', False)]}" />
+                        <button special="cancel" icon="gtk-cancel" string="Close window" colspan="2" />
+                        <button name="remove_selected_lines" type="object" icon="gtk-execute" string="Remove selected lines" colspan="2" />
                     </group>
                 </form>
             </field>

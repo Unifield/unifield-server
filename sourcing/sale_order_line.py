@@ -1360,6 +1360,14 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             return result
 
         partner = partner_obj.browse(cr, uid, supplier, context)
+
+        # Check if the partner has addresses
+        if not partner.address:
+            result['warning'] = {
+                'title': _('Warning'),
+                'message': _('The chosen partner has no address. Please define an address before continuing.'),
+            }
+
         # If the selected partner belongs to product->suppliers, we take that delay (from supplierinfo)
         line = self.browse(cr, uid, line_id, context=context)
         delay = self.check_supplierinfo(line, partner, context=context)

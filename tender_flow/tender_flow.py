@@ -1062,6 +1062,19 @@ class procurement_order(osv.osv):
         'is_rfq_done': False,
     }
 
+    def no_address_error(self, cr, uid, ids, context=None):
+        '''
+        Put the procurement order in exception state with the good error message
+        '''
+        for proc in self.browse(cr, uid, ids, context=context):
+            if proc.supplier and not proc.supplier.address:
+                self.write(cr, uid, [proc.id], {
+                    'state': 'exception',
+                    'message': _('The supplier "%s" has no address defined!')%(proc.supplier.name,),
+                }, context=context)
+
+        return True
+
     def wkf_action_rfq_create(self, cr, uid, ids, context=None):
         '''
         creation of rfq from procurement workflow
@@ -1096,7 +1109,10 @@ class procurement_order(osv.osv):
                 pricelist_id = supplier.property_product_pricelist_purchase.id
                 address_id = partner_obj.address_get(cr, uid, [supplier.id], ['default'])['default']
                 if not address_id:
-                    raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!')%(supplier.name,))
+                    self.write(cr, uid, [proc.id], {
+                        'message': _('The supplier "%s" has no address defined!')%(supplier.name,),
+                    }, context=context)
+                    continue
 
                 context['rfq_ok'] = True
                 rfq_id = rfq_obj.create(cr, uid, {'sale_order_id': sale_order.id,

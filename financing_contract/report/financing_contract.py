@@ -51,9 +51,16 @@ class contract(report_sxw.rml_parse):
         # Parse each contract line
         for line in reporting_lines:
             account_list = ''
-            for account_destination in line.account_destination_ids:
-                account_list += str(account_destination.account_id.code) + " " + str(account_destination.destination_id.code)
-                account_list += ', '
+            if line.account_quadruplet_ids:
+                # Case of quadruplet
+                for quad in line.account_quadruplet_ids:
+                    account_list += " ".join([str(quad.account_destination_name), str(quad.funding_pool_id.code), str(quad.cost_center_id.code)])
+                    account_list += ', '
+            else:
+                # Case where we have some destination_ids
+                for account_destination in line.account_destination_ids:
+                    account_list += str(account_destination.account_id.code) + " " + str(account_destination.destination_id.code)
+                    account_list += ', '
             if len(account_list) > 2:
                 account_list = account_list[:-2]
             values = {'code': line.code,

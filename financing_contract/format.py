@@ -137,5 +137,6 @@ class account_destination_link(osv.osv):
         return super(account_destination_link, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
 
 
+
 account_destination_link()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
