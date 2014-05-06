@@ -10,8 +10,8 @@
         % else:
             <field name="date_order"></field>
         % endif
-        <field name="partner_ref">${o.partner_ref or ''}</field>
-        <field name="details">${o.details or ''}</field>
+        <field name="partner_ref">${o.partner_ref or ''|x}</field>
+        <field name="details">${o.details or ''|x}</field>
         % if o.delivery_requested_date and o.delivery_requested_date not in (False, 'False'):
         <field name="delivery_requested_date">${o.delivery_requested_date or ''|n}</field>
         % else:
