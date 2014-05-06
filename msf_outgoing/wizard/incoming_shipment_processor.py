@@ -58,7 +58,7 @@ class stock_incoming_processor(osv.osv):
             readonly=False,
         ),
         'direct_incoming': fields.boolean(
-            string='Direct to Stock ?',
+            string='Direct to Requesting Location',
         ),
     }
 
