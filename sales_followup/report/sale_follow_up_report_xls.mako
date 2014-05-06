@@ -83,7 +83,17 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
-    <Style ss:ID="lineNumber">
+    <Style ss:ID="lineInt">
+    <Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+    </Borders>
+    <NumberFormat ss:Format="##0"/>
+    </Style>
+    <Style ss:ID="lineFloat">
     <Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
     <Borders>
       <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -106,26 +116,26 @@
 </Styles>
 <%
 col_count = 12
-header_merge_accross_count = col_count - 1
+header_merge_accross_count = col_count - 2  ## merging cell self deduced
 %>
 % for o in objects:
 <ss:Worksheet ss:Name="FO Follow Up">
 <Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="120" />
-<Column ss:AutoFitWidth="1" ss:Width="120" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="120" />  ## order line
+<Column ss:AutoFitWidth="1" ss:Width="200" />  ## product code
+<Column ss:AutoFitWidth="1" ss:Width="80"  />  ## proc. method
+<Column ss:AutoFitWidth="1" ss:Width="50"  />  ## po/cft
+<Column ss:AutoFitWidth="1" ss:Width="50"  />  ## ordered qty
+<Column ss:AutoFitWidth="1" ss:Width="50"  />  ## uom
+<Column ss:AutoFitWidth="1" ss:Width="50"  />  ## sourced
+<Column ss:AutoFitWidth="1" ss:Width="120" />  ## tender (status)
+<Column ss:AutoFitWidth="1" ss:Width="120" />  ## purchase order (status)
+<Column ss:AutoFitWidth="1" ss:Width="120" />  ## incoming shipment (status)
+<Column ss:AutoFitWidth="1" ss:Width="120" />  ## product available (status)
+<Column ss:AutoFitWidth="1" ss:Width="120" />  ## outgoing delivery (status)
 ## Worksheet Header
 <%
-if header_merge_accross_count:
+if header_merge_accross_count > 0:
     merge_accross = ' ss:MergeAcross="%d"' % (header_merge_accross_count, )
 else:
     merge_accross = ''
@@ -164,7 +174,7 @@ else:
     <Cell ss:StyleID="header"><Data ss:Type="String">ORDER LINE</Data></Cell>
     <Cell ss:StyleID="header"><Data ss:Type="String">PRODUCT CODE</Data></Cell>
     <Cell ss:StyleID="header"><Data ss:Type="String">PROC. METHOD</Data></Cell>
-    <Cell ss:StyleID="header"><Data ss:Type="String">PO/FCT</Data></Cell>
+    <Cell ss:StyleID="header"><Data ss:Type="String">PO/CFT</Data></Cell>
     <Cell ss:StyleID="header"><Data ss:Type="String">ORDERED QTY</Data></Cell>
     <Cell ss:StyleID="header"><Data ss:Type="String">UOM</Data></Cell>
     <Cell ss:StyleID="header"><Data ss:Type="String">SOURCED</Data></Cell>
@@ -175,11 +185,46 @@ else:
     <Cell ss:StyleID="header"><Data ss:Type="String">OUTGOING DELIVERY</Data></Cell>
 </Row>
 ## Tab Data Lines
-##    % for line in o.order_line:
-##<Row>
-##    <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-## </Row>
-##    % endfor
+% for line in o.line_ids:
+<Row>
+## 1) order line
+    <Cell ss:StyleID="lineInt" ><Data ss:Type="Number">
+        ${line.line_number or 0|n}</Data></Cell>
+## 2) product code
+    <Cell ss:StyleID="line" ><Data ss:Type="String">
+        ${line.product_id and line.product_id.default_code or ''|x}</Data></Cell>
+## 3) proc.method
+    <Cell ss:StyleID="line" ><Data ss:Type="String">
+        ${line.procure_method|x}</Data></Cell>
+## 4) po/cft
+    <Cell ss:StyleID="line" ><Data ss:Type="String">
+        ${upper(line.po_cft)|x}</Data></Cell>
+## 5) ordered qty
+    <Cell ss:StyleID="lineFloat" ><Data ss:Type="Number">
+        ${str(line.qty_ordered)|n}</Data></Cell>
+## 6) uom
+    <Cell ss:StyleID="line" ><Data ss:Type="String">
+        ${line.uom_id and line.uom_id.name or ''|x}</Data></Cell>
+## 7) sourced
+    <Cell ss:StyleID="line" ><Data ss:Type="String">
+        ${line.sourced_ok|x}</Data></Cell>
+## 8) tender
+    <Cell ss:StyleID="line" ><Data ss:Type="String">
+        ${line.tender_status|x}</Data></Cell>
+## 9) purchase order
+    <Cell ss:StyleID="line" ><Data ss:Type="String">
+        ${line.purchase_status|x}</Data></Cell>
+## 10) incoming shipment
+    <Cell ss:StyleID="line" ><Data ss:Type="String">
+        ${line.incoming_status|x}</Data></Cell>
+## 11) product available
+    <Cell ss:StyleID="line" ><Data ss:Type="String">
+        ${line.product_available|x}</Data></Cell>
+## 12) outgoing delivery
+    <Cell ss:StyleID="line" ><Data ss:Type="String">
+        ${line.outgoing_status|x}</Data></Cell>
+</Row>
+% endfor
 </Table>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>

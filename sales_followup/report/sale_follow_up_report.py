@@ -32,6 +32,7 @@ class sale_follow_up_report_parser(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'parse_date_xls': self._parse_date_xls,
+            'upper': self._upper,
          })
         self._dates_context = {}
         self._report_context = {}
@@ -46,6 +47,13 @@ class sale_follow_up_report_parser(report_sxw.rml_parse):
         if dt_str:
             dt_str += 'T00:00:00.000'
         return dt_str
+        
+    def _upper(self, s):
+        if not isinstance(s, (str, unicode)):
+            return s
+        if s:
+            return s.upper()
+        return s
 
 report_sxw.report_sxw('report.sale_order_followup',
     'sale.order.followup',
