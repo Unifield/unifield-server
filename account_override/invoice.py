@@ -276,7 +276,7 @@ class account_invoice(osv.osv):
                 elif ctype in ['out_invoice', 'in_refund'] and p.property_product_pricelist:
                     c_id = p.property_product_pricelist.currency_id.id
                 # UFTP-121: regarding UTP-917, we have to change currency when changing partner, but not for direct invoices
-                if c_id and (not is_direct_invoice or not ai_direct_invoice):
+                if c_id and (not is_direct_invoice and not ai_direct_invoice):
                     if not res.get('value', False):
                         res['value'] = {'currency_id': c_id}
                     else:

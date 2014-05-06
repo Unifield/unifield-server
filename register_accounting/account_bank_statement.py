@@ -334,7 +334,7 @@ class account_bank_statement(osv.osv):
             currency =currency[0]
         i = self.pool.get('wizard.account.invoice').search(cr, uid, [('currency_id','=',currency), ('register_id', '=', ids[0])])
         if not i:
-            i = self.pool.get('wizard.account.invoice').create(cr, uid, {'currency_id': currency, 'register_id': ids[0], 'type': 'in_invoice', 'is_direct_invoice': True},
+            i = self.pool.get('wizard.account.invoice').create(cr, uid, {'currency_id': currency, 'register_id': ids[0], 'type': 'in_invoice'},
                 context={'journal_type': 'purchase', 'type': 'in_invoice'})
         return {
             'name': "Supplier Direct Invoice",
