@@ -969,7 +969,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return result
 
-    def _get_date_planned(self, order, line):
+    def _get_date_planned(self, order, line, prep_lt, db_date_format):
         """
         Return the planned date for the FO/IR line according
         to the order and line values.
@@ -984,8 +984,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self._check_browse_param(order, '_get_date_planned')
         self._check_browse_param(line, '_get_date_planned')
 
-        date_planned = datetime.now() + relativedelta(days=line.delay or 0.0)
-        date_planned = (date_planned - timedelta(days=order.company_id.security_lead)).strftime('%Y-%m-%d %H:%M:%S')
+        date_planned = datetime.strptime(order.ready_to_ship_date, db_date_format)
+        date_planned = date_planned - relativedelta(days=prep_lt or 0)
+        date_planned = date_planned.strftime(db_date_format)
 
         return date_planned
 
@@ -1209,6 +1210,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         data_obj = self.pool.get('ir.model.data')
         sol_obj = self.pool.get('sale.order.line')
         config_obj = self.pool.get('unifield.setup.configuration')
+        date_tools = self.pool.get('date.tools')
+        fields_tools = self.pool.get('fields.tools')
 
         if context is None:
             context = {}
@@ -1217,11 +1220,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ids = [ids]
 
         setup = config_obj.get_config(cr, uid)
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
 
         for order in self.browse(cr, uid, ids, context=context):
             proc_ids = []
             move_ids = []
             picking_id = False
+
+            prep_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='preparation_lead_time', context=context)
 
             for line in order.order_line:
                 proc_id = False
@@ -1294,7 +1300,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         # do we need to have one product data per uom?
                         product_uom = data_obj.get_object_reference(cr, uid, 'product', 'cat0')[1]
 
-                    rts_date = self._get_date_planned(order, line)
+                    rts_date = self._get_date_planned(order, line, prep_lt, db_date_format)
                     proc_data = self._get_procurement_order_data(line, order, rts_date, context)
 
                     # Just change some values because in case of IR, we need specific values
@@ -1558,9 +1564,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             delivery_confirmed_date = order.delivery_confirmed_date
 
             prep_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='preparation_lead_time', context=context)
-            rts = datetime.strptime(order.ready_to_ship_date, db_date_format)
-            rts = rts - relativedelta(days=prep_lt or 0)
-            rts = rts.strftime(db_date_format)
 
             # If the order is stock So, we update the confirmed delivery date
             if order.split_type_sale_order == 'stock_split_sale_order':
@@ -1607,6 +1610,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 # when the line is confirmed, the corresponding procurement order has already been processed
                 # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
                 if line.state not in ['sourced', 'confirmed', 'done'] and not (line.created_by_po_line and line.procurement_id) and line.product_id:
+                    rts = self._get_date_planned(order, line, prep_lt, db_date_format)
                     proc_data = self._get_procurement_order_data(line, order, rts, context=context)
                     proc_id = proc_obj.create(cr, uid, proc_data, context=context)
                     # set the flag for log message
