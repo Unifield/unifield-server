@@ -31,9 +31,21 @@ class sale_follow_up_report_parser(report_sxw.rml_parse):
             context=context)
         self.localcontext.update({
             'time': time,
-        })
+            'parse_date_xls': self._parse_date_xls,
+         })
         self._dates_context = {}
         self._report_context = {}
+        
+        #self.module_instance = self.pool.get('sale.order.followup')
+        
+    def _parse_date_xls(self, dt_str, is_datetime=False):
+        if not dt_str or dt_str == 'False':
+            return ''
+        if is_datetime:
+            dt_str = dt_str[0:10] if len(dt_str) >= 10 else ''
+        if dt_str:
+            dt_str += 'T00:00:00.000'
+        return dt_str
 
 report_sxw.report_sxw('report.sale_order_followup',
     'sale.order.followup',
