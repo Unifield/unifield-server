@@ -511,6 +511,28 @@ class product_product(osv.osv):
                 model_data_obj.unlink(cr, uid, sdref_ids,context=context)
 
         return res
+        
+    def unlink(self, cr, uid, ids, context=None):
+        try:
+            res = super(product_product, self).unlink(cr, uid, ids, context=context)
+        except AttributeError, e:
+            """
+            UFTP-208: when deleting a Temporary product (default_code 'XXX')
+            comming from GUI duplication, we dive into get_unique_xml_name
+            an AttributeError is raised:
+                AttributeError: 'Field xmlid_code not found in browse_record(product.product, ID)' 
+            
+            => browse does not cache for a 'Temporary' Product in get_unique_xml_name...
+            => so we intercept this exception
+            """
+            tolerated_error = "'Field xmlid_code not found in browse_record(product.product,"
+            if str(e).startswith(tolerated_error):
+                """
+                this exception is not raised when deleting a 'regular' product
+                """
+                return True
+            raise e  # default behavior: raise any other AttributeError exception
+        return res
 
 product_product()
 
