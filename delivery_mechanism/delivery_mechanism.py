@@ -131,7 +131,7 @@ class stock_move(osv.osv):
         '''
         Get the requestor_location_id in case of IR to update the location_dest_id of each move
         '''
-        location_dest_id = False
+        location_dest_id = super(stock_move, self)._get_location_for_internal_request(cr, uid, context=context, **kwargs)
         move = kwargs['move']
         if move.purchase_line_id:
             proc = move.purchase_line_id.procurement_id
