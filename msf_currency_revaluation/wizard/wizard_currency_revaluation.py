@@ -90,20 +90,20 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         'revaluation_method': lambda *args: 'liquidity_month',
         'fiscalyear_id': _get_default_fiscalyear_id,
     }
-    
+
     def _is_revaluated(self, cr, uid, period_id, context=None):
         """ check if the revaluation has already been run by checking for a non-zero entry in the REV journal in the current instance """
         journal_obj = self.pool.get('account.journal')
         move_obj = self.pool.get('account.move')
         instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
-        
-        rev_journal_id = journal_obj.search(cr, uid, [('code','=','REV'),('instance_id','=',instance_id)])[0]
+
+        rev_journal_id = journal_obj.search(cr, uid, [('type','=','revaluation'),('instance_id','=',instance_id)])[0]
         reval_move_ids = move_obj.search(cr, uid, [('journal_id','=',rev_journal_id),('period_id','=',period_id)])
         if reval_move_ids:
             return True
         else:
             return False
-        
+
 
     def default_get(self, cr, uid, fields, context=None):
         """'default_get' method overridden."""
@@ -131,7 +131,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             fiscalyear = fiscalyear_obj.browse(
                 cr, uid, res['fiscalyear_id'], context=context)
             res['revaluation_date'] = fiscalyear.date_stop
-            
+
          # Period
         period_date = datetime.date.today()
         #if period_date.month > 1:
@@ -140,9 +140,9 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         #       'account_tools' module is used here
         period_ids = period_obj.get_period_from_date(
             cr, uid, period_date.strftime('%Y-%m-%d'))
-        res['period_id'] = period_ids and period_ids[0] or False    
-            
-            
+        res['period_id'] = period_ids and period_ids[0] or False
+
+
         # Set Period to blank
         #res['period_id'] = False
         # Journal
@@ -197,10 +197,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         period_obj = self.pool.get('account.period')
         move_obj = self.pool.get('account.move')
         fiscalyear = fiscalyear_obj.browse(cr, uid, fiscalyear_id)
-        
 
-        
-        
         # Check
         previous_fiscalyear_ids = fiscalyear_obj.search(
             cr, uid,
@@ -219,12 +216,11 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     'title': _('Warning!'),
                     'message': _('No opening entries in opening period for this fiscal year')
                 }
-                
+
         # Set values according to the user input
         value['result_period_id'] = period_id
         period_obj = self.pool.get('account.period')
-        
-        
+
         period = period_obj.browse(cr, uid, period_id, context=None)
         value['posting_date'] = period.date_stop
         value['period_id'] = period_id
@@ -395,7 +391,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 cr, uid, account_id, context=context)
             currency = self.pool.get('res.currency').browse(
                 cr, uid, currency_id, context=context)
-            
+
             base_move = {'name': label,
                          'ref': "%s-%s-%s" % (currency.name, account.code, rate),
                          'journal_id': form.journal_id.id,
@@ -640,7 +636,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         #        _(u"Error"),
         #        _(u"Revaluation aborted, the following periods are not field-closed: %s" % (
         #            ', '.join(periods_not_field_closed))))
-            
+
         # check if revaluation has already been run for this period
         for period_id in period_ids:
             if self._is_revaluated(cr, uid, period_id, context=None):
@@ -648,7 +644,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 raise osv.except_osv(
                     _(u"Error"),
                     _(u"%s has already been revaluated" % (period_name)))
-                
+
 
         # Get balance sums
         account_sums = account_obj.compute_revaluations(
