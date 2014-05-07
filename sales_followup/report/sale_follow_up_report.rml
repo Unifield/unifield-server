@@ -139,6 +139,51 @@
 	    	</tr>
 	    </blockTable>
         
+	    <para style="Standard">
+	    	<font color="white"> </font>
+	    </para>
+	    
+	    <blockTable colWidths="47.0,75.0,50.0,50.0,50.0,50.0,50.0,80.0,80.0,80.0,80.0,80.0" style="LinesTable" repeatRows="1">
+	    	<tr>
+	    		<td>
+	    			<para style="TextInfoBold">ORDER LINE</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">PRODUCT CODE</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">PROC. METHOD</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">PO/CFT</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">ORDERED QTY</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">UOM</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">SOURCED</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">TENDER</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">PURCHASE ORDER</para>
+	    		</td>
+                <td>
+	    			<para style="TextInfoBold">INCOMING SHIPMENT</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">PRODUCT AVAILABLE</para>
+	    		</td>
+                <td>
+	    			<para style="TextInfoBold">OUTGOING DELIVERY</para>
+	    		</td>
+	    	</tr>
+	    </blockTable>
+        
     </story>
     
 </document>
