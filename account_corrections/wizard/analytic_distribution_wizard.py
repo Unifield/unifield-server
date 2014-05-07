@@ -276,20 +276,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             ctx = {'date': orig_date}
             amount_cur = (ml.credit_currency - ml.debit_currency) * line.percentage / 100
             amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
-            # UFTP-169: Use the wizard date in case we are correcting a line that is itself a correction of another line.
+            # UFTP-169: Use the correction line date in case we are correcting a line that is a correction of another line.
             date_to_use = orig_date
             if ml.corrected_line_id:
-                # UFTP-169: If the wizard date is before the reversal one, raise an error.
-                reversal_ids = self.pool.get('account.move.line').search(cr, uid, [('reversal_line_id', '=', ml.corrected_line_id.id)])
-                reversal_date = False
-                for reversal in self.pool.get('account.move.line').read(cr, uid, reversal_ids, ['date']):
-                    if reversal.get('date', False):
-                        reversal_date = reversal.get('date')
-                        break
-                date_to_use = wizard.date
-                if reversal_date:
-                    if reversal_date > wizard.date:
-                        raise osv.except_osv(_('Warning'), _('Posting date (%s) should be after the reversal one (%s).') % (wizard.date, reversal_date))
+                date_to_use = ml.date
             self.pool.get('account.analytic.line').write(cr, uid, to_override_ids, {
                     'account_id': line.analytic_id.id,
                     'cost_center_id': line.cost_center_id.id,
