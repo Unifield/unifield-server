@@ -39,7 +39,7 @@ class sale_follow_up_report_parser(report_sxw.rml_parse):
         
         #self.module_instance = self.pool.get('sale.order.followup')
         
-    def _parse_date_xls(self, dt_str, is_datetime=False):
+    def _parse_date_xls(self, dt_str, is_datetime=True):
         if not dt_str or dt_str == 'False':
             return ''
         if is_datetime:
