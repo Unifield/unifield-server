@@ -143,7 +143,7 @@
 	    	<font color="white"> </font>
 	    </para>
 	    
-	    <blockTable colWidths="47.0,75.0,50.0,50.0,50.0,50.0,50.0,80.0,80.0,80.0,80.0,80.0" style="LinesTable" repeatRows="1">
+	    <blockTable colWidths="52.0,75.0,75.0,50.0,50.0,50.0,50.0,50.0,80.0,80.0,80.0,80.0" style="LinesTable" repeatRows="1">
 	    	<tr>
 	    		<td>
 	    			<para style="TextInfoBold">ORDER LINE</para>
@@ -180,6 +180,45 @@
 	    		</td>
                 <td>
 	    			<para style="TextInfoBold">OUTGOING DELIVERY</para>
+	    		</td>
+	    	</tr>
+	    	<tr>
+	    		[[ repeatIn(objects[0].line_ids, 'line') ]]
+	    		<td>
+	    			<para style="TextInfo">[[ formatLang(line.line_number or 0.) ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ line.product_id and line.product_id.default_code or '' ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ line.procure_method or '' ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ upper(line.po_cft) ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ formatLang(line.qty_ordered or 0) ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ line.uom_id and line.uom_id.name or '' ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ line.sourced_ok or '']]</para>
+	    		</td>
+                <td>
+	    			<para style="TextInfo">[[ line.tender_status or '']]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ line.purchase_status ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ line.incoming_status or '' ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ line.product_available or '' ]]</para>
+	    		</td>
+                <td>
+	    			<para style="TextInfo">[[ line.outgoing_status or '' ]]</para>
 	    		</td>
 	    	</tr>
 	    </blockTable>
