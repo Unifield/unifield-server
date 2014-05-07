@@ -2,11 +2,11 @@
 <openerp>
     <data>
         <report
-            id="report_sale_follow_up_xls"
-            name="sale_order_followup_xls"
+            id="report_sales_follow_up_xls"
+            name="sales.follow.up.report_xls"
             model="sale.order.followup"
             string="Field Order Follow Up Excel Export"
-            file="sale_follow_up_report_xls.mako"
+            file="sales_followup/sale_follow_up_report_xls.mako"
             report_type="webkit"
             header="False"
             auto="False"
@@ -16,11 +16,11 @@
 
     <data>
         <report
-            id="report_sale_follow_up"
-            name="sale_order_followup"
+            id="report_sales_follow_up_pdf"
+            name="sales.follow.up.report_pdf"
             model="sale.order.followup"
             string="Field Order Follow Up PDF Export"
-            rml="sale_follow_up_report.rml"
+            rml="sales_followup/sale_follow_up_report.rml"
             header="False"
             auto="False"
             menu="False"

@@ -338,11 +338,6 @@ class sale_order_followup(osv.osv_memory):
         return tender_ids
         
     def export_get_file_name(self, cr, uid, ids, prefix='FO_Follow_Up', context=None):
-        """
-        UFTP-56: get export file name
-        :param prefix: prefix of the file (POV for PO Validated, etc)
-        :return POV_14_OC_MW101_PO00060_YYYY_MM_DD.xls or POV_14_OC_MW101_PO00060_YYYY_MM_DD.xml
-        """
         if isinstance(ids, (int, long)):
             ids = [ids]
         if len(ids) != 1:
@@ -368,7 +363,7 @@ class sale_order_followup(osv.osv_memory):
             datas['target_filename'] = file_name
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'sale_order_followup_xls',
+            'report_name': 'sales.follow.up.report_xls',
             'datas': datas,
             'context': context,
             'nodestroy': True,
@@ -386,7 +381,7 @@ class sale_order_followup(osv.osv_memory):
             datas['target_filename'] = file_name
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'sale_order_followup',
+            'report_name': 'sales.follow.up.report_pdf',
             'datas': datas,
             'context': context,
             'nodestroy': True,

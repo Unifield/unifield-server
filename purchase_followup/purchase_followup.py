@@ -204,6 +204,56 @@ class purchase_order_followup(osv.osv_memory):
             res.update({'target': 'dummy'})
             
         return res
+        
+    def export_get_file_name(self, cr, uid, ids, prefix='PO_Follow_Up', context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if len(ids) != 1:
+            return False
+        foup = self.browse(cr, uid, ids[0], context=context)
+        if not foup or not foup.order_id or not foup.order_id.name:
+            return False
+        dt_now = datetime.datetime.now()
+        po_name = "%s_%s_%d_%02d_%02d" % (prefix,
+            foup.order_id.name.replace('/', '_'),
+            dt_now.year, dt_now.month, dt_now.day)
+        return po_name
+        
+    def export_xls(self, cr, uid, ids, context=None):
+        """
+        Print the report (Excel)
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        datas = {'ids': ids}
+        file_name = self.export_get_file_name(cr, uid, ids, context=context)
+        if file_name:
+            datas['target_filename'] = file_name
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'purchase.follow.up.report_xls',
+            'datas': datas,
+            'context': context,
+            'nodestroy': True,
+        }
+                
+    def export_pdf(self, cr, uid, ids, context=None):
+        """
+        Print the report (PDF)
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        datas = {'ids': ids}
+        file_name = self.export_get_file_name(cr, uid, ids, context=context)
+        if file_name:
+            datas['target_filename'] = file_name
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'purchase.follow.up.report_pdf',
+            'datas': datas,
+            'context': context,
+            'nodestroy': True,
+        }
     
     _columns = {
         'order_id': fields.many2one('purchase.order', string='Order reference', readonly=True),

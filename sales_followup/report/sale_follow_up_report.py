@@ -55,9 +55,9 @@ class sale_follow_up_report_parser(report_sxw.rml_parse):
             return s.upper()
         return s
 
-report_sxw.report_sxw('report.sale_order_followup',
+report_sxw.report_sxw('report.sales.follow.up.report_pdf',
     'sale.order.followup',
-    'addons/sales_followup/report/sale_follow_up_report.rml',
+    'addons/sales_followup/sale_follow_up_report.rml',
     parser=sale_follow_up_report_parser,
     header=False)
     
@@ -73,7 +73,7 @@ class product_likely_expire_report_xls(SpreadsheetReport):
         data, context)
         return (a[0], 'xls')
         
-product_likely_expire_report_xls('report.sale_order_followup_xls',
+product_likely_expire_report_xls('report.sales.follow.up.report_xls',
     'sale.order.followup',
     'addons/sales_followup/report/sale_follow_up_report_xls.mako',
     parser=sale_follow_up_report_parser,
