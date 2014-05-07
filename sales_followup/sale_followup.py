@@ -162,14 +162,13 @@ class sale_order_followup(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('You should select one order to follow !'))
         
         followup_id = False
-        
+        split_lines = False
         for o in order_obj.browse(cr, uid, ids, context=context):
             followup_id = self.create(cr, uid, {'order_id': o.id}, context=context)
             
             for line in o.order_line:
                 split_line_ids = sol_obj.search(cr, uid, [('original_line_id', '=', line.id)], context=context)
                 first_line = True
-                split_lines = False
                 if split_line_ids:
                     split_lines = True
                     lines = sol_obj.browse(cr, uid, split_line_ids, context=context)
