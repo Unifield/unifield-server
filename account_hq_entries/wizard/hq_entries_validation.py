@@ -227,123 +227,130 @@ class hq_entries_validation(osv.osv_memory):
             for sl in line.split_ids:
                 all_lines.add(sl.id)
             # PROCESS SPLIT LINES
-            if any([x.account_changed for x in line.split_ids]):
-                # utp101 mark the original line as reversed
-                aml_obj.write(cr, uid, original_move.id, {'corrected': True, 'have_an_historic': True} , context=context)
-                original_account_id = original_move.account_id.id
+            #if any([x.account_changed for x in line.split_ids]):
+            # utp101 mark the original line as reversed
+            aml_obj.write(cr, uid, original_move.id, {'corrected': True, 'have_an_historic': True} , context=context)
+            original_account_id = original_move.account_id.id
 
-                new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id, line.currency_id.id, date=line.date, journal=od_journal_id, orig_acct=original_account_id)
+            new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id, line.currency_id.id, date=line.date, journal=od_journal_id, orig_acct=original_account_id)
 
-                # original move line
-                original_ml_result = res_move[line.id]
-                # Mark new journal items as corrections for the first one
-                new_expense_ml_ids = new_res_move.values()
-                corr_name = 'COR1 - ' + original_move.name
-                aml_obj.write(cr, uid, new_expense_ml_ids, {'corrected_line_id': original_ml_result, 'name': corr_name }, context=context, check=False, update_check=False)
+            # original move line
+            original_ml_result = res_move[line.id]
+            # Mark new journal items as corrections for the first one
+            new_expense_ml_ids = new_res_move.values()
+            corr_name = 'COR1 - ' + original_move.name
+            aml_obj.write(cr, uid, new_expense_ml_ids, {'corrected_line_id': original_ml_result, 'name': corr_name }, context=context, check=False, update_check=False)
 
-                # get the move_id
-                corr_moves = aml_obj.browse(cr, uid, new_expense_ml_ids, context=context)
-                corr_move_id = corr_moves[0].move_id.id
-                original_account_id = original_move.account_id.id
-                # get the counterpart id
-                counterpart_id = aml_obj.search(cr, uid, ['&',('move_id','=',corr_move_id),('corrected_line_id','=',False)], context=context)
-                aml_obj.write(cr, uid, counterpart_id, {'reversal': True, 'name': 'REV - ' + original_move.name, 'account_id': original_account_id,
-                                                        'reversal_line_id':original_move.id}, context=context, check=False, update_check=False)
-                # create the analytic lines as a reversed copy of the original
-                initial_ana_ids = ana_line_obj.search(cr, uid, [('move_id.move_id', '=', move_id)])  # original move_id
-                res_reverse = ana_line_obj.reverse(cr, uid, initial_ana_ids, posting_date=line.date)
-                acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
-                if not acor_journal_ids:
-                    raise osv.except_osv(_('Error'), _('No correction journal found!'))
-                acor_journal_id = acor_journal_ids[0]
-                if not acor_journal_id:
-                    raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
-                ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
+            # get the move_id
+            corr_moves = aml_obj.browse(cr, uid, new_expense_ml_ids, context=context)
+            corr_move_id = corr_moves[0].move_id.id
+            original_account_id = original_move.account_id.id
+            # get the counterpart id
+            counterpart_id = aml_obj.search(cr, uid, ['&',('move_id','=',corr_move_id),('corrected_line_id','=',False)], context=context)
+            aml_obj.write(cr, uid, counterpart_id, {'reversal': True, 'name': 'REV - ' + original_move.name, 'account_id': original_account_id,
+                                                    'reversal_line_id':original_move.id}, context=context, check=False, update_check=False)
+            # create the analytic lines as a reversed copy of the original
+            initial_ana_ids = ana_line_obj.search(cr, uid, [('move_id.move_id', '=', move_id)])  # original move_id
+            res_reverse = ana_line_obj.reverse(cr, uid, initial_ana_ids, posting_date=line.date)
+            acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+            if not acor_journal_ids:
+                raise osv.except_osv(_('Error'), _('No correction journal found!'))
+            acor_journal_id = acor_journal_ids[0]
+            if not acor_journal_id:
+                raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
+            ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
 
 
-                # Mark new analytic items as correction for original line
-                # - take original move line
-                # - search linked analytic line
-                # - use new journal items (from split lines) to find their analytic lines
-                # - add "last_corrected_id" link for all these new analytic lines to the first one (original analytic line)
-                original_aal_ids = ana_line_obj.search(cr, uid, [('move_id', '=', original_ml_result)])
-                new_aal_ids = ana_line_obj.search(cr, uid, [('move_id', 'in', new_expense_ml_ids)])
-                ana_line_obj.write(cr, uid, new_aal_ids, {'last_corrected_id': original_aal_ids[0],})
-            else:
-                # Search the initial analytic lines to reverse them
-                initial_ana_ids = ana_line_obj.search(cr, uid, [('move_id.move_id', '=', move_id)])
-                # Reverse them. UTP-943: Add original date as reverse date
-                res_reverse = ana_line_obj.reverse(cr, uid, initial_ana_ids, posting_date=line.date)
-                # Give them analytic correction journal (UF-1385 in comments)
-                acor_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
-                if not acor_journal_ids:
-                    raise osv.except_osv(_('Error'), _('No correction journal found!'))
-                acor_journal_id = acor_journal_ids[0]
-                if not acor_journal_id:
-                    raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
-                ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
-                # New lines creation
-                if not initial_ana_ids: # UTP-546 - this have been added because of sync that break analytic lines generation
-                    continue
-                # Update analytic distribution on move line to be in adequation with new split lines
-                move_line = self.pool.get('account.move.line').browse(cr, uid, res_move[line.id])
-                if not move_line.analytic_distribution_id or not move_line.analytic_distribution_id.funding_pool_lines:
-                    raise osv.except_osv(_('Error'), _('An error occured in analytic distribution read on this journal item: %s') % (move_line.name or '',))
-                # fetch some info
-                ml_distrib_id = move_line.analytic_distribution_id.id
-                # delete analytic distribution lines
-                for el in [('funding.pool', 'funding_pool_lines'), ('cost.center', 'cost_center_lines'), ('free.1', 'free_1_lines'), ('free.2', 'free_2_lines')]:
-                    object_name = el[0] + '.distribution.line'
-                    self.pool.get(object_name).unlink(cr, uid, [x.id for x in getattr(move_line.analytic_distribution_id, el[1], False)])
-                # Remember corrected lines
-                corrected_line_ids = []
-                for split_line in line.split_ids:
-                    # update funding pool distribution line for the journal item distribution
-                    common_vals = {
-                        'cost_center_id': split_line.cost_center_id.id,
-                        'destination_id': split_line.destination_id.id,
-                        'analytic_id': split_line.analytic_id.id,
-                        'currency_id': split_line.currency_id.id,
-                        'percentage': (split_line.amount / line.amount) * 100,
-                        'distribution_id': ml_distrib_id,
-                        'amount': split_line.amount, # this is to have more precision to create distribution_line_id next
-                    }
-                    self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals, context=context)
-                    # update cost center distribution line for the journal item distribution
-                    common_vals.update({'analytic_id': split_line.cost_center_id.id, 'cost_center_id': False,})
-                    self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals, context=context)
-                    # update free 1 distribution line for the journal item distribution
-                    if split_line.free_1_id:
-                        common_vals.update({'analytic_id': split_line.free_1_id.id,})
-                        self.pool.get('free.1.distribution.line').create(cr, uid, common_vals, context=context)
-                    # update free 2 distribution line for the journal item distribution
-                    if split_line.free_2_id:
-                        common_vals.update({'analytic_id': split_line.free_2_id.id,})
-                        self.pool.get('free.2.distribution.line').create(cr, uid, common_vals, context=context)
-                    # create analytic correction line
-                    # UFTP-37 calculation of correction line functional amount
-                    correction_line_amount_booking = -1 * split_line.amount
-                    context['date'] = split_line.date
-                    correction_line_fonctional_amount = self.pool.get('res.currency').compute(cr, uid,
-                        split_line.currency_id.id, comp_currency_id, correction_line_amount_booking, round=True, context=context)
-                    corr_name = 'COR1 - ' + split_line.name
-                    cor_id = ana_line_obj.copy(cr, uid, initial_ana_ids[0], {'date': line.date, 'source_date': line.date, 'cost_center_id': split_line.cost_center_id.id,
-                        'account_id': split_line.analytic_id.id, 'destination_id': split_line.destination_id.id, 'journal_id': acor_journal_id, 'last_correction_id': initial_ana_ids[0],
-                        'name': corr_name, 'ref': split_line.ref, 'amount_currency': correction_line_amount_booking, 'amount': correction_line_fonctional_amount, })
-                    # update new ana line
-                    ana_line_obj.write(cr, uid, cor_id, {'last_corrected_id': initial_ana_ids[0], 'move_id': move_line.id}, context=context)
-                    # Add correction line to the list of them
-                    corrected_line_ids.append(cor_id)
-                # update corrected lines with the new distribution
-                for correction in ana_line_obj.browse(cr, uid, corrected_line_ids, context=context):
-                    # search distribution line id
-                    fp_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', ml_distrib_id), ('cost_center_id', '=', correction.cost_center_id.id), ('destination_id', '=', correction.destination_id.id), ('analytic_id', '=', correction.account_id.id), ('amount', '=', abs(correction.amount_currency))])
-                    if not fp_line_ids:
-                        raise osv.except_osv(_('Error'), _('We lost a funding pool distribution line.'))
-                    ana_line_obj.write(cr, uid, [correction.id], {'distrib_line_id': '%s,%s' % ('funding.pool.distribution.line', fp_line_ids[0]),})
-                # update old ana lines with new distribution and inform that the line was reallocated
-                cp_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, move_line.analytic_distribution_id.id, {})
-                ana_line_obj.write(cr, uid, initial_ana_ids, {'is_reallocated': True, 'distribution_id': cp_distrib_id})
+            # Mark new analytic items as correction for original line
+            # - take original move line
+            # - search linked analytic line
+            # - use new journal items (from split lines) to find their analytic lines
+            # - browse the name to add COR1 
+            # - add "last_corrected_id" link for all these new analytic lines to the first one (original analytic line)
+            original_aal_ids = ana_line_obj.search(cr, uid, [('move_id', '=', original_ml_result)])
+            new_aal_ids = ana_line_obj.search(cr, uid, [('move_id', 'in', new_expense_ml_ids)])
+            browse_aals = ana_line_obj.browse(cr, uid, new_aal_ids, context=context)
+            for aal in browse_aals:
+                cor_name = 'COR1 - ' + aal.name 
+                ana_line_obj.write(cr, uid, aal.id, {'last_corrected_id': original_aal_ids[0],'name': cor_name})
+            # also write the OD entry_sequence to the REV aal
+            # ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id, 'entry_sequence': aal.entry_sequence})
+            cr.execute('''update account_analytic_line set entry_sequence = '%s' where id = %s''' % (aal.entry_sequence, res_reverse[0]))
+            #else:
+            #    # Search the initial analytic lines to reverse them
+            #    initial_ana_ids = ana_line_obj.search(cr, uid, [('move_id.move_id', '=', move_id)])
+            #    # Reverse them. UTP-943: Add original date as reverse date
+            #    res_reverse = ana_line_obj.reverse(cr, uid, initial_ana_ids, posting_date=line.date)
+            #    # Give them analytic correction journal (UF-1385 in comments)
+            #    acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+            #    if not acor_journal_ids:
+            #        raise osv.except_osv(_('Error'), _('No correction journal found!'))
+            #    acor_journal_id = acor_journal_ids[0]
+            #    if not acor_journal_id:
+            #        raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
+            #    ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
+            #    # New lines creation
+            #    if not initial_ana_ids: # UTP-546 - this have been added because of sync that break analytic lines generation
+            #        continue
+            #    # Update analytic distribution on move line to be in adequation with new split lines
+            #    move_line = self.pool.get('account.move.line').browse(cr, uid, res_move[line.id])
+            #    if not move_line.analytic_distribution_id or not move_line.analytic_distribution_id.funding_pool_lines:
+            #        raise osv.except_osv(_('Error'), _('An error occured in analytic distribution read on this journal item: %s') % (move_line.name or '',))
+            #    # fetch some info
+            #    ml_distrib_id = move_line.analytic_distribution_id.id
+            #    # delete analytic distribution lines
+            #    for el in [('funding.pool', 'funding_pool_lines'), ('cost.center', 'cost_center_lines'), ('free.1', 'free_1_lines'), ('free.2', 'free_2_lines')]:
+            #        object_name = el[0] + '.distribution.line'
+            #        self.pool.get(object_name).unlink(cr, uid, [x.id for x in getattr(move_line.analytic_distribution_id, el[1], False)])
+            #    # Remember corrected lines
+            #    corrected_line_ids = []
+            #    for split_line in line.split_ids:
+            #        # update funding pool distribution line for the journal item distribution
+            #        common_vals = {
+            #            'cost_center_id': split_line.cost_center_id.id,
+            #            'destination_id': split_line.destination_id.id,
+            #            'analytic_id': split_line.analytic_id.id,
+            #            'currency_id': split_line.currency_id.id,
+            #            'percentage': (split_line.amount / line.amount) * 100,
+            #            'distribution_id': ml_distrib_id,
+            #            'amount': split_line.amount, # this is to have more precision to create distribution_line_id next
+            #        }
+            #        self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals, context=context)
+            #        # update cost center distribution line for the journal item distribution
+            #        common_vals.update({'analytic_id': split_line.cost_center_id.id, 'cost_center_id': False,})
+            #        self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals, context=context)
+            #        # update free 1 distribution line for the journal item distribution
+            #        if split_line.free_1_id:
+            #            common_vals.update({'analytic_id': split_line.free_1_id.id,})
+            #            self.pool.get('free.1.distribution.line').create(cr, uid, common_vals, context=context)
+            #        # update free 2 distribution line for the journal item distribution
+            #        if split_line.free_2_id:
+            #            common_vals.update({'analytic_id': split_line.free_2_id.id,})
+            #            self.pool.get('free.2.distribution.line').create(cr, uid, common_vals, context=context)
+            #        # create analytic correction line
+            #        # UFTP-37 calculation of correction line functional amount
+            #        correction_line_amount_booking = -1 * split_line.amount
+            #        context['date'] = split_line.date
+            #        correction_line_fonctional_amount = self.pool.get('res.currency').compute(cr, uid,
+            #            split_line.currency_id.id, comp_currency_id, correction_line_amount_booking, round=True, context=context)
+            #        corr_name = 'COR1 - ' + split_line.name
+            #        cor_id = ana_line_obj.copy(cr, uid, initial_ana_ids[0], {'date': line.date, 'source_date': line.date, 'cost_center_id': split_line.cost_center_id.id,
+            #            'account_id': split_line.analytic_id.id, 'destination_id': split_line.destination_id.id, 'journal_id': acor_journal_id, 'last_correction_id': initial_ana_ids[0],
+            #            'name': corr_name, 'ref': split_line.ref, 'amount_currency': correction_line_amount_booking, 'amount': correction_line_fonctional_amount, })
+            #        # update new ana line
+            #        ana_line_obj.write(cr, uid, cor_id, {'last_corrected_id': initial_ana_ids[0], 'move_id': move_line.id}, context=context)
+            #        # Add correction line to the list of them
+            #        corrected_line_ids.append(cor_id)
+            #    # update corrected lines with the new distribution
+            #    for correction in ana_line_obj.browse(cr, uid, corrected_line_ids, context=context):
+            #        # search distribution line id
+            #        fp_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', ml_distrib_id), ('cost_center_id', '=', correction.cost_center_id.id), ('destination_id', '=', correction.destination_id.id), ('analytic_id', '=', correction.account_id.id), ('amount', '=', abs(correction.amount_currency))])
+            #        if not fp_line_ids:
+            #            raise osv.except_osv(_('Error'), _('We lost a funding pool distribution line.'))
+            #        ana_line_obj.write(cr, uid, [correction.id], {'distrib_line_id': '%s,%s' % ('funding.pool.distribution.line', fp_line_ids[0]),})
+            #    # update old ana lines with new distribution and inform that the line was reallocated
+            #    cp_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, move_line.analytic_distribution_id.id, {})
+            #    ana_line_obj.write(cr, uid, initial_ana_ids, {'is_reallocated': True, 'distribution_id': cp_distrib_id})
         # Mark ALL lines as user_validated
 
         self.pool.get('hq.entries').write(cr, uid, list(all_lines), {'user_validated': True}, context=context)
@@ -390,7 +397,11 @@ class hq_entries_validation(osv.osv_memory):
                 # UTP-760: Do other modifications for split lines
                 if line.is_original or line.is_split:
                     split_change.append(line)
-                    continue
+                    continue  # JF TODO is this correct? 
+                              # condition is line is original or split - these are the only 2 options possible 
+                              # - seems this will always execute and skip rest of for
+                              # Should the rest of this loop be removed?
+                              # I'm not sure if the account_change, cc_change etc are used. This is tested later in line 230
                 if not line.user_validated:
                     to_write.setdefault(line.currency_id.id, {}).setdefault(line.period_id.id, {}).setdefault(line.date, []).append(line.id)
 
