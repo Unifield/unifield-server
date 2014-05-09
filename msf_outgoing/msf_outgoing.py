@@ -390,7 +390,7 @@ class shipment(osv.osv):
 
             ship_val = {
                 'name': shipment_name,
-                'address': shipment.address_id.id,
+                'address_id': shipment.address_id.id,
                 'partner_id': shipment.partner_id.id,
                 'partner_id2': shipment.partner_id.id,
                 'shipment_expected_date': shipment.shipment_expected_date,

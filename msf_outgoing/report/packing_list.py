@@ -29,8 +29,93 @@ class packing_list(report_sxw.rml_parse):
         super(packing_list, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'getPackingList': self._get_packing_list,
+            'getParcel': self._get_parcel,
+            'getCompany': self._get_company_info,
         })
-        
+
+    def _get_packing_list(self, shipment):
+        '''
+        Return a list of PPL with, for each of them, the list of pack family
+        that are linked.
+
+        :param shipment: browse_record of a shipment
+
+        :return: A list of tuples with the pre-packing list as first element and
+                 the list of linked pack-family as second element
+        :rtype: list
+        '''
+        res = {}
+        for pf in shipment.pack_family_memory_ids:
+            res.setdefault(pf.ppl_id.name, {
+                'ppl': pf.ppl_id,
+                'pf': [],
+                'last': False,
+                'total_volume': 0.00,
+                'total_weight': 0.00,
+                'nb_parcel': 0,
+            })
+            res[pf.ppl_id.name]['pf'].append(pf)
+            res[pf.ppl_id.name]['total_volume'] += pf.total_volume
+            res[pf.ppl_id.name]['total_weight'] += pf.total_weight
+            res[pf.ppl_id.name]['nb_parcel'] += pf.num_of_packs
+
+        sort_keys = sorted(res.keys())
+
+        result = []
+        for key in sort_keys:
+            result.append(res.get(key))
+
+        result[-1]['last'] = True
+
+        return result
+
+    def _get_parcel(self, list_of_parcels):
+        '''
+        Return an ordered list of parcel.
+
+        :param list_of_parcel: list of browse_record of pack.family.memory
+
+        :return: An ordered list of browse_record of pack.family.memory
+        :rtype: list
+        '''
+        list_of_parcels.sort(key=lambda p: p.from_pack)
+        return list_of_parcels
+
+    def _get_company_info(self, field):
+        '''
+        Return info from instance's company.
+
+        :param field: Field to read
+
+        :return: Information of the company
+        :rtype: str
+        '''
+        company = self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.partner_id
+
+        if field == 'name':
+            return company.name
+        else:
+            if not company.address:
+                return ''
+
+            addr = company.address[0]
+
+            if field == 'addr_name':
+                return addr.name
+            elif field == 'street':
+                return addr.street
+            elif field == 'street2':
+                return addr.street2
+            elif field == 'city':
+                return '%s %s' % (addr.zip, addr.city)
+            elif field == 'country':
+                return addr.country_id and addr.country_id.name or ''
+            elif field == 'phone':
+                return addr.phone or addr.mobile or ''
+
+        return ''
+
     def set_context(self, objects, data, ids, report_type=None):
         '''
         opening check
@@ -38,7 +123,7 @@ class packing_list(report_sxw.rml_parse):
         #for obj in objects:
             #if not obj.backshipment_id:
                 #raise osv.except_osv(_('Warning !'), _('Packing List is only available for Shipment Objects (not draft)!'))
-        
+
         return super(packing_list, self).set_context(objects, data, ids, report_type=report_type)
 
 report_sxw.report_sxw('report.packing.list', 'shipment', 'addons/msf_outgoing/report/packing_list.rml', parser=packing_list, header="external")
