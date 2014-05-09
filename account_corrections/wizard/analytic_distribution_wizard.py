@@ -194,8 +194,12 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'distribution_id': distrib_id,
                     'currency_id': ml and  ml.currency_id and ml.currency_id.id or company_currency_id,
                 })
+            # UFTP-169: Use the correction line date in case we are correcting a line that is a correction of another line.
+            create_date = orig_date
+            if ml.corrected_line_id:
+                create_date = ml.date
             # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
-            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=orig_date, document_date=orig_document_date, source_date=orig_date,context=context)
+            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date,context=context)
 
         #####
         ## FP: TO DELETE
