@@ -1585,7 +1585,7 @@ class sale_order_line(osv.osv):
     
     _columns = {'tender_line_ids': fields.one2many('tender.line', 'sale_order_line_id', string="Tender Lines", readonly=True),}
 
-    def copy(self, cr, uid, ids, default, context=None):
+    def copy_data(self, cr, uid, ids, default=None, context=None):
         '''
         Remove tender lines linked
         '''
@@ -1594,7 +1594,7 @@ class sale_order_line(osv.osv):
         if not 'tender_line_ids' in default:
             default['tender_line_ids'] = []
 
-        return super(sale_order_line, self).copy(cr, uid, ids, default, context=context)
+        return super(sale_order_line, self).copy_data(cr, uid, ids, default, context=context)
     
 sale_order_line()
 
