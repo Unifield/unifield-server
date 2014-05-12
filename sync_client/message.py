@@ -280,17 +280,15 @@ class message_received(osv.osv):
             sale_purchase_logger={})
 
         # get all ids if not specified
-        entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context) #UF-1830
         if ids is None:
-            ids = self.search(cr, uid, [('run','=',False),('source','!=',entity.name)], order='id asc', context=context)#UF-1830
+            ids = self.search(cr, uid, [('run','=',False)], order='id asc', context=context)
         if not ids: return 0
 
         execution_date = fields.datetime.now()
         for message in self.browse(cr, uid, ids, context=context):
             #UTP-682: double check to make sure if the message has been executed, then skip it
-            if not (not message.run and message.source != entity.name): #UF-1830
+            if message.run:
                 continue
-
             cr.execute("SAVEPOINT exec_message")
             model, method = self.get_model_and_method(message.remote_call)
             arg = self.get_arg(message.arguments)

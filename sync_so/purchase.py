@@ -214,9 +214,17 @@ class purchase_order_sync(osv.osv):
         proc_ids = []
         order_ids = []
         order = self.browse(cr, uid, res_id, context=context)
+        #pdb.set_trace()
         for order_line in order.order_line:
             if order_line.original_purchase_line_id:
                 orig_line = line_obj.search(cr, uid, [('sync_order_line_db_id', '=', order_line.original_purchase_line_id)], context=context)
+                if not orig_line:
+                    cancel_ids = self.pool.get('sale.order.line.cancel').search(cr, uid, [('sync_order_line_db_id', '=', order_line.original_purchase_line_id), ('resource_sync_line_db_id', '!=', False)], context=context)
+                    orig_line_txt = ''
+                    if cancel_ids:
+                        orig_line_txt = self.pool.get('sale.order.line.cancel').read(cr, uid, cancel_ids[0], ['resource_sync_line_db_id'], context=context)['resource_sync_line_db_id']
+                        orig_line = line_obj.search(cr, uid, [('sync_order_line_db_id', '=', orig_line_txt)], context=context)
+
                 if orig_line:
                     line = line_obj.browse(cr, uid, orig_line[0], context=context)
                     if line.procurement_id:
@@ -268,6 +276,7 @@ class purchase_order_sync(osv.osv):
             context = {}
 
         so_po_common = self.pool.get('so.po.common')
+        line_obj = self.pool.get('purchase.order.line')
         partner_type = so_po_common.get_partner_type(cr, uid, source, context)
         if partner_type == 'section':
             raise Exception, "Sorry, the push low is not available for intersection partner! " + source
@@ -301,7 +310,20 @@ class purchase_order_sync(osv.osv):
         else:
             # create a new PO, then send it to Validated state
             po_id = self.create(cr, uid, default , context=context)
-
+        
+        for line in self.browse(cr, uid, po_id, context=context).order_line:
+            if line.sync_order_line_db_id:
+                cancel_ids = self.pool.get('sale.order.line.cancel').search(cr, uid, [('resource_sync_line_db_id', '=', line.sync_order_line_db_id)], context=context)
+                sol_ids = []
+                for cancel in self.pool.get('sale.order.line.cancel').browse(cr, uid, cancel_ids, context=context):
+                    sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('sync_order_line_db_id', '=', cancel.fo_sync_order_line_db_id)], context=context)
+                    for sol in self.pool.get('sale.order.line').browse(cr, uid, sol_ids, context=context):
+                        if sol.procurement_id and sol.procurement_id.purchase_id:
+                            self.pool.get('procurement.order').write(cr, uid, [sol.procurement_id.id], {'purchase_id': po_id}, context=context)
+                            line_obj.write(cr, uid, [line.id], {'procurement_id': sol.procurement_id.id}, context=context)
+                            netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', [sol.procurement_id.id], 'purchase.order', [sol.procurement_id.purchase_id.id], po_id, cr)
+                        if sol.order_id and (not sol.order_id.procurement_request or sol.order_id.location_requestor_id.usage == 'customer'):
+                            self.write(cr, uid, [po_id], {'cross_docking_ok': True}, context=context)
 
         # UTP-952: If the partner is intermission, then use the intermission CC to create a default AD
         if partner_type == 'intermission':

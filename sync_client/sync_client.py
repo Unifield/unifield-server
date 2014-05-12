@@ -710,10 +710,7 @@ class Entity(osv.osv):
 
         # Get the whole list of messages to execute
         # Warning: order matters
-        #UF-1830
-        entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
-        message_ids = messages.search(cr, uid, [('run','=',False),('source','!=',entity.name)], order='id asc', context=context)
-
+        message_ids = messages.search(cr, uid, [('run','=',False)], order='id asc', context=context)
         messages_count = len(message_ids)
         if messages_count == 0: return 0
 

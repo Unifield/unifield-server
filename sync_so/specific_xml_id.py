@@ -20,26 +20,6 @@ from osv import fields
 def get_valid_xml_name(*args):
     return u"_".join(map(lambda x: unicode(x), filter(None, args))).replace('.', '')
 
-class financing_contract_account_quadruplet(osv.osv):
-
-    _inherit = 'financing.contract.account.quadruplet'
-
-    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
-        quadruplet = self.browse(cr, uid, res_id)
-        contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', '=', quadruplet.format_id.id)])
-        if not contract_ids:
-            return super(financing_contract_account_quadruplet, self).get_unique_xml_name(cr, uid, uuid, table_name, res_id)
-
-        contract = self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids[0])
-        return get_valid_xml_name('quadruplet',
-                                  contract.code,
-                                  quadruplet.account_destination_id.account_id.code,
-                                  quadruplet.account_destination_id.destination_id.code,
-                                  quadruplet.cost_center_id.code,
-                                  quadruplet.funding_pool_id.code)
-
-financing_contract_account_quadruplet()
-
 class sale_order(osv.osv):
    _inherit = 'sale.order'
 
@@ -530,6 +510,28 @@ class product_product(osv.osv):
             if prod == 'XXX': # if the system created automatically the xmlid in ir_model_data, just delete it!
                 model_data_obj.unlink(cr, uid, sdref_ids,context=context)
 
+        return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        try:
+            res = super(product_product, self).unlink(cr, uid, ids, context=context)
+        except AttributeError, e:
+            """
+            UFTP-208: when deleting a Temporary product (default_code 'XXX')
+            comming from GUI duplication, we dive into get_unique_xml_name
+            an AttributeError is raised:
+                AttributeError: 'Field xmlid_code not found in browse_record(product.product, ID)'
+
+            => browse does not cache for a 'Temporary' Product in get_unique_xml_name...
+            => so we intercept this exception
+            """
+            tolerated_error = "'Field xmlid_code not found in browse_record(product.product,"
+            if str(e).startswith(tolerated_error):
+                """
+                this exception is not raised when deleting a 'regular' product
+                """
+                return True
+            raise e  # default behavior: raise any other AttributeError exception
         return res
 
 product_product()
