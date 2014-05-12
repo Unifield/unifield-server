@@ -582,11 +582,11 @@ class update_received(osv.osv):
             sdref_are_deleted = dict.fromkeys(sdref_update_ids.keys(), do_deletion)
             sdref_are_deleted.update(
                 obj.find_sd_ref(cr, uid, sdref_update_ids.keys(), field='is_deleted', context=context) )
-            update_id_are_deleted = dict(zip(
-                sdref_update_ids.values(),
-                sdref_are_deleted.values()
-            ))
+            update_id_are_deleted = {}
+            for key in sdref_update_ids:
+                update_id_are_deleted[sdref_update_ids[key]] = sdref_are_deleted[key]
             deleted_update_ids = [update_id for update_id, is_deleted in update_id_are_deleted.items() if is_deleted]
+
             self.write(cr, uid, deleted_update_ids, {
                 'editable' : False,
                 'run' : True,
