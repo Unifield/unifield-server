@@ -355,7 +355,7 @@
             </pto_header>
         
             <!-- Lines -->
-            <blockTable colWidths="30.0,120.0,240.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" style="LinesValues">
+            <blockTable colWidths="30.0,120.0,240.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" rowHeights="15.0" style="LinesValues">
                 [[ repeatIn(pt.move_lines, 'm', 'blockTable') ]]
                 <tr>
                     <td>
@@ -434,8 +434,13 @@
                     </td>
                 </tr>
             </blockTable>
-        </pto>
+
+            <para style="LineValue">
+                <font color="white"> </font>
+            </para>
         
+        </pto>
+
     </story>
 
 </document>
