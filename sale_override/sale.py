@@ -1734,11 +1734,12 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for line in self.browse(cr, uid, ids, context=context):
-            if line.order_id and line.order_id.state != 'draft':
-                return self.pool.get('sale.order.line.unlink.wizard').ask_unlink(cr, uid, ids, context=context)
+        #for line in self.browse(cr, uid, ids, context=context):
+        #    if line.order_id and line.order_id.state != 'draft':
+        #        return self.pool.get('sale.order.line.unlink.wizard').ask_unlink(cr, uid, ids, context=context)
 
         return self.ask_order_unlink(cr, uid, ids, context=context)
+        #return True
 
     def ask_order_unlink(self, cr, uid, ids, context=None):
         '''
@@ -1753,9 +1754,9 @@ class sale_order_line(osv.osv):
 
         self.unlink(cr, uid, ids, context=context)
 
-        for order in self.pool.get('sale.order').read(cr, uid, sale_ids, ['order_line'], context=context):
-            if len(order['order_line']) == 0:
-                res = self.pool.get('sale.order.unlink.wizard').ask_unlink(cr, uid, order['id'], context=context)
+        #for order in self.pool.get('sale.order').read(cr, uid, sale_ids, ['order_line'], context=context):
+        #    if len(order['order_line']) == 0:
+        #        res = self.pool.get('sale.order.unlink.wizard').ask_unlink(cr, uid, order['id'], context=context)
 
         return res
 
