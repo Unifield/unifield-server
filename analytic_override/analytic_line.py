@@ -55,7 +55,6 @@ class account_analytic_line(osv.osv):
         'free_account': fields.function(_get_is_free, method=True, type='boolean', string='Free account?', help="Is that line comes from a Free 1 or Free 2 account?"),
         'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed."),
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
-        'currency_id': fields.many2one('res.currency', string="Book. Currency", required=True, readonly=True),
         'is_reversal': fields.boolean('Reversal?'),
         'is_reallocated': fields.boolean('Reallocated?'),
         'date': fields.date('Posting Date', required=True, select=True, readonly=True),

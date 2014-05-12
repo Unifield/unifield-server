@@ -250,7 +250,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 product = product_obj.browse(cr, uid, product_id)
                 product_uom = product.uom_id.id
                 hidden_batch_management_mandatory = product.batch_management
-                hidden_perishable_mandatory = product.perishable and not product.batch_management
+                hidden_perishable_mandatory = product.perishable
                 if hidden_batch_management_mandatory and not batch:
                     comment += _('Batch is missing.\n')
                 if hidden_perishable_mandatory and not expiry:

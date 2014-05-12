@@ -77,8 +77,8 @@ class purchase_line_import_xml_line(osv.osv_memory):
     with a read.
     """
     _name = 'purchase.line.import.xml.line'
-    
-    
+
+
     _columns = {
         'order_id': fields.many2one('purchase.order', string='Purchase Order'),
         'line_ignored_ok': fields.boolean('Ignored?'),
@@ -101,7 +101,7 @@ class purchase_line_import_xml_line(osv.osv_memory):
     _defaults = {
         'line_ignored_ok': False,
         }
-    
+
 purchase_line_import_xml_line()
 
 
@@ -113,8 +113,8 @@ class purchase_import_xml_line(osv.osv_memory):
     with a read.
     """
     _name = 'purchase.import.xml.line'
-    
-    
+
+
     _columns = {
         'file_line_number': fields.integer(string='File line numbers'),
         'error_list': fields.text('Error'),
@@ -134,7 +134,7 @@ class purchase_import_xml_line(osv.osv_memory):
     _defaults = {
         'line_ignored_ok': False,
         }
-    
+
 purchase_import_xml_line()
 
 
@@ -168,7 +168,7 @@ class wizard_import_po(osv.osv_memory):
                                   string="State", required=True, readonly=True),
         'line_ids': fields.one2many('wizard.simu.import.po.line', 'import_id', string='Purchase Order Lines'),
     }
-    
+
     _defaults = {
         'message': lambda *a : _("""
         IMPORTANT : The first line will be ignored by the system because it only contains the header values.
@@ -220,7 +220,9 @@ The columns should be in this values:
         """
         for k,v in header_index.items():
             if k not in columns_for_po_integration:
-                vals = {'message': _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: \n %s') 
+                if k == 'Delivery requested date':
+                    continue  # 'Delivery requested date' tolerated (for Rfq vs 'Delivery Requested Date' of PO_COLUMNS_HEADER_FOR_IMPORT)
+                vals = {'message': _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: \n %s')
                                                    % (k, ', \n'.join(columns_for_po_integration))}
                 return self.write(cr, uid, ids, vals, context), False
         list_of_required_values = ['Line', 'Product Code']
@@ -259,7 +261,7 @@ The columns should be in this values:
         partner_ref = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if partner_ref:
             to_write_po.update({'partner_ref': partner_ref})
-        
+
         # Est. Transport Lead Time
         cell_nb = header_index.get('Est. Transport Lead Time', False)
         cell_data = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
@@ -270,7 +272,7 @@ The columns should be in this values:
             except ValueError, e:
                 to_write_po['error_list'].append(_('The Est. Transport Lead Time %s has a wrong value. Details: %s.') % (cell_data, e))
                 to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
-        
+
         # Transport Mode
         cell_nb = header_index.get('Transport Mode', False)
         transport_type = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
@@ -287,7 +289,7 @@ The columns should be in this values:
                 # we set all the error in to_write
                 to_write_po['error_list'].append(_('The Transport Mode Value should be in %s.') % transport_type_value)
                 to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
-        
+
         # Destination Partner and Destination Address go together
         cell_nb = header_index.get('Destination Partner', False)
         dest_partner_name = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
@@ -300,7 +302,7 @@ The columns should be in this values:
             else:
                 to_write_po['error_list'].append(_('The Destination Partner %s does not exist in the Database.') % dest_partner_name)
                 to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
-        
+
         # Invoicing Address
         cell_nb = header_index.get('Invoicing Address', False)
         invoice_address_name = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
@@ -312,7 +314,7 @@ The columns should be in this values:
             else:
                 to_write_po['error_list'].append(_('The Invoicing Address %s does not exist in the Database.') % invoice_address_name)
                 to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
-        
+
         # Arrival Date in the country
         cell_nb = header_index.get('Arrival Date in the country', False)
         arrival_date = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
@@ -344,7 +346,7 @@ The columns should be in this values:
         cell_nb = header_index.get('Notes (PO)', False)
         notes_po = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         to_write_po.update({'notes': notes_po})
-        
+
         return to_write_po
 
     def get_po_row_values(self, cr, uid, ids, row, po_browse, header_index, context=None):
@@ -415,7 +417,7 @@ The columns should be in this values:
             except ValueError, e:
                 to_write['error_list'].append(_('The Quantity %s has a wrong format. Details: %s.') % (cell_data, e))
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
-    
+
         # Product Code
         cell_nb = header_index.get('Product Code', False)
         product_code = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
@@ -491,7 +493,7 @@ The columns should be in this values:
         Import file
         '''
         cr = pooler.get_db(dbname).cursor()
-        
+
         if context is None:
             context = {}
         po_obj = self.pool.get('purchase.order')
@@ -510,13 +512,13 @@ The columns should be in this values:
         processed_lines, ignore_lines, complete_lines, lines_to_correct = 0, 0, 0, 0
         line_with_error, error_list, notif_list = [], [], []
         error_log, notif_log = '', ''
-        
+
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
         rows = fileobj.getRows()
         # take all the lines of the file in a list of dict
         file_values = self.get_file_values(cr, uid, ids, rows, header_index, error_list=[], line_num=False, context=context)
 
-        
+
         rows = fileobj.getRows()
         rows.next()
         file_line_number = 0 # we begin at 0 for referencing the first line of the file_values with this index
@@ -919,7 +921,7 @@ The columns should be in this values:
                 'res_id': po_id,
                 'context': context,
                 }
-    
+
 wizard_import_po()
 
 
@@ -1002,7 +1004,7 @@ class wizard_simu_import_po_line(osv.osv_memory):
                                                  'initial_origin': line.origin,
                                                  'initial_currency': line.currency_id.id,
                                                  'line_number': line.line_number,}, context=context)
-        
+
         return True
 
 wizard_simu_import_po_line()
@@ -1011,27 +1013,27 @@ wizard_simu_import_po_line()
 class wizard_export_po(osv.osv_memory):
     _name = 'wizard.export.po'
     _description = 'Export PO for integration'
-    
+
     _columns = {
         'po_id': fields.many2one('purchase.order', string='PO'),
         'file': fields.binary(string='File to export', required=True, readonly=True),
         'filename': fields.char(size=128, string='Filename', required=True),
         'message': fields.char(size=256, string='Message', readonly=True),
     }
-    
+
     def close_window(self, cr, uid, ids, context=None):
         '''
         Return to the initial view
         '''
         res_id = self.browse(cr, uid, ids[0], context=context).po_id.id
-        
+
         return {'type': 'ir.actions.act_window',
                 'res_model': 'purchase.order',
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'crush',
-                'res_id': res_id}   
-        
+                'res_id': res_id}
+
 wizard_export_po()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

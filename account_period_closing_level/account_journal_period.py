@@ -19,13 +19,13 @@
 #
 ##############################################################################
 
-from osv import fields, osv
+from osv import osv
 from tools.translate import _
 
 class account_journal_period(osv.osv):
     _name = "account.journal.period"
     _inherit = "account.journal.period"
-    
+
     # @@@override@account.account_journal_period.create()
     def create(self, cr, uid, vals, context=None):
         period_id=vals.get('period_id',False)

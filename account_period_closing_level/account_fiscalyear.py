@@ -22,7 +22,7 @@
 
 import datetime
 from dateutil.relativedelta import relativedelta
-from osv import fields, osv
+from osv import osv
 
 class account_fiscalyear(osv.osv):
     _name = "account.fiscalyear"
@@ -49,9 +49,9 @@ class account_fiscalyear(osv.osv):
                     'number': i,
                 })
                 ds = ds + relativedelta(months=interval)
-                 
+
             ds = datetime.datetime.strptime(fy.date_stop, '%Y-%m-%d')
-            for period_nb in (13, 14, 15):   
+            for period_nb in (13, 14, 15):
                 self.pool.get('account.period').create(cr, uid, {
                     'name': 'Period %d' % (period_nb),
                     'code': 'Period %d' % (period_nb),

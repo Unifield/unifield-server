@@ -183,10 +183,10 @@
                         <para style="Line">[[ formatLang(item.item_exp, date=True) ]]</para>
                     </td>
                     <td>
-                        <para style="LineCentered">[[ item.hidden_batch_management_mandatory and u'&#x2611;' or u'&#x2610;' ]]</para>
+                        <para style="LineCentered">[[ item.hidden_batch_management_mandatory and 'X' or ' ' ]]</para>
                     </td>
                     <td>
-                        <para style="LineCentered">[[ item.hidden_perishable_mandatory and u'&#x2611;' or u'&#x2610;' ]]</para>
+                        <para style="LineCentered">[[ item.hidden_perishable_mandatory and 'X' or ' ' ]]</para>
                     </td>
                     <td>
                         <para style="Line">[[ item.inactive_error ]]</para>
@@ -235,10 +235,10 @@
                         <para style="Line">[[ item.item_uom_id and get_name('product.uom', item.item_uom_id.id) or '' ]]</para>
                     </td>
                     <td>
-                        <para style="LineCentered">[[ item.hidden_batch_management_mandatory and u'&#x2611;' or u'&#x2610;' ]]</para>
+                        <para style="LineCentered">[[ item.hidden_batch_management_mandatory and 'X' or ' ' ]]</para>
                     </td>
                     <td>
-                        <para style="LineCentered">[[ item.hidden_perishable_mandatory and u'&#x2611;' or u'&#x2610;' ]]</para>
+                        <para style="LineCentered">[[ item.hidden_perishable_mandatory and 'X' or ' ' ]]</para>
                     </td>
                     <td>
                         <para style="Line">[[ item.inactive_error ]]</para>

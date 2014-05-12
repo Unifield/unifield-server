@@ -92,7 +92,7 @@
                     <field name="imp_cost" />
                     <field name="discrepancy" />
                     <field name="imp_currency_id" />
-                    <field name="imp_batch_id" />
+                    <field name="imp_batch_name" />
                     <field name="imp_exp_date" />
                     <field name="lot_check" />
                     <field name="exp_check" />

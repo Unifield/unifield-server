@@ -20,23 +20,18 @@
 #
 ##############################################################################
 from osv import fields, osv
-import time
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
-from tools.translate import _
 
 class account_subscription(osv.osv):
     _name = "account.subscription"
-    _inherit = "account.subscription" 
-    
+    _inherit = "account.subscription"
+
     _columns = {
         'period_nbr': fields.integer('Periodicity', required=True, help="This field will determine how often entries will be generated: if the period type is 'month' and the periodicity '2' then entries will be generated every 2 months"),
     }
-    
+
     _defaults = {
         'period_total': 0,
     }
-    
+
 account_subscription()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
- 

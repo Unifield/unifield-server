@@ -47,7 +47,7 @@ class weekly_forecast_report(osv.osv):
     '''
     Weekly forecast report
     '''
-    _name  = 'weekly.forecast.report'
+    _name = 'weekly.forecast.report'
     _description = 'Stock forecast by week'
     _rec_name = 'id'
     _order = 'requestor_date desc, id'
@@ -95,13 +95,33 @@ class weekly_forecast_report(osv.osv):
             readonly=True,
         ),
         'progress': fields.float(
-            digits=(16,2),
+            digits=(16, 2),
             string='Progression',
             readonly=True,
         ),
         'progress_comment': fields.text(
             string='Status of the progression',
             readonly=True,
+        ),
+        'sublist_id': fields.many2one(
+            'product.list',
+            string='List/Sublist',
+        ),
+        'nomen_manda_0': fields.many2one(
+            'product.nomenclature',
+            'Main Type',
+        ),
+        'nomen_manda_1': fields.many2one(
+            'product.nomenclature',
+            'Group',
+        ),
+        'nomen_manda_2': fields.many2one(
+            'product.nomenclature',
+            'Family',
+        ),
+        'nomen_manda_3': fields.many2one(
+            'product.nomenclature',
+            'Root',
         ),
     }
 
@@ -136,9 +156,8 @@ class weekly_forecast_report(osv.osv):
             'progress': 0.00,
             'progress_comment': '',
             'xml_data': '',
-            'requestor_date': time.strftime('%Y-%d-%m %H:%M:%S'),
+            'requestor_date': time.strftime('%Y-%m-%d %H:%M:%S'), # Fixed the wrong typo date format
         })
-
         return super(weekly_forecast_report, self).copy(cr, uid, report_id, defaults, context=context)
 
     def period_change(self, cr, uid, ids, consumption_from, consumption_to, consumption_type, context=None):
@@ -193,7 +212,7 @@ class weekly_forecast_report(osv.osv):
 
         cr.commit()
         new_thread = threading.Thread(target=self._process_lines,
-                        args=(cr, uid, ids, context))
+                                      args=(cr, uid, ids, context))
         new_thread.start()
         new_thread.join(10.0)
         if new_thread.isAlive():
@@ -275,7 +294,6 @@ class weekly_forecast_report(osv.osv):
         if context is None:
             context = {}
 
-
         if report_brw.interval <= 0 or report_brw.interval > 20 or not report_brw.interval_type:
             raise osv.except_osv(
                 _('Error'),
@@ -319,19 +337,62 @@ class weekly_forecast_report(osv.osv):
 
         # background cursor
         new_cr = pooler.get_db(cr.dbname).cursor()
-
         try:
             for report in self.browse(new_cr, uid, ids, context=context):
-                nb_products = product_obj.search(new_cr, uid, [('type', '=', 'product'),], count=True, context=context)
-                # Process the products by group of 500
-                offset = 50.00
-                nb_offset = (nb_products / offset) + 1
+                product_domain = [('type', '=', 'product')]
+                product_ids = []
+                nomen_name_for_loc = None
+                if report.nomen_manda_0:
+                    nom = False
+                    # Get all products for the defined nomenclature
+                    if report.nomen_manda_3:
+                        nom = report.nomen_manda_3.id
+                        field = 'nomen_manda_3'
+                    elif report.nomen_manda_2:
+                        nom = report.nomen_manda_2.id
+                        field = 'nomen_manda_2'
+                    elif report.nomen_manda_1:
+                        nom = report.nomen_manda_1.id
+                        field = 'nomen_manda_1'
+                    elif report.nomen_manda_0:
+                        nom = report.nomen_manda_0.id
+                        field = 'nomen_manda_0'
+                        nomen_name_for_loc = report.nomen_manda_0.name
 
+                    if nom:
+                        product_domain.append((field, '=', nom))
+
+                if report.sublist_id:
+                    context.update({'search_default_list_ids': report.sublist_id.id})
+                    for line in report.sublist_id.product_ids:
+                        product_ids.append(line.name.id)
+
+                    if product_ids:
+                        product_domain.append(('id', 'in', product_ids))
+
+                nb_products = product_obj.search(new_cr, uid, product_domain, count=True, context=context)
                 # Get all locations
                 location_ids = loc_obj.search(new_cr, uid, [
                     ('location_id', 'child_of', report.location_id.id),
                     ('quarantine_location', '=', False),
                 ], order='location_id', context=context)
+
+                if location_ids:
+                    loc_name = loc_obj.read(new_cr, uid, location_ids[0], ['name',], context=context)
+                    if loc_name:
+                        loc_name = loc_name['name']
+                        if loc_name in ['LOG', 'MED'] and loc_name != nomen_name_for_loc:
+                            nomen_id = self.pool.get('product.nomenclature').search(new_cr, uid, [('level', '=', 0), ('name', '=', loc_name)], context=context)[0]
+                            product_domain.append(('nomen_manda_0', '=', nomen_id))
+
+                #UFTP-225: If the location is from Stock/MED/LOG, take also the Input location for the report
+                stock_ids = loc_obj.search(new_cr, uid, [('location_category', '=', 'stock')], context=context)
+                for loc in location_ids:
+                    if loc in stock_ids:
+                        # search for Input location, and add it into the location list
+                        input_stock_ids = loc_obj.search(new_cr, uid, [('location_category', '=', 'transition'), ('name', '=', 'Input')], context=context)
+                        location_ids.extend(input_stock_ids)
+                        break
 
                 context.update({
                     'location_id': location_ids,
@@ -362,15 +423,47 @@ class weekly_forecast_report(osv.osv):
                 product_cons = {}
                 in_pipe_vals = {}
                 exp_vals = {}
-                for i in range(int(nb_offset)):
-                    tmp_product_ids = product_obj.search(new_cr, uid, [('type', '=', 'product')], limit=offset, offset=i, context=context)
-                    product_ids.extend(tmp_product_ids)
+
+                ##### First, get the list of product_id
+                product_ids = product_obj.search(new_cr, uid, product_domain, context=context)
+                product_ids = list(set(product_ids))
+
+                if len(product_ids) > 0:
+                    ##### UFTP-220: Filter this list of products for those only appeared in the selected location of the report, not all product
+                    new_cr.execute("select distinct product_id from report_stock_inventory where location_id in %s and product_id in %s", (tuple(location_ids),tuple(product_ids),) )
+                    product_ids = []
+                    for row in new_cr.dictfetchall():
+                        product_ids.append(row['product_id'])
+                    product_ids = list(set(product_ids)) # just to make sure that the list is duplicate-free
+
+                ##### We still need to get the list of products with AMC and FMC > 0
+                fmc_line_obj = self.pool.get('monthly.review.consumption.line')
+                tmp_product_ids = []
+                amc_fmc_product_ids = fmc_line_obj.search(new_cr, uid, ['|', ('amc', '>', 0), ('fmc', '>', 0)], context=context)
+                if len(amc_fmc_product_ids) > 0:
+                    amc_fmc_product_ids = fmc_line_obj.read(new_cr, uid, amc_fmc_product_ids, ['name',], context=context) # read the name, which is product_id
+                    for temp in amc_fmc_product_ids:
+                        if temp['name'] and temp['name'][0]:
+                            tmp_product_ids.append(temp['name'][0])
+
+                temp_domain = product_domain
+                temp_domain.append(('id', 'in', tmp_product_ids))
+                tmp_product_ids = product_obj.search(new_cr, uid, temp_domain, context=context) # search with domain again
+
+                product_ids.extend(tmp_product_ids)
+                product_ids = list(set(product_ids)) # just to make sure that the list is duplicate-free
+
+                ##### Now, from this list, perform calculation for consumption, in-pipeline and expired quantity
+                nb_products = len(product_ids) # reupdate the number of real products to calculate
+                t = 0
+                jump = 100
+                while t < nb_products:
                     # Get consumption, in-pipe and expired quantities for each product
-                    product_cons.update(self._get_product_consumption(new_cr, uid, tmp_product_ids, location_ids, report, context=context))
-                    in_pipe_vals.update(self._get_in_pipe_vals(new_cr, uid, tmp_product_ids, location_ids, report, context=context))
+                    product_cons.update(self._get_product_consumption(new_cr, uid, product_ids, location_ids, report, context=context))
+                    in_pipe_vals.update(self._get_in_pipe_vals(new_cr, uid, product_ids, location_ids, report, context=context))
                     exp_vals.update(self._get_expiry_batch(new_cr, uid, product_cons, location_ids, report, context=context))
 
-                    percent_completed = (((i*offset)/nb_products) * 0.50) * 100
+                    percent_completed = (t/nb_products) * 100
                     progress_comment = """
                         Calculation of consumption values by product: %(treated_products)s/%(nb_products)s
 
@@ -383,8 +476,8 @@ class weekly_forecast_report(osv.osv):
                         Calculate the forecasted quantity by product and period: 0/%(nb_products)s
 
                     """ % {
-                            'treated_products': int(i*offset),
-                            'nb_products': nb_products,
+                        'treated_products': t,
+                        'nb_products': nb_products,
                     }
                     self.write(new_cr, uid, [report.id], {
                         'status': 'in_progress',
@@ -392,6 +485,7 @@ class weekly_forecast_report(osv.osv):
                         'progress_comment': progress_comment,
                     }, context=context)
                     new_cr.commit()
+                    t = t + jump
 
                 line_values = """<Row></Row><Row>
                       <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Product Code</Data></Cell>
@@ -409,11 +503,8 @@ class weekly_forecast_report(osv.osv):
                     }
 
                 line_values += """</Row>"""
+                context.update({'from_date': False, 'to_date': False,})
 
-                context.update({
-                    'from_date': False,
-                    'to_date': False,
-                })
                 stock_products = product_obj.read(new_cr, uid, product_ids, [
                     'qty_available',
                     'default_code',
@@ -423,19 +514,18 @@ class weekly_forecast_report(osv.osv):
                 ], context=context)
 
                 j = 0
+                # UFTP-220: get a list of rules that has either one of 3 columns yes, and add the product_ids of these lines for checking it.
+                rule_prod_ids = []
+                new_cr.execute("select distinct product_id from procurement_rules_report where auto_supply_ok = 'yes' or order_cycle_ok = 'yes' or min_max_ok = 'yes' or threshold_ok = 'yes'")
+                for row in new_cr.dictfetchall():
+                    rule_prod_ids.append(row['product_id'])
+
                 for product in stock_products:
                     product_id = product['id']
                     j += 1
                     cons = product_cons[product_id][1]
-                    if not cons:
-                        proc_rules = self.pool.get('procurement.rules.report').search(new_cr, uid, [
-                            ('product_id', '=', product_id),
-                            '|', ('auto_supply_ok', '=', 'yes'),
-                            '|', ('order_cycle_ok', '=', 'yes'),
-                            '|', ('min_max_ok', '=', 'yes'),
-                            ('threshold_ok', '=', 'yes'),
-                        ], context=context)
-                        if not proc_rules:
+                    if not cons and not product['qty_available']:
+                        if product_id not in rule_prod_ids:
                             continue
 
                     weekly_cons = cons
@@ -473,6 +563,8 @@ class weekly_forecast_report(osv.osv):
                     # Return the last from date of interval closest to date
                     def get_interval_by_date(date):
                         date = DateFrom(date)
+                        if date < now():
+                            date = now()
                         if report.interval_type == 'week':
                             st_day = now().day_of_week
                             last_date = date + RelativeDateTime(weekday=(st_day, 0))
@@ -513,7 +605,11 @@ class weekly_forecast_report(osv.osv):
                     for interval_name in interval_keys:
                         interval_values = inter.get(interval_name)
                         last_value = last_value - weekly_cons - interval_values['exp_qty'] + interval_values['pipe_qty']
-                        line_values += """<Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(value)s</Data></Cell>""" % {
+                        # UFTP-225: if the value of week is negative, just set it as 0 in display
+                        if last_value < 0:
+                            last_value = 0
+                        line_values += """<Cell ss:StyleID=\"%(line_style)s\" ss:Formula=\"\"><Data ss:Type=\"Number\">%(value)s</Data></Cell>""" % {
+                            'line_style': last_value >= 0.00 and 'line' or 'redline',
                             'value': last_value,
                         }
 
@@ -621,6 +717,7 @@ class weekly_forecast_report(osv.osv):
         """
         # Objects
         lot_obj = self.pool.get('stock.production.lot')
+        uom_obj = self.pool.get('product.uom')
 
         if context is None:
             context = {}
@@ -645,7 +742,7 @@ class weekly_forecast_report(osv.osv):
             prodlot_ids = lot_obj.search(cr, uid, [
                 ('product_id', '=', product['id']),
                 ('stock_available', '>', 0.00),
-                ('life_date', '>=', time.strftime('%Y-%m-%d')),
+#                ('life_date', '>=', time.strftime('%Y-%m-%d')),
                 ('life_date', '<=', report_end_date.strftime('%Y-%m-%d')),
             ], order='life_date', context=context)
 
@@ -657,9 +754,13 @@ class weekly_forecast_report(osv.osv):
                 l_expired_qty = 0.00
                 lot_days = Age(DateFrom(lot.life_date), last_expiry_date)
                 lot_coeff = (lot_days.years*365.0 + lot_days.months*30.0 + lot_days.days)/30.0
-                if lot_coeff >= 0.00: last_expiry_date = DateFrom(lot.life_date)
-                if lot_coeff < 0.00: lot_coeff = 0.00
-                lot_cons = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(lot_coeff*av_cons,2), lot.product_id.uom_id.id) + rest
+
+                if lot_coeff >= 0.00:
+                    last_expiry_date = DateFrom(lot.life_date)
+                if lot_coeff < 0.00:
+                    lot_coeff = 0.00
+
+                lot_cons = uom_obj._compute_qty(cr, uid, lot.product_id.uom_id.id, round(lot_coeff*av_cons, 2), lot.product_id.uom_id.id) + rest
                 if lot_cons > 0.00:
                     if lot_cons >= lot.stock_available:
                         already_cons += lot.stock_available
@@ -706,7 +807,7 @@ class weekly_forecast_report(osv.osv):
             FROM
             ((SELECT
                p.id AS product_id,
-               sum(s.product_qty/u1.factor/u2.factor) AS qty,
+               sum(-s.product_qty/u1.factor/u2.factor) AS qty,
                s.date AS date
             FROM
                stock_move s
@@ -749,11 +850,37 @@ class weekly_forecast_report(osv.osv):
         for r in cr.dictfetchall():
             res.setdefault(r['product_id'], {'total': 0.00})
             res[r['product_id']].setdefault(r['date'], 0.00)
-            res[r['product_id']][r['date']] = r['qty']
+            res[r['product_id']][r['date']] += r['qty']
             res[r['product_id']].setdefault('total', 0.00)
-            res[r['product_id']]['total'] = r['qty']
+            res[r['product_id']]['total'] += r['qty']
 
         return res
+
+##############################################################################################################################
+# The code below aims to enable filtering products regarding their nomenclature.
+# NB: the difference with the other same kind of product filters (with nomenclature and sublist) is that here we are dealing with osv_memory
+##############################################################################################################################
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        res = self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
+        if nomen_manda_0:
+            res.setdefault('value', {}).setdefault('sublist_id', False)
+        return res
+
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if vals.get('sublist_id',False):
+            vals.update({'nomen_manda_0':False,'nomen_manda_1':False,'nomen_manda_2':False,'nomen_manda_3':False})
+        if vals.get('nomen_manda_0',False):
+            vals.update({'sublist_id':False})
+        if vals.get('nomen_manda_1',False):
+            vals.update({'sublist_id':False})
+        ret = super(weekly_forecast_report, self).write(cr, uid, ids, vals, context=context)
+        return ret
+##############################################################################
+# END of the definition of the product filters and nomenclatures
+##############################################################################
 
 weekly_forecast_report()
 

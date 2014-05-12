@@ -386,10 +386,11 @@ class shipment(osv.osv):
 
             shipment_number = sequence.get_id(code_or_id='id', context=context)
             shipment_name = '%s-%s' % (shipment.name, shipment_number)
+            source_shipment_address_id = shipment.address_id.id if shipment.address_id else False
 
             ship_val = {
                 'name': shipment_name,
-                'address': shipment.address_id.id,
+                'address_id': shipment.address_id.id,
                 'partner_id': shipment.partner_id.id,
                 'partner_id2': shipment.partner_id.id,
                 'shipment_expected_date': shipment.shipment_expected_date,
@@ -400,6 +401,8 @@ class shipment(osv.osv):
             shipment_id = self.create(cr, uid, ship_val, context=context)
 
             context['shipment_id'] = shipment_id
+            if source_shipment_address_id:
+                context['source_shipment_address_id'] = source_shipment_address_id
 
             for add_line in wizard.additional_line_ids:
                 line_vals = {
@@ -936,7 +939,10 @@ class shipment(osv.osv):
             # the state does not need to be updated - function
             # update actual ship date (shipment_actual_date) to today + time
             today = time.strftime(db_datetime_format)
-            shipment.write({'shipment_actual_date': today, })
+            vals = {'shipment_actual_date': today,}
+            if context.get('source_shipment_address_id', False):
+                vals['address_id'] = context['source_shipment_address_id']
+            shipment.write(vals)
             # corresponding packing objects
             packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id)], context=context)
 
@@ -1468,6 +1474,7 @@ class stock_picking(osv.osv):
             context.update({'picking_type': 'incoming_shipment'})
         else:
             context.update({'picking_type': 'internal_move'})
+            context.update({'_terp_view_name': 'Internal Moves'}) # REF-92: Update also the Form view name, otherwise Products to Process
 
         return super(stock_picking, self)._hook_picking_get_view(cr, uid, ids, context=context, *args, **kwargs)
 
@@ -1903,7 +1910,7 @@ class stock_picking(osv.osv):
                                     store={'stock.move': (_get_picking_ids, ['picking_id', 'state', 'product_qty'], 10),
                                            'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
                 # 'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
-                'pack_family_memory_ids': fields.one2many('pack.family.memory', 'draft_packing_id', string='Memory Families'),
+                'pack_family_memory_ids': fields.one2many('pack.family.memory', 'ppl_id', string='Memory Families'),
                 'description_ppl': fields.char('Description', size=256),
                 'already_shipped': fields.boolean(string='The shipment is done'),  # UF-1617: only for indicating the PPL that the relevant Ship has been closed
                 'has_draft_moves': fields.function(_get_draft_moves, method=True, type='boolean', string='Has draft moves ?', store=False),
@@ -3946,8 +3953,8 @@ class stock_move(osv.osv):
             if not move.picking_id:
                 continue
 
-            if not move.has_to_be_resourced and not move.picking_id.has_to_be_resourced:
-                continue
+#            if not move.has_to_be_resourced and not move.picking_id.has_to_be_resourced:
+#                continue
 
             if move.state == 'cancel':
                 continue

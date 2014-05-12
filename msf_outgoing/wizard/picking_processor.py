@@ -915,7 +915,7 @@ class stock_move_processor(osv.osv):
                     res['value']['prodlot_id'] = False
                 else:
                     # Display warning message
-                    res['waring'].update({
+                    res['warning'].update({
                         'title': _('Error'),
                         'message': _('The selected Expiry Date does not exist in the system.'),
                     })

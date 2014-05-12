@@ -81,19 +81,16 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
     def _get_report_dates_with_expiry(self, report):
         dates = self.pool.get('product.likely.expire.report').get_report_dates_multi(report)
         res = []
-        for dt_tuple in dates:  # dates: [(mx_date, '01/14'),]
+        self._report_context['no_expiry_from_to'] = {}
+        for dt_tuple in dates:
             if not self._get_month_item_lines_ids(report, dt_tuple[0]):
-                self._report_context['no_expiry_from_to'] = "No expiry from %s to %s" % (dt_tuple[1], dates[len(dates)-1][1], )
-                break  # first month with no product in expiry
+                self._report_context['no_expiry_from_to'][dt_tuple[1]] = "No expiry for %s" % (dt_tuple[1], )
             res.append(dt_tuple)
-            self._report_context['last_date'] = dt_tuple[1]
         return res
 
     def _get_report_no_expiry_from_to(self, date):
         if date:
-            last_date = self._report_context.get('last_date', False)
-            if last_date and last_date == date:
-                return self._report_context.get('no_expiry_from_to', '')
+            return self._report_context.get('no_expiry_from_to', {}).get(date)
         return False
 
     def _get_lines(self, report, type='all'):
@@ -120,6 +117,8 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         domain = [('line_id', '=', line.id)]
         items_ids = item_obj.search(self.cr, self.uid, domain,
                                     order='period_start')  # items ordered by date
+        if not items_ids:
+            return False
         return item_obj.browse(self.cr, self.uid, items_ids)
 
     def _get_month_item_lines_ids(self, report, month_date):

@@ -174,7 +174,7 @@ def compute_kit_value(cr, uid, **kwargs):
             kit_name = row.cells[cell_nb].data.strip()
             if kit_name and product_id:
                 kit_ids = kit_obj.search(cr, uid, [('composition_type', '=', 'real'),
-                                                   ('composition_reference', '=', kit_name), 
+                                                   ('composition_reference', '=', kit_name),
                                                    ('composition_product_id', '=', product_id)])
                 if kit_ids:
                     kit_id = kit_ids[0]
@@ -303,9 +303,6 @@ def quantity_value(**kwargs):
     cell_nb = kwargs.get('cell_nb', 2)
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
-    cell_nb = kwargs.get('cell_nb', False)
-    if not cell_nb:
-        cell_nb = 2
     try:
         if not row.cells[cell_nb]:
             warning_list.append(_('The Product Quantity was not set. It is set to 1 by default.'))
@@ -337,9 +334,8 @@ def compute_uom_value(cr, uid, **kwargs):
     uom_id = kwargs['to_write'].get('uom_id', False)
     # The tender line may have a default UOM if it is not found
     obj_data = kwargs['obj_data']
-    cell_nb = kwargs.get('cell_nb', 3)
+    cell_nb = kwargs.get('cell_nb', 4)
     msg = ''
-    cell_nb = kwargs.get('cell_nb', 3)
     try:
         if row.cells[cell_nb] and row.cells[cell_nb].data is not None:
             if row.cells[cell_nb].type == 'str':
@@ -387,7 +383,7 @@ def compute_price_value(**kwargs):
     warning_list = kwargs['to_write']['warning_list']
     price = kwargs['price'] or 'Price'
     price_unit_defined = False
-    cell_nb = kwargs.get('cell_nb', 4)
+    cell_nb = kwargs.get('cell_nb', 3)
     try:
         if not row.cells[cell_nb] or not row.cells[cell_nb].data:
             if default_code:
@@ -555,3 +551,22 @@ def comment_value(**kwargs):
     except IndexError:
         warning_list.append(_("No comment was defined"))
     return {'comment': comment, 'warning_list': warning_list}
+
+def check_lines_currency(rows, ccy_col_index, ccy_expected_code):
+    """
+    check rows currency
+    :param ccy_col_index: currency column index
+    :param ccy_expected_code: currency code expected in all rows
+    :return count of bad ccy lines or 0 if OK
+    :rtype int
+    """
+    res = 0
+    for row in rows:
+        if row.cells:
+            cell = row.cells[ccy_col_index]
+            if cell.type == 'str':
+                if str(cell) != ccy_expected_code:
+                    res += 1
+            else:
+                res += 1
+    return res

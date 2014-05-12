@@ -709,7 +709,7 @@ class account_bank_statement_line(osv.osv):
             # amount is negative, it should be in amount_out
             elif absl.amount < 0 and field_name == "amount_out":
                 res[absl.id] = abs(absl.amount)
-            # if no resultat, we display 0.0 (default amount)
+            # if no result, we display 0.0 (default amount)
             else:
                 res[absl.id] = default_amount
         return res
@@ -919,6 +919,10 @@ class account_bank_statement_line(osv.osv):
             res[line.id] = ''
             if len(line.move_ids) > 0:
                 res[line.id] = line.move_ids[0].name
+            else:
+                # UFTP-201: If there is no move linked to this reg line, get the current value of ref
+                res[line.id] = line.sequence_for_reference
+
         return res
 
     def _get_bank_statement_line_ids(self, cr, uid, ids, context=None):
@@ -1112,23 +1116,26 @@ class account_bank_statement_line(osv.osv):
 
         for absl in self.browse(cr, uid, ids):
             if absl.state == 'temp' and absl.direct_invoice == True:
-
                 # Find all moves lines linked to this register line
                 # first, via the statement
                 move_ids = [x.id for x in absl.move_ids]
                 if move_ids:
                     am1 = account_move.browse(cr, uid, move_ids)[0]
                     seqnums[am1.journal_id.id] = am1.name
+                else:
+                    # UFTP-201: If there is no move linked to this reg line, get the current value of ref
+                    seqnums[absl.statement_id.journal_id.id] = absl.sequence_for_reference
 
                 # then via the direct invoice
                 ai = account_invoice.browse(cr, uid, [absl.invoice_id.id])[0]
-                move_id = ai.move_id.id
-
-                if move_id:
-                    move_ids.append(move_id)
+                if ai.move_id.id:
+                    move_ids.append(ai.move_id.id)
                     seqnums[ai.move_id.journal_id.id] = ai.move_id.name
                     account_invoice.write(cr, uid, [ai.id],{'move_id': False}, context=context)
-
+                else:
+                    # UFTP-201: If there is no move linked to this invoice, retrieve the current value
+                    if absl.invoice_id.journal_id and absl.invoice_id.journal_id.id: # not needed but just to be sure 
+                        seqnums[absl.invoice_id.journal_id.id] = absl.invoice_id.internal_number
 
                 # TODO: Needs to be fixed during refactoring. The field move_id on account.analytic.line
                 # is actually account_move_line.id, not account_move.id
@@ -1299,9 +1306,9 @@ class account_bank_statement_line(osv.osv):
         if values:
             amount_in = values.get('amount_in', 0.0)
             amount_out = values.get('amount_out', 0.0)
-            if amount_in > 0 and amount_out == 0:
+            if amount_out == 0:
                 amount = amount_in
-            elif amount_in == 0 and amount_out > 0:
+            elif amount_in == 0:
                 amount = - amount_out
             else:
                 raise osv.except_osv(_('Error'), _('Please correct amount fields!'))
@@ -1341,11 +1348,11 @@ class account_bank_statement_line(osv.osv):
             employee = self.pool.get('hr.employee').read(cr, uid, int(emp_id), ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id'])
             if is_expense and employee.get('cost_center_id', False):
                 # Create a distribution
-                destination_id = (employee.get('destination_id', [False])[0]) or (account.get('default_destination_id', [False])[0]) or False
-                cc_id = employee.get('cost_center_id', [False])[0] or False
-                fp_id = employee.get('funding_pool_id',[False])[0] or False
-                f1_id = employee.get('free1_id', [False])[0] or False
-                f2_id = employee.get('free2_id', [False])[0] or False
+                destination_id = (employee.get('destination_id', False) and employee.get('destination_id')[0]) or (account.get('default_destination_id', False) and account.get('default_destination_id')[0]) or False
+                cc_id = employee.get('cost_center_id', False) and employee.get('cost_center_id')[0] or False
+                fp_id = employee.get('funding_pool_id',False) and employee.get('funding_pool_id')[0] or False
+                f1_id = employee.get('free1_id', False) and employee.get('free1_id')[0] or False
+                f2_id = employee.get('free2_id', False) and employee.get('free2_id')[0] or False
                 if not fp_id:
                     fp_id = msf_fp_id
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
@@ -1980,7 +1987,7 @@ class account_bank_statement_line(osv.osv):
                 # update the invoice 'name' (ref)  TODO - does this need to be set to "/" ?
                 self.pool.get('account.invoice').read(cr, uid, absl.invoice_id.id, ['number'])['number']
                 # self.write(cr, uid, [absl.id], {'name': "/"})
-                account_move_line_ids = account_move_line.search(cr, uid, [('move_id', '=', absl.invoice_id.move_id.id)])
+
                 # Optimization: Do check=True and update_check=True because it was out from previous lines.
                 account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'}, context=context, check=True, update_check=True)
 

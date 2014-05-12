@@ -382,5 +382,15 @@ class msf_budget(osv.osv):
         self.update_parent_budgets(cr, uid, to_validate, context=context)
         return True
 
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        UFTP-156: Make sure that the validated budget cannot be deleted
+        '''
+        for budget in self.browse(cr, uid, ids, context=context):
+            if budget.state == 'valid':
+                raise osv.except_osv(_('Error'), _('You cannot delete the validated budget!'))
+
+        return super(msf_budget, self).unlink(cr, uid, budget.id, context=context)
+
 msf_budget()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

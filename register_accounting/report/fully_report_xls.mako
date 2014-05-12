@@ -550,7 +550,9 @@
 <% invoice_lines = line.invoice_id.invoice_line %>
 % elif line.imported_invoice_line_ids:
 % for ji in line.imported_invoice_line_ids:
+% if ji.invoice and ji.invoice.invoice_line:
 <% invoice_lines += ji.invoice.invoice_line %>
+% endif
 % endfor
 % endif
 

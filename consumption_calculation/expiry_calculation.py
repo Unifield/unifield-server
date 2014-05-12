@@ -30,21 +30,21 @@ import time
 class expiry_quantity_report(osv.osv_memory):
     _name = 'expiry.quantity.report'
     _description = 'Products Expired'
-    
+
     def _get_date_to(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Compute the end date for the calculation
         '''
         if context is None:
             context = {}
-        
+
         res = {}
-        
+
         for report in self.browse(cr, uid, ids, context=context):
             res[report.id] = (date.today() + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')
-            
+
         return res
-    
+
     _columns = {
         'location_id': fields.many2one('stock.location', string='Location'),
         'input_output_ok': fields.boolean(string='Exclude Input and Output locations'),
@@ -52,27 +52,27 @@ class expiry_quantity_report(osv.osv_memory):
         'date_to': fields.function(_get_date_to, method=True, type='date', string='Limit date', readonly=True),
         'line_ids': fields.one2many('expiry.quantity.report.line', 'report_id', string='Products', readonly=True),
     }
-    
+
     def print_report_wizard(self, cr, uid, ids, context=None):
         '''
         Print the report directly from the wizard: pdf
         '''
         self.process_lines(cr, uid, ids, context=context)
         return self.print_report(cr, uid, ids, context=context)
-   
+
     def print_report_wizard_xls(self, cr, uid, ids, context=None):
         '''
         Print the report directly from the wizard: xls
         '''
         self.process_lines(cr, uid, ids, context=context)
         return self.print_report_xls(cr, uid, ids, context=context)
-        
+
     def _print_report(self, cr, uid, ids, report_name, context=None):
         '''
         Print the report of expiry report
         '''
-        datas = {'ids': ids} 
-        
+        datas = {'ids': ids}
+
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
@@ -80,37 +80,37 @@ class expiry_quantity_report(osv.osv_memory):
             'nodestroy': True,
             'context': context,
         }
-    
+
     def print_report(self, cr, uid, ids, context=None):
         '''
         Print the report of expiry report: pdf
         '''
         return self._print_report(cr, uid, ids, 'expiry.report', context=None)
-        
+
     def print_report_xls(self, cr, uid, ids, context=None):
         '''
         Print the report of expiry report: xls
         '''
         return self._print_report(cr, uid, ids, 'expiry.report_xls', context=None)
-    
+
     def process_lines(self, cr, uid, ids, context=None):
         '''
         Creates all lines of expired products
         '''
         if context is None:
             context = {}
-        
+
         move_obj = self.pool.get('stock.move')
         lot_obj = self.pool.get('stock.production.lot')
         loc_obj = self.pool.get('stock.location')
         lots = {}
         loc_ids = []
-        
+
         report = self.browse(cr, uid, ids[0], context=context)
         lot_ids = lot_obj.search(cr, uid, [('life_date', '<=', (date.today() + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d'))])
         domain = [('date', '<=', (date.today()  + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
         domain_out = [('date', '<=', (date.today()  + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
-            
+
         not_loc_ids = []
         # Remove input and output location
         if report.input_output_ok:
@@ -125,7 +125,7 @@ class expiry_quantity_report(osv.osv_memory):
         else:
             # Search all locations according to parameters
             loc_ids = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], context=context)
-        
+
         # Return the good view
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'expiry_quantity_report_processed_loc_view')[1]
         domain.append(('location_dest_id', 'in', loc_ids))
@@ -138,7 +138,7 @@ class expiry_quantity_report(osv.osv_memory):
                 # Add the lot in the list
                 if lot_id not in lots:
                     lots[lot_id] = {}
-                
+
                 # Add the location in the lot list
                 if move.location_dest_id.id not in lots[lot_id]:
                     lots[lot_id][move.location_dest_id.id] = 0.00
@@ -150,7 +150,7 @@ class expiry_quantity_report(osv.osv_memory):
         for move in move_obj.browse(cr, uid, move_out_ids, context=context):
             if move.prodlot_id and move.prodlot_id.id in lots and move.location_id.id in lots[move.prodlot_id.id]:
                 lots[move.prodlot_id.id][move.location_id.id] -= move.product_qty
-                
+
         for lot_location in lots:
             lot_brw = lot_obj.browse(cr, uid, lot_location, context=context)
             for location in lots[lot_location]:
@@ -166,7 +166,7 @@ class expiry_quantity_report(osv.osv_memory):
                                                                                   'location_id': location,
                                                                                   'report_id': ids[0],
                                                                                   }, context=context)
-            
+
         return {'type': 'ir.actions.act_window',
                 'res_model': 'expiry.quantity.report',
                 'view_type': 'form',
@@ -175,7 +175,7 @@ class expiry_quantity_report(osv.osv_memory):
                 'view_id': [view_id],
                 'res_id': ids[0],
         }
-    
+
 expiry_quantity_report()
 
 
@@ -183,7 +183,7 @@ class expiry_quantity_report_line(osv.osv_memory):
     _name = 'expiry.quantity.report.line'
     _description = 'Products expired line'
     _order = 'expiry_date, location_id, product_id asc'
-    
+
     _columns = {
         'report_id': fields.many2one('expiry.quantity.report', string='Report', required=True),
         'product_id': fields.many2one('product.product', string='Product', required=True),
@@ -197,7 +197,7 @@ class expiry_quantity_report_line(osv.osv_memory):
         'expiry_date': fields.date(string='Exp. date'),
         'location_id': fields.many2one('stock.location', string='Loc.'),
     }
-    
+
 expiry_quantity_report_line()
 
 
@@ -207,8 +207,8 @@ LIKELY_EXPIRE_STATUS = [
     ('ready', 'Ready')
 ]
 CONSUMPTION_TYPE = [
-    ('fmc', 'FMC -- Forecasted Monthly Consumption'), 
-    ('amc', 'AMC -- Average Monthly Consumption'), 
+    ('fmc', 'FMC -- Forecasted Monthly Consumption'),
+    ('amc', 'AMC -- Average Monthly Consumption'),
     ('rac', 'RAC -- Real Average Consumption'),
 ]
 class product_likely_expire_report(osv.osv):
@@ -427,7 +427,7 @@ class product_likely_expire_report(osv.osv):
         for lot in lot_obj.browse(new_cr, uid, lot_ids, context=context):
             if lot.product_id and lot.product_id.id not in products:
                 products.update({lot.product_id.id: {}})
-                consumption = self._get_average_consumption(new_cr, uid, lot.product_id.id, 
+                consumption = self._get_average_consumption(new_cr, uid, lot.product_id.id,
                                                             report.consumption_type,
                                                             context.get('from', report.date_from),
                                                             context.get('to', report.date_to),
@@ -451,7 +451,7 @@ class product_likely_expire_report(osv.osv):
                     # Remove one day to include the expiry date as possible consumable day
                     if not last_expiry_date: last_expiry_date = month - RelativeDateTime(days=1)
 
-                    item_id = item_obj.create(new_cr, uid, {'name': month.strftime('%m/%y'), 
+                    item_id = item_obj.create(new_cr, uid, {'name': month.strftime('%m/%y'),
                                                         'line_id': products[lot.product_id.id]['line_id']}, context=context)
                     available_qty = 0.00
                     expired_qty = 0.00
@@ -617,7 +617,7 @@ class product_likely_expire_report(osv.osv):
         new_context = context.copy()
         new_context['dates'] = self.get_report_dates_str(report)
         view_id = self.pool.get('ir.model.data').get_object_reference(
-            cr, uid, 'consumption_calculation', 
+            cr, uid, 'consumption_calculation',
             'product_likely_expire_report_form_processed')[1]
         return {
             'type': 'ir.actions.act_window',
@@ -649,10 +649,22 @@ class product_likely_expire_report(osv.osv):
                 'context': context,
             }
 
+    def _has_expiry(self, cr, uid, ids, context=None):
+        if not ids:
+            return False
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        pler = self.browse(cr, uid, ids[0], context=context)
+        if pler and pler.line_ids:
+            return True
+        return False
+
     def print_report_xls(self, cr, uid, ids, context=None):
         '''
         Print the report (Excel)
         '''
+        if not self._has_expiry(cr, uid, ids, context=context):
+            raise osv.except_osv(_("Warning"), _("There is not any product in expiry"))
         datas = {'ids': ids}
 
         return {
@@ -667,6 +679,8 @@ class product_likely_expire_report(osv.osv):
         '''
         Print the report (PDF)
         '''
+        if not self._has_expiry(cr, uid, ids, context=context):
+            raise osv.except_osv(_("Warning"), _("There is not any product in expiry"))
         datas = {'ids': ids}
 
         return {
@@ -831,8 +845,8 @@ class product_product(osv.osv):
         elif d_values.get('past_consumption', False):
             monthly_consumption = 'amc'
         else:
-            monthly_consumption = d_values.get('manual_consumption', 0.00)
-            context.update({'manual_consumption': monthly_consumption})
+            monthly_consumption_val = d_values.get('manual_consumption', 0.00)
+            context.update({'manual_consumption': monthly_consumption_val})
 
         product = self.browse(cr, uid, product_id, context=context)
         # Get the delivery lead time of the product if the leadtime is not defined in rule and no supplier found in product form
@@ -853,7 +867,7 @@ class product_product(osv.osv):
                        'consumption_from': d_values.get('consumption_period_from'),
                        'consumption_to': d_values.get('consumption_period_to'),
                        'location_id': location_id}
-
+        
         report_obj = self.pool.get('product.likely.expire.report')
         line_obj = self.pool.get('product.likely.expire.report.line')
 

@@ -34,11 +34,13 @@ class wizard_csv_report(osv.osv_memory):
             context = {}
         if 'reporting_type' in context:
 
+            # default 'out' currency to contract (reporting) currency
             out_currency_name = contract.reporting_currency.name
             out_currency_amount = contract.grant_amount
 
-            if 'output_currency' in context:
-                currency_id = context.get('output_currency')
+            if 'out_currency' in context:
+                curr_id = context.get('out_currency')
+                currency_id = self.pool.get('res.currency').browse(cr, uid, curr_id, context=None)
                 out_currency_name = currency_id.name
 
                 # get amount in selected currency

@@ -121,7 +121,12 @@ class purchase_order(osv.osv):
         # update price lists
         self.update_supplier_info(cr, uid, ids, context=context)
         # copy the po with rfq_ok set to False
-        data = self.read(cr, uid, ids[0], ['name'], context=context)
+        data = self.read(cr, uid, ids[0], ['name', 'amount_total'], context=context)
+        if not data.get('amount_total', 0.00):
+            raise osv.except_osv(
+                _('Error'),
+                _('Generation of PO aborted because no price defined on lines.'),
+            )
         new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False, 'origin': data['name']}, context=dict(context,keepOrigin=True))
         # Remove lines with 0.00 as unit price
         no_price_line_ids = line_obj.search(cr, uid, [
@@ -966,8 +971,8 @@ stock moves which are already processed : '''
             if not po.split_po and not po.order_line:
                 raise osv.except_osv(_('Error !'), _('You can not validate a purchase order without Purchase Order Lines.'))
 
-            if po.amount_total == 0:  # UFTP-69
-                raise osv.except_osv(_('Error'), _('You can not validate a purchase order with a total amount of 0.'))
+            if po.order_type == 'purchase_list' and po.amount_total == 0:  # UFTP-69
+                raise osv.except_osv(_('Error'), _('You can not validate a purchase list with a total amount of 0.'))
 
             for line in po.order_line:
                 if line.state=='draft':
@@ -1400,11 +1405,11 @@ stock moves which are already processed : '''
         setup = uf_config.get_config(cr, uid)
 
         for order in self.browse(cr, uid, ids):
-            if order.amount_total == 0:  # UFTP-69
+            if order.order_type == 'purchase_list' and order.amount_total == 0:  # UFTP-69
                 # total amount could be set to 0 after it was Validated
                 # or no lines
                 # (after wkf_confirm_order total amount check)
-                raise osv.except_osv(_('Error'), _('You can not confirm a purchase order with a total amount of 0.'))
+                raise osv.except_osv(_('Error'), _('You can not confirm a purchase list with a total amount of 0.'))
 
             # Create commitments for each PO only if po is "from picking"
             # UTP-114: No Commitment Voucher on PO that are 'purchase_list'!
@@ -1603,6 +1608,11 @@ stock moves which are already processed : '''
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
+        line_obj = self.pool.get('purchase.order.line')
+        sol_obj = self.pool.get('sale.order.line')
+        data_obj = self.pool.get('ir.model.data')
+
+        input_loc = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
         picking_id = False
         for order in self.browse(cr, uid, ids):
             moves_to_update = []
@@ -1653,6 +1663,11 @@ stock moves which are already processed : '''
                 # service with reception are directed to Service Location
                 if order_line.product_id.type == 'service_recep' and not order.cross_docking_ok:
                     dest = self.pool.get('stock.location').get_service_location(cr, uid)
+                else:
+                    sol_ids = line_obj.get_sol_ids_from_pol_ids(cr, uid, [order_line.id], context=context)
+                    for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
+                        if sol.order_id and sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage != 'customer':
+                            dest = input_loc
 
                 move_values = {
                     'name': order.name + ': ' +(order_line.name or ''),
@@ -2521,7 +2536,9 @@ class purchase_order_line(osv.osv):
         for sol in sol_to_update:
             context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete_ids
             sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
-        del context['update_or_cancel_line_not_delete']
+
+        if context.get('update_or_cancel_line_not_delete', False):
+            del context['update_or_cancel_line_not_delete']
 
         # UFTP-82: IR and its PO is cancelled
         # IR cancel all lines that have to be cancelled
@@ -2589,7 +2606,8 @@ class purchase_order_line(osv.osv):
             if line.order_id.id not in purchase_ids:
                 purchase_ids.append(line.order_id.id)
 
-            self.cancel_sol(cr, uid, [line.id], context=context)
+            if not self.pool.get('sale.order.line.cancel').search(cr, uid, [('sync_order_line_db_id', '=', line.sync_order_line_db_id)], context=context):
+                self.cancel_sol(cr, uid, [line.id], context=context)
             # we want to skip resequencing because unlink is performed on merged purchase order lines
             tmp_Resequencing = context.get('skipResequencing', False)
             context['skipResequencing'] = True

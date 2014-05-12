@@ -24,11 +24,30 @@
 
 from report import report_sxw
 from osv import osv
-from report_webkit.webkit_report import WebKitParser
+from report_webkit.webkit_report import WebKitParser as OldWebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 
 import pooler
+
+
+class _int_noformat(report_sxw._int_format):
+    def __str__(self):
+        return str(self.val)
+
+
+class _float_noformat(report_sxw._float_format):
+    def __str__(self):
+        return str(self.val)
+
+
+_fields_process = {
+    'integer': _int_noformat,
+    'float': _float_noformat,
+    'date': report_sxw._date_format,
+    'datetime': report_sxw._dttime_format
+}
+
 
 def getIds(self, cr, uid, ids, context):
     if not context:
@@ -37,6 +56,13 @@ def getIds(self, cr, uid, ids, context):
         table_obj = pooler.get_pool(cr.dbname).get(self.table)
         ids = table_obj.search(cr, uid, context.get('search_domain'), limit=5000)
     return ids
+
+class WebKitParser(OldWebKitParser):
+
+    def getObjects(self, cr, uid, ids, context):
+        table_obj = pooler.get_pool(cr.dbname).get(self.table)
+        return table_obj.browse(cr, uid, ids, list_class=report_sxw.browse_record_list, context=context, fields_process=_fields_process)
+
 
 # FIELD ORDER == INTERNAL REQUEST== SALE ORDER they are the same object
 class sale_order_report_xls(WebKitParser):

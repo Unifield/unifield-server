@@ -392,7 +392,7 @@
                     <field name="functional_out" invisible="1"/>
                     <field name="functional_currency_id" invisible="1"/>
                     <field name="state"/>
-                    <field name="statement_id" string="Register Name"/><!-- Pay ATTENTION that string="Register Name" had been added by UF-1736 -->
+                    <field name="statement_id" string="Register Name" readonly="1"/><!-- Pay ATTENTION that string="Register Name" had been added by UF-1736 -->
                     <field name="direct_invoice" invisible="1" readonly="1"/>
                 </tree>
             </field>
@@ -578,7 +578,7 @@
             </field>
         </record>
 
-    <!--Bank Statement modification to change "Bank Statement" into "Bank Statement" -->
+    <!--Bank Statement modification to change "Bank Statement" into "Bank Registers" -->
         <record id="action_view_bank_statement_search" model="ir.actions.server">
           <field name="name">Bank Registers</field>
           <field name="model_id" ref="model_account_bank_statement"/>

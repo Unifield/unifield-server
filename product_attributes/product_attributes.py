@@ -24,7 +24,6 @@ import re
 from tools.translate import _
 from lxml import etree
 import logging
-import re
 import tools
 from os import path
 
@@ -409,6 +408,10 @@ class product_attributes(osv.osv):
                                              'product.international.status': (_get_international_status, ['no_storage'], 10),}),
         'available_for_restriction': fields.function(_get_dummy, fnct_search=_src_available_for_restriction, method=True, type='boolean',
                                                  store=False, string='Available for the partner', readonly=True),
+        'form_value': fields.text(string='Form', translate=True),
+        'fit_value': fields.text(string='Form', translate=True),
+        'function_value': fields.text(string='Form', translate=True),
+        'standard_ok': fields.boolean(string='Standard'),
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -1007,6 +1010,19 @@ class product_attributes(osv.osv):
     ]
 
 product_attributes()
+
+
+class product_template(osv.osv):
+    _inherit = 'product.template'
+
+    _columns = {
+        'volume': fields.float('Volume', digits=(16,5), help="The volume in m3."),
+        'weight': fields.float('Gross weight', digits=(16,5), help="The gross weight in Kg."),
+        'weight_net': fields.float('Net weight', digits=(16,5), help="The net weight in Kg."),
+    }
+
+product_template()
+
 
 class product_deactivation_error(osv.osv_memory):
     _name = 'product.deactivation.error'

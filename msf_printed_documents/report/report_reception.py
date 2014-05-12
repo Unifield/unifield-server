@@ -116,10 +116,13 @@ class report_reception(report_sxw.rml_parse):
 
     def getQtyIS(self,line,o):
         # Amount received in this IN only
-        if o.state == 'assigned':
+        # REF-96: Don't count the shipped available IN
+        if o.state in ('assigned', 'shipped'):
             val = 0
         else:
             val = line.product_qty
+        if val == 0:
+            return ' ' # Set blank instead of 0.0
         return "{0:.2f}".format(val)
 
 
