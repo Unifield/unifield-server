@@ -234,41 +234,29 @@ headers_list = [
 % for line in o.line_ids:
 <Row>
 ## 1) order line
-    <Cell ss:StyleID="lineInt"><Data ss:Type="Number">
-        ${line.line_number or 0.}</Data></Cell>
+    <Cell ss:StyleID="lineInt"><Data ss:Type="Number">${int(line.line_number)}</Data></Cell>
 ## 2) product code
-    <Cell ss:StyleID="line"><Data ss:Type="String">
-        ${line.product_id and line.product_id.default_code or ''|x}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.product_id and line.product_id.default_code or ''|x}</Data></Cell>
 ## 3) proc.method
-    <Cell ss:StyleID="line"><Data ss:Type="String">
-        ${line.procure_method or ''|x}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${getSel(line, 'procure_method')|x}</Data></Cell>
 ## 4) po/cft
-    <Cell ss:StyleID="line"><Data ss:Type="String">
-        ${upper(line.po_cft)|x}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${getSel(line, 'po_cft')|x}</Data></Cell>
 ## 5) ordered qty
-    <Cell ss:StyleID="lineFloat"><Data ss:Type="Number">
-        ${line.qty_ordered or 0.}</Data></Cell>
+    <Cell ss:StyleID="lineFloat"><Data ss:Type="Number">${line.qty_ordered or 0.}</Data></Cell>
 ## 6) uom
-    <Cell ss:StyleID="line"><Data ss:Type="String">
-        ${line.uom_id and line.uom_id.name or ''|x}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.uom_id and line.uom_id.name or ''|x}</Data></Cell>
 ## 7) sourced
-    <Cell ss:StyleID="line"><Data ss:Type="String">
-        ${line.sourced_ok or ''|x}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.sourced_ok or ''|x}</Data></Cell>
 ## 8) tender
-    <Cell ss:StyleID="line"><Data ss:Type="String">
-        ${line.tender_status or ''|x}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.tender_status or ''|x}</Data></Cell>
 ## 9) purchase order
-    <Cell ss:StyleID="line"><Data ss:Type="String">
-        ${line.purchase_status or ''|x}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.purchase_status or ''|x}</Data></Cell>
 ## 10) incoming shipment
-    <Cell ss:StyleID="line"><Data ss:Type="String">
-        ${line.incoming_status or ''|x}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.incoming_status or ''|x}</Data></Cell>
 ## 11) product available
-    <Cell ss:StyleID="line"><Data ss:Type="String">
-        ${line.product_available or ''|x}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.product_available or ''|x}</Data></Cell>
 ## 12) outgoing delivery
-    <Cell ss:StyleID="line"><Data ss:Type="String">
-        ${line.outgoing_status or ''|x}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.outgoing_status or ''|x}</Data></Cell>
 </Row>
 % endfor
 
