@@ -938,13 +938,16 @@
             </field>
         </record>
 
-        <act_window
-            id="account.act_account_move_to_account_move_line_open"
-            name="Journal Items"
-            domain="[('move_id', 'in', [active_id])]"
-            res_model="account.move.line"
-            src_model="account.move"
-            view_id="view_move_line_tree_from_move"/>
+        <record id="account.act_account_move_to_account_move_line_open" model="ir.actions.act_window">
+            <field name="name">Journal Items</field>
+            <field name="res_model">account.move.line</field>
+            <field name="src_model">account.move</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_move_line_tree_from_move"/>
+            <field name="search_view_id" ref="account_mcdb.mcdb_view_account_move_line_filter"/>
+            <field name="domain">[('move_id', 'in', [active_id])]</field>
+        </record>
 
     <!--
       Add partner_txt to analytic journal entries
