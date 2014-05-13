@@ -179,7 +179,7 @@ class purchase_order_followup(osv.osv_memory):
                                          'move_product_id': line.product_id.id != move.product_id.id and move.product_id.id or False,
                                          'move_product_qty': (line.product_qty != move.product_qty or line.product_id.id != move.product_id.id) and '%.2f' % move.product_qty or '',
                                          'move_uom_id': line.product_uom.id != move.product_uom.id and move.product_uom.id or False,
-                                         'move_delivery_date': line.confirmed_delivery_date != move.date[:10] and move.date or False,
+                                         'move_delivery_date': line.confirmed_delivery_date != move.date[:10] and move.date[:10] or False,
                                          'return_move': move.type == 'out',
                                          }
                             line_obj.create(cr, uid, line_data, context=context)

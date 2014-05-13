@@ -237,8 +237,8 @@ headers_list = [
 % else:
     <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
 % endif
-## 6) shipped rate
-    <Cell ss:StyleID="line"><Data ss:Type="String">${line.line_product_id and '%s %%' % line.line_shipped_rate or ''|x}</Data></Cell>
+## 6) shipped rate0
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.line_product_id and '%s %%' % min(line.line_shipped_rate, 100.00) or ''|x}</Data></Cell>
 ## 7) incoming shipment
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.picking_id and line.picking_id.name or ''|x}</Data></Cell>
 ## 8) move product

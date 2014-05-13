@@ -232,7 +232,7 @@
 	    			<para style="TextInfoLeft">[[ line.move_product_id and '[%s] %s' % (line.move_product_id.default_code, line.move_product_id.name) or '' ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfo">[[ line.move_product_qty and formatLang(line.move_product_qty) or '' ]]</para>
+	    			<para style="TextInfo">[[ line.move_product_qty ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="TextInfo">[[ line.move_uom_id and line.move_uom_id.name or '' ]]</para>
