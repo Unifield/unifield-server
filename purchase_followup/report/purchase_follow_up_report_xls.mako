@@ -124,29 +124,29 @@ header_merge_accross_count = col_count - 2  ## merging cell self deduced
 <ss:Worksheet ss:Name="FO Follow Up">
 <Table x:FullColumns="1" x:FullRows="1">
 ## order line
-<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
 ## product code
-<Column ss:AutoFitWidth="1" ss:Width="200" />
+<Column ss:AutoFitWidth="1" ss:Width="250" />
 ## proc. method
-<Column ss:AutoFitWidth="1" ss:Width="80"  />
+<Column ss:AutoFitWidth="1" ss:Width="60"  />
 ## po/cft
-<Column ss:AutoFitWidth="1" ss:Width="50"  />
+<Column ss:AutoFitWidth="1" ss:Width="70"  />
 ## ordered qty
-<Column ss:AutoFitWidth="1" ss:Width="50"  />
+<Column ss:AutoFitWidth="1" ss:Width="70"  />
 ## uom
-<Column ss:AutoFitWidth="1" ss:Width="50"  />
+<Column ss:AutoFitWidth="1" ss:Width="70"  />
 ## sourced  
-<Column ss:AutoFitWidth="1" ss:Width="50"  />
+<Column ss:AutoFitWidth="1" ss:Width="70"  />
 ## tender (status)
-<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="250" />
 ## purchase order (status)
-<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
 ## incoming shipment (status)
-<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="70" />
 ## product available (status)
-<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="70" />
 ## outgoing delivery (status)
-<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="100" />
 
 ## WORKSHEET HEADER
 <%
@@ -155,50 +155,35 @@ if header_merge_accross_count > 0:
 else:
     merge_accross = ''
 %>
-## internal reference
+## order reference
 <Row>
-    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Internal reference:')|x}</Data></Cell>
+    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Order reference:')|x}</Data></Cell>
     <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String">${o.order_id and o.order_id.name or ''|x}</Data></Cell>
 </Row>
-## customer referene
+## supplier referene
 <Row>
-    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Customer reference:')|x}</Data></Cell>
-    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String">${o.cust_ref or ''|x}</Data></Cell>
+    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Supplier reference:')|x}</Data></Cell>
+    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String">${o.supplier_ref or ''|x}</Data></Cell>
 </Row>
-## creation date
+## supplier
 <Row>
-    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Creation date:')|x}</Data></Cell>
-<% dt = parse_date_xls(o.creation_date) %>
-% if dt:
-    <Cell ss:StyleID="short_date"${merge_accross}><Data ss:Type="DateTime">${dt|n}</Data></Cell>
-% else:
-    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String"></Data></Cell>
-% endif
+    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Supplier:')|x}</Data></Cell>
+    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String">${o.partner_id and o.partner_id.name or ''|x}</Data></Cell>
 </Row>
-## order state
+## order type
 <Row>
-    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Order state:')|x}</Data></Cell>
-    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String">${o.state or ''|x}</Data></Cell>
+    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Order type:')|x}</Data></Cell>
+    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String">${getSel(o, 'order_type')|x}</Data></Cell>
 </Row>
-## requested date
+## priority
 <Row>
-    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Requested date:')|x}</Data></Cell>
-<% dt = parse_date_xls(o.requested_date) %>
-% if dt:
-    <Cell ss:StyleID="short_date"${merge_accross}><Data ss:Type="DateTime">${dt|n}</Data></Cell>
-% else:
-    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String"></Data></Cell>
-% endif
+    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Priority:')|x}</Data></Cell>
+    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String">${getSel(o, 'priority')|x}</Data></Cell>
 </Row>
-## confirmed date
+## order category
 <Row>
-    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Confirmed date:')|x}</Data></Cell>
-<% dt = parse_date_xls(o.confirmed_date) %>
-% if dt:
-    <Cell ss:StyleID="short_date"${merge_accross}><Data ss:Type="DateTime">${dt|n}</Data></Cell>
-% else:
-    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String"></Data></Cell>
-% endif
+    <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Order category:')|x}</Data></Cell>
+    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String">${getSel(o, 'categ')|x}</Data></Cell>
 </Row>
 <Row>
 ## separator line
@@ -210,18 +195,18 @@ else:
 ## TABLE DATA HEADER
 <%
 headers_list = [
-    _('ORDER LINE'),
-    _('PRODUCT CODE'),
-    _('PROC. METHOD'),
-    _('PO/CFT'),
-    _('ORDERED QTY'),
+    _('#'),
+    _('PRODUCT'),
+    _('QTY'),
     _('UOM'),
-    _('SOURCED'),
-    _('TENDER'),
-    _('PURCHASE ORDER'),
+    _('DEL. CONF. DATE'),
+    _('% OF LINE RECEIVED'),
     _('INCOMING SHIPMENT'),
-    _('PRODUCT AVAILABLE'),
-    _('OUTGOING DELIVERY'),
+    _('NEW PRODUCT'),
+    _('NEW QTY'),
+    _('NEW UOM'),
+    _('NEW DEL. DATE'),
+    _('STATE'),
 ]
 %>
 <Row>
@@ -234,29 +219,47 @@ headers_list = [
 % for line in o.line_ids:
 <Row>
 ## 1) order line
-    <Cell ss:StyleID="lineInt"><Data ss:Type="Number">${int(line.line_number)}</Data></Cell>
-## 2) product code
-    <Cell ss:StyleID="line"><Data ss:Type="String">${line.product_id and line.product_id.default_code or ''|x}</Data></Cell>
-## 3) proc.method
-    <Cell ss:StyleID="line"><Data ss:Type="String">${getSel(line, 'procure_method')|x}</Data></Cell>
-## 4) po/cft
-    <Cell ss:StyleID="line"><Data ss:Type="String">${getSel(line, 'po_cft')|x}</Data></Cell>
-## 5) ordered qty
-    <Cell ss:StyleID="lineFloat"><Data ss:Type="Number">${line.qty_ordered or 0.}</Data></Cell>
-## 6) uom
-    <Cell ss:StyleID="line"><Data ss:Type="String">${line.uom_id and line.uom_id.name or ''|x}</Data></Cell>
-## 7) sourced
-    <Cell ss:StyleID="line"><Data ss:Type="String">${line.sourced_ok or ''|x}</Data></Cell>
-## 8) tender
-    <Cell ss:StyleID="line"><Data ss:Type="String">${line.tender_status or ''|x}</Data></Cell>
-## 9) purchase order
-    <Cell ss:StyleID="line"><Data ss:Type="String">${line.purchase_status or ''|x}</Data></Cell>
-## 10) incoming shipment
-    <Cell ss:StyleID="line"><Data ss:Type="String">${line.incoming_status or ''|x}</Data></Cell>
-## 11) product available
-    <Cell ss:StyleID="line"><Data ss:Type="String">${line.product_available or ''|x}</Data></Cell>
-## 12) outgoing delivery
-    <Cell ss:StyleID="line"><Data ss:Type="String">${line.outgoing_status or ''|x}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.line_name|x}</Data></Cell>
+## 2) purchase line product 
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.line_product_id and '[%s] %s' % (line.line_product_id.default_code, line.line_product_id.name) or ''|x}</Data></Cell>
+## 3) purchase line qty
+% if line.line_product_qty:
+    <Cell ss:StyleID="lineFloat"><Data ss:Type="Number">${line.line_product_qty}</Data></Cell>
+% else:
+    <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+% endif
+## 4) purchase line uom
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.line_uom_id and line.line_uom_id.name or ''|x}</Data></Cell>
+## 5) purchase line confirmed date
+<% dt = parse_date_xls(line.line_confirmed_date) %>
+% if dt:
+    <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${dt|n}</Data></Cell>
+% else:
+    <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+% endif
+## 6) shipped rate
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.line_product_id and '%s %%' % line.line_shipped_rate or ''|x}</Data></Cell>
+## 7) incoming shipment
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.picking_id and line.picking_id.name or ''|x}</Data></Cell>
+## 8) move product
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.move_product_id and '[%s] %s' % (line.move_product_id.default_code, line.move_product_id.name) or ''|x}</Data></Cell>
+## 9) move qty
+% if line.move_product_qty:
+    <Cell ss:StyleID="lineFloat"><Data ss:Type="Number">${line.move_product_qty}</Data></Cell>
+% else:
+    <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+% endif
+## 10) move uom
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.move_uom_id and line.move_uom_id.name or ''|x}</Data></Cell>
+## 11) move delivery date
+<% dt = parse_date_xls(line.move_delivery_date) %>
+% if dt:
+    <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${dt|n}</Data></Cell>
+% else:
+    <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+% endif
+## 12) move state
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.move_state or ''|x}</Data></Cell>
 </Row>
 % endfor
 
