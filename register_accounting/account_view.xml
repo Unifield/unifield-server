@@ -869,30 +869,11 @@
                 <data>
                     <xpath expr="//field[@name='partner_id']" position="replace">
                         <newline/>
-                        <field name="partner_id" select="1" string="3RD Party Partner"/>
-                        <field name="employee_id" select="1" string="3RD Party Employee"/>
-                        <field name="transfer_journal_id" select="1" string="3RD Party Journal"/>
-                        <newline/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-    
-    <!-- UF-1719: Add employee_id + transfer_journal_id on Journal Items -->
-        <record model="ir.ui.view" id="inherit_view_account_move_line_filter_register">
-            <field name="name">inherit.view.account.move.line.filter.register</field>
-            <field name="model">account.move.line</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_move_line_filter" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="//field[@name='name']" position="after">
-                        <newline/>
-                        <field name="partner_id" select="1" string="3RD Party Partner"/>
-                        <field name="employee_id" select="1" string="3RD Party Employee"/>
-                        <field name="transfer_journal_id" select="1" string="3RD Party Journal"/>
-                        <field name="is_reconciled" select="1"/>
-                        <field name="reconcile_total_partial_id" select="1"/>
+                        <group>
+                            <field name="partner_id" select="1" string="3RD Party Partner"/>
+                            <field name="employee_id" select="1" string="3RD Party Employee"/>
+                            <field name="transfer_journal_id" select="1" string="3RD Party Journal"/>
+                        </group>
                         <newline/>
                     </xpath>
                 </data>

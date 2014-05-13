@@ -114,73 +114,128 @@
             <field name="name">Journal Items</field>
             <field name="model">account.move.line</field>
             <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_move_filter"/>
+            <field name="priority" eval="5"/>
             <field name="arch" type="xml">
-                <search string="Search Journal Items">
-                    <group>
-                        <filter icon="terp-document-new" string="Unbalanced" domain="[('state','=','draft')]" help="Unbalanced Journal Items"/>
-                        <separator orientation="vertical"/>
-                        <filter icon="terp-document-new" string="Unposted" domain="[('move_id.state','=','draft')]" help="Unposted Journal Items"/>
-                        <filter name="posted" icon="terp-camera_test" string="Posted" domain="[('move_id.state','=','posted')]" help="Posted Journal Items"/>
-                        <separator orientation="vertical"/>
-                        <filter
-                            icon="terp-dolar_ok!"
-                            string="Unreconciled"
-                            domain="[('reconcile_id','=',False), ('account_id.reconcile','=',True)]" help="Unreconciled Journal Items"
-                            name="unreconciled"/>
-                        <field name="document_date"/>
-                        <field name="date" select='1'/>
-                        <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
-                    </group>
-                    <newline/>
-                    <group>
-                        <field name="move_id" select="1"/>
-                        <field name="ref" select="1" string="Reference"/>
-                        <field name="account_id" select='1'/>
-                        <field name="name" select="1"/>
-                    </group>
-                    <newline/>
-                    <group>
-                        <field name="partner_id" select='1' string="3RD Party Partner"/>
-                        <field name="employee_id" select='1' string="3RD Party Employee"/>
-                        <field name="transfer_journal_id" select='1' string="3RD Party Journal"/>
-                        <field name="is_reconciled" select='1'/>
-                        <field name="reconcile_total_partial_id" select='1'/>
+                <xpath expr="/search" position="replace">
+                    <search string="Search Journal Items">
+                        <group>
+                            <filter icon="terp-document-new" string="Invalid" domain="[('state','=','draft')]" help="Invalid Journal Items"/>
+                            <separator orientation="vertical"/>
+                            <filter icon="terp-document-new" string="Unposted" domain="[('move_id.state','=','draft')]" help="Unposted Journal Items"/>
+                            <filter name="posted" icon="terp-camera_test" string="Posted" domain="[('move_id.state','=','posted')]" help="Posted Journal Items"/>
+                            <separator orientation="vertical"/>
+                            <filter
+                                icon="terp-dolar_ok!"
+                                string="Unreconciled"
+                                domain="[('reconcile_id','=',False), ('account_id.reconcile','=',True)]" help="Unreconciled Journal Items"
+                                name="unreconciled"/>
+                            <field name="document_date"/>
+                            <field name="date" select='1'/>
+                            <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
+                        </group>
                         <newline/>
-                    </group>
-                    <newline/>
-                    <group>
-                        <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
-                        <field name="journal_id_fake" context="{'journal_id':self, 'visible_id':self, 'normal_view':False}"/>
-                        <field name="journal_type"/>
-                    </group>
-                    <newline/>
-                    <group col="2" colspan="4">
-                        <field name="balance" string="Debit/Credit Fonctional" select='1'/>
-                        <field name="balance_currency" string="Debit/Credit Booking" select='1'/>
-                    </group>
-                    <newline/>
-                    <group expand="0" string="Extended Filters..." col="20" colspan="6">
-                        <field name="narration" select="1"/>
-                    </group>
-                    <newline/>
-                    <group expand="0" string="Group By..." colspan="4" col="20">
-                        <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
-                        <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
-                        <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id'}"/>
-                        <separator orientation="vertical"/>
-                        <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
-                        <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
-                        <filter string="Account Type"  icon="terp-folder-green" context="{'group_by':'account_type'}"/>
-                        <separator orientation="vertical"/>
-                        <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
-                        <separator orientation="vertical"/>
-                        <filter string="Register Name" icon="terp-dolar_ok!" domain="[]" context="{'group_by': 'statement_id'}"/>
-                        <separator orientation="vertical"/>
-                        <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance_id'}"/>
-                    </group>
-                    <newline/>
-                </search>
+                        <group>
+                            <field name="move_id" select="1"/>
+                            <field name="ref" select="1" string="Reference"/>
+                            <field name="account_id" select='1'/>
+                            <field name="name" select="1"/>
+                        </group>
+                        <newline/>
+                        <group>
+                            <field name="partner_id" select='1' string="3RD Party Partner"/>
+                            <field name="employee_id" select='1' string="3RD Party Employee"/>
+                            <field name="transfer_journal_id" select='1' string="3RD Party Journal"/>
+                            <field name="is_reconciled" select='1'/>
+                            <field name="reconcile_total_partial_id" select='1'/>
+                            <newline/>
+                        </group>
+                        <newline/>
+                        <group>
+                            <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
+                            <field name="journal_id_fake" context="{'journal_id':self, 'visible_id':self, 'normal_view':False}"/>
+                            <field name="journal_type"/>
+                        </group>
+                        <newline/>
+                        <group col="2" colspan="4">
+                            <field name="balance" string="Debit/Credit Fonctional" select='1'/>
+                            <field name="balance_currency" string="Debit/Credit Booking" select='1'/>
+                        </group>
+                        <newline/>
+                        <group expand="0" string="Extended Filters..." col="20" colspan="6">
+                            <field name="narration" select="1"/>
+                        </group>
+                        <newline/>
+                        <group expand="0" string="Group By..." colspan="4" col="20">
+                            <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                            <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
+                            <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id'}"/>
+                            <separator orientation="vertical"/>
+                            <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
+                            <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
+                            <filter string="Account Type"  icon="terp-folder-green" context="{'group_by':'account_type'}"/>
+                            <separator orientation="vertical"/>
+                            <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
+                            <separator orientation="vertical"/>
+                            <filter string="Register Name" icon="terp-dolar_ok!" domain="[]" context="{'group_by': 'statement_id'}"/>
+                            <separator orientation="vertical"/>
+                            <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance_id'}"/>
+                        </group>
+                        <newline/>
+                    </search>
+                </xpath>
             </field>
+        </record>
+
+    <!-- Redefine Journal Items action that launch the journal item view in order to use previous redefinition -->
+        <record id="account.action_account_moves_all_a" model="ir.actions.act_window">
+            <field name="name">Journal Items</field>
+            <field name="res_model">account.move.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_posted': 1}</field>
+            <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
+            <field name="help">This view can be used by accountants in order to quickly record entries in OpenERP. If you want to record a supplier invoice, start by recording the line of the expense account. OpenERP will propose to you automatically the Tax related to this account and the counterpart "Account Payable".</field>
+        </record>
+
+        <record id="account.action_move_line_select" model="ir.actions.act_window">
+            <field name="name">Journal Items</field>
+            <field name="res_model">account.move.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
+        </record>
+
+        <record id="account.action_view_move_line" model="ir.actions.act_window">
+            <field name="name">Lines to reconcile</field>
+            <field name="res_model">account.move.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('account_id.reconcile', '=', True),('reconcile_id','=',False)]</field>
+            <field eval="False" name="view_id"/>
+            <field eval="True" name="filter"/>
+            <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
+        </record>
+
+        <record id="account.action_move_line_select" model="ir.actions.act_window">
+            <field name="name">Journal Items</field>
+            <field name="res_model">account.move.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="account.view_move_line_tree"/>
+            <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
+            <field name="domain">[('account_id', 'child_of', active_id)]</field>
+            <field name="context">{'account_id':active_id}</field>
+        </record>
+
+        <record id="account.action_move_line_search" model="ir.actions.act_window">
+            <field name="name">Journal Items</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">account.move.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="account.view_move_line_tree"/>
+            <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
         </record>
 
     <!-- Account analytic line search view -->

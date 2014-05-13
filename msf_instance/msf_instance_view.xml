@@ -321,26 +321,6 @@
                 </data>
             </field>
         </record>
-        <record id="view_account_move_line_filter_instance_inherit" model="ir.ui.view">
-            <field name="name">account.move.line.filter.instance.inherit</field>
-            <field name="model">account.move.line</field>
-            <field name="type">search</field>
-            <field eval="300" name="priority"/>
-            <field name="inherit_id" ref="account.view_account_move_line_filter"/>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/search//field[@name='journal_id']" position="replace">
-                        <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
-                        <field name="journal_id_fake"/>
-                    </xpath>
-                    <xpath expr="/search//filter[@string='Period']" position="after">
-                        <separator orientation="vertical"/>
-                        <filter context="{'group_by': 'instance_id'}"
-                            domain="[]" icon="terp-stage" string="Proprietary Instance"/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
         <!-- Redefine register -->
         <record id="inherit_view_bank_statement_instance_form" model="ir.ui.view">
             <field name="name">inherit.view.bank.statement.instance.form</field>
