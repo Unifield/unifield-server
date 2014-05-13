@@ -173,17 +173,17 @@ else:
 ## order type
 <Row>
     <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Order type:')|x}</Data></Cell>
-    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String">${getSel(o, 'order_type')|x}</Data></Cell>
+    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String">${o.order_type and getSel(o, 'order_type') or ''|x}</Data></Cell>
 </Row>
 ## priority
 <Row>
     <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Priority:')|x}</Data></Cell>
-    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String">${getSel(o, 'priority')|x}</Data></Cell>
+    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String">${o.priority and getSel(o, 'priority') or ''|x}</Data></Cell>
 </Row>
 ## order category
 <Row>
     <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Order category:')|x}</Data></Cell>
-    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String">${getSel(o, 'categ')|x}</Data></Cell>
+    <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String">${o.categ and getSel(o, 'categ') or ''|x}</Data></Cell>
 </Row>
 <Row>
 ## separator line

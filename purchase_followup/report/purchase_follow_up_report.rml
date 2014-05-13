@@ -132,7 +132,7 @@
 	    			<para style="TextInfoBold">Order type:</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfoLeft">[[ getSel(objects[0], 'order_type') ]]</para>
+	    			<para style="TextInfoLeft">[[ objects[0].order_type and getSel(objects[0], 'order_type') or '' ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="TextInfo"> </para>
@@ -143,7 +143,7 @@
 	    			<para style="TextInfoBold">Priority:</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfoLeft">[[ getSel(objects[0], 'priority') ]]</para>
+	    			<para style="TextInfoLeft">[[ objects[0].priority and getSel(objects[0], 'priority') or '' ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="TextInfo"> </para>
@@ -154,7 +154,7 @@
 	    			<para style="TextInfoBold">Order Category:</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfoLeft">[[ getSel(objects[0], 'categ') ]]</para>
+	    			<para style="TextInfoLeft">[[ objects[0].categ and getSel(objects[0], 'categ') or '' ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="TextInfo"> </para>
@@ -241,7 +241,7 @@
 	    			<para style="TextInfo">[[ formatLang(line.move_delivery_date, date=True) ]]</para>
 	    		</td>
                 <td>
-	    			<para style="TextInfo">[[ getSel(line, 'move_state') ]]</para>
+	    			<para style="TextInfo">[[ line.move_state and getSel(line, 'move_state') or '' ]]</para>
                 </td>
 	    	</tr>
 	    </blockTable>

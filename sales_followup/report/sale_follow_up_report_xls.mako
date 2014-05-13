@@ -238,9 +238,9 @@ headers_list = [
 ## 2) product code
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.product_id and '[%s] %s' % (line.product_id.default_code, line.product_id.name) or ''|x}</Data></Cell>
 ## 3) proc.method
-    <Cell ss:StyleID="line"><Data ss:Type="String">${getSel(line, 'procure_method')|x}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.procure_method and getSel(line, 'procure_method') or ''|x}</Data></Cell>
 ## 4) po/cft
-    <Cell ss:StyleID="line"><Data ss:Type="String">${getSel(line, 'po_cft')|x}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.po_cft and getSel(line, 'po_cft') or ''|x}</Data></Cell>
 ## 5) ordered qty
     <Cell ss:StyleID="lineFloat"><Data ss:Type="Number">${line.qty_ordered or 0.}</Data></Cell>
 ## 6) uom
