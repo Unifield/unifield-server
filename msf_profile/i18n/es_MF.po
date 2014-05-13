@@ -727,7 +727,7 @@ msgstr "Línea de pedido"
 
 #. module: stock
 #: view:stock.inventory:0
-msgid "General Informations"
+msgid "General Information"
 msgstr "Informaciones generales"
 
 #. modules: msf_budget, account, reason_types_moves, resource, product_attributes, financing_contract, msf_instance, product, sale, analytic, base, stock, analytic_distribution
@@ -25856,7 +25856,7 @@ msgstr "No se encontró el nombre de la moneda."
 #. module: account_corrections
 #: code:addons/account_corrections/wizard/journal_items_corrections.py:333
 #, python-format
-msgid "You're just allowed to change ONE field amoungst Account, Third Party or Analytical Distribution"
+msgid "You're just allowed to change ONE field amongst Account, Third Party or Analytical Distribution"
 msgstr "Solo puede cambiar UN SOLO campo de entre Cuenta, Tercero y Distribución analítica"
 
 #. module: mission_stock
@@ -53398,12 +53398,6 @@ msgstr "Línea de pago sin monedas %s"
 #, python-format
 msgid "\"Delivery Confirmed Date (PO)\" %s has a wrong format. Please format the cell in Excel as date."
 msgstr "\"Delivery Confirmed Date (PO)\" %s has a wrong format. Please format the cell in Excel as date."
-
-#. module: account_corrections
-#: code:addons/account_corrections/account_move_line.py:586
-#, python-format
-msgid "No account_id given. update_account_on_st_line() could not works."
-msgstr "No se ha asignado un account_id  ya que update_account_on_st_line () no funcionaba."
 
 #. module: msf_outgoing
 #: field:stock.move.memory.shipment.returnpacksfromshipment,return_from:0

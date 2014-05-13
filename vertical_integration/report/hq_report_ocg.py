@@ -148,9 +148,12 @@ class hq_report_ocg(report_sxw.report_sxw):
         move_line_ids = pool.get('account.move.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                        ('instance_id', 'in', data['form']['instance_ids']),
                                                                        ('analytic_distribution_id', '=', False),
-                                                                       ('journal_id.type', 'not in', ['hq', 'cur_adj', 'inkind'])], context=context)
+                                                                       ('journal_id.type', 'not in', ['migration', 'hq', 'cur_adj', 'inkind'])], context=context)
         
         for move_line in pool.get('account.move.line').browse(cr, uid, move_line_ids, context=context):
+            # UFTP-194: Just take posted move lines
+            if move_line.move_id.state != 'posted':
+                continue
             journal = move_line.journal_id
             account = move_line.account_id
             currency = move_line.currency_id
@@ -198,9 +201,12 @@ class hq_report_ocg(report_sxw.report_sxw):
         
         analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
-                                                                               ('journal_id.type', 'not in', ['hq', 'engagement', 'inkind']),
+                                                                               ('journal_id.type', 'not in', ['migration', 'hq', 'engagement', 'inkind']),
                                                                                ('journal_id', 'not in', ana_cur_journal_ids)], context=context)
         for analytic_line in pool.get('account.analytic.line').browse(cr, uid, analytic_line_ids, context=context):
+            # Just take analytic lines that comes from posted move lines
+            if analytic_line.move_state != 'posted':
+                continue
             journal = analytic_line.move_id and analytic_line.move_id.journal_id
             account = analytic_line.general_account_id
             currency = analytic_line.currency_id

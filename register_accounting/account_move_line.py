@@ -73,6 +73,7 @@ class account_move_line(osv.osv):
             ('account_id.type','in',['receivable','payable']),
             ('reconcile_id','=',False),
             ('state', '=', 'valid'),
+            ('move_state', '=', 'posted'), # UFTP-204: Exclude the Direct Invoice from the list
             ('journal_id.type', 'in', ['purchase', 'sale','purchase_refund','sale_refund', 'hr']),
             ('account_id.type_for_register', 'not in', ['down_payment'])
         ]

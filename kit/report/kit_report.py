@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,10 +20,9 @@
 ##############################################################################
 
 from report import report_sxw
-from report_webkit.webkit_report import WebKitParser
 
-import pooler
 import time
+
 
 class kit_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
@@ -39,6 +38,12 @@ class kit_report(report_sxw.rml_parse):
         '''
         return self.pool.get(obj).name_get(self.cr, self.uid, [obj_id])[0][1]
 
-report_sxw.report_sxw('report.kit.report','composition.kit','addons/kit/report/kit_report.rml',parser=kit_report, header=False)
+report_sxw.report_sxw(
+    'report.kit.report',
+    'composition.kit',
+    'addons/kit/report/kit_report.rml',
+    parser=kit_report,
+    header=False,
+)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

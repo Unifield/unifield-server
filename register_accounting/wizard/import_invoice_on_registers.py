@@ -26,6 +26,7 @@ from osv import fields
 from tools.translate import _
 import decimal_precision as dp
 import time
+from lxml import etree
 
 class wizard_import_invoice_lines(osv.osv_memory):
     """
@@ -114,6 +115,18 @@ class wizard_import_invoice(osv.osv_memory):
         if view:
             view_id = view[1]
         result = super(wizard_import_invoice, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        # UFTP-121: Add instance in the selection
+        user = self.pool.get('res.users').browse(cr, uid, uid)
+        instance_id = user.company_id and user.company_id.instance_id and user.company_id.instance_id.id or False
+        fctx = {
+            'from': 'wizard_import_invoice', 
+            'search_default_instance_id': instance_id,
+        }
+        form = etree.fromstring(result['arch'])
+        fields = form.xpath("//field[@name='line_ids']")
+        for field in fields:
+            field.set('context', str(fctx))
+        result['arch'] = etree.tostring(form)
         return result
 
     def single_import(self, cr, uid, ids, context=None):

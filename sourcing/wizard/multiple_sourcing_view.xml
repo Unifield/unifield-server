@@ -33,7 +33,9 @@
                         <separator colspan="4" string="Supplier selection" />
                         <field name="supplier"
                                domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft), ('line_contains_fo', '=', line_ids)]"
-                               attrs="{'readonly': ['|', ('po_cft', '=', 'cft'), ('type', '=', 'make_to_stock')]}"/>
+                               attrs="{'readonly': ['|', ('po_cft', '=', 'cft'), ('type', '=', 'make_to_stock')]}"
+                               on_change="change_supplier(supplier)"
+                        />
                     </group>
                     <separator colspan="4" string="Actions" />
                     <button special="cancel" string="Cancel" icon="gtk-cancel" help="Close the wizard" />

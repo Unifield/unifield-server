@@ -111,6 +111,13 @@ def create_csv(self, cr, uid, ids, data, context=None):
 class account_move_line_report(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context=context)
+        if context is None:
+            context = {}
+        return super(account_move_line_report, self).create(cr, uid, ids, data, context=context)
+
     def getObjects(self, cr, uid, ids, context):
         return getObjects(self, cr, uid, ids, context)
 
@@ -182,6 +189,13 @@ account_move_line_report_xls('report.account.move.line_xls','account.move.line',
 class account_analytic_line_report(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context=context)
+        if context is None:
+            context = {}
+        return super(account_analytic_line_report, self).create(cr, uid, ids, data, context=context)
+
     def getObjects(self, cr, uid, ids, context):
         return getObjects(self, cr, uid, ids, context)
 

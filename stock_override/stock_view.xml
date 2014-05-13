@@ -1005,7 +1005,7 @@
                     <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <field name="date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <notebook colspan="4">
-                    <page string="General Informations">
+                    <page string="General Information">
                         <field colspan="4" name="inventory_line_id" nolabel="1" widget="one2many_list"  attrs="{'readonly': [('state', '!=', 'draft')]}">
                             <tree string="Products" editable="bottom" colors="red: has_problem == True">
                                 <field colspan="4" domain="[('usage','=','internal')]" name="location_id" required="True"

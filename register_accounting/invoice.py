@@ -257,8 +257,11 @@ class account_invoice(osv.osv):
         absl = direct_invoice.register_line_ids[0]
         if (direct_invoice.document_date != absl.document_date) or (direct_invoice.partner_id != absl.partner_id):
             account_bank_statement_line.write(cr, uid, [absl.id], {'document_date': direct_invoice.document_date, \
-                                                                   'partner_id': direct_invoice.partner_id.id },     \
+                                                                   'partner_id': direct_invoice.partner_id.id , \
+                                                                   'account_id': direct_invoice.account_id.id}, # UFTP-166: Saved also the account change to reg line
                                                                    context=context)
+        if (direct_invoice.reference != absl.ref):
+            account_bank_statement_line.write(cr, uid, [absl.id], {'ref': direct_invoice.reference }, context=context)
         # Delete moves
         # existing seqnums are saved into context here. utp917
         account_bank_statement_line.unlink_moves(cr, uid, [absl.id], context=context)
@@ -267,7 +270,37 @@ class account_invoice(osv.osv):
         account_bank_statement_line.button_temp_posting(cr, uid, [absl.id], context=context)
         # remove seqnums from context
         context.pop("seqnums",None)
+
+        # fix the reference UFTP-167
+        self.fix_aal_aml_reference(cr, uid, ids[0], context=context)
+
         return True
+
+    def fix_aal_aml_reference(self, cr, uid, id, context=None):
+        # fix the reference UFTP-167
+        aml_obj = self.pool.get('account.move.line')
+        aal_obj = self.pool.get('account.analytic.line')
+
+        # 1. find the moves associated with the invoice - account_invoice.move_id
+        move_id = self.browse(cr, uid, id, context=context).move_id.id
+
+        # 2. get all the move_lines for that move_id with an account_move_line.invoice_line_id <> null
+        aml_ids = aml_obj.search(cr, uid, [('move_id', '=', move_id),('invoice_line_id','!=',False)], context=context)
+        move_lines = aml_obj.browse(cr, uid, aml_ids, context=context)
+
+        # 3. get the corresponding invoice_line
+        # 4. if the ref is not blank than update it
+
+        for move_line in move_lines:
+            ail = move_line.invoice_line_id
+            if ail.reference:
+                # must write to 'reference' to have 'ref' update: very confusing.
+                aml_obj.write(cr, uid, move_line.id, {'reference': ail.reference}, context=context)
+                # update analytic lines. move_id is actually move_line_id
+                aal_ids = aal_obj.search(cr, uid, [('move_id','=',move_line.id)], context=context)
+                aal_obj.write(cr, uid, aal_ids, {'reference': ail.reference}, context=context)
+
+
 
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """

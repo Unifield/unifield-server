@@ -1608,6 +1608,11 @@ stock moves which are already processed : '''
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
+        line_obj = self.pool.get('purchase.order.line')
+        sol_obj = self.pool.get('sale.order.line')
+        data_obj = self.pool.get('ir.model.data')
+
+        input_loc = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
         picking_id = False
         for order in self.browse(cr, uid, ids):
             moves_to_update = []
@@ -1658,6 +1663,11 @@ stock moves which are already processed : '''
                 # service with reception are directed to Service Location
                 if order_line.product_id.type == 'service_recep' and not order.cross_docking_ok:
                     dest = self.pool.get('stock.location').get_service_location(cr, uid)
+                else:
+                    sol_ids = line_obj.get_sol_ids_from_pol_ids(cr, uid, [order_line.id], context=context)
+                    for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
+                        if sol.order_id and sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage != 'customer':
+                            dest = input_loc
 
                 move_values = {
                     'name': order.name + ': ' +(order_line.name or ''),

@@ -8,7 +8,7 @@
                   groups='base.group_no_one'
                 />
 
-		<!-- UF-1555/1557: The following block is for adding all menus that need to be deleted, set it to hidden and PLEASE DO NOT HARD-Delete THEM! -->
+        <!-- UF-1555/1557: The following block is for adding all menus that need to be deleted, set it to hidden and PLEASE DO NOT HARD-Delete THEM! -->
         <menuitem id="base.menu_partner_address_form" parent="menu_hidden" />
         <menuitem id="base.menu_address_book" parent="menu_hidden" />
         <menuitem id="sale.menu_invoiced" parent="menu_hidden" />
@@ -147,6 +147,7 @@
             
         <menuitem id="purchase.menu_purchase_config_pricelist" 
         parent="menu_hidden" />
-            
+
+        <menuitem id="account.account_template_folder" parent="menu_hidden" />
     </data>
 </openerp>

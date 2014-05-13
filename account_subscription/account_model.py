@@ -21,8 +21,6 @@
 ##############################################################################
 from osv import fields, osv
 import time
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
 from tools.translate import _
 
 class account_model_line(osv.osv):
@@ -156,7 +154,6 @@ class account_model_line(osv.osv):
         if not ids:
             raise osv.except_osv(_('Error'), _('No model line given. Please save your model line before.'))
         model_line = self.browse(cr, uid, ids[0], context=context)
-        distrib_id = False
         amount = abs(model_line.debit - model_line.credit)
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         currency = model_line.model_id and  model_line.model_id.currency_id and  model_line.model_id.currency_id.id or company_currency
@@ -262,6 +259,10 @@ class account_model(osv.osv):
         if not period_id:
             raise osv.except_osv(_('No period found !'), _('Unable to find a valid period !'))
         period_id = period_id[0]
+        # UFTP-105: Check that period is open. Otherwise raise an error
+        period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
+        if not period or period.state != 'draft':
+            raise osv.except_osv(_('Warning'), _('This period should be in open state: %s') % (period.name))
 
         for model in self.browse(cr, uid, ids, context=context):
             entry['name'] = model.name%{'year':time.strftime('%Y'), 'month':time.strftime('%m'), 'date':time.strftime('%Y-%m')}
