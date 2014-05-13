@@ -203,6 +203,7 @@
             <field name="res_model">account.move.line</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="account_move_line_mcdb_search_result"/>
             <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
         </record>
 
@@ -222,7 +223,7 @@
             <field name="res_model">account.move.line</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="account.view_move_line_tree"/>
+            <field name="view_id" ref="account_move_line_mcdb_search_result"/>
             <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
             <field name="domain">[('account_id', 'child_of', active_id)]</field>
             <field name="context">{'account_id':active_id}</field>
@@ -234,7 +235,7 @@
             <field name="res_model">account.move.line</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="account.view_move_line_tree"/>
+            <field name="view_id" ref="account_move_line_mcdb_search_result"/>
             <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
         </record>
 
@@ -283,6 +284,61 @@
             <field name="name">Search for Mass Reallocation</field>
             <field eval="'ir.actions.server,%d'%action_analytic_account_mass_reallocation_search" name="value"/>
             <field eval="True" name="object"/>
+        </record>
+
+    <!-- Journal Entries Search (filter) -->
+        <record model="ir.ui.view" id="inherit_view_account_move_filter">
+            <field name="name">inherit.view.account.move.filter</field>
+            <field name="model">account.move</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_move_filter" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search" position="replace">
+                        <search string="Search Move">
+                            <group col='8' colspan='4'>
+                                <filter icon="terp-document-new" string="Unposted" domain="[('state','=','draft')]" help="Unposted Journal Entries"/>
+                                <filter icon="terp-camera_test" string="Posted" domain="[('state','=','posted')]" help="Posted Journal Entries"/>
+                                <separator orientation="vertical"/>
+                                <field name="document_date" select="1"/>
+                                <field name="date" select="1" string="Posting Date"/>
+                                <field name="period_id"/>
+                            </group>
+                            <newline/>
+                            <group col='8' colspan='4'>
+                                <field name="name"/>
+                                <field name="ref"/>
+                            </group>
+                            <newline/>
+                            <group col='8' colspan='4'>
+                                <field name="partner_id" select="1" string="3RD Party Partner"/>
+                                <field name="employee_id" select="1" string="3RD Party Employee"/>
+                                <field name="transfer_journal_id" select="1" string="3RD Party Journal"/>
+                            </group>
+                            <newline/>
+                            <group col='8' colspan='4'>
+                                <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
+                                <field name="journal_id_fake"/>
+                                <field name="journal_type"/>
+                            </group>
+                            <newline/>
+                            <group expand="0" string="Group By..." colspan="12" col="10">
+                                <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                                <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
+                                <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id'}"/>
+                                <separator orientation="vertical"/>
+                                <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
+                                <filter string="States" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+                                <separator orientation="vertical"/>
+                                <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
+                                <filter string="Date" icon="terp-go-month" domain="[]" context="{'group_by':'date'}"/>
+                                <separator orientation="vertical"/>
+                                <filter context="{'group_by': 'instance_id'}" domain="[]" icon="terp-stage" string="Proprietary Instance"/>
+                            </group>
+                        </search>
+                    </xpath>
+                </data>
+            </field>
         </record>
 
     </data>
