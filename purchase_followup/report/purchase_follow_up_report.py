@@ -18,16 +18,16 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+
 import time
 
 from report import report_sxw
-from report_webkit.webkit_report import WebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 
 class purchase_follow_up_report_parser(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
-        super(sale_follow_up_report_parser, self).__init__(cr, uid, name,
+        super(purchase_follow_up_report_parser, self).__init__(cr, uid, name,
             context=context)
         self.localcontext.update({
             'time': time,
