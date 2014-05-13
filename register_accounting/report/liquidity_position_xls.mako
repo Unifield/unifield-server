@@ -319,6 +319,12 @@
 		<Cell ss:StyleID="s34" >
 <Data ss:Type="String">${_('Journal Name')}</Data>
 </Cell>
+<Cell ss:StyleID="s34" >
+	<Data ss:Type="String">${_('Status')}</Data>
+</Cell>
+<Cell ss:StyleID="s34" >
+	<Data ss:Type="String">${_('Period')}</Data>
+</Cell>
 		<Cell ss:StyleID="s34" >
 <Data ss:Type="String">${_('Calculated Balance in register currency')}</Data>
 </Cell>
@@ -339,7 +345,7 @@
 </Cell>
 </Row>
 
-% for reg in getRegister():
+% for reg in getRegister(data.get('period_id')):
 	% for o in getRegister2()[reg]:
 	<Row>
         <Cell ss:StyleID="s25" >
@@ -350,6 +356,12 @@
 </Cell>
         <Cell ss:StyleID="s25" >
 <Data ss:Type="String">${(o.journal_id and o.journal_id.name or '')|x}</Data>
+</Cell>
+ <Cell ss:StyleID="s25" >
+	<Data ss:Type="String">${(o.state or '')|x}</Data>
+</Cell>
+ <Cell ss:StyleID="s25" >
+	<Data ss:Type="String">${(o.period_id.name or '')|x}</Data>
 </Cell>
         <Cell ss:StyleID="s26" >
 <Data ss:Type="Number">${(o.msf_calculated_balance or 0.0)|x}</Data>
