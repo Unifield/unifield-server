@@ -124,9 +124,9 @@ header_merge_accross_count = col_count - 2  ## merging cell self deduced
 <ss:Worksheet ss:Name="FO Follow Up">
 <Table x:FullColumns="1" x:FullRows="1">
 ## order line
-<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
 ## product code
-<Column ss:AutoFitWidth="1" ss:Width="200" />
+<Column ss:AutoFitWidth="1" ss:Width="220" />
 ## proc. method
 <Column ss:AutoFitWidth="1" ss:Width="80"  />
 ## po/cft
@@ -134,9 +134,9 @@ header_merge_accross_count = col_count - 2  ## merging cell self deduced
 ## ordered qty
 <Column ss:AutoFitWidth="1" ss:Width="50"  />
 ## uom
-<Column ss:AutoFitWidth="1" ss:Width="50"  />
+<Column ss:AutoFitWidth="1" ss:Width="60"  />
 ## sourced  
-<Column ss:AutoFitWidth="1" ss:Width="50"  />
+<Column ss:AutoFitWidth="1" ss:Width="60"  />
 ## tender (status)
 <Column ss:AutoFitWidth="1" ss:Width="120" />
 ## purchase order (status)
@@ -236,7 +236,7 @@ headers_list = [
 ## 1) order line
     <Cell ss:StyleID="lineInt"><Data ss:Type="Number">${int(line.line_number)}</Data></Cell>
 ## 2) product code
-    <Cell ss:StyleID="line"><Data ss:Type="String">${line.product_id and line.product_id.default_code or ''|x}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="String">${line.product_id and '[%s] %s' % (line.product_id.default_code, line.product_id.name) or ''|x}</Data></Cell>
 ## 3) proc.method
     <Cell ss:StyleID="line"><Data ss:Type="String">${getSel(line, 'procure_method')|x}</Data></Cell>
 ## 4) po/cft
