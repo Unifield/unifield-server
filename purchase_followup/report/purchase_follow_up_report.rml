@@ -166,7 +166,7 @@
 	    	<font color="white"> </font>
 	    </para>
 	    
-	    <blockTable colWidths="22.0,80.0,80.0,50.0,60.0,60.0,50.0,70.0,75.0,75.0,75.0,75.0" style="LinesTable" repeatRows="1">
+	    <blockTable colWidths="22.0,100.0,60.0,50.0,60.0,60.0,50.0,100.0,60.0,50.0,75.0,75.0" style="LinesTable" repeatRows="1">
 	    	<tr>
 	    		<td>
 	    			<para style="TextInfoBoldCenter">#</para>
@@ -214,7 +214,7 @@
                     <para style="TextInfoLeft">[[ line.line_product_id and '[%s] %s' % (line.line_product_id.default_code, line.line_product_id.name) or '' ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfo">[[ formatLang(line.line_product_qty or 0.00) ]]</para>
+	    			<para style="TextInfo">[[ line.line_product_qty and formatLang(line.line_product_qty) or '' ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="TextInfo">[[ line.line_uom_id and line.line_uom_id.name or '' ]]</para>
@@ -223,7 +223,7 @@
 	    			<para style="TextInfo">[[ formatLang(line.line_confirmed_date, date=True) ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="TextInfo">[[ formatLang(line.line_shipped_rate or 0.00) ]] %</para>
+                    <para style="TextInfo">[[ line.line_product_id and '%s %%' % formatLang(line.line_shipped_rate &lt; 100.00 and line.line_shipped_rate or 100.00) or '' ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="TextInfoLeft">[[ line.picking_id and line.picking_id.name or '' ]]</para>

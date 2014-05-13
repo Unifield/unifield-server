@@ -297,6 +297,16 @@ class purchase_order_followup_line(osv.osv_memory):
         'move_state': fields.char(size=64, string='State'),
         'return_move': fields.boolean(string='Is a return move ?'),
     }
+
+    def read(self, cr, uid, ids, fields, context=None, load='_classic_write'):
+        res = super(purchase_order_followup_line, self).read(cr, uid, ids, fields, context=context, load=load)
+
+        if context.get('export'):
+            for r in res:
+                if 'line_shipped_rate' in r and r['line_shipped_rate'] == 'no-progressbar':
+                    r['line_shipped_rate'] = 0.00
+
+        return res
     
     def go_to_incoming(self, cr, uid, ids, context=None):
         '''

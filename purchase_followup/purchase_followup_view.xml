@@ -52,8 +52,8 @@
         			<button name="close_view" type="object" string="Close" icon="gtk-cancel" colspan="2" />
         			<button name="update_view" type="object" string="Update" icon="gtk-execute" colspan="2" />
                     <newline />
-                    <button name="export_xls" string="Export Excel" icon="gtk-execute" colspan="2" type="object" />
-                    <button name="export_pdf" string="Export PDF" icon="gtk-execute" colspan="2" type="object" />
+                    <button name="export_xls" string="Export Excel" icon="gtk-execute" colspan="2" type="object" context="{'export':True}" />
+                    <button name="export_pdf" string="Export PDF" icon="gtk-execute" colspan="2" type="object" context="{'export':True}" />
                 </form>
         	</field>
         </record>
@@ -94,8 +94,8 @@
         			<button name="close_view" type="object" string="Close" icon="gtk-cancel" colspan="2" />
         			<button name="update_view" type="object" string="Update" icon="gtk-execute" colspan="2" />
                     <newline />
-                    <button name="export_xls" string="Export Excel" icon="gtk-execute" colspan="2" type="object" />
-                    <button name="export_pdf" string="Export PDF" icon="gtk-execute" colspan="2" type="object" />
+                    <button name="export_xls" string="Export Excel" icon="gtk-execute" colspan="2" type="object" context="{'export':True}" />
+                    <button name="export_pdf" string="Export PDF" icon="gtk-execute" colspan="2" type="object" context="{'export':True}" />
                 </form>
         	</field>
         </record>
