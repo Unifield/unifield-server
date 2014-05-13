@@ -981,6 +981,17 @@ class board_board(osv.osv):
                     model = self.pool.get('ir.actions.act_window').browse(cr, uid, action_id).res_model
                     if not self.pool.get('ir.model.access').check(cr, uid, model, mode='read', raise_exception=False):
                         node.remove(child)                                      
+
+                if child.get('menu_ref'):
+                    menu_ids = child.get('menu_ref').split(',')
+                    if not isinstance(menu_ids, list):
+                        menu_ids = [menu_ids]
+
+                    for menu_id in menu_ids:
+                        menu_id = int(menu_id)
+                        if not self.pool.get('ir.ui.menu').search(cr, uid, [('id', '=', menu_id)]):
+                            node.remove(child)
+                            break
             else:                                                               
                 child = self.remove_unauthorized_children(cr, uid, child)       
                 
