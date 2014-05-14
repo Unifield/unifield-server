@@ -279,6 +279,10 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         default.update(shipment_ref=False)
+
+        if not 'previous_chained_pick_id' in default:
+            default['previous_chained_pick_id'] = False
+
         return super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
 
     def _check_active_product(self, cr, uid, ids, context=None):
