@@ -736,7 +736,7 @@ class purchase_order(osv.osv):
                 distrib = pol.analytic_distribution_id  or po.analytic_distribution_id  or False
                 # Raise an error if no analytic distribution found
                 if not distrib:
-                    if not po.order_type in ('loan', 'donation_st', 'donation_exp'):
+                    if not po.order_type in ('loan', 'donation_st', 'donation_exp', 'in_kind'):
                         raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
 
                     # UF-2031: If no distrib accepted (for loan, donation), then do not process the distrib
