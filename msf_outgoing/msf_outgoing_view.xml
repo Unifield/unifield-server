@@ -325,7 +325,6 @@
 									<label string="" colspan="4"/>
 									<field name="state"/>
 									<group col="4" colspan="2">
-										<button name="action_cancel" states="assigned" string="Cancel Move" type="object" icon="gtk-cancel"/>
 										<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
 										<button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
 									</group>
@@ -688,7 +687,6 @@
 									<label string="" colspan="4"/>
 									<field name="state"/>
 									<group col="4" colspan="2">
-										<button name="action_cancel" states="assigned" string="Cancel Move" type="object" icon="gtk-cancel"/>
 										<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
 										<button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
 									</group>
@@ -1060,7 +1058,6 @@
 									<label string="" colspan="4"/>
 									<field name="state"/>
 									<group col="4" colspan="2">
-										<button name="action_cancel" states="assigned" string="Cancel Move" type="object" icon="gtk-cancel"/>
 										<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
 										<button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
 									</group>
