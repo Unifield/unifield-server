@@ -263,6 +263,7 @@ class stock_picking(osv.osv):
         'dpo_out': fields.function(_get_dpo_incoming, method=True, type='boolean', string='DPO Out', multi='dpo',
                                         store={'stock.move': (_get_dpo_picking_ids, ['sync_dpo', 'dpo_line_id', 'picking_id'], 10,),
                                                'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
+        'previous_chained_pick_id': fields.many2one('stock.picking', string='Previous chained picking', ondelete='set null', readonly=True),
     }
 
     _defaults = {'from_yml_test': lambda *a: False,
@@ -1963,6 +1964,7 @@ class stock_move(osv.osv):
             'sale_id': picking.sale_id and picking.sale_id.id or False,
             'auto_picking': picking.type == 'in' and picking.move_lines[0]['direct_incoming'],
             'reason_type_id': reason_type_id,
+            'previous_chained_pick_id': picking.id,
         }
 
         return picking_obj.create(cr, uid, pick_values, context=context)
