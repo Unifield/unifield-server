@@ -674,8 +674,10 @@
                                     context="{'cancel_type': 'update_out'}"
                                     confirm="Warning, you are going to Cancel!"
                                     />
+                                <field name="from_wkf_sourcing" invisible="1" />
                                 <button name="enter_reason"
                                     states="assigned,confirmed,draft,shipped"
+                                    attrs="{'invisible': [('from_wkf_sourcing', '=', False)]}"
                                     string="Cancel &amp; Resource"
                                     type="object"
                                     icon="gtk-cancel"
