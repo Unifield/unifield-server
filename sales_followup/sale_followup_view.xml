@@ -93,6 +93,9 @@
                     <group colspan="4" col="6">
                         <button special="cancel" string="Close" icon="gtk-cancel" colspan="2" />
                         <button name="update_followup" string="Update" icon="gtk-execute" colspan="2" type="object" />
+                        <newline />
+                        <button name="export_xls" string="Export Excel" icon="gtk-execute" colspan="2" type="object" />
+                        <button name="export_pdf" string="Export PDF" icon="gtk-execute" colspan="2" type="object" />
                     </group>
                 </form>
             </field>
@@ -133,6 +136,9 @@
                     <group colspan="4" col="6">
                         <button special="cancel" string="Close" icon="gtk-cancel" colspan="2" />
                         <button name="update_followup" string="Update" icon="gtk-execute" colspan="2" type="object" />
+                        <newline />
+                        <button name="export_xls" string="Export Excel" icon="gtk-execute" colspan="2" type="object" />
+                        <button name="export_pdf" string="Export PDF" icon="gtk-execute" colspan="2" type="object" />
                     </group>
                 </form>
             </field>
