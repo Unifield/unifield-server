@@ -411,13 +411,17 @@ class Search(TinyInputWidget):
                         if defval:
                             model = fields[name].get('relation')
                             type2 = fields[name].get('type2')
-
-                            if kind == 'many2one' and model:
-                                try:
-                                    value = rpc.name_get(model, default_search, self.context)
-                                except Exception,e:
-                                    value = defval
-                                defval = value or ''
+                            many2one_int = False
+                            if kind == 'many2one':
+                                if isinstance(default_search, (int, long)):
+                                    many2one_int = True
+                                    defval = default_search
+                                elif model:
+                                    try:
+                                        value = rpc.name_get(model, default_search, self.context)
+                                    except Exception,e:
+                                        value = defval
+                                    defval = value or ''
 
                             if attrs.get('filter_domain'):
                                 domain = expr_eval(attrs['filter_domain'], {'self': defval})
@@ -442,6 +446,8 @@ class Search(TinyInputWidget):
                                 elif field.kind == 'boolean':
                                     domain = [(name, '=', defval!='0')]
                                                
+                                elif many2one_int:
+                                    domain = [(name, '=', defval)]
                                 else:
                                     domain = [(name,fields[name].get('comparator','ilike'), defval)]
 
