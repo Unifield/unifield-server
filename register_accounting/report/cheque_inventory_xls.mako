@@ -144,40 +144,39 @@
     <Cell ss:StyleID="title"><Data ss:Type="String">${_('State:')}</Data></Cell>
     <Cell ss:StyleID="title"><Data ss:Type="String">${(o.state and getSel(o, 'state') or '')|x}</Data></Cell>
   </Row>
+  <Row>
+    <Cell ss:StyleID="title"><Data ss:Type="String">${_('Register name:')}</Data></Cell>
+    <Cell ss:StyleID="title" ><Data ss:Type="String">${(o.name or '')|x}</Data></Cell>
+  </Row>
+  <Row>
+    <Cell ss:StyleID="title" ><Data ss:Type="String">${_('Journal Code')}</Data></Cell>
+    <Cell ss:StyleID="title" ><Data ss:Type="String">${(o.journal_id and o.journal_id.code or '')|x}</Data></Cell>
+  </Row>
+  <Row>
+    <Cell ss:StyleID="title" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
+    <Cell ss:StyleID="title" ><Data ss:Type="String">${(o.journal_id and o.journal_id.currency and o.journal_id.currency.name or '')|x}</Data></Cell>
+  </Row>
   <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 
-	<Row>
-        	<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Proprietary Instance')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Register Name')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Journal Code')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Register Period')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Register Line Status')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Document Date')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cheque Number')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Sequence')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Description')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Reference')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Account')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Third Parties')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Amount In')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Amount Out')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Func. In')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Func. Out')}</Data></Cell>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Func. CCY')}</Data></Cell>
+  <Row>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Period')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Document Date')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cheque Number')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Sequence')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Description')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Reference')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Account')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Third Parties')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Amount In')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Amount Out')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Amount reconciled')}</Data></Cell>
-
-
-	</Row>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Status')}</Data></Cell>
+  </Row>
     % for line in o.line_ids:
         % if line.statement_id.journal_id.type == 'cheque' and line.first_move_line_id :
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.instance_id and line.statement_id.instance_id.code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.journal_id and line.statement_id.journal_id.code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.period_id and line.statement_id.period_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and getSel(line,'state') or '')|x}</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.document_date|n}T00:00:00.000</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date|n}T00:00:00.000</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.cheque_number and line.cheque_number or '')|x}</Data></Cell>
@@ -188,12 +187,9 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.first_move_line_id and line.first_move_line_id.partner_txt or '')|x}</Data></Cell>
         <Cell ss:StyleID="lineN" ><Data ss:Type="Number">${(line.amount_in and line.amount_in or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="lineN" ><Data ss:Type="Number">${(line.amount_out and line.amount_out or 0.00)|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.currency_id and line.currency_id.name or '')|x}</Data></Cell>
 
-        <Cell ss:StyleID="lineN" ><Data ss:Type="Number">${(line.functional_in and line.functional_in or 0.00)|x}</Data></Cell>
-        <Cell ss:StyleID="lineN" ><Data ss:Type="Number">${(line.functional_out and line.functional_out or 0.00)|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.company_id and line.company_id.currency_id and line.company_id.currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.reconciled and 'X' or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.state and getSel(line,'state') or '')|x}</Data></Cell>
     </Row>
         % endif
     % endfor
