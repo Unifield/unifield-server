@@ -1386,7 +1386,18 @@ class purchase_order(osv.osv):
         This hook belongs to the rfq_sent method from tender_flow>tender_flow.py
         - check lines after import
         '''
-        res = True
+        pol_obj = self.pool.get('purchase.order.line')                          
+        
+        res = True                                                              
+        empty_lines = pol_obj.search(cr, uid, [                                 
+            ('order_id', 'in', ids),                                            
+            ('product_qty', '<=', 0.00),                                        
+        ], context=context)                                                     
+        if empty_lines:                                                         
+            raise osv.except_osv(                                               
+                _('Error'),                                                     
+                _('You cannot have a line without quantity'),                   
+                    ) 
         return res
 
         
