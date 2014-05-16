@@ -1396,7 +1396,7 @@ class purchase_order(osv.osv):
         if empty_lines:                                                         
             raise osv.except_osv(                                               
                 _('Error'),                                                     
-                _('You cannot have a line without quantity'),                   
+                _('All lines of the RfQ should have a quantity before sending the RfQ to the supplier'),
                     ) 
         return res
 
