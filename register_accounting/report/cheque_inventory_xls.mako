@@ -193,7 +193,12 @@
     </Row>
     % endfor
 </Table>
-<x:WorksheetOptions/>
+<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <PageSetup>
+    <Layout x:Orientation="Portrait"/>
+    <Footer x:Data="Page &amp;P of &amp;N"/>
+   </PageSetup>
+</WorksheetOptions>
 </ss:Worksheet>
 % endfor
 </Workbook>
