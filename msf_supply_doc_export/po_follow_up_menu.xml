@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-    <menuitem id="po_follow_up_menu2" action="po_follow_up_menu" parent="base.menu_purchase_root" />
+  
+    
       <record id="po_follow_up_menu" model="ir.actions.act_window">
          <field name="name">PO Follow Up</field>
          <field name="res_model">po.follow.up</field>
@@ -11,6 +12,8 @@
          <field name="context">{}</field>
          <field name="help">The Purchase Order follow up report .... </field>
       </record>
+      
+        <menuitem id="po_follow_up_menu2" action="po_follow_up_menu" parent="base.menu_purchase_root" />
     </data>
 </openerp>
 			

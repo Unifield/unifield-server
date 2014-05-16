@@ -50,3 +50,4 @@ class po_follow_up(osv.osv_memory):
     def button_validate(self, cr, uid, ids, context=None):
         return True
     
+po_follow_up()
