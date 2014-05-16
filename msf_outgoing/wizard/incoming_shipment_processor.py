@@ -361,7 +361,7 @@ class stock_move_in_processor(osv.osv):
                         'stock_location_cross_docking')[1]
                 location_ids.append(cd_id)
                 
-            res[moves_to_ids[move.id]] = location_ids
+            res[moves_to_ids[move.id]] = ','.join(map(lambda id: str(id), location_ids))
 
         return res
 
@@ -432,10 +432,9 @@ class stock_move_in_processor(osv.osv):
             _get_batch_location_ids,
             method=True,
             string='Locations',
-            type='one2many',
-            relation='stock.location',
-            readonly=True,
+            type='char',
             help="Specific locations with batch number",
+            invisible=True,
         ),
         'location_supplier_customer_mem_out': fields.function(
             _get_move_info,

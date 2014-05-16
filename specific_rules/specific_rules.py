@@ -907,21 +907,33 @@ class stock_production_lot(osv.osv):
         '''
         return super(stock_production_lot, self)._stock_search(cr, uid, obj, name, args, context=context)
 
+    def _parse_context_location_id(self, context=None):
+        if context:
+            location_id = context.get('location_id', False)
+            if location_id and isinstance(location_id, (str, unicode)):
+                #context['location_id'] = list(map(lambda id: int(id), location_id.split(',')))
+                context['location_id'] = [int(id) for id in location_id.split(',')]
+    
     def _get_stock_virtual(self, cr, uid, ids, field_name, arg, context=None):
         """ Gets stock of products for locations
         @return: Dictionary of values
         """
         if context is None:
             context = {}
+        self._parse_context_location_id(context=context)
+        
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         # when the location_id = False results now in showing stock for all internal locations
         # *previously*, was showing the location of no location (= 0.0 for all prodlot)
         if 'location_id' not in context or not context['location_id']:
             locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
         else:
-            locations = context['location_id'] and [context['location_id']] or []
+            locations = context['location_id'] or []
 
-        if isinstance(ids, (int, long)):
-            ids = [ids]
+        if isinstance(locations, (int, long)):
+            locations = [locations]
 
         res = {}.fromkeys(ids, 0.0)
         if locations:
@@ -940,6 +952,7 @@ class stock_production_lot(osv.osv):
         '''
         call super method, as fields.function does not work with inheritance
         '''
+        self._parse_context_location_id(context=context)
         return super(stock_production_lot, self)._get_stock(cr, uid, ids, field_name, arg, context=context)
     
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
