@@ -113,20 +113,19 @@
 <ss:Worksheet ss:Name="${"%s"%( o.name.split('/')[-1] +'_'+str(o.id) or 'Sheet1')|x}">
 
 <Table >
-<Column ss:Width="70.5" ss:Span="1"/>
-<Column ss:Index="3" ss:Width="72.75"/>
-<Column ss:Width="67.5"/>
-<Column ss:Width="73.5"/>
-<Column ss:Width="61.5"/>
-<Column ss:Width="75.75"/>
-<Column ss:Width="113.25"/>
-<Column ss:Width="100"/>
-<Column ss:Width="180.75"/>
+<Column ss:Width="65.0"/>
+<Column ss:Width="65.0"/>
+<Column ss:Width="65.0"/>
+<Column ss:Width="65.0"/>
+<Column ss:Width="60.0"/>
+<Column ss:Width="75.0"/>
+<Column ss:Width="75.0"/>
+<Column ss:Width="85.0"/>
+<Column ss:Width="90.0"/>
 <Column ss:Width="70.5"/>
-<Column ss:AutoFitWidth="0" ss:Width="229.5"/>
-<Column ss:Width="57.75"/>
-<Column ss:Width="44.25"/>
-<Column ss:Index="16" ss:AutoFitWidth="0" ss:Width="51"/>
+<Column ss:Width="70.5"/>
+<Column ss:Width="65.0"/>
+<Column ss:Width="45.0"/>
 
 
   <Row>
