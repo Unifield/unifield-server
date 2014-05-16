@@ -1,0 +1,14 @@
+#Fri May 16 11:20:37 CEST 2014
+eclipse.preferences.version=1
+encoding//account_mcdb/wizard/output_currency_for_export.py=utf-8
+encoding//msf_instance/add_instance.py=utf-8
+encoding//msf_instance/msf_instance.py=utf-8
+encoding//msf_supply_doc_export/__init__.py=utf-8
+encoding//msf_supply_doc_export/__openerp__.py=utf-8
+encoding//msf_supply_doc_export/wizard/po_follow_up.py=utf-8
+encoding//purchase_msf/purchase_msf.py=utf-8
+encoding//purchase_override/purchase.py=utf-8
+encoding//register_accounting/account_bank_statement.py=utf-8
+encoding//register_accounting/account_cheque_register.py=utf-8
+encoding//register_accounting/invoice.py=utf-8
+encoding//register_accounting/wizard/import_invoice_on_registers.py=utf-8

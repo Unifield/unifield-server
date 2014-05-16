@@ -29,6 +29,8 @@
     "init_xml" : [],
     "update_xml" : [
         'msf_export_report.xml',
+        'wizard/po_follow_up_view.xml',
+        'po_follow_up_menu.xml',
     ],
     "demo_xml" : [],
     "test": [],
