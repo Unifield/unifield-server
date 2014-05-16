@@ -173,8 +173,8 @@
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Amount reconciled')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Status')}</Data></Cell>
   </Row>
-    % for line in o.line_ids:
-        % if line.statement_id.journal_id.type == 'cheque' and line.first_move_line_id :
+    <% lines = getLines(o) %>
+    % for line in lines:
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.period_id and line.statement_id.period_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.document_date|n}T00:00:00.000</Data></Cell>
@@ -191,7 +191,6 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.reconciled and 'X' or ''|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.state and getSel(line,'state') or '')|x}</Data></Cell>
     </Row>
-        % endif
     % endfor
 </Table>
 <x:WorksheetOptions/>
