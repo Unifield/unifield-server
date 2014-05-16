@@ -911,7 +911,6 @@ class stock_production_lot(osv.osv):
         if context:
             location_id = context.get('location_id', False)
             if location_id and isinstance(location_id, (str, unicode)):
-                #context['location_id'] = list(map(lambda id: int(id), location_id.split(',')))
                 context['location_id'] = [int(id) for id in location_id.split(',')]
     
     def _get_stock_virtual(self, cr, uid, ids, field_name, arg, context=None):
