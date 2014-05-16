@@ -310,6 +310,61 @@ class stock_move_in_processor(osv.osv):
     def _get_integrity_status(self, cr, uid, ids, field_name, args, context=None):
         return super(stock_move_in_processor, self)._get_integrity_status(cr, uid, ids, field_name, args, context=context)
 
+    def _get_batch_location_ids(self, cr, uid, ids, field_name, args, context=None):
+        """
+        UFTP-53: specific get stock locations ids for incoming shipment
+        in batch numbers:
+            - From FO:     CD + Main Stock & children (For example LOG/MED)
+            - From non-FO: Main Stock & children (For example LOG/MED)
+        """
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        main_stock_id = self.pool.get('ir.model.data').get_object_reference(cr,
+            uid, 'stock', 'stock_location_stock')[1]
+        cd_id = False
+            
+        # get related move ids and map them to ids
+        moves_to_ids = {}
+        for r in self.read(cr, uid, ids, ['move_id'], context=context):
+            if r['move_id']:
+                moves_to_ids[r['move_id'][0]] = r['id']
+                
+        # scan moves' purchase line and check if associated with a SO/FO
+        po_obj = self.pool.get('purchase.order')
+        sol_obj = self.pool.get('sale.order.line')
+        for move in self.pool.get('stock.move').browse(cr, uid,
+            moves_to_ids.keys(), context=context):
+            location_ids = [main_stock_id] if main_stock_id else []
+            is_from_fo = False
+            
+            if move.purchase_line_id and move.purchase_line_id.order_id:
+                sol_ids = po_obj.get_sol_ids_from_po_ids(cr, uid,
+                        [move.purchase_line_id.order_id.id], context=context)
+                if sol_ids:
+                    # move associated with a SO, check not with an IR (so is FO)
+                    is_from_fo = True
+                    for sol in sol_obj.browse(cr, uid, sol_ids, 
+                        context=context):
+                        if sol.order_id and sol.order_id.procurement_request:
+                            # from an IR then not from FO
+                            is_from_fo = False
+                            break
+            
+            if is_from_fo:
+                if not cd_id:
+                    cd_id = self.pool.get('ir.model.data').get_object_reference(
+                        cr, uid, 'msf_cross_docking',
+                        'stock_location_cross_docking')[1]
+                location_ids.append(cd_id)
+                
+            res[moves_to_ids[move.id]] = location_ids
+
+        return res
+
     _columns = {
         # Parent wizard
         'wizard_id': fields.many2one(
@@ -372,6 +427,15 @@ class stock_move_in_processor(osv.osv):
             readonly=True,
             help="Source location of the move",
             multi='move_info'
+        ),
+        'batch_location_ids': fields.function(
+            _get_batch_location_ids,
+            method=True,
+            string='Locations',
+            type='one2many',
+            relation='stock.location',
+            readonly=True,
+            help="Specific locations with batch number",
         ),
         'location_supplier_customer_mem_out': fields.function(
             _get_move_info,

@@ -83,6 +83,7 @@
                     <!-- Visible fields -->
                     <field name="line_number" string="Line" />
                     <field name="product_id" string="Product" />
+                    <field name="batch_location_ids" invisible="1" />
                     <button name="open_change_product_wizard"
                             type="object"
                             icon="gtk-convert"
@@ -115,7 +116,7 @@
                             />
                     <field name="prodlot_id"
                            domain="[('product_id', '=', product_id), ('check_type', '=', True)]"
-                           context="{'location_id': location_id, 'product_id': product_id, 'expiry_date_check': exp_check, 'batch_number_check': lot_check}"
+                           context="{'location_id': batch_location_ids, 'product_id': product_id, 'expiry_date_check': exp_check, 'batch_number_check': lot_check}"
                            attrs="{'readonly': [('lot_check', '=', False), ('exp_check', '=', False)]}"
                            on_change="change_lot(prodlot_id)"
                            />
