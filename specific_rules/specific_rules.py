@@ -924,7 +924,7 @@ class stock_production_lot(osv.osv):
         
     def _location_dive(self, cr, uid, parent_location_ids, result_ids=None,
         context=None):
-        result_ids += parent_location_ids
+        result_ids += [id for id in parent_location_ids if id not in result_ids]
         for r in self.pool.get('stock.location').read(cr, uid,
             parent_location_ids, ['child_ids'], context=context):
             if r['child_ids']:
