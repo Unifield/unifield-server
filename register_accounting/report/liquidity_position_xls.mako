@@ -291,21 +291,21 @@
 </Cell>
 </Row>
 <Row ss:Height="13.5"/>
-<Row >
-<Cell>
-<Data ss:Type="String">${_('Report Date:')}</Data>
-</Cell>
-<Cell ss:StyleID="short_date2" >
-<Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
-</Cell>
-</Row>
 <Row>
-<Cell>
-<Data ss:Type="String">${_('Prop Instance: ')}</Data>
-</Cell>
-<Cell ss:StyleID="pop">
-<Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
-</Cell>
+  <Cell>
+    <Data ss:Type="String">${_('Prop Instance: ')}</Data>
+  </Cell>
+  <Cell ss:StyleID="pop">
+    <Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
+  </Cell>
+</Row>
+<Row >
+  <Cell>
+    <Data ss:Type="String">${_('Report Date:')}</Data>
+  </Cell>
+  <Cell ss:StyleID="short_date2" >
+    <Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
+  </Cell>
 </Row>
 <Row ss:Height="13.5"/>
 
