@@ -51,6 +51,18 @@ class po_follow_up(osv.osv_memory):
         for x in self.browse(cr,uid,ids):
             print x.name
             print x.state
-        return True
+        #return True
+    
+        datas = {'ids': ids}                                                    
+                                                                                
+        return {                                                                
+            'type': 'ir.actions.report.xml',                                    
+            'report_name': 'po.follow.up_xls',                                         
+            'datas': datas,                                                     
+            'nodestroy': True,                                                  
+            'context': context,                                                 
+        }
+    
+    
     
 po_follow_up()

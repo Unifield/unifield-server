@@ -1,6 +1,8 @@
-#Mon May 19 09:42:33 CEST 2014
+#Mon May 19 14:37:43 CEST 2014
 eclipse.preferences.version=1
+encoding//account_mcdb/report/mcdb_result.py=utf-8
 encoding//account_mcdb/wizard/output_currency_for_export.py=utf-8
+encoding//msf_doc_import/report/__init__.py=utf-8
 encoding//msf_instance/add_instance.py=utf-8
 encoding//msf_instance/msf_instance.py=utf-8
 encoding//msf_supply_doc_export/__init__.py=utf-8

@@ -8,7 +8,7 @@
             string="PO Follow Up Report"
             model="purchase.order"
             name="po.follow.up_xls"
-            file="unifield-wm/msf_supply_doc_export/report/report_po_follow_up_xls.mako"
+            file="msf_supply_doc_export/report/report_po_follow_up_xls.mako"
             report_type="webkit"
             header="False"
             auto="False"
