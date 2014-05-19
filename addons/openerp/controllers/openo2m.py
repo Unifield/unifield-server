@@ -160,7 +160,7 @@ class OpenO2M(Form):
         proxy = rpc.RPCProxy(model)
         try:
             if id:
-                res  = proxy.unlink([id])
+                res  = proxy.unlink([int(id)])
         except Exception, e:
             error = ustr(e)
             
