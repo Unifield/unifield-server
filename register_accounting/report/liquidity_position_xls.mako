@@ -447,36 +447,34 @@
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
 </Row>
-
-
 </Table>
 
-
-<WorksheetOptions>
-<FitToPage/>
-<Print>
-<ValidPrinterInfo/>
-<PaperSizeIndex>9</PaperSizeIndex>
-<Scale>63</Scale>
-<HorizontalResolution>600</HorizontalResolution>
-<VerticalResolution>0</VerticalResolution>
-</Print>
-<PageBreakZoom>60</PageBreakZoom>
-<Selected/>
-<DoNotDisplayGridlines/>
-<Panes>
-<Pane>
-<Number>3</Number>
-<ActiveRow>24</ActiveRow>
-<ActiveCol>3</ActiveCol>
-</Pane>
-</Panes>
-<ProtectObjects>False</ProtectObjects>
-<ProtectScenarios>False</ProtectScenarios>
+<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+  <PageSetup>
+    <Layout x:Orientation="Portrait"/>
+    <Footer x:Data="Page &amp;P of &amp;N"/>
+  </PageSetup>
+  <FitToPage/>
+  <Print>
+    <ValidPrinterInfo/>
+    <PaperSizeIndex>9</PaperSizeIndex>
+    <Scale>63</Scale>
+    <HorizontalResolution>600</HorizontalResolution>
+    <VerticalResolution>0</VerticalResolution>
+  </Print>
+  <PageBreakZoom>60</PageBreakZoom>
+  <Selected/>
+  <DoNotDisplayGridlines/>
+  <Panes>
+    <Pane>
+      <Number>3</Number>
+      <ActiveRow>24</ActiveRow>
+      <ActiveCol>3</ActiveCol>
+    </Pane>
+  </Panes>
+  <ProtectObjects>False</ProtectObjects>
+  <ProtectScenarios>False</ProtectScenarios>
 </WorksheetOptions>
 
 </Worksheet>
-
-
-
 </Workbook>
