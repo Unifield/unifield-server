@@ -403,7 +403,7 @@
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
 	<Cell ss:StyleID="s32">
-	<Data ss:Type="String">${_('Sub-Total =')}</Data>
+	<Data ss:Type="String">${_('Subtotal =')}</Data>
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
 	<Cell ss:StyleID="s44" ss:Formula="=SUM(R[-${getCal()}]C:R[-1]C)" >
