@@ -291,6 +291,12 @@ class sale_order_sync(osv.osv):
                 old_lines, new_lines = map(set, changes['order_line'])
                 logger.is_product_added |= (len(new_lines - old_lines) > 0)
                 logger.is_product_removed |= (len(old_lines - new_lines) > 0)
+                
+            #UFTP-242: Log if there is lines deleted for this SO
+            if context.get('deleted_line_so_id', -1) == id:
+                logger.is_product_removed = True
+                del context['deleted_line_so_id']
+                
             logger.is_date_modified |= ('date_order' in changes)
             logger.is_status_modified |= ('state' in changes)
             # handle line's changes
