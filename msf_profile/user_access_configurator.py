@@ -975,12 +975,14 @@ class board_board(osv.osv):
         for child in node.iterchildren():                                       
             if child.tag == 'action':                                           
                 if child.get('invisible'):                                      
-                    node.remove(child)                                          
+                    node.remove(child)      
+                    break
                 elif child.get('name'):                                         
                     action_id = int(child.get('name'))                          
                     model = self.pool.get('ir.actions.act_window').browse(cr, uid, action_id).res_model
                     if not self.pool.get('ir.model.access').check(cr, uid, model, mode='read', raise_exception=False):
                         node.remove(child)                                      
+                        break
 
                 if child.get('menu_ref'):
                     menu_ids = child.get('menu_ref').split(',')
