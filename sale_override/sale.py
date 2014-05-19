@@ -1786,6 +1786,7 @@ class sale_order_line(osv.osv):
         '''
         # Documents
         proc_obj = self.pool.get('procurement.order')
+        move_obj = self.pool.get('stock.move')
 
         wf_service = netsvc.LocalService("workflow")
 
@@ -1801,6 +1802,13 @@ class sale_order_line(osv.osv):
             proc = line.procurement_id and line.procurement_id.id
             # Delete the line and the procurement
             self.write(cr, uid, [line.id], {'state': 'cancel'}, context=context)
+
+            # UF-2401: Remove OUT line when IR line has been canceled
+            if line.order_id.procurement_request and line.order_id.location_requestor_id.usage == 'customer':
+                move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', line.id), ('state', 'not in', ['done', 'cancel'])], context=context)
+                move_obj.write(cr, uid, move_ids, {'state': 'draft'}, context=context)
+                move_obj.unlink(cr, uid, move_ids, context=context)
+
             # UFTP-82:
             # do not delete cancelled IR line from PO cancelled
             # see purchase_override/purchase.py 
