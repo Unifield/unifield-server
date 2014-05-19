@@ -39,15 +39,18 @@ class po_follow_up(osv.osv_memory):
     
     _columns = {
          'name':fields.many2one('purchase.order',string="Order Reference", help="Unique number of the Purchase Order. Optional", required=False),
-         'state': fields.selection(STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order. Optional", select=True, required=False),
+         'state': fields.selection(STATE_SELECTION, 'State', help="The state of the purchase order. Optional", select=True, required=False),
          'po_date_from':fields.date("PO date from", required="False"),
-         'po_date_thru':field.date("PO date through", required="False"),
+         'po_date_thru':fields.date("PO date through", required="False"),
          'partner_id':fields.many2one('res.partner', 'Supplier', required=False),
-         'project_ref':fields.many2one('purchase.order', required=False),
+         'project_ref':fields.char('Supplier reference', size=64, required=False),
          'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),     
     }
     
     def button_validate(self, cr, uid, ids, context=None):
+        for x in self.browse(cr,uid,ids):
+            print x.name
+            print x.state
         return True
     
 po_follow_up()

@@ -19,6 +19,5 @@
 #
 ##############################################################################
 
-import msf_supply_doc_export
-import wizard
+import po_follow_up
 
