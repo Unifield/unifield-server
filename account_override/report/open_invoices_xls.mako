@@ -375,6 +375,10 @@
 % endfor
   </Table>
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <PageSetup>
+    <Layout x:Orientation="Landscape"/>
+    <Footer x:Data="Page &amp;P of &amp;N"/>
+   </PageSetup>
    <Print>
     <ValidPrinterInfo/>
     <PaperSizeIndex>9</PaperSizeIndex>
@@ -385,5 +389,6 @@
    <ProtectObjects>False</ProtectObjects>
    <ProtectScenarios>False</ProtectScenarios>
   </WorksheetOptions>
- </Worksheet>
+
+</Worksheet>
 </Workbook>
