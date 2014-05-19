@@ -271,7 +271,7 @@
           <para style="terp_default_Centre_9">[[ (o.address_invoice_id and o.address_invoice_id.partner_id and o.address_invoice_id.partner_id.ref) or ' ' ]]</para>
         </td>
         <td>
-          <para style="terp_default_Centre_9">[[ o.origin or '' ]]</para>
+          <parawrap style="terp_default_Centre_9">[[ o.origin or '' ]]</parawrap>
         </td>
       </tr>
     </blockTable>
