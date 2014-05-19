@@ -229,7 +229,7 @@
 
 <Worksheet ss:Name="${_('Open Invoices')}">
     <Table>
-    <Column ss:AutoFitWidth="0" ss:Width="90.5" ss:Span="1"/>
+    <Column ss:AutoFitWidth="0" ss:Width="70.5" ss:Span="1"/>
     <Column ss:Index="3" ss:Width="88.5"/>
     <Column ss:Width="91.5"/>
     <Column ss:Width="108"/>
@@ -379,6 +379,7 @@
     <Layout x:Orientation="Landscape"/>
     <Footer x:Data="Page &amp;P of &amp;N"/>
    </PageSetup>
+   <FitToPage/>
    <Print>
     <ValidPrinterInfo/>
     <PaperSizeIndex>9</PaperSizeIndex>
