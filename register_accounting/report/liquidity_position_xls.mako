@@ -152,7 +152,7 @@
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<NumberFormat ss:Format="Fixed"/>
+<NumberFormat ss:Format="#,##0.00"/>
 </Style>
 
 
@@ -238,7 +238,7 @@
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
 <Font x:Family="Swiss" ss:Bold="1"/>
-<NumberFormat ss:Format="Fixed"/>
+<NumberFormat ss:Format="#,##0.00"/>
 </Style>
 
 
@@ -261,7 +261,7 @@
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
 </Borders>
 <Font x:Family="Swiss" ss:Bold="1"/>
-<NumberFormat ss:Format="Fixed"/>
+<NumberFormat ss:Format="#,##0.00"/>
 </Style>
 
 <Style ss:ID="s51">
