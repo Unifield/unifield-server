@@ -123,10 +123,10 @@
 <Column ss:Width="84"/>
 <Column ss:Width="66"/>
 <Column ss:Width="69.75"/>
-<Column ss:Width="83.25"/>
+<Column ss:Width="55.0"/>
 <Column ss:Width="76.5"/>
 <Column ss:Width="79.5"/>
-<Column ss:Width="93.75"/>
+<Column ss:Width="55.0"/>
 
 		<Row>
 		    <Cell ss:StyleID="s25" ><Data ss:Type="String">${_('OPEN ADVANCES')}</Data></Cell>
@@ -184,7 +184,12 @@
 
     % endfor
 </Table>
-<x:WorksheetOptions/>
+<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <PageSetup>
+    <Layout x:Orientation="Portrait"/>
+    <Footer x:Data="Page &amp;P of &amp;N"/>
+   </PageSetup>
+</WorksheetOptions>
 </ss:Worksheet>
 % endfor
 </Workbook>
