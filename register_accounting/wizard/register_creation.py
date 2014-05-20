@@ -48,7 +48,7 @@ class register_creation_lines(osv.osv_memory):
         return res
 
     _columns = {
-        'period_id': fields.many2one('account.period', string='Period', required=True, readonly=True),
+        'period_id': fields.many2one('account.period', string='Period', required=True, domain=[('state','=','draft')], readonly=True),
         'currency_id': fields.many2one("res.currency", string="Currency", required=True, readonly=True),
         'journal_id': fields.many2one('account.journal', string="Journal", required=True, readonly=True),
         'register_type': fields.selection([('cash', 'Cash Register'), ('bank', 'Bank Statement'), ('cheque', 'Cheque Register')], string="Type", readonly=True),
