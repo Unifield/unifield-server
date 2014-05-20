@@ -22,6 +22,7 @@
 from osv import osv, fields
 import tools
 
+import traceback
 import logging
 from sync_common import sync_log
 
@@ -305,7 +306,7 @@ class message_received(osv.osv):
                 self.write(cr, uid, message.id, {
                     'execution_date' : execution_date,
                     'run' : False,
-                    'log' : e.__class__.__name__+": "+tools.ustr(error_msg),
+                    'log' : e.__class__.__name__+": "+tools.ustr(error_msg)+"\n\n--\n"+tools.ustr(traceback.format_exc()),
                 }, context=context)
             else:
                 cr.execute("RELEASE SAVEPOINT exec_message")
