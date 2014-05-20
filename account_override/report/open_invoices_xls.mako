@@ -358,7 +358,7 @@
         <Cell ss:StyleID="s39"/>
         <Cell ss:StyleID="s40"/>
         <Cell ss:StyleID="s40"/>
-        <Cell ss:StyleID="s44"><Data ss:Type="String">${_('Sub Total')} =</Data></Cell>
+        <Cell ss:StyleID="s44"><Data ss:Type="String">${_('Subtotal')} =</Data></Cell>
         % if nb_line:
             <Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${nb_line}]C:R[-1]C)"><Data ss:Type="Number" ></Data></Cell>
             <Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${nb_line}]C:R[-1]C)"><Data ss:Type="Number"></Data></Cell>
