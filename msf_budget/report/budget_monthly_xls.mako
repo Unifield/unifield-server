@@ -97,7 +97,7 @@
       <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
     </Borders>
     <Font x:Family="Swiss" ss:Bold="1"/>
-
+    <Alignment ss:Vertical="Center" ss:WrapText="1"/>
   </Style>
   <Style ss:ID="s28">
     <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
@@ -126,7 +126,7 @@
 <ss:Worksheet ss:Name="${sheet_name(o.name and o.name.split('/')[-1])|x}">
 
   <Table x:FullColumns="1" x:FullRows="1">
-    <Column ss:Width="160.75"/>
+    <Column ss:Width="80.75"/>
     <Column ss:AutoFitWidth="0" ss:Width="273"/>
 
     <Row>
@@ -171,7 +171,7 @@
       <Cell ss:StyleID="s22" ><Data ss:Type="String">${( o.version or '' )|x}</Data></Cell>
     </Row>
 
-    <Row ss:Index="8">
+    <Row ss:Index="8" ss:AutoFitHeight="1">
       <Cell ss:StyleID="s24"><Data ss:Type="String">${_('Account code - Destination code')}</Data></Cell>
       <Cell ss:StyleID="s24"><Data ss:Type="String">${_('Account description')}</Data></Cell>
       <Cell ss:StyleID="s24"><Data ss:Type="String">${_('Jan')}</Data></Cell>
@@ -219,6 +219,11 @@
 % endfor
 
   </Table>
-<x:WorksheetOptions/></ss:Worksheet>
+<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <PageSetup>
+    <Footer x:Data="Page &amp;P of &amp;N"/>
+   </PageSetup>
+</WorksheetOptions>
+</ss:Worksheet>
 % endfor
 </Workbook>
