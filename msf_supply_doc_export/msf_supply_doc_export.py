@@ -29,6 +29,7 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 
 import pooler
+import time
 
 
 class _int_noformat(report_sxw._int_format):
@@ -328,6 +329,28 @@ class incoming_shipment_xml(WebKitParser):
         return (a[0], 'xml')
 
 incoming_shipment_xml('report.incoming.shipment.xml', 'stock.picking', 'addons/msf_supply_doc_export/report/report_incoming_shipment_xml.mako')
+
+
+class parser_po_follow_up(report_sxw.rml_parse):
+
+    def __init__(self, cr, uid, name, context=None):
+        super(parser_po_follow_up, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+        })
+
+
+class po_follow_up_report_xls(SpreadsheetReport):
+
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        super(po_follow_up_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        a = super(po_follow_up_report_xls, self).create(cr, uid, ids, data, context=context)
+        return (a[0], 'xls')
+
+
+po_follow_up_report_xls('report.po.follow.up_xls', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up_xls.mako', parser=parser_po_follow_up, header='internal')
 
 
 class ir_values(osv.osv):
