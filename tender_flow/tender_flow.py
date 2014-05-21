@@ -421,6 +421,7 @@ class tender(osv.osv):
                                             'is_tender': True,
                                             'tender_id': tender.id,
                                             'tender_line_id': line.id,
+                                            'tender_done': True,
                                             'price_unit': line.price_unit,
                                             'date_planned': rts,
                                             'origin': tender.sale_order_id.name,
