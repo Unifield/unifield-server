@@ -21,7 +21,10 @@ else:
 __all__ = ('isset_lock', 'server_version', 'base_version', 'do_prepare', 'base_module_upgrade', 'restart_server')
 
 restart_required = False
-log_file = 'updater.log'
+if sys.platform == 'win32' and os.path.isdir(r'..\ServerLog'):
+    log_file = r'..\ServerLog\updater.log'
+else:
+    log_file = 'updater.log'
 lock_file = 'update.lock'
 update_dir = '.update'
 server_version_file = 'unifield-version.txt'
@@ -46,20 +49,17 @@ def isset_lock(file=None):
 
 def set_lock(file=None):
     """Set the lock file to make OpenERP run into do_update method against normal execution"""
-    from tools import config
     if file is None: file = lock_file
     with open(file, "w") as f:
-        f.write(unicode({'path':os.getcwd(),'rcfile':config.rcfile}))
+        f.write(unicode({'path':os.getcwd()}))
 
 def unset_lock(file=None):
     """Remove the lock"""
     global exec_path
-    global rcfile
     if file is None: file = lock_file
     with open(file, "r") as f:
          data = eval(f.read().strip())
          exec_path = data['path']
-         rcfile = data['rcfile']
     os.unlink(file)
 
 def parse_version_file(filepath):
@@ -124,6 +124,7 @@ def warn(*args):
     """Define way to forward logs"""
     global log
     log.write(("[%s] UPDATER: " % now())+" ".join(map(lambda x:unicode(x), args))+os.linesep)
+    log.flush()
 
 def Try(command):
     """Try...Resume..."""
@@ -163,14 +164,15 @@ def do_update():
     """Real update of the server (before normal OpenERP execution).
     This function is triggered when OpenERP starts. When it finishes, it restart OpenERP automatically.
     On failure, the lock file is deleted and OpenERP files are rollbacked to their previous state."""
-    if os.path.exists(lock_file) and Try(unset_lock):
+    if isset_lock() and Try(unset_lock):
         global log
         ## Move logs log file
         try:
             log = open(log_file, 'a')
         except BaseException, e:
-            log.write("Cannot write into `%s': %s" % (log, unicode(e)))
-        warn(lock_file, 'removed')
+            warn("Cannot write into `%s': %s" % (log, unicode(e)))
+        else:
+            warn(lock_file, 'removed')
         ## Now, update
         application_time = now()
         revisions = []

@@ -49,7 +49,10 @@ class workflow_service(netsvc.Service):
             instance.update(cr, id, ident)
 
     def trg_trigger(self, uid, res_type, res_id, cr):
-        cr.execute('select instance_id from wkf_triggers where res_id=%s and model=%s', (res_id,res_type))
+        # If an unique ID is passed on parameter
+        if isinstance(res_id, (int, long)):
+            res_id = [res_id]
+        cr.execute('select instance_id from wkf_triggers where res_id in %s and model=%s', (tuple(res_id),res_type))
         res = cr.fetchall()
         for (instance_id,) in res:
             cr.execute('select %s,res_type,res_id from wkf_instance where id=%s', (uid, instance_id,))

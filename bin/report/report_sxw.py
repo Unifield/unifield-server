@@ -260,6 +260,8 @@ class rml_parse(object):
             return ''
 
     def setLang(self, lang):
+        if not lang:
+            return
         self.localcontext['lang'] = lang
         self.lang_dict_called = False
         for obj in self.objects:
@@ -399,7 +401,7 @@ class rml_parse(object):
 
         # WARNING: the object[0].exists() call below is slow but necessary because
         # some broken reporting wizards pass incorrect IDs (e.g. ir.ui.menu ids)
-        if objects and len(objects) == 1 and \
+        if objects and isinstance(objects, list) and len(objects) == 1 and \
             objects[0].exists() and 'company_id' in objects[0] and objects[0].company_id:
             # When we print only one record, we can auto-set the correct
             # company in the localcontext. For other cases the report

@@ -528,6 +528,9 @@ class users(osv.osv):
             return self.write(cr, uid, uid, {'password': new_passwd})
         raise osv.except_osv(_('Warning!'), _("Setting empty passwords is not allowed for security reasons!"))
 
+    def get_admin_profile(self, cr, uid, context=None):
+        return uid == 1
+
 users()
 
 class config_users(osv.osv_memory):

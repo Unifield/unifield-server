@@ -330,6 +330,9 @@ form: module.record_id""" % (xml_id,)
         if rec.get('report_type'):
             res['report_type'] = rec.get('report_type')
 
+        if rec.get('target_filename'):
+            res['target_filename'] = rec.get('target_filename')
+
         res['multi'] = rec.get('multi') and eval(rec.get('multi','False'))
 
         xml_id = rec.get('id','').encode('utf8')

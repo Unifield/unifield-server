@@ -634,7 +634,7 @@ class orm_template(object):
                             cols = self._columns[f[i]]
                         elif f[i] in self._inherit_fields.keys():
                             cols = selection_field(self._inherits)
-                        if cols and cols._type == 'selection':
+                        if cols and cols._type == 'selection' and not sync_context:
                             sel_list = cols.selection
                             if r and type(sel_list) == type([]):
                                 r = [x[1] for x in sel_list if r==x[0]]
@@ -902,6 +902,16 @@ class orm_template(object):
                         if line[i] in [tools.ustr(key), tools.ustr(val)]:
                             res = key
                             break
+                    if line[i] and not res:
+                        model_obj = self.pool.get(model_name)
+                        if model_obj:
+                            # get the selection from the field.selection definition
+                            sel_list = getattr(getattr(model_obj._all_columns.get(field[len(prefix)], object), 'column', object), 'selection', False)
+                            if isinstance(sel_list, list):
+                                for key, val in sel_list:
+                                    if line[i] == val:
+                                        res = key
+                                        break
                     if line[i] and not res:
                         logger.notifyChannel("import", netsvc.LOG_WARNING,
                                 _("key '%s' not found in selection field '%s'") % \
@@ -1634,7 +1644,7 @@ class orm_template(object):
                 query = "SELECT arch,name,field_parent,id,type,inherit_id,model FROM ir_ui_view WHERE id=%s"
                 params = (view_id,)
                 if model:
-                    query += " AND model=%s"
+                    query += " AND model = %s"
                     params += (self._name,)
                 cr.execute(query, params)
             else:
@@ -1643,10 +1653,11 @@ class orm_template(object):
                     FROM
                         ir_ui_view
                     WHERE
-                        model=%s AND
+                        model = %s AND
                         type=%s AND
                         inherit_id IS NULL
                     ORDER BY priority''', (self._name, view_type))
+
             sql_res = cr.fetchone()
 
             if not sql_res:
@@ -1663,9 +1674,10 @@ class orm_template(object):
             result['view_id'] = sql_res[3]
             result['arch'] = sql_res[0]
 
+            # Reverse the search on models to apply view inheritance in a good way
             def _inherit_apply_rec(result, inherit_id):
                 # get all views which inherit from (ie modify) this view
-                cr.execute('select arch,id from ir_ui_view where inherit_id=%s and model=%s order by priority', (inherit_id, self._name))
+                cr.execute('select arch,id from ir_ui_view where inherit_id=%s and model = %s order by priority', (inherit_id, self._name))
                 sql_inherit = cr.fetchall()
                 for (inherit, id) in sql_inherit:
                     result = _inherit_apply(result, inherit, id)
@@ -3941,6 +3953,7 @@ class orm(orm_template):
         # e.g.: http://pastie.org/1222060
         result = {}
         fncts = self.pool._store_function.get(self._name, [])
+
         for fnct in range(len(fncts)):
             if fncts[fnct][3]:
                 ok = False
