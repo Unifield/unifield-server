@@ -1047,6 +1047,8 @@ stock moves which are already processed : '''
         so_obj = self.pool.get('sale.order')
         ad_obj = self.pool.get('analytic.distribution')
         proc_obj = self.pool.get('procurement.order')
+        pick_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
 
         if context is None:
             context = {}
@@ -1085,10 +1087,13 @@ stock moves which are already processed : '''
                     'created_by_po': l.order_id.id,
                     'created_by_po_line': l.id,
                     'name': '[%s] %s' % (l.product_id.default_code, l.product_id.name)}
-            sol_obj.create(cr, uid, vals, context=context)
+
+            new_line_id = sol_obj.create(cr, uid, vals, context=context)
+
             # Put the sale_id in the procurement order
             if l.procurement_id:
                 proc_obj.write(cr, uid, [l.procurement_id.id], {'sale_id': l.link_so_id.id}, context=context)
+
             # Create new line in FOXXXX (original FO)
             if l.link_so_id.original_so_id_sale_order:
                 context['sale_id'] = l.link_so_id.original_so_id_sale_order.id
@@ -1096,6 +1101,29 @@ stock moves which are already processed : '''
                              'state': 'done'})
                 sol_obj.create(cr, uid, vals, context=context)
             context['sale_id'] = tmp_sale_context
+
+            # If the order is an Internal request with External location, create a new
+            # stock move on the picking ticket (if not closed)
+            # Get move data and create the move
+            if l.link_so_id.procurement_request and l.link_so_id.location_requestor_id.usage == 'customer':
+                # Get OUT linked to IR
+                pick_to_confirm = None
+                out_ids = pick_obj.search(cr, uid, [
+                    ('sale_id', '=', l.link_so_id.id),
+                    ('type', '=', 'out'),
+                    ('state', 'in', ['draft', 'confirmed', 'assigned']),
+                ], context=context)
+                if not out_ids:
+                    picking_data = so_obj._get_picking_data(cr, uid, l.link_so_id)
+                    out_ids = [pick_obj.create(cr, uid, picking_data, context=context)]
+                    pick_to_confirm = out_ids
+
+                ir_line = sol_obj.browse(cr, uid, new_line_id, context=context)
+                move_data = so_obj._get_move_data(cr, uid, l.link_so_id, ir_line, out_ids[0], context=context)
+                move_obj.create(cr, uid, move_data, context=context)
+
+                if pick_to_confirm:
+                    pick_obj.action_confirm(cr, uid, pick_to_confirm, context=context)
 
             sol_ids.add(l.link_so_id.id)
 
