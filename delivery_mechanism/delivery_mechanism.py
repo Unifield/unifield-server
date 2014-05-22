@@ -814,6 +814,10 @@ class stock_picking(osv.osv):
                 else:
                     self.action_move(cr, uid, [picking.id], context=context)
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
+                    if picking.purchase_id:
+                        so_ids = self.pool.get('purchase.order').get_so_ids_from_po_ids(cr, uid, picking.purchase_id.id, context=context)
+                        for so_id in so_ids:
+                            wf_service.trg_write(uid, 'sale.order', so_id, cr)
 
             if not sync_in:
                 move_obj.action_assign(cr, uid, processed_out_moves)
