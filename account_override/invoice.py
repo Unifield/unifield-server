@@ -281,6 +281,9 @@ class account_invoice(osv.osv):
                         res['value'] = {'currency_id': c_id}
                     else:
                         res['value'].update({'currency_id': c_id})
+        # UFTP-168: If debit note, set account to False value
+        if is_debit_note:
+            res['value'].update({'account_id': False, 'fake_account_id': False})
         return res
 
     def _check_document_date(self, cr, uid, ids):
