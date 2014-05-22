@@ -2520,8 +2520,11 @@ class purchase_order_line(osv.osv):
         sol_of_po_line_resourced_ids = []
         for line in self.browse(cr, uid, ids, context=context):
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
+            line_qty = line.product_qty
+            if 'pol_qty' in context and line.id in context['pol_qty']:
+                line_qty = context['pol_qty'].get(line.id, 0.00)
             for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
-                diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line.product_qty, sol.product_uom.id)
+                diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line_qty, sol.product_uom.id)
                 sol_to_update.setdefault(sol.id, 0.00)
                 sol_to_update[sol.id] += diff_qty
                 if line.has_to_be_resourced:
