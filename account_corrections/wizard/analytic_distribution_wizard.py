@@ -199,7 +199,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             if ml.corrected_line_id:
                 create_date = ml.date
             # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
-            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date,context=context)
+            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date, ref=ml.ref, context=context)
 
         #####
         ## FP: TO DELETE
@@ -367,10 +367,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         'currency_id': ml and  ml.currency_id and ml.currency_id.id or company_currency_id,
                     })
                 # create the ana line
-                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date)
-
-
-
+                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, ref=ml.ref)
 
     def button_cancel(self, cr, uid, ids, context=None):
         """
