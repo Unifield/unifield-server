@@ -288,19 +288,7 @@
                 </field>
             </field>
         </record>
-        <record id="view_move_line_tree_from_move_inherit" model="ir.ui.view">
-            <field name="name">account.move.line.tree.from.move.inherit</field>
-            <field name="model">account.move.line</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="register_accounting.view_move_line_tree_from_move"/>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/tree/field[@name='is_corrigible']" position="before">
-                        <field name="instance_id" readonly="1"/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
+
         <!-- Redefine register -->
         <record id="inherit_view_bank_statement_instance_form" model="ir.ui.view">
             <field name="name">inherit.view.bank.statement.instance.form</field>
