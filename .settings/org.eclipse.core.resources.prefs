@@ -1,5 +1,7 @@
-#Fri May 23 15:21:01 CEST 2014
+#Fri May 23 15:27:09 CEST 2014
 eclipse.preferences.version=1
+encoding//financing_contract/report/financing_contract.py=utf-8
+encoding//financing_contract/report/report_contract_list.py=utf-8
 encoding//msf_printed_documents/report/report_reception.py=utf-8
 encoding//msf_supply_doc_export/msf_supply_doc_export.py=utf-8
 encoding//msf_supply_doc_export/wizard/po_follow_up.py=utf-8

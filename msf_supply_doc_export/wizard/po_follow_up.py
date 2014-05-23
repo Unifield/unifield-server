@@ -109,10 +109,15 @@ class po_follow_up(osv.osv_memory):
         report_header.append(report_header_line2)
       
         datas = {'ids': po_ids, 'report_header': report_header}       
+        if x.export_format == 'xls':
+            report_name = 'po.follow.up_xls'
+        else:
+            report_name = 'po.follow.up_rml'
+            
                                                                                 
         return {                                                                
             'type': 'ir.actions.report.xml',                                    
-            'report_name': 'po.follow.up_xls',                                         
+            'report_name': report_name,                                         
             'datas': datas,                                                     
             'nodestroy': True,                                                  
             'context': context,                                                 

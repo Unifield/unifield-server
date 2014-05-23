@@ -517,6 +517,9 @@ class po_follow_up_report_xls(SpreadsheetReport):
 
 po_follow_up_report_xls('report.po.follow.up_xls', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up_xls.mako', parser=parser_po_follow_up, header='internal')
 
+#po_follow_up_report_rml('report.po.follow.up_rml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up_rml', parser=parser_po_follow_up, header='internal')
+
+
 
 class ir_values(osv.osv):
     """
