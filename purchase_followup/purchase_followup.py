@@ -19,6 +19,8 @@
 #
 ##############################################################################
 
+import datetime
+
 from osv import osv
 from osv import fields
 
@@ -177,7 +179,7 @@ class purchase_order_followup(osv.osv_memory):
                                          'move_product_id': line.product_id.id != move.product_id.id and move.product_id.id or False,
                                          'move_product_qty': (line.product_qty != move.product_qty or line.product_id.id != move.product_id.id) and '%.2f' % move.product_qty or '',
                                          'move_uom_id': line.product_uom.id != move.product_uom.id and move.product_uom.id or False,
-                                         'move_delivery_date': line.confirmed_delivery_date != move.date[:10] and move.date or False,
+                                         'move_delivery_date': line.confirmed_delivery_date != move.date[:10] and move.date[:10] or False,
                                          'return_move': move.type == 'out',
                                          }
                             line_obj.create(cr, uid, line_data, context=context)
@@ -204,6 +206,56 @@ class purchase_order_followup(osv.osv_memory):
             res.update({'target': 'dummy'})
             
         return res
+        
+    def export_get_file_name(self, cr, uid, ids, prefix='PO_Follow_Up', context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if len(ids) != 1:
+            return False
+        foup = self.browse(cr, uid, ids[0], context=context)
+        if not foup or not foup.order_id or not foup.order_id.name:
+            return False
+        dt_now = datetime.datetime.now()
+        po_name = "%s_%s_%d_%02d_%02d" % (prefix,
+            foup.order_id.name.replace('/', '_'),
+            dt_now.year, dt_now.month, dt_now.day)
+        return po_name
+        
+    def export_xls(self, cr, uid, ids, context=None):
+        """
+        Print the report (Excel)
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        datas = {'ids': ids}
+        file_name = self.export_get_file_name(cr, uid, ids, context=context)
+        if file_name:
+            datas['target_filename'] = file_name
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'purchase.follow.up.report_xls',
+            'datas': datas,
+            'context': context,
+            'nodestroy': True,
+        }
+                
+    def export_pdf(self, cr, uid, ids, context=None):
+        """
+        Print the report (PDF)
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        datas = {'ids': ids}
+        file_name = self.export_get_file_name(cr, uid, ids, context=context)
+        if file_name:
+            datas['target_filename'] = file_name
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'purchase.follow.up.report_pdf',
+            'datas': datas,
+            'context': context,
+            'nodestroy': True,
+        }
     
     _columns = {
         'order_id': fields.many2one('purchase.order', string='Order reference', readonly=True),
@@ -245,6 +297,16 @@ class purchase_order_followup_line(osv.osv_memory):
         'move_state': fields.char(size=64, string='State'),
         'return_move': fields.boolean(string='Is a return move ?'),
     }
+
+    def read(self, cr, uid, ids, fields, context=None, load='_classic_write'):
+        res = super(purchase_order_followup_line, self).read(cr, uid, ids, fields, context=context, load=load)
+
+        if context.get('export'):
+            for r in res:
+                if 'line_shipped_rate' in r and r['line_shipped_rate'] == 'no-progressbar':
+                    r['line_shipped_rate'] = 0.00
+
+        return res
     
     def go_to_incoming(self, cr, uid, ids, context=None):
         '''
