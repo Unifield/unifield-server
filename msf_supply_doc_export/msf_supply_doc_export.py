@@ -364,17 +364,19 @@ class parser_po_follow_up(report_sxw.rml_parse):
         
         
     def getReportHeaderLine1(self):
-        #return self.context.get('report_header')[0]
-        return 'PURCHASE ORDER FOLLOW-UP per CLIENT'
+        return self.datas.get('report_header')[0]
     
     def getReportHeaderLine2(self):
-        #return self.context.get('report_header')[1]
-        return 'Header with .....'
+        return self.datas.get('report_header')[1]
+
     
     def getPOLineHeaders(self):
-        return ['Item','Code','Description','Qty ordered','Qty received','IN','Qty backorder','Unit Price','IN unit price','Destination','Cost Center']
+        return ['Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price','Destination','Cost Center']
     
     def getPOLines(self, po_id):
+        # TODO this is the value populated for no change in stock_move.price_unit
+        # TODO it probably should be 1
+        multiplier = 1.0000100000000001 
         pol_obj = self.pool.get('purchase.order.line')
         po_line_ids = pol_obj.search(self.cr, self.uid, [('order_id','=',po_id)])
         po_lines = pol_obj.browse(self.cr, self.uid, po_line_ids)
@@ -388,11 +390,18 @@ class parser_po_follow_up(report_sxw.rml_parse):
             report_line['code'] = line.product_id.default_code or ''
             report_line['description'] = line.product_id.name or ''
             report_line['qty_ordered'] = line.product_qty or ''
+            report_line['uom'] = line.product_uom.name or ''
             report_line['qty_received'] = inline_in.get('product_qty','')
             report_line['in'] = inline_in.get('name','') or ''
             report_line['qty_backordered'] = ''
             report_line['unit_price'] = line.price_unit or ''
-            report_line['in_unit_price'] = inline_in.get('in_unit_price','') or ''
+            if inline_in.get('price_unit') and inline_in.get('price_unit') <> multiplier:
+                print line.price_unit
+                print inline_in.get('price_unit')
+                report_line['in_unit_price'] = inline_in.get('price_unit') * line.price_unit
+            else:
+                report_line['in_unit_price'] = ''
+            report_line['in_unit_price'] = ''
             report_line['destination'] = analytic_lines[0].get('cost_center')
             report_line['cost_centre'] = analytic_lines[0].get('destination')
             report_lines.append(report_line)
@@ -406,6 +415,7 @@ class parser_po_follow_up(report_sxw.rml_parse):
                 report_line['code'] = ''
                 report_line['description'] = ''
                 report_line['qty_ordered'] = ''
+                report_line['uom'] = ''
                 report_line['qty_received'] = ''
                 report_line['in'] = ''
                 report_line['qty_backordered'] = ''
@@ -427,6 +437,7 @@ class parser_po_follow_up(report_sxw.rml_parse):
                     report_line['code'] = ''
                     report_line['description'] = ''
                     report_line['qty_ordered'] = ''
+                    report_line['uom'] = ''
                     if backorder:
                         report_line['qty_received'] = ''
                     else:
@@ -437,7 +448,12 @@ class parser_po_follow_up(report_sxw.rml_parse):
                     else:
                         report_line['qty_backordered'] = ''
                     report_line['unit_price'] = line.price_unit or ''
-                    report_line['in_unit_price'] = 0.15
+                    if inline_in.get('price_unit') and inline_in.get('price_unit') <> multiplier:
+                        print line.price_unit
+                        print inline_in.get('price_unit')
+                        report_line['in_unit_price'] = inline_in.get('price_unit') * line.price_unit
+                    else:
+                        report_line['in_unit_price'] = ''
                     report_line['destination'] = ''
                     report_line['cost_centre'] = ''
                     report_lines.append(report_line)

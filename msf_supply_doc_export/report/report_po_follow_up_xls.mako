@@ -21,6 +21,21 @@
   <ProtectWindows>False</ProtectWindows>
  </ExcelWorkbook>
 <Styles>
+  <Style ss:ID="mainheader">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="0"/>
+        <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="14" ss:Color="#000000"/>
+        <Interior ss:Color="#E6E6E6" ss:Pattern="Solid"/>
+        <Borders>
+          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+    </Style>
+
+
+
+
     <Style ss:ID="header">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
         <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
@@ -85,6 +100,7 @@
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_ordered'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['uom'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_received'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['in'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_backordered'])|x}</Data></Cell>

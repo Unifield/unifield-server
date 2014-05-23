@@ -48,10 +48,7 @@ class po_follow_up(osv.osv_memory):
     }
     
     def button_validate(self, cr, uid, ids, context=None):
-        for x in self.browse(cr,uid,ids):
-            print 'name', x.po_id
-            print x.state
-        #return True
+        x = self.browse(cr,uid,ids)[0]
         
         # PO number
         if x.po_id:
@@ -65,12 +62,7 @@ class po_follow_up(osv.osv_memory):
         else:
             state_criteria = ('state','in',['sourced','confirmed','confirmed_wait','approved'])
             
-        
-        # PO date range
-        #if x.po_date_from > x.po_date_thru:
-        #    print 'start date should be before the end date'
-        #    return True
-        
+        # Dates
         if x.po_date_from:
             from_date_criteria = ('date_order','>=',x.po_date_from)
         else:
@@ -82,7 +74,6 @@ class po_follow_up(osv.osv_memory):
             thru_date_criteria = (1,'=',1)
             
         
-
         # Supplier
         if x.partner_id:
             partner_criteria = ('supplier_id','=', x.supplier_id.id)
@@ -99,20 +90,25 @@ class po_follow_up(osv.osv_memory):
         # get the PO ids based on the selected criteria
         po_obj = self.pool.get('purchase.order')
         domain = [state_criteria, po_id_criteria, from_date_criteria, thru_date_criteria, ref_criteria]
-        #po_ids = po_obj.search(cr, uid, [state_criteria, po_id_criteria, from_date_criteria, thru_date_criteria,ref_criteria])
         po_ids = po_obj.search(cr, uid, domain)
         
         
         if not po_ids:
-            po_id = 999
+            raise osv.except_osv(_('Error'), _('No Purchase Orders match the specified criteria.'))
             return True
         
         report_header = []
-        report_header.append('PURCHASE ORDER FOLLOW-UP per CLIENT')
-        report_header.append('TBD')
+        report_header.append('MULTIPLE PURCHASE ORDER FOLLOW-UP')
+        
+        report_header_line2 = ''
+        if x.partner_id:
+            report_header_line2 += x.partner_id.name
+        report_header_line2 += '  Report run date: ' + time.strftime("%d/%m/%Y")
+        if x.po_date_from:
+            report_header_line2 += x.po_date_from.strftime("%d/%m/%Y") + ' - ' + x.po_date_thru.strftime("%d/%m/%Y")
+        report_header.append(report_header_line2)
       
-        datas = {'ids': po_ids}       
-        context.update({'report_header': report_header})                                             
+        datas = {'ids': po_ids, 'report_header': report_header}       
                                                                                 
         return {                                                                
             'type': 'ir.actions.report.xml',                                    
@@ -121,7 +117,5 @@ class po_follow_up(osv.osv_memory):
             'nodestroy': True,                                                  
             'context': context,                                                 
         }
-    
-    
     
 po_follow_up()
