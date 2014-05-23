@@ -51,11 +51,10 @@
    <NumberFormat ss:Format="Short Date"/>
   </Style>
 </Styles>
-## ==================================== we loop over the purchase_order "objects" == purchase_order  ====================================================
-% for o in objects:
-<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
+
+<ss:Worksheet ss:Name="PO Follow Up">
 ## definition of the columns' size
-<% nb_of_columns = 8 %>
+<% nb_of_columns = 12 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />
 <Column ss:AutoFitWidth="1" ss:Width="300" />
@@ -64,47 +63,45 @@
 % endfor
 <Column ss:AutoFitWidth="1" ss:Width="250" />
 
-## we loop over the purchase_order_line "%s"%po_name.split('/')[-1])
+<Row><Cell ss:StyleID="header"><Data ss:Type="String">${getReportHeaderLine1() or '' | x}</Data></Cell></Row>
+<Row><Cell ss:StyleID="header"><Data ss:Type="String">${getReportHeaderLine2() or '' | x}</Data></Cell></Row>
+<Row></Row>
+
+% for o in objects:
+    <Row>
+    	<Cell ss:StyleID="header"><Data ss:Type="String">${getHeaderLine(o) or '' | x}</Data></Cell>
+    </Row>
+    
     
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery Request Date')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('External Ref')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Justification Code')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Justification Coordination')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('HQ Remarks')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Justification Y/N')}</Data></Cell>
+    	% for header in getPOLineHeaders():
+    		<Cell ss:StyleID="header"><Data ss:Type="String">${header}</Data></Cell>
+    	% endfor
     </Row>
-    % for line in o.order_line:
+    
+    % for line in getPOLines(o.id):
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_qty or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
-        % if line.date_planned :
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date_planned|n}T00:00:00.000</Data></Cell>
-        % elif o.delivery_requested_date:
-        ## if the date does not exist in the line we take the one from the header
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
-        % endif
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.currency_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${(line.external_ref or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and line.product_id.justification_code_id and line.product_id.justification_code_id.code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_ordered'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_received'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['in'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_backordered'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['unit_price'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['in_unit_price'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>
     </Row>
     % endfor
+     <Row>
+    	<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+    	<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+    </Row>
+ % endfor   
+    
 </Table>
 <x:WorksheetOptions/>
 </ss:Worksheet>
-% endfor
+
 </Workbook>

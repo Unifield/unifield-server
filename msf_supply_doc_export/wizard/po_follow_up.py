@@ -38,7 +38,7 @@ class po_follow_up(osv.osv_memory):
     ]
     
     _columns = {
-         'name':fields.many2one('purchase.order',string="Order Reference", help="Unique number of the Purchase Order. Optional", required=False),
+         'po_id':fields.many2one('purchase.order',string="Order Reference", help="Unique number of the Purchase Order. Optional", required=False),
          'state': fields.selection(STATE_SELECTION, 'State', help="The state of the purchase order. Optional", select=True, required=False),
          'po_date_from':fields.date("PO date from", required="False"),
          'po_date_thru':fields.date("PO date through", required="False"),
@@ -49,11 +49,70 @@ class po_follow_up(osv.osv_memory):
     
     def button_validate(self, cr, uid, ids, context=None):
         for x in self.browse(cr,uid,ids):
-            print x.name
+            print 'name', x.po_id
             print x.state
         #return True
-    
-        datas = {'ids': ids}                                                    
+        
+        # PO number
+        if x.po_id:
+            po_id_criteria = ('id','=', x.po_id.id)
+        else:
+            po_id_criteria = ('id','>',0)
+   
+        # State
+        if x.state:
+            state_criteria = ('state','=', x.state)
+        else:
+            state_criteria = ('state','in',['sourced','confirmed','confirmed_wait','approved'])
+            
+        
+        # PO date range
+        #if x.po_date_from > x.po_date_thru:
+        #    print 'start date should be before the end date'
+        #    return True
+        
+        if x.po_date_from:
+            from_date_criteria = ('date_order','>=',x.po_date_from)
+        else:
+            from_date_criteria = (1,'=',1)
+            
+        if x.po_date_thru:
+            thru_date_criteria = ('date_order','<=',x.po_date_thru)
+        else:
+            thru_date_criteria = (1,'=',1)
+            
+        
+
+        # Supplier
+        if x.partner_id:
+            partner_criteria = ('supplier_id','=', x.supplier_id.id)
+        else:
+            partner_criteria = ('supplier_id','>',0)
+            
+        # Supplier Reference
+        if x.project_ref:
+            crit = x.project_ref
+        else:
+            crit = ''
+        ref_criteria = ('project_ref','like',crit)
+        
+        # get the PO ids based on the selected criteria
+        po_obj = self.pool.get('purchase.order')
+        domain = [state_criteria, po_id_criteria, from_date_criteria, thru_date_criteria, ref_criteria]
+        #po_ids = po_obj.search(cr, uid, [state_criteria, po_id_criteria, from_date_criteria, thru_date_criteria,ref_criteria])
+        po_ids = po_obj.search(cr, uid, domain)
+        
+        
+        if not po_ids:
+            po_id = 999
+            return True
+        
+        report_header = []
+        report_header.append('PURCHASE ORDER FOLLOW-UP per CLIENT')
+        report_header.append('TBD')
+      
+        datas = {'ids': po_ids}       
+        context.update({'report_header': report_header})                                             
                                                                                 
         return {                                                                
             'type': 'ir.actions.report.xml',                                    

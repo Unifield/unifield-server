@@ -332,12 +332,161 @@ incoming_shipment_xml('report.incoming.shipment.xml', 'stock.picking', 'addons/m
 
 
 class parser_po_follow_up(report_sxw.rml_parse):
+    ''' developer note: would be a lot easier to write this as a single sql and then use on-break '''
 
     def __init__(self, cr, uid, name, context=None):
+        print 'sfc context: ', context
         super(parser_po_follow_up, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'getHeaderLine': self.getHeaderLine,
+            'getReportHeaderLine1': self.getReportHeaderLine1,
+            'getReportHeaderLine2': self.getReportHeaderLine2,
+            'getInlineIN': self.getInlineIN,
+            'getOtherINs': self.getOtherINs,
+            'getPOLines': self.getPOLines,
+            'getPOLineHeaders': self.getPOLineHeaders,
         })
+        
+        
+    def getHeaderLine(self,obj):
+        ''' format the header line for each PO object '''
+        print 'sfc getHeaderLine', obj
+        print obj.name
+        po_header = 'Order ref: ' + obj.name
+        po_header += ' status: ' + obj.state
+        po_header += ' created: ' 
+        po_header += ' Req del date: ' + obj.delivery_requested_date
+        po_header += ' Confirmed del date: ' + obj.delivery_confirmed_date
+        po_header += ' Nb items: ' 
+        po_header += ' Estimated amount: ' + str(obj.amount_total)
+        return po_header
+        
+        
+    def getReportHeaderLine1(self):
+        #return self.context.get('report_header')[0]
+        return 'PURCHASE ORDER FOLLOW-UP per CLIENT'
+    
+    def getReportHeaderLine2(self):
+        #return self.context.get('report_header')[1]
+        return 'Header with .....'
+    
+    def getPOLineHeaders(self):
+        return ['Item','Code','Description','Qty ordered','Qty received','IN','Qty backorder','Unit Price','IN unit price','Destination','Cost Center']
+    
+    def getPOLines(self, po_id):
+        pol_obj = self.pool.get('purchase.order.line')
+        po_line_ids = pol_obj.search(self.cr, self.uid, [('order_id','=',po_id)])
+        po_lines = pol_obj.browse(self.cr, self.uid, po_line_ids)
+        report_lines = []
+        for line in po_lines:
+            report_line = {}
+            inline_in = self.getInlineIN(line.id)
+            analytic_lines = self.getAnalyticLines(line.analytic_distribution_id.id)
+            report_line['sort_key'] = float(line.line_number)
+            report_line['item'] = line.line_number or ''
+            report_line['code'] = line.product_id.default_code or ''
+            report_line['description'] = line.product_id.name or ''
+            report_line['qty_ordered'] = line.product_qty or ''
+            report_line['qty_received'] = inline_in.get('product_qty','')
+            report_line['in'] = inline_in.get('name','') or ''
+            report_line['qty_backordered'] = ''
+            report_line['unit_price'] = line.price_unit or ''
+            report_line['in_unit_price'] = inline_in.get('in_unit_price','') or ''
+            report_line['destination'] = analytic_lines[0].get('cost_center')
+            report_line['cost_centre'] = analytic_lines[0].get('destination')
+            report_lines.append(report_line)
+            
+            
+            # if additional analytic lines print them here.
+            for (index, analytic_line) in list(enumerate(analytic_lines))[1:]:
+                report_line = {}
+                report_line['sort_key'] = line.line_number + (float(index) / 10)
+                report_line['item'] = ''
+                report_line['code'] = ''
+                report_line['description'] = ''
+                report_line['qty_ordered'] = ''
+                report_line['qty_received'] = ''
+                report_line['in'] = ''
+                report_line['qty_backordered'] = ''
+                report_line['unit_price'] = ''
+                report_line['in_unit_price'] = ''
+                report_line['destination'] = analytic_line.get('cost_center')
+                report_line['cost_centre'] = analytic_line.get('destination')
+                report_lines.append(report_line)
+
+            
+            # check if there are additional INs for this line
+            if inline_in:
+                other_ins = self.getOtherINs(line.id, inline_in.get('id')) 
+                for other_in in other_ins:
+                    report_line = {}
+                    backorder = other_in.get('backorder_id')
+                    report_line['sort_key'] = line.line_number + (float(other_in.get('id')) / 100)
+                    report_line['item'] = ''
+                    report_line['code'] = ''
+                    report_line['description'] = ''
+                    report_line['qty_ordered'] = ''
+                    if backorder:
+                        report_line['qty_received'] = ''
+                    else:
+                        report_line['qty_received'] = other_in.get('product_qty','')
+                    report_line['in'] = other_in.get('name','')
+                    if backorder:
+                        report_line['qty_backordered'] = other_in.get('product_qty','')
+                    else:
+                        report_line['qty_backordered'] = ''
+                    report_line['unit_price'] = line.price_unit or ''
+                    report_line['in_unit_price'] = 0.15
+                    report_line['destination'] = ''
+                    report_line['cost_centre'] = ''
+                    report_lines.append(report_line)
+                       
+        # sort the list for presentation in excel
+        sorted_lines = sorted(report_lines, key=lambda k: k['sort_key'])
+        return sorted_lines
+    
+    def getAnalyticLines(self,dist_id):
+        ccdl_obj = self.pool.get('cost.center.distribution.line')
+        ccdl_ids = ccdl_obj.search(self.cr, self.uid, [('distribution_id','=',dist_id)])
+        ccdl_rows = ccdl_obj.browse(self.cr, self.uid, ccdl_ids)
+        dist_lines = [{'cost_center': ccdl.analytic_id.code,'destination': ccdl.destination_id.code} for ccdl in ccdl_rows]
+        return dist_lines
+             
+        
+    
+    def getInlineIN(self,po_line_id):
+        sm_obj = self.pool.get('stock.move')        
+        self.cr.execute(''' select sm.id, sp.name, sm.product_qty, sm.product_uom, sm.price_unit, sm.state 
+                            from stock_move sm, stock_picking sp
+                            where sm.purchase_line_id = %s 
+                            and sm.type = 'in' 
+                            and sm.picking_id = sp.id
+                            order by sm.id asc limit 1''' % (po_line_id))
+        row = self.cr.dictfetchall()                
+        if row:
+            return row[0]
+        else:
+            return {}
+        
+        
+    
+    def getOtherINs(self,po_line_id,exclude_id):
+        sm_obj = self.pool.get('stock.move')        
+        self.cr.execute(''' select sm.id, sp.name, sm.product_qty, sm.product_uom, sm.price_unit, sm.state, sp.backorder_id 
+                            from stock_move sm, stock_picking sp
+                            where sm.purchase_line_id = %s 
+                            and sm.type = 'in' 
+                            and sm.picking_id = sp.id
+                            and sm.id <> %s 
+                            order by sm.id asc''' % (po_line_id,exclude_id))
+        rows = self.cr.dictfetchall()   
+        if rows:
+            return rows
+        else:
+            return []
+        
+    
 
 
 class po_follow_up_report_xls(SpreadsheetReport):
