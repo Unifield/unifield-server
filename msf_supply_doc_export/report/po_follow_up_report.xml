@@ -22,7 +22,9 @@
             model="purchase.order"
             name="po.follow.up_rml"
             rml="msf_supply_doc_export/report/report_po_follow_up.rml"
+            report_type="pdf"
          />
+
          
        
          
