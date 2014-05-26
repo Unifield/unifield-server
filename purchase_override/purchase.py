@@ -2468,6 +2468,8 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        res = False
+
         # [imported from the 'analytic_distribution_supply']
         # Don't save filtering data
         self._relatedFields(cr, uid, vals, context)
@@ -2475,8 +2477,12 @@ class purchase_order_line(osv.osv):
 
         # Update the name attribute if a product is selected
         self._update_name_attr(cr, uid, vals, context=context)
+        
+        if 'price_unit' in vals:
+            vals.update({'old_price_unit': vals.get('price_unit')})
 
         for line in self.browse(cr, uid, ids, context=context):
+            new_vals = vals.copy()
             if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok and not context.get('noraise'):
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
 
@@ -2485,19 +2491,15 @@ class purchase_order_line(osv.osv):
                 if vals.get('procurement_id', line.procurement_id.id):
                     proc = self.pool.get('procurement.order').browse(cr, uid, vals.get('procurement_id', line.procurement_id.id))
                 if not proc or not proc.sale_id:
-                    vals.update(self.update_origin_link(cr, uid, vals.get('origin', line.origin), context=context))
+                    new_vals.update(self.update_origin_link(cr, uid, vals.get('origin', line.origin), context=context))
 
             if line.order_id and not line.order_id.rfq_ok and (line.order_id.po_from_fo or line.order_id.po_from_ir):
-                vals['from_fo'] = True
+                new_vals['from_fo'] = True
 
-        if not context.get('update_merge'):
-            for line in ids:
-                vals = self._update_merged_line(cr, uid, line, vals, context=dict(context, skipResequencing=True, noraise=True))
+            if not context.get('update_merge'):
+                new_vals = self._update_merged_line(cr, uid, line.id, vals, context=dict(context, skipResequencing=True, noraise=True))
 
-        if 'price_unit' in vals:
-            vals.update({'old_price_unit': vals.get('price_unit')})
-
-        res = super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
+            res = super(purchase_order_line, self).write(cr, uid, [line.id], new_vals, context=context)
 
         # Check the selected product UoM
         if not context.get('import_in_progress', False):

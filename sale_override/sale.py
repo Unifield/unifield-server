@@ -44,6 +44,7 @@ class sync_order_label(osv.osv):
     sourced by a FO.
     '''
     _name = 'sync.order.label'
+    _description = 'Original order'
 
     _columns = {
         'name': fields.char(
@@ -1669,12 +1670,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
                         proc_obj.write(cr, uid, [proc_id], {'state': 'running'}, context=context)
 
-            # the Fo is sourced we set the state
-            o_write_vals['state'] = 'sourced'
-            self.write(cr, uid, [order.id], o_write_vals, context=context)
-            # display message for sourced
-            if display_log:
-                self.log(cr, uid, order.id, _('The split \'%s\' is sourced.') % (order.name))
+            # the Fo is sourced we set the state (keep the IR in confirmed state)
+            if not order.procurement_request:
+                o_write_vals['state'] = 'sourced'
+                self.write(cr, uid, [order.id], o_write_vals, context=context)
+                # display message for sourced
+                if display_log:
+                    self.log(cr, uid, order.id, _('The split \'%s\' is sourced.') % (order.name))
 
         if lines:
             sol_obj.write(cr, uid, lines, {'invoiced': 1}, context=context)
