@@ -16,16 +16,16 @@
          />
          
          <report
+         	auto="False"
             id="report_po_follow_up_rml"
             string="PO Follow Up Report"
             model="purchase.order"
             name="po.follow.up_rml"
-            file="msf_supply_doc_export/report/report_po_follow_up.rml"
-            report_type="webkit"
-            header="False"
-            auto="False"
-            menu="False"
+            rml="msf_supply_doc_export/report/report_po_follow_up.rml"
          />
+         
+       
+         
 
     </data>
 </openerp>

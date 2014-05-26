@@ -517,8 +517,17 @@ class po_follow_up_report_xls(SpreadsheetReport):
 
 po_follow_up_report_xls('report.po.follow.up_xls', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up_xls.mako', parser=parser_po_follow_up, header='internal')
 
+
+class parser_po_follow_up_rml(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(parser_po_follow_up_rml, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+        })
+
+
 #po_follow_up_report_xls('report.po.follow.up_rml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up.rml', parser=parser_po_follow_up, header='internal')
-report_sxw.report_sxw('report.po.follow.up_rml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up.rml', parser=parser_po_follow_up)
+report_sxw.report_sxw('report.po.follow.up_rml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up.rml', parser=parser_po_follow_up_rml)
 
 
 
