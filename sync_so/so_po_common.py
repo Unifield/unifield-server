@@ -379,7 +379,7 @@ class so_po_common(osv.osv_memory):
     
             if line_dict.get('sync_sourced_origin'):
                 values['origin'] = line_dict.get('sync_sourced_origin')
-                so_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', values['origin']), ('state', 'in', ('sourced', 'progress', 'manual'))], context=context)
+                so_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', values['origin']), ('state', 'in', ('sourced', 'progress', 'manual')), ('procurement_request', 'in', ('t', 'f'))], context=context)
                 if so_ids:
                     values['link_so_id'] = so_ids[0]
 
