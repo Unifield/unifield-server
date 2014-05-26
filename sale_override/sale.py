@@ -38,6 +38,30 @@ from sale_override import SALE_ORDER_SPLIT_SELECTION
 from sale_override import SALE_ORDER_LINE_STATE_SELECTION
 
 
+class sync_order_label(osv.osv):
+    '''
+    Class used to know the name of the document of another instance 
+    sourced by a FO.
+    '''
+    _name = 'sync.order.label'
+
+    _columns = {
+        'name': fields.char(
+            string='Name',
+            size=256,
+            required=True,
+        ),
+        'order_id': fields.many2one(
+            'sale.order',
+            string='Linked FO',
+            required=True,
+            ondelete='cascade',
+        ),
+    }
+
+sync_order_label()
+
+
 class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
@@ -311,6 +335,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
         'fo_to_resource': fields.boolean(string='FO created to resource FO in exception', readonly=True),
         'parent_order_name': fields.char(size=64, string='Parent order name', help='In case of this FO is created to re-source a need, this field contains the name of the initial FO (before split).'),
+        'sourced_references': fields.one2many(
+            'sync.order.label',
+            'order_id',
+            string='FO/IR sourced',
+        ),
     }
 
     _defaults = {
@@ -1718,6 +1747,7 @@ class sale_order_line(osv.osv):
                 'created_by_po': fields.many2one('purchase.order', string='Created by PO'),
                 'created_by_po_line': fields.many2one('purchase.order.line', string='Created by PO line'),
                 'dpo_line_id': fields.many2one('purchase.order.line', string='DPO line'),
+                'sync_sourced_origin': fields.char(string='Sync. Origin', size=256),
                 }
 
     _defaults = {

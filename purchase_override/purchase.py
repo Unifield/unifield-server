@@ -262,13 +262,21 @@ class purchase_order(osv.osv):
 
         res = {}
         for po in ids:
-            res[po] = ''
+            res[po] = {
+                'fnct_project_ref': '',
+                'sourced_references': '',
+            }
+
             so_ids = self.get_so_ids_from_po_ids(cr, uid, po, context=context)
             for so in self.pool.get('sale.order').browse(cr, uid, so_ids, context=context):
                 if so.client_order_ref:
-                    if res[po]:
-                        res[po] += ' - '
-                    res[po] += so.client_order_ref
+                    if res[po]['fnct_project_ref']:
+                        res[po]['fnct_project_ref'] += ' - '
+                    res[po]['fnct_project_ref'] += so.client_order_ref
+
+                if res[po]['sourced_references']:
+                    res[po]['sourced_references'] += ','
+                res[po]['sourced_references'] += so.name
 
         return res
 
@@ -328,10 +336,18 @@ class purchase_order(osv.osv):
         'project_ref': fields.char(size=256, string='Project Ref.'),
         'message_esc': fields.text(string='ESC Message'),
         'fnct_project_ref': fields.function(_get_project_ref, method=True, string='Project Ref.',
-                                            type='char', size=256, store=False,),
+                                            type='char', size=256, store=False, multi='so_info'),
         'dest_partner_ids': fields.many2many('res.partner', 'res_partner_purchase_order_rel', 'purchase_order_id', 'partner_id', 'Customers'),  # uf-2223
         'dest_partner_names': fields.function(_get_dest_partner_names, type='string', string='Customers', method=True),  # uf-2223
         'split_po': fields.boolean('Created by split PO', readonly=True),
+        'sourced_references': fields.function(
+            _get_project_ref,
+            method=True,
+            string='Sourced references',
+            type='text',
+            store=False,
+            multi='so_info',
+        ),
     }
 
     _defaults = {
@@ -1086,6 +1102,7 @@ stock moves which are already processed : '''
                     'analytic_distribution_id': new_distrib,
                     'created_by_po': l.order_id.id,
                     'created_by_po_line': l.id,
+                    'sync_sourced_origin': l.instance_sync_order_ref and l.instance_sync_order_ref.name or False,
                     'name': '[%s] %s' % (l.product_id.default_code, l.product_id.name)}
 
             new_line_id = sol_obj.create(cr, uid, vals, context=context)
@@ -2733,11 +2750,17 @@ class purchase_order_line(osv.osv):
         '''
         so_obj = self.pool.get('sale.order')
         if fo_id:
-            res = {'value': {'origin': so_obj.browse(cr, uid, fo_id, context=context).name,
+            fo = so_obj.browse(cr, uid, fo_id, context=context)
+            res = {'value': {'origin': fo.name,
+                             'display_sync_ref': len(fo.sourced_references) and True or False,
                              'select_fo': False}}
             return res
 
-        return {}
+        return {
+            'value': {
+                'display_sync_ref': False,
+            },
+        }
 
     def on_change_origin(self, cr, uid, ids, origin, procurement_id=False, partner_type='external', context=None):
         '''
@@ -2756,6 +2779,14 @@ class purchase_order_line(osv.osv):
             if not sale_id:
                 res['warning'] = {'title': _('Warning'),
                                   'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with %s supplier. No FO/IR line will be created for this PO line') % (origin, o_type)}
+                res['value'] = {
+                    'display_sync_ref': False,
+                    'instance_sync_order_ref': '',
+                }
+            else:
+                res['value'] = {
+                    'display_sync_ref': True,
+                }
 
         return res
 
@@ -2822,6 +2853,11 @@ class purchase_order_line(osv.osv):
         'fnct_project_ref': fields.function(_get_project_po_ref, method=True, string='Project PO',
                                             type='char', size=128, store=False),
         'from_fo': fields.boolean(string='From FO', readonly=True),
+        'display_sync_ref': fields.boolean(string='Display sync. ref.'),
+        'instance_sync_order_ref': fields.many2one(
+            'sync.order.label',
+            string='Order in sync. instance',
+        ),
     }
 
     _defaults = {
