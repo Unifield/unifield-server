@@ -48,50 +48,38 @@ class po_follow_up(osv.osv_memory):
     }
     
     def button_validate(self, cr, uid, ids, context=None):
-        x = self.browse(cr,uid,ids)[0]
+        wiz = self.browse(cr,uid,ids)[0]
         
+        domain = []
+         
         # PO number
-        if x.po_id:
-            po_id_criteria = ('id','=', x.po_id.id)
-        else:
-            po_id_criteria = ('id','>',0)
+        if wiz.po_id:
+            domain.append(('id','=', wiz.po_id.id))
    
-        # State
-        if x.state:
-            state_criteria = ('state','=', x.state)
+        # Status
+        if wiz.state:
+            domain.append(('state','=', wiz.state))
         else:
-            state_criteria = ('state','in',['sourced','confirmed','confirmed_wait','approved'])
+            domain.append(('state','in',['sourced','confirmed','confirmed_wait','approved']))
             
         # Dates
-        if x.po_date_from:
-            from_date_criteria = ('date_order','>=',x.po_date_from)
-        else:
-            from_date_criteria = (1,'=',1)
+        if wiz.po_date_from:
+            domain.append(('date_order','>=',wiz.po_date_from))
             
-        if x.po_date_thru:
-            thru_date_criteria = ('date_order','<=',x.po_date_thru)
-        else:
-            thru_date_criteria = (1,'=',1)
+        if wiz.po_date_thru:
+            domain.append(('date_order','<=',wiz.po_date_thru))
             
-        
         # Supplier
-        if x.partner_id:
-            partner_criteria = ('supplier_id','=', x.supplier_id.id)
-        else:
-            partner_criteria = ('supplier_id','>',0)
+        if wiz.partner_id:
+            domain.append(('partner_id','=', wiz.partner_id.id))
             
         # Supplier Reference
-        if x.project_ref:
-            crit = x.project_ref
-        else:
-            crit = ''
-        ref_criteria = ('project_ref','like',crit)
+        if wiz.project_ref:
+            domain.append(('project_ref','like',wiz.project_ref))
         
         # get the PO ids based on the selected criteria
         po_obj = self.pool.get('purchase.order')
-        domain = [state_criteria, po_id_criteria, from_date_criteria, thru_date_criteria, ref_criteria]
         po_ids = po_obj.search(cr, uid, domain)
-        
         
         if not po_ids:
             raise osv.except_osv(_('Error'), _('No Purchase Orders match the specified criteria.'))
@@ -101,19 +89,21 @@ class po_follow_up(osv.osv_memory):
         report_header.append('MULTIPLE PURCHASE ORDER FOLLOW-UP')
         
         report_header_line2 = ''
-        if x.partner_id:
-            report_header_line2 += x.partner_id.name
+        if wiz.partner_id:
+            report_header_line2 += wiz.partner_id.name
         report_header_line2 += '  Report run date: ' + time.strftime("%d/%m/%Y")
-        if x.po_date_from:
-            report_header_line2 += x.po_date_from.strftime("%d/%m/%Y") + ' - ' + x.po_date_thru.strftime("%d/%m/%Y")
+        if wiz.po_date_from:
+            report_header_line2 += wiz.po_date_from.strftime("%d/%m/%Y") + ' - ' + wiz.po_date_thru.strftime("%d/%m/%Y")
         report_header.append(report_header_line2)
       
         datas = {'ids': po_ids, 'report_header': report_header}       
-        if x.export_format == 'xls':
+        if wiz.export_format == 'xls':
             report_name = 'po.follow.up_xls'
         else:
             report_name = 'po.follow.up_rml'
             
+        if wiz.po_date_from:
+            domain.append(('date_order','>=',wiz.po_date_from))
                                                                                 
         return {                                                                
             'type': 'ir.actions.report.xml',                                    

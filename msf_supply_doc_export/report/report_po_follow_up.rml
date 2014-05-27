@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <document filename="test.pdf">
-  <template pageSize="(1191.0,842.0)" title="Test" author="Martin Simon" allowSplitting="20">
+  <template pageSize="(920.0,842.0)" title="Test" allowSplitting="20">
     <pageTemplate id="first">
-      <frame id="first" x1="14.0" y1="14.0" width="1163" height="814"/>
+      <frame id="first" x1="14.0" y1="14.0" width="900" height="814"/>
     </pageTemplate>
   </template>
   <stylesheet>
@@ -45,20 +45,31 @@
     <images/>
   </stylesheet>
   <story>
-    <blockTable colWidths="1162.0" style="Tableau1">
+    <blockTable colWidths="900.0" style="Tableau1">
       <tr>
         <td>
-          <para style="P1">Purchase Order Follow Up Report</para>
+          <para style="P1">[[getReportHeaderLine1()]]</para>
         </td>
       </tr>
+      <tr>
+        <td>
+      		<para style="P2">[[getReportHeaderLine2()]]</para>
+      	</td>
+      </tr>	      		
     </blockTable>
     <para style="P2">
       <font color="white"> </font>
     </para>
-    <!-- colWidths="41.0,41.0,41.0,226.0,44.0,66.0,66.0,62.0,53.0,78.0,78.0,78.0,39.0,39.0,39.0,39.0,39.0,39.0,52.0" -->
     
-    <para style="terp_default_8">[[repeatIn(objects,'o')]]</para>
-    <blockTable style="Tableau3" >
+    <para>[[repeatIn(objects,'o')]]</para>
+    <blockTable colWidths="900.0" style="Tableau1">
+    <tr>
+       <td>
+    	  <para style="P2">[[getHeaderLine(o)]]</para>
+       </td>
+    </tr>     	  
+     </blockTable>
+    <blockTable colWidths="25.0,175.0,160.0,40.0,50.0,50.0,100.0,100.0,50.0,50.0,50.0,50.0" style="Tableau3" >
 
       <tr>
         <td>
@@ -72,6 +83,9 @@
         </td>
         <td>
           <para style="P3">Qty ordered</para>
+        </td>
+        <td>
+          <para style="P3">UoM</para>
         </td>
         <td>
           <para style="P3">Qty received</para>
@@ -88,49 +102,50 @@
         <td>
           <para style="P3">IN unit price</para>
         </td>
-         <td>
+        <td>
           <para style="P3">Destination</para>
         </td>
-         <td>
+        <td>
           <para style="P3">Cost Center</para>
         </td>
       </tr>
       <tr>
-       <td>
          <para style="P4">[[ repeatIn(getPOLines(o.id), 'line') ]]</para>
-       </td> 
         <td>
           <para style="P4">[[ line['item'] ]]</para>
-       </td>
+        </td>
         <td>
-          <para style="P4">[[ line['item'] ]]</para>
-       </td>
+          <para style="P4">[[ line['code'] ]]</para>
+        </td>
         <td>
-          <para style="P4">[[ line['item'] ]]</para>
-       </td>
+          <para style="P4">[[ line['description'] ]]</para>
+        </td>
         <td>
-          <para style="P4">[[ line['item'] ]]</para>
-       </td>
+          <para style="P4">[[ line['qty_ordered'] ]]</para>
+        </td>
         <td>
-          <para style="P4">[[ line['item'] ]]</para>
-       </td>
+          <para style="P4">[[ line['uom'] ]]</para>
+        </td>
         <td>
-          <para style="P4">[[ line['item'] ]]</para>
-       </td>
+          <para style="P4">[[ line['qty_received'] ]]</para>
+        </td>
         <td>
-          <para style="P4">[[ line['item'] ]]</para>
-       </td>
+          <para style="P4">[[ line['in'] ]]</para>
+        </td>
         <td>
-          <para style="P4">[[ line['item'] ]]</para>
-       </td>
+          <para style="P4">[[ line['qty_backordered'] ]]</para>
+        </td>
         <td>
-          <para style="P4">[[ line['item'] ]]</para>
-       </td>
+          <para style="P4">[[ line['unit_price'] ]]</para>
+        </td>
         <td>
-          <para style="P4">[[ line['item'] ]]</para>
-       </td>
+          <para style="P4">[[ line['in_unit_price'] ]]</para>
+        </td>
         <td>
-          <para style="P4">[[ line['item'] ]]</para>
+          <para style="P4">[[ line['destination'] ]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ line['cost_centre'] ]]</para>
        </td>
      </tr>
     
