@@ -100,37 +100,37 @@
          <para style="P4">[[ repeatIn(getPOLines(o.id), 'line') ]]</para>
        </td> 
         <td>
-          <para style="P4">[[ line['item']) ]]</para>
+          <para style="P4">[[ line['item'] ]]</para>
        </td>
         <td>
-          <para style="P4">[[ line['item']) ]]</para>
+          <para style="P4">[[ line['item'] ]]</para>
        </td>
         <td>
-          <para style="P4">[[ line['item']) ]]</para>
+          <para style="P4">[[ line['item'] ]]</para>
        </td>
         <td>
-          <para style="P4">[[ line['item']) ]]</para>
+          <para style="P4">[[ line['item'] ]]</para>
        </td>
         <td>
-          <para style="P4">[[ line['item']) ]]</para>
+          <para style="P4">[[ line['item'] ]]</para>
        </td>
         <td>
-          <para style="P4">[[ line['item']) ]]</para>
+          <para style="P4">[[ line['item'] ]]</para>
        </td>
         <td>
-          <para style="P4">[[ line['item']) ]]</para>
+          <para style="P4">[[ line['item'] ]]</para>
        </td>
         <td>
-          <para style="P4">[[ line['item']) ]]</para>
+          <para style="P4">[[ line['item'] ]]</para>
        </td>
         <td>
-          <para style="P4">[[ line['item']) ]]</para>
+          <para style="P4">[[ line['item'] ]]</para>
        </td>
         <td>
-          <para style="P4">[[ line['item']) ]]</para>
+          <para style="P4">[[ line['item'] ]]</para>
        </td>
         <td>
-          <para style="P4">[[ line['item']) ]]</para>
+          <para style="P4">[[ line['item'] ]]</para>
        </td>
      </tr>
     
