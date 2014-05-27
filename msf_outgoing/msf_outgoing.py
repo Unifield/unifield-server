@@ -2229,7 +2229,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        if context.get('sync_update_execution', False):
+        if context.get('sync_update_execution', False) or context.get('sync_message_execution', False):
             # UF-2066: in case the data comes from sync, some False value has been removed, but needed in some assert.
             # The following lines are to re-enter explicitly the values, even if they are already set to False
             vals['backorder_id'] = vals.get('backorder_id', False)
