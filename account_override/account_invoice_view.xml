@@ -241,7 +241,7 @@
                     </group>
                     <notebook colspan="4">
                         <page string="Invoice">
-                            <field domain="[('company_id', '=', company_id), ('restricted_area', '=', 'out_invoice'), ('is_intersection_counterpart', '=', True)]" name="account_id" />
+                            <field domain="[('company_id', '=', company_id), ('restricted_area', '=', 'out_invoice'), ('is_intersection_counterpart', '=', False)]" name="account_id" />
                             <field name="name"/>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
                                 <tree editable="top" string="Invoice Line" noteditable="1" hide_new_button="1">

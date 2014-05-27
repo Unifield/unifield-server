@@ -295,6 +295,9 @@ class account_account(osv.osv):
             if x[0] == field_names and x[2] is True:
                 if specific_account_id:
                     arg.append(('id', '=', specific_account_id))
+            elif x[0] == field_names and x[2] is False:
+                if specific_account_id:
+                    arg.append(('id', '!=', specific_account_id))
             elif x[0] != field_names:
                 arg.append(x)
             else:
