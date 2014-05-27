@@ -1,0 +1,216 @@
+# -*- coding: utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+from osv import osv, fields
+import netsvc
+
+import logging
+
+from sync_common import xmlid_to_sdref
+from sync_client import get_sale_purchase_logger
+
+class stock_picking(osv.osv):
+    '''
+    Stock.picking override for Remote Warehouse tasks
+    
+    WORK IN PROGRESS
+    
+    '''
+    _inherit = "stock.picking"
+    _logger = logging.getLogger('------sync.stock.picking')
+
+    def retrieve_picking_header_data(self, cr, uid, source, header_result, pick_dict, context):
+        if 'name' in pick_dict:
+            header_result['name'] = pick_dict.get('name')
+        if 'state' in pick_dict:
+            header_result['state'] = pick_dict.get('state')
+        if 'stock_journal_id' in pick_dict:
+            header_result['stock_journal_id'] = pick_dict.get('stock_journal_id')
+        if 'origin' in pick_dict:
+            header_result['origin'] = pick_dict.get('origin')
+        if 'order_category' in pick_dict:
+            header_result['order_category'] = pick_dict.get('order_category')
+
+        if pick_dict['reason_type_id'] and pick_dict['reason_type_id']['id']:
+            header_result['reason_type_id'] = self.pool.get('stock.reason.type').find_sd_ref(cr, uid, xmlid_to_sdref(pick_dict['reason_type_id']['id']), context=context)
+        else:
+            raise Exception, "Reason Type at picking header cannot be empty"
+              
+        if 'overall_qty' in pick_dict:
+            header_result['overall_qty'] = pick_dict.get('overall_qty')
+        if 'change_reason' in pick_dict:
+            header_result['change_reason'] = pick_dict.get('change_reason')
+            
+        if 'move_type' in pick_dict:
+            header_result['move_type'] = pick_dict.get('move_type')
+        if 'type' in pick_dict:
+            header_result['type'] = pick_dict.get('type')
+        if 'subtype' in pick_dict:
+            header_result['subtype'] = pick_dict.get('subtype')
+            
+        if 'transport_order_id' in pick_dict:
+            header_result['transport_order_id'] = pick_dict.get('transport_order_id')
+
+        so_po_common = self.pool.get('so.po.common')
+
+        partner_id = so_po_common.get_partner_id(cr, uid, source, context)
+        address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
+        price_list = so_po_common.get_price_list_id(cr, uid, partner_id, context)
+        location_id = so_po_common.get_location(cr, uid, partner_id, context)
+        
+        ###### TEMP TEMP TO BE REMOVED ----
+        partner_id = 3
+        address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
+        ###### END TEMP TEMP
+
+        header_result['partner_ref'] = source + "." + pick_dict.get('name')
+        header_result['partner_id'] = partner_id
+        header_result['partner_id2'] = partner_id
+        header_result['address_id'] = address_id
+        header_result['location_id'] = location_id
+        return header_result
+
+    def get_picking_line(self, cr, uid, data, context=None):
+        '''
+        we format the data, gathering ids corresponding to objects
+        '''
+        # objects
+        prod_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
+        location_obj = self.pool.get('stock.location')
+
+        # product
+        product_name = data['product_id']['name']
+        product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
+        if not product_ids:
+            raise Exception, "The corresponding product does not exist here. Product name: %s" % product_name
+        product_id = product_ids[0]
+
+        asset_id = False
+        if data['asset_id'] and data['asset_id']['id']:
+            asset_id = self.pool.get('product.asset').find_sd_ref(cr, uid, xmlid_to_sdref(data['asset_id']['id']), context=context)
+
+        if data['location_dest_id'] and data['location_dest_id']['id']:
+            location = data['location_dest_id']['id']
+            location_dest_id = location_obj.find_sd_ref(cr, uid, xmlid_to_sdref(location), context=context)
+        else:
+            raise Exception, "Destination Location cannot be empty"
+        
+        if data['location_id'] and data['location_id']['id']:
+            location = data['location_id']['id']
+            location_id = location_obj.find_sd_ref(cr, uid, xmlid_to_sdref(location), context=context)
+        else:
+            raise Exception, "Location cannot be empty"
+
+        if data['reason_type_id'] and data['reason_type_id']['id']:
+            reason_type_id = self.pool.get('stock.reason.type').find_sd_ref(cr, uid, xmlid_to_sdref(data['reason_type_id']['id']), context=context)
+        else:
+            raise Exception, "Reason Type at line cannot be empty"
+
+        uom_name = data['product_uom']['name']
+        uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
+        if not uom_ids:
+            raise Exception, "The corresponding uom does not exist here. Uom name: %s" % uom_name
+        uom_id = uom_ids[0]
+        
+
+        batch_id = False
+        if data['prodlot_id']:
+            batch_id = self.pool.get('stock.production.lot').find_sd_ref(cr, uid, xmlid_to_sdref(data['prodlot_id']['id']), context=context)
+            if not batch_id:
+                raise Exception, "Batch Number %s not found for this sync data record" % data['prodlot_id']
+
+        expired_date = data['expired_date']
+        state = data['state']
+        if state == 'done':
+            state = 'assigned'
+        result = {'line_number': data['line_number'],
+                  'product_id': product_id,
+                  'product_uom': uom_id,
+                  'product_uos': uom_id,
+                  'uom_id': uom_id,
+                  'date': data['date'],
+                  'date_expected': data['date_expected'],
+                  'state': state,
+
+                  'original_qty_partial': data['original_qty_partial'], 
+
+                  'prodlot_id': batch_id,
+                  'expired_date': expired_date,
+
+                  'dpo_line_id': dpo_line_id,
+                  'sync_dpo': dpo_line_id and True or False,
+
+                  'location_dest_id': location_dest_id,
+                  'location_id': location_id,
+                  'reason_type_id': reason_type_id,
+
+                  'asset_id': asset_id,
+                  'change_reason': data['change_reason'] or None,
+                  'name': data['name'],
+                  'product_qty': data['product_qty'] or 0.0,
+                  'note': data['note'],
+                  }
+        return result
+
+    def get_picking_lines(self, cr, uid, source, out_info, context=None):
+        '''
+        package the data to get info concerning already processed or not
+        '''
+        result = {}
+        line_result = []
+        if out_info.get('move_lines', False):
+            for line in out_info['move_lines']:
+                line_data = self.get_picking_line(cr, uid, line, context=context)
+                line_result.append((0, 0, line_data))
+
+        return line_result
+
+    def replicate_picking(self, cr, uid, source, out_info, context=None):
+        '''
+        '''
+        move_proc = self.pool.get('stock.move.in.processor')
+        if context is None:
+            context = {}
+
+        pick_dict = out_info.to_dict()
+        pick_name = pick_dict['name']
+            
+        self._logger.info("+++ RW: Replicate the PICK object: %s from %s to %s" % (pick_name, source, cr.dbname))
+        so_po_common = self.pool.get('so.po.common')
+        move_obj = self.pool.get('stock.move')
+        pick_tools = self.pool.get('picking.tools')
+
+        header_result = {}
+        self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
+        pick_data = self.get_picking_lines(cr, uid, source, pick_dict, context)
+        header_result['move_lines'] = pick_data
+
+        pick_id = self.create(cr, uid, header_result , context=context)
+        
+        # Some more to be checked for the PICKING object
+
+        message = "The PICK " + pick_name + "has been well replicated in " + cr.dbname
+        self._logger.info(message)
+        return message
+
+stock_picking()
+
