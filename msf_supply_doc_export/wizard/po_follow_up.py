@@ -26,6 +26,7 @@ from lxml import etree
 
 import time
 
+
 class po_follow_up(osv.osv_memory):
     _name = 'po.follow.up'
     _description = 'PO Follow up report wizard'
@@ -44,7 +45,14 @@ class po_follow_up(osv.osv_memory):
          'po_date_thru':fields.date("PO date through", required="False"),
          'partner_id':fields.many2one('res.partner', 'Supplier', required=False),
          'project_ref':fields.char('Supplier reference', size=64, required=False),
-         'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),     
+         'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),    
+         'background_time': fields.integer('Number of second before background processing'),
+    }
+    
+    
+    _defaults = {
+        'export_format': lambda *a: 'xls',
+        'background_time': lambda *a: 200,
     }
     
     def button_validate(self, cr, uid, ids, context=None):
@@ -104,7 +112,11 @@ class po_follow_up(osv.osv_memory):
             
         if wiz.po_date_from:
             domain.append(('date_order','>=',wiz.po_date_from))
-                                                                                
+                   
+        background_id = self.pool.get('memory.background.report').create(cr, uid, {'file_name': report_name, 'report_name': report_name}, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = wiz.background_time
+                                                                             
         return {                                                                
             'type': 'ir.actions.report.xml',                                    
             'report_name': report_name,                                         
@@ -114,3 +126,20 @@ class po_follow_up(osv.osv_memory):
         }
     
 po_follow_up()
+
+
+class background_report(osv.osv_memory):
+        _name = 'memory.background.report'
+        _description = 'Report result'
+
+        _columns = {
+            'file_name': fields.char('Filename', size=256),
+            'report_name': fields.char('Report Name', size=256),
+            'report_id': fields.integer('Report id'),
+            'percent': fields.float('Percent'),
+        }
+        def update_percent(self, cr, uid, ids, percent, context=None):
+            self.write(cr, uid, ids, {'percent': percent})
+
+
+background_report()

@@ -332,6 +332,13 @@ class incoming_shipment_xml(WebKitParser):
 incoming_shipment_xml('report.incoming.shipment.xml', 'stock.picking', 'addons/msf_supply_doc_export/report/report_incoming_shipment_xml.mako')
 
 
+def get_back_browse(self, cr, uid, context):
+    background_id = context.get('background_id')
+    if background_id:
+        return self.pool.get('memory.background.report').browse(cr, uid, background_id)
+    return False
+
+
 class po_follow_up_mixin(object):
      
     def getHeaderLine(self,obj):
@@ -500,6 +507,7 @@ class parser_po_follow_up_xls(po_follow_up_mixin, report_sxw.rml_parse):
             'getPOLines': self.getPOLines,
             'getPOLineHeaders': self.getPOLineHeaders,
         })
+
     
 
 
