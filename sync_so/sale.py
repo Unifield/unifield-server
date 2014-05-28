@@ -43,7 +43,7 @@ class sale_order_line_cancel(osv.osv):
         self._logger.info("+++ Create an sale.order.line.cancel at %s from a sale.order.line.cancel at %s"%(cr.dbname, source))
         if not context:
             context = {}
-            
+
         line_dict = line_info.to_dict()
         line_dict['partner_id'] = False
 
@@ -54,7 +54,7 @@ class sale_order_line_cancel(osv.osv):
             sol_ids = self.pool.get('purchase.order.line').get_sol_ids_from_pol_ids(cr, uid, pol_ids, context=context)
             if sol_ids:
                 so_order_line_db_id = self.pool.get('sale.order.line').read(cr, uid, sol_ids[0], ['sync_order_line_db_id'], context=context)['sync_order_line_db_id']
-        
+
         if so_order_line_db_id:
             line_dict['fo_sync_order_line_db_id'] = so_order_line_db_id
 
@@ -291,6 +291,12 @@ class sale_order_sync(osv.osv):
                 old_lines, new_lines = map(set, changes['order_line'])
                 logger.is_product_added |= (len(new_lines - old_lines) > 0)
                 logger.is_product_removed |= (len(old_lines - new_lines) > 0)
+
+            #UFTP-242: Log if there is lines deleted for this SO
+            if context.get('deleted_line_so_id', -1) == id:
+                logger.is_product_removed = True
+                del context['deleted_line_so_id']
+
             logger.is_date_modified |= ('date_order' in changes)
             logger.is_status_modified |= ('state' in changes)
             # handle line's changes
