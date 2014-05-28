@@ -18,10 +18,10 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+
 import time
 
 from report import report_sxw
-from report_webkit.webkit_report import WebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 

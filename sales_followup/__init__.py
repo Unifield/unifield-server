@@ -21,3 +21,4 @@
 
 import sale_followup
 import report
+import wizard

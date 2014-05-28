@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+
+    <data>
+
+        <record id="sale_followup_multi_wizard_tree_view" model="ir.ui.view">
+            <field name="name">sale.followup.multi.wizard.tree.view</field>
+            <field name="model">sale.followup.multi.wizard</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="FO Follow-up per client">
+                    <field name="report_date" />
+                    <field name="partner_id" />
+                    <field name="start_date" />
+                    <field name="end_date" />
+                    <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="2" />
+                    <button name="print_pdf" string="PDF report" icon="gtk-print" type="object" colspan="2" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="sale_followup_multi_wizard_form_view" model="ir.ui.view">
+            <field name="name">sale.followup.multi.wizard.form.view</field>
+            <field name="model">sale.followup.multi.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="FO Follow-up per client">
+                    <field name="start_date" />
+                    <field name="end_date" />
+                    <field name="partner_id" />
+                    <button name="get_values" string="Get values" icon="gtk-execute" type="object" colspan="2" />
+                    <separator colspan="4" string="Actions" />
+                    <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="2" />
+                    <button name="print_pdf" string="PDF report" icon="gtk-print" type="object" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="sale_followup_multi_wizard_search_view" model="ir.ui.view">
+            <field name="name">sale.followup.multi.wizard.search.view</field>
+            <field name="model">sale.followup.multi.wizard</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="FO Follow-up per client">
+                    <field name="partner_id" />
+                </search>
+            </field>
+        </record>
+
+        <record id="action_sale_followup_multi_wizard" model="ir.actions.act_window">
+            <field name="name">FO Follow-up per client</field>
+            <field name="res_model">sale.followup.multi.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem
+            id="menu_sale_followup_multi"
+            action="action_sale_followup_multi_wizard"
+            parent="base.menu_sales"
+            sequence="2"
+            />
+
+    </data>
+
+</openerp>
