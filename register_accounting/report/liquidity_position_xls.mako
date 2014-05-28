@@ -345,7 +345,7 @@
 </Cell>
 </Row>
 
-% for reg in getRegister(data.get('period_id')):
+% for reg in getRegister():
 	% for o in getRegister2()[reg]:
 	<Row>
         <Cell ss:StyleID="s25" >
