@@ -37,6 +37,11 @@ class stock_picking(osv.osv):
     _inherit = "stock.picking"
     _logger = logging.getLogger('------sync.stock.picking')
 
+    _columns = {'already_replicated': fields.boolean(string='Already replicated - for sync only'),
+                }
+    _defaults = {'already_replicated': False,
+                 }
+
     def retrieve_picking_header_data(self, cr, uid, source, header_result, pick_dict, context):
         if 'name' in pick_dict:
             header_result['name'] = pick_dict.get('name')
@@ -156,9 +161,6 @@ class stock_picking(osv.osv):
                   'prodlot_id': batch_id,
                   'expired_date': expired_date,
 
-                  'dpo_line_id': dpo_line_id,
-                  'sync_dpo': dpo_line_id and True or False,
-
                   'location_dest_id': location_dest_id,
                   'location_id': location_id,
                   'reason_type_id': reason_type_id,
@@ -187,7 +189,6 @@ class stock_picking(osv.osv):
     def replicate_picking(self, cr, uid, source, out_info, context=None):
         '''
         '''
-        move_proc = self.pool.get('stock.move.in.processor')
         if context is None:
             context = {}
 
@@ -201,8 +202,8 @@ class stock_picking(osv.osv):
 
         header_result = {}
         self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-        pick_data = self.get_picking_lines(cr, uid, source, pick_dict, context)
-        header_result['move_lines'] = pick_data
+        picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+        header_result['move_lines'] = picking_lines
 
         pick_id = self.create(cr, uid, header_result , context=context)
         
@@ -211,6 +212,95 @@ class stock_picking(osv.osv):
         message = "The PICK " + pick_name + "has been well replicated in " + cr.dbname
         self._logger.info(message)
         return message
+            
+    def closed_out_closes_pick(self, cr, uid, source, out_info, context=None):
+        ''' There are 2 cases: 
+        + If the PICK exists in the current instance, then just convert that pick to OUT, same xmlid
+        + If the PICK not present, the a PICK needs to be created first, then convert it to OUT
+        + Another case: OUT with Back order, meaning that the original PICK is not directly linked to this OUT, but an existing OUT at local
+        '''
+        pick_dict = out_info.to_dict()
+        pick_name = pick_dict['name']
+            
+        self._logger.info("+++ RW: OUT closed %s closes original PICK object from %s to %s" % (pick_name, source, cr.dbname))
+        if context is None:
+            context = {}
+
+        so_po_common = self.pool.get('so.po.common')
+        move_obj = self.pool.get('stock.move')
+        pick_tools = self.pool.get('picking.tools')
+
+        header_result = {}
+        self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
+        
+        # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
+        origin = pick_dict['origin']
+        rw_type = self.pool.get('sync.client.entity').get_entity(cr, uid).usb_instance_type
+        
+        
+        if rw_type == 'central_platform' and origin:
+            # look for FO if it is a CP instance
+            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', '=', 'draft')], context=context)  
+            if pick_ids: # This is a real pick in draft, then convert it to OUT
+                self.convert_to_standard(cr, uid, pick_ids, context)
+                self.force_assign(cr, uid, pick_ids)
+                self.write(cr, uid, pick_ids, {'name': pick_name, 'already_replicated': True}, context=context)
+            else:
+                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('state', '=', 'assigned')], context=context)
+            
+            if pick_ids:  
+                picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+                header_result['move_lines'] = picking_lines
+                self.rw_do_out_partial(cr, uid, pick_ids[0], picking_lines, context)
+                
+                backorder_id = self.read(cr, uid, pick_ids[0], ['backorder_id'])['backorder_id']
+                if backorder_id:
+                    self.write(cr, uid, backorder_id, {'already_replicated': True}, context=context)
+    
+                message = "The OUT " + pick_name + " has been closed in " + cr.dbname
+            else:
+                message = "The OUT " + pick_name + " not found in " + cr.dbname
+                
+        elif rw_type == 'remote_warehouse': 
+            message = "Sorry, no update should be done for the RW"
+                
+        self._logger.info(message)
+        return message
+    
+
+    def rw_do_out_partial(self, cr, uid, out_id, picking_lines, context=None):
+        # Objects
+        picking_obj = self.pool.get('stock.picking')
+        sequence_obj = self.pool.get('ir.sequence')
+        uom_obj = self.pool.get('product.uom')
+        move_obj = self.pool.get('stock.move')
+        wf_service = netsvc.LocalService("workflow")
+
+        wizard_obj = self.pool.get('outgoing.delivery.processor')
+        wizard_line_obj = self.pool.get('outgoing.delivery.move.processor')
+        proc_id = wizard_obj.create(cr, uid, {'picking_id': out_id})
+        wizard_obj.create_lines(cr, uid, proc_id, context=context)
+
+        # Copy values from the OUT message move lines into the the wizard lines before making the partial OUT
+        # If the line got split, based on line number and create new wizard line
+        for sline in picking_lines:
+            sline = sline[2]
+            line_number = sline['line_number']
+            
+            #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
+            #### WORK IN PROGRESS
+            
+            wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
+            for mline in wizard.move_ids:
+                if mline.line_number == line_number:
+                    # match the line, copy the content of picking line into the wizard line
+                    vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'], 
+                            'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id']}
+                    wizard_line_obj.write(cr, uid, mline.id, vals, context)
+                    break
+
+        self.do_partial(cr, uid, [proc_id], 'outgoing.delivery.processor', context=context)
+        return True
 
 stock_picking()
 

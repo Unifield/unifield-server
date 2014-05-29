@@ -73,3 +73,32 @@ class stock_move(osv.osv):
 
 stock_move()
 
+class stock_picking(osv.osv):
+    '''
+    Stock.picking override for Remote Warehouse tasks
+    '''
+    _inherit = "stock.picking"
+
+    def _hook_check_cp_instance(self, cr, uid, ids, context=None):
+        res = super(stock_picking, self)._hook_check_cp_instance(cr, uid, ids, context=context)
+        rw_type = self.pool.get('sync.client.entity').get_entity(cr, uid).usb_instance_type
+        if rw_type == 'central_platform':
+            name = "This action should only be performed at the Remote Warehouse instance! Are you sure to proceed it at this main instance?"
+            model = 'confirm'
+            step = 'default'
+            question = name
+            clazz = 'stock.picking'
+            func = 'original_action_process'
+            args = [ids]
+            kwargs = {}            
+            wiz_obj = self.pool.get('wizard')
+            # open the selected wizard
+            res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, question=question,
+                                                                                                    callback={'clazz': clazz,
+                                                                                                              'func': func,
+                                                                                                              'args': args,
+                                                                                                              'kwargs': kwargs}))
+            return res
+        return False            
+
+stock_picking()
