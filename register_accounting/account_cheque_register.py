@@ -62,7 +62,7 @@ class account_cheque_register(osv.osv):
 
     _columns = {
         'display_type': fields.selection([('not_reconciled', 'Outstanding cheques only'), ('all', 'All cheques')], \
-            string="Display type", states={'draft': [('readonly', True)]}),
+            string="Display type", required=True, states={'draft': [('readonly', True)]}),
         'line_ids': one2many_register('account.bank.statement.line', 'statement_id', 'Statement lines', \
                 states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft': [('readonly', True)]}),
     }
