@@ -77,6 +77,7 @@ class stock_picking(osv.osv):
     '''
     Stock.picking override for Remote Warehouse tasks
     '''
+    _name = 'stock.picking'
     _inherit = "stock.picking"
 
     def _hook_check_cp_instance(self, cr, uid, ids, context=None):
