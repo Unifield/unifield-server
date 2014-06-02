@@ -539,7 +539,7 @@
                     <field name="journal_id"/>
                     <field name="balance_start"/>
                     <field name="msf_calculated_balance"/>
-                    <field name="balance_end_cash"/>
+                    <field name="balance_end_cash" string="Cashbox balance" />
                     <field name="state"/>
                     <button type="object" string="Open" name="button_open_cash" states="draft" icon="terp-gtk-go-back-rtl"/>
                     <button type="object" string="Close Register" name="button_confirm_cash" states="open" icon="terp-camera_test"/>
