@@ -100,7 +100,6 @@
                 <xpath expr="/form//button[@string='Split']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
                 </xpath>
-                <xpath expr="/form//button[@string='Cancel']" position="replace" />
             </field>
         </record>
         
@@ -149,7 +148,6 @@
                 <xpath expr="/form//button[@string='Split']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
                 </xpath>
-                <xpath expr="/form//button[@string='Cancel']" position="replace" />
             </field>
         </record>        
 
