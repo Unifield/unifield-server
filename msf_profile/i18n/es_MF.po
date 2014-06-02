@@ -8338,12 +8338,6 @@ msgstr "Estado disponible de producto entrante."
 msgid "res.currency.table"
 msgstr "res.currency.table"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:194
-#, python-format
-msgid "Period for migration is not open!"
-msgstr "Period for migration is not open!"
-
 #. module: report_webkit
 #: model:ir.model,name:report_webkit.model_report_webkit_actions
 msgid "Webkit Actions"
@@ -13512,11 +13506,6 @@ msgstr "Coste unitario de esta línea de productos"
 #: field:stock.partial.picking,description_partial_picking:0
 msgid "Claim Description"
 msgstr "Descripción de reclamación "
-
-#. module: msf_doc_import
-#: field:msf.doc.import.accounting,date:0
-msgid "Migration date"
-msgstr "Fecha de migración"
 
 #. module: base
 #: selection:ir.actions.server,trigger_name:0
@@ -31771,7 +31760,7 @@ msgstr "This budget does not have an analytic domain!"
 
 #. module: msf_doc_import
 #: view:msf.doc.import.accounting:0
-msgid "This will import Migration Entries from a XML file."
+msgid "This will import Entries from a XML file."
 msgstr "Esto importará los asientos de migración desde un archivo XML."
 
 #. module: msf_doc_import
@@ -44791,7 +44780,7 @@ msgstr "America/Argentina/Salta"
 #: model:ir.actions.act_window,name:msf_doc_import.action_migration_accounting_import_wizard
 #: model:ir.ui.menu,name:msf_doc_import.menu_finance_migration_accounting
 #: view:msf.doc.import.accounting:0
-msgid "Import Migration Entries"
+msgid "Import Entries"
 msgstr "Importar asientos de migración"
 
 #. module: base

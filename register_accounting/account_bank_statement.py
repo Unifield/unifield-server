@@ -1834,6 +1834,11 @@ class account_bank_statement_line(osv.osv):
             if line.get('is_down_payment', False) and line.get('down_payment_id'):
                 if not self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, line.get('id'), line.get('down_payment_id')[0], context=context):
                     raise osv.except_osv(_('Warning'), _('An error occured on down_payment check. Please contact an administrator to resolve this problem.'))
+        if 'cheque_number' in values:
+            cr.execute('''select id from account_bank_statement_line where cheque_number = %s ''', (cheque_number, ))
+            for row in cr.dictfetchall():
+                raise osv.except_osv(_('Info'),_('This cheque number has already been used'))
+
         return res
 
     def copy(self, cr, uid, absl_id, default=None, context=None):
