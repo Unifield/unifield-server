@@ -67,12 +67,71 @@ class sale_followup_multi_wizard(osv.osv):
             'order_id',
             string='Orders',
         ),
+        'order_id': fields.many2one(
+            'sale.order',
+            string='Order Ref.',
+        ),
+        'draft_ok': fields.boolean(
+            string='Draft',
+        ),
+        'validated_ok': fields.boolean(
+            string='Validated',
+        ),
+        'sourced_ok': fields.boolean(
+            string='Sourced',
+        ),
+        'confirmed_ok': fields.boolean(
+            string='Confirmed',
+        ),
+        'exception_ok': fields.boolean(
+            string='Exception',
+        ),
+        'closed_ok': fields.boolean(
+            string='Closed',
+        ),
+        'cancel_ok': fields.boolean(
+            string='Cancel',
+        ),
     }
 
     _defaults = {
         'report_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'company_id': lambda self, cr, uid, ids, c={}: self.pool.get('res.users').browse(cr, uid, uid).company_id.id,
     }
+
+    def _get_state_domain(self, wizard):
+        '''
+        Return a list of states on which the FO should be filtered
+
+        :param wizard: A browse_record of the sale.followup.multi.wizard object
+
+        :return: A list of states
+        '''
+        state_domain = []
+
+        if wizard.draft_ok:
+            state_domain.append('draft')
+
+        if wizard.validated_ok:
+            state_domain.extend(['validated', 'waiting_date'])
+
+        if wizard.sourced_ok:
+            state_domain.append('sourced')
+
+        if wizard.confirmed_ok:
+            state_domain.extend(['manual', 'progress'])
+
+        if wizard.exception_ok:
+            state_domain.extend(['shipping_except', 'invoice_except'])
+
+        if wizard.closed_ok:
+            state_domain.append('done')
+
+        if wizard.cancel_ok:
+            state_domain.append('cancel')
+
+        return state_domain
+    
 
     def get_values(self, cr, uid, ids, context=None):
         '''
@@ -87,24 +146,31 @@ class sale_followup_multi_wizard(osv.osv):
             ids = [ids]
 
         for wizard in self.browse(cr, uid, ids, context=context):
-            fo_domain = []
+            if wizard.order_id:
+                fo_ids = [wizard.order_id.id]
+            else:
+                fo_domain = []
+                state_domain = self._get_state_domain(wizard)
 
-            if wizard.partner_id:
-                fo_domain.append(('partner_id', '=', wizard.partner_id.id))
+                if wizard.partner_id:
+                    fo_domain.append(('partner_id', '=', wizard.partner_id.id))
 
-            if wizard.start_date:
-                fo_domain.append(('date_order', '>=', wizard.start_date))
+                if wizard.start_date:
+                    fo_domain.append(('date_order', '>=', wizard.start_date))
 
-            if wizard.end_date:
-                fo_domain.append(('date_order', '<=', wizard.end_date))
-    
-            fo_ids = fo_obj.search(cr, uid, fo_domain, context=context)
+                if wizard.end_date:
+                    fo_domain.append(('date_order', '<=', wizard.end_date))
 
-            if not fo_ids:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('No data found with these parameters'),
-                )
+                if state_domain:
+                    fo_domain.append(('state', 'in', tuple(state_domain)))
+
+                fo_ids = fo_obj.search(cr, uid, fo_domain, context=context)
+
+                if not fo_ids:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('No data found with these parameters'),
+                    )
 
             self.write(cr, uid, [wizard.id], {'order_ids': [(6,0,fo_ids)]}, context=context)
 
