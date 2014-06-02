@@ -556,7 +556,15 @@ class update_received(osv.osv):
                         'run' : False,
                         'log' : tools.ustr(e)
                     }, context=context)
-                    raise
+
+                    ########################################################################
+                    #
+                    # UFTP-116: Cannot raise the exception here, because it will stop the whole sync!!!! Just set this line to become not run, OR set it run but error message
+                    # If we just set it not run, it will be again and again executed but never successfully, and thus it will remain for every not run, attempt to execute EVERYTIME!
+                    # ???? So, just set it RUN?
+                    ########################################################################
+
+#                    raise
                 else:
                     self.write(cr, uid, [update_id], {
                         'editable' : False,
