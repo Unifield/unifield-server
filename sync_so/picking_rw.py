@@ -187,9 +187,15 @@ class stock_picking(osv.osv):
         return line_result
 
     def _hook_check_cp_instance(self, cr, uid, ids, context=None):
+        '''
+        If this is a CP instance (of a RW), then all the process of IN/OUT/PICK should be warned, because it should be done at the RW instance!
+        '''
         res = super(stock_picking, self)._hook_check_cp_instance(cr, uid, ids, context=context)
-        rw_type = self.pool.get('sync.client.entity').get_entity(cr, uid).usb_instance_type
-        if rw_type == 'central_platform':
+        entity = self.pool.get('sync.client.entity').get_entity(cr, uid)
+        if not hasattr(entity, 'usb_instance_type'):
+            return False
+        
+        if entity.usb_instance_type == 'central_platform':
             name = "This action should only be performed at the Remote Warehouse instance! Are you sure to proceed it at this main instance?"
             model = 'confirm'
             step = 'default'
@@ -250,8 +256,7 @@ class stock_picking(osv.osv):
         res = super(stock_picking, self)._hook_create_rw_out_sync_messages(cr, uid, ids, context=context)
         for pick in self.browse(cr, uid, ids, context=context):
             partner = pick.partner_id
-            so_po_common.create_message_with_object_and_partner(cr, uid, 2001, pick.id, partner.name, context)
-
+            so_po_common.create_message_with_object_and_partner(cr, uid, 2001, pick.id, partner.name, context, True)
 
     # WORK IN PROGRESS
     def _hook_delete_rw_out_sync_messages(self, cr, uid, ids, context=None):
@@ -262,9 +267,7 @@ class stock_picking(osv.osv):
         res = super(stock_picking, self)._hook_delete_rw_out_sync_messages(cr, uid, ids, context=context)
         for pick in self.browse(cr, uid, ids, context=context):
             partner = pick.partner_id
-            if not partner or partner.partner_type == 'external':
-                return True
-
+            return True
             
     def convert_pick_to_out(self, cr, uid, source, out_info, context=None):
         ''' Convert PICK to OUT, normally from RW to CP 
@@ -287,9 +290,9 @@ class stock_picking(osv.osv):
             # look for FO if it is a CP instance
             pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', '=', 'draft')], context=context)  
             if pick_ids: # This is a real pick in draft, then convert it to OUT
-                old_name = self.read(cr, uid, pick_ids, ['name'], context=context)
+                old_name = self.read(cr, uid, pick_ids, ['name'], context=context)[0]['name']
                 self.convert_to_standard(cr, uid, pick_ids, context)
-                self.write(cr, uid, pick_ids, {'name': pick_name, 'already_replicated': True}, context=context)
+                self.write(cr, uid, pick_ids, {'name': pick_name, 'already_replicated': True, 'state': 'assigned'}, context=context)
                 message = "The PICK " + old_name + " has been converted to OUT " + pick_name
             else:
                 pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('state', '=', 'assigned')], context=context)
@@ -327,27 +330,20 @@ class stock_picking(osv.osv):
         origin = pick_dict['origin']
         rw_type = self.pool.get('sync.client.entity').get_entity(cr, uid).usb_instance_type
         
-        
         if rw_type == 'central_platform' and origin:
-            # look for FO if it is a CP instance
-            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', '=', 'draft')], context=context)  
-            if pick_ids: # This is a real pick in draft, then convert it to OUT
-                self.convert_to_standard(cr, uid, pick_ids, context)
-                self.write(cr, uid, pick_ids, {'name': pick_name, 'already_replicated': True}, context=context)
-            else:
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('state', '=', 'assigned')], context=context)
-            
+            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
             if pick_ids:
-                state = pick_name = pick_dict['state']
+                state = pick_dict['state']
                 if state == 'done':   
                     picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                     header_result['move_lines'] = picking_lines
                     self.force_assign(cr, uid, pick_ids)
+                    context['rw_backorder_name'] = pick_name  
                     self.rw_do_out_partial(cr, uid, pick_ids[0], picking_lines, context)
                     
                     old_pick = self.browse(cr, uid, pick_ids[0], context)
                     if old_pick.backorder_id:
-                        self.write(cr, uid, old_pick.backorder_id.id, {'already_replicated': True}, context=context)
+                        self.write(cr, uid, old_pick.backorder_id.id, {'name': pick_name,'already_replicated': True}, context=context)
                     message = "The OUT " + pick_name + " has been closed in " + cr.dbname
     
             else:

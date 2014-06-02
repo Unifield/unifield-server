@@ -496,7 +496,7 @@ class so_po_common(osv.osv_memory):
             raise Exception, "No valid warehouse location found for the PO! The PO cannot be created."
         return warehouse_obj.read(cr, uid, warehouse_ids, ['lot_input_id'])[0]['lot_input_id'][0]
 
-    def create_message_with_object_and_partner(self, cr, uid, rule_sequence, object_id, partner_name, context):
+    def create_message_with_object_and_partner(self, cr, uid, rule_sequence, object_id, partner_name,context,usb=False):
 
         ##############################################################################
         # This method creates a message and put into the sendbox, but the message is created for a given object, AND for a given partner
@@ -510,7 +510,10 @@ class so_po_common(osv.osv_memory):
             return
 
         model_obj = self.pool.get(rule.model)
-        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+        if usb:
+            msg_to_send_obj = self.pool.get("sync_remote_warehouse.message_to_send")
+        else:
+            msg_to_send_obj = self.pool.get("sync.client.message_to_send")
 
         arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, context=context)
 
