@@ -12,6 +12,7 @@
                     <label string="Choose a period then click on 'Confirm period' to display all register that could be created." colspan="4" align="0.0"/>
                     <group col="6" colspan="4">
                         <field name="period_id" colspan="2" domain="[('state', '=', 'draft'), ('number', '&lt;=', 12.0)]"/>
+                        <field name="instance_id" colspan="2" />
                         <button name="button_confirm_period" type="object" string="Confirm period" icon="gtk-execute" colspan="1"/>
                         <label string="" colspan="1"/>
                     </group>
@@ -25,6 +26,7 @@
                             <field name="register_type"/>
                             <field name="currency_id"/>
                             <field name="prev_reg_id"/>
+                            <field name="prev_instance_id"/>
                         </tree>
                     </field>
                     <group col="6" colspan="4">

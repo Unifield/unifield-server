@@ -26,6 +26,7 @@ from osv import fields
 from tools.translate import _
 from time import strftime
 from ..register_tools import previous_register_id
+from ..register_tools import previous_register_instance_id
 from ..register_tools import open_register_view
 from ..register_tools import previous_period_id
 
@@ -47,6 +48,20 @@ class register_creation_lines(osv.osv_memory):
             res[el.id] = prev_reg_id
         return res
 
+    def _get_previous_register_instance_id(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Give the previous register instance for each element
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for el in self.browse(cr, uid, ids, context=context):
+            prev_instance_id = previous_register_instance_id(self, cr, uid, el.period_id.id, el.journal_id.id)
+            res[el.id] = prev_instance_id
+        return res
+
     _columns = {
         'period_id': fields.many2one('account.period', string='Period', required=True, domain=[('state','=','draft')], readonly=True),
         'currency_id': fields.many2one("res.currency", string="Currency", required=True, readonly=True),
@@ -55,6 +70,8 @@ class register_creation_lines(osv.osv_memory):
         'prev_reg_id':  fields.function(_get_previous_register_id, method=True, type="many2one", relation="account.bank.statement",
             required=False, readonly=True, string="Previous register", store=False),
         'wizard_id': fields.many2one("wizard.register.creation", string="Wizard"),
+        'prev_instance_id': fields.function(_get_previous_register_instance_id, method=True, type="many2one", relation="msf.instance",
+            required=False, readonly=True, string="Instance", store=False),
     }
 
 register_creation_lines()
@@ -65,6 +82,7 @@ class register_creation(osv.osv_memory):
 
     _columns = {
         'period_id': fields.many2one("account.period", string="Period", required=True, readonly=False),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', required=True, readonly=False),
         'new_register_ids': fields.one2many("wizard.register.creation.lines", 'wizard_id', string="", required=True, readonly=False),
         'state': fields.selection([('draft', 'Draft'), ('open', 'Open')], string="State",
             help="Permits to display Create Register button and list of registers to be created when state is open.")
@@ -72,6 +90,7 @@ class register_creation(osv.osv_memory):
 
     _defaults = {
         'state': lambda *a: 'draft',
+        'instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id,
     }
 
     def button_clear(self, cr, uid, ids, context=None):
@@ -110,12 +129,13 @@ class register_creation(osv.osv_memory):
         abs_obj = self.pool.get('account.bank.statement')
         reg_to_create_obj = self.pool.get('wizard.register.creation.lines')
         period_id = wizard.period_id.id
+        instance_id = wizard.instance_id.id
         prev_period_id = previous_period_id(self, cr, uid, period_id, context=context)
         reg_type = ['bank', 'cheque', 'cash']
 
         for rtype in reg_type:
             # Search all register from previous period
-            abs_ids = abs_obj.search(cr, uid, [('journal_id.type', '=', rtype), ('period_id', '=', prev_period_id)], context=context)
+            abs_ids = abs_obj.search(cr, uid, [('journal_id.type', '=', rtype), ('period_id', '=', prev_period_id),('instance_id','=', instance_id)], context=context)
             if isinstance(abs_ids, (int, long)):
                 abs_ids = [abs_ids]
             # Browse all registers in order to filter those which doesn't have an active currency
