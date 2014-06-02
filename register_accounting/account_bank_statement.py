@@ -186,7 +186,7 @@ class account_bank_statement(osv.osv):
         'responsible_ids': fields.many2many('res.users', 'bank_statement_users_rel', 'statement_id', 'user_id', 'Responsible'),
     }
 
-    _order = 'state asc, period_number desc'
+    _order = 'state asc, period_number asc'
 
     _defaults = {
         'balance_start': lambda *a: 0.0,
