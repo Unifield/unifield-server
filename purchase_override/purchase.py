@@ -743,7 +743,7 @@ class purchase_order(osv.osv):
                     return True
                 elif pol.analytic_distribution_state != 'valid':
                     id_ad = ad_obj.create(cr, uid, {})
-                    ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_centre_lines or po.analytic_distribution_id.cost_center_lines
+                    ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines
                     bro_dests = self._get_destination_ok(cr, uid, [pol], context=context)
                     for line in ad_lines:
                         # fetch compatible destinations then use on of them:
