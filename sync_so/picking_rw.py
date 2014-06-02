@@ -348,6 +348,8 @@ class stock_picking(osv.osv):
     
             else:
                 message = "The OUT " + pick_name + " not found in " + cr.dbname
+                self._logger.info(message)
+                raise Exception, message
                 
         elif rw_type == 'remote_warehouse': 
             message = "Sorry, no update should be done for the RW"
