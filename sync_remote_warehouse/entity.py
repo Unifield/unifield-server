@@ -440,7 +440,7 @@ class Entity(osv.osv):
             logger.replace(logger_index, _('No applicable message rules found'))
         
         # return number of messages to send
-        return len(message_pool.search(cr, uid, [('sent','=',False)], context=context))
+        return len(message_pool.search(cr, uid, [('sent','=',False)], order='create_date', context=context))
     
     def usb_push_validate(self, cr, uid, ids, context=None):
         """

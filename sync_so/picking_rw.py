@@ -343,7 +343,7 @@ class stock_picking(osv.osv):
                     
                     old_pick = self.browse(cr, uid, pick_ids[0], context)
                     if old_pick.backorder_id:
-                        self.write(cr, uid, old_pick.backorder_id.id, {'name': pick_name,'already_replicated': True}, context=context)
+                        self.write(cr, uid, old_pick.backorder_id.id, {'already_replicated': True}, context=context) #'name': pick_name,
                     message = "The OUT " + pick_name + " has been closed in " + cr.dbname
     
             else:
