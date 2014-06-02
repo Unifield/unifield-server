@@ -315,6 +315,12 @@ class analytic_distribution_wizard(osv.osv_memory):
                 })
 
         #####
+        ## Set move line as corrected upstream if needed
+        ###
+        if to_reverse or to_override or to_create:
+            self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [ml.id], context=context)
+
+        #####
         ## FREE 1 / FREE 2
         ###
         for free in [('free.1', 'f1'), ('free.2', 'f2')]:
@@ -380,6 +386,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                     })
                 # create the ana line
                 self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, ref=ml.ref)
+        # Set move line as corrected upstream if needed
+        if to_reverse or to_override or to_create:
+            self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [ml.id], context=context)
 
     def button_cancel(self, cr, uid, ids, context=None):
         """
