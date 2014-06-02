@@ -969,7 +969,6 @@ class account_bank_statement_line(osv.osv):
         return list(res)
 
 
-
     def _get_fp_analytic_lines(self, cr, uid, ids, field_name=None, args=None, context=None):
         """
         Get all analytic lines linked to the given register lines
@@ -1770,6 +1769,12 @@ class account_bank_statement_line(osv.osv):
             distrib_id = values.get('analytic_distribution_id')
         if not distrib_id:
             values = self._update_employee_analytic_distribution(cr, uid, values=values)
+            
+        if 'cheque_number' in values:
+            cr.execute('''select id from account_bank_statement_line where cheque_number = '%s' ''' % (values['cheque_number']))
+            for row in cr.dictfetchall():                
+                raise osv.except_osv(_('Info'),_('This cheque number has already been used'))    
+            
         # Then create a new bank statement line
         absl = super(account_bank_statement_line, self).create(cr, uid, values, context=context)
         return absl
@@ -1830,6 +1835,12 @@ class account_bank_statement_line(osv.osv):
             if line.get('is_down_payment', False) and line.get('down_payment_id'):
                 if not self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, line.get('id'), line.get('down_payment_id')[0], context=context):
                     raise osv.except_osv(_('Warning'), _('An error occured on down_payment check. Please contact an administrator to resolve this problem.'))
+                
+        if 'cheque_number' in values:
+            cr.execute('''select id from account_bank_statement_line where cheque_number = '%s' ''' % (cheque_number))
+            for row in cr.dictfetchall():                
+                raise osv.except_osv(_('Info'),_('This cheque number has already been used'))
+        
         return res
 
     def copy(self, cr, uid, absl_id, default=None, context=None):
@@ -1987,7 +1998,6 @@ class account_bank_statement_line(osv.osv):
                 # update the invoice 'name' (ref)  TODO - does this need to be set to "/" ?
                 self.pool.get('account.invoice').read(cr, uid, absl.invoice_id.id, ['number'])['number']
                 # self.write(cr, uid, [absl.id], {'name': "/"})
-
                 # Optimization: Do check=True and update_check=True because it was out from previous lines.
                 account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'}, context=context, check=True, update_check=True)
 
@@ -2040,7 +2050,7 @@ class account_bank_statement_line(osv.osv):
                     # do a move that enable a complete supplier follow-up
                     self.do_direct_expense(cr, uid, absl, context=context)
                 if previous_state == 'draft':
-                    direct_hard_post = True  # UF-2316
+                    direct_hard_post = True  # UF-2316  
                 else:
                     direct_hard_post = False
                 self._set_register_line_audittrail_post_hard_state_log(cr, uid, absl, direct_hard_post, context=context)
@@ -2063,7 +2073,7 @@ class account_bank_statement_line(osv.osv):
             # get next sequence
             domain = [
                 ('model', '=', model_name),
-                ('res_id', '=', absl.statement_id.id),
+                ('res_id', '=', absl.statement_id.id), 
             ]
             if direct_hard_post:
                 # for a direct hard post, an audit line with Draft 2 Temp is already created
@@ -2151,7 +2161,7 @@ class account_bank_statement_line(osv.osv):
         return self.posting(cr, uid, ids, 'temp', context=context)
 
     def button_analytic_lines(self, cr, uid, ids, context=None):
-        """
+        """       
         Give analytic lines linked to the given register lines
         """
         if not context:
@@ -2192,7 +2202,7 @@ class account_bank_statement_line(osv.osv):
             raise osv.except_osv(_('Error'), _('This wizard only accept ONE advance line.'))
         # others verifications
         for st_line in self.browse(cr, uid, ids, context=context):
-            # verify that the journal id is a cash journal
+            # verify that the journal id is a cash journal   
             if not st_line.statement_id or not st_line.statement_id.journal_id or not st_line.statement_id.journal_id.type \
                 or st_line.statement_id.journal_id.type != 'cash':
                 raise osv.except_osv(_('Error'), _("The attached journal is not a Cash Journal"))

@@ -36,7 +36,7 @@ class msf_doc_import_accounting(osv.osv_memory):
     _name = 'msf.doc.import.accounting'
 
     _columns = {
-        'date': fields.date(string="Migration date", required=True),
+        'date': fields.date(string="Date", required=True),
         'file': fields.binary(string="File", filters='*.xml, *.xls', required=True),
         'filename': fields.char(string="Imported filename", size=256),
         'progression': fields.float(string="Progression", readonly=True),
@@ -52,7 +52,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         'message': lambda *a: _('Initialization…'),
     }
 
-    def create_entries(self, cr, uid, ids, context=None):
+    def create_entries(self, cr, uid, ids, journal_id, context=None):
         """
         Create journal entry 
         """
@@ -60,10 +60,10 @@ class msf_doc_import_accounting(osv.osv_memory):
         if not context:
             context = {}
         # Prepare some values
-        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'migration'), ('is_current_instance', '=', True)])
-        if not journal_ids:
-            raise osv.except_osv(_('Warning'), _('No migration journal found!'))
-        journal_id = journal_ids[0]
+        #journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'migration'), ('is_current_instance', '=', True)])
+        #if not journal_ids:
+        #    raise osv.except_osv(_('Warning'), _('No migration journal found!'))
+        #journal_id = journal_ids[0]
         # Fetch default funding pool: MSF Private Fund
         try: 
             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
@@ -191,7 +191,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                     raise osv.except_osv(_('Warning'), _('No period found!'))
                 period = self.pool.get('account.period').browse(cr, uid, wiz_period_ids[0], context)
                 if not period or period.state in ['created', 'done']:
-                    raise osv.except_osv(_('Warning'), _('Period for migration is not open!'))
+                    raise osv.except_osv(_('Warning'), _('Period is not open!'))
                 date = wiz.date or False
 
                 # Check that a file was given
@@ -213,7 +213,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 self.write(cr, uid, [wiz.id], {'message': _('Reading headers…'), 'progression': 5.00})
                 # Use the first row to find which column to use
                 cols = {}
-                col_names = ['Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third party', 'Destination', 'Cost Centre', 'Booking Debit', 'Booking Credit', 'Booking Currency']
+                col_names = ['Journal Code', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third party', 'Destination', 'Cost Centre', 'Booking Debit', 'Booking Credit', 'Booking Currency']
                 for num, r in enumerate(rows):
                     header = [x and x.data for x in r.iter_cells()]
                     for el in col_names:
@@ -222,6 +222,10 @@ class msf_doc_import_accounting(osv.osv_memory):
                     break
                 # Number of line to bypass in line's count
                 base_num = 2
+                
+                # global journal code for the file
+                file_journal_id = 0
+                aj_obj = self.pool.get('account.journal')
 
                 for el in col_names:
                     if not el in cols:
@@ -289,17 +293,26 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if line[cols['Booking Credit']]:
                         money[line[cols['Booking Currency']]]['credit'] += line[cols['Booking Credit']]
                         r_credit = line[cols['Booking Credit']]
-                    # Check document/posting dates
-                    # UTP-766: Do not use Document date column, but wizard's one
-                    #if not line[cols['Document Date']]:
-                    #    errors.append(_('Line %s. No document date specified!') % (current_line_num,))
-                    #    continue
-                    # UTP-766: Do not use Posting date column, but wizard's one
-                    #if line[cols['Document Date']] > date:
-                    #    errors.append(_("Line %s. Document date '%s' should be inferior or equal to given Posting date '%s'.") % (current_line_num, line[cols['Document Date']], date,))
-                    #    continue
-                    # Fetch document date
-                    #r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
+              
+                    # Check which journal it is to be posted to: should be of type OD, MIG or INT
+                    if not line[cols['Journal Code']]:
+                        errors.append(_('Line %s. No Journal Code specified') % (current_line_num,))
+                        continue
+                    else:
+                        # check for a valid journal code  
+                        aj_id = aj_obj.search(cr, uid, [('type','in',['intermission','migration','correction']),('code','=',line[cols['Journal Code']])])[0]
+                        if aj_id:
+                            if num == 0:   # Assume 1st line is the journal code for the entire spreadsheet                  
+                                file_journal_id = aj_id
+                            else:
+                                if file_journal_id != aj_id:
+                                    errors.append(_('Line %s. Only a single Journal Code can be specified per file') % (current_line_num,))
+                                    continue
+                        else:
+                            errors.append(_('Line %s. Journal Code is not of type OD, INT or MIG') % (current_line_num,))
+                            continue
+                    
+                    print 'journal codes: ', file_journal_id, aj_id
                     # Check G/L account
                     if not line[cols['G/L Account']]:
                         errors.append(_('Line %s. No G/L account specified!') % (current_line_num,))
@@ -399,7 +412,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 # Update wizard
                 self.write(cr, uid, ids, {'message': _('Writing changes…'), 'progression': 0.0})
                 # Create all journal entries
-                self.create_entries(cr, uid, ids, context)
+                self.create_entries(cr, uid, ids, file_journal_id, context)
                 message = _('Import successful.')
 
             # Update wizard
