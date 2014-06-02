@@ -195,9 +195,12 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'distribution_id': distrib_id,
                     'currency_id': ml and  ml.currency_id and ml.currency_id.id or company_currency_id,
                 })
-            # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
             # But regarding UFTP-194, we should set this date to the wizard date when we have some reveral + correction
             create_date = orig_date
+            # UFTP-169: Use the correction line date in case we are correcting a line that is a correction of another line.
+            if ml.corrected_line_id:
+                create_date = ml.date
+            # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
             name = False
             if to_reverse:
                 create_date = wizard.date
@@ -289,13 +292,17 @@ class analytic_distribution_wizard(osv.osv_memory):
             ctx = {'date': orig_date}
             amount_cur = (ml.credit_currency - ml.debit_currency) * line.percentage / 100
             amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
+            # UFTP-169: Use the correction line date in case we are correcting a line that is a correction of another line.
+            date_to_use = orig_date
+            if ml.corrected_line_id:
+                date_to_use = ml.date
             self.pool.get('account.analytic.line').write(cr, uid, to_override_ids, {
                     'account_id': line.analytic_id.id,
                     'cost_center_id': line.cost_center_id.id,
                     'destination_id': line.destination_id.id,
                     'amount_currency': amount_cur,
                     'amount': amount,
-                    'date': orig_date,
+                    'date': date_to_use,
                     'source_date': orig_date,
                     'document_date': orig_document_date,
                 })
@@ -372,10 +379,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         'currency_id': ml and  ml.currency_id and ml.currency_id.id or company_currency_id,
                     })
                 # create the ana line
-                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date)
-
-
-
+                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, ref=ml.ref)
 
     def button_cancel(self, cr, uid, ids, context=None):
         """
