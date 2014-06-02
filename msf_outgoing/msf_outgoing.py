@@ -2801,6 +2801,12 @@ class stock_picking(osv.osv):
             # At first we confirm the new picking (if necessary)
             if new_picking_id:
                 self.write(cr, uid, [picking.id], {'backorder_id': new_picking_id}, context=context)
+                
+                rw_name = context.get('rw_backorder_name', False)
+                if rw_name:
+                    self.write(cr, uid, [new_picking_id], {'name': rw_name}, context=context)
+                    del context['rw_backorder_name']
+                
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, new_picking_id, context=context)
                 # We confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
