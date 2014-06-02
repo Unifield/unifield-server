@@ -121,7 +121,22 @@ class sale_followup_multi_wizard(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        raise NotImplemented()
+        self.get_values(cr, uid, ids, context=context)
+
+        background_id = self.pool.get('memory.background.report').create(cr, uid, {
+            'file_name': 'FO followup per client',
+            'report_name': 'sales.follow.up.multi.report_xls',
+        }, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 1
+
+        data = {'ids': ids, 'context': context}
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'sales.follow.up.multi.report_xls',
+            'datas': data,
+            'context': context,
+        }
 
     def print_pdf(self, cr, uid, ids, context=None):
         '''
@@ -135,7 +150,6 @@ class sale_followup_multi_wizard(osv.osv):
             ids = [ids]
 
         self.get_values(cr, uid, ids, context=context)
-
 
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': 'FO followup per client',
@@ -151,7 +165,5 @@ class sale_followup_multi_wizard(osv.osv):
             'datas': data,
             'context': context,
         }
-
-        raise NotImplemented()
 
 sale_followup_multi_wizard()

@@ -86,7 +86,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Name: <font color="blue">Toto</font></para>
+                    <para style="TextInformation">Name: <font color="blue">[[ r.company_id.instance_id.instance or '-' ]]</font></para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -204,7 +204,7 @@
             </tr>
 	    	<tr>
 	    		<td>
-                    <para style="Lines"><i>Line #</i></para>
+                    <para style="Lines"><i>Item</i></para>
 	    		</td>
 	    		<td>
                     <para style="Lines"><i>Code</i></para>
@@ -264,7 +264,7 @@
                     <para style="LinesBlue">[[ formatLang(line.get('delivered_qty', 0.00)) ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="LinesBlue">[[ line.get('delivered_uom', '')' ]]</para>
+	    			<para style="LinesBlue">[[ line.get('delivered_uom', '') ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="LinesBlue">[[ line.get('packing', '') ]]</para>
