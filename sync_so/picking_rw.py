@@ -284,6 +284,7 @@ class stock_picking(osv.osv):
         pick_tools = self.pool.get('picking.tools')
 
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
+        message = ""
         origin = pick_dict['origin']
         rw_type = self.pool.get('sync.client.entity').get_entity(cr, uid).usb_instance_type
         if rw_type == 'central_platform' and origin:
