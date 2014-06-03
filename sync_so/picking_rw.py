@@ -42,6 +42,14 @@ class stock_picking(osv.osv):
     _defaults = {'already_replicated': False,
                  }
 
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        if not default:
+            default = {}
+        default.update({
+            'already_replicated': False,
+        })
+        return super(stock_picking, self).copy_data(cr, uid, id, default, context=context)
+
     def retrieve_picking_header_data(self, cr, uid, source, header_result, pick_dict, context):
         if 'name' in pick_dict:
             header_result['name'] = pick_dict.get('name')
@@ -227,9 +235,9 @@ class stock_picking(osv.osv):
         self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
         header_result['move_lines'] = picking_lines
+        header_result['already_replicated'] = True
 
         pick_id = self.create(cr, uid, header_result , context=context)
-        
         # Some more to be checked for the PICKING object
 
         message = "The PICK " + pick_name + "has been well replicated in " + cr.dbname
@@ -252,6 +260,10 @@ class stock_picking(osv.osv):
         for pick in self.browse(cr, uid, ids, context=context):
             partner = pick.partner_id
             so_po_common.create_message_with_object_and_partner(cr, uid, 2001, pick.id, partner.name, context, True)
+        
+        # If the PICK got successfully converted to OUT, then reupdate the value already_replicated, for sync purpose
+        self.write(cr, uid, ids, {'already_replicated': False}, context=context)
+        
 
     # WORK IN PROGRESS
     def _hook_delete_rw_out_sync_messages(self, cr, uid, ids, context=None):
@@ -263,6 +275,25 @@ class stock_picking(osv.osv):
         for pick in self.browse(cr, uid, ids, context=context):
             partner = pick.partner_id
             return True
+
+    def update_original_pick(self, cr, uid, pick_id, picking_lines, context=None):
+        move_obj = self.pool.get('stock.move')
+
+        # Copy values from the OUT message move lines into the the wizard lines before making the partial OUT
+        # If the line got split, based on line number and create new wizard line
+        for sline in picking_lines:
+            sline = sline[2]
+            line_number = sline['line_number']
+            
+            pick = self.browse(cr, uid, pick_id, context=context)
+            for mline in pick.move_lines:
+                if mline.line_number == line_number:
+                    # match the line, copy the content of picking line into the wizard line
+                    vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_dest_id': sline['location_dest_id'],
+                            'location_id': sline['location_id'], 'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id']}
+                    move_obj.write(cr, uid, mline.id, vals, context)
+                    break
+        return True
             
     def convert_pick_to_out(self, cr, uid, source, out_info, context=None):
         ''' Convert PICK to OUT, normally from RW to CP 
@@ -287,6 +318,8 @@ class stock_picking(osv.osv):
             pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', '=', 'draft')], context=context)  
             if pick_ids: # This is a real pick in draft, then convert it to OUT
                 old_name = self.read(cr, uid, pick_ids, ['name'], context=context)[0]['name']
+                context['rw_backorder_name'] = pick_name
+                # Before converting to OUT, the PICK needs to be updated as what sent from the RW
                 self.convert_to_standard(cr, uid, pick_ids, context)
                 self.write(cr, uid, pick_ids, {'name': pick_name, 'already_replicated': True, 'state': 'assigned'}, context=context)
                 message = "The PICK " + old_name + " has been converted to OUT " + pick_name
@@ -295,6 +328,10 @@ class stock_picking(osv.osv):
                 if pick_ids:
                     old_name = self.read(cr, uid, pick_ids, ['name'], context=context)[0]['name']
                     message = "The PICK has already been converted to OUT: " + old_name
+                
+            if pick_ids:
+                picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+                self.update_original_pick(cr, uid, pick_ids[0], picking_lines, context)
                 
         elif rw_type == 'remote_warehouse': 
             message = "Sorry, no update should be done for the RW"
@@ -334,7 +371,7 @@ class stock_picking(osv.osv):
                     picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                     header_result['move_lines'] = picking_lines
                     self.force_assign(cr, uid, pick_ids)
-                    context['rw_backorder_name'] = pick_name  
+                    context['rw_backorder_name'] = pick_name
                     self.rw_do_out_partial(cr, uid, pick_ids[0], picking_lines, context)
                     
                     old_pick = self.browse(cr, uid, pick_ids[0], context)
@@ -379,7 +416,7 @@ class stock_picking(osv.osv):
             for mline in wizard.move_ids:
                 if mline.line_number == line_number:
                     # match the line, copy the content of picking line into the wizard line
-                    vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'], 
+                    vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
                             'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id']}
                     wizard_line_obj.write(cr, uid, mline.id, vals, context)
                     break
