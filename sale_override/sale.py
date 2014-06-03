@@ -1750,7 +1750,11 @@ class sale_order_line(osv.osv):
                 'created_by_po_line': fields.many2one('purchase.order.line', string='Created by PO line'),
                 'dpo_line_id': fields.many2one('purchase.order.line', string='DPO line'),
                 'sync_sourced_origin': fields.char(string='Sync. Origin', size=256),
-                }
+                'cancel_split_ok': fields.boolean(
+                    string='Cancel split',
+                    help='If the line has been canceled/removed on the splitted FO',
+                ),
+    }
 
     _defaults = {
         'is_line_split': False,  # UTP-972: By default set False, not split
@@ -2279,7 +2283,10 @@ class sale_order_line_unlink_wizard(osv.osv_memory):
         '''
         Cancel the FO line and display the FO form
         '''
-        context = context or {}
+        line_obj = self.pool.get('sale.order.line')
+
+        if context is None:
+            context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -2287,7 +2294,9 @@ class sale_order_line_unlink_wizard(osv.osv_memory):
         res = False
 
         for wiz in self.browse(cr, uid, ids, context=context):
-            res = self.pool.get('sale.order.line').ask_order_unlink(cr, uid, [wiz.order_line_id.id], context=context)
+            if wiz.order_line_id.original_line_id:
+                line_obj.write(cr, uid, [wiz.order_line_id.original_line_id.id], {'cancel_split_ok': True}, context=context)
+            res = line_obj.ask_order_unlink(cr, uid, [wiz.order_line_id.id], context=context)
             break
 
         return res or {'type': 'ir.actions.act_window_close'}
@@ -2296,7 +2305,8 @@ class sale_order_line_unlink_wizard(osv.osv_memory):
         '''
         Resource the FO line and display the FO form
         '''
-        context = context or {}
+        if context is None:
+            context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
