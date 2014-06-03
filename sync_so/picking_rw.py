@@ -344,8 +344,56 @@ class stock_picking(osv.osv):
                 
         self._logger.info(message)
         return message
+
+    def convert_out_to_pick(self, cr, uid, source, out_info, context=None):
+        ''' Convert PICK to OUT, normally from RW to CP 
+        '''
+        pick_dict = out_info.to_dict()
+        pick_name = pick_dict['name']
+            
+        self._logger.info("+++ RW: Convert %s from %s to %s to PICK" % (pick_name, source, cr.dbname))
+        if context is None:
+            context = {}
+
+        so_po_common = self.pool.get('so.po.common')
+        move_obj = self.pool.get('stock.move')
+        pick_tools = self.pool.get('picking.tools')
+
+        # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
+        message = "Unknown error, please check the log file"
+        origin = pick_dict['origin']
+
+
+        raise Exception, "Work in progress"
+        
+        rw_type = self._usb_entity_type(cr, uid)
+        if rw_type == 'central_platform' and origin:
+            # look for FO if it is a CP instance
+            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', '=', 'draft')], context=context)  
+            if pick_ids: # This is a real pick in draft, then convert it to OUT
+                old_name = self.read(cr, uid, pick_ids, ['name'], context=context)[0]['name']
+                context['rw_backorder_name'] = pick_name
+                # Before converting to OUT, the PICK needs to be updated as what sent from the RW
+                self.convert_to_standard(cr, uid, pick_ids, context)
+                self.write(cr, uid, pick_ids, {'name': pick_name, 'already_replicated': True, 'state': 'assigned'}, context=context)
+                message = "The PICK " + old_name + " has been converted to OUT " + pick_name
+            else:
+                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('state', '=', 'assigned')], context=context)
+                if pick_ids:
+                    old_name = self.read(cr, uid, pick_ids, ['name'], context=context)[0]['name']
+                    message = "The PICK has already been converted to OUT: " + old_name
+                
+            if pick_ids:
+                picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+                self.update_original_pick(cr, uid, pick_ids[0], picking_lines, context)
+                
+        elif rw_type == 'remote_warehouse': 
+            message = "Sorry, no update should be done for the RW"
+                
+        self._logger.info(message)
+        return message
     
-    def closed_out_closes_pick(self, cr, uid, source, out_info, context=None):
+    def closed_out_closes_out(self, cr, uid, source, out_info, context=None):
         ''' There are 2 cases: 
         + If the PICK exists in the current instance, then just convert that pick to OUT, same xmlid
         + If the PICK not present, the a PICK needs to be created first, then convert it to OUT
@@ -428,6 +476,88 @@ class stock_picking(osv.osv):
 
         self.do_partial(cr, uid, [proc_id], 'outgoing.delivery.processor', context=context)
         return True
+
+    def closed_new_pick_closes_pick(self, cr, uid, source, out_info, context=None):
+        '''
+        This is the PICK with format PICK00x-y, meaning the PICK00x-y got closed making the backorder PICK got updated (return products
+        into this backorder PICK), and the PICK00x becomes  
+        '''
+        
+        pick_dict = out_info.to_dict()
+        pick_name = pick_dict['name']
+            
+        self._logger.info("+++ RW: %s closed at %s is now closed at %s" % (pick_name, source, cr.dbname))
+        if context is None:
+            context = {}
+
+        so_po_common = self.pool.get('so.po.common')
+        move_obj = self.pool.get('stock.move')
+        pick_tools = self.pool.get('picking.tools')
+
+        header_result = {}
+        self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
+        
+        raise Exception, "Work in Progress"
+        
+        # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
+        origin = pick_dict['origin']
+        rw_type = self._usb_entity_type(cr, uid)
+        if rw_type == 'central_platform' and origin:
+            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
+            if pick_ids:
+                state = pick_dict['state']
+                if state == 'done':   
+                    picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+                    header_result['move_lines'] = picking_lines
+                    self.force_assign(cr, uid, pick_ids)
+                    context['rw_backorder_name'] = pick_name
+                    self.rw_do_out_partial(cr, uid, pick_ids[0], picking_lines, context)
+                    
+                    old_pick = self.browse(cr, uid, pick_ids[0], context)
+                    if old_pick.backorder_id:
+                        self.write(cr, uid, old_pick.backorder_id.id, {'already_replicated': True}, context=context) #'name': pick_name,
+                    message = "The OUT " + pick_name + " has been closed in " + cr.dbname
+    
+            else:
+                message = "The OUT " + pick_name + " not found in " + cr.dbname
+                self._logger.info(message)
+                raise Exception, message
+                
+        elif rw_type == 'remote_warehouse': 
+            message = "Sorry, no update should be done for the RW"
+                
+        self._logger.info(message)
+        return message
+
+    def replicate_ppl(self, cr, uid, source, out_info, context=None):
+        '''
+        '''
+        if context is None:
+            context = {}
+
+        pick_dict = out_info.to_dict()
+        pick_name = pick_dict['name']
+            
+        self._logger.info("+++ RW: Replicate the PICK object: %s from %s to %s" % (pick_name, source, cr.dbname))
+        so_po_common = self.pool.get('so.po.common')
+        move_obj = self.pool.get('stock.move')
+        pick_tools = self.pool.get('picking.tools')
+
+        header_result = {}
+        self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
+        picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+        header_result['move_lines'] = picking_lines
+        header_result['already_replicated'] = True
+
+        pick_id = self.create(cr, uid, header_result , context=context)
+        # Some more to be checked for the PICKING object
+
+        message = "The PICK " + pick_name + "has been well replicated in " + cr.dbname
+        self._logger.info(message)
+        
+        raise Exception, "Work in progress"
+        
+        return message
 
 stock_picking()
 
