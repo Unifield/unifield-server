@@ -189,16 +189,23 @@ class stock_picking(osv.osv):
 
         return line_result
 
+    def _usb_entity_type(self, cr, uid, context=None):
+        '''
+        '''
+        entity = self.pool.get('sync.client.entity').get_entity(cr, uid)
+        if not hasattr(entity, 'usb_instance_type'):
+            return False
+        
+        return entity.usb_instance_type
+
+
     def _hook_check_cp_instance(self, cr, uid, ids, context=None):
         '''
         If this is a CP instance (of a RW), then all the process of IN/OUT/PICK should be warned, because it should be done at the RW instance!
         '''
         res = super(stock_picking, self)._hook_check_cp_instance(cr, uid, ids, context=context)
-        entity = self.pool.get('sync.client.entity').get_entity(cr, uid)
-        if not hasattr(entity, 'usb_instance_type'):
-            return False
-        
-        if entity.usb_instance_type == 'central_platform':
+        rw_type = self._usb_entity_type(cr, uid)
+        if rw_type and rw_type == 'central_platform':
             name = "This action should only be performed at the Remote Warehouse instance! Are you sure to proceed it at this main instance?"
             model = 'confirm'
             step = 'default'
@@ -246,14 +253,10 @@ class stock_picking(osv.osv):
 
     # Create a RW message when a Pick is converted to OUT for syncing back to its partner
     def _hook_create_rw_out_sync_messages(self, cr, uid, ids, context=None):
+        if self._usb_entity_type(cr, uid) != 'remote_warehouse':
+            return
         if isinstance(ids, (int, long)):
             ids = [ids]
-
-        #### CHECK WITH JF: HOW TO CHECK IF ENTITY CONTAINS USB!!!!
-
-        rw_type = self.pool.get('sync.client.entity').get_entity(cr, uid).usb_instance_type
-        if rw_type != 'remote_warehouse':
-            return
 
         so_po_common = self.pool.get('so.po.common')
         res = super(stock_picking, self)._hook_create_rw_out_sync_messages(cr, uid, ids, context=context)
@@ -267,6 +270,8 @@ class stock_picking(osv.osv):
 
     # WORK IN PROGRESS
     def _hook_delete_rw_out_sync_messages(self, cr, uid, ids, context=None):
+        if self._usb_entity_type(cr, uid) != 'remote_warehouse':
+            return
         if isinstance(ids, (int, long)):
             ids = [ids]
         so_po_common = self.pool.get('so.po.common')
@@ -310,9 +315,10 @@ class stock_picking(osv.osv):
         pick_tools = self.pool.get('picking.tools')
 
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
-        message = ""
+        message = "Unknown error, please check the log file"
         origin = pick_dict['origin']
-        rw_type = self.pool.get('sync.client.entity').get_entity(cr, uid).usb_instance_type
+        
+        rw_type = self._usb_entity_type(cr, uid)
         if rw_type == 'central_platform' and origin:
             # look for FO if it is a CP instance
             pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', '=', 'draft')], context=context)  
@@ -361,8 +367,7 @@ class stock_picking(osv.osv):
         
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         origin = pick_dict['origin']
-        rw_type = self.pool.get('sync.client.entity').get_entity(cr, uid).usb_instance_type
-        
+        rw_type = self._usb_entity_type(cr, uid)
         if rw_type == 'central_platform' and origin:
             pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
             if pick_ids:
