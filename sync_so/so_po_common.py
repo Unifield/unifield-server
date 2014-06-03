@@ -383,6 +383,9 @@ class so_po_common(osv.osv_memory):
                 if so_ids:
                     values['link_so_id'] = so_ids[0]
 
+            if line_dict.get('cancel_split_ok'):
+                continue
+
             # UTP-952: set empty AD for lines if the partner is intermission or section
             partner_type = self.get_partner_type(cr, uid, source, context)
             if partner_type not in ['section', 'intermission'] and line_dict.get('analytic_distribution_id'):
@@ -406,7 +409,7 @@ class so_po_common(osv.osv_memory):
             elif so_id:
                 # look for the correct PO line for updating the value - corresponding to the SO line
                 line_ids = self.pool.get('sale.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', so_id)], context=context)
-
+            
             if line_ids and line_ids[0]:
                 if for_update: # add this value to the list of update, then remove
                     update_lines.append(line_ids[0])
