@@ -1835,8 +1835,6 @@ class sale_order_line(osv.osv):
 
         order = line.order_id and line.order_id.id
 
-        import pdb
-        pdb.set_trace()
         if qty_diff >= line.product_uom_qty:
             proc = line.procurement_id and line.procurement_id.id
             # Delete the line and the procurement
