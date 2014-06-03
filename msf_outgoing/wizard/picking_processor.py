@@ -731,6 +731,7 @@ class stock_move_processor(osv.osv):
             'prodlot_id': move.prodlot_id and move.prodlot_id.id,
             'cost': move.price_unit,
             'currency': move.price_currency_id.id,
+            'location_id': move.location_id and move.location_id.id,
         }
 
         return line_data

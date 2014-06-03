@@ -2489,6 +2489,10 @@ class stock_picking(osv.osv):
 
             # log a message concerning the conversion
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
+            if context.get('rw_backorder_name', False):
+                new_name = context.get('rw_backorder_name')
+                del context['rw_backorder_name']
+            
             self.log(cr, uid, obj.id, _('The Preparation Picking (%s) has been converted to simple Out (%s).') % (obj.name, new_name))
 
             keep_move = self._get_keep_move(cr, uid, [obj.id], context=context).get(obj.id, {})
@@ -2766,6 +2770,7 @@ class stock_picking(osv.osv):
                     'asset_id': line.asset_id and line.asset_id.id or False,
                     'composition_list_id': line.composition_list_id and line.composition_list_id.id or False,
                     'original_qty_partial': orig_qty,
+                    'location_id': line.location_id and line.location_id.id,
                 }
 
                 if quantity < move.product_qty and move_data[move.id]['original_qty'] > move_data[move.id]['processed_qty']:
