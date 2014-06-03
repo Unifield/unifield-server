@@ -80,12 +80,7 @@ class stock_picking(osv.osv):
         address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
         price_list = so_po_common.get_price_list_id(cr, uid, partner_id, context)
         location_id = so_po_common.get_location(cr, uid, partner_id, context)
-        
-        ###### TEMP TEMP TO BE REMOVED ----
-        partner_id = 3
         address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
-        ###### END TEMP TEMP
-
         header_result['partner_ref'] = source + "." + pick_dict.get('name')
         header_result['partner_id'] = partner_id
         header_result['partner_id2'] = partner_id
