@@ -1835,6 +1835,8 @@ class sale_order_line(osv.osv):
 
         order = line.order_id and line.order_id.id
 
+        import pdb
+        pdb.set_trace()
         if qty_diff >= line.product_uom_qty:
             proc = line.procurement_id and line.procurement_id.id
             # Delete the line and the procurement
@@ -1852,6 +1854,9 @@ class sale_order_line(osv.osv):
             for pick in pick_obj.browse(cr, uid, list(picking_ids), context=context):
                 if not len(pick.move_lines):
                     pick_obj.action_cancel(cr, uid, [pick.id])
+
+            if line.original_line_id:
+                self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': True}, context=context)
 
             # UFTP-82:
             # do not delete cancelled IR line from PO cancelled
@@ -2294,8 +2299,6 @@ class sale_order_line_unlink_wizard(osv.osv_memory):
         res = False
 
         for wiz in self.browse(cr, uid, ids, context=context):
-            if wiz.order_line_id.original_line_id:
-                line_obj.write(cr, uid, [wiz.order_line_id.original_line_id.id], {'cancel_split_ok': True}, context=context)
             res = line_obj.ask_order_unlink(cr, uid, [wiz.order_line_id.id], context=context)
             break
 
