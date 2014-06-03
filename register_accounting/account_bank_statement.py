@@ -1559,9 +1559,13 @@ class account_bank_statement_line(osv.osv):
             move_obj = self.pool.get('account.move')
             move_line_obj = self.pool.get('account.move.line')
             curr_date = time.strftime('%Y-%m-%d')
+            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)])
+            if not journal_ids:
+                raise osv.except_osv(_('Error'), _('No purchase journal found!'))
+            journal_id = journal_ids[0]
             # Create a move
             move_vals= {
-                'journal_id': st_line.statement_id.journal_id.id,
+                'journal_id': journal_id,
                 'period_id': st_line.statement_id.period_id.id,
                 'date': st_line.date or curr_date,
                 'document_date': st_line.document_date or curr_date,
@@ -1591,7 +1595,7 @@ class account_bank_statement_line(osv.osv):
                 'credit': 0.0,
                 'debit': 0.0,
                 'statement_id': st_line.statement_id.id,
-                'journal_id': st_line.statement_id.journal_id.id,
+                'journal_id': journal_id,
                 'period_id': st_line.statement_id.period_id.id,
                 'currency_id': st_line.statement_id.currency.id,
                 'analytic_account_id': st_line.analytic_account_id and st_line.analytic_account_id.id or False
