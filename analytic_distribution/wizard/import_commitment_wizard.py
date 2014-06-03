@@ -129,8 +129,9 @@ class import_commitment_wizard(osv.osv_memory):
                         partner_ids = self.pool.get('res.partner').search(cr, uid, [('&'), ('name', '=', third_party), ('partner_type', '=', 'esc')])
                         if not len(partner_ids) > 0:
                             raise osv.except_osv(_('Error'), _('No ESC partner found for code %s !') % (third_party))
-                    else:
-                        raise osv.except_osv(_('Error'), _('No third party found!'))
+                    # UFTP-60: Third party is not mandatory
+#                    else:
+#                        raise osv.except_osv(_('Error'), _('No third party found!'))
                     # currency
                     if booking_currency:
                         currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', booking_currency), ('active', 'in', [False, True])])
