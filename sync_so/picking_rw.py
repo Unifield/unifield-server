@@ -321,7 +321,7 @@ class stock_picking(osv.osv):
         rw_type = self._usb_entity_type(cr, uid)
         if rw_type == 'central_platform' and origin:
             # look for FO if it is a CP instance
-            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', '=', 'draft')], context=context)  
+            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', '=', 'draft')], context=context)  
             if pick_ids: # This is a real pick in draft, then convert it to OUT
                 old_name = self.read(cr, uid, pick_ids, ['name'], context=context)[0]['name']
                 context['rw_backorder_name'] = pick_name
@@ -346,12 +346,12 @@ class stock_picking(osv.osv):
         return message
 
     def convert_out_to_pick(self, cr, uid, source, out_info, context=None):
-        ''' Convert PICK to OUT, normally from RW to CP 
+        ''' Convert OUT to PICK, normally from RW to CP 
         '''
         pick_dict = out_info.to_dict()
         pick_name = pick_dict['name']
             
-        self._logger.info("+++ RW: Convert %s from %s to %s to PICK" % (pick_name, source, cr.dbname))
+        self._logger.info("+++ RW: Convert %s to PICK, from %s to %s" % (pick_name, source, cr.dbname))
         if context is None:
             context = {}
 
@@ -360,7 +360,7 @@ class stock_picking(osv.osv):
         pick_tools = self.pool.get('picking.tools')
 
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
-        message = "Unknown error, please check the log file"
+        message = "Unknown error, please check the log file."
         origin = pick_dict['origin']
 
 
@@ -368,22 +368,24 @@ class stock_picking(osv.osv):
         
         rw_type = self._usb_entity_type(cr, uid)
         if rw_type == 'central_platform' and origin:
-            # look for FO if it is a CP instance
-            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', '=', 'draft')], context=context)  
+            # look for the OUT if it has already been converted before, using the origin from FO
+            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('type', '=', 'out'),('state', '=', 'draft')], context=context)  
             if pick_ids: # This is a real pick in draft, then convert it to OUT
                 old_name = self.read(cr, uid, pick_ids, ['name'], context=context)[0]['name']
                 context['rw_backorder_name'] = pick_name
                 # Before converting to OUT, the PICK needs to be updated as what sent from the RW
-                self.convert_to_standard(cr, uid, pick_ids, context)
+                self.convert_to_pick(cr, uid, pick_ids, context)
                 self.write(cr, uid, pick_ids, {'name': pick_name, 'already_replicated': True, 'state': 'assigned'}, context=context)
                 message = "The PICK " + old_name + " has been converted to OUT " + pick_name
             else:
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('state', '=', 'assigned')], context=context)
+                # If the OUT has already been converted back to PICK before, then just inform this fact
+                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', '=', 'assigned')], context=context)
                 if pick_ids:
                     old_name = self.read(cr, uid, pick_ids, ['name'], context=context)[0]['name']
                     message = "The PICK has already been converted to OUT: " + old_name
                 
             if pick_ids:
+                # Should update the lines again? will there be new updates from the OUT converted to PICK? --- TO CHECK, if not do not call the stmt below
                 picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                 self.update_original_pick(cr, uid, pick_ids[0], picking_lines, context)
                 
