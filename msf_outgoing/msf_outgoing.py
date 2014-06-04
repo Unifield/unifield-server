@@ -3960,11 +3960,12 @@ class stock_move(osv.osv):
                 continue
 
             pick_type = move.picking_id.type
+            pick_cancel = move.picking_id.change_reason
             pick_subtype = move.picking_id.subtype
             pick_state = move.picking_id.state
             subtype_ok = pick_type == 'out' and (pick_subtype == 'standard' or (pick_subtype == 'picking' and pick_state == 'draft'))
 
-            if pick_type == 'in' and move.purchase_line_id:
+            if pick_type == 'in' and move.purchase_line_id and not pick_cancel:
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
