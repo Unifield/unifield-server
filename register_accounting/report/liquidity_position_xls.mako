@@ -177,7 +177,7 @@
 <Font ss:Bold="1"/>
 </Style>
 
-
+require 'spec_helper'
 <Style ss:ID="s35">
 <Alignment ss:Vertical="Center" ss:WrapText="1"/>
 </Style>
@@ -343,47 +343,50 @@
 	% for o in getRegister2()[reg]:
 	<Row>
         <Cell ss:StyleID="s25" >
-<Data ss:Type="String">${(o.instance_id and o.instance_id.code or '')|x}</Data>
-</Cell>
+            <Data ss:Type="String">${(o.instance_id and o.instance_id.code or '')|x}</Data>
+        </Cell>
         <Cell ss:StyleID="s25" >
-<Data ss:Type="String">${(o.journal_id and o.journal_id.code or '')|x}</Data>
-</Cell>
+             <Data ss:Type="String">${(o.journal_id and o.journal_id.code or '')|x}</Data>
+        </Cell>
         <Cell ss:StyleID="s25" >
-<Data ss:Type="String">${(o.journal_id and o.journal_id.name or '')|x}</Data>
-</Cell>
+             <Data ss:Type="String">${(o.journal_id and o.journal_id.name or '')|x}</Data>
+        </Cell>
         <Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${(o.msf_calculated_balance or 0.0)|x}</Data>
-</Cell>
+            <Data ss:Type="Number">${(o.msf_calculated_balance or 0.0)|x}</Data>
+        </Cell>
         % if o.journal_id.type == 'cash' :
         	<Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${(o.balance_end_cash or 0.0)|x}</Data>
-</Cell>
-	% endif
+                <Data ss:Type="Number">${(o.balance_end_cash or 0.0)|x}</Data>
+            </Cell>
+	    % endif
         % if o.journal_id.type == 'bank' :
         	<Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${(o.balance_end_real or 0.0)|x}</Data>
-</Cell>
-	% endif
+                <Data ss:Type="Number">${(o.balance_end_real or 0.0)|x}</Data>
+            </Cell>
+	    % endif
         <Cell ss:StyleID="s25" >
-<Data ss:Type="String">${( o.journal_id and o.journal_id.currency and o.journal_id.currency.name or '')|x}</Data>
-</Cell>
+            <Data ss:Type="String">${( o.journal_id and o.journal_id.currency and o.journal_id.currency.name or '')|x}</Data>
+        </Cell>
         <Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${( getConvert(o.journal_id.currency,o.journal_id.company_id.currency_id,o.msf_calculated_balance, 'cal') or 0.0 )|x}</Data>
-</Cell>
+            <Data ss:Type="Number">${( getConvert(o.journal_id.currency,o.journal_id.company_id.currency_id,o.msf_calculated_balance, 'cal') or 0.0 )|x}</Data>
+        </Cell>
 
         % if o.journal_id.type == 'cash' :
         	<Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${( getConvert(o.journal_id.currency,o.journal_id.company_id.currency_id,o.balance_end_cash,'reg') or 0.0 )|x}</Data>
-</Cell>
-	% endif
+                <Data ss:Type="Number">${( getConvert(o.journal_id.currency,o.journal_id.company_id.currency_id,o.balance_end_cash,'reg') or 0.0 )|x}</Data>
+            </Cell>
+	    % endif
         % if o.journal_id.type == 'bank' :
         	<Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${( getConvert(o.journal_id.currency,o.journal_id.company_id.currency_id,o.balance_end_real,'reg') or 0.0 )|x}</Data>
-</Cell>
-	% endif
+                <Data ss:Type="Number">${( getConvert(o.journal_id.currency,o.journal_id.company_id.currency_id,o.balance_end_real,'reg') or 0.0 )|x}</Data>
+            </Cell>
+	    % endif
         <Cell ss:StyleID="s25" >
-<Data ss:Type="String">${( getFuncCur(o) or '')|x}</Data>
-</Cell>
+            <Data ss:Type="String">${( getFuncCur(o) or '')|x}</Data>
+        </Cell>
+         <Cell ss:StyleID="s25" >
+            <Data ss:Type="String">${o}</Data>
+        </Cell>
 	</Row>
 
 % endfor

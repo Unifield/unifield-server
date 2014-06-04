@@ -361,7 +361,7 @@ class po_follow_up_mixin(object):
     def getPOLineHeaders(self):
         return ['Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price','Destination','Cost Center']
        
-    def getPOLines(self, po_id  ):
+    def getPOLines(self, po_id):
         ''' developer note: would be a lot easier to write this as a single sql and then use on-break '''
         # TODO this is the value populated for no change in stock_move.price_unit
         # TODO it probably should be 1
@@ -373,7 +373,7 @@ class po_follow_up_mixin(object):
         for line in po_lines:
             report_line = {}
             inline_in = self.getInlineIN(line.id)
-            analytic_lines = self.getAnalyticLines(line.analytic_distribution_id.id)
+            analytic_lines = self.getAnalyticLines(line)
             report_line['sort_key'] = float(line.line_number)
             report_line['item'] = line.line_number or ''
             report_line['code'] = line.product_id.default_code or ''
@@ -389,8 +389,8 @@ class po_follow_up_mixin(object):
             else:
                 report_line['in_unit_price'] = ''
             report_line['in_unit_price'] = ''
-            report_line['destination'] = analytic_lines[0].get('cost_center')
-            report_line['cost_centre'] = analytic_lines[0].get('destination')
+            report_line['destination'] = analytic_lines[0].get('destination')
+            report_line['cost_centre'] = analytic_lines[0].get('cost_center')
             report_lines.append(report_line)
               
             # if additional analytic lines print them here.
@@ -407,8 +407,8 @@ class po_follow_up_mixin(object):
                 report_line['qty_backordered'] = ''
                 report_line['unit_price'] = ''
                 report_line['in_unit_price'] = ''
-                report_line['destination'] = analytic_line.get('cost_center')
-                report_line['cost_centre'] = analytic_line.get('destination')
+                report_line['destination'] = analytic_line.get('destination')
+                report_line['cost_centre'] = analytic_line.get('cost_center')
                 report_lines.append(report_line)
 
             # check if there are additional INs for this line
@@ -445,11 +445,17 @@ class po_follow_up_mixin(object):
         sorted_lines = sorted(report_lines, key=lambda k: k['sort_key'])
         return sorted_lines
     
-    def getAnalyticLines(self,dist_id):
+    def getAnalyticLines(self,po_line):
         ccdl_obj = self.pool.get('cost.center.distribution.line')
+        if po_line.analytic_distribution_id.id:
+            dist_id = po_line.analytic_distribution_id.id
+        else:
+            dist_id = po_line.order_id.analytic_distribution_id.id  # get it from the header
         ccdl_ids = ccdl_obj.search(self.cr, self.uid, [('distribution_id','=',dist_id)])
         ccdl_rows = ccdl_obj.browse(self.cr, self.uid, ccdl_ids)
         dist_lines = [{'cost_center': ccdl.analytic_id.code,'destination': ccdl.destination_id.code} for ccdl in ccdl_rows]
+        if not dist_lines:
+            dist_lines = [{'cost_center': '','destination': ''}]
         return dist_lines
              
     def getInlineIN(self,po_line_id):
