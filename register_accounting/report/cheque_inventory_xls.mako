@@ -193,8 +193,9 @@
     % endfor
 </Table>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <FitToPage/>
    <PageSetup>
-    <Layout x:Orientation="Portrait"/>
+    <Layout x:Orientation="Landscape"/>
     <Footer x:Data="Page &amp;P of &amp;N"/>
    </PageSetup>
 </WorksheetOptions>
