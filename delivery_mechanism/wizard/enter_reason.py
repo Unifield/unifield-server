@@ -70,9 +70,10 @@ class enter_reason(osv.osv_memory):
             obj.write({'change_reason': change_reason}, context=context)
 
             for move in obj.move_lines:
-                pol_ids.append(move.purchase_line_id.id)
-                pol_qty.setdefault(move.purchase_line_id.id, 0.00)
-                pol_qty[move.purchase_line_id.id] += move.product_qty
+                if move.state != 'cancel':
+                    pol_ids.append(move.purchase_line_id.id)
+                    pol_qty.setdefault(move.purchase_line_id.id, 0.00)
+                    pol_qty[move.purchase_line_id.id] += move.product_qty
 
             # if full cancel (no resource), we updated corresponding out and correct po state
             if cancel_type == 'update_out':
