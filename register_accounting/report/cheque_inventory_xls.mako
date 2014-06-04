@@ -158,9 +158,9 @@
   <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 
   <Row>
-    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Period')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Document Date')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Period')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cheque Number')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Sequence')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Description')}</Data></Cell>
@@ -175,9 +175,9 @@
     <% lines = getLines(o) %>
     % for line in lines:
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.period_id and line.statement_id.period_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.document_date|n}T00:00:00.000</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.period_id and line.statement_id.period_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.cheque_number and line.cheque_number or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.sequence_for_reference and line.sequence_for_reference or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name and line.name or '')|x}</Data></Cell>
