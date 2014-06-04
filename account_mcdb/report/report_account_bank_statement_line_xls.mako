@@ -124,6 +124,7 @@ x:FullRows="1">
 <AutoFilter x:Range="R1C1:R1C17" xmlns="urn:schemas-microsoft-com:office:excel">
 </AutoFilter>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <FitToPage/>
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
     <Footer x:Data="Page &amp;P of &amp;N"/>

@@ -193,6 +193,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <AutoFilter x:Range="R1C1:R1C19" xmlns="urn:schemas-microsoft-com:office:excel">
 </AutoFilter>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <FitToPage/>
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
     <Footer x:Data="Page &amp;P of &amp;N"/>
