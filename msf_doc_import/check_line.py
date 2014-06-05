@@ -174,7 +174,7 @@ def compute_kit_value(cr, uid, **kwargs):
             kit_name = row.cells[cell_nb].data.strip()
             if kit_name and product_id:
                 kit_ids = kit_obj.search(cr, uid, [('composition_type', '=', 'real'),
-                                                   ('composition_reference', '=', kit_name), 
+                                                   ('composition_reference', '=', kit_name),
                                                    ('composition_product_id', '=', product_id)])
                 if kit_ids:
                     kit_id = kit_ids[0]
@@ -551,3 +551,22 @@ def comment_value(**kwargs):
     except IndexError:
         warning_list.append(_("No comment was defined"))
     return {'comment': comment, 'warning_list': warning_list}
+
+def check_lines_currency(rows, ccy_col_index, ccy_expected_code):
+    """
+    check rows currency
+    :param ccy_col_index: currency column index
+    :param ccy_expected_code: currency code expected in all rows
+    :return count of bad ccy lines or 0 if OK
+    :rtype int
+    """
+    res = 0
+    for row in rows:
+        if row.cells:
+            cell = row.cells[ccy_col_index]
+            if cell.type == 'str':
+                if str(cell) != ccy_expected_code:
+                    res += 1
+            else:
+                res += 1
+    return res

@@ -608,7 +608,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     ('order_id', '=', order.id),
                     ('type', '!=', 'make_to_stock'),
                 ], context=context)
-                line_obj.write(cr, uid, non_mts_line, {'type': 'make_to_stock'}, context=context)
+                if non_mts_line:
+                    line_obj.write(cr, uid, non_mts_line, {'type': 'make_to_stock'}, context=context)
 
             # 4/ Check if the currency of the order is compatible with the currency of the partner
             pricelist_ids = pricelist_obj.search(cr, uid, [('in_search', '=', order.partner_id.partner_type)], context=context)
@@ -968,7 +969,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return result
 
-    def _get_date_planned(self, order, line):
+    def _get_date_planned(self, order, line, prep_lt, db_date_format):
         """
         Return the planned date for the FO/IR line according
         to the order and line values.
@@ -983,8 +984,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self._check_browse_param(order, '_get_date_planned')
         self._check_browse_param(line, '_get_date_planned')
 
-        date_planned = datetime.now() + relativedelta(days=line.delay or 0.0)
-        date_planned = (date_planned - timedelta(days=order.company_id.security_lead)).strftime('%Y-%m-%d %H:%M:%S')
+        date_planned = datetime.strptime(order.ready_to_ship_date, db_date_format)
+        date_planned = date_planned - relativedelta(days=prep_lt or 0)
+        date_planned = date_planned.strftime(db_date_format)
 
         return date_planned
 
@@ -1208,6 +1210,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         data_obj = self.pool.get('ir.model.data')
         sol_obj = self.pool.get('sale.order.line')
         config_obj = self.pool.get('unifield.setup.configuration')
+        date_tools = self.pool.get('date.tools')
+        fields_tools = self.pool.get('fields.tools')
 
         if context is None:
             context = {}
@@ -1216,11 +1220,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ids = [ids]
 
         setup = config_obj.get_config(cr, uid)
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
 
         for order in self.browse(cr, uid, ids, context=context):
             proc_ids = []
             move_ids = []
             picking_id = False
+
+            prep_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='preparation_lead_time', context=context)
 
             for line in order.order_line:
                 proc_id = False
@@ -1293,7 +1300,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         # do we need to have one product data per uom?
                         product_uom = data_obj.get_object_reference(cr, uid, 'product', 'cat0')[1]
 
-                    rts_date = self._get_date_planned(order, line)
+                    rts_date = self._get_date_planned(order, line, prep_lt, db_date_format)
                     proc_data = self._get_procurement_order_data(line, order, rts_date, context)
 
                     # Just change some values because in case of IR, we need specific values
@@ -1557,9 +1564,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             delivery_confirmed_date = order.delivery_confirmed_date
 
             prep_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='preparation_lead_time', context=context)
-            rts = datetime.strptime(order.ready_to_ship_date, db_date_format)
-            rts = rts - relativedelta(days=prep_lt or 0)
-            rts = rts.strftime(db_date_format)
 
             # If the order is stock So, we update the confirmed delivery date
             if order.split_type_sale_order == 'stock_split_sale_order':
@@ -1606,6 +1610,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 # when the line is confirmed, the corresponding procurement order has already been processed
                 # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
                 if line.state not in ['sourced', 'confirmed', 'done'] and not (line.created_by_po_line and line.procurement_id) and line.product_id:
+                    rts = self._get_date_planned(order, line, prep_lt, db_date_format)
                     proc_data = self._get_procurement_order_data(line, order, rts, context=context)
                     proc_id = proc_obj.create(cr, uid, proc_data, context=context)
                     # set the flag for log message
@@ -1728,10 +1733,6 @@ class sale_order_line(osv.osv):
 
         if isinstance(ids, (int, long)):
             ids = [ids]
-
-        for line in self.browse(cr, uid, ids, context=context):
-            if line.order_id and line.order_id.state != 'draft':
-                return self.pool.get('sale.order.line.unlink.wizard').ask_unlink(cr, uid, ids, context=context)
 
         return self.ask_order_unlink(cr, uid, ids, context=context)
 
@@ -2189,71 +2190,6 @@ class sale_config_picking_policy(osv.osv_memory):
     }
 
 sale_config_picking_policy()
-
-class sale_order_line_unlink_wizard(osv.osv_memory):
-    _name = 'sale.order.line.unlink.wizard'
-
-    _columns = {
-            'order_line_id': fields.many2one('sale.order.line', 'Line to delete'),
-            }
-
-    def ask_unlink(self, cr, uid, order_line_id, context=None):
-        '''
-        Return the wizard
-        '''
-        context = context or {}
-
-        if isinstance(order_line_id, (int, long)):
-            order_line_id = [order_line_id]
-
-        wiz_id = self.create(cr, uid, {'order_line_id': order_line_id[0]}, context=context)
-
-        return {'type': 'ir.actions.act_window',
-                'res_model': self._name,
-                'res_id': wiz_id,
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'context': context}
-
-    def close_window(self, cr, uid, ids, context=None):
-        '''
-        Close the pop-up and reload the FO
-        '''
-        return {'type': 'ir.actions.act_window_close'}
-
-    def cancel_fo_line(self, cr, uid, ids, context=None):
-        '''
-        Cancel the FO line and display the FO form
-        '''
-        context = context or {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        res = False
-
-        for wiz in self.browse(cr, uid, ids, context=context):
-            res = self.pool.get('sale.order.line').ask_order_unlink(cr, uid, [wiz.order_line_id.id], context=context)
-            break
-
-        return res or {'type': 'ir.actions.act_window_close'}
-
-    def resource_line(self, cr, uid, ids, context=None):
-        '''
-        Resource the FO line and display the FO form
-        '''
-        context = context or {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        for wiz in self.browse(cr, uid, ids, context=context):
-            self.pool.get('sale.order.line').add_resource_line(cr, uid, wiz.order_line_id.id, False, wiz.order_line_id.product_uom_qty, context=context)
-
-        return self.cancel_fo_line(cr, uid, ids, context=context)
-
-sale_order_line_unlink_wizard()
 
 class sale_order_unlink_wizard(osv.osv_memory):
     _name = 'sale.order.unlink.wizard'

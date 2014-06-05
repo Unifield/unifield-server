@@ -131,7 +131,7 @@ class stock_move(osv.osv):
         '''
         Get the requestor_location_id in case of IR to update the location_dest_id of each move
         '''
-        location_dest_id = False
+        location_dest_id = super(stock_move, self)._get_location_for_internal_request(cr, uid, context=context, **kwargs)
         move = kwargs['move']
         if move.purchase_line_id:
             proc = move.purchase_line_id.procurement_id
@@ -814,6 +814,10 @@ class stock_picking(osv.osv):
                 else:
                     self.action_move(cr, uid, [picking.id], context=context)
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
+                    if picking.purchase_id:
+                        so_ids = self.pool.get('purchase.order').get_so_ids_from_po_ids(cr, uid, picking.purchase_id.id, context=context)
+                        for so_id in so_ids:
+                            wf_service.trg_write(uid, 'sale.order', so_id, cr)
 
             if not sync_in:
                 move_obj.action_assign(cr, uid, processed_out_moves)
@@ -918,6 +922,12 @@ class stock_picking(osv.osv):
                         if out_move.picking_id and out_move.picking_id.sale_id:
                             if out_move.picking_id.sale_id.id not in sale_ids:
                                 sale_ids.append(out_move.picking_id.sale_id.id)
+
+                if move.purchase_line_id and move.purchase_line_id.procurement_id:
+                    procurement = move.purchase_line_id.procurement_id
+                    if not procurement.sale_id and procurement.move_id:
+                        self.pool.get('stock.move').action_cancel(cr, uid, [move.purchase_line_id.procurement_id.move_id.id])
+                        wf_service.trg_validate(uid, 'procurement.order', move.purchase_line_id.procurement_id.id, 'button_cancel', cr)
 
             # correct the corresponding po manually if exists - should be in shipping exception
             if obj.purchase_id:

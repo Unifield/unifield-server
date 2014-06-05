@@ -242,7 +242,7 @@ class account_invoice(osv.osv):
         return res
 
     def onchange_partner_id(self, cr, uid, ids, ctype, partner_id,\
-        date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False, is_intermission=False):
+        date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False, is_intermission=False, is_debit_note=False, is_direct_invoice=False):
         """
         Update fake_account_id field regarding account_id result.
         Get default donation account for Donation invoices.
@@ -265,20 +265,25 @@ class account_invoice(osv.osv):
             res['value'].update({'fake_account_id': res['value'].get('account_id')})
         if partner_id and ctype:
             p = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            ai_direct_invoice = False
             if ids: #utp917
                 ai = self.browse(cr, uid, ids)[0]
+                ai_direct_invoice = ai.is_direct_invoice
             if p:
                 c_id = False
                 if ctype in ['in_invoice', 'out_refund'] and p.property_product_pricelist_purchase:
                     c_id = p.property_product_pricelist_purchase.currency_id.id
                 elif ctype in ['out_invoice', 'in_refund'] and p.property_product_pricelist:
                     c_id = p.property_product_pricelist.currency_id.id
-                if ids:
-                    if c_id and not ai.is_direct_invoice:   #utp917
-                        if not res.get('value', False):
-                            res['value'] = {'currency_id': c_id}
-                        else:
-                            res['value'].update({'currency_id': c_id})
+                # UFTP-121: regarding UTP-917, we have to change currency when changing partner, but not for direct invoices
+                if c_id and (not is_direct_invoice and not ai_direct_invoice):
+                    if not res.get('value', False):
+                        res['value'] = {'currency_id': c_id}
+                    else:
+                        res['value'].update({'currency_id': c_id})
+        # UFTP-168: If debit note, set account to False value
+        if is_debit_note:
+            res['value'].update({'account_id': False, 'fake_account_id': False})
         return res
 
     def _check_document_date(self, cr, uid, ids):
@@ -510,6 +515,7 @@ class account_invoice(osv.osv):
         """
         if not context:
             context = {}
+        local_ctx = context.copy()
         # Prepare some values
         # Search donation view and return it
         try:
@@ -519,7 +525,8 @@ class account_invoice(osv.osv):
             intermission_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_intermission_form')
             supplier_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_supplier_form')
             customer_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_form')
-        except ValueError:
+            supplier_direct_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'direct_supplier_invoice_form')
+        except ValueError, e:
             return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, context)
         debit_view_id = debit_res and debit_res[1] or False
         debit_note_ctx = {'view_id': debit_view_id, 'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}
@@ -539,20 +546,25 @@ class account_invoice(osv.osv):
                 if m and m.groups():
                     message = re.sub(pattern, el[1], message, 1)
                     message_changed = True
-                context.update(el[2])
+                local_ctx.update(el[2])
         # UF-1112: Give all customer invoices a name as "Stock Transfer Voucher".
         if not message_changed and self.read(cr, uid, inv_id, ['type']).get('type', False) == 'out_invoice':
             message = re.sub(pattern, 'Stock Transfer Voucher', message, 1)
 
-            context.update(customer_ctx)
+            local_ctx.update(customer_ctx)
         # UF-1307: for supplier invoice log (from the incoming shipment), the context was not
         # filled with all the information; this leaded to having a "Sale" journal in the supplier
         # invoice if it was saved after coming from this link. Here's the fix.
-        if (not context.get('journal_type', False) and context.get('type', False) == 'in_invoice'):
-            supplier_view_id = supplier_invoice_res and supplier_invoice_res[1] or False
-            context.update({'journal_type': 'purchase',
-                            'view_id': supplier_view_id})
-        return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, context)
+        if local_ctx.get('type', False) == 'in_invoice':
+            if not local_ctx.get('journal_type', False):
+                supplier_view_id = supplier_invoice_res and supplier_invoice_res[1] or False
+                local_ctx.update({'journal_type': 'purchase',
+                                'view_id': supplier_view_id})
+            elif local_ctx.get('journal_type', False) == 'purchase': # UFTP-166: The wrong context saved in log
+                supplier_view_id = supplier_direct_invoice_res and supplier_direct_invoice_res[1] or False
+                local_ctx = {'journal_type': 'purchase',
+                             'view_id': supplier_view_id}
+        return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, local_ctx)
 
     def invoice_open(self, cr, uid, ids, context=None):
         """
@@ -661,8 +673,9 @@ class account_invoice(osv.osv):
     def action_date_assign(self, cr, uid, ids, *args):
         """
         Check Document date.
-        Add it if we come from a YAML test.
         """
+        # Prepare some values
+        period_obj = self.pool.get('account.period')
         # Default behaviour to add date
         res = super(account_invoice, self).action_date_assign(cr, uid, ids, args)
         # Process invoices
@@ -670,10 +683,15 @@ class account_invoice(osv.osv):
             if not i.date_invoice:
                 self.write(cr, uid, i.id, {'date_invoice': strftime('%Y-%m-%d')})
                 i = self.browse(cr, uid, i.id) # This permit to refresh the browse of this element
-            if not i.document_date and i.from_yml_test:
-                self.write(cr, uid, i.id, {'document_date': i.date_invoice})
-            if not i.document_date and not i.from_yml_test:
+            if not i.document_date:
                 raise osv.except_osv(_('Warning'), _('Document Date is a mandatory field for validation!'))
+            # UFTP-105: Search period and raise an exeception if this one is not open
+            period_ids = period_obj.get_period_from_date(cr, uid, i.date_invoice)
+            if not period_ids:
+                raise osv.except_osv(_('Error'), _('No period found for this posting date: %s') % (i.date_invoice))
+            for period in period_obj.browse(cr, uid, period_ids):
+                if period.state != 'draft':
+                    raise osv.except_osv(_('Warning'), _('You cannot validate this document in the given period: %s because it\'s not open. Change the date of the document or open the period.') % (period.name))
         # Posting date should not be done BEFORE document date
         self._check_document_date(cr, uid, ids)
         return res
@@ -887,6 +905,7 @@ class account_invoice_line(osv.osv):
             readonly=True, help="This informs system if this item have been corrected in analytic lines. Criteria: the invoice line is linked to a journal items that have analytic item which is reallocated.",
             store=False),
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
+        'reference': fields.char(string="Reference", size=64),
     }
 
     _defaults = {

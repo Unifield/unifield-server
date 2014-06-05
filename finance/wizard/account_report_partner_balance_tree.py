@@ -169,10 +169,9 @@ class account_partner_balance_tree(osv.osv):
 
         res = self._execute_query_partners(cr, uid, data)
 
-        for r in res:
+        for r in res[0]:
             if not r.get('partner_name', False):
                 r.update({'partner_name': _('Unknown Partner')})
-
             vals = {
                 'uid': uid,
                 'build_ts': data['build_ts'],
@@ -393,7 +392,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
     def print_pdf(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        data = self._get_data(cr, uid, ids, context=context)
+        data, account_type = self._get_data(cr, uid, ids, context=context)
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.partner.balance',
@@ -403,7 +402,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
     def print_xls(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        data = self._get_data(cr, uid, ids, context=context)
+        data, account_type = self._get_data(cr, uid, ids, context=context)
         self.pool.get('account.partner.balance.tree').build_data(cr,
                                                         uid, data,
                                                         context=context)

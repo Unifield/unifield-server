@@ -250,44 +250,58 @@ class account_account(osv.osv):
                 raise osv.except_osv(_('Error'), _('Operation not implemented!'))
         return arg
 
-    def _get_is_intermission_counterpart(self, cr, uid, ids, field_names, args, context=None):
+    def _get_is_specific_counterpart(self, cr, uid, ids, field_names, args, context=None):
         """
-        If this account is the same as default intermission counterpart, then return True. Otherwise return nothing.
+        If this account is the same as default intermission counterpart OR rebilling intersection account, then return True. Otherwise return nothing.
         """
         # Checks
         if context is None:
             context = {}
         # Prepare some values
         res = {}
-        intermission = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
-        intermission_id = intermission and intermission.id or False
+        account = False
+        if field_names == 'is_intermission_counterpart':
+            account = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
+        elif field_names == 'is_intersection_counterpart':
+            account = self.pool.get('res.users').browse(cr, uid, uid).company_id.import_invoice_default_account
+        specific_account_id = account and account.id or False
 
         for account_id in ids:
             res[account_id] = False
-        if intermission_id in ids:
-            res[intermission_id] = True
+        if specific_account_id in ids:
+            res[specific_account_id] = True
         return res
 
-    def _search_is_intermission_counterpart(self, cr, uid, ids, field_names, args, context=None):
+    def _search_is_specific_counterpart(self, cr, uid, ids, field_names, args, context=None):
         """
-        Return the intermission counterpart ID.
+        Return the intermission counterpart OR the rebilling intersection account ID.
         """
         # Checks
         if context is None:
             context = {}
         # Prepare some values
         arg = []
-        intermission = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
-        intermission_id = intermission and intermission.id or False
+        account = False
+        fieldname = False
+        if field_names == 'is_intermission_counterpart':
+            account = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
+            fieldname = 'intermission_default_counterpart'
+        elif field_names == 'is_intersection_counterpart':
+            account = self.pool.get('res.users').browse(cr, uid, uid).company_id.import_invoice_default_account
+            fieldname = 'import_invoice_default_account'
+        specific_account_id = account and account.id or False
 
         for x in args:
-            if x[0] == 'is_intermission_counterpart' and x[2] is True:
-                if intermission_id:
-                    arg.append(('id', '=', intermission_id))
-            elif x[0] != 'is_intermission_counterpart':
+            if x[0] == field_names and x[2] is True:
+                if specific_account_id:
+                    arg.append(('id', '=', specific_account_id))
+            elif x[0] == field_names and x[2] is False:
+                if specific_account_id:
+                    arg.append(('id', '!=', specific_account_id))
+            elif x[0] != field_names:
                 arg.append(x)
             else:
-                raise osv.except_osv(_('Error'), _('Filter on field is_intermission_counterpart not implemented! %s') % (x,))
+                raise osv.except_osv(_('Error'), _('Filter on field %s not implemented! %s') % (field_names, x,))
         return arg
 
     _columns = {
@@ -308,7 +322,8 @@ class account_account(osv.osv):
         'balance': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Balance', multi='balance'),
         'debit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Debit', multi='balance'),
         'credit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Credit', multi='balance'),
-        'is_intermission_counterpart': fields.function(_get_is_intermission_counterpart, fnct_search=_search_is_intermission_counterpart, method=True, type='boolean', string='Is the intermission counterpart account?'),
+        'is_intermission_counterpart': fields.function(_get_is_specific_counterpart, fnct_search=_search_is_specific_counterpart, method=True, type='boolean', string='Is the intermission counterpart account?'),
+        'is_intersection_counterpart': fields.function(_get_is_specific_counterpart, fnct_search=_search_is_specific_counterpart, method=True, type='boolean', string='Is the intersection counterpart account?'),
     }
 
     _defaults = {
@@ -653,6 +668,9 @@ class account_move(osv.osv):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'sys':
                     raise osv.except_osv(_('Warning'), _('You are not able to approve a Journal Entry that comes from the system!'))
+                # UFTP-105: Do not permit to validate a journal entry on a period that is not open
+                if m.period_id and m.period_id.state != 'draft':
+                    raise osv.except_osv(_('Warning'), _('You cannot post entries in a non-opened period: %s') % (m.period_id.name))
                 prev_currency_id = False
                 for ml in m.line_id:
                     if not prev_currency_id:

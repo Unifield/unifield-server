@@ -29,7 +29,7 @@ from account_override import finance_export
 from report import report_sxw
 
 class finance_archive(finance_export.finance_archive):
-    def postprocess_reconciliable(self, cr, uid, data, column_deletion=False):
+    def postprocess_reconciliable(self, cr, uid, data, model, column_deletion=False):
         """
         Replace 15th column by its reconcile name.
         Note: as we begin to 0, the python column is 14.
@@ -48,7 +48,10 @@ class finance_archive(finance_export.finance_archive):
                 reconcile = reconcile_obj.read(cr, uid, reconcile_id, ['name'])
                 if reconcile and reconcile.get('name', False):
                     tmp_line[14] = reconcile.get('name')
-            new_data.append(tmp_line)
+            # Add DB ID on each line (first column)
+            line_ids = str(line[0])
+            tmp_line[0] = self.get_hash(cr, uid, line_ids, model)
+            new_data.append(self.line_to_utf8(tmp_line))
         return new_data
 
 class hq_report_ocb_matching(report_sxw.report_sxw):
@@ -83,7 +86,7 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
         sqlrequests = {
             # Do not take lines that come from a HQ or MIGRATION journal
             'reconciliable': """
-                SELECT m.name || '-' || aml.line_number, m.name AS "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code, aml.partner_txt, debit_currency, credit_currency, c.name AS "Booking Currency", aml.debit, aml.credit, cc.name AS "functional_currency", aml.reconcile_id
+                SELECT aml.id, m.name AS "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code, aml.partner_txt, debit_currency, credit_currency, c.name AS "Booking Currency", aml.debit, aml.credit, cc.name AS "functional_currency", aml.reconcile_id
                 FROM account_move_line AS aml, account_move AS m, account_account AS a, res_currency AS c, res_company AS e, res_currency AS cc, account_journal AS j
                 WHERE aml.move_id = m.id
                 AND aml.account_id = a.id
@@ -92,6 +95,7 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
                 AND e.currency_id = cc.id
                 AND aml.journal_id = j.id
                 AND a.reconcile = 't'
+                AND a.type != 'liquidity'
                 AND j.type not in %s
                 AND aml.instance_id in %s;
                 """,
@@ -107,6 +111,7 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
                 'key': 'reconciliable',
                 'query_params': (tuple(excluded_journal_types), tuple(instance_ids),),
                 'function': 'postprocess_reconciliable',
+                'fnct_params': 'account.move.line',
                 },
         ]
         # Launch finance archive object

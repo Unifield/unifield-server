@@ -210,6 +210,6 @@ class account_partner_balance_tree_xls(SpreadsheetReport):
     def create(self, cr, uid, ids, data, context=None):
         a = super(account_partner_balance_tree_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
-account_partner_balance_tree_xls('report.account.partner.balance.tree_xls', 'account.partner.balance.tree', 'account_override/report/account_partner_balance_tree_xls.mako', parser=account_partner_balance_tree, header='internal')
+account_partner_balance_tree_xls('report.account.partner.balance.tree_xls', 'account.partner.balance.tree', 'finance/report/account_partner_balance_tree_xls.mako', parser=account_partner_balance_tree, header='internal')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

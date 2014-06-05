@@ -23,12 +23,11 @@ from osv import fields, osv
 
 class account_move_line(osv.osv):
     _name = "account.move.line"
-    _inherit = "account.move.line" 
-    
+    _inherit = "account.move.line"
+
     _columns = {
         'is_recurring': fields.boolean('Comes from a recurring entry'),
     }
-    
+
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
- 

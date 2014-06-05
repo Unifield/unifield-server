@@ -328,7 +328,7 @@ class journal_items_corrections(osv.osv_memory):
         elif comparison == 4:
             raise osv.except_osv('Warning', 'Do analytic distribution reallocation here!')
         elif comparison in [3, 5, 7]:
-            raise osv.except_osv(_('Error'), _("You're just allowed to change ONE field amoungst Account, Third Party or Analytical Distribution"))
+            raise osv.except_osv(_('Error'), _("You're just allowed to change ONE field amongst Account, Third Party or Analytical Distribution"))
         else:
             raise osv.except_osv(_('Warning'), _('No modifications seen!'))
         return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}

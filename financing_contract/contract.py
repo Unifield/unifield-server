@@ -38,6 +38,23 @@ class financing_contract_funding_pool_line(osv.osv):
         'total_project': True,
     }
 
+    def check_fp(self, cr, uid, ids, context=None):
+        """
+        See all other funding pool lines and check that the FP is not used yet.
+        If used, raise an error.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for line in self.browse(cr, uid, ids):
+            fp_id = line.funding_pool_id.id
+            # Search other lines
+            other_same_fp_ids = self.search(cr, uid, [('contract_id', '=', line.contract_id.id), ('id', '!=', line.id), ('funding_pool_id', '=', fp_id)])
+            if other_same_fp_ids:
+                raise osv.except_osv(_('Error'), _('This FP is already in use: %s') % (line.funding_pool_id.name))
+        return True
+
     def create(self, cr, uid, vals, context=None):
         result = super(financing_contract_funding_pool_line, self).create(cr, uid, vals, context=context)
         # when a new funding pool is added to contract, then add all of the cost centers to the cost center tab, unless
@@ -64,7 +81,19 @@ class financing_contract_funding_pool_line(osv.osv):
             cc_ids = list(set(cc_ids).union(quad_cc_ids))
             # replace the associated cc list -NOT WORKING
             format_obj.write(cr, uid, vals['contract_id'],{'cost_center_ids':[(6,0,cc_ids)]}, context=context)
+        # UFTP-121: Check that FP is not used yet.
+        self.check_fp(cr, uid, result)
         return result
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check that no previous funding pool account is used yet.
+        """
+        if context is None:
+            context = {}
+        res = super(financing_contract_funding_pool_line, self).write(cr, uid, ids, vals, context=context)
+        self.check_fp(cr, uid, ids)
+        return res
 
 financing_contract_funding_pool_line()
 
@@ -485,6 +514,26 @@ class financing_contract_contract(osv.osv):
         res = super(financing_contract_contract, self).write(cr, uid, ids, vals, context=context)
         if fp_added_flag: # if the previous save has been recovered thanks to the flag set to True, then reset it back to False
             cr.execute('''update financing_contract_contract set fp_added_flag = 'f' where id = %s''' % (ids[0]))
+
+        # uf-2342 delete any assigned quads that are no longer valid due to changes in the contract
+        # get list of all valid ids for this contract
+        format =  self.browse(cr,uid,ids,context=context)[0].format_id
+        funding_pool_ids = [x.funding_pool_id.id for x in format.funding_pool_ids]
+        cost_center_ids = [x.id for x in format.cost_center_ids]
+
+        quad_obj = self.pool.get('financing.contract.account.quadruplet')
+        valid_quad_ids = quad_obj.search(cr, uid, [('funding_pool_id','in',funding_pool_ids),('cost_center_id','in',cost_center_ids)], context=context)
+
+        # filter current assignments and re-write entries if necessary
+        format_obj = self.pool.get('financing.contract.format')
+        format_line_obj = self.pool.get('financing.contract.format.line')
+        format_browse = format_obj.browse(cr, uid, format.id, context=context)
+        for format_line in format_browse.actual_line_ids:
+            account_quadruplet_ids = [account_quadruplet.id for account_quadruplet in format_line.account_quadruplet_ids]
+            filtered_quads = [x for x in account_quadruplet_ids if x in valid_quad_ids]
+            list_diff = set(account_quadruplet_ids).symmetric_difference(set(filtered_quads))
+            if list_diff:
+                ret = format_line_obj.write(cr, uid, format_line.id, {'account_quadruplet_ids': [(6, 0, filtered_quads)]}, context=context)
         return res
 
 financing_contract_contract()

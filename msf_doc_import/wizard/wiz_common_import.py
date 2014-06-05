@@ -74,13 +74,19 @@ class wiz_common_import(osv.osv_memory):
             header_dict.update({self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context): cell_nb})
         return header_dict
 
-    def check_header_values(self, cr, uid, ids, context, header_index, real_columns):
+    def check_header_values(self, cr, uid, ids, context, header_index,
+        real_columns, origin=False):
         """
         Check that the columns in the header will be taken into account.
         """
         translated_headers = [_(f) for f in real_columns]
         for k,v in header_index.items():
             if k not in translated_headers:
+                if origin:
+                    # special case from document origin
+                    if origin == 'PO' and k == 'Delivery requested date' \
+                        and 'Delivery Request Date' in real_columns:
+                        continue  # 'Delivery requested date' tolerated (for Rfq vs 'Delivery Requested Date' of PO_COLUMNS_HEADER_FOR_IMPORT)
                 vals = {'state': 'draft',
                         'message': _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s'
                                      ) % (k, ','.join(translated_headers))}
@@ -148,7 +154,7 @@ class wizard_common_import_line(osv.osv_memory):
         context = context is None and {} or context
         ids = isinstance(ids, (int, long)) and [ids] or ids
 
-        fields_to_read = ['parent_id', 
+        fields_to_read = ['parent_id',
                           'parent_model',
                           'line_model',
                           'product_ids']
@@ -320,8 +326,8 @@ class sale_order_line(osv.osv):
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
         for p_data in p_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
-            order_data = order_obj.read(cr, uid, parent_id, ['pricelist_id', 
-                                                             'partner_id', 
+            order_data = order_obj.read(cr, uid, parent_id, ['pricelist_id',
+                                                             'partner_id',
                                                              'date_order',
                                                              'fiscal_position'], context=context)
 
@@ -674,9 +680,9 @@ class threshold_value_line(osv.osv):
                       'product_uom_id': p_data['uom_id'],
                       'threshold_value_id': parent_id}
 
-            values.update(self.onchange_product_id(cr, 
-                                                   uid, 
-                                                   False, 
+            values.update(self.onchange_product_id(cr,
+                                                   uid,
+                                                   False,
                                                    p_data['id'],
                                                    t_data.compute_method,
                                                    t_data.consumption_method,

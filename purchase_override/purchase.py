@@ -736,14 +736,14 @@ class purchase_order(osv.osv):
                 distrib = pol.analytic_distribution_id  or po.analytic_distribution_id  or False
                 # Raise an error if no analytic distribution found
                 if not distrib:
-                    if not po.order_type in ('loan', 'donation_st', 'donation_exp'):
+                    if not po.order_type in ('loan', 'donation_st', 'donation_exp', 'in_kind'):
                         raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
 
                     # UF-2031: If no distrib accepted (for loan, donation), then do not process the distrib
                     return True
                 elif pol.analytic_distribution_state != 'valid':
                     id_ad = ad_obj.create(cr, uid, {})
-                    ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_centre_lines or po.analytic_distribution_id.cost_center_lines
+                    ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines
                     bro_dests = self._get_destination_ok(cr, uid, [pol], context=context)
                     for line in ad_lines:
                         # fetch compatible destinations then use on of them:
@@ -1046,6 +1046,7 @@ stock moves which are already processed : '''
         sol_obj = self.pool.get('sale.order.line')
         so_obj = self.pool.get('sale.order')
         ad_obj = self.pool.get('analytic.distribution')
+        proc_obj = self.pool.get('procurement.order')
 
         if context is None:
             context = {}
@@ -1085,6 +1086,9 @@ stock moves which are already processed : '''
                     'created_by_po_line': l.id,
                     'name': '[%s] %s' % (l.product_id.default_code, l.product_id.name)}
             sol_obj.create(cr, uid, vals, context=context)
+            # Put the sale_id in the procurement order
+            if l.procurement_id:
+                proc_obj.write(cr, uid, [l.procurement_id.id], {'sale_id': l.link_so_id.id}, context=context)
             # Create new line in FOXXXX (original FO)
             if l.link_so_id.original_so_id_sale_order:
                 context['sale_id'] = l.link_so_id.original_so_id_sale_order.id
@@ -1095,7 +1099,8 @@ stock moves which are already processed : '''
 
             sol_ids.add(l.link_so_id.id)
 
-        so_obj.action_ship_proc_create(cr, uid, list(sol_ids), context=context)
+        if sol_ids:
+            so_obj.action_ship_proc_create(cr, uid, list(sol_ids), context=context)
 
         return True
 
@@ -1608,6 +1613,11 @@ stock moves which are already processed : '''
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
+        line_obj = self.pool.get('purchase.order.line')
+        sol_obj = self.pool.get('sale.order.line')
+        data_obj = self.pool.get('ir.model.data')
+
+        input_loc = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
         picking_id = False
         for order in self.browse(cr, uid, ids):
             moves_to_update = []
@@ -1658,6 +1668,11 @@ stock moves which are already processed : '''
                 # service with reception are directed to Service Location
                 if order_line.product_id.type == 'service_recep' and not order.cross_docking_ok:
                     dest = self.pool.get('stock.location').get_service_location(cr, uid)
+                else:
+                    sol_ids = line_obj.get_sol_ids_from_pol_ids(cr, uid, [order_line.id], context=context)
+                    for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
+                        if sol.order_id and sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage != 'customer':
+                            dest = input_loc
 
                 move_values = {
                     'name': order.name + ': ' +(order_line.name or ''),

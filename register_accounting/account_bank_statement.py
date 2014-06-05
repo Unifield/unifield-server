@@ -186,7 +186,7 @@ class account_bank_statement(osv.osv):
         'responsible_ids': fields.many2many('res.users', 'bank_statement_users_rel', 'statement_id', 'user_id', 'Responsible'),
     }
 
-    _order = 'state asc, period_number desc'
+    _order = 'state asc, period_number asc'
 
     _defaults = {
         'balance_start': lambda *a: 0.0,
@@ -919,6 +919,10 @@ class account_bank_statement_line(osv.osv):
             res[line.id] = ''
             if len(line.move_ids) > 0:
                 res[line.id] = line.move_ids[0].name
+            else:
+                # UFTP-201: If there is no move linked to this reg line, get the current value of ref
+                res[line.id] = line.sequence_for_reference
+
         return res
 
     def _get_bank_statement_line_ids(self, cr, uid, ids, context=None):
@@ -1112,23 +1116,26 @@ class account_bank_statement_line(osv.osv):
 
         for absl in self.browse(cr, uid, ids):
             if absl.state == 'temp' and absl.direct_invoice == True:
-
                 # Find all moves lines linked to this register line
                 # first, via the statement
                 move_ids = [x.id for x in absl.move_ids]
                 if move_ids:
                     am1 = account_move.browse(cr, uid, move_ids)[0]
                     seqnums[am1.journal_id.id] = am1.name
+                else:
+                    # UFTP-201: If there is no move linked to this reg line, get the current value of ref
+                    seqnums[absl.statement_id.journal_id.id] = absl.sequence_for_reference
 
                 # then via the direct invoice
                 ai = account_invoice.browse(cr, uid, [absl.invoice_id.id])[0]
-                move_id = ai.move_id.id
-
-                if move_id:
-                    move_ids.append(move_id)
+                if ai.move_id.id:
+                    move_ids.append(ai.move_id.id)
                     seqnums[ai.move_id.journal_id.id] = ai.move_id.name
                     account_invoice.write(cr, uid, [ai.id],{'move_id': False}, context=context)
-
+                else:
+                    # UFTP-201: If there is no move linked to this invoice, retrieve the current value
+                    if absl.invoice_id.journal_id and absl.invoice_id.journal_id.id: # not needed but just to be sure 
+                        seqnums[absl.invoice_id.journal_id.id] = absl.invoice_id.internal_number
 
                 # TODO: Needs to be fixed during refactoring. The field move_id on account.analytic.line
                 # is actually account_move_line.id, not account_move.id
@@ -1763,6 +1770,10 @@ class account_bank_statement_line(osv.osv):
             distrib_id = values.get('analytic_distribution_id')
         if not distrib_id:
             values = self._update_employee_analytic_distribution(cr, uid, values=values)
+        if 'cheque_number' in values:
+            cr.execute('''select id from account_bank_statement_line where cheque_number = %s ''', (values['cheque_number'], ))
+            for row in cr.dictfetchall():
+                raise osv.except_osv(_('Info'),_('This cheque number has already been used'))
         # Then create a new bank statement line
         absl = super(account_bank_statement_line, self).create(cr, uid, values, context=context)
         return absl
@@ -1980,7 +1991,7 @@ class account_bank_statement_line(osv.osv):
                 # update the invoice 'name' (ref)  TODO - does this need to be set to "/" ?
                 self.pool.get('account.invoice').read(cr, uid, absl.invoice_id.id, ['number'])['number']
                 # self.write(cr, uid, [absl.id], {'name': "/"})
-                account_move_line_ids = account_move_line.search(cr, uid, [('move_id', '=', absl.invoice_id.move_id.id)])
+
                 # Optimization: Do check=True and update_check=True because it was out from previous lines.
                 account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'}, context=context, check=True, update_check=True)
 
@@ -2328,6 +2339,7 @@ class account_bank_statement_line(osv.osv):
 
             default_vals = ({
                 'name': '(copy) ' + line.name,
+                'cheque_number': '',
             })
             self.copy(cr, uid, line.id, default_vals, context=context)
         return True

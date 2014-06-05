@@ -66,7 +66,10 @@ class account_cash_statement(osv.osv):
         j_obj = self.pool.get('account.journal')
         journal = j_obj.browse(cr, uid, vals['journal_id'], context=context)
         # @@@override@account.account_cash_statement.create()
-        if journal.type == 'cash':
+
+        # UFTP-116: Fixed a serious problem detected very late: the cashbox lines created by default even for the Cash Reg from sync!
+        # This leads to the problem that each time, a Cash Reg is new from a sync, it added new 16 lines for the Cash Reg
+        if journal.type == 'cash' and not context.get('sync_update_execution', False):
             open_close = self._get_cash_open_close_box_lines(cr, uid, context)
             if vals.get('starting_details_ids', False):
                 for start in vals.get('starting_details_ids'):
@@ -94,7 +97,7 @@ class account_cash_statement(osv.osv):
                     vals.update({'balance_start': prev_reg.msf_calculated_balance})
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
         # take on previous lines if exists (or discard if they come from sync)
-        if prev_reg_id and not context.get('sync_data', False):
+        if prev_reg_id and not context.get('sync_update_execution', False):
             create_cashbox_lines(self, cr, uid, [prev_reg_id], ending=True, context=context)
         # update balance_end
         self._get_starting_balance(cr, uid, [res_id], context=context)

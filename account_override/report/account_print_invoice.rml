@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+
 <document filename="Invoices.pdf">
 
 
@@ -185,7 +185,7 @@
     <pto_header><!-- Must be after setLang() -->
 	<blockTable colWidths="202.0,87.0,71.0,57.0,71.0" style="Table7">
 	<tr>
-	    <td> <para style="terp_tblheader_Details">DESCRIPTION</para> </td>
+	    <td> <para style="terp_tblheader_Details">Description</para> </td>
 	    <td> <para style="terp_tblheader_Details_Centre">Taxes</para> </td>
 	    <td> <para style="terp_tblheader_Details_Centre">Quantity</para> </td>
 	    <td> <para style="terp_tblheader_Details_Right">Unit Price </para> </td>
@@ -249,7 +249,7 @@
           <para style="terp_tblheader_General_Centre">Date</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">DESCRIPTION</para>
+          <para style="terp_tblheader_General_Centre">Description</para>
         </td>
 	<td>
           <para style="terp_tblheader_General_Centre">Your Reference</para>
@@ -289,10 +289,10 @@
       <font color="white"> </font>
     </para>
 
-    <blockTable colWidths="245.0,80.0,60.0,60.0,85.0" style="Table7">
+    <blockTable colWidths="140.0,50.0,100.0,100.0,140.0" style="Table7">
       <tr>
         <td>
-          <para style="terp_tblheader_General">DESCRIPTION</para>
+          <para style="terp_tblheader_General">Description</para>
         </td>
          <td>
           <para style="terp_tblheader_General_Right">Account</para>
@@ -310,7 +310,7 @@
     </blockTable>
     <section>
       <para style="terp_default_2">[[ repeatIn(o.invoice_line,'l') ]]</para>
-      <blockTable colWidths="245.0,80.0,60.0,60.0,85.0" style="Table8">
+      <blockTable colWidths="140.0,50.0,100.0,100.0,140.0" style="Table8">
         <tr>
           <td>
             <para style="terp_default_9">[[ l.name ]]</para>
@@ -325,7 +325,7 @@
             <para style="terp_default_Right_9">[[ l.price_unit or '0.00' ]]</para>
           </td>
           <td>
-            <para style="terp_default_Right_9">[[ formatLang(l.price_subtotal, digits=2, grouping=True) ]] [[ o.currency_id.symbol ]]</para>
+            <para style="terp_default_Right_9">[[ formatLang(l.price_subtotal, digits=2, grouping=True) ]]</para>
           </td>
         </tr>
         <tr>
@@ -378,7 +378,7 @@
           <para style="terp_default_9">Taxe [[ t.name ]]</para>
         </td>
         <td>
-          <para style="terp_default_Right_9">[[ (t.tax_code_id and t.tax_code_id.notprintable) and removeParentNode('tr') or '' ]] [[ formatLang(t.amount, digits=get_digits(dp='Account')) ]] [[ o.currency_id.symbol ]]</para>
+          <para style="terp_default_Right_9">[[ (t.tax_code_id and t.tax_code_id.notprintable) and removeParentNode('tr') or '' ]] [[ formatLang(t.amount, digits=get_digits(dp='Account')) ]] </para>
         </td>
       </tr>
 
@@ -390,10 +390,9 @@
           </para>
         </td>
         <td>
-          <para style="terp_tblheader_Details">Total:</para>
         </td>
         <td>
-          <para style="terp_default_Bold_Right_9">[[ formatLang(o.amount_total, digits=get_digits(dp='Account')) ]] [[ o.currency_id.symbol ]]</para>
+          <para style="terp_default_Bold_Right_9">[[ formatLang(o.amount_total, digits=get_digits(dp='Account')) ]] [[ o.currency_id.name ]]</para>
         </td>
       </tr>
     </blockTable>

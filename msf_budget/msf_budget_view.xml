@@ -7,7 +7,7 @@
             <field name="model">msf.budget</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-               <tree colors="blue:state in ('draft');gray:state in ('done');black:state in ('valid')" string="Budget">
+               <tree colors="blue:state in ('draft');gray:state in ('done');black:state in ('valid')" string="Budget"  hide_new_button="1" hide_delete_button="1"  noteditable="1" >
                     <field name="name" colspan="1"/>
                     <field name="code" colspan="1"/>
                     <field name="fiscalyear_id"/>
@@ -17,6 +17,7 @@
                     <field name="decision_moment_id"/>
                     <field name="version"/>
                     <field name="total_budget_amount" digits="(24,0)"/>
+                    <button name="unlink" string="Delete" icon="gtk-del" type="object" attrs="{'invisible': [('state', '=', 'Validated')]}" confirm="Do you really want to delete this budget?" />
                 </tree>
             </field>
         </record>
@@ -54,7 +55,7 @@
             <field name="model">msf.budget</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Budget">
+                <form string="Budget" hide_new_button="1" hide_delete_button="1"  hide_duplicate_button="1" >
                     <field name="name" readonly="1"/>
                     <field name="code" readonly="1"/>
                     <field name="fiscalyear_id" readonly="1"/>

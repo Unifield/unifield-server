@@ -23,7 +23,6 @@
 
 from osv import osv
 from osv import fields
-from tools.translate import _
 
 class hq_entries_unsplit(osv.osv_memory):
     _name = 'hq.entries.unsplit'

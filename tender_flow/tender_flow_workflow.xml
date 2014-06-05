@@ -60,6 +60,10 @@
         </record>
 
         <!-- PROCUREMENT WORKFLOW -->
+        <record id="procurement.act_confirm_mto" model="workflow.activity">
+            <field name="kind">function</field>
+            <field name="action">{'message': ''}</field>
+        </record>
  		<record id="procurement.act_tender" model="workflow.activity">
             <field name="wkf_id" ref="procurement.wkf_procurement"/>
             <field name="name">tender</field>
@@ -88,6 +92,13 @@
             <field name="name">rfq_done</field>
             <field name="kind">function</field>
             <field name="action">wkf_action_rfq_done()</field>
+        </record>
+
+        <record id="procurement.act_rfq_exception" model="workflow.activity">
+            <field name="wkf_id" ref="procurement.wkf_procurement" />
+            <field name="name">rfq_exception</field>
+            <field name="kind">function</field>
+            <field name="action">no_address_error()</field>
         </record>
         
         <record id="procurement.trans_confirm_mto_tender" model="workflow.transition">
@@ -123,7 +134,20 @@
         <record id="procurement.trans_confirm_mto_rfq" model="workflow.transition">
             <field name="act_from" ref="procurement.act_confirm_mto" />
             <field name="act_to" ref="procurement.act_rfq" />
-            <field name="condition">is_rfq and not is_rfq_done and not is_tender and not is_tender_done</field>
+            <field name="condition">is_rfq and not is_rfq_done and not is_tender and not is_tender_done and supplier.address</field>
+        </record>
+
+        <record id="procurement.trans_rfq_rfq_exception" model="workflow.transition">
+            <field name="act_from" ref="procurement.act_confirm_mto" />
+            <field name="act_to" ref="procurement.act_rfq_exception" />
+            <field name="condition">is_rfq and not is_rfq_done and not is_tender and not is_tender_done and not supplier.address</field>
+        </record>
+
+        <record id="procurement.trans_rfq_exception_confirm_wait" model="workflow.transition">
+            <field name="act_from" ref="procurement.act_rfq_exception" />
+            <field name="act_to" ref="procurement.act_confirm_mto" />
+            <field name="signal">button_restart</field>
+            <field name="condition">procure_method=='make_to_order'</field>
         </record>
 
         <record id="procurement.trans_rfq_rfq_done" model="workflow.transition">

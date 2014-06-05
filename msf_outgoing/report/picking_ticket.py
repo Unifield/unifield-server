@@ -56,7 +56,7 @@ class picking_ticket(report_sxw.rml_parse):
         :param picking: A browse_record of stock.picking
 
         :return A message to be displayed on the report or False
-        :rtype str or boolean 
+        :rtype str or boolean
         """
         kc = ''
         dg = ''

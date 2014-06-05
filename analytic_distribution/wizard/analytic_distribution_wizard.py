@@ -600,7 +600,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         'sale_order_id': fields.many2one('sale.order', string="Sale Order"),
         'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
         'amount': fields.function(_get_amount, method=True, string="Total amount", type="float", readonly=True),
-        'from_direct_inv': fields.many2one('account.bank.statement.line', string="Register Line For Direct Invoice"),
         'posting_date': fields.date('Posting date', readonly=True),
         'document_date': fields.date('Document date', readonly=True),
         'register_line_state': fields.function(_get_register_line_state, method=True, string='Register line state', type='selection', selection=[('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')], readonly=True, store=False),
@@ -612,7 +611,6 @@ class analytic_distribution_wizard(osv.osv_memory):
     _defaults = {
         'state': lambda *a: 'draft',
         'entry_mode': lambda *a: 'percentage',
-        'from_direct_inv': lambda *a: False,
     }
 
     def dummy(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -964,13 +962,26 @@ class analytic_distribution_wizard(osv.osv_memory):
                         raise osv.except_osv(_('Error'), _('Funding Pool %s is not active at this date: %s') % (fpline.analytic_id.code or '', w.document_date))
         return True
 
+    def _check_open_wizard_account_invoice(self, cr, uid, wiz, context):
+        if context.get('from_register') and wiz and wiz.invoice_id and wiz.invoice_id.is_direct_invoice:
+            invoice_id = wiz.invoice_id.id
+        elif context.get('from_register') and wiz and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.is_direct_invoice:
+            invoice_id = wiz.invoice_line_id.invoice_id.id
+        else:
+            invoice_id = False
+
+        if invoice_id:
+            st_obj = self.pool.get('account.bank.statement.line')
+            st_id = st_obj.search(cr, uid, [('invoice_id', '=', invoice_id)], context=context)
+            return st_obj.button_open_invoice(cr, uid, st_id, context=context)
+        return False
+
     def button_confirm(self, cr, uid, ids, context=None):
         """
         Calculate total of lines and verify that it's equal to total_amount
         """
         if not context:
             context = {}
-
         if isinstance(ids, (int, long)):
             ids = [ids]
         o2m_toreload = {}
@@ -1044,6 +1055,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'res_id': direct_invoice_id,
                     'context': context,
                 }
+        wizard_account_invoice = self._check_open_wizard_account_invoice(cr, uid, wiz, context)
+        if wizard_account_invoice:
+            return wizard_account_invoice
         # Validate account_move if we come from a Journal Entry or a Journal Item
         if wiz and (wiz.move_id or wiz.move_line_id):
             move_id = False
@@ -1128,8 +1142,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'res_id': wizard_id,
                     'context': context,
                  }
-        elif wiz.from_direct_inv:
-            return self.pool.get('account.bank.statement.line').button_open_invoice(cr, uid, [wiz.from_direct_inv.id], context)
         return return_wiz
 
     def validate(self, cr, uid, wizard_id, context=None):
@@ -1270,8 +1282,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'res_id': direct_invoice_id,
                     'context': context,
                 }
-        elif wiz.from_direct_inv:
-            return self.pool.get('account.bank.statement.line').button_open_invoice(cr, uid, [wiz.from_direct_inv.id], context)
+        wizard_account_invoice = self._check_open_wizard_account_invoice(cr, uid, wiz, context)
+        if wizard_account_invoice:
+            return wizard_account_invoice
 
         return dict(type='ir.actions.act_window_close', **o2m_toreload)
 

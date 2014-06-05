@@ -3574,8 +3574,8 @@ msgstr "La Commande d'Approvisionnement passe sous statut fermé"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:186
 #, python-format
-msgid "Period for migration is not open!"
-msgstr "La période de la date de migration n'est pas ouverte !"
+msgid "Period for is not open!"
+msgstr "La période n'est pas ouverte !"
 
 #. module: register_accounting
 #: view:account.bank.statement:0
@@ -19253,12 +19253,6 @@ msgstr "Stock"
 msgid "Ghana"
 msgstr "Ghana"
 
-#. module: account_corrections
-#: code:addons/account_corrections/account_move_line.py:549
-#, python-format
-msgid "No account_id given. update_account_on_st_line() could not works."
-msgstr "No account_id given. update_account_on_st_line() could not works."
-
 #. modules: mission_stock, supplier_catalogue, product, reason_types_moves
 #: view:stock.mission.report.line:0
 #: view:product.product:0
@@ -29472,7 +29466,7 @@ msgstr "Mexico"
 #: model:ir.actions.act_window,name:msf_doc_import.action_migration_accounting_import_wizard
 #: model:ir.ui.menu,name:msf_doc_import.menu_finance_migration_accounting
 #: view:msf.doc.import.accounting:0
-msgid "Import Migration Entries"
+msgid "Import Entries"
 msgstr "Import d'entrées de migration"
 
 #. module: sale
@@ -30363,7 +30357,7 @@ msgstr "Ligne %s. Monnaie non trouvée : %s"
 
 #. module: msf_doc_import
 #: view:msf.doc.import.accounting:0
-msgid "This will import Migration Entries from a XML file."
+msgid "This will import Entries from a XML file."
 msgstr "Ceci va importer les entrées de migration depuis un fichier XML."
 
 #. module: financing_contract
@@ -38273,7 +38267,7 @@ msgstr "Inventaire (pertes & profits)"
 #. module: account_corrections
 #: code:addons/account_corrections/wizard/journal_items_corrections.py:332
 #, python-format
-msgid "You're just allowed to change ONE field amoungst Account, Third Party or Analytical Distribution"
+msgid "You're just allowed to change ONE field amongst Account, Third Party or Analytical Distribution"
 msgstr "Vous ne pouvez changer qu'UN champ parmi:  Compte, Tiers, Allocation Analytique"
 
 #. modules: account, account_voucher
@@ -47093,7 +47087,7 @@ msgstr "Le formulaire de la liste de Piquage est créé dès que la commande ter
 
 #. module: stock
 #: view:stock.inventory:0
-msgid "General Informations"
+msgid "General Information"
 msgstr "Informations Générales"
 
 #. module: msf_budget
@@ -60487,8 +60481,8 @@ msgstr "Produits - Type de Prix"
 
 #. module: msf_doc_import
 #: field:msf.doc.import.accounting,date:0
-msgid "Migration date"
-msgstr "Date de migration"
+msgid "Date"
+msgstr "Date"
 
 #. module: financing_contract
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:455

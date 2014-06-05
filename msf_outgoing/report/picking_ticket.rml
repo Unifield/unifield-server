@@ -5,12 +5,12 @@
     <template pageSize="(842.0,595.0)" title="Packing-List" author="Unifield,MSF" allowSplitting="20">
         <pageTemplate id="first">
             <frame id="first" x1="0.0" y1="0.0" width="842" height="520" />
-            
+
             <pageGraphics>
                 <setFont name="Helvetica-Bold" size="13.0"/>
                 <drawString x="20.0" y="555.0">PICKING TICKET ([[ getSel(objects[0], 'state') ]])</drawString>
-                <fill color="blue"/>                                                
-                <drawString x="20.0" y="541.0">[[ objects[0].name ]]</drawString>                                                
+                <fill color="blue"/>
+                <drawString x="20.0" y="541.0">[[ objects[0].name ]]</drawString>
                 <image x="725.0" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
                 <setFont name="Helvetica" size="8" />
                 <fill color="black" />
@@ -22,12 +22,12 @@
 
         <pageTemplate id="second">
             <frame id="second" x1="0.0" y1="0.0" width="842" height="520" />
-            
+
             <pageGraphics>
                 <setFont name="Helvetica-Bold" size="13.0"/>
                 <drawString x="20.0" y="555.0">PICKING TICKET ([[ getSel(objects[0], 'state') ]])</drawString>
-                <fill color="blue"/>                                                
-                <drawString x="20.0" y="541.0">[[ objects[0].name ]]</drawString>                                                
+                <fill color="blue"/>
+                <drawString x="20.0" y="541.0">[[ objects[0].name ]]</drawString>
                 <image x="725.0" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
                 <setFont name="Helvetica" size="8" />
                 <fill color="black" />
@@ -47,13 +47,13 @@
             <lineStyle kind="OUTLINE" colorName="black" start="4,0" stop="5,0" />
             <lineStyle kind="OUTLINE" colorName="black" start="7,0" stop="7,0" />
         </blockTableStyle>
-        
+
         <blockTableStyle id="WarningTable">
             <blockAlignment value="CENTRE" />
             <blockValign value="MIDDLE" />
             <lineStyle kind="OUTLINE" colorName="black" />
         </blockTableStyle>
-        
+
         <blockTableStyle id="LinesHeader">
             <blockAlignment value="LEFT" />
             <blockValign value="MIDDLE" />
@@ -70,7 +70,7 @@
             <blockSpan start="10,0" stop="10,-1" />
             <blockSpan start="11,0" stop="11,-1" />
         </blockTableStyle>
-        
+
         <blockTableStyle id="LinesValues">
             <blockAlignment value="LEFT" />
             <blockValign value="MIDDLE" />
@@ -93,16 +93,16 @@
 
         <paraStyle name="HeaderInfosTitle" fontName="Helvetica" fontSize="8.0" />
         <paraStyle name="HeaderInfosValue" fontName="Helvetica" fontSize="8.0" textColor="blue" />
-        
+
         <paraStyle name="WarningMessage" fontName="Helvetica-Bold" fontSize="10.0" alignment="CENTER" />
-        
+
         <paraStyle name="LineHeaderItem" fontName="Helvetica" fontSize="7.0" leading="6.0" />
         <paraStyle name="LineHeader" fontName="Helvetica-Oblique" fontSize="6.0" alignment="CENTER" leading="5.0" />
         <paraStyle name="LineHeaderLeft" fontName="Helvetica-Oblique" fontSize="6.0" alignment="LEFT" leading="5.0" />
-        
+
         <paraStyle name="LineValue" fontName="Helvetica" fontSize="6.0" alignment="CENTER" leading="5.0" textColor="blue" />
         <paraStyle name="LineValueLeft" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="5.0" textColor="blue" />
-        
+
 
     </stylesheet>
 
@@ -163,12 +163,12 @@
                 </td>
             </tr>
         </blockTable>
-        
+
         <!-- Empty block -->
         <para style="HeaderInfosTitle">
             <font color="white"> </font>
         </para>
-        
+
         <!-- Warning message -->
         <blockTable colWidths="810.0" style="WarningTable">
             <tr>
@@ -177,14 +177,14 @@
                 </td>
             </tr>
         </blockTable>
-        
+
         <!-- Empty block -->
         <para style="HeaderInfosTitle">
             <font color="white"> </font>
         </para>
 
-    	<setNextTemplate name="second" />
-        
+        <setNextTemplate name="second" />
+
         <!-- Lines -->
         <blockTable colWidths="810.0" style="LinesHeader">
             <tr>
@@ -271,8 +271,8 @@
                 </td>
             </tr>
         </blockTable>
-        
-	    <pto>
+
+        <pto>
             <pto_header>
                 <blockTable colWidths="30.0,120.0,240.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" style="LinesHeader">
                     <tr>
@@ -353,7 +353,7 @@
                     </tr>
                 </blockTable>
             </pto_header>
-        
+
             <!-- Lines -->
             <blockTable colWidths="30.0,120.0,240.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" rowHeights="15.0" style="LinesValues">
                 [[ repeatIn(pt.move_lines, 'm', 'blockTable') ]]
@@ -438,7 +438,7 @@
             <para style="LineValue">
                 <font color="white"> </font>
             </para>
-        
+
         </pto>
 
     </story>

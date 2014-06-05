@@ -29,6 +29,7 @@ import pooler
 import zipfile
 from tempfile import NamedTemporaryFile
 import os
+from hashlib import md5
 
 class finance_archive():
     """
@@ -93,6 +94,35 @@ class finance_archive():
         pool = pooler.get_pool(cr.dbname)
         data = pool.get(model).fields_get(cr, 1, [field])
         return dict(data[field]['selection'])
+
+    def get_hash(self, cr, uid, ids, model):
+        """
+        Create a concatenation of:
+          - dbname
+          - ids
+          - model
+        Then create a md5
+        """
+        # Prepare some values
+        md5sum = md5()
+        is_list = False
+        if not ids or not model:
+            return ''
+        if not isinstance(ids, (str, unicode, list)):
+            return ''
+        if isinstance(ids, list):
+            is_list = True
+            res_ids = ids
+        # preapre some values
+        name = cr.dbname
+        if not is_list:
+            ids = sorted(ids.split(','))
+            # We have this: [u'2', u'4', u'6', u'8']
+            # And we want this: [2, 4, 6, 8]
+            # So we do some process on this list
+            res_ids = [int(x) for x in ids]
+        md5sum.update(','.join([name, model, str(res_ids)]))
+        return md5sum.hexdigest()
 
     def postprocess_selection_columns(self, cr, uid, data, changes, column_deletion=False):
         """

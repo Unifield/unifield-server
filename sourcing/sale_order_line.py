@@ -356,6 +356,44 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return [('state', '=', 'draft'), ('sale_order_state', '=', 'validated')]
 
+    def _search_in_progress(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns all field order lines that are sourcing in progress according to
+        the domain given in args.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that runs the method
+        :param obj: Object on which the search is
+        :param field_name: Name of the field on which the search is
+        :param args: The domain
+        :param context: Context of the call
+
+        :return A list of tuples that allows the system to return the list
+                 of matching field order lines
+        :rtype list
+        """
+        if context is None:
+            context = {}
+
+        if not args:
+            return []
+
+        # Put procurement_request = True in context to get FO and IR
+        context['procurement_request'] = True
+
+        if args[0][1] != '=' or not args[0][2]:
+            raise osv.except_osv(_('Error !'), _('Filter not implemented'))
+
+        return [
+            ('display_confirm_button', '=', False),
+            ('state', '!=', 'draft'),
+            ('sale_order_in_progress', '=', False),
+            '|', '&',
+            ('type', '=', 'make_to_order'),
+            ('procurement_id.state', '=', 'confirmed'),
+            ('sale_order_state', '=', 'validated'),
+        ]
+
     _columns = {
         'customer': fields.related(
             'order_id',
@@ -449,6 +487,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             type='boolean',
             string='Only for filtering',
             fnct_search=_search_need_sourcing,
+        ),
+        'in_progress': fields.function(
+            _get_fake,
+            method=True,
+            type='boolean',
+            string='Only for filtering',
+            fnct_search=_search_in_progress,
         ),
         # UTP-392: if the FO is loan type, then the procurement method is only Make to Stock allowed
         'loan_type': fields.function(
@@ -650,7 +695,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         o_type = line.order_id and line.order_id.order_type == 'loan' or False
 
         if l_type and o_state and ctx_cond and o_type:
-            return _('You can\'t source a loan \'from stock\'.')
+            return _('You can\'t source a loan \'on order\'.')
 
         return False
 
@@ -872,7 +917,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             vals['location_id'] = False
 
         # UFTP-139: if make_to_stock and no location, put Stock as location
-        if 'type' in vals and  vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
+        if ids and 'type' in vals and  vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
             # Define Stock as location_id for each line without location_id
             for line in self.read(cr, uid, ids, ['location_id'], context=context):
                 line_vals = vals.copy()
@@ -1360,6 +1405,14 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             return result
 
         partner = partner_obj.browse(cr, uid, supplier, context)
+
+        # Check if the partner has addresses
+        if not partner.address:
+            result['warning'] = {
+                'title': _('Warning'),
+                'message': _('The chosen partner has no address. Please define an address before continuing.'),
+            }
+
         # If the selected partner belongs to product->suppliers, we take that delay (from supplierinfo)
         line = self.browse(cr, uid, line_id, context=context)
         delay = self.check_supplierinfo(line, partner, context=context)

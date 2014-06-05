@@ -421,6 +421,7 @@ class tender(osv.osv):
                                             'is_tender': True,
                                             'tender_id': tender.id,
                                             'tender_line_id': line.id,
+                                            'tender_done': True,
                                             'price_unit': line.price_unit,
                                             'date_planned': rts,
                                             'origin': tender.sale_order_id.name,
@@ -1062,6 +1063,19 @@ class procurement_order(osv.osv):
         'is_rfq_done': False,
     }
 
+    def no_address_error(self, cr, uid, ids, context=None):
+        '''
+        Put the procurement order in exception state with the good error message
+        '''
+        for proc in self.browse(cr, uid, ids, context=context):
+            if proc.supplier and not proc.supplier.address:
+                self.write(cr, uid, [proc.id], {
+                    'state': 'exception',
+                    'message': _('The supplier "%s" has no address defined!')%(proc.supplier.name,),
+                }, context=context)
+
+        return True
+
     def wkf_action_rfq_create(self, cr, uid, ids, context=None):
         '''
         creation of rfq from procurement workflow
@@ -1096,7 +1110,10 @@ class procurement_order(osv.osv):
                 pricelist_id = supplier.property_product_pricelist_purchase.id
                 address_id = partner_obj.address_get(cr, uid, [supplier.id], ['default'])['default']
                 if not address_id:
-                    raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!')%(supplier.name,))
+                    self.write(cr, uid, [proc.id], {
+                        'message': _('The supplier "%s" has no address defined!')%(supplier.name,),
+                    }, context=context)
+                    continue
 
                 context['rfq_ok'] = True
                 rfq_id = rfq_obj.create(cr, uid, {'sale_order_id': sale_order.id,
@@ -1370,7 +1387,18 @@ class purchase_order(osv.osv):
         This hook belongs to the rfq_sent method from tender_flow>tender_flow.py
         - check lines after import
         '''
-        res = True
+        pol_obj = self.pool.get('purchase.order.line')                          
+        
+        res = True                                                              
+        empty_lines = pol_obj.search(cr, uid, [                                 
+            ('order_id', 'in', ids),                                            
+            ('product_qty', '<=', 0.00),                                        
+        ], context=context)                                                     
+        if empty_lines:                                                         
+            raise osv.except_osv(                                               
+                _('Error'),                                                     
+                _('All lines of the RfQ should have a quantity before sending the RfQ to the supplier'),
+                    ) 
         return res
 
         
@@ -1569,7 +1597,7 @@ class sale_order_line(osv.osv):
     
     _columns = {'tender_line_ids': fields.one2many('tender.line', 'sale_order_line_id', string="Tender Lines", readonly=True),}
 
-    def copy(self, cr, uid, ids, default, context=None):
+    def copy_data(self, cr, uid, ids, default=None, context=None):
         '''
         Remove tender lines linked
         '''
@@ -1578,7 +1606,7 @@ class sale_order_line(osv.osv):
         if not 'tender_line_ids' in default:
             default['tender_line_ids'] = []
 
-        return super(sale_order_line, self).copy(cr, uid, ids, default, context=context)
+        return super(sale_order_line, self).copy_data(cr, uid, ids, default, context=context)
     
 sale_order_line()
 

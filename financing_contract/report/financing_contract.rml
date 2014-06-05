@@ -290,10 +290,10 @@
           <para style="P16" alignment="LEFT">Line Type</para>
         </td>
         <td>
-          <para style="P16" alignment="RIGHT">Funded - Budget</para>
+            <para style="P16" alignment="RIGHT">[[ (o.reporting_type=='all') and 'Funded' or '' ]]</para>
         </td>
         <td>
-          <para style="P17" alignment="RIGHT">Total project - Budget</para>
+            <para style="P17" alignment="RIGHT">[[ (o.reporting_type=='all' or o.reporting_type=='project') and 'Total Project' or '' ]][[ (o.reporting_type=='allocated') and 'Funded' or '' ]]</para> 
         </td>
       </tr>
     </blockTable>
@@ -314,13 +314,13 @@
             <para style="P15" alignment="LEFT">[[ (line['line_type'] == 'View' and line['line_type']) or removeParentNode('para') ]]</para>
           </td>
           <td>
-          	<para style="P12" alignment="RIGHT">[[ (line['line_type'] != 'View' and formatLang(line['allocated_budget'], digits=0, grouping=True)) or removeParentNode('para') ]]</para>
-            <para style="P15" alignment="RIGHT">[[ (line['line_type'] == 'View' and formatLang(line['allocated_budget'], digits=0, grouping=True)) or removeParentNode('para') ]]</para>
+          	<para style="P12" alignment="RIGHT">[[ o.reporting_type=='all' and line['line_type'] != 'View' and formatLang(line['allocated_budget'], digits=0, grouping=True) or '' ]]</para>
+            <para style="P15" alignment="RIGHT">[[ o.reporting_type=='all' and line['line_type'] == 'View' and formatLang(line['allocated_budget'], digits=0, grouping=True) or '' ]]</para>
 
           </td>
           <td>
-          	<para style="P12" alignment="RIGHT">[[ (line['line_type'] != 'View' and formatLang(line['project_budget'], digits=0, grouping=True)) or removeParentNode('para') ]]</para>
-            <para style="P15" alignment="RIGHT">[[ (line['line_type'] == 'View' and formatLang(line['project_budget'], digits=0, grouping=True)) or removeParentNode('para') ]]</para>
+          	<para style="P12" alignment="RIGHT">[[ (o.reporting_type=='all' or o.reporting_type=='project') and line['line_type'] != 'View' and formatLang(line['project_budget'], digits=0, grouping=True) or '' ]] [[ o.reporting_type=='allocated' and line['line_type'] != 'View' and formatLang(line['allocated_budget'], digits=0, grouping=True) or '' ]]   </para>
+            <para style="P15" alignment="RIGHT">[[ (o.reporting_type=='all' or o.reporting_type=='project') and line['line_type'] == 'View' and formatLang(line['project_budget'], digits=0, grouping=True) or '' ]] [[ o.reporting_type=='allocated' and line['line_type'] == 'View' and formatLang(line['allocated_budget'], digits=0, grouping=True) or '' ]] </para>
             
           </td>
         </tr>
@@ -349,10 +349,10 @@
              
           </td>
 	      <td>
-	        <para style="P15" alignment="RIGHT">[[ formatLang( get_totals(o.actual_line_ids)[0], digits=0, grouping=True) ]] </para>
+	        <para style="P15" alignment="RIGHT">[[ o.reporting_type=='all' and formatLang( get_totals(o.actual_line_ids)[0], digits=0, grouping=True) or '']] </para>
 	      </td>
 	      <td>
-	        <para style="P15" alignment="RIGHT">[[ formatLang( get_totals(o.actual_line_ids)[1], digits=0, grouping=True) ]]</para>
+	        <para style="P15" alignment="RIGHT">[[ (o.reporting_type=='all' or o.reporting_type=='project') and formatLang( get_totals(o.actual_line_ids)[1], digits=0, grouping=True) or '']][[ o.reporting_type=='allocated' and formatLang( get_totals(o.actual_line_ids)[0], digits=0, grouping=True) or '']]  </para>
 
 
 
