@@ -1734,6 +1734,15 @@ stock moves which are already processed : '''
         if not warehouse_id:
             warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)[0]
 
+        if isinstance(warehouse_id, str):
+            try:
+                warehouse_id = int(warehouse_id)
+            except ValueError:
+                raise osv.except_osv(
+                        _('Error'),
+                        _('The field \'warehouse_id\' is a float field but value is a string - Please contact your administrator'),
+                )
+
         if not vals.get('cross_docking_ok', False):
             vals.update({'location_id': self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_input_id.id})
         elif vals.get('cross_docking_ok', False):
