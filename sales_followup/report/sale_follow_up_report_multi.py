@@ -139,7 +139,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         self._order_iterator += 1
 
         if self.back_browse:
-            percent = self._order_iterator / self._nb_orders
+            percent = float(self._order_iterator) / float(self._nb_orders)
             self.pool.get('memory.background.report').update_percent(self.cr, self.uid, [self.back_browse.id], percent)
 
         return res

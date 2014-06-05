@@ -28,7 +28,7 @@ import time
 
 class sale_followup_multi_wizard(osv.osv):
     _name = 'sale.followup.multi.wizard'
-    _rec_name = 'date'
+    _rec_name = 'report_date'
 
     _columns = {
         'report_date': fields.datetime(
