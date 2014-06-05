@@ -2608,7 +2608,7 @@ class stock_picking(osv.osv):
                 # Add an empty write to display the 'Process' button on OUT
                 self.write(cr, uid, [new_pick_id or obj.id], {'state': 'assigned'}, context=context)
 
-            self._hook_create_rw_out_sync_messages(cr, uid, [new_pick_id or obj.id], context)
+            self._hook_create_rw_out_sync_messages(cr, uid, [new_pick_id or obj.id], context, True)
 
             # TODO which behavior
             data_obj = self.pool.get('ir.model.data')
@@ -2627,10 +2627,10 @@ class stock_picking(osv.osv):
                     }
 
 
-    def _hook_create_rw_out_sync_messages(self, cr, uid, ids, context=None):
+    def _hook_create_rw_out_sync_messages(self, cr, uid, ids, context=None, out=True):
         return True
 
-    def _hook_delete_rw_out_sync_messages(self, cr, uid, ids, context=None):
+    def _hook_delete_rw_out_sync_messages(self, cr, uid, ids, context=None, out=True):
         return True
 
     def convert_to_pick(self, cr, uid, ids, context=None):
@@ -2679,7 +2679,8 @@ class stock_picking(osv.osv):
         pack_loc_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
         move_obj.write(cr, uid, move_to_update, {'location_dest_id': pack_loc_id}, context=context)
 
-        self._hook_delete_rw_out_sync_messages(cr, uid, [out.id], context)
+        # Create a sync message for RW when converting the OUT back to PICk
+        self._hook_create_rw_out_sync_messages(cr, uid, [out.id], context, False)
 
         context.update({'picking_type': 'picking'})
         return {'name': _('Picking Tickets'),
