@@ -553,7 +553,7 @@ class account_bank_statement(osv.osv):
         context.update({
             'journal_type': st_type,
             'search_default_open': 1,
-            'search_default_instance_id': instance_id,
+            #'search_default_instance_id': instance_id,
             'active_id': False, # this is to avoid some "No field_values" problem
             'active_ids': False, # idem that active_id
         })
