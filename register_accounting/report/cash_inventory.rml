@@ -286,10 +286,10 @@
             <blockTable style="Table12">
               <tr>
                 <td>
-                  <para style="P3">[[ line.pieces ]]</para>
+                  <para style="P18">[[ line.pieces ]]</para>
                 </td>
                 <td>
-                  <para style="P3">[[ line.number and line.number or '0' ]]</para>
+                  <para style="P18">[[ line.number and line.number or '0' ]]</para>
                 </td>
                 <td>
                   <para style="P18">[[ line.subtotal and line.subtotal or '0.00' ]]</para>
@@ -304,10 +304,10 @@
             <blockTable style="Table12">
               <tr>
                 <td>
-                  <para style="P3">[[ line.pieces ]]</para>
+                  <para style="P18">[[ line.pieces ]]</para>
                 </td>
                 <td>
-                  <para style="P3">[[ line.number and line.number or '0' ]]</para>
+                  <para style="P18">[[ line.number and line.number or '0' ]]</para>
                 </td>
                 <td>
                   <para style="P18">[[ line.subtotal and line.subtotal or '0.00' ]]</para>
