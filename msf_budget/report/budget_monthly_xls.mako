@@ -128,6 +128,19 @@
   <Table x:FullColumns="1" x:FullRows="1">
     <Column ss:Width="80.75"/>
     <Column ss:AutoFitWidth="0" ss:Width="273"/>
+    <Column ss:AutoFitWidth="0" ss:Width="60.0"/>
+    <Column ss:AutoFitWidth="0" ss:Width="60.0"/>
+    <Column ss:AutoFitWidth="0" ss:Width="60.0"/>
+    <Column ss:AutoFitWidth="0" ss:Width="60.0"/>
+    <Column ss:AutoFitWidth="0" ss:Width="60.0"/>
+    <Column ss:AutoFitWidth="0" ss:Width="60.0"/>
+    <Column ss:AutoFitWidth="0" ss:Width="60.0"/>
+    <Column ss:AutoFitWidth="0" ss:Width="60.0"/>
+    <Column ss:AutoFitWidth="0" ss:Width="60.0"/>
+    <Column ss:AutoFitWidth="0" ss:Width="60.0"/>
+    <Column ss:AutoFitWidth="0" ss:Width="60.0"/>
+    <Column ss:AutoFitWidth="0" ss:Width="60.0"/>
+    <Column ss:AutoFitWidth="0" ss:Width="60.0"/>
 
     <Row>
       <Cell ss:StyleID="s22">
@@ -225,7 +238,23 @@
     <Layout x:Orientation="Landscape"/>
     <Footer x:Data="Page &amp;P of &amp;N"/>
    </PageSetup>
-</WorksheetOptions>
+   <Print>
+     <FitHeight>0</FitHeight>
+     <ValidPrinterInfo/>
+     <PaperSizeIndex>9</PaperSizeIndex>
+     <HorizontalResolution>600</HorizontalResolution>
+     <VerticalResolution>600</VerticalResolution>
+   </Print>
+   <Selected/>
+   <Panes>
+     <Pane>
+       <Number>3</Number>
+       <ActiveRow>17</ActiveRow>
+     </Pane>
+   </Panes>
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+ </WorksheetOptions>
 </ss:Worksheet>
 % endfor
 </Workbook>
