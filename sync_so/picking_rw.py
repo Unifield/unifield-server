@@ -167,7 +167,15 @@ class stock_picking(osv.osv):
                   'location_dest_id': location_dest_id,
                   'location_id': location_id,
                   'reason_type_id': reason_type_id,
-
+                  
+                  'from_pack': data['from_pack'] or 0,
+                  'to_pack': data['to_pack'] or 0,
+                  'height': data['height'] or 0,
+                  'weight': data['weight'] or 0,
+                  'length': data['length'] or 0,
+                  'width': data['width'] or 0,
+                  'pack_type': data['pack_type'] or None,
+                  
                   'asset_id': asset_id,
                   'change_reason': data['change_reason'] or None,
                   'name': data['name'],
@@ -351,7 +359,7 @@ class stock_picking(osv.osv):
                 self.update_original_pick(cr, uid, pick_ids[0], picking_lines, context)
                 
         elif rw_type == 'remote_warehouse': 
-            message = "Sorry, no update should be done for the RW"
+            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
                 
         self._logger.info(message)
         return message
@@ -402,7 +410,7 @@ class stock_picking(osv.osv):
                 self.update_original_pick(cr, uid, pick_ids[0], picking_lines, context)
                 
         elif rw_type == 'remote_warehouse': 
-            message = "Sorry, no update should be done for the RW"
+            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
                 
         self._logger.info(message)
         return message
@@ -454,7 +462,7 @@ class stock_picking(osv.osv):
                 raise Exception, message
                 
         elif rw_type == 'remote_warehouse': 
-            message = "Sorry, no update should be done for the RW"
+            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
                 
         self._logger.info(message)
         return message
@@ -540,7 +548,7 @@ class stock_picking(osv.osv):
                 raise Exception, message
                 
         elif rw_type == 'remote_warehouse': 
-            message = "Sorry, no update should be done for the RW"
+            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
                 
         self._logger.info(message)
         return message
@@ -619,7 +627,7 @@ class stock_picking(osv.osv):
                 raise Exception, message
                 
         elif rw_type == 'remote_warehouse': 
-            message = "Sorry, no update should be done for the RW"
+            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
                 
         self._logger.info(message)
         return message
@@ -653,6 +661,178 @@ class stock_picking(osv.osv):
                     break
 
         self.do_validate_picking(cr, uid, [proc_id], context=context)
+        return True
+
+
+    def sync_create_packing(self, cr, uid, source, out_info, context=None):
+        pick_dict = out_info.to_dict()
+        pick_name = pick_dict['name']
+            
+        self._logger.info("+++ RW: Replicate the Packing list: %s from %s to %s" % (pick_name, source, cr.dbname))
+        if context is None:
+            context = {}
+
+        so_po_common = self.pool.get('so.po.common')
+        move_obj = self.pool.get('stock.move')
+        pick_tools = self.pool.get('picking.tools')
+
+        message = "Unknown error, please check the log file."
+        header_result = {}
+        self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
+        
+        # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
+        origin = pick_dict['origin']
+        shipment_name = pick_dict['shipment_id'] and pick_dict['shipment_id']['name'] or None
+        
+        rw_type = self._usb_entity_type(cr, uid)
+        if rw_type == 'central_platform' and origin:
+            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'ppl'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
+            if pick_ids:
+                state = pick_dict['state']
+                if state in ('done','draft','assigned'):   
+                    picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+                    header_result['move_lines'] = picking_lines
+                    context['shipment_name'] = shipment_name
+                    self.rw_create_ppl_all_steps(cr, uid, pick_ids[0], picking_lines, context)
+                    
+                    old_pick = self.browse(cr, uid, pick_ids[0], context)
+                    if old_pick.backorder_id:
+                        self.write(cr, uid, old_pick.backorder_id.id, {'already_replicated': True}, context=context) #'name': pick_name,
+                    message = "The PICK: " + old_pick.name + " has been validated and generated a PPL: " + pick_name
+                    self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
+    
+            else:
+                message = "The OUT " + pick_name + " not found in " + cr.dbname
+                self._logger.info(message)
+                raise Exception, message
+                
+        elif rw_type == 'remote_warehouse': 
+            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
+                
+        self._logger.info(message)
+        return message
+
+    def rw_create_ppl_all_steps(self, cr, uid, pick_id, picking_lines, context=None):
+        '''
+        Create the Pack family for the packing list
+        '''
+        
+        # Objects
+        picking_obj = self.pool.get('stock.picking')
+        sequence_obj = self.pool.get('ir.sequence')
+
+        wizard_obj = self.pool.get('ppl.processor')
+        wizard_line_obj = self.pool.get('ppl.move.processor')
+        proc_id = wizard_obj.create(cr, uid, {'picking_id': pick_id}, context=context)
+        wizard_obj.create_lines(cr, uid, proc_id, context=context)        
+
+        for sline in picking_lines:
+            sline = sline[2]
+            line_number = sline['line_number']
+            
+            #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
+            #### WORK IN PROGRESS
+            
+            wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
+            for mline in wizard.move_ids:
+                if mline.line_number == line_number:
+                    # match the line, copy the content of picking line into the wizard line
+                    vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
+                            'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
+                            'from_pack': sline['from_pack'], 'to_pack': sline['to_pack'],'pack_type': sline['pack_type'],
+                            'height': sline['height'], 'weight': sline['weight'],'length': sline['length'], 'width': sline['width'],
+                            }
+                    
+                    wizard_line_obj.write(cr, uid, mline.id, vals, context)
+                    break
+
+        self.do_ppl_step1(cr, uid, [proc_id], context=context)
+        self.do_ppl_step2(cr, uid, [proc_id], context=context)
+        return True
+
+    def sync_create_shipment(self, cr, uid, source, out_info, context=None):
+        pick_dict = out_info.to_dict()
+        
+        if not pick_dict['shipment_id']:
+            message = "Sorry the Shipment is invalid in the sync message! The message cannot be processed"
+            self._logger.info(message)
+            raise Exception, message
+        
+        shipment_name = pick_dict['shipment_id']['name']
+            
+        self._logger.info("+++ RW: Create Shipment: %s from %s to %s" % (shipment_name, source, cr.dbname))
+        if context is None:
+            context = {}
+
+        so_po_common = self.pool.get('so.po.common')
+        move_obj = self.pool.get('stock.move')
+        pick_tools = self.pool.get('picking.tools')
+
+        message = "Unknown error, please check the log file."
+        header_result = {}
+        self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
+        
+        # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
+        origin = pick_dict['origin']
+        rw_type = self._usb_entity_type(cr, uid)
+        if rw_type == 'central_platform' and origin:
+            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'packing'),('shipment_id', '!=', False), ('state', 'in', ['draft', 'assigned'])], context=context)
+            if pick_ids:
+                state = pick_dict['state']
+                if state in ('done','draft','assigned'):   
+                    header_result['move_lines'] = picking_lines
+                    context['shipment_name'] = shipment_name
+                    num_of_packs = pick_dict['shipment_id']['num_of_packs']
+                    self.rw_do_create_shipment(cr, uid, pick_ids[0], num_of_packs, context)
+                    
+                    old_pick = self.browse(cr, uid, pick_ids[0], context)
+                    if old_pick.backorder_id:
+                        self.write(cr, uid, old_pick.backorder_id.id, {'already_replicated': True}, context=context) #'name': shipment_name,
+                    message = "The PICK: " + old_pick.name + " has been validated and generated a PPL: " + shipment_name
+                    self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
+    
+            else:
+                message = "No valid Packing List found for the Shipment " + shipment_name + " in " + cr.dbname
+                self._logger.info(message)
+                raise Exception, message
+                
+        elif rw_type == 'remote_warehouse': 
+            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
+                
+        self._logger.info(message)
+        return message
+
+    def rw_do_create_shipment(self, cr, uid, pick_id, num_of_packs, context=None):
+        '''
+        Create the shipment from an existing draft shipment, then perform the ship
+        '''
+        
+        # from the picking Id, search for the shipment
+        
+        pick = self.browse(cr, uid, pick_id, context=context)
+        
+        # Objects
+        ship_proc_obj = self.pool.get('shipment.processor')
+        ship_proc_vals = {
+            'shipment_id': pick.shipment_id.id,
+            'address_id': pick.shipment_id.address_id.id,
+        }        
+
+        wizard_line_obj = self.pool.get('shipment.family.processor')
+        proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
+        ship_proc_obj.create_lines(cr, uid, proc_id, context=context)        
+
+        #### CHECK THE CASE WHERE ONE SHIPMENT WIZARD HAS MORE THAN ONE FAMILIES
+        #### WORK IN PROGRESS
+        
+        wizard = ship_proc_obj.browse(cr, uid, proc_id, context=context)
+        for family in wizard.family_ids:
+            # match the line, copy the content of picking line into the wizard line
+            vals = {'selected_number': num_of_packs}
+            wizard_line_obj.write(cr, uid, family.id, vals, context)
+            break
+
+        self.pool.get('shipment').do_create_shipment(cr, uid, [proc_id], context=context)
         return True
 
 stock_picking()
