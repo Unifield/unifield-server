@@ -326,7 +326,6 @@ class account_invoice(osv.osv):
                     else:
                         for purchase in purchase_obj.browse(cr, uid, inv.get('purchase_ids', []), context=context):
                             commitment_obj.action_commitment_done(cr, uid, [x.id for x in purchase.commitment_ids])
-                        # TODO: set PO as "%" invoiced
         return True
 
     def _hook_period_id(self, cr, uid, inv, context=None):
