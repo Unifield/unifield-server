@@ -2608,7 +2608,9 @@ class stock_picking(osv.osv):
                 # Add an empty write to display the 'Process' button on OUT
                 self.write(cr, uid, [new_pick_id or obj.id], {'state': 'assigned'}, context=context)
 
-            self._hook_create_rw_out_sync_messages(cr, uid, [new_pick_id or obj.id], context, True)
+            # Create a sync message for RW when converting the OUT back to PICK, except the caller of this method is sync
+            if not context.get('sync_message_execution', False):
+                self._hook_create_rw_out_sync_messages(cr, uid, [new_pick_id or obj.id], context, True)
 
             # TODO which behavior
             data_obj = self.pool.get('ir.model.data')
@@ -2679,8 +2681,9 @@ class stock_picking(osv.osv):
         pack_loc_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
         move_obj.write(cr, uid, move_to_update, {'location_dest_id': pack_loc_id}, context=context)
 
-        # Create a sync message for RW when converting the OUT back to PICk
-        self._hook_create_rw_out_sync_messages(cr, uid, [out.id], context, False)
+        # Create a sync message for RW when converting the OUT back to PICK, except the caller of this method is sync
+        if not context.get('sync_message_execution', False):
+            self._hook_create_rw_out_sync_messages(cr, uid, [out.id], context, False)
 
         context.update({'picking_type': 'picking'})
         return {'name': _('Picking Tickets'),
@@ -3281,7 +3284,6 @@ class stock_picking(osv.osv):
                     del family_data['move_ids']
 
                 fam_id = family_obj.create(cr, uid, family_data)
-
                 if move_ids:
                     proc_line_obj.write(cr, uid, move_ids, {'pack_id': fam_id}, context=context)
 
@@ -3453,6 +3455,10 @@ class stock_picking(osv.osv):
             wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
 
         shipment_id = new_packing_id and self.read(cr, uid, new_packing_id, ['shipment_id'])['shipment_id'][0] or False
+        if context.get('shipment_name', False) and context.get('sync_message_execution', False): # RW Sync - update the shipment name same as on RW instance
+            new_name = context.get('shipment_name')
+            del context['shipment_name']
+            self.pool.get('shipment').write(cr, uid, shipment_id, {'name': new_name}, context=context)
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         view_id = view_id and view_id[1] or False
