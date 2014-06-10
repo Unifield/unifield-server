@@ -388,7 +388,8 @@ class analytic_account(osv.osv):
         default['tuple_destination_summary'] = []
         # code is deleted in copy method in addons
         new_id = super(analytic_account, self).copy(cr, uid, a_id, default, context=context)
-        self.write(cr, uid, new_id, {'code': '%s(copy)' % (account['code'] or '')})
+        # UFTP-83: Add name + context (very important) in order the translation to not display wrong element. This is because context is missing (wrong language)
+        self.write(cr, uid, new_id, {'name': '%s(copy)' % (account['name'] or ''),'code': '%s(copy)' % (account['code'] or '')}, context=context)
         return new_id
 
     def create(self, cr, uid, vals, context=None):
