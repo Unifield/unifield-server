@@ -48,6 +48,11 @@
                     </xpath>
                     <xpath expr="//label[@string='(keep empty to use the current period)']" position="replace">
                     </xpath>
+                    <button name='invoice_cancel' position="replace">
+                        <!-- The widget boolean permit to the attrs to work efficiently -->
+                        <field name="purchase_ids" invisible="1" widget="boolean"/>
+                        <button name="invoice_cancel" string="Cancel" icon="gtk-cancel" attrs="{'invisible': ['|', ('state', 'in', ['open', 'paid']), ('purchase_ids', '!=', False)]}" confirm="You are about to cancel this invoice. Do you want to proceed?"/>
+                    </button>
                     <button name='invoice_open' position="after">
                         <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
                     </button>
