@@ -310,6 +310,10 @@
                     <button name='invoice_open' position="replace">
                         <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
                     </button>
+
+                    <xpath expr="/form//button[@name='button_reset_taxes']" position="attributes">
+                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
+                    </xpath>
                 </data>
             </field>
         </record>
@@ -357,6 +361,10 @@
                     </xpath>
 
                     <xpath expr="/form//field[@name='amount_tax']" position="attributes">
+                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
+                    </xpath>
+
+                    <xpath expr="/form//button[@name='button_reset_taxes']" position="attributes">
                         <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
                     </xpath>
                 </data>
