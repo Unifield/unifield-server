@@ -1770,7 +1770,7 @@ class account_bank_statement_line(osv.osv):
             distrib_id = values.get('analytic_distribution_id')
         if not distrib_id:
             values = self._update_employee_analytic_distribution(cr, uid, values=values)
-        if 'cheque_number' in values:
+        if 'cheque_number' in values and values['cheque_number'] is not None:
             cr.execute('''select id from account_bank_statement_line where cheque_number = %s ''', (values['cheque_number'], ))
             for row in cr.dictfetchall():
                 raise osv.except_osv(_('Info'),_('This cheque number has already been used'))
@@ -2339,7 +2339,7 @@ class account_bank_statement_line(osv.osv):
 
             default_vals = ({
                 'name': '(copy) ' + line.name,
-                'cheque_number': '',
+                'cheque_number': None,
             })
             self.copy(cr, uid, line.id, default_vals, context=context)
         return True
