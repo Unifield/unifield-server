@@ -444,6 +444,8 @@ class shipment(osv.osv):
                 })
 
                 new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
+                if not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+                    picking_obj.write(cr, uid, new_packing_id, {'for_shipment_replicate': True}, context=context)
 
                 # Reset context
                 context.update({
@@ -2819,7 +2821,9 @@ class stock_picking(osv.osv):
                 if rw_name:
                     self.write(cr, uid, [new_picking_id], {'name': rw_name}, context=context)
                     del context['rw_backorder_name']
-                
+                else:
+                    self.write(cr, uid, [new_picking_id], {'already_replicated': False}, context=context)
+                    
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, new_picking_id, context=context)
                 # We confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
@@ -2919,8 +2923,8 @@ class stock_picking(osv.osv):
                 'allow_copy': True,
             })
             new_picking_id = self.copy(cr, uid, picking.id, copy_data, context=context)
-            if context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
-                self.write(cr, uid, new_picking_id, {'already_replicated':True}, context=context)
+            if not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+                self.write(cr, uid, new_picking_id, {'already_replicated': False}, context=context)
             
             context['allow_copy'] = tmp_allow_copy
 
@@ -3073,8 +3077,9 @@ class stock_picking(osv.osv):
             })
             
             new_ppl_id = self.copy(cr, uid, picking.id, cp_vals, context=context)
-            if context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
-                self.write(cr, uid, new_ppl_id, {'already_replicated':True}, context=context)
+            if not context.get('sync_message_execution', False): 
+                self.write(cr, uid, new_ppl_id, {'already_replicated': False}, context=context)
+                
             new_ppl = self.browse(cr, uid, new_ppl_id, context=context)
             context.update({
                 'keep_prodlot': False,
@@ -3377,6 +3382,8 @@ class stock_picking(osv.osv):
 
             # Create the packing with pack_values and the updated context
             new_packing_id = self.copy(cr, uid, picking.id, pack_values, context=context)
+            if not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+                self.write(cr, uid, new_packing_id, {'already_replicated': False}, context=context)
 
             # Reset context values
             context.update({
