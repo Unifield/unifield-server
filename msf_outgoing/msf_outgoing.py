@@ -952,7 +952,7 @@ class shipment(osv.osv):
                 # - an integrity check at _get_vals level of shipment states that all packing linked to a shipment must have the same state
                 # we therefore modify it before the copy, otherwise new (assigned) and old (done) are linked to the same shipment
                 # -> integrity check has been removed
-                pick_obj.write(cr, uid, [packing.id], {'shipment_id': False, }, context=context)
+                pick_obj.write(cr, uid, [packing.id], {'shipment_id': False}, context=context)
                 # copy each packing
                 new_packing_id = pick_obj.copy(cr, uid, packing.id, {'name': packing.name,
                                                                      'first_shipment_packing_id': packing.id,
@@ -1439,6 +1439,10 @@ class stock_picking(osv.osv):
                 pass
 
         return super(stock_picking, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+    # This method is empty for non-Remote Warehouse instances, to be implemented at RW module
+    def _usb_entity_type(self, cr, uid, context=None):
+        return False
 
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -2909,14 +2913,15 @@ class stock_picking(osv.osv):
                 'backorder_id': picking.id,
                 'move_lines': [],
             }
-
             tmp_allow_copy = context.get('allow_copy')
             context.update({
                 'wkf_copy': True,
                 'allow_copy': True,
             })
-
             new_picking_id = self.copy(cr, uid, picking.id, copy_data, context=context)
+            if context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+                self.write(cr, uid, new_picking_id, {'already_replicated':True}, context=context)
+            
             context['allow_copy'] = tmp_allow_copy
 
             # Create stock moves corresponding to processing lines
@@ -3066,7 +3071,10 @@ class stock_picking(osv.osv):
                 'allow_copy': True,
                 'keepLineNumber': True,
             })
+            
             new_ppl_id = self.copy(cr, uid, picking.id, cp_vals, context=context)
+            if context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+                self.write(cr, uid, new_ppl_id, {'already_replicated':True}, context=context)
             new_ppl = self.browse(cr, uid, new_ppl_id, context=context)
             context.update({
                 'keep_prodlot': False,
