@@ -258,13 +258,17 @@ class stock_picking(osv.osv):
         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
         header_result['move_lines'] = picking_lines
         
-        # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
-        existing_pick = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', '=', 'draft')], context=context)
-        if existing_pick:
-            message = "Sorry, the PICK: " + pick_name + " existed already in " + cr.dbname
+        rw_type = self._usb_entity_type(cr, uid)
+        if rw_type == self.REMOTE_WAREHOUSE and origin:
+            # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
+            existing_pick = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', '=', 'draft')], context=context)
+            if existing_pick:
+                message = "Sorry, the PICK: " + pick_name + " existed already in " + cr.dbname
+            else:
+                pick_id = self.create(cr, uid, header_result , context=context)
+                message = "The PICK: " + pick_name + " has been well replicated in " + cr.dbname
         else:
-            pick_id = self.create(cr, uid, header_result , context=context)
-            message = "The PICK: " + pick_name + " has been well replicated in " + cr.dbname
+            message = "Sorry, the given operation is only available for Remote Warehouse instance!"
             
         self._logger.info(message)
         return message
@@ -497,7 +501,7 @@ class stock_picking(osv.osv):
     def usb_create_picking(self, cr, uid, source, out_info, context=None):
         '''
         This is the PICK with format PICK00x-y, meaning the PICK00x-y got closed making the backorder PICK got updated (return products
-        into this backorder PICK), and the PICK00x becomes  
+        into this backorder PICK)
         '''
         
         pick_dict = out_info.to_dict()
@@ -519,7 +523,7 @@ class stock_picking(osv.osv):
         origin = pick_dict['origin']
         rw_type = self._usb_entity_type(cr, uid)
         if rw_type == self.CENTRAL_PLATFORM and origin:
-            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
+            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['draft','confirmed', 'assigned'])], context=context)
             if pick_ids:
                 state = pick_dict['state']
                 if state in ('done', 'assigned'):   
@@ -646,7 +650,9 @@ class stock_picking(osv.osv):
                 if mline.line_number == line_number:
                     # match the line, copy the content of picking line into the wizard line
                     vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
-                            'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id']}
+                            'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
+                            'from_pack': sline['from_pack'], 'to_pack': sline['to_pack'],'pack_type': sline['pack_type'],
+                            'height': sline['height'], 'weight': sline['weight'],'length': sline['length'], 'width': sline['width'],}
                     wizard_line_obj.write(cr, uid, mline.id, vals, context)
                     break
 
@@ -713,6 +719,7 @@ class stock_picking(osv.osv):
         proc_id = wizard_obj.create(cr, uid, {'picking_id': pick_id}, context=context)
         wizard_obj.create_lines(cr, uid, proc_id, context=context)        
 
+        wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
         for sline in picking_lines:
             sline = sline[2]
             line_number = sline['line_number']
@@ -720,11 +727,10 @@ class stock_picking(osv.osv):
             #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
             #### WORK IN PROGRESS
             
-            wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
             for mline in wizard.move_ids:
                 if mline.line_number == line_number:
                     # match the line, copy the content of picking line into the wizard line
-                    vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
+                    vals = {'product_id': sline['product_id'], 'quantity': sline['original_qty_partial'],'location_id': sline['location_id'],
                             'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
                             'from_pack': sline['from_pack'], 'to_pack': sline['to_pack'],'pack_type': sline['pack_type'],
                             'height': sline['height'], 'weight': sline['weight'],'length': sline['length'], 'width': sline['width'],
@@ -734,6 +740,22 @@ class stock_picking(osv.osv):
                     break
 
         self.do_ppl_step1(cr, uid, [proc_id], context=context)
+
+        family_obj = self.pool.get('ppl.family.processor')
+        for sline in picking_lines:
+            sline = sline[2]
+            
+            #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
+            #### WORK IN PROGRESS
+
+            for family in wizard.family_ids:
+                values = {'length': sline['length'],
+                          'width': sline['width'],
+                          'height': sline['height'],
+                          'weight': sline['weight'],
+                                }
+                family_obj.write(cr, uid, [family.id], values, context=context)        
+        
         self.do_ppl_step2(cr, uid, [proc_id], context=context)
         return True
 
