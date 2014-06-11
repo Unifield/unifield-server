@@ -38,15 +38,20 @@ class stock_picking(osv.osv):
     _logger = logging.getLogger('------sync.stock.picking')
 
     _columns = {'already_replicated': fields.boolean(string='Already replicated - for sync only'),
+                'for_shipment_replicate': fields.boolean(string='To be synced for RW for Shipment - for sync only'),
                 }
-    _defaults = {'already_replicated': False,
+    _defaults = {'already_replicated': True,
+                 'for_shipment_replicate': False,
                  }
+
+    CENTRAL_PLATFORM="central_platform"
+    REMOTE_WAREHOUSE="remote_warehouse"
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
         default.update({
-            'already_replicated': False,
+            'already_replicated': True,
         })
         return super(stock_picking, self).copy_data(cr, uid, id, default, context=context)
 
@@ -199,6 +204,7 @@ class stock_picking(osv.osv):
 
     def _usb_entity_type(self, cr, uid, context=None):
         '''
+        Verify if the given instance is Remote Warehouse instance, if no, just return False, if yes, return the type (RW or CP) 
         '''
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid)
         if not hasattr(entity, 'usb_instance_type'):
@@ -213,7 +219,7 @@ class stock_picking(osv.osv):
         '''
         res = super(stock_picking, self)._hook_check_cp_instance(cr, uid, ids, context=context)
         rw_type = self._usb_entity_type(cr, uid)
-        if rw_type and rw_type == 'central_platform':
+        if rw_type == self.CENTRAL_PLATFORM:
             name = "This action should only be performed at the Remote Warehouse instance! Are you sure to proceed it at this main instance?"
             model = 'confirm'
             step = 'default'
@@ -232,7 +238,7 @@ class stock_picking(osv.osv):
             return res
         return False            
 
-    def replicate_picking(self, cr, uid, source, out_info, context=None):
+    def usb_replicate_picking(self, cr, uid, source, out_info, context=None):
         '''
         '''
         if context is None:
@@ -242,7 +248,7 @@ class stock_picking(osv.osv):
         pick_name = pick_dict['name']
         origin = pick_dict['origin']
             
-        self._logger.info("+++ RW: Replicate the PICK object: %s from %s to %s" % (pick_name, source, cr.dbname))
+        self._logger.info("+++ RW: Replicate the PICK: %s from %s to %s" % (pick_name, source, cr.dbname))
         so_po_common = self.pool.get('so.po.common')
         move_obj = self.pool.get('stock.move')
         pick_tools = self.pool.get('picking.tools')
@@ -251,7 +257,6 @@ class stock_picking(osv.osv):
         self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
         header_result['move_lines'] = picking_lines
-        header_result['already_replicated'] = True
         
         # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
         existing_pick = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', '=', 'draft')], context=context)
@@ -266,7 +271,7 @@ class stock_picking(osv.osv):
 
     # Create a RW message when a Pick is converted to OUT for syncing back to its partner
     def _hook_create_rw_out_sync_messages(self, cr, uid, ids, context=None, out=True):
-        if self._usb_entity_type(cr, uid) != 'remote_warehouse':
+        if self._usb_entity_type(cr, uid) != self.REMOTE_WAREHOUSE:
             return
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -289,16 +294,7 @@ class stock_picking(osv.osv):
 
     # WORK IN PROGRESS
     def _hook_delete_rw_out_sync_messages(self, cr, uid, ids, context=None, out=True):
-        if self._usb_entity_type(cr, uid) != 'remote_warehouse':
-            return
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        so_po_common = self.pool.get('so.po.common')
-
-        res = super(stock_picking, self)._hook_delete_rw_out_sync_messages(cr, uid, ids, context=context)
-        for pick in self.browse(cr, uid, ids, context=context):
-            partner = pick.partner_id
-            return True
+        return
 
     def update_original_pick(self, cr, uid, pick_id, picking_lines, context=None):
         move_obj = self.pool.get('stock.move')
@@ -319,7 +315,7 @@ class stock_picking(osv.osv):
                     break
         return True
             
-    def convert_pick_to_out(self, cr, uid, source, out_info, context=None):
+    def usb_convert_pick_to_out(self, cr, uid, source, out_info, context=None):
         ''' Convert PICK to OUT, normally from RW to CP 
         '''
         pick_dict = out_info.to_dict()
@@ -338,7 +334,7 @@ class stock_picking(osv.osv):
         origin = pick_dict['origin']
         
         rw_type = self._usb_entity_type(cr, uid)
-        if rw_type == 'central_platform' and origin:
+        if rw_type == self.CENTRAL_PLATFORM and origin:
             # look for FO if it is a CP instance
             pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', '=', 'draft')], context=context)  
             if pick_ids: # This is a real pick in draft, then convert it to OUT
@@ -358,19 +354,19 @@ class stock_picking(osv.osv):
                 picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                 self.update_original_pick(cr, uid, pick_ids[0], picking_lines, context)
                 
-        elif rw_type == 'remote_warehouse': 
+        elif rw_type == self.REMOTE_WAREHOUSE: 
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
                 
         self._logger.info(message)
         return message
 
-    def convert_out_to_pick(self, cr, uid, source, out_info, context=None):
+    def usb_convert_out_to_pick(self, cr, uid, source, out_info, context=None):
         ''' Convert OUT to PICK, normally from RW to CP 
         '''
         pick_dict = out_info.to_dict()
         pick_name = pick_dict['name']
             
-        self._logger.info("+++ RW: Convert %s to PICK, from %s to %s" % (pick_name, source, cr.dbname))
+        self._logger.info("+++ RW: Convert OUT back to PICK (%s), from %s to %s" % (pick_name, source, cr.dbname))
         if context is None:
             context = {}
 
@@ -383,7 +379,7 @@ class stock_picking(osv.osv):
         origin = pick_dict['origin']
        
         rw_type = self._usb_entity_type(cr, uid)
-        if rw_type == 'central_platform' and origin:
+        if rw_type == self.CENTRAL_PLATFORM and origin:
             # look for the OUT if it has already been converted before, using the origin from FO
             pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('type', '=', 'out'),('state', 'in', ['draft', 'assigned'])], context=context)  
             if pick_ids: # This is a real pick in draft, then convert it to OUT
@@ -392,15 +388,15 @@ class stock_picking(osv.osv):
                 # Before converting to OUT, the PICK needs to be updated as what sent from the RW
                 self.convert_to_pick(cr, uid, pick_ids, context)
                 self.write(cr, uid, pick_ids, {'name': pick_name, 'already_replicated': True, 'state': 'assigned'}, context=context)
-                message = "The OUT: " + old_name + " has been converted to PICK: " + pick_name
+                message = "The OUT: " + old_name + " has been converted back to PICK: " + pick_name
             else:
                 # If the OUT has already been converted back to PICK before, then just inform this fact
                 pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', '=', 'assigned')], context=context)
                 if pick_ids:
                     old_name = self.read(cr, uid, pick_ids, ['name'], context=context)[0]['name']
-                    message = "The PICK has already been converted to OUT: " + old_name
+                    message = "The OUT has already been converted to PICK: " + old_name
                 else:
-                    message = "The OUT for the FO: " + origin + " found for converting to PICK."
+                    message = "The relevant PICK/OUT for the FO: " + origin + " not found for converting."
                     self._logger.info(message)
                     raise Exception, message
                 
@@ -409,13 +405,13 @@ class stock_picking(osv.osv):
                 picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                 self.update_original_pick(cr, uid, pick_ids[0], picking_lines, context)
                 
-        elif rw_type == 'remote_warehouse': 
+        elif rw_type == self.REMOTE_WAREHOUSE: 
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
                 
         self._logger.info(message)
         return message
     
-    def closed_out_closes_out(self, cr, uid, source, out_info, context=None):
+    def usb_closed_out_closes_out(self, cr, uid, source, out_info, context=None):
         ''' There are 2 cases: 
         + If the PICK exists in the current instance, then just convert that pick to OUT, same xmlid
         + If the PICK not present, the a PICK needs to be created first, then convert it to OUT
@@ -424,7 +420,7 @@ class stock_picking(osv.osv):
         pick_dict = out_info.to_dict()
         pick_name = pick_dict['name']
             
-        self._logger.info("+++ RW: OUT closed %s closes original PICK object from %s to %s" % (pick_name, source, cr.dbname))
+        self._logger.info("+++ RW: OUT closed %s at %s closes the relevant OUT at %s" % (pick_name, source, cr.dbname))
         if context is None:
             context = {}
 
@@ -439,7 +435,7 @@ class stock_picking(osv.osv):
         message = "Unknown error, please check the log file."
         origin = pick_dict['origin']
         rw_type = self._usb_entity_type(cr, uid)
-        if rw_type == 'central_platform' and origin:
+        if rw_type == self.CENTRAL_PLATFORM and origin:
             pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
             if pick_ids:
                 state = pick_dict['state']
@@ -450,18 +446,15 @@ class stock_picking(osv.osv):
                     context['rw_backorder_name'] = pick_name
                     self.rw_do_out_partial(cr, uid, pick_ids[0], picking_lines, context)
                     
-                    old_pick = self.browse(cr, uid, pick_ids[0], context)
-                    if old_pick.backorder_id:
-                        self.write(cr, uid, old_pick.backorder_id.id, {'already_replicated': True}, context=context) #'name': pick_name,
-                    message = "The OUT " + pick_name + " has been closed in " + cr.dbname
+                    message = "The OUT " + pick_name + " has been successfully closed in " + cr.dbname
                     self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
     
             else:
-                message = "The OUT " + pick_name + " not found in " + cr.dbname
+                message = "The OUT: " + pick_name + " not found in " + cr.dbname
                 self._logger.info(message)
                 raise Exception, message
                 
-        elif rw_type == 'remote_warehouse': 
+        elif rw_type == self.REMOTE_WAREHOUSE: 
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
                 
         self._logger.info(message)
@@ -501,7 +494,7 @@ class stock_picking(osv.osv):
         self.do_partial(cr, uid, [proc_id], 'outgoing.delivery.processor', context=context)
         return True
 
-    def rw_create_picking(self, cr, uid, source, out_info, context=None):
+    def usb_create_picking(self, cr, uid, source, out_info, context=None):
         '''
         This is the PICK with format PICK00x-y, meaning the PICK00x-y got closed making the backorder PICK got updated (return products
         into this backorder PICK), and the PICK00x becomes  
@@ -510,7 +503,7 @@ class stock_picking(osv.osv):
         pick_dict = out_info.to_dict()
         pick_name = pick_dict['name']
             
-        self._logger.info("+++ RW: %s closed at %s is now closed at %s" % (pick_name, source, cr.dbname))
+        self._logger.info("+++ RW: Replicate Picking: %s from %s to %s" % (pick_name, source, cr.dbname))
         if context is None:
             context = {}
 
@@ -525,7 +518,7 @@ class stock_picking(osv.osv):
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         origin = pick_dict['origin']
         rw_type = self._usb_entity_type(cr, uid)
-        if rw_type == 'central_platform' and origin:
+        if rw_type == self.CENTRAL_PLATFORM and origin:
             pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
             if pick_ids:
                 state = pick_dict['state']
@@ -536,18 +529,15 @@ class stock_picking(osv.osv):
                     context['rw_backorder_name'] = pick_name
                     self.rw_do_create_picking_partial(cr, uid, pick_ids[0], picking_lines, context)
                     
-                    old_pick = self.browse(cr, uid, pick_ids[0], context)
-                    if old_pick.backorder_id:
-                        self.write(cr, uid, old_pick.backorder_id.id, {'already_replicated': True}, context=context) #'name': pick_name,
-                    message = "The OUT " + pick_name + " has been closed in " + cr.dbname
+                    message = "The Picking " + pick_name + " has been successfully replicated in " + cr.dbname
                     self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
     
             else:
-                message = "The OUT " + pick_name + " not found in " + cr.dbname
+                message = "The Picking: " + pick_name + " not found in " + cr.dbname
                 self._logger.info(message)
                 raise Exception, message
                 
-        elif rw_type == 'remote_warehouse': 
+        elif rw_type == self.REMOTE_WAREHOUSE: 
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
                 
         self._logger.info(message)
@@ -585,7 +575,7 @@ class stock_picking(osv.osv):
         self.do_create_picking(cr, uid, [proc_id], context=context)
         return True
 
-    def replicate_ppl(self, cr, uid, source, out_info, context=None):
+    def usb_replicate_ppl(self, cr, uid, source, out_info, context=None):
         pick_dict = out_info.to_dict()
         pick_name = pick_dict['name']
             
@@ -604,8 +594,8 @@ class stock_picking(osv.osv):
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         origin = pick_dict['origin']
         rw_type = self._usb_entity_type(cr, uid)
-        if rw_type == 'central_platform' and origin:
-            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
+        if rw_type == self.CENTRAL_PLATFORM and origin:
+            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['confirmed', 'assigned'])], order='id desc', context=context)
             if pick_ids:
                 state = pick_dict['state']
                 if state in ('done', 'assigned'):   
@@ -618,15 +608,15 @@ class stock_picking(osv.osv):
                     old_pick = self.browse(cr, uid, pick_ids[0], context)
                     if old_pick.backorder_id:
                         self.write(cr, uid, old_pick.backorder_id.id, {'already_replicated': True}, context=context) #'name': pick_name,
-                    message = "The PICK: " + old_pick.name + " has been validated and generated a PPL: " + pick_name
+                    message = "The PICK: " + old_pick.name + " has been successfully validated and has generated the PPL: " + pick_name
                     self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
     
             else:
-                message = "The OUT " + pick_name + " not found in " + cr.dbname
+                message = "Cannot replicate the PPL " + pick_name + " because no relevant document found at " + cr.dbname
                 self._logger.info(message)
                 raise Exception, message
                 
-        elif rw_type == 'remote_warehouse': 
+        elif rw_type == self.REMOTE_WAREHOUSE: 
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
                 
         self._logger.info(message)
@@ -664,7 +654,7 @@ class stock_picking(osv.osv):
         return True
 
 
-    def sync_create_packing(self, cr, uid, source, out_info, context=None):
+    def usb_create_packing(self, cr, uid, source, out_info, context=None):
         pick_dict = out_info.to_dict()
         pick_name = pick_dict['name']
             
@@ -685,7 +675,7 @@ class stock_picking(osv.osv):
         shipment_name = pick_dict['shipment_id'] and pick_dict['shipment_id']['name'] or None
         
         rw_type = self._usb_entity_type(cr, uid)
-        if rw_type == 'central_platform' and origin:
+        if rw_type == self.CENTRAL_PLATFORM and origin:
             pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'ppl'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
             if pick_ids:
                 state = pick_dict['state']
@@ -695,18 +685,15 @@ class stock_picking(osv.osv):
                     context['shipment_name'] = shipment_name
                     self.rw_create_ppl_all_steps(cr, uid, pick_ids[0], picking_lines, context)
                     
-                    old_pick = self.browse(cr, uid, pick_ids[0], context)
-                    if old_pick.backorder_id:
-                        self.write(cr, uid, old_pick.backorder_id.id, {'already_replicated': True}, context=context) #'name': pick_name,
-                    message = "The PICK: " + old_pick.name + " has been validated and generated a PPL: " + pick_name
+                    message = "The pre-packing list: " + pick_name + " has been replicated in " + cr.dbname
                     self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
     
             else:
-                message = "The OUT " + pick_name + " not found in " + cr.dbname
+                message = "Cannot replicate the packing " + pick_name + " because no relevant document found at " + cr.dbname
                 self._logger.info(message)
                 raise Exception, message
                 
-        elif rw_type == 'remote_warehouse': 
+        elif rw_type == self.REMOTE_WAREHOUSE: 
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
                 
         self._logger.info(message)
@@ -714,7 +701,7 @@ class stock_picking(osv.osv):
 
     def rw_create_ppl_all_steps(self, cr, uid, pick_id, picking_lines, context=None):
         '''
-        Create the Pack family for the packing list
+        Prepare the wizard for 2 steps of creating packing: pack family and size/weight of the pack
         '''
         
         # Objects
@@ -750,7 +737,7 @@ class stock_picking(osv.osv):
         self.do_ppl_step2(cr, uid, [proc_id], context=context)
         return True
 
-    def sync_create_shipment(self, cr, uid, source, out_info, context=None):
+    def usb_create_shipment(self, cr, uid, source, out_info, context=None):
         pick_dict = out_info.to_dict()
         
         if not pick_dict['shipment_id']:
@@ -775,28 +762,25 @@ class stock_picking(osv.osv):
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         origin = pick_dict['origin']
         rw_type = self._usb_entity_type(cr, uid)
-        if rw_type == 'central_platform' and origin:
-            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'packing'),('shipment_id', '!=', False), ('state', 'in', ['draft', 'assigned'])], context=context)
+        if rw_type == self.CENTRAL_PLATFORM and origin:
+            pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'packing'),('shipment_id', '!=', False), ('state', 'in', ['draft', 'assigned'])], order='id asc', context=context)
             if pick_ids:
                 state = pick_dict['state']
                 if state in ('done','draft','assigned'):   
-                    header_result['move_lines'] = picking_lines
                     context['shipment_name'] = shipment_name
                     num_of_packs = pick_dict['shipment_id']['num_of_packs']
                     self.rw_do_create_shipment(cr, uid, pick_ids[0], num_of_packs, context)
                     
                     old_pick = self.browse(cr, uid, pick_ids[0], context)
-                    if old_pick.backorder_id:
-                        self.write(cr, uid, old_pick.backorder_id.id, {'already_replicated': True}, context=context) #'name': shipment_name,
-                    message = "The PICK: " + old_pick.name + " has been validated and generated a PPL: " + shipment_name
+                    message = "The shipment: " + shipment_name + " has been created from the Packing list: " + old_pick.name
                     self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
     
             else:
-                message = "No valid Packing List found for the Shipment " + shipment_name + " in " + cr.dbname
+                message = "Cannot generate the Shipment: " + shipment_name + " because no relevant document found at " + cr.dbname
                 self._logger.info(message)
                 raise Exception, message
                 
-        elif rw_type == 'remote_warehouse': 
+        elif rw_type == self.REMOTE_WAREHOUSE: 
             message = "Sorry, the given operation is not available for Remote Warehouse instance!"
                 
         self._logger.info(message)
@@ -806,9 +790,7 @@ class stock_picking(osv.osv):
         '''
         Create the shipment from an existing draft shipment, then perform the ship
         '''
-        
         # from the picking Id, search for the shipment
-        
         pick = self.browse(cr, uid, pick_id, context=context)
         
         # Objects
