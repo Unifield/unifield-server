@@ -38,4 +38,4 @@ class monthly_budget2(report_sxw.rml_parse):
         })
         return
 
-SpreadsheetReport('report.xls.budget.monthly','msf.budget','addons/msf_budget/report/budget_monthly_xls.mako', parser=monthly_budget2)
+SpreadsheetReport('report.xls.budget.monthly','msf.budget','addons/msf_budget/report/monthly_budget.mako', parser=monthly_budget2)

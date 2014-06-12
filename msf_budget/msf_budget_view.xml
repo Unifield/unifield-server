@@ -269,7 +269,6 @@
             <field eval="True" name="object"/>
         </record>
 
-
         <record id="view_account_analytic_account_budget_tree" model="ir.ui.view">
             <field name="name">account.analytic.account.budget.tree</field>
             <field name="model">account.analytic.account</field>
@@ -358,6 +357,17 @@
         <menuitem id="menu_action_msf_budget_decision_moment_tree"
             parent="next_id_31"
             action="action_msf_budget_decision_moment_tree"/>
+
+        <act_window id="action_monthly_budget_wizard"
+            name="Monthly Budget"
+            res_model="monthly.budget.wizard"
+            src_model="msf.budget"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="monthly_budget_wizard_form_view"
+            context="context"/>
 
     </data>
 </openerp>
