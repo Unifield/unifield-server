@@ -1917,9 +1917,9 @@ class account_bank_statement_line(osv.osv):
             raise osv.except_osv(_('Warning'), _('There is no active_id. Please contact an administrator to resolve the problem.'))
         acc_move_obj = self.pool.get("account.move")
         # browse all statement lines for creating move lines
-        if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
-            raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
         for absl in self.browse(cr, uid, ids, context=context):
+            if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
+                raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
             previous_state = ''.join(absl.state)
             if absl.state == "hard":
                 raise osv.except_osv(_('Warning'), _('You can\'t re-post a hard posted entry !'))
