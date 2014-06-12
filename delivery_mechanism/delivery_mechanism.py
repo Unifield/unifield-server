@@ -710,7 +710,7 @@ class stock_picking(osv.osv):
                             out_values.update({
                                 'product_qty': remaining_out_qty,
                                 'product_uom': line.uom_id.id,
-                                'in_out_updated': sync_in and False or True,
+                                'in_out_updated': True if not sync_in else False,
                             })
                             context['keepLineNumber'] = True
                             new_out_move_id = move_obj.copy(cr, uid, out_move.id, out_values, context=context)
@@ -725,7 +725,7 @@ class stock_picking(osv.osv):
                             out_values.update({
                                 'product_qty': remaining_out_qty,
                                 'product_uom': line.uom_id.id,
-                                'in_out_updated': sync_in and False or True,
+                                'in_out_updated': True if not sync_in else False,
                             })
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
@@ -734,7 +734,7 @@ class stock_picking(osv.osv):
                             out_values.update({
                                 'product_qty': uom_partial_qty,
                                 'product_uom': line.uom_id.id,
-                                'in_out_updated': sync_in and False or True
+                                'in_out_updated': True if not sync_in else False,
                             })
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
