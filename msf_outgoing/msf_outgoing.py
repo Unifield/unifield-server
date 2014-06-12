@@ -1415,6 +1415,10 @@ class stock_picking(osv.osv):
     _inherit = 'stock.picking'
     _name = 'stock.picking'
 
+    # For use only in Remote Warehouse
+    CENTRAL_PLATFORM="central_platform"
+    REMOTE_WAREHOUSE="remote_warehouse"
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         Set the appropriate search view according to the context
@@ -1443,7 +1447,7 @@ class stock_picking(osv.osv):
         return super(stock_picking, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 
     # This method is empty for non-Remote Warehouse instances, to be implemented at RW module
-    def _usb_entity_type(self, cr, uid, context=None):
+    def _get_usb_entity_type(self, cr, uid, context=None):
         return False
 
     def unlink(self, cr, uid, ids, context=None):
@@ -2290,6 +2294,13 @@ class stock_picking(osv.osv):
 
         # create packing object
         new_packing_id = super(stock_picking, self).create(cr, uid, vals, context=context)
+        
+        # For Remote Warehouse: If the instance is CP, and if the type=out, subtype=PICK and name does not contain "-", then set the flag to ask syncing this PICK 
+        if self._get_usb_entity_type(cr, uid, context) == self.CENTRAL_PLATFORM:
+            # read the new object
+            new_packing = self.browse(cr, uid, new_packing_id, context=context)
+            if new_packing and new_packing.type == 'out' and new_packing.subtype == 'picking' and new_packing.name.find('-') == -1:
+                self.write(cr, uid, [new_packing_id], {'already_replicated': False}, context=context)
 
         if 'subtype' in vals and vals['subtype'] == 'packing':
             # creation of a new packing
@@ -3468,8 +3479,11 @@ class stock_picking(osv.osv):
             # Trigger standard workflow on PPL
             self.action_move(cr, uid, [picking.id])
             wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
-
-        shipment_id = new_packing_id and self.read(cr, uid, new_packing_id, ['shipment_id'])['shipment_id'][0] or False
+        
+        shipment_id = False
+        if new_packing_id:
+            shipment_id = self.read(cr, uid, new_packing_id, ['shipment_id'])['shipment_id'][0]
+            
         if context.get('shipment_name', False) and context.get('sync_message_execution', False): # RW Sync - update the shipment name same as on RW instance
             new_name = context.get('shipment_name')
             del context['shipment_name']
