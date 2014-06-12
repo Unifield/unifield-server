@@ -1917,6 +1917,8 @@ class account_bank_statement_line(osv.osv):
             raise osv.except_osv(_('Warning'), _('There is no active_id. Please contact an administrator to resolve the problem.'))
         acc_move_obj = self.pool.get("account.move")
         # browse all statement lines for creating move lines
+        if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
+            raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
         for absl in self.browse(cr, uid, ids, context=context):
             previous_state = ''.join(absl.state)
             if absl.state == "hard":
@@ -1996,8 +1998,6 @@ class account_bank_statement_line(osv.osv):
                 account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'}, context=context, check=True, update_check=True)
 
             if postype == "hard":
-                if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
-                    raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
                 # Update analytic lines
                 if absl.account_id.is_analytic_addicted:
                     self.update_analytic_lines(cr, uid, absl)
