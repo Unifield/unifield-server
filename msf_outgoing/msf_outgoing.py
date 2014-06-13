@@ -419,6 +419,9 @@ class shipment(osv.osv):
                 add_line_obj.create(cr, uid, line_vals, context=context)
 
             for family in wizard.family_ids:
+                if not family.selected_number:
+                    continue
+
                 picking = family.draft_packing_id
                 # Copy the picking object without moves
                 # Creation of moves and update of initial in picking create method
