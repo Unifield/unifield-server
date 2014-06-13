@@ -214,6 +214,18 @@ class account_account(osv.osv):
         'destination_ids': many2many_notlazy('account.analytic.account', 'account_destination_link', 'account_id', 'destination_id', 'Destinations', readonly=True),
     }
 
+    def create(self, cr, uid, vals, context=None):
+        """
+        Add default destination to the list of destination_ids
+        """
+        # Some checks
+        if context is None:
+            context = {}
+        # Add default_destination_id in destination_ids if exists
+        if 'default_destination_id' in vals and vals.get('default_destination_id', False):
+            vals.update({'destination_ids': [(4, vals.get('default_destination_id'))]})
+        return super(account_account, self).create(cr, uid, vals, context=context)
+
     def write(self, cr, uid, ids, vals, context=None):
         """
         Add default destination to the list of destination_ids
