@@ -234,16 +234,25 @@ class account_account(osv.osv):
             return res
         return super(account_account, self).write(cr, uid, ids, vals, context=context)
 
-    def onchange_user_type(self, cr, uid, ids, user_type_id=False, context=None):
+    def onchange_user_type(self, cr, uid, ids, user_type_id=False, code=False, context=None):
         """
-        Update user_type_code with user_type_id code
+        Update user_type_code with user_type_id code.
+        Also update default_destination_id mandatory field
         """
         res = {}
         if not user_type_id:
             return res
+        if context is None:
+            context = {}
         data = self.pool.get('account.account.type').read(cr, uid, user_type_id, ['code', 'report_type'])
         if data:
-            res.setdefault('value', {}).update({'user_type_code': data.get('code', False), 'user_type_report_type': data.get('report_type', False)})
+            company_account_active = False
+            company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+            if company and company.additional_allocation:
+                company_account_active = company.additional_allocation
+            company_account = 7 # User for accounts that begins by "7"
+            is_analytic_addicted = self.is_analytic_addicted(cr, uid, data.get('code'), code, company_account, company_account_active)
+            res.setdefault('value', {}).update({'user_type_code': data.get('code', False), 'user_type_report_type': data.get('report_type', False), 'is_analytic_addicted': is_analytic_addicted})
         return res
 
 account_account()
