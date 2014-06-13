@@ -640,6 +640,10 @@ class ppl_move_processor(osv.osv):
             'ordered_quantity': move.product_qty,
             'from_pack': from_pack,
             'to_pack': to_pack,
+            'length': move.length,
+            'width': move.width,
+            'height': move.height,
+            'weight': move.weight,
         })
 
         return res

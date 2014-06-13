@@ -388,6 +388,10 @@ class shipment(osv.osv):
             shipment_name = '%s-%s' % (shipment.name, shipment_number)
             source_shipment_address_id = shipment.address_id.id if shipment.address_id else False
 
+            if context.get('rw_shipment_name', False) and context.get('sync_message_execution', False): # RW Sync - update the shipment name same as on RW instance
+                shipment_name = context.get('rw_shipment_name')
+                del context['rw_shipment_name']
+
             ship_val = {
                 'name': shipment_name,
                 'address_id': shipment.address_id.id,
@@ -444,8 +448,6 @@ class shipment(osv.osv):
                 })
 
                 new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
-                if not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
-                    picking_obj.write(cr, uid, new_packing_id, {'for_shipment_replicate': True}, context=context)
 
                 # Reset context
                 context.update({
@@ -960,8 +962,13 @@ class shipment(osv.osv):
                                                                      'first_shipment_packing_id': packing.id,
                                                                      # UF-1617: keepLineNumber must be set so that all line numbers are passed correctly when updating the corresponding IN
                                                                      'shipment_id': shipment.id, }, context=dict(context, keepLineNumber=True, keep_prodlot=True, allow_copy=True,))
+                
                 pick_obj.write(cr, uid, [new_packing_id], {'origin': packing.origin}, context=context)
                 new_packing = pick_obj.browse(cr, uid, new_packing_id, context=context)
+                
+                if new_packing.move_lines and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+                    pick_obj.write(cr, uid, [new_packing_id], {'for_shipment_replicate': True}, context=context)
+                
                 # update the shipment_date of the corresponding sale order if the date is not set yet - with current date
                 if new_packing.sale_id and not new_packing.sale_id.shipment_date:
                     # get the date format
@@ -977,7 +984,7 @@ class shipment(osv.osv):
                 for move in new_packing.move_lines:
                     move.write({'location_id': new_packing.warehouse_id.lot_distribution_id.id,
                                 'location_dest_id': new_packing.warehouse_id.lot_output_id.id}, context=context)
-
+                
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'stock.picking', new_packing_id, 'button_confirm', cr)
                 # simulate check assign button, as stock move must be available
@@ -985,7 +992,7 @@ class shipment(osv.osv):
                 # trigger standard workflow
                 pick_obj.action_move(cr, uid, [packing.id])
                 wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
-
+                
             # log the ship action
             self.log(cr, uid, shipment.id, _('The Shipment %s has been shipped.') % (shipment.name,))
 
@@ -3484,9 +3491,9 @@ class stock_picking(osv.osv):
         if new_packing_id:
             shipment_id = self.read(cr, uid, new_packing_id, ['shipment_id'])['shipment_id'][0]
             
-        if context.get('shipment_name', False) and context.get('sync_message_execution', False): # RW Sync - update the shipment name same as on RW instance
-            new_name = context.get('shipment_name')
-            del context['shipment_name']
+        if context.get('rw_shipment_name', False) and context.get('sync_message_execution', False): # RW Sync - update the shipment name same as on RW instance
+            new_name = context.get('rw_shipment_name')
+            del context['rw_shipment_name']
             self.pool.get('shipment').write(cr, uid, shipment_id, {'name': new_name}, context=context)
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
