@@ -863,26 +863,35 @@ class stock_picking(osv.osv):
 
         #### CHECK THE CASE WHERE ONE SHIPMENT WIZARD HAS MORE THAN ONE FAMILIES
         #### WORK IN PROGRESS
+
+
+        '''
+        
+        
+        
+        THIS PART STILL NEEDS TO BE CHECKED VERY CAREFULLY HOW TO CALCULATE THE NUMBER OF PACKS, AS HERE IT'S TOO COMPLICATED TO GET THE WRIGHT ONE!
+        
+        NEED FURTHER INVESTIGATION ON THIS SUBJECT!
+        
+        NOT 100% SURE IT IS CORRECT ALL THE TIME!
+        
+         
+        '''
+
+        ofp=[]         
+        for sline in picking_lines:
+            sline = sline[2]
+            ofp.append(sline['to_pack'] - sline['from_pack'] + 1)
         
         wizard = ship_proc_obj.browse(cr, uid, proc_id, context=context)
+        i = 0
         for family in wizard.family_ids:
             # match the line, copy the content of picking line into the wizard line
-            vals = {'selected_number': num_of_packs}
-            wizard_line_obj.write(cr, uid, family.id, vals, context)
+            if i < len(ofp):
+                vals = {'selected_number': ofp[i]}
+                wizard_line_obj.write(cr, uid, family.id, vals, context)
+                i = i+1
 
-            family.to_pack
-            for mline in family.move_lines:
-                if mline.line_number == line_number:
-                    # match the line, copy the content of picking line into the wizard line
-                    vals = {'product_id': sline['product_id'], 'quantity': sline['original_qty_partial'],'location_id': sline['location_id'],
-                            'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
-                            }
-                    
-                    wizard_line_obj.write(cr, uid, mline.id, vals, context)
-                    break
-
-
-        raise Exception, "dddd"
         self.pool.get('shipment').do_create_shipment(cr, uid, [proc_id], context=context)
         return True
 
