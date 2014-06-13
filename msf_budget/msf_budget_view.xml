@@ -362,7 +362,7 @@
             name="Monthly Budget"
             res_model="monthly.budget.wizard"
             src_model="msf.budget"
-            key2="client_action_multi"
+            key2="client_print_multi"
             view_mode="form"
             view_type="form"
             target="new"
