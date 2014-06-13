@@ -731,7 +731,7 @@ class stock_picking(osv.osv):
                     if state in ('done','draft','assigned'):   
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                         header_result['move_lines'] = picking_lines
-                        context['shipment_name'] = shipment_name
+                        context['rw_shipment_name'] = shipment_name
                         self.rw_create_ppl_all_steps(cr, uid, pick_ids[0], picking_lines, context)
                         
                         message = "The pre-packing list: " + pick_name + " has been replicated in " + cr.dbname
@@ -785,22 +785,6 @@ class stock_picking(osv.osv):
                     break
 
         self.do_ppl_step1(cr, uid, [proc_id], context=context)
-
-        family_obj = self.pool.get('ppl.family.processor')
-        for sline in picking_lines:
-            sline = sline[2]
-            
-            #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
-            #### WORK IN PROGRESS
-
-            for family in wizard.family_ids:
-                values = {'length': sline['length'],
-                          'width': sline['width'],
-                          'height': sline['height'],
-                          'weight': sline['weight'],
-                                }
-                family_obj.write(cr, uid, [family.id], values, context=context)        
-        
         self.do_ppl_step2(cr, uid, [proc_id], context=context)
         return True
 
@@ -835,9 +819,10 @@ class stock_picking(osv.osv):
                 if pick_ids:
                     state = pick_dict['state']
                     if state in ('done','draft','assigned'):   
-                        context['shipment_name'] = shipment_name
+                        context['rw_shipment_name'] = shipment_name
                         num_of_packs = pick_dict['shipment_id']['num_of_packs']
-                        self.rw_do_create_shipment(cr, uid, pick_ids[0], num_of_packs, context)
+                        picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+                        self.rw_do_create_shipment(cr, uid, pick_ids[0], picking_lines, num_of_packs, context)
                         
                         old_pick = self.browse(cr, uid, pick_ids[0], context)
                         message = "The shipment: " + shipment_name + " has been created from the Packing list: " + old_pick.name
@@ -858,7 +843,7 @@ class stock_picking(osv.osv):
         self._logger.info(message)
         return message
 
-    def rw_do_create_shipment(self, cr, uid, pick_id, num_of_packs, context=None):
+    def rw_do_create_shipment(self, cr, uid, pick_id, picking_lines, num_of_packs, context=None):
         '''
         Create the shipment from an existing draft shipment, then perform the ship
         '''
@@ -884,8 +869,20 @@ class stock_picking(osv.osv):
             # match the line, copy the content of picking line into the wizard line
             vals = {'selected_number': num_of_packs}
             wizard_line_obj.write(cr, uid, family.id, vals, context)
-            break
 
+            family.to_pack
+            for mline in family.move_lines:
+                if mline.line_number == line_number:
+                    # match the line, copy the content of picking line into the wizard line
+                    vals = {'product_id': sline['product_id'], 'quantity': sline['original_qty_partial'],'location_id': sline['location_id'],
+                            'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
+                            }
+                    
+                    wizard_line_obj.write(cr, uid, mline.id, vals, context)
+                    break
+
+
+        raise Exception, "dddd"
         self.pool.get('shipment').do_create_shipment(cr, uid, [proc_id], context=context)
         return True
 
