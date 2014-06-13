@@ -3489,12 +3489,16 @@ class stock_picking(osv.osv):
         
         shipment_id = False
         if new_packing_id:
-            shipment_id = self.read(cr, uid, new_packing_id, ['shipment_id'])['shipment_id'][0]
+            obj = self.browse(cr, uid, new_packing_id, context)
+            if obj and obj.shipment_id and obj.shipment_id.id:
+                shipment_id = obj.shipment_id.id
             
-        if context.get('rw_shipment_name', False) and context.get('sync_message_execution', False): # RW Sync - update the shipment name same as on RW instance
-            new_name = context.get('rw_shipment_name')
-            del context['rw_shipment_name']
-            self.pool.get('shipment').write(cr, uid, shipment_id, {'name': new_name}, context=context)
+                if context.get('rw_shipment_name', False) and context.get('sync_message_execution', False): # RW Sync - update the shipment name same as on RW instance
+                    new_name = context.get('rw_shipment_name')
+                    del context['rw_shipment_name']
+                    self.pool.get('shipment').write(cr, uid, shipment_id, {'name': new_name}, context=context)
+                    return
+
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         view_id = view_id and view_id[1] or False
