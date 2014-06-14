@@ -3398,6 +3398,21 @@ class stock_picking(osv.osv):
                 'allow_copy': True,
             })
 
+            '''
+            
+            
+                !!!!!!!!!!!!!!!!!!!!!!!!!
+            
+            
+                CHECK WITH QUENTIN WHY THIS FLAG IS SET, WHICH CAUSED THE PROBLEM OF NOT CREATE ANY SHIPMENT IN SYNC RW!!!!!!
+                (FROM DUY FOR REMOTE WAREHOUSE DEV: 14.06.2014)
+
+                !!!!!!!!!!!!!!!!!!!!!!!!!
+                
+                
+            '''
+            context['offline_synchronization'] = False
+            
             # Create the packing with pack_values and the updated context
             new_packing_id = self.copy(cr, uid, picking.id, pack_values, context=context)
             if not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
@@ -3482,11 +3497,13 @@ class stock_picking(osv.osv):
                         _('Line %(line_number)s: The sum of processed quantities %(processed_qty)s '\
 'is not equal to the initial quantity of the stock move %(initial_qty)s.') % m_data
                     )
-
             # Trigger standard workflow on PPL
             self.action_move(cr, uid, [picking.id])
             wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
         
+        '''
+        This code can be set back to the old one, because the shipment should always be available at this stage!!!!! DUY
+        '''
         shipment_id = False
         if new_packing_id:
             obj = self.browse(cr, uid, new_packing_id, context)
@@ -3498,7 +3515,8 @@ class stock_picking(osv.osv):
                     del context['rw_shipment_name']
                     self.pool.get('shipment').write(cr, uid, shipment_id, {'name': new_name}, context=context)
                     return
-
+            else:
+                raise Exception, "For some reason, there is no shipment created for the Packing list: " + obj.name
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         view_id = view_id and view_id[1] or False
