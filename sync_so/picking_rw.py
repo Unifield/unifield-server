@@ -878,19 +878,24 @@ class stock_picking(osv.osv):
          
         '''
 
-        ofp=[]         
+        ofp={}
         for sline in picking_lines:
             sline = sline[2]
-            ofp.append(sline['to_pack'] - sline['from_pack'] + 1)
+            ofp_key = (sline['to_pack'], sline['from_pack'])
+            ofp.setdefault(ofp_key, sline['to_pack'] - sline['from_pack'] + 1)
         
         wizard = ship_proc_obj.browse(cr, uid, proc_id, context=context)
         i = 0
+        ofp_used = []
         for family in wizard.family_ids:
             # match the line, copy the content of picking line into the wizard line
             if i < len(ofp):
-                vals = {'selected_number': ofp[i]}
-                wizard_line_obj.write(cr, uid, family.id, vals, context)
-                i = i+1
+                for ofp_key, ofp_vals in ofp.iteritems():
+                    if ofp_key[0] <= family.to_pack and ofp_key[1] >= family.from_pack and ofp_key not in ofp_used:
+                        vals = {'selected_number': ofp[ofp_key]}
+                        wizard_line_obj.write(cr, uid, family.id, vals, context)
+                        ofp_used.append(ofp_key)
+                        i = i+1
 
         self.pool.get('shipment').do_create_shipment(cr, uid, [proc_id], context=context)
         return True
