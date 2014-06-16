@@ -117,7 +117,10 @@ class stock_picking(osv.osv):
         asset_id = False
         if data['asset_id'] and data['asset_id']['id']:
             asset_id = self.pool.get('product.asset').find_sd_ref(cr, uid, xmlid_to_sdref(data['asset_id']['id']), context=context)
-
+            
+        location_requestor_rw = '-1'
+        if 'location_requestor_rw' in data:
+            location_requestor_rw = data['location_requestor_rw']
         if data['location_dest_id'] and data['location_dest_id']['id']:
             location = data['location_dest_id']['id']
             location_dest_id = location_obj.find_sd_ref(cr, uid, xmlid_to_sdref(location), context=context)
@@ -168,6 +171,7 @@ class stock_picking(osv.osv):
 
                   'location_dest_id': location_dest_id,
                   'location_id': location_id,
+                  'location_requestor_rw': location_requestor_rw,
                   'reason_type_id': reason_type_id,
                   
                   'from_pack': data['from_pack'] or 0,

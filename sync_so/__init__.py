@@ -4,4 +4,5 @@ import specific_xml_id
 import account_analytic_line
 import account
 import picking_rw
+import in_rw
 import picking
