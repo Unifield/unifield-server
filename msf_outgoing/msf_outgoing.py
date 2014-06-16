@@ -2308,6 +2308,8 @@ class stock_picking(osv.osv):
             new_packing = self.browse(cr, uid, new_packing_id, context=context)
             if new_packing and new_packing.type == 'out' and new_packing.subtype == 'picking' and new_packing.name.find('-') == -1:
                 self.write(cr, uid, [new_packing_id], {'already_replicated': False}, context=context)
+            elif new_packing and new_packing.type == 'in' and new_packing.subtype == 'standard':
+                self.write(cr, uid, [new_packing_id], {'already_replicated': False}, context=context)
 
         if 'subtype' in vals and vals['subtype'] == 'packing':
             # creation of a new packing

@@ -616,7 +616,10 @@ class stock_picking(osv.osv):
 
         # UF-1617: Get the sync_message case
         sync_in = context.get('sync_message_execution', False)
-
+        if context.get('rw_sync', False):
+            sync_in = False
+        backorder_id = False
+        
         internal_loc = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('cross_docking_location_ok', '=', False)])
         proc_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'location_procurement')[1]
         context['location'] = internal_loc
@@ -800,10 +803,13 @@ class stock_picking(osv.osv):
 
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                 # Then we finish the good picking
-                self.write(cr, uid, [picking.id], {
-                    'backorder_id': backorder_id,
-                    'cd_from_bo': values.get('cd_from_bo', False),
-                }, context=context)
+                updates = {'backorder_id': backorder_id,'cd_from_bo': values.get('cd_from_bo', False),}
+                if not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+                    updates.update({
+                        'already_replicated': False,
+                    })
+                
+                self.write(cr, uid, [picking.id], updates, context=context)
                 self.action_move(cr, uid, [backorder_id])
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
                 wf_service.trg_write(uid, 'stock.picking', picking.id, cr)
@@ -812,8 +818,10 @@ class stock_picking(osv.osv):
                     self.write(cr, uid, [picking.id], {'state': 'shipped'}, context=context)
                     return picking.id
                 else:
-                    self.action_move(cr, uid, [picking.id], context=context)
+                    self.action_move(cr, uid, [picking.id], context=context) 
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
+                    if not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+                        self.write(cr, uid, picking.id, {'already_replicated': False}, context=context)
 
             if not sync_in:
                 move_obj.action_assign(cr, uid, processed_out_moves)
@@ -837,6 +845,12 @@ class stock_picking(osv.osv):
                 # We process the creation of the picking
                 wiz_obj.do_create_picking(cr, uid, [wiz['res_id']], context=wiz_context)
 
+
+        if context.get('rw_sync', False):
+            if backorder_id:
+                return backorder_id
+            return wizard.picking_id.id
+        
         if context.get('from_simu_screen'):
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
             return {
