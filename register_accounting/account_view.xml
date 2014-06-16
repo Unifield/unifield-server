@@ -447,14 +447,15 @@
                         <field name="sequence_for_reference" select='1'/>
                         <field name="name" select='1' string="Description"/>
                         <field name="ref" select='1'/>
+                        <field name="journal_id" select='1'/>
                         <newline/>
                         <field name="account_id" select='1'/>
                         <field name="amount_in" select='1'/>
                         <field name="amount_out" select='1'/>
                         <newline/>
-                        <field name="partner_id" select='1'/>
-                        <field name="transfer_journal_id" select='1'/>
-                        <field name="employee_id" select='1'/>
+                        <field name="partner_id" select='1' string="3RD Party Partner"/>
+                        <field name="transfer_journal_id" select='1' string='3RD Party Journal'/>
+                        <field name="employee_id" select='1' string="3RD Party Employee"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="12" col="10">

@@ -1048,6 +1048,7 @@ class account_bank_statement_line(osv.osv):
             ('transfer', 'Internal Transfer'), ('transfer_same', 'Internal Transfer (same currency)'), ('advance', 'Operational Advance'),
             ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')] , readonly=True),
         'fp_analytic_lines': fields.function(_get_fp_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines linked to the given register line(s). Correction(s) included."),
+        'journal_id': fields.related('statement_id','journal_id', string="Journal", type='many2one', relation='account.journal', readonly=True),
     }
 
     _defaults = {
