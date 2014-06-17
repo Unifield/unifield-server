@@ -44,14 +44,6 @@ class stock_picking(osv.osv):
                  'for_shipment_replicate': False,
                  }
 
-    def copy_data(self, cr, uid, id, default=None, context=None):
-        if not default:
-            default = {}
-        default.update({
-            'already_replicated': True,
-        })
-        return super(stock_picking, self).copy_data(cr, uid, id, default, context=context)
-
     def retrieve_picking_header_data(self, cr, uid, source, header_result, pick_dict, context):
         if 'name' in pick_dict:
             header_result['name'] = pick_dict.get('name')
