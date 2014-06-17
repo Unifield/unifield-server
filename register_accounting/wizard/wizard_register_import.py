@@ -145,7 +145,7 @@ class wizard_register_import(osv.osv_memory):
 
                 vals = {
                     'name':                l.get('description', ''),
-                    'reference':           l.get('ref', ''),
+                    'ref':                 l.get('ref', ''),
                     'document_date':       l.get('document_date', False),
                     'date':                date,
                     'account_id':          account_id,
@@ -457,7 +457,7 @@ class wizard_register_import(osv.osv_memory):
                     # - Booking Currency
                     vals = {
                         'description': r_description or '',
-                        'ref': line[cols['reference']] or '',
+                        'ref': line[3]  or '',
                         'account_id': r_account or False,
                         'debit': r_debit or 0.0,
                         'credit': r_credit or 0.0,

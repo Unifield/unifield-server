@@ -1,4 +1,4 @@
-#Tue Jun 17 15:21:50 CEST 2014
+#Tue Jun 17 16:29:53 CEST 2014
 eclipse.preferences.version=1
 encoding//account_hq_entries/hq_entries.py=utf-8
 encoding//account_hq_entries/wizard/hq_entries_split.py=utf-8
@@ -12,3 +12,4 @@ encoding//financing_contract/format_line.py=utf-8
 encoding//msf_button_access_rights/osv_override.py=utf-8
 encoding//msf_currency_revaluation/res_currency.py=utf-8
 encoding//register_accounting/account_bank_statement.py=utf-8
+encoding//register_accounting/wizard/wizard_register_import.py=utf-8
