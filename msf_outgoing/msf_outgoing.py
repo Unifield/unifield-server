@@ -2303,12 +2303,11 @@ class stock_picking(osv.osv):
         new_packing_id = super(stock_picking, self).create(cr, uid, vals, context=context)
         
         # For Remote Warehouse: If the instance is CP, and if the type=out, subtype=PICK and name does not contain "-", then set the flag to ask syncing this PICK 
-        if self._get_usb_entity_type(cr, uid, context) == self.CENTRAL_PLATFORM:
+        if not context.get('sync_message_execution', False) and self._get_usb_entity_type(cr, uid, context) == self.CENTRAL_PLATFORM:
             # read the new object
             new_packing = self.browse(cr, uid, new_packing_id, context=context)
-            if new_packing and new_packing.type == 'out' and new_packing.subtype == 'picking' and new_packing.name.find('-') == -1:
-                self.write(cr, uid, [new_packing_id], {'already_replicated': False}, context=context)
-            elif new_packing and new_packing.type == 'in' and new_packing.subtype == 'standard':
+            if new_packing and ((new_packing.type == 'out' and new_packing.subtype == 'picking' and new_packing.name.find('-') == -1) or
+                    (new_packing.type == 'in' and new_packing.subtype == 'standard')):
                 self.write(cr, uid, [new_packing_id], {'already_replicated': False}, context=context)
 
         if 'subtype' in vals and vals['subtype'] == 'packing':
@@ -2841,7 +2840,8 @@ class stock_picking(osv.osv):
                 if rw_name:
                     self.write(cr, uid, [new_picking_id], {'name': rw_name}, context=context)
                     del context['rw_backorder_name']
-                else:
+                    
+                if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                     self.write(cr, uid, [new_picking_id], {'already_replicated': False}, context=context)
                     
                 # Claim specific code
@@ -2943,7 +2943,7 @@ class stock_picking(osv.osv):
                 'allow_copy': True,
             })
             new_picking_id = self.copy(cr, uid, picking.id, copy_data, context=context)
-            if not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+            if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                 self.write(cr, uid, new_picking_id, {'already_replicated': False}, context=context)
             
             context['allow_copy'] = tmp_allow_copy
@@ -3097,7 +3097,7 @@ class stock_picking(osv.osv):
             })
             
             new_ppl_id = self.copy(cr, uid, picking.id, cp_vals, context=context)
-            if not context.get('sync_message_execution', False): 
+            if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): 
                 self.write(cr, uid, new_ppl_id, {'already_replicated': False}, context=context)
                 
             new_ppl = self.browse(cr, uid, new_ppl_id, context=context)
@@ -3417,7 +3417,7 @@ class stock_picking(osv.osv):
             
             # Create the packing with pack_values and the updated context
             new_packing_id = self.copy(cr, uid, picking.id, pack_values, context=context)
-            if not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+            if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
                 self.write(cr, uid, new_packing_id, {'already_replicated': False}, context=context)
 
             # Reset context values

@@ -764,12 +764,22 @@ class stock_picking(osv.osv):
 
             # Create the backorder if needed
             if backordered_moves:
-                backorder_id = self.copy(cr, uid, picking.id, {
-                    'name': sequence_obj.get(cr, uid, 'stock.picking.%s' % (picking.type)),
-                    'move_lines': [],
-                    'state': 'draft',
-                }, context=context)
-
+                initial_vals_copy = {
+                    'name':sequence_obj.get(cr, uid, 'stock.picking.%s' % (picking.type)), 
+                    'move_lines':[], 
+                    'state':'draft'}
+                
+                if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+                    initial_vals_copy.update({
+                        'already_replicated': False,
+                    })
+                                    
+                backorder_id = self.copy(cr, uid, picking.id, initial_vals_copy, context=context)
+                if context.get('rw_backorder_name', False):
+                    new_name = context.get('rw_backorder_name')
+                    del context['rw_backorder_name']
+                    self.write(cr, uid, backorder_id, {'name': new_name}, context=context)
+                
                 for bo_move, bo_qty, av_values, data_back in backordered_moves:
                     if bo_move.product_qty != bo_qty:
                         # Create the corresponding move in the backorder - reset batch - reset asset_id
@@ -804,7 +814,7 @@ class stock_picking(osv.osv):
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                 # Then we finish the good picking
                 updates = {'backorder_id': backorder_id,'cd_from_bo': values.get('cd_from_bo', False),}
-                if not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+                if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
                     updates.update({
                         'already_replicated': False,
                     })
@@ -820,7 +830,7 @@ class stock_picking(osv.osv):
                 else:
                     self.action_move(cr, uid, [picking.id], context=context) 
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
-                    if not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+                    if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
                         self.write(cr, uid, picking.id, {'already_replicated': False}, context=context)
 
             if not sync_in:
