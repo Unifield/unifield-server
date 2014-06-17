@@ -635,6 +635,9 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
         :raise AccessError: * if user tries to bypass access rules for read on the requested object.
 
         """
+        if context is None:
+            context = {}
+
         real_args = []
         for item in args:
             if isinstance(item, (tuple, list)):
@@ -667,7 +670,8 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
             else:
                 real_args.append(item)
 
-        return self.search(cr, user, real_args, offset=offset, limit=limit, context=context, count=count)
+        context['rw_sync_in_progress'] = True
+        return self.search(cr, user, real_args, offset=offset, limit=limit, order=order, context=context, count=count)
 
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         """

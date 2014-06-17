@@ -44,6 +44,18 @@ class stock_picking(osv.osv):
                  'for_shipment_replicate': False,
                  }
 
+    def search(self, cr, uid, args, offset=None, limit=None, order=None, context=None, count=False):
+        '''
+        Change the order if we are on RW synchronisation
+        '''
+        if context is None:
+            context = {}
+          
+        if context.get('rw_sync_in_progress', False):
+            order = 'id'
+    
+        return super(stock_picking, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
+
     def retrieve_picking_header_data(self, cr, uid, source, header_result, pick_dict, context):
         if 'name' in pick_dict:
             header_result['name'] = pick_dict.get('name')
@@ -179,6 +191,7 @@ class stock_picking(osv.osv):
                   'name': data['name'],
                   'product_qty': data['product_qty'] or 0.0,
                   'note': data['note'],
+                  'picking_id': data.get('picking_id', {}).get('name', False),
                   }
         return result
 
@@ -874,19 +887,24 @@ class stock_picking(osv.osv):
          
         '''
 
-        ofp=[]         
+        ofp={}
         for sline in picking_lines:
             sline = sline[2]
-            ofp.append(sline['to_pack'] - sline['from_pack'] + 1)
+            ofp_key = (sline['picking_id'], sline['to_pack'], sline['from_pack'])
+            ofp.setdefault(ofp_key, sline['to_pack'] - sline['from_pack'] + 1)
         
         wizard = ship_proc_obj.browse(cr, uid, proc_id, context=context)
         i = 0
+        ofp_used = []
         for family in wizard.family_ids:
             # match the line, copy the content of picking line into the wizard line
             if i < len(ofp):
-                vals = {'selected_number': ofp[i]}
-                wizard_line_obj.write(cr, uid, family.id, vals, context)
-                i = i+1
+                for ofp_key, ofp_vals in ofp.iteritems():
+                    if family.draft_packing_id.name == pick.name and ofp_key[1] <= family.to_pack and ofp_key[2] >= family.from_pack and ofp_key not in ofp_used:
+                        vals = {'selected_number': ofp[ofp_key]}
+                        wizard_line_obj.write(cr, uid, family.id, vals, context)
+                        ofp_used.append(ofp_key)
+                        i = i+1
 
         self.pool.get('shipment').do_create_shipment(cr, uid, [proc_id], context=context)
         return True
