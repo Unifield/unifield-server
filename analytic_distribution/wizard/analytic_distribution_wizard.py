@@ -1112,7 +1112,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         return_wiz =  dict(type='ir.actions.act_window_close', **o2m_toreload)
         if context.get("from_cash_return_analytic_dist"):
             # If the wizard was called from the cash return line, the perform some actions before returning back to the caller wizard
-            wizard_name = context.get('from')
+            wizard_name = context.get('from') 
             wizard_id = context.get('wiz_id')
             cash_return_id = context.get('cash_return_id')
             cash_return_line_id = context.get('cash_return_line_id')

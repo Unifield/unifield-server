@@ -426,7 +426,7 @@ class account_bank_statement(osv.osv):
                 create_cashbox_lines(self, cr, uid, reg.id, context=context)
             # For bank statement, give balance_end
             elif reg.journal_id.type == 'bank':
-                # Verify that another bank statement exists
+                # Verify that another bank statement existsi
                 st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', reg.id)], context=context)
                 if len(st_prev_ids) > 1:
                     raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
@@ -974,6 +974,8 @@ class account_bank_statement_line(osv.osv):
         """
         Get all analytic lines linked to the given register lines
         """
+        
+        print '_get_fp_analytic_lines:', ids
         if not context:
             context = {}
 
@@ -1006,6 +1008,19 @@ class account_bank_statement_line(osv.osv):
             res[absl.id] = aal_obj.get_corrections_history(cr, uid, aal_ids, context=context)
         return res
 
+
+    
+    def _check_red_on_supplier(self, cr, uid, ids, name, arg, context=None):
+        result = {}
+        for id in ids:
+            result[id] = {'red_on_supplier': False}        
+        print 'red on supplier:', ids
+            
+        for out in self.browse(cr, uid, ids, context=context):
+            type_for_register = out.account_id.type_for_register
+            if type_for_register in ['advance','transfer_same','down_payment','transfer'] and out.partner_id is None:
+                result[out.id]['red_on_supplier'] = True
+        return result
 
 
     _columns = {
@@ -1048,6 +1063,7 @@ class account_bank_statement_line(osv.osv):
             ('transfer', 'Internal Transfer'), ('transfer_same', 'Internal Transfer (same currency)'), ('advance', 'Operational Advance'),
             ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')] , readonly=True),
         'fp_analytic_lines': fields.function(_get_fp_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines linked to the given register line(s). Correction(s) included."),
+        'red_on_supplier': fields.function(_check_red_on_supplier, method=True, type="boolean", string="Supplier flag", store=False, readonly=True, multi="m"),
     }
 
     _defaults = {
@@ -1056,6 +1072,9 @@ class account_bank_statement_line(osv.osv):
         'transfer_amount': lambda *a: 0,
         'direct_state': lambda *a: 'draft',
     }
+    
+
+
 
     def return_to_register(self, cr, uid, ids, context=None):
         """
