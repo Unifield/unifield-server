@@ -426,7 +426,7 @@ class account_bank_statement(osv.osv):
                 create_cashbox_lines(self, cr, uid, reg.id, context=context)
             # For bank statement, give balance_end
             elif reg.journal_id.type == 'bank':
-                # Verify that another bank statement existsi
+                # Verify that another bank statement exists
                 st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', reg.id)], context=context)
                 if len(st_prev_ids) > 1:
                     raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
@@ -1014,7 +1014,6 @@ class account_bank_statement_line(osv.osv):
         result = {}
         for id in ids:
             result[id] = {'red_on_supplier': False}        
-        print 'red on supplier:', ids
             
         for out in self.browse(cr, uid, ids, context=context):
             type_for_register = out.account_id.type_for_register
