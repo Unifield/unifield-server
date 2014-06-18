@@ -22,10 +22,84 @@
 from osv import osv, fields
 import netsvc
 
+from tools.translate import _
+
 import logging
 
 from sync_common import xmlid_to_sdref
-from sync_client import get_sale_purchase_logger
+
+
+class shipment(osv.osv):
+    '''
+    Shipment override for Remove Warehouse Tasks
+    '''
+    _inherit = 'shipment'
+    _logger = logging.getLogger('------sync.shipment')
+
+    _columns = {
+        'already_rw_delivered': fields.boolean(
+            string='Already delivered through the RW - for sync. only',
+        ),
+        'already_rw_validated': fields.boolean(
+            string='Already validated through the RW - for sync. only',
+        ),
+    }
+
+    _defaults = {
+        'already_rw_delivered': False,
+        'already_rw_validated': False,
+    }
+
+    def usb_set_state_shipment(self, cr, uid, source, out_info, state, context=None):
+        '''
+        Set the shipment at CP according to the state when it is flagged on RW
+        '''
+        pick_obj = self.pool.get('stock.picking')
+
+        if context is None:
+            context = {}
+
+        ship_dict = out_info.to_dict()
+        ship_name = ship_dict['name']
+        message = ''
+
+        if state == 'done':
+            self._logger.info("+++ RW: Set Delivered the SHIP: %s from %s to %s" % (ship_name, source, cr.dbname))
+        elif state == 'shipped':
+            self._logger.info("+++ RW: Validated the SHIP: %s from %s to %s" % (ship_name, source, cr.dbname))
+
+        rw_type = pick_obj._get_usb_entity_type(cr, uid)
+        if rw_type == pick_obj.CENTRAL_PLATFORM:
+            ship_ids = self.search(cr, uid, [('name', '=', ship_name), ('state', '=', state)], context=context)
+            if not ship_ids:
+                message = _("Sorry, no Shipment with the name %s found !") % ship_name
+            else:
+                if state == 'done':
+                    self.set_delivered(cr, uid, ship_ids, context=context)
+                    self.write(cr, uid, ship_ids, {'already_rw_delivered': True}, context=context)
+                elif state == 'shipped':
+                    self.validate(cr, uid, ship_ids, context=context)
+                    self.write(cr, uid, ship_ids, {'already_rw_validated': True}, context=context)
+        else:
+            message = ("Sorry, the given operation is only available for Central Platform instance!")
+            
+        self._logger.info(message)
+        return message
+
+    def usb_set_delivered_shipment(self, cr, uid, source, out_info, context=None):
+        '''
+        Set the shipment as delivered at CP when it is flagged as delivered on RW
+        '''
+        return self.usb_set_state_shipment(cr, uid, source, out_info, state='done', context=context)
+
+    def usb_set_validated_shipment(self, cr, uid, source, out_info, context=None):
+        '''
+        Validate the shipment at CP when it is flagged as validated on RW
+        '''
+        return self.usb_set_state_shipment(cr, uid, source, out_info, state='shipped', context=context)
+
+shipment()
+
 
 class stock_picking(osv.osv):
     '''
