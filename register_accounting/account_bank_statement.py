@@ -1016,8 +1016,9 @@ class account_bank_statement_line(osv.osv):
             
         for out in self.browse(cr, uid, ids, context=context):
             type_for_register = out.account_id.type_for_register
-            if type_for_register in ['advance','transfer_same','down_payment','transfer'] and out.partner_id.id is False:
-                result[out.id]['red_on_supplier'] = True
+            if type_for_register in ['advance','transfer_same','down_payment','transfer']:
+                if out.partner_id.id is False and out.employee_id.id is False and out.transfer_journal_id.id is False: 
+                    result[out.id]['red_on_supplier'] = True
         return result
 
 
