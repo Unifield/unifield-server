@@ -661,7 +661,7 @@ class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
     _inherit = "account.bank.statement.line"
 
-    _order = 'sequence_for_reference desc'
+    _order = 'sequence_for_reference desc, document_date asc'
 
     def _get_state(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
