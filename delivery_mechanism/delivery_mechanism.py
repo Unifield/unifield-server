@@ -775,7 +775,7 @@ class stock_picking(osv.osv):
                     })
                                     
                 backorder_id = self.copy(cr, uid, picking.id, initial_vals_copy, context=context)
-                if context.get('rw_backorder_name', False):
+                if self._get_usb_entity_type(cr, uid) == self.CENTRAL_PLATFORM and context.get('rw_backorder_name', False):
                     new_name = context.get('rw_backorder_name')
                     del context['rw_backorder_name']
                     self.write(cr, uid, backorder_id, {'name': new_name}, context=context)
@@ -821,6 +821,10 @@ class stock_picking(osv.osv):
                 
                 self.write(cr, uid, [picking.id], updates, context=context)
                 self.action_move(cr, uid, [backorder_id])
+                
+                # Create the new INT moves, force the name of INT here!!!
+                
+                
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
                 wf_service.trg_write(uid, 'stock.picking', picking.id, cr)
             else:

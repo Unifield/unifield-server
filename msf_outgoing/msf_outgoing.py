@@ -2837,12 +2837,18 @@ class stock_picking(osv.osv):
                 self.write(cr, uid, [picking.id], {'backorder_id': new_picking_id}, context=context)
                 
                 rw_name = context.get('rw_backorder_name', False)
+                update_vals = {}
                 if rw_name:
-                    self.write(cr, uid, [new_picking_id], {'name': rw_name}, context=context)
+                    update_vals.update({'name': rw_name})
                     del context['rw_backorder_name']
-                    
+                
+                if picking.type == 'internal':
+                    update_vals.update({'associate_int_name': picking.name})
                 if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
-                    self.write(cr, uid, [new_picking_id], {'already_replicated': False}, context=context)
+                    update_vals.update({'already_replicated': False})
+                    
+                if len(update_vals) > 0:
+                    self.write(cr, uid, [new_picking_id], update_vals, context=context)
                     
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, new_picking_id, context=context)
