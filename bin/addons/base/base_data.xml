@@ -987,6 +987,10 @@
             <field name="name">South Africa</field>
             <field name="code">za</field>
         </record>
+        <record id="ss" model="res.country">
+            <field name="name">South Sudan</field>
+            <field name="code">ss</field>
+        </record>
         <record id="zm" model="res.country">
             <field name="name">Zambia</field>
             <field name="code">zm</field>
