@@ -22,10 +22,84 @@
 from osv import osv, fields
 import netsvc
 
+from tools.translate import _
+
 import logging
 
 from sync_common import xmlid_to_sdref
-from sync_client import get_sale_purchase_logger
+
+
+class shipment(osv.osv):
+    '''
+    Shipment override for Remove Warehouse Tasks
+    '''
+    _inherit = 'shipment'
+    _logger = logging.getLogger('------sync.shipment')
+
+    _columns = {
+        'already_rw_delivered': fields.boolean(
+            string='Already delivered through the RW - for sync. only',
+        ),
+        'already_rw_validated': fields.boolean(
+            string='Already validated through the RW - for sync. only',
+        ),
+    }
+
+    _defaults = {
+        'already_rw_delivered': False,
+        'already_rw_validated': False,
+    }
+
+    def usb_set_state_shipment(self, cr, uid, source, out_info, state, context=None):
+        '''
+        Set the shipment at CP according to the state when it is flagged on RW
+        '''
+        pick_obj = self.pool.get('stock.picking')
+
+        if context is None:
+            context = {}
+
+        ship_dict = out_info.to_dict()
+        ship_name = ship_dict['name']
+        message = ''
+
+        if state == 'done':
+            self._logger.info("+++ RW: Set Delivered the SHIP: %s from %s to %s" % (ship_name, source, cr.dbname))
+        elif state == 'shipped':
+            self._logger.info("+++ RW: Validated the SHIP: %s from %s to %s" % (ship_name, source, cr.dbname))
+
+        rw_type = pick_obj._get_usb_entity_type(cr, uid)
+        if rw_type == pick_obj.CENTRAL_PLATFORM:
+            ship_ids = self.search(cr, uid, [('name', '=', ship_name), ('state', '=', state)], context=context)
+            if not ship_ids:
+                message = _("Sorry, no Shipment with the name %s found !") % ship_name
+            else:
+                if state == 'done':
+                    self.set_delivered(cr, uid, ship_ids, context=context)
+                    self.write(cr, uid, ship_ids, {'already_rw_delivered': True}, context=context)
+                elif state == 'shipped':
+                    self.validate(cr, uid, ship_ids, context=context)
+                    self.write(cr, uid, ship_ids, {'already_rw_validated': True}, context=context)
+        else:
+            message = ("Sorry, the given operation is only available for Central Platform instance!")
+            
+        self._logger.info(message)
+        return message
+
+    def usb_set_delivered_shipment(self, cr, uid, source, out_info, context=None):
+        '''
+        Set the shipment as delivered at CP when it is flagged as delivered on RW
+        '''
+        return self.usb_set_state_shipment(cr, uid, source, out_info, state='done', context=context)
+
+    def usb_set_validated_shipment(self, cr, uid, source, out_info, context=None):
+        '''
+        Validate the shipment at CP when it is flagged as validated on RW
+        '''
+        return self.usb_set_state_shipment(cr, uid, source, out_info, state='shipped', context=context)
+
+shipment()
+
 
 class stock_picking(osv.osv):
     '''
@@ -44,6 +118,18 @@ class stock_picking(osv.osv):
     _defaults = {'already_replicated': True,
                  'for_shipment_replicate': False,
                  }
+
+    def search(self, cr, uid, args, offset=None, limit=None, order=None, context=None, count=False):
+        '''
+        Change the order if we are on RW synchronisation
+        '''
+        if context is None:
+            context = {}
+          
+        if context.get('rw_sync_in_progress', False):
+            order = 'id'
+    
+        return super(stock_picking, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
 
     def search(self, cr, uid, args, offset=None, limit=None, order=None, context=None, count=False):
         '''
@@ -534,7 +620,6 @@ class stock_picking(osv.osv):
         This is the PICK with format PICK00x-y, meaning the PICK00x-y got closed making the backorder PICK got updated (return products
         into this backorder PICK)
         '''
-        
         pick_dict = out_info.to_dict()
         pick_name = pick_dict['name']
             
@@ -555,7 +640,9 @@ class stock_picking(osv.osv):
             if origin:
                 header_result = {}
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['draft','confirmed', 'assigned'])], context=context)
+                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['draft'])], context=context)
+                if not pick_ids:
+                    pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['draft','confirmed', 'assigned'])], context=context)
                 if pick_ids:
                     state = pick_dict['state']
                     if state in ('done', 'assigned'):   
@@ -593,7 +680,6 @@ class stock_picking(osv.osv):
         proc_id = wizard_obj.create(cr, uid, {'picking_id': pick_id}, context=context)
         wizard_obj.create_lines(cr, uid, proc_id, context=context)        
         
-
         # Copy values from the OUT message move lines into the the wizard lines before making the partial OUT
         # If the line got split, based on line number and create new wizard line
         for sline in picking_lines:
@@ -611,6 +697,10 @@ class stock_picking(osv.osv):
                             'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id']}
                     wizard_line_obj.write(cr, uid, mline.id, vals, context)
                     break
+
+        line_to_del = wizard_line_obj.search(cr, uid, [('wizard_id', '=', proc_id), ('quantity', '=', 0.00)], context=context)
+        if line_to_del:
+            wizard_line_obj.unlink(cr, uid, line_to_del, context=context)
 
         self.do_create_picking(cr, uid, [proc_id], context=context)
         return True
