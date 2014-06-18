@@ -2017,6 +2017,9 @@ class stock_move(osv.osv):
                 if old_ptype != picking.type:
                     old_pick_name = seq_obj.get(cr, uid, 'stock.picking.' + old_ptype)
                     picking_obj.write(cr, uid, [picking.id], {'name': old_pick_name}, context=context)
+                
+                if ptype == 'internal':
+                     picking_obj.write(cr, uid, [picking.id], {'associate_int_name': new_pick_name}, context=context) # save the INT name into this original IN
             else:
                 pickid = False
             for move, (loc, dummy, delay, dummy, company_id, ptype) in todo:
