@@ -1770,7 +1770,7 @@ class account_bank_statement_line(osv.osv):
             distrib_id = values.get('analytic_distribution_id')
         if not distrib_id:
             values = self._update_employee_analytic_distribution(cr, uid, values=values)
-        if 'cheque_number' in values:
+        if 'cheque_number' in values and values['cheque_number'] is not None:
             cr.execute('''select id from account_bank_statement_line where cheque_number = %s ''', (values['cheque_number'], ))
             for row in cr.dictfetchall():
                 raise osv.except_osv(_('Info'),_('This cheque number has already been used'))
@@ -1918,6 +1918,8 @@ class account_bank_statement_line(osv.osv):
         acc_move_obj = self.pool.get("account.move")
         # browse all statement lines for creating move lines
         for absl in self.browse(cr, uid, ids, context=context):
+            if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
+                raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
             previous_state = ''.join(absl.state)
             if absl.state == "hard":
                 raise osv.except_osv(_('Warning'), _('You can\'t re-post a hard posted entry !'))
@@ -2339,7 +2341,7 @@ class account_bank_statement_line(osv.osv):
 
             default_vals = ({
                 'name': '(copy) ' + line.name,
-                'cheque_number': '',
+                'cheque_number': None,
             })
             self.copy(cr, uid, line.id, default_vals, context=context)
         return True
