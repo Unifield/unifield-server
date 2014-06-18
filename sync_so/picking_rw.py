@@ -39,6 +39,7 @@ class stock_picking(osv.osv):
 
     _columns = {'already_replicated': fields.boolean(string='Already replicated - for sync only'),
                 'for_shipment_replicate': fields.boolean(string='To be synced for RW for Shipment - for sync only'),
+                'associate_int_name': fields.char('Name of INT associated with the IN', size=256),
                 }
     _defaults = {'already_replicated': True,
                  'for_shipment_replicate': False,
@@ -88,6 +89,9 @@ class stock_picking(osv.osv):
         if 'transport_order_id' in pick_dict:
             header_result['transport_order_id'] = pick_dict.get('transport_order_id')
 
+        if 'associate_int_name' in pick_dict:
+            header_result['associate_int_name'] = pick_dict.get('associate_int_name')
+
         so_po_common = self.pool.get('so.po.common')
 
         partner_id = so_po_common.get_partner_id(cr, uid, source, context)
@@ -121,10 +125,12 @@ class stock_picking(osv.osv):
         asset_id = False
         if data['asset_id'] and data['asset_id']['id']:
             asset_id = self.pool.get('product.asset').find_sd_ref(cr, uid, xmlid_to_sdref(data['asset_id']['id']), context=context)
-            
-        location_requestor_rw = '-1'
-        if 'location_requestor_rw' in data:
-            location_requestor_rw = data['location_requestor_rw']
+        
+        # Get the location requestor
+        location_requestor_rw = False
+        if 'location_requestor_rw' in data and data.get('location_requestor_rw', False):
+            location_requestor_rw = data['location_requestor_rw']['id']
+            location_requestor_rw = location_obj.find_sd_ref(cr, uid, xmlid_to_sdref(location_requestor_rw), context=context)
         if data['location_dest_id'] and data['location_dest_id']['id']:
             location = data['location_dest_id']['id']
             location_dest_id = location_obj.find_sd_ref(cr, uid, xmlid_to_sdref(location), context=context)

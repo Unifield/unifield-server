@@ -75,6 +75,7 @@ class stock_picking(osv.osv):
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
                 picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                 header_result['move_lines'] = picking_lines
+                header_result['already_replicated'] = True
                 
                 # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
                 existing_pick = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('type', '=', 'in'), ('state', '=', 'draft')], context=context)
@@ -129,7 +130,7 @@ class stock_picking(osv.osv):
                         header_result['move_lines'] = picking_lines
                         self.force_assign(cr, uid, pick_ids)
                         context['rw_backorder_name'] = pick_name
-                        self.rw_do_create_partial_in(cr, uid, pick_ids[0], picking_lines, context)
+                        self.rw_do_create_partial_in(cr, uid, pick_ids[0], header_result, picking_lines, context)
                         
                         message = "The IN: " + pick_name + " has been successfully created in " + cr.dbname
                         self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
@@ -149,7 +150,7 @@ class stock_picking(osv.osv):
         self._logger.info(message)
         return message
 
-    def rw_do_create_partial_in(self, cr, uid, pick_id, pack_data, context=None):
+    def rw_do_create_partial_in(self, cr, uid, pick_id, header_result, pack_data, context=None):
         # Objects
         processor_obj = self.pool.get('stock.incoming.processor')
         in_processor = processor_obj.create(cr, uid, {'picking_id': pick_id}, context=context)
@@ -260,10 +261,20 @@ class stock_picking(osv.osv):
 
         # for the last Shipment of an FO, no new INcoming shipment will be created --> same value as pick_id
         new_picking = self.do_incoming_shipment(cr, uid, in_processor, context)
-
+        
+        # we should also get the newly created INT object for this new picking, the force the name of it as what received from the RW
+        if 'associate_int_name' in header_result:
+            associate_int_name = header_result.get('associate_int_name')
+            old_ref_name = self.browse(cr, uid, new_picking, context=context)['associate_int_name']
+            int_ids = self.search(cr, uid, [('name', '=', old_ref_name), ('type', '=', 'internal'), ('subtype', '=', 'standard')], context=context)
+            if int_ids:
+                self.write(cr, uid, int_ids, {'name': associate_int_name}, context)
+                self.write(cr, uid, pick_id, {'associate_int_name': associate_int_name}, context)
+        
         # Set the backorder reference to the IN !!!! THIS NEEDS TO BE CHECKED WITH SUPPLY PM!
         if new_picking != pick_id:
             self.write(cr, uid, pick_id, {'backorder_id': new_picking}, context)
+            self.write(cr, uid, new_picking, {'already_replicated': True}, context=context)
 
         in_name = self.browse(cr, uid, new_picking, context=context)['name']
         message = "The INcoming " + in_name + " is partially processed!"
@@ -295,7 +306,12 @@ class stock_picking(osv.osv):
             if origin:
                 header_result = {}
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('type', '=', 'internal'), ('subtype', '=', 'standard'), ('state', 'in', ['assigned', 'confirmed'])], context=context)
+                search_condition = [('origin', '=', origin), ('type', '=', 'internal'), ('subtype', '=', 'standard'), ('state', 'in', ['assigned', 'confirmed'])]
+                if header_result.get('associate_int_name', False):
+                    search_condition.append(('name', '=', header_result.get('associate_int_name')))
+                else: # if this is not a partial reception of INT, then just take the given INT itself
+                    search_condition.append(('name', '=', pick_name))
+                pick_ids = self.search(cr, uid, search_condition, context=context)
                 if pick_ids:
                     state = pick_dict['state']
                     if state in ('done', 'assigned'):
@@ -347,8 +363,6 @@ class stock_picking(osv.osv):
                             'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id']}
                     wizard_line_obj.write(cr, uid, mline.id, vals, context)
                     break
-
-                
 
         wizard_obj.do_partial(cr, uid, [in_processor], context=context)
         

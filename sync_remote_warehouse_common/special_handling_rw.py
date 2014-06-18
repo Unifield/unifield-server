@@ -35,11 +35,8 @@ from tools.translate import _
 class stock_move(osv.osv):
     # This is to treat the location requestor on Remote warehouse instance if IN comes from an IR
     _inherit = 'stock.move'
-    _columns = {'location_requestor_rw': fields.integer(string='Location Requestor For RW-IR'),
+    _columns = {'location_requestor_rw': fields.many2one('stock.location', 'Location Requestor For RW-IR', required=False, ondelete="cascade"),
                 }
-    _defaults = {
-        'location_requestor_rw': -1,
-    }
 
     def create(self, cr, uid, vals, context=None):
         if not context:
@@ -66,8 +63,8 @@ class stock_move(osv.osv):
         type = self.pool.get('sync.client.entity').get_entity(cr, uid).usb_instance_type
         if type == 'remote_warehouse':
             move = kwargs['move']
-            if move.location_requestor_rw != -1:
-                return move.location_requestor_rw
+            if move.location_requestor_rw:
+                return move.location_requestor_rw.id
         # for any case, just return False and let the caller to pick the normal loc requestor
         return False
 
