@@ -21,5 +21,6 @@
 
 import purchase_followup
 import sale_purchase
+import report
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

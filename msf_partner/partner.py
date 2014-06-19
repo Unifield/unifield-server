@@ -446,6 +446,9 @@ class res_partner(osv.osv):
             if other_supplier:
                 r.update({'property_stock_supplier': other_supplier[1]})
 
+        if partner_type and partner_type == 'esc':
+            r['zone'] = 'international'
+
         return {'value': r}
 
     def search(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):

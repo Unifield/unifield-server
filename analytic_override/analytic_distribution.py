@@ -251,7 +251,7 @@ class distribution_line(osv.osv):
         (_check_percentage, '0 is not allowed as percentage value!', ['percentage']),
     ]
 
-    def create_analytic_lines(self, cr, uid, ids, move_line_id, date, document_date, source_date=False, name=False, context=None):
+    def create_analytic_lines(self, cr, uid, ids, move_line_id, date, document_date, source_date=False, name=False, ref='', context=None):
         '''
         Creates an analytic lines from a distribution line and an account.move.line
         '''
@@ -283,7 +283,7 @@ class distribution_line(osv.osv):
                 'name': name or move_line.name,
                 'distrib_id': line.distribution_id.id,
                 'distrib_line_id': '%s,%s'%(self._name, line.id),
-                'ref': move_line.move_id.name,
+                'ref': ref or move_line.move_id.name,
             }
             if self._name == 'funding.pool.distribution.line':
                 vals.update({

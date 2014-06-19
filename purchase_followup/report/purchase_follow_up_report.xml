@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            id="report_purchase_follow_up_xls"
+            name="purchase.follow.up.report_xls"
+            model="purchase.order.followup"
+            string="Purchase Order Follow Up Excel Export"
+            file="purchase_followup/report/purchase_follow_up_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+    </data>
+
+    <data>
+        <report
+            id="report_purchase_follow_up_pdf"
+            name="purchase.follow.up.report_pdf"
+            model="purchase.order.followup"
+            string="Purchase Order Follow Up PDF Export"
+            rml="purchase_followup/report/purchase_follow_up_report.rml"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+    </data>
+</openerp>

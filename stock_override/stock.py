@@ -288,6 +288,7 @@ class stock_picking(osv.osv):
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
         'from_wkf': fields.boolean('From wkf'),
+        'from_wkf_sourcing': fields.boolean('From wkf sourcing'),
         'update_version_from_in_stock_picking': fields.integer(string='Update version following IN processing'),
         'partner_type_stock_picking': fields.function(_vals_get_stock_ov, method=True, type='selection', selection=PARTNER_TYPE, string='Partner Type', multi='get_vals_stock_ov', readonly=True, select=True,
                                                       store={'stock.picking': (lambda self, cr, uid, ids, c=None: ids, ['partner_id2'], 10),
@@ -312,10 +313,12 @@ class stock_picking(osv.osv):
             string='Do not sync.', 
             store=False,
         ),
+        'previous_chained_pick_id': fields.many2one('stock.picking', string='Previous chained picking', ondelete='set null', readonly=True),
     }
 
     _defaults = {'from_yml_test': lambda *a: False,
                  'from_wkf': lambda *a: False,
+                 'from_wkf_sourcing': lambda *a: False,
                  'update_version_from_in_stock_picking': 0,
                  'fake_type': 'in',
                  'shipment_ref':False
@@ -327,6 +330,13 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         default.update(shipment_ref=False)
+
+        if not 'from_wkf_sourcing' in default:
+            default['from_wkf_sourcing'] = False
+
+        if not 'previous_chained_pick_id' in default:
+            default['previous_chained_pick_id'] = False
+
         return super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
 
     def _check_active_product(self, cr, uid, ids, context=None):
@@ -389,6 +399,13 @@ class stock_picking(osv.osv):
         # in case me make a copy of a stock.picking coming from a workflow
         if context.get('not_workflow', False):
             vals['from_wkf'] = False
+
+        if vals.get('from_wkf') and vals.get('purchase_id'):
+            po = self.pool.get('purchase.order').browse(cr, uid, vals.get('purchase_id'), context=context)
+            for line in po.order_line:
+                if line.procurement_id and line.procurement_id.sale_id:
+                    vals['from_wkf_sourcing'] = True
+                    break
 
         if not vals.get('partner_id2') and vals.get('address_id'):
             addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
@@ -2012,6 +2029,7 @@ class stock_move(osv.osv):
             'sale_id': picking.sale_id and picking.sale_id.id or False,
             'auto_picking': picking.type == 'in' and picking.move_lines[0]['direct_incoming'],
             'reason_type_id': reason_type_id,
+            'previous_chained_pick_id': picking.id,
         }
 
         return picking_obj.create(cr, uid, pick_values, context=context)

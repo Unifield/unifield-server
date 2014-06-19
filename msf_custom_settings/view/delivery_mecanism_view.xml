@@ -12,10 +12,6 @@
                     <xpath expr="/form" position="inside">
                         <field name="from_so_ok" invisible="1" />
                     </xpath>
-                    <xpath expr="/form//button[@name='action_cancel']" position="attributes">
-                        <attribute name='attrs'>{'invisible': [('from_so_ok', '=', True)]}</attribute>
-                    </xpath>
-                
                 </data>
             </field>
         </record>

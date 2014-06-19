@@ -1770,10 +1770,6 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for line in self.browse(cr, uid, ids, context=context):
-            if line.order_id and line.order_id.state != 'draft':
-                return self.pool.get('sale.order.line.unlink.wizard').ask_unlink(cr, uid, ids, context=context)
-
         return self.ask_order_unlink(cr, uid, ids, context=context)
 
     def ask_order_unlink(self, cr, uid, ids, context=None):
@@ -2250,74 +2246,6 @@ class sale_config_picking_policy(osv.osv_memory):
 
 sale_config_picking_policy()
 
-class sale_order_line_unlink_wizard(osv.osv_memory):
-    _name = 'sale.order.line.unlink.wizard'
-
-    _columns = {
-            'order_line_id': fields.many2one('sale.order.line', 'Line to delete'),
-            }
-
-    def ask_unlink(self, cr, uid, order_line_id, context=None):
-        '''
-        Return the wizard
-        '''
-        context = context or {}
-
-        if isinstance(order_line_id, (int, long)):
-            order_line_id = [order_line_id]
-
-        wiz_id = self.create(cr, uid, {'order_line_id': order_line_id[0]}, context=context)
-
-        return {'type': 'ir.actions.act_window',
-                'res_model': self._name,
-                'res_id': wiz_id,
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'context': context}
-
-    def close_window(self, cr, uid, ids, context=None):
-        '''
-        Close the pop-up and reload the FO
-        '''
-        return {'type': 'ir.actions.act_window_close'}
-
-    def cancel_fo_line(self, cr, uid, ids, context=None):
-        '''
-        Cancel the FO line and display the FO form
-        '''
-        line_obj = self.pool.get('sale.order.line')
-
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        res = False
-
-        for wiz in self.browse(cr, uid, ids, context=context):
-            res = line_obj.ask_order_unlink(cr, uid, [wiz.order_line_id.id], context=context)
-            break
-
-        return res or {'type': 'ir.actions.act_window_close'}
-
-    def resource_line(self, cr, uid, ids, context=None):
-        '''
-        Resource the FO line and display the FO form
-        '''
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        for wiz in self.browse(cr, uid, ids, context=context):
-            self.pool.get('sale.order.line').add_resource_line(cr, uid, wiz.order_line_id.id, False, wiz.order_line_id.product_uom_qty, context=context)
-
-        return self.cancel_fo_line(cr, uid, ids, context=context)
-
-sale_order_line_unlink_wizard()
 
 class sale_order_unlink_wizard(osv.osv_memory):
     _name = 'sale.order.unlink.wizard'
