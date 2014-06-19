@@ -84,6 +84,12 @@ class stock_picking(osv.osv):
                     self._logger.info(message)
                     return message
                 pick_id = self.create(cr, uid, header_result , context=context)
+
+                # Update the sequence for the IN object in Remote Warehouse to have the same value as of in CP
+                if 'rw_force_seq' in pick_dict and pick_dict.get('rw_force_seq', False):
+                    self.alter_sequence_for_rw_pick(cr, uid, 'stock.picking.in', pick_dict.get('rw_force_seq') + 1, context)
+                
+                
                 message = "The PICK: " + pick_name + " has been well replicated in " + cr.dbname
             else:
                 message = "Sorry, the case without the origin PO is not yet available!"
@@ -91,7 +97,7 @@ class stock_picking(osv.osv):
                 raise Exception, message
         else:
             message = "Sorry, the given operation is only available for Remote Warehouse instance!"
-            
+        
         self._logger.info(message)
         return message
 

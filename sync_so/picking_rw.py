@@ -114,9 +114,11 @@ class stock_picking(osv.osv):
     _columns = {'already_replicated': fields.boolean(string='Already replicated - for sync only'),
                 'for_shipment_replicate': fields.boolean(string='To be synced for RW for Shipment - for sync only'),
                 'associate_int_name': fields.char('Name of INT associated with the IN', size=256),
+                'rw_force_seq': fields.integer('Force sequence on stock picking in Remote warehouse'),
                 }
     _defaults = {'already_replicated': True,
                  'for_shipment_replicate': False,
+                 'for_shipment_replicate': -1,
                  }
 
     def search(self, cr, uid, args, offset=None, limit=None, order=None, context=None, count=False):
@@ -384,10 +386,10 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
             
-        message_id = 2001 # Default it's an OUT message
+        message_id = 2010 # Default it's an OUT message
         already_replicated = False
         if not out: # convert to PICK --> do not resend this object again
-            message_id = 2002
+            message_id = 2011
             already_replicated = True
 
         so_po_common = self.pool.get('so.po.common')
