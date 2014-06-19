@@ -55,29 +55,6 @@ class setup_remote_warehouse(osv.osv_memory):
         if connection_manager_ids:
             server_connection_pool.browse(cr, uid, connection_manager_ids[0]).disconnect()
             
-    def _prefix_sequences(self, cr, uid, revert=False): 
-        """ 
-        Add "/RW" prefix to sequences in _sequences_to_prefix to avoid conflicts with central platform. 
-        If revert is True, this function will remove /RW from the sequence prefix instead.
-        """
-        ir_sequence_object = self.pool.get('ir.sequence')
-        
-        for sequence in self._sequences_to_prefix:
-            try:
-                sequence_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, *sequence.split('.', 1))[1]
-            except ValueError:
-                self._logger.warning('Could not find sequence with XML ID: %s' % sequence)
-                continue
-            
-            sequence_prefix = ir_sequence_object.read(cr, 1, [sequence_id], ['prefix'])[0]['prefix']
-            
-            if not revert:
-                if sequence_prefix[-3:] != 'RW/':
-                    ir_sequence_object.write(cr, 1, sequence_id, {'prefix' : '%sRW/' % sequence_prefix})
-            else:
-                if sequence_prefix[-3:] == 'RW/':
-                    ir_sequence_object.write(cr, 1, sequence_id, {'prefix' : sequence_prefix[:-3]})
-                
     def _fill_ir_model_data_dates(self, cr):
         """ 
         For each record in ir.model.data that has no sync_date or usb_sync_date
@@ -94,7 +71,6 @@ class setup_remote_warehouse(osv.osv_memory):
         """ Perform actions necessary to set up this instance as a remote warehouse """
         self._set_sync_menu_active(cr, uid, False)
         self._sync_disconnect(cr, uid)
-        self._prefix_sequences(cr, uid)
         self._set_entity_type(cr, uid, entity_id, self.remote_warehouse)
     
     def _setup_central_platform(self, cr, uid, entity_id):
@@ -117,7 +93,6 @@ class setup_remote_warehouse(osv.osv_memory):
     def _revert_remote_warehouse(self, cr, uid, entity_id):
         """ Enables sync menu, un-prefixes sequences and clears entity usb instance type """
         self._set_sync_menu_active(cr, uid, True)
-        self._prefix_sequences(cr, uid, revert=True)
         self._set_entity_type(cr, uid, entity_id, "", context=None)
     
     def _revert_central_platform(self, cr, uid, entity_id):
