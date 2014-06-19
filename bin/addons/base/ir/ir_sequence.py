@@ -116,7 +116,7 @@ class ir_sequence(osv.osv):
         assert isinstance(id, (int, long))
         cr.execute("""
             ALTER SEQUENCE ir_sequence_%03d INCREMENT BY %%s
-            """ % id, (number_increment))
+            """ % id, (number_increment,))
 
     def create(self, cr, uid, values, context=None):
         values = self._add_missing_default_values(cr, uid, values, context)
