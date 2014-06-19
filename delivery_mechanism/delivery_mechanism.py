@@ -813,18 +813,8 @@ class stock_picking(osv.osv):
 
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                 # Then we finish the good picking
-                updates = {'backorder_id': backorder_id,'cd_from_bo': values.get('cd_from_bo', False),}
-                if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
-                    updates.update({
-                        'already_replicated': False,
-                    })
-                
-                self.write(cr, uid, [picking.id], updates, context=context)
+                self.write(cr, uid, [picking.id], {'backorder_id': backorder_id,'cd_from_bo': values.get('cd_from_bo', False),}, context=context)
                 self.action_move(cr, uid, [backorder_id])
-                
-                # Create the new INT moves, force the name of INT here!!!
-                
-                
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
                 wf_service.trg_write(uid, 'stock.picking', picking.id, cr)
             else:
@@ -834,8 +824,8 @@ class stock_picking(osv.osv):
                 else:
                     self.action_move(cr, uid, [picking.id], context=context) 
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
-                    if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
-                        self.write(cr, uid, picking.id, {'already_replicated': False}, context=context)
+                    if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE:
+                        self.write(cr, uid, [picking.id], {'already_replicated': False}, context=context)
 
             if not sync_in:
                 move_obj.action_assign(cr, uid, processed_out_moves)
