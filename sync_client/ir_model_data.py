@@ -112,7 +112,7 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
 
             # get all records for the object
             cr.execute("""\
-                SELECT r.id
+                SELECT distinct r.id
                 FROM %s r
                     LEFT JOIN ir_model_data data ON data.module = 'sd' AND
                         data.model = %%s AND r.id = data.res_id

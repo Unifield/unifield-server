@@ -19,7 +19,7 @@ class DuplicateKey(KeyError):
     value = None
 
     def __init__(self, ddict, key, value):
-        self.message = message_template % (key, ddict[key], value)
+        self.message = self.message_template % (key, ddict[key], value)
         self.key = key
         self.value = value
 

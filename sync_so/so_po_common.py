@@ -433,8 +433,12 @@ class so_po_common(osv.osv_memory):
                     if existing_line not in update_lines:
                         if po_id:
                             self.pool.get('purchase.order.line').fake_unlink(cr, uid, [existing_line], context=context)
+                            #UFTP-242: Log if there is lines deleted for this PO
+                            context.update({'deleted_line_po_id': po_id})
                         elif so_id:
                             self.pool.get('sale.order.line').ask_order_unlink(cr, uid, [existing_line], context=context)
+                            #UFTP-242: Log if there is lines deleted for this SO
+                            context.update({'deleted_line_so_id': so_id})
                         else:
                             line_result.append((2, existing_line))
                 

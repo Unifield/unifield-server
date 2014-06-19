@@ -556,7 +556,15 @@ class update_received(osv.osv):
                         'run' : False,
                         'log' : tools.ustr(e)
                     }, context=context)
-                    raise
+
+                    ########################################################################
+                    #
+                    # UFTP-116: Cannot raise the exception here, because it will stop the whole sync!!!! Just set this line to become not run, OR set it run but error message
+                    # If we just set it not run, it will be again and again executed but never successfully, and thus it will remain for every not run, attempt to execute EVERYTIME!
+                    # ???? So, just set it RUN?
+                    ########################################################################
+
+#                    raise
                 else:
                     self.write(cr, uid, [update_id], {
                         'editable' : False,
@@ -582,11 +590,11 @@ class update_received(osv.osv):
             sdref_are_deleted = dict.fromkeys(sdref_update_ids.keys(), do_deletion)
             sdref_are_deleted.update(
                 obj.find_sd_ref(cr, uid, sdref_update_ids.keys(), field='is_deleted', context=context) )
-            update_id_are_deleted = dict(zip(
-                sdref_update_ids.values(),
-                sdref_are_deleted.values()
-            ))
+            update_id_are_deleted = {}
+            for key in sdref_update_ids:
+                update_id_are_deleted[sdref_update_ids[key]] = sdref_are_deleted[key]
             deleted_update_ids = [update_id for update_id, is_deleted in update_id_are_deleted.items() if is_deleted]
+
             self.write(cr, uid, deleted_update_ids, {
                 'editable' : False,
                 'run' : True,
