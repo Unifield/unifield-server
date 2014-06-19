@@ -238,8 +238,8 @@ class analytic_account(osv.osv):
     def _check_unicity(self, cr, uid, ids, context=None):
         if not context:
             context = {}
-        for account in self.browse(cr, uid, ids, context=context):
-            bad_ids = self.search(cr, uid, [('category', '=', account.category),('|'),('name', '=ilike', account.name),('code', '=ilike', account.code)])
+        for account in self.read(cr, uid, ids, ['category', 'name', 'code'], context=context):
+            bad_ids = self.search(cr, uid, [('category', '=', account.get('category', '')), ('|'), ('name', '=ilike', account.get('name', '')), ('code', '=ilike', account.get('code', ''))])
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
@@ -412,6 +412,9 @@ class analytic_account(osv.osv):
             ids = [ids]
         self._check_date(vals, context=context)
         self.set_funding_pool_parent(cr, uid, vals)
+        # UFTP-83: Error after duplication, the _constraints is not called with right params. So the _check_unicity gets wrong.
+        if vals.get('name', False):
+            cr.execute('UPDATE account_analytic_account SET name = %s WHERE id IN %s', (vals.get('name'), tuple(ids)))
         res = super(analytic_account, self).write(cr, uid, ids, vals, context=context)
         # UFTP-83: Use name as SRC value for translations (to be done after WRITE())
         if vals.get('name', False):
@@ -419,7 +422,6 @@ class analytic_account(osv.osv):
             trans_ids = trans_obj.search(cr, uid, [('name', '=', 'account.analytic.account,name'), ('res_id', 'in', ids)])
             if trans_ids:
                 cr.execute('UPDATE ir_translation SET src = %s WHERE id IN %s', (vals.get('name'), tuple(trans_ids)))
-                cr.execute('UPDATE account_analytic_account SET name = %s WHERE id IN %s', (vals.get('name'), tuple(ids)))
         return res
 
     def unlink(self, cr, uid, ids, context=None):
