@@ -2225,6 +2225,28 @@ class stock_picking(osv.osv):
                     created_ids.append(pf_id)
         return created_ids
 
+    def get_current_pick_sequence_for_rw(self, cr, uid, picking_type, context=None):
+        company_ids = self.pool.get('res.company').search(cr, uid, [], context=context)
+        cr.execute('SELECT id FROM ir_sequence WHERE code=\'' + picking_type + '\' and active=true ORDER BY id')        
+        res = cr.dictfetchone()
+        if res and res['id']:
+            cr.execute("SELECT currval('ir_sequence_%03d')" % res['id'])
+            res = cr.dictfetchone()
+            if res and res['currval']:
+                return res['currval']
+        return False
+
+    def alter_sequence_for_rw_pick(self, cr, uid, picking_type, value_to_force, context=None):
+        if not self._get_usb_entity_type(cr, uid, context):
+            return
+        
+        cr.execute('SELECT id FROM ir_sequence WHERE code=\'' + picking_type + '\' and active=true ORDER BY id')
+        res = cr.dictfetchone()
+        if res and res['id']:
+            seq = 'ir_sequence_%03d' % res['id']
+            cr.execute("ALTER SEQUENCE " + seq +" RESTART WITH " + str(value_to_force))
+        return
+
     def create(self, cr, uid, vals, context=None):
         '''
         creation of a stock.picking of subtype 'packing' triggers
@@ -2308,7 +2330,13 @@ class stock_picking(osv.osv):
             new_packing = self.browse(cr, uid, new_packing_id, context=context)
             if new_packing and ((new_packing.type == 'out' and new_packing.subtype == 'picking' and new_packing.name.find('-') == -1) or
                     (new_packing.type == 'in' and new_packing.subtype == 'standard')):
-                self.write(cr, uid, [new_packing_id], {'already_replicated': False}, context=context)
+                for_update = {'already_replicated':False}
+                
+                seq_obj_name =  'stock.picking.' + vals['type']
+                sequence_id = self.get_current_pick_sequence_for_rw(cr, uid, seq_obj_name, context)
+                if sequence_id:
+                    for_update['rw_force_seq'] = sequence_id
+                self.write(cr, uid, [new_packing_id], for_update, context=context)
 
         if 'subtype' in vals and vals['subtype'] == 'packing':
             # creation of a new packing
