@@ -446,9 +446,11 @@ class shipment(osv.osv):
                     'shipment_proc_id': wizard.id,
                     'draft_packing_id': picking.id,
                 })
-
+                
                 new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
-
+                if picking_obj._get_usb_entity_type(cr, uid) == picking_obj.CENTRAL_PLATFORM:
+                        picking_obj.write(cr, uid, [new_packing_id], {'already_replicated': True}, context=context)
+                
                 # Reset context
                 context.update({
                     'keep_prodlot': False,
@@ -468,7 +470,7 @@ class shipment(osv.osv):
             self.log(cr, uid, shipment.id, _('The new Shipment %s has been created.') % (shipment_name,))
             # The shipment is automatically shipped, no more pack states in between.
             self.ship(cr, uid, [shipment_id], context=context)
-
+        picking_obj.browse(cr, uid, new_packing_id, context=context)['already_replicated']
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         view_id = view_id and view_id[1] or False
 
@@ -966,7 +968,7 @@ class shipment(osv.osv):
                 pick_obj.write(cr, uid, [new_packing_id], {'origin': packing.origin}, context=context)
                 new_packing = pick_obj.browse(cr, uid, new_packing_id, context=context)
                 
-                if new_packing.move_lines and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
+                if new_packing.move_lines and pick_obj._get_usb_entity_type(cr, uid) == pick_obj.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
                     pick_obj.write(cr, uid, [new_packing_id], {'for_shipment_replicate': True}, context=context)
                 
                 # update the shipment_date of the corresponding sale order if the date is not set yet - with current date
@@ -3441,22 +3443,7 @@ class stock_picking(osv.osv):
                 'keepLineNumber': True,
                 'allow_copy': True,
             })
-
-            '''
-            
-            
-                !!!!!!!!!!!!!!!!!!!!!!!!!
-            
-            
-                CHECK WITH QUENTIN WHY THIS FLAG IS SET, WHICH CAUSED THE PROBLEM OF NOT CREATE ANY SHIPMENT IN SYNC RW!!!!!!
-                (FROM DUY FOR REMOTE WAREHOUSE DEV: 14.06.2014)
-
-                !!!!!!!!!!!!!!!!!!!!!!!!!
-                
-                
-            '''
             context['offline_synchronization'] = False
-            
             # Create the packing with pack_values and the updated context
             new_packing_id = self.copy(cr, uid, picking.id, pack_values, context=context)
             if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
