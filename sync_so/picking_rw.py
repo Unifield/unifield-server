@@ -118,7 +118,7 @@ class stock_picking(osv.osv):
                 }
     _defaults = {'already_replicated': True,
                  'for_shipment_replicate': False,
-                 'for_shipment_replicate': -1,
+                 'rw_force_seq': -1,
                  }
 
     def search(self, cr, uid, args, offset=None, limit=None, order=None, context=None, count=False):
