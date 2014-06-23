@@ -2230,10 +2230,10 @@ class stock_picking(osv.osv):
         cr.execute('SELECT id FROM ir_sequence WHERE code=\'' + picking_type + '\' and active=true ORDER BY id')        
         res = cr.dictfetchone()
         if res and res['id']:
-            cr.execute("SELECT currval('ir_sequence_%03d')" % res['id'])
+            cr.execute("SELECT last_value from ir_sequence_%03d" % res['id'])
             res = cr.dictfetchone()
-            if res and res['currval']:
-                return res['currval']
+            if res and res['last_value']:
+                return res['last_value']
         return False
 
     def alter_sequence_for_rw_pick(self, cr, uid, picking_type, value_to_force, context=None):
@@ -2332,10 +2332,18 @@ class stock_picking(osv.osv):
                     (new_packing.type == 'in' and new_packing.subtype == 'standard')):
                 for_update = {'already_replicated':False}
                 
-                seq_obj_name =  'stock.picking.' + vals['type']
-                sequence_id = self.get_current_pick_sequence_for_rw(cr, uid, seq_obj_name, context)
-                if sequence_id:
-                    for_update['rw_force_seq'] = sequence_id
+                '''
+                    Only get the current sequence for the IN object at the moment, as we still have problem with the naming of documents functionally
+                    A proper functional solution for this should be found, then we will look for technical solution to apply for all cases!
+                    
+                    Please refer to the code and explanation in sync_so/in_rw.py, method usb_replicate_in(), line 90 for further information on this issue
+                
+                ''' 
+                if new_packing.type == 'in': 
+                    seq_obj_name =  'stock.picking.' + vals['type']
+                    sequence_id = self.get_current_pick_sequence_for_rw(cr, uid, seq_obj_name, context)
+                    if sequence_id:
+                        for_update['rw_force_seq'] = sequence_id
                 self.write(cr, uid, [new_packing_id], for_update, context=context)
 
         if 'subtype' in vals and vals['subtype'] == 'packing':
