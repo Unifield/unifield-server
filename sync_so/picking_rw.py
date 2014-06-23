@@ -38,10 +38,10 @@ class shipment(osv.osv):
 
     _columns = {
         'already_rw_delivered': fields.boolean(
-            string='Already delivered through the RW - for sync. only',
+            string='Already delivered through the RW - for rw sync. only',
         ),
         'already_rw_validated': fields.boolean(
-            string='Already validated through the RW - for sync. only',
+            string='Already validated through the RW - for rw sync. only',
         ),
     }
 
@@ -603,7 +603,6 @@ class stock_picking(osv.osv):
             line_number = sline['line_number']
             
             #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
-            #### WORK IN PROGRESS
             
             wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
             for mline in wizard.move_ids:
@@ -689,7 +688,6 @@ class stock_picking(osv.osv):
             line_number = sline['line_number']
             
             #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
-            #### WORK IN PROGRESS
             
             wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
             for mline in wizard.move_ids:
@@ -778,7 +776,6 @@ class stock_picking(osv.osv):
             line_number = sline['line_number']
             
             #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
-            #### WORK IN PROGRESS
             
             wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
             for mline in wizard.move_ids:
@@ -879,7 +876,6 @@ class stock_picking(osv.osv):
             line_number = sline['line_number']
             
             #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
-            #### WORK IN PROGRESS
             
             for mline in wizard.move_ids:
                 if mline.line_number == line_number:
@@ -967,23 +963,6 @@ class stock_picking(osv.osv):
         wizard_line_obj = self.pool.get('shipment.family.processor')
         proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
         ship_proc_obj.create_lines(cr, uid, proc_id, context=context)        
-
-        #### CHECK THE CASE WHERE ONE SHIPMENT WIZARD HAS MORE THAN ONE FAMILIES
-        #### WORK IN PROGRESS
-
-
-        '''
-        
-        
-        
-        THIS PART STILL NEEDS TO BE CHECKED VERY CAREFULLY HOW TO CALCULATE THE NUMBER OF PACKS, AS HERE IT'S TOO COMPLICATED TO GET THE WRIGHT ONE!
-        
-        NEED FURTHER INVESTIGATION ON THIS SUBJECT!
-        
-        NOT 100% SURE IT IS CORRECT ALL THE TIME!
-        
-         
-        '''
 
         ofp={}
         for sline in picking_lines:

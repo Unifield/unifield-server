@@ -85,12 +85,18 @@ class stock_picking(osv.osv):
                     return message
                 pick_id = self.create(cr, uid, header_result , context=context)
 
-                # Update the sequence for the IN object in Remote Warehouse to have the same value as of in CP
+                '''
+                    Update the sequence for the IN object in Remote Warehouse to have the same value as of in CP
+                    This is currently just a temporary solution. A proper solution needs to be found for all cases (OUT, PICK, PPS, IN, INT)
+                    Please refer to the code that retrieve the sequence of the newly created IN at CP and stored in the field 'rw_force_seq'
+                    in this class: msf_outgoing/msf_outgoing.py, method: stock.picking.create(), line 2337
+                     
+                '''
                 if 'rw_force_seq' in pick_dict and pick_dict.get('rw_force_seq', False):
                     self.alter_sequence_for_rw_pick(cr, uid, 'stock.picking.in', pick_dict.get('rw_force_seq') + 1, context)
                 
                 
-                message = "The PICK: " + pick_name + " has been well replicated in " + cr.dbname
+                message = "The IN: " + pick_name + " has been well replicated in " + cr.dbname
             else:
                 message = "Sorry, the case without the origin PO is not yet available!"
                 self._logger.info(message)
