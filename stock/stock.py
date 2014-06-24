@@ -805,6 +805,11 @@ class stock_picking(osv.osv):
             move_ids = [x.id for x in pick.move_lines if x.state in ['confirmed','waiting']]
             move_obj.force_assign(cr, uid, move_ids)
             wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
+            
+            '''
+            UF-2377: AGAIN IN RW, THE CALL TO trg_write not working!!!!!!! 
+            '''
+            self.write(cr, uid,  pick.id, {'state': 'assigned'}) 
         return True
 
     def draft_force_assign(self, cr, uid, ids, *args):
