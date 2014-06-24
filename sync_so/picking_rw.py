@@ -100,6 +100,43 @@ class shipment(osv.osv):
 
 shipment()
 
+class stock_move(osv.osv):
+    # This is to treat the location requestor on Remote warehouse instance if IN comes from an IR
+    _inherit = 'stock.move'
+    _columns = {'location_requestor_rw': fields.many2one('stock.location', 'Location Requestor For RW-IR', required=False, ondelete="cascade"),
+                }
+
+    def create(self, cr, uid, vals, context=None):
+        if not context:
+            context = {}
+        if not vals:
+            vals = {}
+
+        # Save the location requestor from IR into the field location_requestor_rw if exists
+        res = super(stock_move, self).create(cr, uid, vals, context=context)
+        move = self.browse(cr, uid, [res], context=context)[0]
+        if move.purchase_line_id:
+            proc = move.purchase_line_id.procurement_id
+            if proc and proc.sale_order_line_ids and proc.sale_order_line_ids[0].order_id and proc.sale_order_line_ids[0].order_id.procurement_request:
+                location_dest_id = proc.sale_order_line_ids[0].order_id.location_requestor_id.id
+                cr.execute('update stock_move set location_requestor_rw=%s where id=%s', (location_dest_id, move.id))
+        
+        return res
+
+    def _get_location_for_internal_request(self, cr, uid, context=None, **kwargs):
+        '''
+            If it is a remote warehouse instance, then take the location requestor from IR
+        '''
+        location_dest_id = super(stock_move, self)._get_location_for_internal_request(cr, uid, context=context, **kwargs)
+        type = self.pool.get('sync.client.entity').get_entity(cr, uid).usb_instance_type
+        if type == 'remote_warehouse':
+            move = kwargs['move']
+            if move.location_requestor_rw:
+                return move.location_requestor_rw.id
+        # for any case, just return False and let the caller to pick the normal loc requestor
+        return False
+
+stock_move()
 
 class stock_picking(osv.osv):
     '''
@@ -424,6 +461,55 @@ class stock_picking(osv.osv):
                     move_obj.write(cr, uid, mline.id, vals, context)
                     break
         return True
+
+    def usb_replicate_int_ir(self, cr, uid, source, out_info, context=None):
+        '''
+        '''
+        if context is None:
+            context = {}
+
+        pick_dict = out_info.to_dict()
+        pick_name = pick_dict['name']
+        origin = pick_dict['origin']
+            
+        self._logger.info("+++ RW: Replicate the INT from an IR: %s from %s to %s" % (pick_name, source, cr.dbname))
+        so_po_common = self.pool.get('so.po.common')
+        move_obj = self.pool.get('stock.move')
+        pick_tools = self.pool.get('picking.tools')
+
+        rw_type = self._get_usb_entity_type(cr, uid)
+        if rw_type == self.REMOTE_WAREHOUSE:
+            if origin:
+                header_result = {}
+                self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
+                picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+                header_result['move_lines'] = picking_lines
+                header_result['already_replicated'] = True
+                
+                # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
+                existing_pick = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('type', '=', 'internal'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
+                if existing_pick:
+                    message = "Sorry, the INT: " + pick_name + " existed already in " + cr.dbname
+                    self._logger.info(message)
+                    return message
+                pick_id = self.create(cr, uid, header_result , context=context)
+                
+                if 'rw_force_seq' in pick_dict and pick_dict.get('rw_force_seq', False):
+                    self.alter_sequence_for_rw_pick(cr, uid, 'stock.picking.internal', pick_dict.get('rw_force_seq') + 1, context)
+                
+                
+                message = "The INT: " + pick_name + " has been well replicated in " + cr.dbname
+            else:
+                message = "Sorry, the case without the origin FO or IR is not yet available!"
+                self._logger.info(message)
+                raise Exception, message
+        else:
+            message = "Sorry, the given operation is only available for Remote Warehouse instance!"
+            
+        self._logger.info(message)
+        return message
+
+
             
     def usb_convert_pick_to_out(self, cr, uid, source, out_info, context=None):
         ''' Convert PICK to OUT, normally from RW to CP 
