@@ -72,7 +72,7 @@ class shipment(osv.osv):
         if rw_type == pick_obj.CENTRAL_PLATFORM:
             ship_ids = self.search(cr, uid, [('name', '=', ship_name), ('state', '=', state)], context=context)
             if not ship_ids:
-                message = _("Sorry, no Shipment with the name %s found !") % ship_name
+                message = _("Sorry, no Shipment with the name %s in state %s found !") % (ship_name, state)
             else:
                 if state == 'done':
                     self.set_delivered(cr, uid, ship_ids, context=context)
@@ -860,33 +860,10 @@ class stock_picking(osv.osv):
         '''
         Prepare the wizard for 2 steps of creating packing: pack family and size/weight of the pack
         '''
-        
-        # Objects
-        picking_obj = self.pool.get('stock.picking')
-        sequence_obj = self.pool.get('ir.sequence')
-
         wizard_obj = self.pool.get('ppl.processor')
-        wizard_line_obj = self.pool.get('ppl.move.processor')
         proc_id = wizard_obj.create(cr, uid, {'picking_id': pick_id}, context=context)
-        wizard_obj.create_lines(cr, uid, proc_id, context=context)        
-
-        wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
-        for sline in picking_lines:
-            sline = sline[2]
-            line_number = sline['line_number']
-            
-            #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
-            
-            for mline in wizard.move_ids:
-                if mline.line_number == line_number:
-                    # match the line, copy the content of picking line into the wizard line
-                    vals = {'product_id': sline['product_id'], 'quantity': sline['original_qty_partial'],'location_id': sline['location_id'],
-                            'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
-                            }
-                    
-                    wizard_line_obj.write(cr, uid, mline.id, vals, context)
-                    break
-
+        wizard_obj.create_lines(cr, uid, proc_id, context=context)
+                
         self.do_ppl_step1(cr, uid, [proc_id], context=context)
         self.do_ppl_step2(cr, uid, [proc_id], context=context)
         return True
