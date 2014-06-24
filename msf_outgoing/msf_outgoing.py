@@ -2331,7 +2331,8 @@ class stock_picking(osv.osv):
             # read the new object
             new_packing = self.browse(cr, uid, new_packing_id, context=context)
             if new_packing and ((new_packing.type == 'out' and new_packing.subtype == 'picking' and new_packing.name.find('-') == -1) or
-                    (new_packing.type == 'in' and new_packing.subtype == 'standard')):
+                    (new_packing.type == 'in' and new_packing.subtype == 'standard') or 
+                    (new_packing.type == 'internal' and new_packing.subtype == 'standard' and new_packing.sale_id)):
                 for_update = {'already_replicated':False}
                 
                 '''
@@ -2341,7 +2342,7 @@ class stock_picking(osv.osv):
                     Please refer to the code and explanation in sync_so/in_rw.py, method usb_replicate_in(), line 90 for further information on this issue
                 
                 ''' 
-                if new_packing.type == 'in': 
+                if new_packing.type in ('in', 'internal'): 
                     seq_obj_name =  'stock.picking.' + vals['type']
                     sequence_id = self.get_current_pick_sequence_for_rw(cr, uid, seq_obj_name, context)
                     if sequence_id:
@@ -2907,8 +2908,21 @@ class stock_picking(osv.osv):
                 if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type != 'return'):
                     self.action_move(cr, uid, [picking.id])
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
+                    
+                    '''
+                    UF-2377: AGAIN IN RW, THE CALL TO trg_write not working!!!!!!!???????? 
+                    '''
+                    
+                    update_vals = {'state':'done', 'date_done':time.strftime('%Y-%m-%d %H:%M:%S')}
+                    if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
+                        update_vals.update({'already_replicated': False})
+                    self.write(cr, uid, picking.id, update_vals)
+                    
                     # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
                     self._hook_create_sync_messages(cr, uid, [picking.id], context)
+                    
+                    
+                    
 
                 delivered_pack_id = picking.id
 
