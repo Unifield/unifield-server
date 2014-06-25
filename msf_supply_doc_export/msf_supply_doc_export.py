@@ -343,14 +343,29 @@ class po_follow_up_mixin(object):
      
     def getHeaderLine(self,obj):
         ''' format the header line for each PO object '''
-        po_header = 'Order ref: ' + obj.name
-        po_header += ' status: ' + obj.state
-        po_header += ' created: ' 
-        po_header += ' Req del date: ' + obj.delivery_requested_date
-        po_header += ' Confirmed del date: ' + obj.delivery_confirmed_date
-        po_header += ' Nb items: ' 
-        po_header += ' Estimated amount: ' + str(obj.amount_total)
+        states = {'sourced': 'Sourced', 'confirmed': 'Validated', 'confirmed_wait': 'Confirmed (waiting)', 'approved': 'Confirmed' }
+        po_header = []
+        po_header.append('Order ref: ' + obj.name)
+        po_header.append('status: ' + states[obj.state])
+        po_header.append('created: ' + obj.date_order)
+        po_header.append('Confirmed del date: ' + obj.delivery_confirmed_date)
+        po_header.append('Nb items: ' + str(len(obj.order_line)))
+        po_header.append('Estimated amount: ' + str(obj.amount_total))
         return po_header
+
+    def getHeaderLine2(self,obj):
+        ''' format the header line for each PO object '''
+        states = {'sourced': 'Sourced', 'confirmed': 'Validated', 'confirmed_wait': 'Confirmed (waiting)', 'approved': 'Confirmed' }
+        po_header = {}
+        po_header['ref'] = 'Order ref: ' + obj.name
+        po_header['status'] = 'status: ' + states[obj.state]
+        po_header['created'] = 'created: ' + obj.date_order
+        po_header['deldate'] = 'Confirmed del date: ' + obj.delivery_confirmed_date
+        po_header['items'] = 'Nb items: ' + str(len(obj.order_line))
+        po_header['amount'] = 'Estimated amount: ' + str(obj.amount_total)
+        line = po_header['ref'] + po_header['status'] + po_header['created'] + po_header['deldate'] + po_header['items'] + po_header['amount'] 
+        return line
+
     
     def getReportHeaderLine1(self):
         return self.datas.get('report_header')[0]
@@ -506,6 +521,7 @@ class parser_po_follow_up_xls(po_follow_up_mixin, report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'getHeaderLine': self.getHeaderLine,
+            'getHeaderLine2': self.getHeaderLine2,
             'getReportHeaderLine1': self.getReportHeaderLine1,
             'getReportHeaderLine2': self.getReportHeaderLine2,
             'getInlineIN': self.getInlineIN,
@@ -535,6 +551,7 @@ class parser_po_follow_up_rml(po_follow_up_mixin, report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'getPOLines': self.getPOLines,
+            'getHeaderLine2': self.getHeaderLine2,
             'getHeaderLine': self.getHeaderLine,
             'getReportHeaderLine1': self.getReportHeaderLine1,
             'getReportHeaderLine2': self.getReportHeaderLine2,

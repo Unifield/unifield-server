@@ -53,7 +53,7 @@
       </tr>
       <tr>
         <td>
-      		<para style="P2">[[getReportHeaderLine2()]]</para>
+         <para style="P2">[[getReportHeaderLine2()]]</para>
       	</td>
       </tr>	      		
     </blockTable>
@@ -65,7 +65,7 @@
     <blockTable colWidths="900.0" style="Tableau1">
     <tr>
        <td>
-    	  <para style="P2">[[getHeaderLine(o)]]</para>
+    	  <para style="P2">[[getHeaderLine2(o)]]</para>
        </td>
     </tr>     	  
      </blockTable>

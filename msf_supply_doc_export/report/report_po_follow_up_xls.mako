@@ -82,15 +82,16 @@
 <Row></Row>
 
 % for o in objects:
-    <Row>
-    	<Cell ss:StyleID="header"><Data ss:Type="String">${getHeaderLine(o) or '' | x}</Data></Cell>
-    </Row>
+    % for header in getHeaderLine(o):
+      <Row>
+    	  <Cell ss:StyleID="header"><Data ss:Type="String">${header |x}</Data></Cell>
+      </Row>
+    %endfor
     
-    
-    <Row>
-    	% for header in getPOLineHeaders():
-    		<Cell ss:StyleID="header"><Data ss:Type="String">${header}</Data></Cell>
-    	% endfor
+    <Row> 
+       % for header in getPOLineHeaders():
+    	    <Cell ss:StyleID="header"><Data ss:Type="String">${header}</Data></Cell>
+       % endfor       
     </Row>
     
     % for line in getPOLines(o.id):

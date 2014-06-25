@@ -18,7 +18,7 @@
 				<group col="4" colspan="6">
 					<label string="" colspan="1"/>
 					<button special="cancel" string="Cancel" icon="gtk-cancel" colspan="1"/>
-					<button name="button_validate" type="object" string="Validate" icon="gtk-ok" colspan="1"/>
+					<button name="button_validate" type="object" string="Generate report" icon="gtk-ok" colspan="1"/>
 				</group>
 			</form>
 		</field>
