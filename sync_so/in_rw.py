@@ -84,6 +84,7 @@ class stock_picking(osv.osv):
                     self._logger.info(message)
                     return message
                 pick_id = self.create(cr, uid, header_result , context=context)
+                self.draft_force_assign(cr, uid, [pick_id]) # Fixed by JF: To send the IN to the right state 
 
                 '''
                     Update the sequence for the IN object in Remote Warehouse to have the same value as of in CP
@@ -273,15 +274,15 @@ class stock_picking(osv.osv):
 
         # for the last Shipment of an FO, no new INcoming shipment will be created --> same value as pick_id
         new_picking = self.do_incoming_shipment(cr, uid, in_processor, context)
-        
         # we should also get the newly created INT object for this new picking, the force the name of it as what received from the RW
         if 'associate_int_name' in header_result:
             associate_int_name = header_result.get('associate_int_name')
+            origin = header_result.get('origin')
             old_ref_name = self.browse(cr, uid, new_picking, context=context)['associate_int_name']
-            int_ids = self.search(cr, uid, [('name', '=', old_ref_name), ('type', '=', 'internal'), ('subtype', '=', 'standard')], context=context)
+            int_ids = self.search(cr, uid, [('origin', '=', origin),('name', '=', old_ref_name), ('type', '=', 'internal'), ('subtype', '=', 'standard')], context=context)
             if int_ids:
-                self.write(cr, uid, int_ids, {'name': associate_int_name}, context)
-                self.write(cr, uid, pick_id, {'associate_int_name': associate_int_name}, context)
+                self.write(cr, uid, int_ids[0], {'name': associate_int_name}, context)
+                self.write(cr, uid, new_picking, {'associate_int_name': associate_int_name}, context)
         
         # Set the backorder reference to the IN !!!! THIS NEEDS TO BE CHECKED WITH SUPPLY PM!
         if new_picking != pick_id:
