@@ -2856,9 +2856,12 @@ class stock_picking(osv.osv):
                     move_obj.write(cr, uid, [move.id], values, context=context)
                     processed_moves.append(move.id)
 
+            # We check if all stock moves and all quantities are processed
+            # If not, create a backorder
             need_new_picking = False
-            for move_vals in move_data.values():
-                if move_vals['original_qty'] != move_vals['processed_qty']:
+            for move in picking.move_lines:
+                if not move_data.get(move.id, False) or \
+                   move_data[move.id]['original_qty'] != move_data[move.id]['processed_qty']:
                     need_new_picking = True
                     break
 

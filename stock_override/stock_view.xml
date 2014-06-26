@@ -52,6 +52,9 @@
                 <xpath expr="/form//field[@name='partner_id2']" position="attributes">
                     <attribute name="domain">[('customer', '=', True)]</attribute>
                 </xpath>
+                <xpath expr="/form//field[@name='move_lines']/tree//field[@name='location_id']" position="after">
+                    <field name="location_dest_id" readonly="1" />
+                </xpath>
             </field>
         </record>
 
