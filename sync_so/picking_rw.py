@@ -134,7 +134,7 @@ class stock_move(osv.osv):
             if move.location_requestor_rw:
                 return move.location_requestor_rw.id
         # for any case, just return False and let the caller to pick the normal loc requestor
-        return False
+        return location_dest_id
 
 stock_move()
 
@@ -539,7 +539,7 @@ class stock_picking(osv.osv):
                     context['rw_backorder_name'] = pick_name
                     # Before converting to OUT, the PICK needs to be updated as what sent from the RW
                     self.convert_to_standard(cr, uid, pick_ids, context)
-                    self.write(cr, uid, pick_ids, {'name': pick_name, 'already_replicated': True, 'state': 'assigned'}, context=context)
+                    self.write(cr, uid, pick_ids[0], {'name': pick_name, 'already_replicated': True, 'state': 'assigned'}, context=context)
                     message = "The PICK " + old_name + " has been converted to OUT " + pick_name
                 else:
                     pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('state', '=', 'assigned')], context=context)
@@ -588,7 +588,7 @@ class stock_picking(osv.osv):
                     context['rw_backorder_name'] = pick_name
                     # Before converting to OUT, the PICK needs to be updated as what sent from the RW
                     self.convert_to_pick(cr, uid, pick_ids, context)
-                    self.write(cr, uid, pick_ids, {'name': pick_name, 'already_replicated': True, 'state': 'assigned'}, context=context)
+                    self.write(cr, uid, pick_ids[0], {'name': pick_name, 'already_replicated': True, 'state': 'assigned'}, context=context)
                     message = "The OUT: " + old_name + " has been converted back to PICK: " + pick_name
                 else:
                     # If the OUT has already been converted back to PICK before, then just inform this fact
