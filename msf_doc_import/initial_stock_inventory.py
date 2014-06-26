@@ -752,9 +752,13 @@ class initial_stock_inventory_line(osv.osv):
             hidden_perishable_mandatory = product.perishable
 
         location_id = vals.get('location_id')
+        
         batch = vals.get('prodlot_name')
+        batch_numer = vals.get('prod_lot_id', False)
+        if batch_numer and not batch: # for the sync case, sometime only the prodlot id is given but not the name, so search for name
+            batch = self.pool.get('stock.production.lot').browse(cr, uid, batch_numer, context=context).name
+            vals.update({'prodlot_name':batch})
         expiry = vals.get('expiry_date')
-
 
         if not location_id:
             comment += _('Location is missing.\n')
