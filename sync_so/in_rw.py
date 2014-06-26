@@ -163,6 +163,55 @@ class stock_picking(osv.osv):
         self._logger.info(message)
         return message
 
+
+    def usb_replicate_int_ir(self, cr, uid, source, out_info, context=None):
+        '''
+        '''
+        if context is None:
+            context = {}
+
+        pick_dict = out_info.to_dict()
+        pick_name = pick_dict['name']
+        origin = pick_dict['origin']
+            
+        self._logger.info("+++ RW: Replicate the INT from an IR: %s from %s to %s" % (pick_name, source, cr.dbname))
+        so_po_common = self.pool.get('so.po.common')
+        move_obj = self.pool.get('stock.move')
+        pick_tools = self.pool.get('picking.tools')
+
+        rw_type = self._get_usb_entity_type(cr, uid)
+        if rw_type == self.REMOTE_WAREHOUSE:
+            if origin:
+                header_result = {}
+                self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
+                picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+                header_result['move_lines'] = picking_lines
+                header_result['already_replicated'] = True
+                
+                # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
+                existing_pick = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('type', '=', 'internal'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
+                if existing_pick:
+                    message = "Sorry, the INT: " + pick_name + " existed already in " + cr.dbname
+                    self._logger.info(message)
+                    return message
+                pick_id = self.create(cr, uid, header_result , context=context)
+                self.draft_force_assign(cr, uid, [pick_id]) # Fixed by JF: To send the IN to the right state 
+                
+                if 'rw_force_seq' in pick_dict and pick_dict.get('rw_force_seq', False):
+                    self.alter_sequence_for_rw_pick(cr, uid, 'stock.picking.internal', pick_dict.get('rw_force_seq') + 1, context)
+                
+                
+                message = "The INT: " + pick_name + " has been well replicated in " + cr.dbname
+            else:
+                message = "Sorry, the case without the origin FO or IR is not yet available!"
+                self._logger.info(message)
+                raise Exception, message
+        else:
+            message = "Sorry, the given operation is only available for Remote Warehouse instance!"
+            
+        self._logger.info(message)
+        return message
+
     def rw_do_create_partial_in(self, cr, uid, pick_id, header_result, pack_data, context=None):
         # Objects
         processor_obj = self.pool.get('stock.incoming.processor')
