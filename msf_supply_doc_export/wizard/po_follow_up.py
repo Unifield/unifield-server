@@ -25,6 +25,7 @@ from tools.translate import _
 from lxml import etree
 
 import time
+from datetime import datetime
 
 
 class po_follow_up(osv.osv_memory):
@@ -37,6 +38,9 @@ class po_follow_up(osv.osv_memory):
          ('confirmed_wait', 'Confirmed (waiting)'),
          ('approved', 'Confirmed'),               
     ]
+
+    STATES = {'sourced': 'Sourced','confirmed': 'Validated','confirmed_wait': 'Confirmed waiting','approved':'Confirmed'}
+
     
     _columns = {
          'po_id':fields.many2one('purchase.order',string="Order Reference", help="Unique number of the Purchase Order. Optional", required=False),
@@ -59,6 +63,8 @@ class po_follow_up(osv.osv_memory):
         wiz = self.browse(cr,uid,ids)[0]
         
         domain = []
+        states = {'sourced': 'Sourced','confirmed': 'Validated','confirmed_wait': 'Confirmed waiting','approved':'Confirmed'}
+        report_parms =  {'title':'MULTIPLE PURCHASE ORDER FOLLOW-UP','run_date': time.strftime("%d/%m/%Y"), 'date_from': '', 'date_thru': '','state': '', 'supplier':'' }
          
         # PO number
         if wiz.po_id:
@@ -67,19 +73,25 @@ class po_follow_up(osv.osv_memory):
         # Status
         if wiz.state:
             domain.append(('state','=', wiz.state))
+            report_parms['state'] = states[wiz.state]
         else:
             domain.append(('state','in',['sourced','confirmed','confirmed_wait','approved']))
             
         # Dates
         if wiz.po_date_from:
             domain.append(('date_order','>=',wiz.po_date_from))
-            
+            tmp = datetime.strptime(wiz.po_date_from,"%Y-%m-%d")
+            report_parms['date_from'] = tmp.strftime("%d/%m/%Y")
+
         if wiz.po_date_thru:
             domain.append(('date_order','<=',wiz.po_date_thru))
-            
+            tmp = datetime.strptime(wiz.po_date_thru,"%Y-%m-%d")
+            report_parms['date_thru'] = tmp.strftime("%d/%m/%Y")
+
         # Supplier
         if wiz.partner_id:
             domain.append(('partner_id','=', wiz.partner_id.id))
+            report_parms['supplier'] = wiz.partner_id.name  
             
         # Supplier Reference
         if wiz.project_ref:
@@ -99,12 +111,12 @@ class po_follow_up(osv.osv_memory):
         report_header_line2 = ''
         if wiz.partner_id:
             report_header_line2 += wiz.partner_id.name
-        report_header_line2 += '  Report run date: ' + time.strftime("%d/%m/%Y")
+        report_header_line2 += '  Report run date: ' + time.strftime("%d/%m/%Y")  #TODO to be removed
         if wiz.po_date_from:
-            report_header_line2 += wiz.po_date_from.strftime("%d/%m/%Y") + ' - ' + wiz.po_date_thru.strftime("%d/%m/%Y")
+            report_header_line2 += wiz.po_date_from + ' - ' + wiz.po_date_thru
         report_header.append(report_header_line2)
       
-        datas = {'ids': po_ids, 'report_header': report_header}       
+        datas = {'ids': po_ids, 'report_header': report_header, 'report_parms': report_parms}       
         if wiz.export_format == 'xls':
             report_name = 'po.follow.up_xls'
         else:

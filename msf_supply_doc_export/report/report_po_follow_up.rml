@@ -51,26 +51,33 @@
           <para style="P1">[[getReportHeaderLine1()]]</para>
         </td>
       </tr>
-      <tr>
-        <td>
-         <para style="P2">[[getReportHeaderLine2()]]</para>
-      	</td>
-      </tr>	      		
     </blockTable>
+    <blockTable colWidths="200.0,150.0,150.0,200.0,200.0" style="Tableau3">
+      <tr>
+        <td><para style="P2">Report Run Date: [[getRunParmsRML('run_date')]]</para></td>
+        <td><para style="P2">PO Date From: [[getRunParmsRML('date_from')]]</para></td>
+        <td><para style="P2">PO Date To: [[getRunParmsRML('date_thru')]]</para></td>
+        <td><para style="P2">PO State: [[getRunParmsRML('state')]]</para></td>
+        <td><para style="P2">Supplier: [[getRunParmsRML('supplier')]]</para></td>	      		
+      </tr>    
+    </blockTable>
+
     <para style="P2">
       <font color="white"> </font>
     </para>
     
     <para>[[repeatIn(objects,'o')]]</para>
-    <blockTable colWidths="900.0" style="Tableau1">
+    <blockTable colWidths="150.0,150.0,150.0,150.0,150.0,150.0" style="Tableau3">
     <tr>
-       <td>
-    	  <para style="P2">[[getHeaderLine2(o)]]</para>
-       </td>
+         <td><para style="P2">[[ getHeaderLine(o)[0] ]]</para></td>
+         <td><para style="P2">[[ getHeaderLine(o)[1] ]]</para></td>
+         <td><para style="P2">[[ getHeaderLine(o)[2] ]]</para></td>
+         <td><para style="P2">[[ getHeaderLine(o)[3] ]]</para></td>
+         <td><para style="P2">[[ getHeaderLine(o)[4] ]]</para></td>
+         <td><para style="P2">[[ getHeaderLine(o)[5] ]]</para></td>
     </tr>     	  
      </blockTable>
     <blockTable colWidths="25.0,175.0,160.0,40.0,50.0,50.0,100.0,100.0,50.0,50.0,50.0,50.0" style="Tableau3" >
-
       <tr>
         <td>
           <para style="P3">Item</para>

@@ -346,11 +346,17 @@ class po_follow_up_mixin(object):
         states = {'sourced': 'Sourced', 'confirmed': 'Validated', 'confirmed_wait': 'Confirmed (waiting)', 'approved': 'Confirmed' }
         po_header = []
         po_header.append('Order ref: ' + obj.name)
-        po_header.append('status: ' + states[obj.state])
-        po_header.append('created: ' + obj.date_order)
+        po_header.append('Status: ' + states[obj.state])
+        po_header.append('Created: ' + obj.date_order)
         po_header.append('Confirmed del date: ' + obj.delivery_confirmed_date)
         po_header.append('Nb items: ' + str(len(obj.order_line)))
         po_header.append('Estimated amount: ' + str(obj.amount_total))
+        po_header.append('')
+        po_header.append('')
+        po_header.append('')
+        po_header.append('')
+        po_header.append('')
+        po_header.append('')
         return po_header
 
     def getHeaderLine2(self,obj):
@@ -358,8 +364,8 @@ class po_follow_up_mixin(object):
         states = {'sourced': 'Sourced', 'confirmed': 'Validated', 'confirmed_wait': 'Confirmed (waiting)', 'approved': 'Confirmed' }
         po_header = {}
         po_header['ref'] = 'Order ref: ' + obj.name
-        po_header['status'] = 'status: ' + states[obj.state]
-        po_header['created'] = 'created: ' + obj.date_order
+        po_header['status'] = 'Status: ' + states[obj.state]
+        po_header['created'] = 'Created: ' + obj.date_order
         po_header['deldate'] = 'Confirmed del date: ' + obj.delivery_confirmed_date
         po_header['items'] = 'Nb items: ' + str(len(obj.order_line))
         po_header['amount'] = 'Estimated amount: ' + str(obj.amount_total)
@@ -368,17 +374,23 @@ class po_follow_up_mixin(object):
 
     
     def getReportHeaderLine1(self):
-        return self.datas.get('report_header')[0]
+        return self.datas['report_parms']
     
     def getReportHeaderLine2(self):
         return self.datas.get('report_header')[1]
+
+    def getRunParms(self):
+        return self.datas['report_parms']
+
+    def getRunParmsRML(self,key):
+        return self.datas['report_parms'][key]
 
     def getPOLineHeaders(self):
         return ['Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price','Destination','Cost Center']
        
     def getPOLines(self, po_id):
         ''' developer note: would be a lot easier to write this as a single sql and then use on-break '''
-        # TODO this is the value populated for no change in stock_move.price_unit
+        # TODO the multiplier is the value populated for no change in stock_move.price_unit
         # TODO it probably should be 1
         multiplier = 1.0000100000000001 
         pol_obj = self.pool.get('purchase.order.line')
@@ -397,7 +409,10 @@ class po_follow_up_mixin(object):
             report_line['uom'] = line.product_uom.name or ''
             report_line['qty_received'] = inline_in.get('product_qty','')
             report_line['in'] = inline_in.get('name','') or ''
-            report_line['qty_backordered'] = ''
+            if report_line['in'] == '':
+                report_line['qty_backordered'] = report_line['qty_ordered']
+            else:
+                report_line['qty_backordered'] = ''
             report_line['unit_price'] = line.price_unit or ''
             if inline_in.get('price_unit') and inline_in.get('price_unit') <> multiplier:
                 report_line['in_unit_price'] = inline_in.get('price_unit') * line.price_unit
@@ -528,6 +543,7 @@ class parser_po_follow_up_xls(po_follow_up_mixin, report_sxw.rml_parse):
             'getOtherINs': self.getOtherINs,
             'getPOLines': self.getPOLines,
             'getPOLineHeaders': self.getPOLineHeaders,
+            'getRunParms': self.getRunParms,
         })
 
     
@@ -555,6 +571,7 @@ class parser_po_follow_up_rml(po_follow_up_mixin, report_sxw.rml_parse):
             'getHeaderLine': self.getHeaderLine,
             'getReportHeaderLine1': self.getReportHeaderLine1,
             'getReportHeaderLine2': self.getReportHeaderLine2,
+            'getRunParmsRML': self.getRunParmsRML,
         })
 
 report_sxw.report_sxw('report.po.follow.up_rml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up.rml', parser=parser_po_follow_up_rml, header=False)

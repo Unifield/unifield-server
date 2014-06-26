@@ -23,7 +23,7 @@
 <Styles>
   <Style ss:ID="mainheader">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="0"/>
-        <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="14" ss:Color="#000000"/>
+        <Font ss:FontName="Calibri" x:Family="Swiss" ss:Color="#000000"/>
         <Interior ss:Color="#E6E6E6" ss:Pattern="Solid"/>
         <Borders>
           <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -33,9 +33,20 @@
         </Borders>
     </Style>
 
-    <Style ss:ID="header">
+    <Style ss:ID="poheader">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
         <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
+        <Borders>
+          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+    </Style>
+    
+    <Style ss:ID="header">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+        <Interior ss:Color="#d3d3d3" ss:Pattern="Solid"/>
         <Borders>
           <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
           <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -71,25 +82,39 @@
 <% nb_of_columns = 12 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="120" />
 <Column ss:AutoFitWidth="1" ss:Width="300" />
-% for x in range(2,nb_of_columns - 1):
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-% endfor
-<Column ss:AutoFitWidth="1" ss:Width="250" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
 
-<Row><Cell ss:StyleID="header"><Data ss:Type="String">${getReportHeaderLine1() or '' | x}</Data></Cell></Row>
-<Row><Cell ss:StyleID="header"><Data ss:Type="String">${getReportHeaderLine2() or '' | x}</Data></Cell></Row>
+<Row>
+   <Cell ss:StyleID="mainheader"><Data ss:Type="String">${getRunParms()['title'] or '' |x}</Data></Cell>
+   <Cell ss:StyleID="mainheader"><Data ss:Type="String">Report run date: ${getRunParms()['run_date'] or '' |x}</Data></Cell>
+   <Cell ss:StyleID="mainheader"><Data ss:Type="String">PO date from: ${getRunParms()['date_from'] or ''|x}</Data></Cell>
+   <Cell ss:StyleID="mainheader"><Data ss:Type="String">PO date to: ${getRunParms()['date_thru'] or '' |x}</Data></Cell>
+   <Cell ss:StyleID="mainheader"><Data ss:Type="String">Supplier: ${getRunParms()['supplier'] or '' |x}</Data></Cell>
+   <Cell ss:StyleID="mainheader"><Data ss:Type="String">PO State: ${getRunParms()['state'] or '' | x}</Data></Cell>
+</Row>
+<Row></Row>
 <Row></Row>
 
 % for o in objects:
-    % for header in getHeaderLine(o):
-      <Row>
-    	  <Cell ss:StyleID="header"><Data ss:Type="String">${header |x}</Data></Cell>
-      </Row>
-    %endfor
     
     <Row> 
-       % for header in getPOLineHeaders():
+       % for header in getHeaderLine(o):
+    	  <Cell ss:StyleID="poheader"><Data ss:Type="String">${header |x}</Data></Cell>
+       % endfor
+    </Row>
+
+    <Row>
+      % for header in getPOLineHeaders():
     	    <Cell ss:StyleID="header"><Data ss:Type="String">${header}</Data></Cell>
        % endfor       
     </Row>
