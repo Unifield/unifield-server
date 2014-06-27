@@ -327,7 +327,7 @@ class account_move_line(osv.osv):
             if vals.get('date', False):
                 date = vals.get('date')
             if date < dd:
-                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+                raise osv.except_osv(_('Error'), _('Posting date (%s) should be later than Document Date (%s).') % (date, dd))
         return True
 
     def _check_date_validity(self, cr, uid, ids, vals=None):
@@ -364,7 +364,7 @@ class account_move_line(osv.osv):
         if not vals.get('document_date') and vals.get('date'):
             vals.update({'document_date': vals.get('date')})
         if vals.get('document_date', False) and vals.get('date', False) and vals.get('date') < vals.get('document_date'):
-            raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+            raise osv.except_osv(_('Error'), _('Posting date (%s) should be later than Document Date (%s).') % (vals.get('date'), vals.get('document_date')))
         if 'move_id' in vals and context.get('from_web_menu'):
             m = self.pool.get('account.move').browse(cr, uid, vals.get('move_id'))
             if m and m.document_date:
