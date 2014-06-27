@@ -234,9 +234,9 @@ class mass_reallocation_wizard(osv.osv_memory):
         if dd > pd:
             raise osv.except_osv(_('Error'), _('Maximum document date is superior to maximum of posting date. Check selected analytic lines dates first.'))
         if date < dd:
-            raise osv.except_osv(_('Warning'), _('Given date is inferior to those from the maximum document date. Please change it to be superior or equal to %s') % (dd,))
+            raise osv.except_osv(_('Warning'), _('Posting date should be later than all Document Dates. Please change it to be greater than or equal to %s') % (dd,))
         if date < pd:
-            raise osv.except_osv(_('Warning'), _('Given date is inferior to those from the maximum posting date. You cannot post lines before the youngest one. Please change it to be superior or equal to %s') % (pd,))
+            raise osv.except_osv(_('Warning'), _('Posting date should be later than all Document Dates. You cannot post lines before the earliest one. Please change it to be greater than or equal to %s') % (pd,))
         return True
 
     def button_validate(self, cr, uid, ids, context=None):
