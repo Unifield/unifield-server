@@ -299,8 +299,9 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
                     else:
                         # check for a valid journal code
-                        aj_id = aj_obj.search(cr, uid, [('type','in',['intermission','migration','correction']),('code','=',line[cols['Journal Code']])])[0]
-                        if aj_id:
+                        aj_ids = aj_obj.search(cr, uid, [('type','in',['intermission','migration','correction']),('code','=',line[cols['Journal Code']])])
+                        if aj_ids:
+                            aj_id = aj_ids[0]
                             if num == 0:   # Assume 1st line is the journal code for the entire spreadsheet
                                 file_journal_id = aj_id
                             else:
