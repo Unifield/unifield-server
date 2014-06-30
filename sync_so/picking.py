@@ -897,8 +897,8 @@ class stock_picking(osv.osv):
         # Handle purchase pickings only
         if type == 'in_invoice' and self.pool.get('sync_remote_warehouse.update_to_send'):
             # Are we setup as a central platform?
-            entity_obj = self.pool.get('sync.client.entity')
-            if entity_obj.get_entity(cr, 1).usb_instance_type == 'remote_warehouse':
+            rw_type = self._get_usb_entity_type(cr, uid)
+            if rw_type == 'remote_warehouse':
                 do_invoice = False
 
         if do_invoice:

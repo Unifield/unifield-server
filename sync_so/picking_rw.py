@@ -128,8 +128,8 @@ class stock_move(osv.osv):
             If it is a remote warehouse instance, then take the location requestor from IR
         '''
         location_dest_id = super(stock_move, self)._get_location_for_internal_request(cr, uid, context=context, **kwargs)
-        type = self.pool.get('sync.client.entity').get_entity(cr, uid).usb_instance_type
-        if type == 'remote_warehouse':
+        rw_type = self.pool.get('stock.picking')._get_usb_entity_type(cr, uid)
+        if rw_type == 'remote_warehouse':
             move = kwargs['move']
             if move.location_requestor_rw:
                 return move.location_requestor_rw.id
