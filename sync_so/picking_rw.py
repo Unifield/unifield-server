@@ -119,7 +119,8 @@ class stock_move(osv.osv):
             proc = move.purchase_line_id.procurement_id
             if proc and proc.sale_order_line_ids and proc.sale_order_line_ids[0].order_id and proc.sale_order_line_ids[0].order_id.procurement_request:
                 location_dest_id = proc.sale_order_line_ids[0].order_id.location_requestor_id.id
-                cr.execute('update stock_move set location_requestor_rw=%s where id=%s', (location_dest_id, move.id))
+                if location_dest_id:
+                    cr.execute('update stock_move set location_requestor_rw=%s where id=%s', (location_dest_id, move.id))
         
         return res
 
@@ -324,6 +325,21 @@ class stock_picking(osv.osv):
                   'note': data['note'],
                   'picking_id': data.get('picking_id', {}).get('name', False),
                   }
+        
+        # For RW instances, order line ids need to be retrieved and store in the IN and OUT to keep references (via procurement) when making the INcoming via cross docking
+        rw_type = self._get_usb_entity_type(cr, uid)
+        if rw_type == self.REMOTE_WAREHOUSE:
+            purchase_line_id = False
+            sale_line_id = False
+            if data['sale_line_id'] and data['sale_line_id']['id']:
+                sale_line_id = data['sale_line_id']['id']
+                sale_line_id = self.pool.get('sale.order.line').find_sd_ref(cr, uid, xmlid_to_sdref(sale_line_id), context=context)
+            if data['purchase_line_id'] and data['purchase_line_id']['id']:
+                purchase_line_id = data['purchase_line_id']['id']
+                purchase_line_id = self.pool.get('purchase.order.line').find_sd_ref(cr, uid, xmlid_to_sdref(purchase_line_id), context=context)
+                
+            result.update({'sale_line_id': sale_line_id,
+                  'purchase_line_id': purchase_line_id,})
         return result
 
     def get_picking_lines(self, cr, uid, source, out_info, context=None):
@@ -405,6 +421,19 @@ class stock_picking(osv.osv):
                     self._logger.info(message)
                     return message
                 pick_id = self.create(cr, uid, header_result , context=context)
+                self.draft_force_assign(cr, uid, [pick_id])
+                
+                # Check if this PICK/OUT comes from a procurement, if yes, then update the move id to the procurement if exists
+                if pick_id:
+                    proc_obj = self.pool.get('procurement.order')
+                    pick = self.browse(cr, uid, pick_id, context=context)
+                    for move in pick.move_lines:
+                        if move.sale_line_id and move.sale_line_id.procurement_id and move.sale_line_id.procurement_id.id:
+                            # check this procurement has already move_id, if not then update
+                            proc = proc_obj.read(cr, uid, move.sale_line_id.procurement_id.id, ['move_id'])['move_id']
+                            if not proc:
+                                proc_obj.write(cr, uid, move.sale_line_id.procurement_id.id, {'move_id': move.id}, context=context)
+                
                 message = "The PICK: " + pick_name + " has been well replicated in " + cr.dbname
             else:
                 message = "Sorry, the case without the origin FO or IR is not yet available!"
