@@ -952,11 +952,9 @@ class account_bank_statement_line(osv.osv):
                 # Default ones (direct link to register lines)
                 for m in absl.move_ids:
                     res.add(m.id)
-                    # Those from cash advance return (we should use the reconciliation to find the return and its expenses)
+                    # Fetch reversal and correction moves
+		    # UTP-1055: delete lines that fetch reconciled lines so that cash advance return don't give all lines in the Full Report
                     for ml in m.line_id:
-                        if ml.reconcile_id and ml.reconcile_id.line_id:
-                            for line in ml.reconcile_id.line_id:
-                                res.add(line.move_id.id)
                         other_ml_ids = self.pool.get('account.move.line').search(cr, uid, ['|', ('reversal_line_id', '=', ml.id), ('corrected_line_id', '=', ml.id)], context=context)
                         if other_ml_ids:
                             for el in self.pool.get('account.move.line').read(cr, uid, other_ml_ids, ['move_id'], context=context):
@@ -967,8 +965,6 @@ class account_bank_statement_line(osv.osv):
                 for ml in absl.imported_invoice_line_ids:
                     res.add(ml.move_id.id)
         return list(res)
-
-
 
     def _get_fp_analytic_lines(self, cr, uid, ids, field_name=None, args=None, context=None):
         """
