@@ -1069,7 +1069,6 @@ class account_bank_statement_line(osv.osv):
                 domain += ['|' for x in range(0,name_len - 1)]
             for name in advance_names:
                 domain.append(('name', 'ilike', '%%%s' % name))
-	print "domain", domain
         context.update({'display_fp': True}) # to display "Funding Pool" column name instead of "Analytic account"
         return {
             'name': _('Analytic Journal Items'),
