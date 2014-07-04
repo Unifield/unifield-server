@@ -394,6 +394,10 @@ class wizard_register_import(osv.osv_memory):
                         errors.append(_('Line %s. G/L account %s not found!') % (current_line_num, account_code,))
                         continue
                     r_account = account_ids[0]
+                    acct = self.pool.get('account.account').browse(cr, uid, r_account, context=context)
+                    if acct.restricted_area == True:
+                        errors.append(_('Line %s. G/L account %s is restricted.') % (current_line_num, account_code,))
+                        continue
                     account = self.pool.get('account.account').read(cr, uid, r_account, ['type_for_register', 'is_analytic_addicted'], context)
                     type_for_register = account.get('type_for_register', '')
                     # Check that Third party exists (if not empty)
