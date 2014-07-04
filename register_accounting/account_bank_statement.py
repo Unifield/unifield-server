@@ -966,6 +966,9 @@ class account_bank_statement_line(osv.osv):
             if absl.imported_invoice_line_ids:
                 for ml in absl.imported_invoice_line_ids:
                     res.add(ml.move_id.id)
+            # Direct invoice
+            if absl.direct_invoice and absl.invoice_id:
+                res.add(absl.invoice_id.move_id.id)
         return list(res)
 
 

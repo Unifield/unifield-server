@@ -228,12 +228,14 @@ class wizard_account_invoice(osv.osv):
         # Delete the wizard
         self.unlink(cr, uid, ids, context=context)
         # TODO: unlink the wizard_account_invoice_line rows also
-
+        
         view = open_register_view(self, cr, uid, inv['register_id'][0])
         # UF-2308: When closing the Direct Invoice, just refresh only the register lines, and no the whole view
         # to avoid having everything reset to default state.
         view['o2m_refresh'] = 'line_ids'
         view['type'] = 'ir.actions.act_window_close'
+        
+        
         return view
 
 
@@ -343,6 +345,7 @@ class wizard_account_invoice_line(osv.osv):
         """
         Launch analytic distribution wizard on a direct invoice line
         """
+
         # Some verifications
         if not context:
             context = {}
