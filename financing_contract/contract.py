@@ -191,7 +191,12 @@ class financing_contract_contract(osv.osv):
                 else:
                     # first time
                     analytic_domain = temp
-
+        # UTP-1063: Don't use MSF Private Funds anymore
+	try:
+	    fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+	except Exception as e:
+	    fp_id = 0
+	analytic_domain = [('account_id', '!=', fp_id)] + analytic_domain
         return analytic_domain
 
     def _get_overhead_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):
