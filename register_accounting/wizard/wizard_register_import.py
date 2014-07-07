@@ -61,7 +61,7 @@ class wizard_register_import(osv.osv_memory):
         view = super(wizard_register_import, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         if view_type=='form':
             form = etree.fromstring(view['arch'])
-            for el in [('document_date', 'Document Date'), ('posting_date', 'Posting Date'), ('description', 'Description'), ('reference', 'Reference'), ('account', 'Account'), ('third_party', 'Third Party'), ('amount_in', 'Amount In'), ('amount_out', 'Amount Out'), ('destination', 'Destination'), ('cost_center', 'Cost Centre'), ('funding_pool', 'Funding Pool'), ('proprietary_instance', "Proprietary instance's code"), ('journal', "Journal's code"), ('currency', "Currency's code")]:
+            for el in [('document_date', 'Document Date'), ('posting_date', 'Posting Date'), ('cheque_number', 'Cheque Number'), ('description', 'Description'), ('reference', 'Reference'), ('account', 'Account'), ('third_party', 'Third Party'), ('amount_in', 'Amount In'), ('amount_out', 'Amount Out'), ('destination', 'Destination'), ('cost_center', 'Cost Centre'), ('funding_pool', 'Funding Pool'), ('proprietary_instance', "Proprietary instance's code"), ('journal', "Journal's code"), ('currency', "Currency's code")]:
                 fields = form.xpath('/form//th[@class="' + el[0] + '"]')
                 for field in fields:
                     field.text = _(el[1])
@@ -113,6 +113,7 @@ class wizard_register_import(osv.osv_memory):
                 'description',
                 'ref',
                 'document_date',
+                'cheque_number',
                 'account_id',
                 'debit',
                 'credit',
@@ -139,6 +140,7 @@ class wizard_register_import(osv.osv_memory):
                 destination_id = l.get('destination_id', False) and l.get('destination_id')[0] or False
                 funding_pool_id = l.get('funding_pool_id', False) and l.get('funding_pool_id')[0] or False
                 cost_center_id = l.get('cost_center_id', False) and l.get('cost_center_id')[0] or False
+                cheque_number = l.get('cheque_number', False) and l.get('cheque_number')[0] or False
                 date = l.get('date', False)
                 currency_id = l.get('currency_id', False) and l.get('currency_id')[0] or False
                 account = account_obj.read(cr, uid, account_id, ['is_analytic_addicted'])
@@ -154,6 +156,7 @@ class wizard_register_import(osv.osv_memory):
                     'employee_id':         employee_id,
                     'transfer_journal_id': transfer_journal_id,
                     'statement_id':        register_id,
+                    'cheque_number':       cheque_number, 
                 }
                 absl_id = absl_obj.create(cr, uid, vals, context)
                 # Analytic distribution
