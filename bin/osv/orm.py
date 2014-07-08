@@ -823,8 +823,14 @@ class orm_template(object):
             done = {}
             for i in range(len(fields)):
                 res = False
-                if not line[i]:
+		# UTP-1057: Special handling for synchronization: Take changes on account.bank.statement.line object if partner_id change to a False value
+                if context.get('sync_update_execution', False) and model_name == 'account.bank.statement.line' and fields[i] == ['partner_id', 'id']:
+                    field = fields[i]
+                    row[field[len(prefix)]] = line[i]
                     continue
+                else:
+                    if not line[i]:
+                        continue
                 if i >= len(line):
                     raise Exception(_('Please check that all your lines have %d columns.') % (len(fields),))
 
