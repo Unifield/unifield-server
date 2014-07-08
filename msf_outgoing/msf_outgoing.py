@@ -941,7 +941,11 @@ class shipment(osv.osv):
 
         for shipment in self.browse(cr, uid, ids, context=context):
             # shipment state should be 'packed'
-            assert shipment.state == 'packed', 'cannot ship a shipment which is not in correct state - packed - %s' % shipment.state
+            #assert shipment.state == 'packed', 'cannot ship a shipment which is not in correct state - packed - %s' % shipment.state
+            if shipment.state != 'packed':
+                raise osv.except_osv(_('Error, packing in wrong state !'),
+                    _('Cannot make a shipment which is in a wrong correct state - should be "packed" but here it is %s' % shipment.state))
+            
             # the state does not need to be updated - function
             # update actual ship date (shipment_actual_date) to today + time
             today = time.strftime(db_datetime_format)
@@ -1064,7 +1068,8 @@ class shipment(osv.osv):
                     wf_service.trg_validate(uid, 'stock.picking', draft_packing.id, 'button_done', cr)
                     # ask for draft picking validation, depending on picking completion
                     # if picking ticket is not completed, the validation will not complete
-                    draft_packing.previous_step_id.previous_step_id.backorder_id.validate(context=context)
+                    if draft_packing.previous_step_id.previous_step_id.backorder_id:
+                        draft_packing.previous_step_id.previous_step_id.backorder_id.validate(context=context)
 
                     # UF-1617: set the flag to PPL to indicate that the SHIP has been done, for synchronisation purpose
 #                    if draft_packing.previous_step_id and draft_packing.previous_step_id.id:
