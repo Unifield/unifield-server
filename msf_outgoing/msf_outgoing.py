@@ -3135,6 +3135,7 @@ class stock_picking(osv.osv):
 
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
         today = time.strftime(db_date_format)
+        update_replicated_flag = self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False)
 
         for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
             picking = wizard.picking_id
@@ -3158,7 +3159,7 @@ class stock_picking(osv.osv):
             })
             
             new_ppl_id = self.copy(cr, uid, picking.id, cp_vals, context=context)
-            if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): 
+            if update_replicated_flag: 
                 self.write(cr, uid, new_ppl_id, {'already_replicated': False}, context=context)
                 
             new_ppl = self.browse(cr, uid, new_ppl_id, context=context)
@@ -3264,6 +3265,10 @@ class stock_picking(osv.osv):
             # trigger standard workflow for validated picking ticket
             self.action_move(cr, uid, [picking.id])
             wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
+            
+            # UF-2377 set also this picking to become ready for sync back to the CP
+            if update_replicated_flag: 
+                self.write(cr, uid, picking.id, {'already_replicated': False}, context=context)            
 
             # if the flow type is in quick mode, we perform the ppl steps automatically
             if picking.flow_type == 'quick' and new_ppl:
