@@ -415,7 +415,7 @@ class stock_picking(osv.osv):
                 header_result['move_lines'] = picking_lines
                 
                 # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
-                existing_pick = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', '=', 'draft')], context=context)
+                existing_pick = self.search(cr, uid, [('name', '=', pick_name), ('origin', '=', origin), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', '=', 'draft')], context=context)
                 if existing_pick:
                     message = "Sorry, the PICK: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
