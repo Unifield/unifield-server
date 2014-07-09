@@ -50,6 +50,10 @@ class multiple_sourcing_wizard(osv.osv_memory):
             _SELECTION_PO_CFT,
             string='PO/CFT',
         ),
+        'location_id': fields.many2one(
+            'stock.location',
+            string='Location',
+        ),
         'supplier': fields.many2one(
             'res.partner',
             string='Supplier',
@@ -123,7 +127,9 @@ class multiple_sourcing_wizard(osv.osv_memory):
                     try:
                         line_obj.write(cr, uid, [line.id], {'type': wiz.type,
                                                             'po_cft': wiz.po_cft,
-                                                            'supplier': wiz.supplier and wiz.supplier.id or False}, context=context)
+                                                            'supplier': wiz.supplier and wiz.supplier.id or False,
+                                                            'location_id': wiz.location_id.id and wiz.location_id.id or False}, 
+                                                             context=context)
                     except osv.except_osv, e:
                         errors.setdefault(e.value, [])
                         errors[e.value].append((line.id, '%s of %s' % (line.line_number, line.order_id.name)))

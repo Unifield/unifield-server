@@ -36,6 +36,10 @@
                                attrs="{'readonly': ['|', ('po_cft', '=', 'cft'), ('type', '=', 'make_to_stock')]}"
                                on_change="change_supplier(supplier)"
                         />
+                        
+                        
+                   <field name="location_id"  domain="[('usage', '=', 'internal'), ('quarantine_location', '=', False), ('scrap_location', '=', False), ('destruction_location', '=', False), ('output_ok', '=', False), ('input_ok', '=', False)]" attrs="{'readonly': [('type', '!=', 'make_to_stock')]}" />
+                        
                     </group>
                     <separator colspan="4" string="Actions" />
                     <button special="cancel" string="Cancel" icon="gtk-cancel" help="Close the wizard" />
