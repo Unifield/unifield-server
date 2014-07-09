@@ -25,6 +25,7 @@
                             <separator string="Company" colspan="4"/>
                             <field name="currency" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque'))]}"/>
                             <field name="analytic_journal_id" domain="[('is_current_instance','=',True)]" attrs="{'required': [('type', 'not in', ('situation', 'stock'))]}"/>
+                            <field name="bank_journal_id" attrs="{'invisible': [('type', '!=', 'cheque')], 'required': [('type', '=', 'cheque')]}"/>
                         </group>
                         <group colspan="4" col="4">
                             <label string="" colspan="2"/>
