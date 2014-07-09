@@ -30,8 +30,16 @@ _SELECTION_TYPE = [
     ('make_to_order', 'on order'), ]
 
 
+
+
 class multiple_sourcing_wizard(osv.osv_memory):
     _name = 'multiple.sourcing.wizard'
+    
+    def _get_real_stock(self, cr, uid, ids, context=None):
+        
+        x = ids
+        print x
+        return 28
 
     _columns = {
         'line_ids': fields.many2many(
@@ -67,7 +75,13 @@ class multiple_sourcing_wizard(osv.osv_memory):
             string='Error',
             help="If there is line without need sourcing on selected lines",
         ),
+        'dynamic_real_stock': fields.function(
+            _get_real_stock, method=True, type='char', size=256, string="Real Stock2", readonly=True, store=False
+        ),
     }
+    
+
+    
 
     def default_get(self, cr, uid, fields_list, context=None):
         """
@@ -223,6 +237,13 @@ class multiple_sourcing_wizard(osv.osv_memory):
                     'message': _('The chosen partner has no address. Please define an address before continuing.'),
                 }
         return result
+    
+    
+    def change_location(self, cr, uid, ids, location_id, context=None):
+     
+
+        return {'value': {'real_stock': 250}}
+      
 
 multiple_sourcing_wizard()
 
