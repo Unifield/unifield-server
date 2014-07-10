@@ -421,7 +421,7 @@ class stock_picking(osv.osv):
                     self._logger.info(message)
                     return message
                 pick_id = self.create(cr, uid, header_result , context=context)
-                self.draft_force_assign(cr, uid, [pick_id])
+#                 self.draft_force_assign(cr, uid, [pick_id])
                 
                 # Check if this PICK/OUT comes from a procurement, if yes, then update the move id to the procurement if exists
                 if pick_id:
@@ -824,8 +824,6 @@ class stock_picking(osv.osv):
         self._logger.info(message)
         return message
 
-
-
     def rw_do_validate_picking(self, cr, uid, pick_id, picking_lines, context=None):
         # Objects
         wizard_obj = self.pool.get('validate.picking.processor')
@@ -834,43 +832,20 @@ class stock_picking(osv.osv):
         
         
         proc_id = wizard_obj.create(cr, uid, {'picking_id': pick_id}, context=context)
-        wizard_obj.create_lines(cr, uid, proc_id, context=context)        
+        wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
+        line_obj = self.pool.get(wizard._columns['move_ids']._obj)
+        
+        # Make the full quantity process for this PICK to PPL
+        for move in wizard.picking_id.move_lines:
+            if move.state in ('draft', 'done', 'cancel', 'confirmed') or  move.product_qty == 0.00 :
+                continue
 
-        # Copy values from the OUT message move lines into the the wizard lines before making the partial OUT
-        # If the line got split, based on line number and create new wizard line
-        for sline in picking_lines:
-            sline = sline[2]
-            line_number = sline['line_number']
-            
-            #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
-            
-            wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
-            for mline in wizard.move_ids:
-                if mline.line_number == line_number:
-                    # match the line, copy the content of picking line into the wizard line
-                    vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
-                            'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
-                            'from_pack': sline['from_pack'], 'to_pack': sline['to_pack'],'pack_type': sline['pack_type'],
-                            'height': sline['height'], 'weight': sline['weight'],'length': sline['length'], 'width': sline['width'],}
-                    wizard_line_obj.write(cr, uid, mline.id, vals, context)
-                    break
+            line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
+            line_data['product_qty'] = move.product_qty
+            line_data['quantity'] = move.product_qty
+            ret = line_obj.create(cr, uid, line_data, context=context)
 
         self.do_validate_picking(cr, uid, [proc_id], context=context)
-        
-        # Now update the pack values to the move lines of the new PPL
-        ppl_ids = self.search(cr, uid, [('type', '=', 'out'), ('subtype', '=', 'ppl'), ('previous_step_id', '=', pick_id)], context=context)
-        if ppl_ids:
-            ppl = self.browse(cr, uid, ppl_ids[0], context=context)
-            for sline in picking_lines:
-                sline = sline[2]
-                line_number = sline['line_number']
-                
-                move_ids = move_obj.search(cr, uid, [('picking_id', '=', ppl.id), ('line_number', '=', line_number)], context=context)
-                # match the line, copy the content of picking line into the wizard line
-                vals = {'from_pack': sline['from_pack'], 'to_pack': sline['to_pack'],'pack_type': sline['pack_type'],
-                        'height': sline['height'], 'weight': sline['weight'],'length': sline['length'], 'width': sline['width'],}
-                move_obj.write(cr, uid, move_ids, vals, context)
-        
         return True
 
     def usb_create_packing(self, cr, uid, source, out_info, context=None):
@@ -928,10 +903,51 @@ class stock_picking(osv.osv):
         Prepare the wizard for 2 steps of creating packing: pack family and size/weight of the pack
         '''
         wizard_obj = self.pool.get('ppl.processor')
+        wizard_line_obj = self.pool.get('ppl.move.processor')
+        family_obj = self.pool.get('ppl.family.processor')
+        
         proc_id = wizard_obj.create(cr, uid, {'picking_id': pick_id}, context=context)
-        wizard_obj.create_lines(cr, uid, proc_id, context=context)
-                
+        wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
+        
+        # Check how many lines the wizard has, to make it mirror with the lines received from the sync        
+        # Check if the number of moves of the wizard is different with the number of received PPL --> recreate a new lines
+        if wizard.picking_id.move_lines and len(wizard.picking_id.move_lines):
+            for sline in picking_lines:
+                sline = sline[2]            
+                line_number = sline['line_number']
+                for move in wizard.picking_id.move_lines:
+                    if move.line_number == line_number:
+                        move_id = move.id
+                        line_data = wizard_line_obj._get_line_data(cr, uid, wizard, move, context=context)
+                        
+                vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
+                        'ordered_quantity': sline['product_qty'],
+                        'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
+                        'from_pack': sline['from_pack'], 'to_pack': sline['to_pack'],'pack_type': sline['pack_type'],
+                        'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],
+                        'cost':line_data['cost'],'currency':line_data['currency'],
+                        }
+                wizard_line_obj.create(cr, uid, vals, context=context)
+
         self.do_ppl_step1(cr, uid, [proc_id], context=context)
+        
+        # Simulate the setting of size of pack before executing step 2
+        for sline in picking_lines:
+            sline = sline[2]            
+            from_pack = sline['from_pack']
+            to_pack = sline['to_pack']
+        
+            for family in wizard.family_ids:
+                # Only pack "from" and "to" can allow to identify the family! 
+                if family.from_pack == from_pack and family.to_pack == to_pack:  
+                    values = {
+                        'length': sline['length'],
+                        'width': sline['width'],
+                        'height': sline['height'],
+                        'weight': sline['weight'],
+                    }        
+                    family_obj.write(cr, uid, [family.id], values, context=context)
+        
         self.do_ppl_step2(cr, uid, [proc_id], context=context)
         return True
 
