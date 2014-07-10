@@ -171,18 +171,6 @@ class stock_picking(osv.osv):
     
         return super(stock_picking, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
 
-    def search(self, cr, uid, args, offset=None, limit=None, order=None, context=None, count=False):
-        '''
-        Change the order if we are on RW synchronisation
-        '''
-        if context is None:
-            context = {}
-          
-        if context.get('rw_sync_in_progress', False):
-            order = 'id'
-    
-        return super(stock_picking, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
-
     def retrieve_picking_header_data(self, cr, uid, source, header_result, pick_dict, context):
         if 'name' in pick_dict:
             header_result['name'] = pick_dict.get('name')
