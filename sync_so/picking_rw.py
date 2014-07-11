@@ -1065,8 +1065,8 @@ class stock_picking(osv.osv):
                     family_vals = {
                         'wizard_id': wizard.id,
                         'sale_order_id': family.sale_order_id and family.sale_order_id.id or False,
-                        'from_pack': family.from_pack,
-                        'to_pack': family.to_pack,
+                        'from_pack': from_pack,
+                        'to_pack': to_pack,
                         'selected_number': sline['to_pack'] - sline['from_pack'] + 1,
                         'pack_type': family.pack_type and family.pack_type.id or False,
                         'length': family.length,
