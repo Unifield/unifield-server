@@ -697,7 +697,7 @@ class account_move(osv.osv):
             'date': je.date,
             'name': ''
         }
-        res = super(account_move, self).copy(cr, uid, id, vals, context=context)
+        res = super(account_move, self).copy(cr, uid, a_id, vals, context=context)
         for line in je.line_id:
             self.pool.get('account.move.line').copy(cr, uid, line.id, {'move_id': res, 'document_date': je.document_date, 'date': je.date, 'period_id': je.period_id and je.period_id.id or False}, context)
         self.validate(cr, uid, [res], context=context)
