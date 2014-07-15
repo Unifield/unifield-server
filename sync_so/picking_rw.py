@@ -396,7 +396,7 @@ class stock_picking(osv.osv):
         pick_tools = self.pool.get('picking.tools')
 
         rw_type = self._get_usb_entity_type(cr, uid)
-        if rw_type == self.REMOTE_WAREHOUSE:
+        if rw_type == self.REMOTE_WAREHOUSE or 'OUT-CONSO' in pick_name: # if it's a OUT-CONSO, just executing it
             if origin:
                 header_result = {}
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
