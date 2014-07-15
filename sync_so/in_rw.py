@@ -85,6 +85,8 @@ class stock_picking(osv.osv):
                     return message
                 pick_id = self.create(cr, uid, header_result , context=context)
                 self.draft_force_assign(cr, uid, [pick_id]) # Fixed by JF: To send the IN to the right state 
+                if pick_dict['state'] == 'shipped':
+                    self.write(cr, uid, pick_id, {'state': 'shipped'}, context=context)
 
                 '''
                     Update the sequence for the IN object in Remote Warehouse to have the same value as of in CP
