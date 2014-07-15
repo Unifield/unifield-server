@@ -116,7 +116,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         }
                         common_vals.update({'analytic_id': l.cost_center_id.id,})
                         cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
-                        common_vals.update({'analytic_id': msf_fp_id, 'cost_center_id': l.cost_center_id.id,})
+                        common_vals.update({'analytic_id': l.funding_pool_id.id, 'cost_center_id': l.cost_center_id.id,})
                         fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
                     # Create move line
                     move_line_vals = {
@@ -164,6 +164,10 @@ class msf_doc_import_accounting(osv.osv_memory):
             cr = dbname
         else:
             cr = pooler.get_db(dbname).cursor()
+        try:
+            msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            msf_fp_id = 0
         created = 0
         processed = 0
         errors = []
@@ -207,7 +211,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 self.write(cr, uid, [wiz.id], {'message': _('Reading headers…'), 'progression': 5.00})
                 # Use the first row to find which column to use
                 cols = {}
-                col_names = ['Journal Code', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third party', 'Destination', 'Cost Centre', 'Booking Debit', 'Booking Credit', 'Booking Currency']
+                col_names = ['Journal Code', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third party', 'Destination', 'Cost Centre', 'Funding Pool', 'Booking Debit', 'Booking Credit', 'Booking Currency']
                 for num, r in enumerate(rows):
                     header = [x and x.data for x in r.iter_cells()]
                     for el in col_names:
@@ -348,6 +352,14 @@ class msf_doc_import_accounting(osv.osv_memory):
                             errors.append(_('Line %s. Cost Center %s not found!') % (current_line_num, line[cols['Cost Centre']]))
                             continue
                         r_cc = cc_ids[0]
+                        # Check Funding Pool (added since UTP-1082)
+                        r_fp = msf_fp_id
+                        if line[cols['Funding Pool']]:
+                            fp_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FUNDING'), '|', ('name', '=', line[cols['Funding Pool']]), ('code', '=', line[cols['Funding Pool']])])
+                            if not fp_ids:
+                                errors.append(_('Line %s. Funding Pool %s not found!') % (current_line_num, line[cols['Funding Pool']]))
+                                continue
+                            r_fp = fp_ids[0]
                     # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.
 
                     # Registering data regarding these "keys":
@@ -364,6 +376,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         'credit': r_credit or 0.0,
                         'cost_center_id': r_cc or False,
                         'destination_id': r_destination or False,
+                        'funding_pool_id': r_fp or False,
                         'document_date': date or False, #r_document_date or False,
                         'date': date or False,
                         'currency_id': r_currency or False,
@@ -463,6 +476,7 @@ class msf_doc_import_accounting_lines(osv.osv):
         'account_id': fields.many2one('account.account', "G/L Account", required=True, readonly=True),
         'destination_id': fields.many2one('account.analytic.account', "Destination", required=False, readonly=True),
         'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=False, readonly=True),
+        'funding_pool_id': fields.many2one('account.analytic.account', "Funding Pool", required=False, readonly=True),
         'debit': fields.float("Debit", required=False, readonly=True),
         'credit': fields.float("Credit", required=False, readonly=True),
         'currency_id': fields.many2one('res.currency', "Currency", required=True, readonly=True),
