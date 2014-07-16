@@ -211,7 +211,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 self.write(cr, uid, [wiz.id], {'message': _('Reading headers…'), 'progression': 5.00})
                 # Use the first row to find which column to use
                 cols = {}
-                col_names = ['Journal Code', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third party', 'Destination', 'Cost Centre', 'Funding Pool', 'Booking Debit', 'Booking Credit', 'Booking Currency']
+                col_names = ['Journal Code', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Partner', 'Employee', 'Destination', 'Cost Centre', 'Funding Pool', 'Booking Debit', 'Booking Credit', 'Booking Currency']
                 for num, r in enumerate(rows):
                     header = [x and x.data for x in r.iter_cells()]
                     for el in col_names:
@@ -243,6 +243,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                     r_credit = 0
                     r_currency = False
                     r_partner = False
+                    r_employee = False
                     r_account = False
                     r_destination = False
                     r_cc = False
@@ -321,17 +322,24 @@ class msf_doc_import_accounting(osv.osv_memory):
                     r_account = account_ids[0]
                     account = self.pool.get('account.account').browse(cr, uid, r_account)
                     # Check that Third party exists (if not empty)
-                    tp_label = _('Partner')
-                    if line[cols['Third party']]:
-                        if account.type_for_register == 'advance':
-                            tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['Third party']])])
-                            tp_label = _('Employee')
-                        else:
-                            tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['Third party']])])
-                        if not tp_ids:
-                            errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, line[cols['Third party']],))
-                            continue
+                    if line[cols['Partner']]:
+                        tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['Partner']])])
                         r_partner = tp_ids[0]
+                    if line[cols['Employee']]:
+                        tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['Employee']])])
+                        r_employee = tp_ids[0]
+                    if not r_employee and not r_partner:
+                        if not r_partner:
+                            tp_label = _('Partner')
+                            tp_content = line[cols['Partner']]
+                        else:
+                            tp_label = _('Employee')
+                            tp_content = line[cols['Employee']]
+                        errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, tp_content,))
+                        continue
+                    if r_employee and r_partner:
+                        errors.append(_('Line %s. You cannot add a partner AND an employee.') % (current_line_num,))
+                        continue
                     # Check analytic axis only if G/L account is analytic-a-holic
                     if account.is_analytic_addicted:
                         # Check Destination
@@ -382,11 +390,23 @@ class msf_doc_import_accounting(osv.osv_memory):
                         'currency_id': r_currency or False,
                         'wizard_id': wiz.id,
                         'period_id': period and period.id or False,
+                        'employee_id': r_employee or False,
+                        'partner_id': r_partner or False,
                     }
-                    if account.type_for_register == 'advance':
-                        vals.update({'employee_id': r_partner,})
-                    else:
-                        vals.update({'partner_id': r_partner,})
+                    # UTP-1056: Add employee possibility. So we need to check if employee and/or partner is authorized
+                    partner_needs = self.pool.get('account.bank.statement.line').onchange_account(cr, uid, False, account_id=account.id, context=context)
+                    if not partner_needs:
+                        errors.append(_('Line %s. No info about given account: %s') % (current_line_num, account.code,))
+                        continue
+                    })
+                    # Check result
+                    partner_options = partner_needs['value']['partner_type']['options']
+                    if r_partner and ('res.partner', 'Partner') not in partner_options:
+                        errors.append(_('Line %s. You cannot use a partner for the given account: %s.') % (current_line_num, account.code))
+                        continue
+                    if r_employee and ('hr.employee', 'Employee') not in partner_options:
+                        errors.append(_('Line %s. You cannot use an employee for the given account: %s.') % (current_line_num, account.code))
+                        continue
                     line_res = self.pool.get('msf.doc.import.accounting.lines').create(cr, uid, vals, context)
                     if not line_res:
                         errors.append(_('Line %s. A problem occured for line registration. Please contact an Administrator.') % (current_line_num,))

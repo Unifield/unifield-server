@@ -50,7 +50,8 @@
                                 <th class='posting_date' style='border: thin solid black; border-left: none; text-transform: none;'>Posting Date</th>
                                 <th class='period' style='border: thin solid black; border-left: none; text-transform: none;'>Period</th>
                                 <th class='account' style='border: thin solid black; border-left: none; text-transform: none;'>G/L Account</th>
-                                <th class='third_party' style='border: thin solid black; border-left: none; text-transform: none;'>Third party</th>
+                                <th class='partner' style='border: thin solid black; border-left: none; text-transform: none;'>Partner</th>
+                                <th class='employee' style='border: thin solid black; border-left: none; text-transform: none;'>Employee</th>
                                 <th class='destination' style='border: thin solid black; border-left: none; text-transform: none;'>Destination</th>
                                 <th class='cost_center' style='border: thin solid black; border-left: none; text-transform: none;'>Cost Centre</th>
                                 <th class='destination' style='border: thin solid black; border-left: none; text-transform: none;'>Funding Pool</th>
@@ -62,6 +63,7 @@
                             <tbody>
                               <tr>
                                 <th style="border: thin solid black; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
                                 <th style="border: thin solid black; border-left: none; border-top: none;"></th>
                                 <th style="border: thin solid black; border-left: none; border-top: none;"></th>
                                 <th style="border: thin solid black; border-left: none; border-top: none;"></th>
