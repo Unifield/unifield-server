@@ -33,6 +33,56 @@
                     <button name="button_update" type="object" string="Update" icon="gtk-refresh" attrs="{'invisible': [('state', '!=', 'inprogress')]}"/>
                     <newline />
                     <field name="error_ids" nolabel="1" attrs="{'invisible': [('state', '!=', 'error')]}"/>
+                    <group col="4" colspan="4" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                        <separator string="Import template"/>
+                        <newline />
+                        <html>
+                          <br />
+                          <table style="margin: 0 auto;">
+                            <thead>
+                              <tr style='background-color: #ccc;'>
+                                <th class='proprietary_instance' style='border: thin solid black; text-transform: none;'>Proprietary Instance</th>
+                                <th class='journal_code' style='border: thin solid black; border-left: none; text-transform: none;'>Journal Code</th>
+                                <th class='entry_sequence' style='border: thin solid black; border-left: none; text-transform: none;'>Entry Sequence</th>
+                                <th class='description' style='border: thin solid black; border-left: none; text-transform: none;'>Description</th>
+                                <th class='reference' style='border: thin solid black; border-left: none; text-transform: none;'>Reference</th>
+                                <th class='document_date' style="border: thin solid black; border-left: none;">Document Date</th>
+                                <th class='posting_date' style='border: thin solid black; border-left: none; text-transform: none;'>Posting Date</th>
+                                <th class='period' style='border: thin solid black; border-left: none; text-transform: none;'>Period</th>
+                                <th class='account' style='border: thin solid black; border-left: none; text-transform: none;'>G/L Account</th>
+                                <th class='third_party' style='border: thin solid black; border-left: none; text-transform: none;'>Third party</th>
+                                <th class='destination' style='border: thin solid black; border-left: none; text-transform: none;'>Destination</th>
+                                <th class='cost_center' style='border: thin solid black; border-left: none; text-transform: none;'>Cost Centre</th>
+                                <th class='destination' style='border: thin solid black; border-left: none; text-transform: none;'>Funding Pool</th>
+                                <th class='debit' style='border: thin solid black; border-left: none; text-transform: none;'>Booking Debit</th>
+                                <th class='credit' style='border: thin solid black; border-left: none; text-transform: none;'>Booking Credit</th>
+                                <th class='currency' style='border: thin solid black; border-left: none; text-transform: none;'>Booking Currency</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <th style="border: thin solid black; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                              </tr>
+                            </tbody>
+                          </table>
+                          <br />
+                        </html>
+                    </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'draft')]}">
                         <button string="Cancel" special="cancel" icon="gtk-cancel"/>
                         <button name="button_validate" type="object" string="Import" icon="terp-camera_test"/>
