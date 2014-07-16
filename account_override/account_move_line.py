@@ -349,7 +349,8 @@ class account_move_line(osv.osv):
 
     def create(self, cr, uid, vals, context=None, check=True):
         """
-        Filled in 'document_date' if we come from tests
+        Filled in 'document_date' if we come from tests.
+        Check that reference field in fill in. If not, use those from the move.
         """
         if not context:
             context = {}
@@ -360,6 +361,8 @@ class account_move_line(osv.osv):
                 sequence = move.sequence_id
                 line = sequence.get_id(code_or_id='id', context=context)
                 vals.update({'line_number': line})
+            if move.status == 'manu' and not vals.get('reference', False) and move.ref:
+                vals.update({'reference': move.ref})
         # Some checks
         if not vals.get('document_date') and vals.get('date'):
             vals.update({'document_date': vals.get('date')})
@@ -404,6 +407,11 @@ class account_move_line(osv.osv):
         # Note that _check_document_date HAVE TO be BEFORE the super write. If not, some problems appears in ournal entries document/posting date changes at the same time!
         self._check_document_date(cr, uid, ids, vals)
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
+        # UFTP-262: Check reference field for all lines. Optimisation: Do nothing if reference is in vals as it will be applied on all lines.
+        if context.get('from_web_menu', False) and not vals.get('reference', False):
+            for ml in self.browse(cr, uid, ids):
+                if ml.move_id and ml.move_id.status == 'manu' and not ml.reference:
+                    super(account_move_line, self).write(cr, uid, [ml.id], {'reference': ml.move_id.ref}, context=context, check=False, update_check=False)
         return res
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):

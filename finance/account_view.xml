@@ -85,7 +85,7 @@
                                     <tree colors="blue:state in ('draft');black:state in ('posted')" editable="top" string="Journal Items">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="name"/>
-                                        <field name="ref"/>
+                                        <field name="reference"/>
                                         <field name="account_id" domain="[('restricted_area', '=', 'account_move_lines')]"/>
                                         <field name="partner_id" invisible="1"/>
                                         <field name="debit_currency" sum="Total Booking Debit" string="Book. Debit"/>
