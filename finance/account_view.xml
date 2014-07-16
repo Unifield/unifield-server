@@ -81,7 +81,7 @@
                         </group>
                         <notebook colspan="4">
                             <page string="Journal Items">
-                                <field colspan="4" name="line_id" nolabel="1" height="250" widget="one2many_list" default_get="{'lines': [], 'journal':journal_id, 'period_id':period_id}" attrs="{'readonly': [('status', '=', 'sys')]}">
+                                <field colspan="4" name="line_id" nolabel="1" height="250" widget="one2many_list" default_get="{'lines': [], 'journal':journal_id, 'period_id':period_id, 'move_reference': ref}" attrs="{'readonly': [('status', '=', 'sys')]}">
                                     <tree colors="blue:state in ('draft');black:state in ('posted')" editable="top" string="Journal Items">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="name"/>
