@@ -946,7 +946,7 @@ class shipment(osv.osv):
             #assert shipment.state == 'packed', 'cannot ship a shipment which is not in correct state - packed - %s' % shipment.state
             if shipment.state != 'packed':
                 raise osv.except_osv(_('Error, packing in wrong state !'),
-                    _('Cannot make a shipment which is in a wrong correct state - should be "packed" but here it is %s' % shipment.state))
+                    _('Cannot make a shipment which is in a wrong correct state - should be "packed" but here it is ' + shipment.state))
             
             # the state does not need to be updated - function
             # update actual ship date (shipment_actual_date) to today + time
@@ -2282,6 +2282,9 @@ class stock_picking(osv.osv):
             # The following lines are to re-enter explicitly the values, even if they are already set to False
             vals['backorder_id'] = vals.get('backorder_id', False)
             vals['shipment_id'] = vals.get('shipment_id', False)
+        else: # if it is a CONSO-OUT --_> set the state for replicating back to CP
+            if 'name' in vals and 'OUT-CONSO' in vals['name']:
+               vals.update(already_replicated=False,)
 
         # the action adds subtype in the context depending from which screen it is created
         if context.get('picking_screen', False) and not vals.get('name', False):
@@ -3572,8 +3575,9 @@ class stock_picking(osv.osv):
             
                 if context.get('rw_shipment_name', False) and context.get('sync_message_execution', False): # RW Sync - update the shipment name same as on RW instance
                     new_name = context.get('rw_shipment_name')
-                    del context['rw_shipment_name']
-                    self.pool.get('shipment').write(cr, uid, shipment_id, {'name': new_name}, context=context)
+                    if new_name != obj.shipment_id.name:
+                        del context['rw_shipment_name']
+                        self.pool.get('shipment').write(cr, uid, shipment_id, {'name': new_name}, context=context)
                     return
             else:
                 raise Exception, "For some reason, there is no shipment created for the Packing list: " + obj.name
