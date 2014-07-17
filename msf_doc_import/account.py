@@ -246,6 +246,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                     r_employee = False
                     r_account = False
                     r_destination = False
+                    r_fp = False
                     r_cc = False
                     # UTP-766: Do not use Document date column, but wizard's one as document date for each line
                     #r_document_date = False
