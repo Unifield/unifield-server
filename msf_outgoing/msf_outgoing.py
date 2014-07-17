@@ -3027,6 +3027,14 @@ class stock_picking(osv.osv):
             picking = wizard.picking_id
 
             move_data = {}
+            for move in picking.move_lines:
+                if move.id not in move_data:
+                    move_data.setdefault(move.id, {
+                            'initial_qty': move.product_qty,
+                            'processed_qty': 0.00,
+                            'move': move,
+                            'first': True,
+                        })
 
             # Create the new ppl object
             ppl_number = picking.name.split("/")[1]
@@ -3054,7 +3062,7 @@ class stock_picking(osv.osv):
             # For each processed lines, save the processed quantity to update the draft picking ticket
             # and create a new line on PPL
             for line in wizard.move_ids:
-                first = False
+                first = move_data[line.move_id.id]['first']
 
                 orig_qty = line.move_id.product_qty
                 if line.move_id.original_qty_partial and line.move_id.original_qty_partial != -1:
@@ -3066,7 +3074,6 @@ class stock_picking(osv.osv):
                         'processed_qty': 0.00,
                         'move': line.move_id,
                     })
-                    first = True
 
                 if line.uom_id.id != line.move_id.product_uom.id:
                     processed_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.move_id.product_uom.id)
@@ -3090,6 +3097,7 @@ class stock_picking(osv.osv):
                 # Update or create the validate picking ticket line
                 if first:
                     move_obj.write(cr, uid, [line.move_id.id], values, context=context)
+                    move_data[line.move_id.id]['first'] = False
                 else:
                     # Split happened during the validation
                     # Copy the stock move and set the quantity
@@ -3122,7 +3130,6 @@ class stock_picking(osv.osv):
                     'non_stock_noupdate': False,
                 })
 
-
             # For each move, check if there is remaining quantity
             for move_vals in move_data.itervalues():
                 # The quantity after the validation does not correspond to the picking ticket quantity
@@ -3139,6 +3146,9 @@ class stock_picking(osv.osv):
                     backorder_qty = max(original_vals.product_qty + diff_qty, 0)
                     if backorder_qty != 0.00:
                         move_obj.write(cr, uid, [original_move_id], {'product_qty': backorder_qty}, context=context)
+
+                if move_vals['processed_qty'] == 0.00:
+                    move_obj.write(cr, uid, [move_vals['move'].id], {'product_qty': 0.00}, context=context)
 
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'stock.picking', new_ppl_id, 'button_confirm', cr)
