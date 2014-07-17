@@ -184,6 +184,11 @@ class stock_picking(osv.osv):
         if 'order_category' in pick_dict:
             header_result['order_category'] = pick_dict.get('order_category')
 
+        if 'backorder_id' in pick_dict and pick_dict['backorder_id'] and pick_dict['backorder_id']['id']:
+            backorder_id = self.find_sd_ref(cr, uid, xmlid_to_sdref(pick_dict['backorder_id']['id']), context=context)
+            if backorder_id:
+                header_result['backorder_id'] = backorder_id
+
         if pick_dict['reason_type_id'] and pick_dict['reason_type_id']['id']:
             header_result['reason_type_id'] = self.pool.get('stock.reason.type').find_sd_ref(cr, uid, xmlid_to_sdref(pick_dict['reason_type_id']['id']), context=context)
         else:
@@ -316,19 +321,15 @@ class stock_picking(osv.osv):
                   }
         
         # For RW instances, order line ids need to be retrieved and store in the IN and OUT to keep references (via procurement) when making the INcoming via cross docking
-        rw_type = self._get_usb_entity_type(cr, uid)
-        if rw_type == self.REMOTE_WAREHOUSE:
-            purchase_line_id = False
-            sale_line_id = False
-            if data['sale_line_id'] and data['sale_line_id']['id']:
-                sale_line_id = data['sale_line_id']['id']
-                sale_line_id = self.pool.get('sale.order.line').find_sd_ref(cr, uid, xmlid_to_sdref(sale_line_id), context=context)
-            if data['purchase_line_id'] and data['purchase_line_id']['id']:
-                purchase_line_id = data['purchase_line_id']['id']
-                purchase_line_id = self.pool.get('purchase.order.line').find_sd_ref(cr, uid, xmlid_to_sdref(purchase_line_id), context=context)
-                
-            result.update({'sale_line_id': sale_line_id,
-                  'purchase_line_id': purchase_line_id,})
+        if data['sale_line_id'] and data['sale_line_id']['id']:
+            sale_line_id = data['sale_line_id']['id']
+            sale_line_id = self.pool.get('sale.order.line').find_sd_ref(cr, uid, xmlid_to_sdref(sale_line_id), context=context)
+            result.update({'sale_line_id': sale_line_id,})
+
+        if data['purchase_line_id'] and data['purchase_line_id']['id']:
+            purchase_line_id = data['purchase_line_id']['id']
+            purchase_line_id = self.pool.get('purchase.order.line').find_sd_ref(cr, uid, xmlid_to_sdref(purchase_line_id), context=context)
+            result.update({'purchase_line_id': purchase_line_id,})
         return result
 
     def get_picking_lines(self, cr, uid, source, out_info, context=None):
@@ -402,6 +403,8 @@ class stock_picking(osv.osv):
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
                 picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                 header_result['move_lines'] = picking_lines
+                if 'OUT-CONSO' in pick_name:
+                    header_result['state'] = 'assigned' # for CONSO OUT, do not take "done state" -> can't execute workflow later
                 
                 # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
                 existing_pick = self.search(cr, uid, [('name', '=', pick_name), ('origin', '=', origin), ('subtype', '=', 'picking'), ('type', '=', 'out'), ('state', '=', 'draft')], context=context)
@@ -1031,7 +1034,55 @@ class stock_picking(osv.osv):
         self._logger.info(message)
         return message
 
-    def rw_do_create_shipment(self, cr, uid, pick_id, picking_lines, num_of_packs, context=None):
+
+    def rw_do_create_shipment(self, cr, uid, pick_id, picking_lines, num_of_packs, context=None): 
+        '''
+        Create the shipment from an existing draft shipment, then perform the ship
+        '''
+        # from the picking Id, search for the shipment
+        pick = self.browse(cr, uid, pick_id, context=context)
+        
+        # Objects
+        order_line_obj = self.pool.get('sale.order.line')
+        ship_proc_obj = self.pool.get('shipment.processor')
+        ship_proc_vals = {
+            'shipment_id': pick.shipment_id.id,
+            'address_id': pick.shipment_id.address_id.id,
+        }        
+
+        wizard_line_obj = self.pool.get('shipment.family.processor')
+        proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
+        ship_proc_obj.create_lines(cr, uid, proc_id, context=context)
+
+        wizard = ship_proc_obj.browse(cr, uid, proc_id, context=context)
+        shipment = wizard.shipment_id
+
+        # Create only the pack family that has been shipped, not all!
+        for sline in picking_lines:
+            sline = sline[2]
+            to_pack = sline['to_pack']
+            from_pack = sline['from_pack']
+            
+            sale_order_id = False
+            #get sale order from this sline:
+            if sline['sale_line_id']:
+                sale_order_id = order_line_obj.read(cr, uid, sline['sale_line_id'], ['order_id'])['order_id']
+                if sale_order_id:
+                    sale_order_id = sale_order_id[0]
+
+            for family in wizard.family_ids:
+                family_sale_id = family.sale_order_id and family.sale_order_id.id or False
+                if family.from_pack <= from_pack and family.to_pack >= to_pack and sale_order_id == family_sale_id:
+                    family_vals = {
+                        'selected_number': to_pack - from_pack + 1,
+                    }
+                    wizard_line_obj.write(cr, uid, [family.id], family_vals, context=context)
+                    print family.id, " - ", family_vals['selected_number'] 
+                    
+        self.pool.get('shipment').do_create_shipment(cr, uid, [proc_id], context=context)
+        return True
+
+    def rw_do_create_shipmentDUY_TEMP(self, cr, uid, pick_id, picking_lines, num_of_packs, context=None):
         '''
         Create the shipment from an existing draft shipment, then perform the ship
         '''
@@ -1045,6 +1096,7 @@ class stock_picking(osv.osv):
             'address_id': pick.shipment_id.address_id.id,
         }        
 
+        order_line_obj = self.pool.get('sale.order.line')
         wizard_line_obj = self.pool.get('shipment.family.processor')
         proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
 
@@ -1056,15 +1108,23 @@ class stock_picking(osv.osv):
             sline = sline[2]
             to_pack = sline['to_pack']
             from_pack = sline['from_pack']
+
+            sale_order_id = False
+            #get sale order from this sline:
+            if sline['sale_line_id']:
+                sale_order_id = order_line_obj.read(cr, uid, sline['sale_line_id'], ['order_id'])['order_id']
+                if sale_order_id:
+                    sale_order_id = sale_order_id[0]
             
             for family in shipment.pack_family_memory_ids:
                 if family.state == 'done':
                     continue
                 
-                if family.from_pack <= from_pack and family.to_pack >= to_pack:  
+                family_sale_id = family.sale_order_id and family.sale_order_id.id or False
+                if family.from_pack <= from_pack and family.to_pack >= to_pack and sale_order_id == family_sale_id:
                     family_vals = {
                         'wizard_id': wizard.id,
-                        'sale_order_id': family.sale_order_id and family.sale_order_id.id or False,
+                        'sale_order_id': family_sale_id,
                         'from_pack': from_pack,
                         'to_pack': to_pack,
                         'selected_number': sline['to_pack'] - sline['from_pack'] + 1,
@@ -1077,9 +1137,8 @@ class stock_picking(osv.osv):
                         'description_ppl': family.description_ppl,
                         'ppl_id': family.ppl_id and family.ppl_id.id or False,
                     }
-                    wizard_line_obj.create(cr, uid, family_vals, context=context)
-                    
-                    
+                    fid = wizard_line_obj.create(cr, uid, family_vals, context=context)
+                    print fid, " - ", family_vals['selected_number'] 
                     
         # TO BE REVIEWED AND REMOVED THE FOLLOWING BLOCK OF CODE!
 # 
