@@ -225,6 +225,47 @@ class stock_picking(osv.osv):
 
         return result
 
+    def _get_do_not_sync(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+
+        if context is None:
+            context = {}
+
+        current_company_p_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
+
+        for pick in self.browse(cr, uid, ids, context=context):
+            res[pick.id] = False
+            if pick.partner_id.id == current_company_p_id:
+                res[pick.id] = True
+
+        return res
+
+    def _src_do_not_sync(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns picking ticket that do not synched because the partner of the
+        picking is the partner of the current company.
+        '''
+        res = []
+        curr_partner_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
+
+        if context is None:
+            context = {}
+        
+        for arg in args:
+
+            eq_false = arg[1] == '=' and arg[2] in (False, 'f', 'false', 'False', 0)
+            neq_true = arg[1] in ('!=', '<>') and arg[2] in (True, 't', 'true', 'True', 1)
+            eq_true = arg[1] == '=' and arg[2] in (True, 't', 'true', 'True', 1)
+            neq_false = arg[1] in ('!=', '<>') and arg[2] in (False, 'f', 'false', 'False', 0)
+
+            if arg[0] == 'do_not_sync' and (eq_false or neq_true):
+                res.append(('partner_id', '!=', curr_partner_id))
+            elif arg[0] == 'do_not_sync' and (eq_true or neq_false):
+                res.append(('partner_id', '=', curr_partner_id))
+
+        return res
+
+
     _columns = {
         'state': fields.selection([
             ('draft', 'Draft'),
@@ -265,6 +306,14 @@ class stock_picking(osv.osv):
                                         store={'stock.move': (_get_dpo_picking_ids, ['sync_dpo', 'dpo_line_id', 'picking_id'], 10,),
                                                'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
         'previous_chained_pick_id': fields.many2one('stock.picking', string='Previous chained picking', ondelete='set null', readonly=True),
+        'do_not_sync': fields.function(
+            _get_do_not_sync,
+            fnct_search=_src_do_not_sync,
+            method=True,
+            type='boolean',
+            string='Do not sync.', 
+            store=False,
+        ),
     }
 
     _defaults = {'from_yml_test': lambda *a: False,
