@@ -322,19 +322,23 @@ class msf_doc_import_accounting(osv.osv_memory):
                     r_account = account_ids[0]
                     account = self.pool.get('account.account').browse(cr, uid, r_account)
                     # Check that Third party exists (if not empty)
+                    tp_label = False
+                    tp_content = False
                     if line[cols['Partner']]:
                         tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['Partner']])])
-                        r_partner = tp_ids[0]
-                    if line[cols['Employee']]:
-                        tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['Employee']])])
-                        r_employee = tp_ids[0]
-                    if not r_employee and not r_partner:
-                        if not r_partner:
+                        if not tp_ids:
                             tp_label = _('Partner')
                             tp_content = line[cols['Partner']]
                         else:
+                            r_partner = tp_ids[0]
+                    if line[cols['Employee']]:
+                        tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['Employee']])])
+                        if not tp_ids:
                             tp_label = _('Employee')
                             tp_content = line[cols['Employee']]
+                        else:
+                            r_employee = tp_ids[0]
+                    if tp_label and tp_content:
                         errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, tp_content,))
                         continue
                     if r_employee and r_partner:
@@ -398,7 +402,6 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if not partner_needs:
                         errors.append(_('Line %s. No info about given account: %s') % (current_line_num, account.code,))
                         continue
-                    })
                     # Check result
                     partner_options = partner_needs['value']['partner_type']['options']
                     if r_partner and ('res.partner', 'Partner') not in partner_options:
