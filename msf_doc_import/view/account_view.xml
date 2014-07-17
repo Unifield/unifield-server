@@ -46,7 +46,7 @@
                                 <th class='entry_sequence' style='border: thin solid black; border-left: none; text-transform: none;'>Entry Sequence</th>
                                 <th class='description' style='border: thin solid black; border-left: none; text-transform: none;'>Description</th>
                                 <th class='reference' style='border: thin solid black; border-left: none; text-transform: none;'>Reference</th>
-                                <th class='document_date' style="border: thin solid black; border-left: none;">Document Date</th>
+                                <th class='document_date' style="border: thin solid black; border-left: none; text-transform: none;">Document Date</th>
                                 <th class='posting_date' style='border: thin solid black; border-left: none; text-transform: none;'>Posting Date</th>
                                 <th class='period' style='border: thin solid black; border-left: none; text-transform: none;'>Period</th>
                                 <th class='account' style='border: thin solid black; border-left: none; text-transform: none;'>G/L Account</th>
