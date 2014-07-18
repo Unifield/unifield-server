@@ -59,11 +59,21 @@ class UnifieldTest(unittest.TestCase):
         names = ['sync', 'hq1', 'c1', 'p1']
         if not tempo_mkdb:
             db_suffixes = ['SYNC_SERVER', 'HQ_01', 'COORDO_01', 'PROJECT_01']
+        # Check Remote warehouse and complete old params
+        remote_warehouse = c.get('DB', 'RW') or False
+        self.is_remote_warehouse = False
+        if remote_warehouse:
+            self.is_remote_warehouse = True
+        self.is_remote_warehouse = False
+        # Other values
         colors = TerminalColors()
         self.colors = colors
         # Keep each database connection
         for db_tuple in zip(db_suffixes, names):
             self._addConnection(db_tuple[0], db_tuple[1])
+        # Add remote warehouse
+        if remote_warehouse:
+            self._addConnection(remote_warehouse, 'rw')
         # For each database, check that unifield_tests module is loaded
         #+ If not, load it.
         #+ Except if the database is sync one
