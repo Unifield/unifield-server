@@ -1048,13 +1048,19 @@ class stock_picking(osv.osv):
         ship_proc_vals = {
             'shipment_id': pick.shipment_id.id,
             'address_id': pick.shipment_id.address_id.id,
-        }        
+        }
+        
+        # Get this Shipment dest location, if a stock move is with this location then it's a returned pack --> do not process
+        returned_pack_loc = self.pool.get('stock.location').find_sd_ref(cr, uid, xmlid_to_sdref('sd.msf_outgoing_stock_location_dispatch'), context=context)        
 
         wizard_line_obj = self.pool.get('shipment.family.processor')
         proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
         ship_proc_obj.create_lines(cr, uid, proc_id, context=context)
 
         wizard = ship_proc_obj.browse(cr, uid, proc_id, context=context)
+        # Reset the selected packs for shipment, because by a wizard, it sets total pack!
+        for family in wizard.family_ids:
+            wizard_line_obj.write(cr, uid, [family.id], {'selected_number': 0,}, context=context)
         shipment = wizard.shipment_id
 
         # Create only the pack family that has been shipped, not all!
@@ -1062,6 +1068,9 @@ class stock_picking(osv.osv):
             sline = sline[2]
             to_pack = sline['to_pack']
             from_pack = sline['from_pack']
+            location_dest_id = sline['location_dest_id']
+            if location_dest_id == returned_pack_loc:
+                continue
             
             sale_order_id = False
             #get sale order from this sline:
@@ -1069,100 +1078,18 @@ class stock_picking(osv.osv):
                 sale_order_id = order_line_obj.read(cr, uid, sline['sale_line_id'], ['order_id'])['order_id']
                 if sale_order_id:
                     sale_order_id = sale_order_id[0]
-
+                    
             for family in wizard.family_ids:
                 family_sale_id = family.sale_order_id and family.sale_order_id.id or False
                 if family.from_pack <= from_pack and family.to_pack >= to_pack and sale_order_id == family_sale_id:
                     family_vals = {
                         'selected_number': to_pack - from_pack + 1,
+#                        'from_pack': from_pack,
+#                        'to_pack': to_pack,                        
                     }
                     wizard_line_obj.write(cr, uid, [family.id], family_vals, context=context)
-                    print family.id, " - ", family_vals['selected_number'] 
-                    
-        self.pool.get('shipment').do_create_shipment(cr, uid, [proc_id], context=context)
-        return True
-
-    def rw_do_create_shipmentDUY_TEMP(self, cr, uid, pick_id, picking_lines, num_of_packs, context=None):
-        '''
-        Create the shipment from an existing draft shipment, then perform the ship
-        '''
-        # from the picking Id, search for the shipment
-        pick = self.browse(cr, uid, pick_id, context=context)
-        
-        # Objects
-        ship_proc_obj = self.pool.get('shipment.processor')
-        ship_proc_vals = {
-            'shipment_id': pick.shipment_id.id,
-            'address_id': pick.shipment_id.address_id.id,
-        }        
-
-        order_line_obj = self.pool.get('sale.order.line')
-        wizard_line_obj = self.pool.get('shipment.family.processor')
-        proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
-
-        wizard = ship_proc_obj.browse(cr, uid, proc_id, context=context)
-        shipment = wizard.shipment_id
-
-        # Create only the pack family that has been shipped, not all!
-        for sline in picking_lines:
-            sline = sline[2]
-            to_pack = sline['to_pack']
-            from_pack = sline['from_pack']
-
-            sale_order_id = False
-            #get sale order from this sline:
-            if sline['sale_line_id']:
-                sale_order_id = order_line_obj.read(cr, uid, sline['sale_line_id'], ['order_id'])['order_id']
-                if sale_order_id:
-                    sale_order_id = sale_order_id[0]
-            
-            for family in shipment.pack_family_memory_ids:
-                if family.state == 'done':
-                    continue
-                
-                family_sale_id = family.sale_order_id and family.sale_order_id.id or False
-                if family.from_pack <= from_pack and family.to_pack >= to_pack and sale_order_id == family_sale_id:
-                    family_vals = {
-                        'wizard_id': wizard.id,
-                        'sale_order_id': family_sale_id,
-                        'from_pack': from_pack,
-                        'to_pack': to_pack,
-                        'selected_number': sline['to_pack'] - sline['from_pack'] + 1,
-                        'pack_type': family.pack_type and family.pack_type.id or False,
-                        'length': family.length,
-                        'width': family.width,
-                        'height': family.height,
-                        'weight': family.weight,
-                        'draft_packing_id': family.draft_packing_id and family.draft_packing_id.id or False,
-                        'description_ppl': family.description_ppl,
-                        'ppl_id': family.ppl_id and family.ppl_id.id or False,
-                    }
-                    fid = wizard_line_obj.create(cr, uid, family_vals, context=context)
-                    print fid, " - ", family_vals['selected_number'] 
-                    
-        # TO BE REVIEWED AND REMOVED THE FOLLOWING BLOCK OF CODE!
-# 
-#         ofp={}
-#         for sline in picking_lines:
-#             sline = sline[2]
-#             ofp_key = (sline['picking_id'], sline['to_pack'], sline['from_pack'])
-#             ofp.setdefault(ofp_key, sline['to_pack'] - sline['from_pack'] + 1)
-#         
-#         wizard = ship_proc_obj.browse(cr, uid, proc_id, context=context)
-#         i = 0
-#         ofp_used = []
-#         for family in wizard.family_ids:
-#             # match the line, copy the content of picking line into the wizard line
-#             if i < len(ofp):
-#                 for ofp_key, ofp_vals in ofp.iteritems():
-#                     selected_number = 0
-#                     if family.draft_packing_id.name == pick.name and ofp_key[1] <= family.to_pack and ofp_key[2] >= family.from_pack and ofp_key not in ofp_used:
-#                         selected_number = ofp[ofp_key]
-#                     vals = {'selected_number': selected_number}
-#                     wizard_line_obj.write(cr, uid, family.id, vals, context)
-#                     ofp_used.append(ofp_key)
-#                     i = i+1
-
+                    print family.id, " - ", family_vals['selected_number']
+                     
         self.pool.get('shipment').do_create_shipment(cr, uid, [proc_id], context=context)
         return True
 
