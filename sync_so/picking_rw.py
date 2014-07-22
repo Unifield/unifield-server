@@ -406,6 +406,7 @@ class stock_picking(osv.osv):
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
                 picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                 header_result['move_lines'] = picking_lines
+                del header_result['state']
                 if 'OUT-CONSO' in pick_name:
                     header_result['state'] = 'assigned' # for CONSO OUT, do not take "done state" -> can't execute workflow later
                 
@@ -416,7 +417,9 @@ class stock_picking(osv.osv):
                     self._logger.info(message)
                     return message
                 pick_id = self.create(cr, uid, header_result , context=context)
-#                 self.draft_force_assign(cr, uid, [pick_id])
+                wf_service = netsvc.LocalService("workflow")
+                wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
+                self.action_assign(cr, uid, [pick_id])
                 
                 # Check if this PICK/OUT comes from a procurement, if yes, then update the move id to the procurement if exists
                 if pick_id:
