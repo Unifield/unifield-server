@@ -201,6 +201,9 @@ class stock_picking(osv.osv):
             
         if 'move_type' in pick_dict:
             header_result['move_type'] = pick_dict.get('move_type')
+        if 'cross_docking_ok' in pick_dict:
+            header_result['cross_docking_ok'] = pick_dict.get('cross_docking_ok')
+            
         if 'type' in pick_dict:
             header_result['type'] = pick_dict.get('type')
         if 'subtype' in pick_dict:
@@ -416,7 +419,8 @@ class stock_picking(osv.osv):
                     self._logger.info(message)
                     return message
                 pick_id = self.create(cr, uid, header_result , context=context)
-#                 self.draft_force_assign(cr, uid, [pick_id])
+                if 'OUT' in pick_name:
+                    self.draft_force_assign(cr, uid, [pick_id])
                 
                 # Check if this PICK/OUT comes from a procurement, if yes, then update the move id to the procurement if exists
                 if pick_id:
