@@ -291,7 +291,7 @@ class stock_picking(osv.osv):
             ids = [ids]
         res = super(stock_picking, self)._stock_picking_action_process_hook(cr, uid, ids, context=context, *args, **kwargs)
         wizard_obj = self.pool.get('wizard')
-        res = wizard_obj.open_wizard(cr, uid, ids, type='update', context=dict(context,
+        res = wizard_obj.open_wizard(cr, uid, ids, w_type='update', context=dict(context,
                                                                                wizard_ids=[res['res_id']],
                                                                                wizard_name=res['name'],
                                                                                model=res['res_model'],
