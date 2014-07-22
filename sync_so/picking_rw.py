@@ -215,6 +215,9 @@ class stock_picking(osv.osv):
         so_po_common = self.pool.get('so.po.common')
 
         partner_id = so_po_common.get_partner_id(cr, uid, source, context)
+        if 'partner_id' in pick_dict:
+            partner_id = so_po_common.get_partner_id(cr, uid, pick_dict['partner_id'], context)
+        
         address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
         price_list = so_po_common.get_price_list_id(cr, uid, partner_id, context)
         location_id = so_po_common.get_location(cr, uid, partner_id, context)
