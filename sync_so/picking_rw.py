@@ -738,24 +738,36 @@ class stock_picking(osv.osv):
         wizard_obj = self.pool.get('create.picking.processor')
         wizard_line_obj = self.pool.get('create.picking.move.processor')
         proc_id = wizard_obj.create(cr, uid, {'picking_id': pick_id}, context=context)
-        wizard_obj.create_lines(cr, uid, proc_id, context=context)        
-        
-        # Copy values from the OUT message move lines into the the wizard lines before making the partial OUT
-        # If the line got split, based on line number and create new wizard line
-        for sline in picking_lines:
-            sline = sline[2]
-            line_number = sline['line_number']
-            
-            #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
-            
-            wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
-            for mline in wizard.move_ids:
-                if mline.line_number == line_number:
-                    # match the line, copy the content of picking line into the wizard line
-                    vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
-                            'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id']}
-                    wizard_line_obj.write(cr, uid, mline.id, vals, context)
-                    break
+        wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
+
+        # Check how many lines the wizard has, to make it mirror with the lines received from the sync        
+        # Check if the number of moves of the wizard is different with the number of received PPL --> recreate a new lines
+        move_already_checked = []
+        move_id = False
+        line_data = False
+        if wizard.picking_id.move_lines:
+            for sline in picking_lines:
+                sline = sline[2]            
+                line_number = sline['line_number']
+                if not sline['product_qty'] or sline['product_qty'] == 0.00:
+                    continue
+                
+                for move in wizard.picking_id.move_lines:
+                    if move.line_number == line_number:
+                        if move.id not in move_already_checked:
+                            move_id = move.id
+                            move_already_checked.append(move.id) # this move id will not be picked in the next search when creating lines
+                            line_data = wizard_line_obj._get_line_data(cr, uid, wizard, move, context=context)
+                            break
+
+                if move_id and line_data:
+                    vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
+                            'ordered_quantity': sline['product_qty'],
+                            'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
+                            'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],
+                            'cost':line_data['cost'],'currency':line_data['currency'],
+                            }
+                    wizard_line_obj.create(cr, uid, vals, context=context)
 
         line_to_del = wizard_line_obj.search(cr, uid, [('wizard_id', '=', proc_id), ('quantity', '=', 0.00)], context=context)
         if line_to_del:
@@ -918,26 +930,32 @@ class stock_picking(osv.osv):
         
         # Check how many lines the wizard has, to make it mirror with the lines received from the sync        
         # Check if the number of moves of the wizard is different with the number of received PPL --> recreate a new lines
-        if wizard.picking_id.move_lines and len(wizard.picking_id.move_lines):
+        move_already_checked = []
+        move_id = False
+        line_data = False
+        if wizard.picking_id.move_lines:
             for sline in picking_lines:
                 sline = sline[2]            
                 line_number = sline['line_number']
                 if not sline['from_pack'] or not sline['to_pack']:
                     continue
-                
                 for move in wizard.picking_id.move_lines:
                     if move.line_number == line_number:
-                        move_id = move.id
-                        line_data = wizard_line_obj._get_line_data(cr, uid, wizard, move, context=context)
-
-                vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
-                        'ordered_quantity': sline['product_qty'],
-                        'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
-                        'from_pack': sline['from_pack'], 'to_pack': sline['to_pack'],'pack_type': sline['pack_type'],
-                        'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],
-                        'cost':line_data['cost'],'currency':line_data['currency'],
-                        }
-                wizard_line_obj.create(cr, uid, vals, context=context)
+                        if move.id not in move_already_checked:
+                            move_id = move.id
+                            move_already_checked.append(move.id) # this move id will not be picked in the next search when creating lines
+                            line_data = wizard_line_obj._get_line_data(cr, uid, wizard, move, context=context)
+                            break
+                
+                if move_id and line_data:
+                    vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
+                            'ordered_quantity': sline['product_qty'],
+                            'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
+                            'from_pack': sline['from_pack'], 'to_pack': sline['to_pack'],'pack_type': sline['pack_type'],
+                            'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],
+                            'cost':line_data['cost'],'currency':line_data['currency'],
+                            }
+                    wizard_line_obj.create(cr, uid, vals, context=context)
 
         self.do_ppl_step1(cr, uid, [proc_id], context=context)
         
@@ -1084,8 +1102,6 @@ class stock_picking(osv.osv):
                 if family.from_pack <= from_pack and family.to_pack >= to_pack and sale_order_id == family_sale_id:
                     family_vals = {
                         'selected_number': to_pack - from_pack + 1,
-#                        'from_pack': from_pack,
-#                        'to_pack': to_pack,                        
                     }
                     wizard_line_obj.write(cr, uid, [family.id], family_vals, context=context)
                     print family.id, " - ", family_vals['selected_number']
