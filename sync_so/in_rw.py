@@ -84,7 +84,15 @@ class stock_picking(osv.osv):
                     self._logger.info(message)
                     return message
                 pick_id = self.create(cr, uid, header_result , context=context)
-                self.draft_force_assign(cr, uid, [pick_id]) # Fixed by JF: To send the IN to the right state 
+
+                todo_moves = []
+                for move in self.browse(cr, uid, pick_id, context=context).move_lines:
+                    todo_moves.append(move.id)
+                move_obj.action_confirm(cr, uid, todo_moves)
+                move_obj.force_assign(cr, uid, todo_moves)
+                wf_service = netsvc.LocalService("workflow")
+                wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
+#                self.draft_force_assign(cr, uid, [pick_id]) # Fixed by JF: To send the IN to the right state 
                 if pick_dict['state'] == 'shipped':
                     self.write(cr, uid, pick_id, {'state': 'shipped'}, context=context)
 
