@@ -152,7 +152,7 @@ class stock_picking(osv.osv):
                     if state in ('done', 'assigned'):
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                         header_result['move_lines'] = picking_lines
-                        self.force_assign(cr, uid, pick_ids)
+                        #self.force_assign(cr, uid, pick_ids)
                         context['rw_backorder_name'] = pick_name
                         self.rw_do_create_partial_in(cr, uid, pick_ids[0], header_result, picking_lines, context)
                         
@@ -206,7 +206,8 @@ class stock_picking(osv.osv):
                     self._logger.info(message)
                     return message
                 pick_id = self.create(cr, uid, header_result , context=context)
-                self.draft_force_assign(cr, uid, [pick_id]) # Fixed by JF: To send the IN to the right state 
+                self.action_assign(cr, uid, [pick_id])
+#                self.draft_force_assign(cr, uid, [pick_id]) # Fixed by JF: To send the IN to the right state 
                 
                 if 'rw_force_seq' in pick_dict and pick_dict.get('rw_force_seq', False):
                     self.alter_sequence_for_rw_pick(cr, uid, 'stock.picking.internal', pick_dict.get('rw_force_seq') + 1, context)
@@ -390,7 +391,7 @@ class stock_picking(osv.osv):
                     if state in ('done', 'assigned'):
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                         header_result['move_lines'] = picking_lines
-                        self.force_assign(cr, uid, pick_ids)
+                        #self.force_assign(cr, uid, pick_ids)
                         context['rw_backorder_name'] = pick_name
                         self.rw_do_create_partial_int_moves(cr, uid, pick_ids[0], picking_lines, context)
                         

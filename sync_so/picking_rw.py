@@ -420,14 +420,15 @@ class stock_picking(osv.osv):
                     message = "Sorry, the PICK: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
                     return message
+                print pick_name, origin
                 pick_id = self.create(cr, uid, header_result , context=context)
                 if state != 'draft': # if draft, do nothing
                     wf_service = netsvc.LocalService("workflow")
                     wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
                     self.action_assign(cr, uid, [pick_id])
     
-                    if state == 'assigned' and self.browse(cr, uid, pick_id, context=context).state == 'confirmed':
-                        self.force_assign(cr, uid, [pick_id])
+#                    if state == 'assigned' and self.browse(cr, uid, pick_id, context=context).state == 'confirmed':
+#                        self.force_assign(cr, uid, [pick_id])
                 
                 # Check if this PICK/OUT comes from a procurement, if yes, then update the move id to the procurement if exists
                 if pick_id:
@@ -634,7 +635,7 @@ class stock_picking(osv.osv):
                     if state == 'done':   
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                         header_result['move_lines'] = picking_lines
-                        self.force_assign(cr, uid, pick_ids)
+#                        self.force_assign(cr, uid, pick_ids)
                         context['rw_backorder_name'] = pick_name
                         self.rw_do_out_partial(cr, uid, pick_ids[0], picking_lines, context)
                         
@@ -677,13 +678,17 @@ class stock_picking(osv.osv):
             
             #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
             
-            wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
-            for mline in wizard.move_ids:
+            mline_ids = wizard_line_obj.search(cr, uid, [('wizard_id', '=', proc_id)], context=context)
+            brw_mline = wizard_line_obj.browse(cr, uid, mline_ids, context=context)
+            for mline in brw_mline:
                 if mline.line_number == line_number:
                     # match the line, copy the content of picking line into the wizard line
                     vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
                             'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id']}
-                    wizard_line_obj.write(cr, uid, mline.id, vals, context)
+                    if mline.quantity == 0.00:
+                        wizard_line_obj.write(cr, uid, mline.id, vals, context)
+                    elif id(mline) == id(brw_mline[-1]):
+                        wizard_line_obj.copy(cr, uid, mline.id, vals, context)
                     break
 
         self.do_partial(cr, uid, [proc_id], 'outgoing.delivery.processor', context=context)
@@ -714,6 +719,17 @@ class stock_picking(osv.osv):
             if origin:
                 header_result = {}
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
+                same_ids = self.search(cr, uid, [
+                    ('name', '=', pick_name),
+                    ('origin', '=', origin),
+                    ('subtype', '=', 'picking'),
+                    ('state', 'in', ['assigned', 'draft']),
+                ], context=context)
+                if same_ids:
+                    message = "The Picking: " + pick_name + " is already replicated in " + cr.dbname
+                    self._logger.info(message)
+                    return message
+
                 pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['draft'])], context=context)
                 if not pick_ids:
                     pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['draft','confirmed', 'assigned'])], context=context)
@@ -722,7 +738,7 @@ class stock_picking(osv.osv):
                     if state in ('done', 'assigned'):   
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                         header_result['move_lines'] = picking_lines
-                        self.force_assign(cr, uid, pick_ids)
+#                        self.force_assign(cr, uid, pick_ids)
                         context['rw_backorder_name'] = pick_name
                         self.rw_do_create_picking_partial(cr, uid, pick_ids[0], picking_lines, context)
                         
@@ -817,7 +833,7 @@ class stock_picking(osv.osv):
                     if state in ('done', 'assigned'):   
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                         header_result['move_lines'] = picking_lines
-                        self.force_assign(cr, uid, pick_ids)
+#                        self.force_assign(cr, uid, pick_ids)
                         context['rw_backorder_name'] = pick_name
                         self.rw_do_validate_picking(cr, uid, pick_ids[0], picking_lines, context)
                         
