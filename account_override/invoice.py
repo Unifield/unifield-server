@@ -302,8 +302,10 @@ class account_invoice(osv.osv):
         Remove useless fields
         """
         for line in lines:
-            del line['move_lines']
-            del line['import_invoice_id']
+            if line.get('move_lines',False):
+                del line['move_lines']
+            if line.get('import_invoice_id',False):
+                del line['import_invoice_id']
         res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines)
         return res
 
