@@ -58,6 +58,7 @@ class wizard_account_invoice(osv.osv):
         'date_invoice': lambda *a: time.strftime('%Y-%m-%d'),
         'document_date': lambda *a: time.strftime('%Y-%m-%d'),
         'state': lambda *a: 'draft',
+        'reference': lambda *a: ' ',
     }
 
     def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
