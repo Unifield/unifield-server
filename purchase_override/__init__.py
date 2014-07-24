@@ -22,6 +22,7 @@ PURCHASE_ORDER_STATE_SELECTION = [
     ('rfq_sent', 'Sent'),
     ('rfq_updated', 'Updated'),
     ('split', 'Split'),
+    ('rw', 'RW'),
 ]
 
 

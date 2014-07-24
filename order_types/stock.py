@@ -184,7 +184,25 @@ class stock_picking(osv.osv):
             raise osv.except_osv(_('Warning'), _('This picking doesn\'t require a donation certificate'))
 
 
+    def _hook_check_cp_instance(self, cr, uid, ids, context=None):
+        return False
+
+
     def action_process(self, cr, uid, ids, context=None):
+        '''
+        Override the method to display a message to attach
+        a certificate of donation
+        '''
+        if context is None:
+            context = {}
+
+        hook_cp_check = self._hook_check_cp_instance(cr, uid, ids, context)
+        if hook_cp_check:
+            return hook_cp_check
+
+        return self.original_action_process(cr, uid, ids, context)
+
+    def original_action_process(self, cr, uid, ids, context=None):
         '''
         Override the method to display a message to attach
         a certificate of donation

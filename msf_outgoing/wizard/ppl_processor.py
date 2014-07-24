@@ -633,9 +633,22 @@ class ppl_move_processor(osv.osv):
         """
         res = super(ppl_move_processor, self)._get_line_data(cr, uid, wizard, move, context=context)
 
+        # For Remote Warehouse purpose
+        from_pack = move.from_pack
+        to_pack = move.to_pack
+        if from_pack == 0 or to_pack == 0:
+            from_pack == 1
+            to_pack == 1
+
         res.update({
             'quantity': move.product_qty,
             'ordered_quantity': move.product_qty,
+            'from_pack': from_pack,
+            'to_pack': to_pack,
+            'length': move.length,
+            'width': move.width,
+            'height': move.height,
+            'weight': move.weight,
         })
 
         return res
