@@ -420,7 +420,6 @@ class stock_picking(osv.osv):
                     message = "Sorry, the PICK: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
                     return message
-                print pick_name, origin
                 pick_id = self.create(cr, uid, header_result , context=context)
                 if state != 'draft': # if draft, do nothing
                     wf_service = netsvc.LocalService("workflow")

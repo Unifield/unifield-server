@@ -392,6 +392,7 @@ class stock_picking(osv.osv):
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                         header_result['move_lines'] = picking_lines
                         #self.force_assign(cr, uid, pick_ids)
+                        self.action_assign(cr, uid, pick_ids)
                         context['rw_backorder_name'] = pick_name
                         self.rw_do_create_partial_int_moves(cr, uid, pick_ids[0], picking_lines, context)
                         
