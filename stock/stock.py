@@ -2011,11 +2011,15 @@ class stock_move(osv.osv):
                 # name of new picking according to its type
                 new_pick_name = seq_obj.get(cr, uid, 'stock.picking.' + ptype)
                 pickid = self._create_chained_picking(cr, uid, new_pick_name, picking, ptype, todo, context=context)
+
                 # Need to check name of old picking because it always considers picking as "OUT" when created from Sale Order
                 old_ptype = location_obj.picking_type_get(cr, uid, picking.move_lines[0].location_id, picking.move_lines[0].location_dest_id)
                 if old_ptype != picking.type:
                     old_pick_name = seq_obj.get(cr, uid, 'stock.picking.' + old_ptype)
                     picking_obj.write(cr, uid, [picking.id], {'name': old_pick_name}, context=context)
+
+                if ptype == 'internal':
+                     picking_obj.write(cr, uid, [picking.id], {'associate_int_name': new_pick_name}, context=context) # save the INT name into this original IN
             else:
                 pickid = False
             for move, (loc, dummy, delay, dummy, company_id, ptype) in todo:
@@ -2386,6 +2390,10 @@ class stock_move(osv.osv):
 
         for pick_id in picking_ids:
             wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
+            pick = self.pool.get('stock.picking').browse(cr, uid, pick_id, context=context)
+            ##### UF-2378 For some reason, the RW code from OpenERP kept the IN always in Available, even its lines are closed!!!
+            if pick.state != 'done' and pick.type=='in':
+                self.pool.get('stock.picking').write(cr, uid, pick_id, {'state': 'done', 'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
 
         moves = self.browse(cr, uid, move_ids, context=context)
         self.create_chained_picking(cr, uid, moves, context)
