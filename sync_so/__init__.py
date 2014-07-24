@@ -3,4 +3,7 @@ import purchase
 import specific_xml_id
 import account_analytic_line
 import account
+import picking_rw
+import so_po_rw
+import in_rw
 import picking

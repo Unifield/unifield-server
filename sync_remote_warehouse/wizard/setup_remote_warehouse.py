@@ -33,11 +33,22 @@ class setup_remote_warehouse(osv.osv_memory):
         'existing_usb_instance_type': fields.function(get_existing_usb_instance_type, method=True, type='char', string="Instance Type"),
     }
     
-    _sequences_to_prefix = [
-        'specific_rules.sequence_production_lots',
-        'stock.seq_picking_internal',
-        'stock.seq_picking_in',
-        'procurement_request.seq_procurement_request',
+    # This is the list of the code of sequences
+    _sequences_to_suffix = [
+        'stock.lot.serial',
+        'stock.picking.in',
+        'stock.picking.internal',
+        'stock.picking.out',
+        'procurement.request',
+        'sale.order',
+        'purchase.order',
+        'kit.creation',
+        'kit.lot',
+        'stock.lot.tracking',
+        'ppl',
+        'product.asset',
+        'return.claim',
+        'shipment',
     ]
     
     _logger = logging.getLogger('setup_remote_warehouse')
@@ -55,29 +66,6 @@ class setup_remote_warehouse(osv.osv_memory):
         if connection_manager_ids:
             server_connection_pool.browse(cr, uid, connection_manager_ids[0]).disconnect()
             
-    def _prefix_sequences(self, cr, uid, revert=False): 
-        """ 
-        Add "/RW" prefix to sequences in _sequences_to_prefix to avoid conflicts with central platform. 
-        If revert is True, this function will remove /RW from the sequence prefix instead.
-        """
-        ir_sequence_object = self.pool.get('ir.sequence')
-        
-        for sequence in self._sequences_to_prefix:
-            try:
-                sequence_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, *sequence.split('.', 1))[1]
-            except ValueError:
-                self._logger.warning('Could not find sequence with XML ID: %s' % sequence)
-                continue
-            
-            sequence_prefix = ir_sequence_object.read(cr, 1, [sequence_id], ['prefix'])[0]['prefix']
-            
-            if not revert:
-                if sequence_prefix[-3:] != 'RW/':
-                    ir_sequence_object.write(cr, 1, sequence_id, {'prefix' : '%sRW/' % sequence_prefix})
-            else:
-                if sequence_prefix[-3:] == 'RW/':
-                    ir_sequence_object.write(cr, 1, sequence_id, {'prefix' : sequence_prefix[:-3]})
-                
     def _fill_ir_model_data_dates(self, cr):
         """ 
         For each record in ir.model.data that has no sync_date or usb_sync_date
@@ -89,13 +77,35 @@ class setup_remote_warehouse(osv.osv_memory):
             SET usb_sync_date = now()
             WHERE sync_date is null AND usb_sync_date is null;
         """)
+
+    def _set_sequence_suffix(self, cr, uid, suffix="", context=None):
+        """
+        Put or remove the suffix of all the sequences in _sequences_to_suffix
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that calls the method
+        :param suffix: Suffix that will be applied on all sequences
+        :param context: Context of the call
+
+        :return Nothing
+        """
+        seq_obj = self.pool.get('ir.sequence')
+
+        for seq_code in self._sequences_to_suffix:
+            seq_ids = seq_obj.search(cr, uid, [('code', '=', seq_code)], context=context)
+            for seq in seq_obj.browse(cr, uid, seq_ids, context=context):
+                old_suffix = seq.suffix and seq.suffix.replace('-RW', '') or ''
+                new_suffix = '%s%s' % (old_suffix, suffix)
+                seq_obj.write(cr, uid, [seq.id], {'suffix': new_suffix}, context=context)
+
+        return
         
     def _setup_remote_warehouse(self, cr, uid, entity_id):
         """ Perform actions necessary to set up this instance as a remote warehouse """
         self._set_sync_menu_active(cr, uid, False)
         self._sync_disconnect(cr, uid)
-        self._prefix_sequences(cr, uid)
         self._set_entity_type(cr, uid, entity_id, self.remote_warehouse)
+        self._set_sequence_suffix(cr, uid, suffix="-RW", context=None)
     
     def _setup_central_platform(self, cr, uid, entity_id):
         """ First set up as remote warehouse, save db backup, then revert changes and setup as central platform """
@@ -111,17 +121,19 @@ class setup_remote_warehouse(osv.osv_memory):
         # revert remote warehouse changes and setup as central platform
         self._revert_remote_warehouse(cr, uid, entity_id)
         self._set_entity_type(cr, uid, entity_id, self.central_platform)
+        self._set_sequence_suffix(cr, uid, suffix="", context=None)
         
         return dump_file_path
     
     def _revert_remote_warehouse(self, cr, uid, entity_id):
         """ Enables sync menu, un-prefixes sequences and clears entity usb instance type """
         self._set_sync_menu_active(cr, uid, True)
-        self._prefix_sequences(cr, uid, revert=True)
         self._set_entity_type(cr, uid, entity_id, "", context=None)
+        self._set_sequence_suffix(cr, uid, suffix="", context=None)
     
     def _revert_central_platform(self, cr, uid, entity_id):
         self._set_entity_type(cr, uid, entity_id, "", context=None)
+        self._set_sequence_suffix(cr, uid, suffix="-RW", context=None)
         
     def _get_db_dump(self, database_name):
         """ Makes a dump of database_name and returns the base64 SQL """
@@ -159,7 +171,7 @@ class setup_remote_warehouse(osv.osv_memory):
         Otherwise if it is a remote warehouse:
          - Disable the normal synchronisation menu item
          - Disconnect from the main sync server
-         - Add /RW prefix to all sequences in the _sequences_to_prefix list
+         - Add -RW suffix to all sequences in the _sequences_to_suffix list
         """
         
         # parameter validation

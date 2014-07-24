@@ -13,7 +13,8 @@ class MessageToSend(osv.osv):
     def get_message_packet(self, cr, uid, context=None):
         packet = []
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context)
-        for message in self.browse(cr, uid, self.search(cr, uid, [('sent','=',False)], context=context), context=context):
+        # UF-2377: The order of message created and put into the zip file must respect the order of creation of rw messages
+        for message in self.browse(cr, uid, self.search(cr, uid, [('sent','=',False)], order='id asc', context=context), context=context):
             packet.append({
                 'id' : message.identifier,
                 'remote_call' : message.remote_call,

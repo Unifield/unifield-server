@@ -757,44 +757,6 @@ class stock_picking(osv.osv):
         # make a change on the message only now
         msg_to_send_obj.modify_manual_message(cr, uid, existing_message_id, xml_id, call, arg, update_destinations.values()[0], context)
 
-    def create_message_with_object_and_partner(self, cr, uid, rule_sequence, object_id, partner_name, context):
-
-        ##############################################################################
-        # This method creates a message and put into the sendbox, but the message is created for a given object, AND for a given partner
-        # Meaning that for the same object, but for different internal partners, the object could be sent many times to these partner
-        #
-        ##############################################################################
-        rule_obj = self.pool.get("sync.client.message_rule")
-        rule = rule_obj.get_rule_by_sequence(cr, uid, rule_sequence, context)
-
-        if not rule or not object_id:
-            return
-
-        model_obj = self.pool.get(rule.model)
-        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
-
-        arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, context=context)
-
-        identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [object_id], rule.server_id, context=context)
-        if not identifiers:
-            return
-
-        xml_id = identifiers[object_id]
-        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id), ('destination_name', '=', partner_name)], context=context)
-        if existing_message_id:  # if similar message does not exist in the system, then do nothing
-            return
-
-        # if not then create a new one --- FOR THE GIVEN Batch number AND Destination
-        data = {
-                'identifier' : xml_id,
-                'remote_call': rule.remote_call,
-                'arguments': arguments,
-                'destination_name': partner_name,
-                'sent' : False,
-                'generate_message' : True,
-        }
-        return msg_to_send_obj.create(cr, uid, data, context=context)
-
 
     # UF-1617: Override the hook method to create sync messages manually for some extra objects once the OUT/Partial is done
     def _hook_create_sync_messages(self, cr, uid, ids, context=None):
@@ -934,8 +896,8 @@ class stock_picking(osv.osv):
         # Handle purchase pickings only
         if type == 'in_invoice' and self.pool.get('sync_remote_warehouse.update_to_send'):
             # Are we setup as a central platform?
-            entity_obj = self.pool.get('sync.client.entity')
-            if entity_obj.get_entity(cr, 1).usb_instance_type == 'remote_warehouse':
+            rw_type = self._get_usb_entity_type(cr, uid)
+            if rw_type == 'remote_warehouse':
                 do_invoice = False
 
         if do_invoice:

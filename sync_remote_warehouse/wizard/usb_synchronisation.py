@@ -149,6 +149,30 @@ class usb_synchronisation(osv.osv_memory):
                 {'usb_last_tarball_patches' : revisions.export_patch(cr, uid, rev_ids, 'warn', context=context)},
                 context=context)
 
-        return self.write(cr, uid, ids, vals, context=context)
+        res = self.write(cr, uid, ids, vals, context=context)
+        # UF-2397: Change the result into an attachment so that the user can use again an export
+        attachment_obj = self.pool.get('ir.attachment')
+        import base64
+        import time
+        for synchro in self.read(cr, uid, ids, ['push_file', 'push_file_name'], context=context):
+            # Create the attachment
+            name = synchro.get('push_file_name', 'noname')
+            attachment_obj.create(cr, uid, {
+                'name': name,
+                'datas_fname': name,
+                'description': 'USB Synchronization file @%s' % time.strftime('%Y-%m-%d_%H%M'),
+                'res_model': 'res.company',
+                'res_id': self.pool.get('res.users').browse(cr, uid, uid).company_id.id,
+                'datas': base64.encodestring(synchro.get('push_file')),
+            })
+        # Delete all previous attachment except last 10
+        number = 5 # default value
+        to_delete = []
+        a_ids = attachment_obj.search(cr, uid, [], order='id desc')
+        for idx, el in enumerate(a_ids):
+            if idx >= number:
+                to_delete.append(el)
+        attachment_obj.unlink(cr, uid, to_delete)
+        return res
 
 usb_synchronisation()

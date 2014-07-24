@@ -8,7 +8,4 @@
     'developer': 'Max Mumford',
     'depends': ['sync_client'],
     'installable': True,
-    'function': [
-        ('workflow.witm_trans', 'generate_sd_refs')
-    ]
 }

@@ -309,9 +309,11 @@ class so_po_common(osv.osv_memory):
 
             if line_dict.get('product_uom_qty'): # come from the SO
                 values['product_qty'] = line.product_uom_qty
+                values['product_uom_qty'] = line.product_uom_qty
 
             if line_dict.get('product_qty'): # come from the PO
                 values['product_uom_qty'] = line.product_qty
+                values['product_qty'] = line.product_qty
 
             if line_dict.get('date_planned'):
                 values['date_planned'] = line.date_planned
@@ -346,6 +348,11 @@ class so_po_common(osv.osv_memory):
             else:
                 values['name'] = line.comment
 
+            if line_dict.get('procurement_id'): # replicating procurement for RW instance
+                rec_id = self.pool.get('procurement.order').find_sd_ref(cr, uid, xmlid_to_sdref(line.procurement_id.id), context=context)
+                if rec_id:
+                    values['procurement_id'] = rec_id
+
             if line_dict.get('nomen_manda_0'):
                 rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_0.id), context=context)
                 if rec_id:
@@ -365,6 +372,9 @@ class so_po_common(osv.osv_memory):
                 rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_3.id), context=context)
                 if rec_id:
                     values['nomen_manda_3'] = rec_id
+
+            if line_dict.get('id'): # Only used for Remote Warehouse when creating a new order line, this xmlid will be used and not the local one 
+                values['rw_xmlid'] = line.id.replace('sd.','')
 
             # UTP-952: set empty AD for lines if the partner is intermission or section
             partner_type = self.get_partner_type(cr, uid, source, context)
@@ -423,6 +433,28 @@ class so_po_common(osv.osv_memory):
                             line_result.append((2, existing_line))
                 
         return line_result 
+
+
+    def create_rw_xml_for_line(self, cr, uid, line_obj, line, context):
+        '''
+        UF-2377: This method is to add the xmlid of the order line from CP in RW with res_id at RW
+        It is used for the OUT that linked to an IN when the IN got processed, stock moves will be transfered directly to OUT via
+        procurement, retrieved from the order line
+        '''
+        line_id = line_obj.create(cr, uid, line, context=context)
+        rw_xmlid = line.get('rw_xmlid', False)
+        if rw_xmlid:
+            # get xmlid and create a new one with the same res
+            self.pool.get('ir.model.data').create(cr, uid, {
+                    'noupdate' : False, # don't set to True otherwise import won't work
+                    'module' : 'sd',
+                    'last_modification' : fields.datetime.now(),
+                    'model' : line_obj._name,
+                    'res_id' : line_id,
+                    'version' : 1,
+                    'name' : rw_xmlid,
+                }, context=context)        
+
 
     def get_stock_move_lines(self, cr, uid, line_values, context):
         line_result = []
@@ -500,7 +532,7 @@ class so_po_common(osv.osv_memory):
             raise Exception, "No valid warehouse location found for the PO! The PO cannot be created."
         return warehouse_obj.read(cr, uid, warehouse_ids, ['lot_input_id'])[0]['lot_input_id'][0]
 
-    def create_message_with_object_and_partner(self, cr, uid, rule_sequence, object_id, partner_name, context):
+    def create_message_with_object_and_partner(self, cr, uid, rule_sequence, object_id, partner_name,context,usb=False):
 
         ##############################################################################
         # This method creates a message and put into the sendbox, but the message is created for a given object, AND for a given partner
@@ -514,7 +546,10 @@ class so_po_common(osv.osv_memory):
             return
 
         model_obj = self.pool.get(rule.model)
-        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+        if usb:
+            msg_to_send_obj = self.pool.get("sync_remote_warehouse.message_to_send")
+        else:
+            msg_to_send_obj = self.pool.get("sync.client.message_to_send")
 
         arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, context=context)
 
