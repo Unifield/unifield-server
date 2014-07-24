@@ -40,7 +40,7 @@ __all__ = ["Binary", "Image"]
 
 class Binary(TinyInputWidget):
     template = "/openerp/widgets/form/templates/binary.mako"
-    params = ["name", "text", "readonly", "filename", "bin_data", 'value_bin_size']
+    params = ["name", "text", "readonly", "filename", "bin_data", 'value_bin_size', 'ctx']
 
     text = None
     file_upload = True
@@ -53,6 +53,7 @@ class Binary(TinyInputWidget):
         # if bin_size was in context when reading the binary field, then the field's value is actually the binary
         # field's content size
         self.value_bin_size = getattr(self, 'context', {}).get('bin_size', False)
+        self.ctx = getattr(self, 'context', {}).get('from', False)
 
     def set_value(self, value):
         #XXX: server bug work-arround
