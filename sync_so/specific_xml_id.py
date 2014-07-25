@@ -366,20 +366,21 @@ class account_analytic_line(osv.osv):
                 new_cost_center_id = old_cost_center_id
 
             # UF-2342: only generate delete message if the instance is at Project level
-            old_destination_level = self.get_instance_level_from_cost_center(cr, uid, old_cost_center_id, context=context)
-            new_destination_level = self.get_instance_level_from_cost_center(cr, uid, new_cost_center_id, context=context)
-            if old_destination_level == 'project' and new_destination_level == 'coordo':
-                old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
-                new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
-                if not old_destination_name == new_destination_name: # Create a delete message for this AJI to destination project, and store it into the queue for next synchronisation
-                    now = fields.datetime.now()
-                    message_data = {'identifier':'delete_%s_to_%s' % (xml_id, old_destination_name),
-                                    'sent':False,
-                                    'generate_message':True,
-                                    'remote_call':self._name + ".message_unlink_analytic_line",
-                                    'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
-                                    'destination_name':old_destination_name}
-                    msg_to_send_obj.create(cr, uid, message_data)
+            # UTP-1128: deletes should not be processed on cost center changes
+            #old_destination_level = self.get_instance_level_from_cost_center(cr, uid, old_cost_center_id, context=context)
+            #new_destination_level = self.get_instance_level_from_cost_center(cr, uid, new_cost_center_id, context=context)
+            #if old_destination_level == 'project' and new_destination_level == 'coordo':
+            #    old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
+            #    new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
+            #    if not old_destination_name == new_destination_name: # Create a delete message for this AJI to destination project, and store it into the queue for next synchronisation
+            #        now = fields.datetime.now()
+            #        message_data = {'identifier':'delete_%s_to_%s' % (xml_id, new_destination_name),
+            #                        'sent':False,
+            #                        'generate_message':True,
+            #                        'remote_call':self._name + ".message_unlink_analytic_line",
+            #                        'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
+            #                        'destination_name':new_destination_name}
+            #        msg_to_send_obj.create(cr, uid, message_data)
 
             # Check if the new code center belongs to a project that has *previously* a delete message for the same AJI created but not sent
             # -> remove that delete message from the queue
