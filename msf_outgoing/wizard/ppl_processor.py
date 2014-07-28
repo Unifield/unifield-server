@@ -681,7 +681,7 @@ class ppl_move_processor(osv.osv):
                 raise osv.except_osv(
                     _('Error'),
                     _('Selected quantity (%0.1f %s) exceeds the initial quantity (%0.1f %s)') %
-                    (new_qty, line.uom_id.name, line.quantity_ordered, line.uom_id.name),
+                    (new_qty, line.uom_id.name, line.ordered_quantity, line.uom_id.name),
                 )
             elif new_qty == line.ordered_quantity:
                 # Cannot select more than initial quantity
