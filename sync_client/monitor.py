@@ -77,9 +77,11 @@ class MonitorLogger(object):
     def close(self):
         self.switch('status', self.final_status)
         for model, column, res_id in self.link_to:
-            self.monitor.pool.get(model).write(self.cr, self.uid, res_id, {
-                column : self.row_id,
-            }, context=self.context)
+            # if a message failed, a rollback is made so the log message doesn't exist anymore
+            if self.monitor.pool.get(model).exists(self.cr, self.uid, res_id, self.context):
+                self.monitor.pool.get(model).write(self.cr, self.uid, res_id, {
+                    column : self.row_id,
+                }, context=self.context)
         self.write()
         self.cr.close()
         del self.cr
