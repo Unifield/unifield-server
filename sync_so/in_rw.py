@@ -65,7 +65,6 @@ class stock_picking(osv.osv):
         origin = pick_dict['origin']
             
         self._logger.info("+++ RW: Replicate the Incoming Shipment: %s from %s to %s" % (pick_name, source, cr.dbname))
-        so_po_common = self.pool.get('so.po.common')
         move_obj = self.pool.get('stock.move')
 
         rw_type = self._get_usb_entity_type(cr, uid)
@@ -133,10 +132,6 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        so_po_common = self.pool.get('so.po.common')
-        move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')
-
         message = "Unknown error, please check the log file."
         
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
@@ -146,7 +141,7 @@ class stock_picking(osv.osv):
             if origin:
                 header_result = {}
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('type', '=', 'in'), ('subtype', '=', 'standard'), ('state', 'in', ['assigned'])], context=context)
+                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('type', '=', 'in'), ('subtype', '=', 'standard'), ('state', 'in', ['assigned', 'shipped'])], context=context)
                 if pick_ids:
                     state = pick_dict['state']
                     if state in ('done', 'assigned'):
@@ -184,11 +179,7 @@ class stock_picking(osv.osv):
         pick_dict = out_info.to_dict()
         pick_name = pick_dict['name']
         origin = pick_dict['origin']
-            
         self._logger.info("+++ RW: Replicate the INT from an IR: %s from %s to %s" % (pick_name, source, cr.dbname))
-        so_po_common = self.pool.get('so.po.common')
-        move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')
 
         rw_type = self._get_usb_entity_type(cr, uid)
         if rw_type == self.REMOTE_WAREHOUSE:
@@ -233,16 +224,11 @@ class stock_picking(osv.osv):
         self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context)
         partial_datas = {}
         partial_datas[pick_id] = {}
-        line_numbers = {}
         context['InShipOut'] = "IN"  # asking the IN object to be logged
         context['rw_sync'] = True
         
-        so_po_common = self.pool.get('so.po.common')
-        po_obj = self.pool.get('purchase.order')
         move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')        
         move_proc = self.pool.get('stock.move.in.processor')
-        
         
         for l in pack_data:
             data = l[2]
