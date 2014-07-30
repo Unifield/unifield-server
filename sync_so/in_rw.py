@@ -84,7 +84,25 @@ class stock_picking(osv.osv):
                     return message
                 del header_result['state']                
                 pick_id = self.create(cr, uid, header_result , context=context)
-
+                
+                # update this object as backorder of previous object
+                
+                '''
+                
+                CALCULATE THE BACK ORDER OBJECT AND THIS NEW PICK AS ITS BO --- WIP:
+                Adding new field and store the xmlid of backorder on the other instance -- for retrieving later
+                
+                
+                '''
+                
+                
+                if pick_id and 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
+                    if pick_dict.get('backorder_ids', False):
+                        for line in pick_dict['backorder_ids']:
+                            bo_of_other = self.find_sd_ref(cr, uid, xmlid_to_sdref(line['id']), context=context)
+                            if bo_of_other:
+                                self.write(cr, uid, bo_of_other, {'backorder_id': pick_id}, context=context)
+                            
                 todo_moves = []
                 for move in self.browse(cr, uid, pick_id, context=context).move_lines:
                     todo_moves.append(move.id)
@@ -142,6 +160,21 @@ class stock_picking(osv.osv):
                 header_result = {}
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
                 pick_ids = self.search(cr, uid, [('origin', '=', origin), ('type', '=', 'in'), ('subtype', '=', 'standard'), ('state', 'in', ['assigned', 'shipped'])], context=context)
+                if pick_ids and len(pick_ids) > 1:
+                    '''
+                    Search for the right IN to do partial reception!!!!!!
+                    for the case of full reception, it's easy, search for same name, but if partial of a partial --->
+                    look for the original name!!!!!! and compare to get the original pick at CP!
+                    
+                    WIP
+                    
+                    '''
+                    
+                    # check to pick if there is a pick with same name
+                    exact_ids = self.search(cr, uid, [('name', '=', pick_name), ('id', 'in', pick_ids)], context=context)
+                    if exact_ids:
+                        pick_ids = exact_ids
+                
                 if pick_ids:
                     state = pick_dict['state']
                     if state in ('done', 'assigned'):
