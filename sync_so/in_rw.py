@@ -82,27 +82,33 @@ class stock_picking(osv.osv):
                     message = "Sorry, the IN: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
                     return message
-                del header_result['state']                
-                pick_id = self.create(cr, uid, header_result , context=context)
+                del header_result['state']
                 
+                # get the sdref of the given IN and store it into the new field rw_sdref_counterpart for later retrieval
+                identifier = context.get('identifier', False)
+                if identifier:
+                    # 'e45a954a-172a-11e4-af61-00259054f102/stock_picking/2_53'
+                    del context['identifier']
+                    pos = identifier.find('/stock_picking/')
+                    if pos > 0: # this is the correct stock_picking object
+                        pos = identifier.rfind('_')
+                        identifier = identifier[:pos] # return this: e45a954a-172a-11e4-af61-00259054f102/stock_picking/2
+                        header_result['rw_sdref_counterpart'] = identifier
+                        
+                pick_id = self.create(cr, uid, header_result , context=context)
                 # update this object as backorder of previous object
                 
                 '''
-                
                 CALCULATE THE BACK ORDER OBJECT AND THIS NEW PICK AS ITS BO --- WIP:
                 Adding new field and store the xmlid of backorder on the other instance -- for retrieving later
-                
-                
                 '''
-                
-                
                 if pick_id and 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
                     if pick_dict.get('backorder_ids', False):
                         for line in pick_dict['backorder_ids']:
-                            bo_of_other = self.find_sd_ref(cr, uid, xmlid_to_sdref(line['id']), context=context)
+                            sdref = line['id'][3:]
+                            bo_of_other = self.search(cr, uid, [('rw_sdref_counterpart', '=', sdref)], context=context)
                             if bo_of_other:
                                 self.write(cr, uid, bo_of_other, {'backorder_id': pick_id}, context=context)
-                            
                 todo_moves = []
                 for move in self.browse(cr, uid, pick_id, context=context).move_lines:
                     todo_moves.append(move.id)
@@ -229,6 +235,9 @@ class stock_picking(osv.osv):
                     message = "Sorry, the INT: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
                     return message
+                
+                header_result['rw_sdref_counterpart'] = pick_dict['id']
+                
                 pick_id = self.create(cr, uid, header_result , context=context)
                 self.action_assign(cr, uid, [pick_id])
 #                self.draft_force_assign(cr, uid, [pick_id]) # Fixed by JF: To send the IN to the right state 
