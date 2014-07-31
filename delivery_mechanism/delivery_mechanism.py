@@ -695,6 +695,9 @@ class stock_picking(osv.osv):
                     remaining_out_qty = line.quantity
                     out_move = None
                     for out_move in out_moves:
+                        if not remaining_out_qty: # Fix from Quentin
+                            break
+                        
                         out_move = move_obj.browse(cr, uid, out_move.id, context=context)
 
                         # List the Picking Ticket that need to be created from the Draft Picking Ticket
