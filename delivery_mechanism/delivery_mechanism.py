@@ -692,9 +692,14 @@ class stock_picking(osv.osv):
                     if out_values.get('location_dest_id', False):
                         out_values.pop('location_dest_id')
 
+                    import pdb
+                    pdb.set_trace()
                     remaining_out_qty = line.quantity
                     out_move = None
                     for out_move in out_moves:
+                        if not remaining_out_qty:
+                            break
+
                         out_move = move_obj.browse(cr, uid, out_move.id, context=context)
 
                         # List the Picking Ticket that need to be created from the Draft Picking Ticket
