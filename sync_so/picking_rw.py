@@ -171,6 +171,8 @@ class stock_picking(osv.osv):
         return super(stock_picking, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
 
     def retrieve_picking_header_data(self, cr, uid, source, header_result, pick_dict, context):
+        so_po_common = self.pool.get('so.po.common')
+        
         if 'name' in pick_dict:
             header_result['name'] = pick_dict.get('name')
         if 'state' in pick_dict:
@@ -186,6 +188,9 @@ class stock_picking(osv.osv):
             backorder_id = self.find_sd_ref(cr, uid, xmlid_to_sdref(pick_dict['backorder_id']['id']), context=context)
             if backorder_id:
                 header_result['backorder_id'] = backorder_id
+                
+        # get the sdref of the given IN and store it into the new field rw_sdref_counterpart for later retrieval
+        header_result['rw_sdref_counterpart'] = so_po_common.get_xml_id_counterpart(cr, uid, self, context=context)        
 
         if pick_dict['reason_type_id'] and pick_dict['reason_type_id']['id']:
             header_result['reason_type_id'] = self.pool.get('stock.reason.type').find_sd_ref(cr, uid, xmlid_to_sdref(pick_dict['reason_type_id']['id']), context=context)
@@ -213,8 +218,6 @@ class stock_picking(osv.osv):
         if 'associate_int_name' in pick_dict:
             header_result['associate_int_name'] = pick_dict.get('associate_int_name')
 
-        so_po_common = self.pool.get('so.po.common')
-
         partner_id = so_po_common.get_partner_id(cr, uid, source, context)
         if 'partner_id' in pick_dict:
             partner_id = so_po_common.get_partner_id(cr, uid, pick_dict['partner_id'], context)
@@ -226,6 +229,18 @@ class stock_picking(osv.osv):
         header_result['partner_id2'] = partner_id
         header_result['address_id'] = address_id
         header_result['location_id'] = location_id
+        
+        # For RW instances, order line ids need to be retrieved and store in the IN and OUT to keep references (via procurement) when making the INcoming via cross docking
+        if pick_dict['sale_id'] and pick_dict['sale_id']['id']:
+            order_id = pick_dict['sale_id']['id']
+            order_id = self.pool.get('sale.order').find_sd_ref(cr, uid, xmlid_to_sdref(order_id), context=context)
+            header_result['sale_id'] = order_id
+
+        if pick_dict['purchase_id'] and pick_dict['purchase_id']['id']:
+            order_id = pick_dict['purchase_id']['id']
+            order_id = self.pool.get('purchase.order').find_sd_ref(cr, uid, xmlid_to_sdref(order_id), context=context)
+            header_result['purchase_id'] = order_id
+        
         return header_result
 
     def get_picking_line(self, cr, uid, data, context=None):
@@ -297,6 +312,7 @@ class stock_picking(osv.osv):
                   'state': state,
 
                   'original_qty_partial': data['original_qty_partial'], 
+                  'product_uos_qty': data['product_uos_qty']  or 0.0, 
 
                   'prodlot_id': batch_id,
                   'expired_date': expired_date,

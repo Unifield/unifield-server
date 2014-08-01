@@ -226,6 +226,17 @@ class so_po_common(osv.osv_memory):
 
         return header_result
 
+    def get_xml_id_counterpart(self, cr, uid, object_name, context):
+        identifier = context.get('identifier', False)
+        if identifier:
+            # for example: 'e45a954a-172a-11e4-af61-00259054f102/stock_picking/2_53'
+            del context['identifier']
+            object_name = object_name._name.replace('.', '_')
+            if identifier.find(object_name) > 0:
+                pos = identifier.rfind('_')
+                return identifier[:pos] # return this: e45a954a-172a-11e4-af61-00259054f102/stock_picking/2
+        return False
+
     def get_analytic_distribution_id(self, cr, uid, data_dict, context):
         # if it has been given in the sync message, then take into account if the value is False by intention,
         # --> be careful when modifying the statement below
@@ -443,18 +454,7 @@ class so_po_common(osv.osv_memory):
         '''
         line_id = line_obj.create(cr, uid, line, context=context)
         rw_xmlid = line.get('rw_xmlid', False)
-        if rw_xmlid:
-            # get xmlid and create a new one with the same res
-            self.pool.get('ir.model.data').create(cr, uid, {
-                    'noupdate' : False, # don't set to True otherwise import won't work
-                    'module' : 'sd',
-                    'last_modification' : fields.datetime.now(),
-                    'model' : line_obj._name,
-                    'res_id' : line_id,
-                    'version' : 1,
-                    'name' : rw_xmlid,
-                }, context=context)        
-
+        self.pool.get('ir.model.data').manual_create_sdref(cr, uid, self, rw_xmlid, line_id, context=context)        
 
     def get_stock_move_lines(self, cr, uid, line_values, context):
         line_result = []
