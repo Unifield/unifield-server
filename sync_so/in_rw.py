@@ -53,6 +53,17 @@ class stock_picking(osv.osv):
     '''
     _inherit = "stock.picking"
     _logger = logging.getLogger('------sync.stock.picking')
+
+
+    # Retrieve the value of sdref and rw_sdref_counterpart from the given backorder_idS
+    def rw_get_backorders_values(self, cr, uid, pick_dict, context=None):
+        if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
+            if pick_dict.get('backorder_ids', False):
+                for line in pick_dict['backorder_ids']:
+                    sdref = line['id'][3:]
+                    rw_sdref_counterpart = line['rw_sdref_counterpart']
+                    return sdref, rw_sdref_counterpart
+        return False, False
     
     def usb_replicate_in(self, cr, uid, source, in_info, context=None):
         so_po_common = self.pool.get('so.po.common')
@@ -84,13 +95,12 @@ class stock_picking(osv.osv):
                 del header_result['state']
                 pick_id = self.create(cr, uid, header_result , context=context)
                 # update this object as backorder of previous object
-                if pick_id and 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
-                    if pick_dict.get('backorder_ids', False):
-                        for line in pick_dict['backorder_ids']:
-                            sdref = line['id'][3:]
-                            bo_of_other = self.search(cr, uid, [('rw_sdref_counterpart', '=', sdref)], context=context)
-                            if bo_of_other:
-                                self.write(cr, uid, bo_of_other, {'backorder_id': pick_id}, context=context)
+                
+                if pick_id: # If successfully created, then get the sdref of the CP IN and store into this replicated IN in RW
+                    sdref, temp = self.rw_get_backorders_values(cr, uid, pick_dict, context=context)
+                    bo_of_other = self.search(cr, uid, [('rw_sdref_counterpart', '=', sdref)], context=context)
+                    if bo_of_other:# The original IN of this backorder IN exists, update that original IN
+                        self.write(cr, uid, bo_of_other, {'backorder_id': pick_id}, context=context)
 
                 todo_moves = []
                 for move in self.browse(cr, uid, pick_id, context=context).move_lines:
@@ -151,18 +161,13 @@ class stock_picking(osv.osv):
                 pick_ids = self.search(cr, uid, [('origin', '=', origin), ('type', '=', 'in'), ('subtype', '=', 'standard'), ('state', 'in', ['assigned', 'shipped'])], context=context)
                 if pick_ids and len(pick_ids) > 1:
                     '''
-                    Search for the right IN to do partial reception!!!!!!
-                    for the case of full reception, it's easy, search for same name, but if partial of a partial --->
-                    look for the original name!!!!!! and compare to get the original pick at CP!
-                    
-                    WIP
-                    
+                    Search for the right IN to do partial reception, using the backorder_idS to look for that right original IN
+                    The value is stored in the rw_sdref_counterpart of the RW, from this value, the real IN Id from the CP will be retrieved
                     '''
-                    
-                    # check to pick if there is a pick with same name
-                    exact_ids = self.search(cr, uid, [('name', '=', pick_name), ('id', 'in', pick_ids)], context=context)
-                    if exact_ids:
-                        pick_ids = exact_ids
+                    temp, rw_sdref_counterpart = self.rw_get_backorders_values(cr, uid, pick_dict, context=context)
+                    real_in_id = self.find_sd_ref(cr, uid, xmlid_to_sdref(rw_sdref_counterpart), context=context)
+                    if real_in_id: # found the real IN id of the original IN for performing the partial incoming reception
+                        pick_ids = [real_in_id]
                 
                 if pick_ids:
                     state = pick_dict['state']
