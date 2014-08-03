@@ -695,9 +695,9 @@ class stock_picking(osv.osv):
                     remaining_out_qty = line.quantity
                     out_move = None
                     for out_move in out_moves:
-                        if not remaining_out_qty: # Fix from Quentin
+                        if remaining_out_qty <= 0.00:
                             break
-                        
+
                         out_move = move_obj.browse(cr, uid, out_move.id, context=context)
 
                         # List the Picking Ticket that need to be created from the Draft Picking Ticket
@@ -735,15 +735,25 @@ class stock_picking(osv.osv):
                             })
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
+                            remaining_out_qty = 0.00
                         else:
                             # Just update the data of the initial out move
+                            processed_qty = out_move is out_moves[-1] and uom_partial_qty or out_move.product_qty
                             out_values.update({
-                                'product_qty': uom_partial_qty,
+                                'product_qty': processed_qty,
                                 'product_uom': line.uom_id.id,
                                 'in_out_updated': sync_in and False or True
                             })
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
+                            
+                            if line.uom_id.id != out_move.product_uom.id:
+                                uom_processed_qty = uom_obj._compute_qty(cr, uid, out_move.product_uom.id, processed_qty, line.uom_id.id)
+                            else:
+                                uom_processed_qty = processed_qty
+
+                            remaining_out_qty -= uom_processed_qty
+
 
                 # Decrement the inital move, cannot be less than zero
                 diff_qty = move.product_qty - count
