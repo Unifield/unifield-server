@@ -101,7 +101,7 @@ class shipment(osv.osv):
     a shipment presents the data from grouped stock moves in a 'sequence' way
     '''
     _name = 'shipment'
-    _description = 'represents a group of pack families'
+    _description = 'Shipment'
 
     def copy(self, cr, uid, copy_id, default=None, context=None):
         '''
