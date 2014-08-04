@@ -19,7 +19,5 @@
 #
 ##############################################################################
 
-import msf_supply_doc_export
-import wizard
-import report
+import po_follow_up
 
