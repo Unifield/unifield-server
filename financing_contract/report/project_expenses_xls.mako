@@ -455,6 +455,9 @@
 <Data ss:Type="String">${_('Financing contract line description')}</Data>
 </Cell>
 <Cell ss:StyleID="s31">
+<Data ss:Type="String">${_('Third Party')}</Data>
+</Cell>
+<Cell ss:StyleID="s31">
 <Data ss:Type="String">${_('General Account')}</Data>
 </Cell>
 <Cell ss:StyleID="s31">
@@ -505,6 +508,9 @@
 </Cell>
 <Cell ss:StyleID="s36">
 <Data ss:Type="String">${( line[2] or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="s36">
+<Data ss:Type="String">${( line[0] and line[0].partner_txt or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="s36">
 <Data ss:Type="String">${( getAccountName(line[0]) or '')|x}</Data>
