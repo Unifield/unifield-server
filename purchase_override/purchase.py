@@ -404,11 +404,10 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for po in self.browse(cr, uid, ids, context=context):
-        
-            # Delete FO/IR lines according to deleted PO lines
-            self.delete_lines_on_fo(cr, uid, ids, context=context)
+        # Delete FO/IR lines according to deleted PO lines
+        self.delete_lines_on_fo(cr, uid, ids, context=context)
 
+        for po in self.browse(cr, uid, ids, context=context):
             for l in po.order_line:
                 if line_obj.get_sol_ids_from_pol_ids(cr, uid, [l.id], context=context):
                     wiz_id = wiz_obj.create(cr, uid, {'order_id': po.id}, context=context)
@@ -1388,12 +1387,20 @@ stock moves which are already processed : '''
         # from all so, list all corresponding po second level
         all_po_for_all_so_ids = so_obj.get_po_ids_from_so_ids(cr, uid, all_so_ids, context=context)
 
+        not_confirmed_po = self.search(cr, uid, [
+            ('id', 'not in', all_po_for_all_so_ids),
+            ('state', '=', 'confirmed_wait'),
+        ], context=context)
+
         # we trigger all the corresponding sale order -> test_lines is called on these so
         for so_id in all_so_ids:
             wf_service.trg_write(uid, 'sale.order', so_id, cr)
 
         # we trigger pos of all sale orders -> all_po_confirm is called on these po
         for po_id in all_po_for_all_so_ids:
+            wf_service.trg_write(uid, 'purchase.order', po_id, cr)
+
+        for po_id in not_confirmed_po:
             wf_service.trg_write(uid, 'purchase.order', po_id, cr)
 
         return True
@@ -1793,6 +1800,9 @@ stock moves which are already processed : '''
 
         wf_service = netsvc.LocalService("workflow")
 
+        # Delete FO/IR lines according to deleted PO lines
+        self.delete_lines_on_fo(cr, uid, ids, context=context)
+
         line_ids = []
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:
@@ -1821,12 +1831,20 @@ stock moves which are already processed : '''
         # from all so, list all corresponding po second level
         all_po_for_all_so_ids = so_obj.get_po_ids_from_so_ids(cr, uid, all_so_ids, context=context)
 
+        not_confirmed_po = self.search(cr, uid, [
+            ('id', 'not in', all_po_for_all_so_ids),
+            ('state', '=', 'confirmed_wait'),
+        ], context=context)
+
         # we trigger all the corresponding sale order -> test_lines is called on these so
         for so_id in all_so_ids:
             wf_service.trg_write(uid, 'sale.order', so_id, cr)
 
         # we trigger pos of all sale orders -> all_po_confirm is called on these po
         for po_id in all_po_for_all_so_ids:
+            wf_service.trg_write(uid, 'purchase.order', po_id, cr)
+
+        for po_id in not_confirmed_po:
             wf_service.trg_write(uid, 'purchase.order', po_id, cr)
 
         return True
