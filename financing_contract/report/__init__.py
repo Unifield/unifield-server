@@ -1,4 +1,4 @@
-import report_allocated_expenses
+
 import report_interactive
 import report_project_expenses
 import report_contract_list
