@@ -551,6 +551,23 @@ class wizard_cash_return(osv.osv_memory):
                 if wizard.invoice_line_ids:
                     for line in wizard.invoice_line_ids:
                         total += line.amount
+
+                # Fetch invoices
+                # acct_bank_stmt = account_bank_statement
+                # absl = account_bank_statement_line
+                invoice_payments = 0
+                acct_bank_stmt = wizard.advance_st_line_id.statement_id
+                for absl in acct_bank_stmt.line_ids:  #should be absl
+                    if absl.state == 'hard':
+                        absl_move_ids = []
+                        for ml in absl.imported_invoice_line_ids:
+                            if ml.move_id:
+                                absl_move_ids.append(ml.move_id.id)
+                        inv_ids = self.pool.get('account.invoice').search(cr, uid, [('move_id', 'in', absl_move_ids)])
+                        if inv_ids:
+                            if inv_ids[0] == invoice.id:
+                                invoice_payments += absl.amount
+
                 # We search all move_line that results from an invoice (so they have the same move_id that the invoice)
                 line_ids = move_line_obj.search(cr, uid, [('move_id', '=', invoice.move_id.id), \
                     ('account_id', '=', account_id)], context=context)
@@ -562,10 +579,12 @@ class wizard_cash_return(osv.osv_memory):
                     account_id = move_line.account_id.id or False
                     # abs() should be deleted if we take care of "Credit Note".
                     #+ Otherwise abs() give an absolute amount.
-                    amount = move_line.invoice.amount_total or 0.0
+
+                    amount = (move_line.invoice.amount_total - invoice_payments) or 0.0
+                    #amount = move_line.invoice.amount_total or 0.0
                     # Calculate the good amount seeing currency
                     if move_line.currency_id and move_line.currency_id.id == st_currency:
-                        amount = abs(move_line.amount_currency) or 0.0
+                        amount = abs(move_line.amount_currency - invoice_payments) or 0.0
                     # Add this line to our wizard
                     new_lines.append((0, 0, {'document_date': date, 'reference': reference, 'communication': communication, 'partner_id': partner_id, \
                         'account_id': account_id, 'amount': amount, 'invoice_id': invoice.id}))
