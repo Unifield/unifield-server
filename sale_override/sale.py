@@ -1506,6 +1506,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id,
             'so_back_update_dest_pol_id_procurement_order': line.so_back_update_dest_pol_id_sale_order_line.id,
             'sale_id': line.order_id.id,
+            'purchase_id': line.created_by_po and line.created_by_po.id or False,
         }
 
         if line.product_id:

@@ -1092,7 +1092,10 @@ stock moves which are already processed : '''
             sol_obj.create(cr, uid, vals, context=context)
             # Put the sale_id in the procurement order
             if l.procurement_id:
-                proc_obj.write(cr, uid, [l.procurement_id.id], {'sale_id': l.link_so_id.id}, context=context)
+                proc_obj.write(cr, uid, [l.procurement_id.id], {
+                    'sale_id': l.link_so_id.id,
+                    'purchase_id': l.order_id.id,
+                }, context=context)
             # Create new line in FOXXXX (original FO)
             if l.link_so_id.original_so_id_sale_order:
                 context['sale_id'] = l.link_so_id.original_so_id_sale_order.id
