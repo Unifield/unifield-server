@@ -638,7 +638,8 @@ class sale_order(osv.osv):
         write_cancel_ids = []
         for order in self.browse(cr, uid, ids, context={}):
             for line in order.order_line:
-                if (not line.procurement_id) or (line.procurement_id.state=='done'):
+                if (not line.procurement_id) or (line.procurement_id.state=='done') or \
+                   (line.procurement_id.state in ['cancel'] and line.order_id.is_ir_from_po_cancel):
                     if line.state != 'done':
                         write_done_ids.append(line.id)
                 else:
@@ -646,7 +647,7 @@ class sale_order(osv.osv):
                 if line.procurement_id:
                     if (line.procurement_id.state == 'cancel'):
                         canceled = True
-                        if line.state != 'exception':
+                        if line.state != 'exception' and not line.order_id.is_ir_from_po_cancel:
                             write_cancel_ids.append(line.id)
                     else:
                         notcanceled = True
