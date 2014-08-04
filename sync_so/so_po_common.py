@@ -234,6 +234,14 @@ class so_po_common(osv.osv_memory):
             return self.pool.get('analytic.distribution').find_sd_ref(cr, uid, xmlid_to_sdref(analytic_id['id']), context=context)
         return False
 
+    def create_sync_order_label(self, cr, uid, data_dict, context=None):
+        sourced_references = data_dict.get('sourced_references').split(',')
+        label_ids = []
+        for sourced_order in sourced_references:
+            label_ids.append((0,0,{'name': sourced_order}))
+
+        return label_ids
+
     def retrieve_so_header_data(self, cr, uid, source, header_result, header_info, context):
         if 'notes' in header_info:
             header_result['notes'] = header_info.get('notes')
@@ -262,6 +270,9 @@ class so_po_common(osv.osv_memory):
         partner_type = self.get_partner_type(cr, uid, source, context)
         if partner_type not in ['section', 'intermission'] and header_info.get('analytic_distribution_id', False):
             header_result['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, header_info, context)
+
+        if 'sourced_references' in header_info:
+            header_result['sourced_references'] = self.create_sync_order_label(cr, uid, header_info, context)
 
         partner_id = self.get_partner_id(cr, uid, source, context)
         address_id = self.get_partner_address_id(cr, uid, partner_id, context)
@@ -372,6 +383,15 @@ class so_po_common(osv.osv_memory):
                 rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_3.id), context=context)
                 if rec_id:
                     values['nomen_manda_3'] = rec_id
+    
+            if line_dict.get('sync_sourced_origin'):
+                values['origin'] = line_dict.get('sync_sourced_origin')
+                so_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', values['origin']), ('state', 'in', ('sourced', 'progress', 'manual')), ('procurement_request', 'in', ('t', 'f'))], context=context)
+                if so_ids:
+                    values['link_so_id'] = so_ids[0]
+
+            if line_dict.get('cancel_split_ok'):
+                continue
 
             if line_dict.get('id'): # Only used for Remote Warehouse when creating a new order line, this xmlid will be used and not the local one 
                 values['rw_xmlid'] = line.id.replace('sd.','')
@@ -399,7 +419,7 @@ class so_po_common(osv.osv_memory):
             elif so_id:
                 # look for the correct PO line for updating the value - corresponding to the SO line
                 line_ids = self.pool.get('sale.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', so_id)], context=context)
-
+            
             if line_ids and line_ids[0]:
                 if for_update: # add this value to the list of update, then remove
                     update_lines.append(line_ids[0])
