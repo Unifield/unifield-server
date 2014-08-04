@@ -425,6 +425,7 @@ class shipment(osv.osv):
             for family in wizard.family_ids:
                 if not family.selected_number: # UTP-1015 fix from Quentin
                     continue
+
                 picking = family.draft_packing_id
                 # Copy the picking object without moves
                 # Creation of moves and update of initial in picking create method

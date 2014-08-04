@@ -262,13 +262,21 @@ class purchase_order(osv.osv):
 
         res = {}
         for po in ids:
-            res[po] = ''
+            res[po] = {
+                'fnct_project_ref': '',
+                'sourced_references': '',
+            }
+
             so_ids = self.get_so_ids_from_po_ids(cr, uid, po, context=context)
             for so in self.pool.get('sale.order').browse(cr, uid, so_ids, context=context):
                 if so.client_order_ref:
-                    if res[po]:
-                        res[po] += ' - '
-                    res[po] += so.client_order_ref
+                    if res[po]['fnct_project_ref']:
+                        res[po]['fnct_project_ref'] += ' - '
+                    res[po]['fnct_project_ref'] += so.client_order_ref
+
+                if res[po]['sourced_references']:
+                    res[po]['sourced_references'] += ','
+                res[po]['sourced_references'] += so.name
 
         return res
 
@@ -328,10 +336,18 @@ class purchase_order(osv.osv):
         'project_ref': fields.char(size=256, string='Project Ref.'),
         'message_esc': fields.text(string='ESC Message'),
         'fnct_project_ref': fields.function(_get_project_ref, method=True, string='Project Ref.',
-                                            type='char', size=256, store=False,),
+                                            type='char', size=256, store=False, multi='so_info'),
         'dest_partner_ids': fields.many2many('res.partner', 'res_partner_purchase_order_rel', 'purchase_order_id', 'partner_id', 'Customers'),  # uf-2223
         'dest_partner_names': fields.function(_get_dest_partner_names, type='string', string='Customers', method=True),  # uf-2223
         'split_po': fields.boolean('Created by split PO', readonly=True),
+        'sourced_references': fields.function(
+            _get_project_ref,
+            method=True,
+            string='Sourced references',
+            type='text',
+            store=False,
+            multi='so_info',
+        ),
     }
 
     _defaults = {
@@ -1047,6 +1063,8 @@ stock moves which are already processed : '''
         so_obj = self.pool.get('sale.order')
         ad_obj = self.pool.get('analytic.distribution')
         proc_obj = self.pool.get('procurement.order')
+        pick_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
 
         if context is None:
             context = {}
@@ -1084,11 +1102,15 @@ stock moves which are already processed : '''
                     'analytic_distribution_id': new_distrib,
                     'created_by_po': l.order_id.id,
                     'created_by_po_line': l.id,
+                    'sync_sourced_origin': l.instance_sync_order_ref and l.instance_sync_order_ref.name or False,
                     'name': '[%s] %s' % (l.product_id.default_code, l.product_id.name)}
-            sol_obj.create(cr, uid, vals, context=context)
+
+            new_line_id = sol_obj.create(cr, uid, vals, context=context)
+
             # Put the sale_id in the procurement order
             if l.procurement_id:
                 proc_obj.write(cr, uid, [l.procurement_id.id], {'sale_id': l.link_so_id.id}, context=context)
+
             # Create new line in FOXXXX (original FO)
             if l.link_so_id.original_so_id_sale_order:
                 context['sale_id'] = l.link_so_id.original_so_id_sale_order.id
@@ -1096,6 +1118,29 @@ stock moves which are already processed : '''
                              'state': 'done'})
                 sol_obj.create(cr, uid, vals, context=context)
             context['sale_id'] = tmp_sale_context
+
+            # If the order is an Internal request with External location, create a new
+            # stock move on the picking ticket (if not closed)
+            # Get move data and create the move
+            if l.link_so_id.procurement_request and l.link_so_id.location_requestor_id.usage == 'customer':
+                # Get OUT linked to IR
+                pick_to_confirm = None
+                out_ids = pick_obj.search(cr, uid, [
+                    ('sale_id', '=', l.link_so_id.id),
+                    ('type', '=', 'out'),
+                    ('state', 'in', ['draft', 'confirmed', 'assigned']),
+                ], context=context)
+                if not out_ids:
+                    picking_data = so_obj._get_picking_data(cr, uid, l.link_so_id)
+                    out_ids = [pick_obj.create(cr, uid, picking_data, context=context)]
+                    pick_to_confirm = out_ids
+
+                ir_line = sol_obj.browse(cr, uid, new_line_id, context=context)
+                move_data = so_obj._get_move_data(cr, uid, l.link_so_id, ir_line, out_ids[0], context=context)
+                move_obj.create(cr, uid, move_data, context=context)
+
+                if pick_to_confirm:
+                    pick_obj.action_confirm(cr, uid, pick_to_confirm, context=context)
 
             sol_ids.add(l.link_so_id.id)
 
@@ -2431,6 +2476,8 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        res = False
+
         # [imported from the 'analytic_distribution_supply']
         # Don't save filtering data
         self._relatedFields(cr, uid, vals, context)
@@ -2439,7 +2486,11 @@ class purchase_order_line(osv.osv):
         # Update the name attribute if a product is selected
         self._update_name_attr(cr, uid, vals, context=context)
 
+        if 'price_unit' in vals:
+            vals.update({'old_price_unit': vals.get('price_unit')})
+
         for line in self.browse(cr, uid, ids, context=context):
+            new_vals = vals.copy()
             if vals.get('product_qty', line.product_qty) == 0.00 and not line.order_id.rfq_ok and not context.get('noraise'):
                 raise osv.except_osv(_('Error'), _('You cannot save a line with no quantity !'))
 
@@ -2448,19 +2499,15 @@ class purchase_order_line(osv.osv):
                 if vals.get('procurement_id', line.procurement_id.id):
                     proc = self.pool.get('procurement.order').browse(cr, uid, vals.get('procurement_id', line.procurement_id.id))
                 if not proc or not proc.sale_id:
-                    vals.update(self.update_origin_link(cr, uid, vals.get('origin', line.origin), context=context))
+                    new_vals.update(self.update_origin_link(cr, uid, vals.get('origin', line.origin), context=context))
 
             if line.order_id and not line.order_id.rfq_ok and (line.order_id.po_from_fo or line.order_id.po_from_ir):
-                vals['from_fo'] = True
+                new_vals['from_fo'] = True
 
-        if not context.get('update_merge'):
-            for line in ids:
-                vals = self._update_merged_line(cr, uid, line, vals, context=dict(context, skipResequencing=True, noraise=True))
+            if not context.get('update_merge'):
+                new_vals = self._update_merged_line(cr, uid, line.id, vals, context=dict(context, skipResequencing=True, noraise=True))
 
-        if 'price_unit' in vals:
-            vals.update({'old_price_unit': vals.get('price_unit')})
-
-        res = super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
+            res = super(purchase_order_line, self).write(cr, uid, [line.id], new_vals, context=context)
 
         # Check the selected product UoM
         if not context.get('import_in_progress', False):
@@ -2713,11 +2760,17 @@ class purchase_order_line(osv.osv):
         '''
         so_obj = self.pool.get('sale.order')
         if fo_id:
-            res = {'value': {'origin': so_obj.browse(cr, uid, fo_id, context=context).name,
+            fo = so_obj.browse(cr, uid, fo_id, context=context)
+            res = {'value': {'origin': fo.name,
+                             'display_sync_ref': len(fo.sourced_references) and True or False,
                              'select_fo': False}}
             return res
 
-        return {}
+        return {
+            'value': {
+                'display_sync_ref': False,
+            },
+        }
 
     def on_change_origin(self, cr, uid, ids, origin, procurement_id=False, partner_type='external', context=None):
         '''
@@ -2736,6 +2789,14 @@ class purchase_order_line(osv.osv):
             if not sale_id:
                 res['warning'] = {'title': _('Warning'),
                                   'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with %s supplier. No FO/IR line will be created for this PO line') % (origin, o_type)}
+                res['value'] = {
+                    'display_sync_ref': False,
+                    'instance_sync_order_ref': '',
+                }
+            else:
+                res['value'] = {
+                    'display_sync_ref': True,
+                }
 
         return res
 
@@ -2802,6 +2863,11 @@ class purchase_order_line(osv.osv):
         'fnct_project_ref': fields.function(_get_project_po_ref, method=True, string='Project PO',
                                             type='char', size=128, store=False),
         'from_fo': fields.boolean(string='From FO', readonly=True),
+        'display_sync_ref': fields.boolean(string='Display sync. ref.'),
+        'instance_sync_order_ref': fields.many2one(
+            'sync.order.label',
+            string='Order in sync. instance',
+        ),
     }
 
     _defaults = {
