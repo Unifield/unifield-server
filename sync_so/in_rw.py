@@ -164,13 +164,16 @@ class stock_picking(osv.osv):
                     Search for the right IN to do partial reception, using the backorder_idS to look for that right original IN
                     The value is stored in the rw_sdref_counterpart of the RW, from this value, the real IN Id from the CP will be retrieved
                     '''
-                    temp, rw_sdref_counterpart = self.rw_get_backorders_values(cr, uid, pick_dict, context=context)
-                    if rw_sdref_counterpart:
-                        real_in_id = self.find_sd_ref(cr, uid, xmlid_to_sdref(rw_sdref_counterpart), context=context)
-                        if real_in_id: # found the real IN id of the original IN for performing the partial incoming reception
-                            pick_ids = [real_in_id]
-                    else: # no back order, meaning that it's a full reception
-                        pick_ids = self.search(cr, uid, [('name', '=', pick_name), ('state', 'in', ['assigned', 'shipped'])], context=context)
+                    # Check if it is a full reception
+                    exact_ids = self.search(cr, uid, [('name', '=', pick_name), ('state', 'in', ['assigned', 'shipped'])], context=context)
+                    if exact_ids:
+                        pick_ids = exact_ids
+                    else:
+                        temp, rw_sdref_counterpart = self.rw_get_backorders_values(cr, uid, pick_dict, context=context)
+                        if rw_sdref_counterpart:
+                            real_in_id = self.find_sd_ref(cr, uid, xmlid_to_sdref(rw_sdref_counterpart), context=context)
+                            if real_in_id: # found the real IN id of the original IN for performing the partial incoming reception
+                                pick_ids = [real_in_id]
                 
                 if pick_ids:
                     state = pick_dict['state']
