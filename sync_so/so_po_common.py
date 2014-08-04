@@ -454,7 +454,7 @@ class so_po_common(osv.osv_memory):
         '''
         line_id = line_obj.create(cr, uid, line, context=context)
         rw_xmlid = line.get('rw_xmlid', False)
-        self.pool.get('ir.model.data').manual_create_sdref(cr, uid, self, rw_xmlid, line_id, context=context)        
+        self.pool.get('ir.model.data').manual_create_sdref(cr, uid, line_obj, rw_xmlid, line_id, context=context)        
 
     def get_stock_move_lines(self, cr, uid, line_values, context):
         line_result = []
