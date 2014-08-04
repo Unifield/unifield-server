@@ -102,7 +102,7 @@ class stock_partial_picking(osv.osv_memory):
             integrity_check = self.integrity_check_do_incoming_shipment(cr, uid, ids, picking_type, None, context=context)
             if not integrity_check:
                 # the windows must be updated to trigger tree colors
-                return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
+                return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, w_type='update', context=context)
 
             if not moves_list:
                     raise osv.except_osv(_('Warning !'), _('Selected list to process cannot be empty.'))

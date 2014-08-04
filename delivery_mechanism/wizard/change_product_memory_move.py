@@ -52,7 +52,7 @@ class change_product_memory_move(osv.osv_memory):
         
         wiz_obj = self.pool.get('wizard')
         # no data for type 'back'
-        return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
+        return wiz_obj.open_wizard(cr, uid, context['active_ids'], w_type='back', context=context)
 
     def change_product(self, cr, uid, ids, context=None):
         # quick integrity check
@@ -80,6 +80,6 @@ class change_product_memory_move(osv.osv_memory):
         # update the object    
         memory_move_obj.write(cr, uid, memory_move_ids, values, context=context)
         # no data for type 'back'
-        return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
+        return wiz_obj.open_wizard(cr, uid, context['active_ids'], w_type='back', context=context)
     
 change_product_memory_move()
