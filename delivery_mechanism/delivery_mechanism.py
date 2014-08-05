@@ -694,11 +694,11 @@ class stock_picking(osv.osv):
 
                     remaining_out_qty = line.quantity
                     out_move = None
-                    for out_move in out_moves:
+                    for lst_out_move in out_moves:
                         if remaining_out_qty <= 0.00:
                             break
 
-                        out_move = move_obj.browse(cr, uid, out_move.id, context=context)
+                        out_move = move_obj.browse(cr, uid, lst_out_move.id, context=context)
 
                         # List the Picking Ticket that need to be created from the Draft Picking Ticket
                         if out_move.picking_id.type == 'out' \
@@ -738,7 +738,7 @@ class stock_picking(osv.osv):
                             remaining_out_qty = 0.00
                         else:
                             # Just update the data of the initial out move
-                            processed_qty = out_move is out_moves[-1] and uom_partial_qty or out_move.product_qty
+                            processed_qty = lst_out_move is out_moves[-1] and uom_partial_qty or out_move.product_qty
                             out_values.update({
                                 'product_qty': processed_qty,
                                 'product_uom': line.uom_id.id,
