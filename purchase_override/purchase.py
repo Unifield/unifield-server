@@ -176,15 +176,35 @@ class purchase_order(osv.osv):
     # @@@purchase.purchase_order._shipped_rate
     def _invoiced_rate(self, cursor, user, ids, name, arg, context=None):
         res = {}
+        sp_obj = self.pool.get('stock.picking')
+        inv_obj = self.pool.get('account.invoice')
         for purchase in self.browse(cursor, user, ids, context=context):
             if ((purchase.order_type == 'regular' and purchase.partner_id.partner_type in ('internal', 'esc')) or \
                 purchase.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']):
                 res[purchase.id] = purchase.shipped_rate
             else:
                 tot = 0.0
+                # UTP-808: Deleted invoices amount should be taken in this process. So what we do:
+                # 1/ Take all closed stock picking linked to the purchase
+                # 2/ Search invoices linked to these stock picking
+                # 3/ Take stock picking not linked to an invoice
+                # 4/ Use these non-invoiced closed stock picking to add their amount to the "invoiced" amount
                 for invoice in purchase.invoice_ids:
                     if invoice.state not in ('draft','cancel'):
                         tot += invoice.amount_untaxed
+                stock_pickings = sp_obj.search(cursor, user, [('purchase_id', '=', purchase.id), ('state', '=', 'done')])
+                if stock_pickings:
+                    sp_ids = list(stock_pickings)
+                    if isinstance(stock_pickings, (int, long)):
+                        stock_pickings = [stock_pickings]
+                    for sp in stock_pickings:
+                        inv_ids = inv_obj.search(cursor, user, [('picking_id', '=', sp)])
+                        if inv_ids:
+                            sp_ids.remove(sp)
+                    if sp_ids:
+                        for stock_picking in sp_obj.browse(cursor, user, sp_ids):
+                            for line in stock_picking.move_lines:
+                                tot += line.product_qty * line.price_unit
                 if purchase.amount_untaxed:
                     res[purchase.id] = min(100.0, tot * 100.0 / (purchase.amount_untaxed))
                 else:
