@@ -96,7 +96,7 @@
       <paraStyle name="all" alignment="justify"/>
     </initialize>
     <paraStyle name="P2" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT"/>
-    <paraStyle name="P2a" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER"/>
+    <paraStyle name="P2a" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT"/>
     <paraStyle name="P3gauche" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT"/>
     <paraStyle name="P3gaucheB" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT"/>
     <paraStyle name="P5" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>

@@ -152,7 +152,7 @@
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<NumberFormat ss:Format="Fixed"/>
+<NumberFormat ss:Format="#,##0.00"/>
 </Style>
 
 
@@ -238,7 +238,7 @@
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
 <Font x:Family="Swiss" ss:Bold="1"/>
-<NumberFormat ss:Format="Fixed"/>
+<NumberFormat ss:Format="#,##0.00"/>
 </Style>
 
 
@@ -261,7 +261,7 @@
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
 </Borders>
 <Font x:Family="Swiss" ss:Bold="1"/>
-<NumberFormat ss:Format="Fixed"/>
+<NumberFormat ss:Format="#,##0.00"/>
 </Style>
 
 <Style ss:ID="s51">
@@ -280,10 +280,10 @@
 <Table >
 <Column ss:AutoFitWidth="0" ss:Width="110.5"/>
 <Column ss:AutoFitWidth="0" ss:Width="102.75" ss:Span="1"/>
-<Column  ss:AutoFitWidth="0" ss:Width="103.5" ss:Span="1"/>
-<Column  ss:AutoFitWidth="0" ss:Width="75.75"/>
-<Column ss:AutoFitWidth="0" ss:Width="103.5" ss:Span="1"/>
-<Column  ss:AutoFitWidth="0" ss:Width="70.75"/>
+<Column ss:AutoFitWidth="0" ss:Width="60.5" ss:Span="1"/>
+<Column ss:AutoFitWidth="0" ss:Width="75.75"/>
+<Column ss:AutoFitWidth="0" ss:Width="60.5" ss:Span="1"/>
+<Column ss:AutoFitWidth="0" ss:Width="70.75"/>
 
 <Row>
 <Cell ss:StyleID="s25b" >
@@ -291,21 +291,21 @@
 </Cell>
 </Row>
 <Row ss:Height="13.5"/>
-<Row >
-<Cell>
-<Data ss:Type="String">${_('Report Date:')}</Data>
-</Cell>
-<Cell ss:StyleID="short_date2" >
-<Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
-</Cell>
-</Row>
 <Row>
-<Cell>
-<Data ss:Type="String">${_('Prop Instance: ')}</Data>
-</Cell>
-<Cell ss:StyleID="pop">
-<Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
-</Cell>
+  <Cell>
+    <Data ss:Type="String">${_('Prop Instance: ')}</Data>
+  </Cell>
+  <Cell ss:StyleID="pop">
+    <Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
+  </Cell>
+</Row>
+<Row >
+  <Cell>
+    <Data ss:Type="String">${_('Report Date:')}</Data>
+  </Cell>
+  <Cell ss:StyleID="short_date2" >
+    <Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
+  </Cell>
 </Row>
 <Row ss:Height="13.5"/>
 
@@ -403,7 +403,7 @@
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
 	<Cell ss:StyleID="s32">
-	<Data ss:Type="String">${_('Sub-Total =')}</Data>
+	<Data ss:Type="String">${_('Subtotal =')}</Data>
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
 	<Cell ss:StyleID="s44" ss:Formula="=SUM(R[-${getCal()}]C:R[-1]C)" >
@@ -447,36 +447,34 @@
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
 </Row>
-
-
 </Table>
 
-
-<WorksheetOptions>
-<FitToPage/>
-<Print>
-<ValidPrinterInfo/>
-<PaperSizeIndex>9</PaperSizeIndex>
-<Scale>63</Scale>
-<HorizontalResolution>600</HorizontalResolution>
-<VerticalResolution>0</VerticalResolution>
-</Print>
-<PageBreakZoom>60</PageBreakZoom>
-<Selected/>
-<DoNotDisplayGridlines/>
-<Panes>
-<Pane>
-<Number>3</Number>
-<ActiveRow>24</ActiveRow>
-<ActiveCol>3</ActiveCol>
-</Pane>
-</Panes>
-<ProtectObjects>False</ProtectObjects>
-<ProtectScenarios>False</ProtectScenarios>
+<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+  <PageSetup>
+    <Layout x:Orientation="Portrait"/>
+    <Footer x:Data="Page &amp;P of &amp;N"/>
+  </PageSetup>
+  <FitToPage/>
+  <Print>
+    <ValidPrinterInfo/>
+    <PaperSizeIndex>9</PaperSizeIndex>
+    <Scale>63</Scale>
+    <HorizontalResolution>600</HorizontalResolution>
+    <VerticalResolution>0</VerticalResolution>
+  </Print>
+  <PageBreakZoom>60</PageBreakZoom>
+  <Selected/>
+  <DoNotDisplayGridlines/>
+  <Panes>
+    <Pane>
+      <Number>3</Number>
+      <ActiveRow>24</ActiveRow>
+      <ActiveCol>3</ActiveCol>
+    </Pane>
+  </Panes>
+  <ProtectObjects>False</ProtectObjects>
+  <ProtectScenarios>False</ProtectScenarios>
 </WorksheetOptions>
 
 </Worksheet>
-
-
-
 </Workbook>

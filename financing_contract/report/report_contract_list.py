@@ -31,16 +31,15 @@ class report_contract_list(report_sxw.rml_parse):
         })
         return
 
-    def get_contract_list(self):
+    def get_contract_list(self, contracts):
+        """
+        Make a list of given contract with their info
+        """
+        # Prepare some values
         result = []
-        
-        contract_obj = self.pool.get('financing.contract.contract')
         reporting_types = dict(self.pool.get('financing.contract.format')._columns['reporting_type'].selection)
-        
-        # get all contracts
-        contract_ids = contract_obj.search(self.cr, self.uid, [], context={})
-        contracts = contract_obj.browse(self.cr, self.uid, contract_ids, context={})
-        
+
+        # Browse contracts
         for contract in contracts:
             earmarked_funding_pools = ""
             total_project_funding_pools = ""
