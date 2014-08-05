@@ -1274,12 +1274,20 @@ stock moves which are already processed : '''
                         elif out_move_id.state in ('cancel', 'done'):
                             continue
                         else:
-                            move_dic = {'product_id': line.product_id and line.product_id.id or False,
-                                        'name': line.name,
-                                        'product_uom': line.product_uom and line.product_uom.id or False,
-                                        'product_uos': line.product_uom and line.product_uom.id or False,
-                                        'product_qty': line.product_qty,
-                                        'product_uos_qty': line.product_qty,}
+                            move_dic = {
+                                'name': line.name,
+                                'product_uom': line.product_uom and line.product_uom.id or False,
+                                'product_uos': line.product_uom and line.product_uom.id or False,
+                                'product_qty': line.product_qty,
+                                'product_uos_qty': line.product_qty,
+                            }
+                            if line.product_id:
+                                move_dic['product_id'] = line.product_id.id
+                            if line.product_uom:
+                                move_dic.update({
+                                    'product_uom': line.product_uom.id,
+                                    'product_uos': line.product_uom.id,
+                                })
                             move_obj.write(cr, uid, [out_move_id.id], move_dic, context=context)
 
             if store_to_call:

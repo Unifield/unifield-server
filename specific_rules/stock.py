@@ -28,6 +28,7 @@ import time
 
 class initial_stock_inventory(osv.osv):
     _name = 'initial.stock.inventory'
+    _description = "Initial Stock Inventory"
     _inherit = 'stock.inventory'
     
     def unlink(self, cr, uid, ids, context=None):
@@ -232,6 +233,7 @@ initial_stock_inventory()
 
 class initial_stock_inventory_line(osv.osv):
     _name = 'initial.stock.inventory.line'
+    _description = "Initial Stock Inventory Line"
     _inherit = 'stock.inventory.line'
     
     def _get_error_msg(self, cr, uid, ids, field_name, args, context=None):
