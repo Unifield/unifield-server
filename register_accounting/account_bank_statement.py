@@ -1559,9 +1559,13 @@ class account_bank_statement_line(osv.osv):
             move_obj = self.pool.get('account.move')
             move_line_obj = self.pool.get('account.move.line')
             curr_date = time.strftime('%Y-%m-%d')
+            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)])
+            if not journal_ids:
+                raise osv.except_osv(_('Error'), _('No purchase journal found!'))
+            journal_id = journal_ids[0]
             # Create a move
             move_vals= {
-                'journal_id': st_line.statement_id.journal_id.id,
+                'journal_id': journal_id,
                 'period_id': st_line.statement_id.period_id.id,
                 'date': st_line.date or curr_date,
                 'document_date': st_line.document_date or curr_date,
@@ -1591,7 +1595,7 @@ class account_bank_statement_line(osv.osv):
                 'credit': 0.0,
                 'debit': 0.0,
                 'statement_id': st_line.statement_id.id,
-                'journal_id': st_line.statement_id.journal_id.id,
+                'journal_id': journal_id,
                 'period_id': st_line.statement_id.period_id.id,
                 'currency_id': st_line.statement_id.currency.id,
                 'analytic_account_id': st_line.analytic_account_id and st_line.analytic_account_id.id or False
@@ -1770,7 +1774,7 @@ class account_bank_statement_line(osv.osv):
             distrib_id = values.get('analytic_distribution_id')
         if not distrib_id:
             values = self._update_employee_analytic_distribution(cr, uid, values=values)
-        if 'cheque_number' in values and values['cheque_number'] is not None:
+        if 'cheque_number' in values and values.get('cheque_number', False):
             cr.execute('''select id from account_bank_statement_line where cheque_number = %s ''', (values['cheque_number'], ))
             for row in cr.dictfetchall():
                 raise osv.except_osv(_('Info'),_('This cheque number has already been used'))
@@ -2043,6 +2047,8 @@ class account_bank_statement_line(osv.osv):
                     acc_move_obj.write(cr, uid, [absl.invoice_id.move_id.id], {'state':'posted'}, context=context)
                 else:
                     acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
+                    # WARNING: if we don't do a browse before the "do_direct_expense", the system doesn't know that the absl state is hard post. And so the direct expense functionnality doesn't work!
+                    absl = self.browse(cr, uid, absl.id, context=context)
                     # do a move that enable a complete supplier follow-up
                     self.do_direct_expense(cr, uid, absl, context=context)
                 if previous_state == 'draft':
