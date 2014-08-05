@@ -30,6 +30,12 @@ class sale_order_rw(osv.osv):
     _inherit = "sale.order"
     _logger = logging.getLogger('------sync.sale.order')
 
+    # Do not show the button new, duplicate in the tree and form view
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        so_po_common = self.pool.get('so.po.common')
+        res = super(sale_order_rw, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
+        return so_po_common.rw_view_remove_buttons(cr, uid, res, view_type,self.pool.get('stock.picking').REMOTE_WAREHOUSE)
+
     def usb_replicate_fo(self, cr, uid, source, sync_values, context=None):
         po_dict = sync_values.to_dict()
         fo_name = po_dict.get('name', False)
@@ -93,6 +99,11 @@ class purchase_order_rw(osv.osv):
     _inherit = "purchase.order"
     _logger = logging.getLogger('------sync.purchase.order')
 
+    # Do not show the button new, duplicate in the tree and form view
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        so_po_common = self.pool.get('so.po.common')
+        res = super(purchase_order_rw, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
+        return so_po_common.rw_view_remove_buttons(cr, uid, res, view_type,self.pool.get('stock.picking').REMOTE_WAREHOUSE)
 
     def usb_replicate_po(self, cr, uid, source, sync_values, context=None):
         so_dict = sync_values.to_dict()
@@ -150,3 +161,28 @@ class purchase_order_rw(osv.osv):
         return message
     
 purchase_order_rw()
+
+class tender_rw(osv.osv):
+    _inherit = 'tender'
+    
+    # Do not show the button new, duplicate in the tree and form view
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        so_po_common = self.pool.get('so.po.common')
+        res = super(tender_rw, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
+        return so_po_common.rw_view_remove_buttons(cr, uid, res, view_type, self.pool.get('stock.picking').REMOTE_WAREHOUSE)
+    
+tender_rw()
+    
+class real_average_consumption_rw(osv.osv):
+    _name = 'real.average.consumption'
+    _inherit = 'real.average.consumption'
+    
+    # Do not show the button new, duplicate in the tree and form view
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        so_po_common = self.pool.get('so.po.common')
+        res = super(real_average_consumption_rw, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
+        return so_po_common.rw_view_remove_buttons(cr, uid, res, view_type, self.pool.get('stock.picking').CENTRAL_PLATFORM)
+    
+real_average_consumption_rw()
+
+

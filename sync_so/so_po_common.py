@@ -21,13 +21,21 @@
 
 from osv import osv, fields
 from sync_common import xmlid_to_sdref
-
-
-
+from lxml import etree
 
 class so_po_common(osv.osv_memory):
     _name = "so.po.common"
     _description = "Common methods for SO - PO"
+
+    def rw_view_remove_buttons(self, cr, uid, res, view_type, instance_type):
+        rw_type = self.pool.get('stock.picking')._get_usb_entity_type(cr, uid)
+        if view_type in ['tree','form'] and rw_type == instance_type:
+            root = etree.fromstring(res['arch'])
+            root.set('hide_new_button', 'True')
+            root.set('noteditable', 'True')
+            root.set('hide_duplicate_button', 'True')
+            res['arch'] = etree.tostring(root)
+        return res
 
     # UTP-952: get the partner type, for the case of intermission and section
     def get_partner_type(self, cr, uid, partner_name, context=None):
