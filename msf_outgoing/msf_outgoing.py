@@ -101,7 +101,7 @@ class shipment(osv.osv):
     a shipment presents the data from grouped stock moves in a 'sequence' way
     '''
     _name = 'shipment'
-    _description = 'represents a group of pack families'
+    _description = 'Shipment'
 
     def copy(self, cr, uid, copy_id, default=None, context=None):
         '''
@@ -945,7 +945,7 @@ class shipment(osv.osv):
             #assert shipment.state == 'packed', 'cannot ship a shipment which is not in correct state - packed - %s' % shipment.state
             if shipment.state != 'packed':
                 raise osv.except_osv(_('Error, packing in wrong state !'),
-                    _('Cannot make a shipment which is in a wrong correct state - should be "packed" but here it is ' + shipment.state))
+                    _('Cannot make a shipment which is in a wrong correct state - should be "packed" but here it is - %s' % shipment.state))
 
             # the state does not need to be updated - function
             # update actual ship date (shipment_actual_date) to today + time
