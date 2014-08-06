@@ -404,6 +404,9 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # Delete FO/IR lines according to deleted PO lines
+        self.delete_lines_on_fo(cr, uid, ids, context=context)
+
         for po in self.browse(cr, uid, ids, context=context):
             for l in po.order_line:
                 if line_obj.get_sol_ids_from_pol_ids(cr, uid, [l.id], context=context):
@@ -1088,7 +1091,10 @@ stock moves which are already processed : '''
             sol_obj.create(cr, uid, vals, context=context)
             # Put the sale_id in the procurement order
             if l.procurement_id:
-                proc_obj.write(cr, uid, [l.procurement_id.id], {'sale_id': l.link_so_id.id}, context=context)
+                proc_obj.write(cr, uid, [l.procurement_id.id], {
+                    'sale_id': l.link_so_id.id,
+                    'purchase_id': l.order_id.id,
+                }, context=context)
             # Create new line in FOXXXX (original FO)
             if l.link_so_id.original_so_id_sale_order:
                 context['sale_id'] = l.link_so_id.original_so_id_sale_order.id
@@ -1128,6 +1134,9 @@ stock moves which are already processed : '''
 
         # Create extra lines on the linked FO/IR
         self.create_extra_lines_on_fo(cr, uid, ids, context=context)
+
+        # Delete FO/IR lines according to deleted PO lines
+        self.delete_lines_on_fo(cr, uid, ids, context=context)
 
         # code from wkf_approve_order
         self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
@@ -1386,12 +1395,20 @@ stock moves which are already processed : '''
         # from all so, list all corresponding po second level
         all_po_for_all_so_ids = so_obj.get_po_ids_from_so_ids(cr, uid, all_so_ids, context=context)
 
+        not_confirmed_po = self.search(cr, uid, [
+            ('id', 'not in', all_po_for_all_so_ids),
+            ('state', '=', 'confirmed_wait'),
+        ], context=context)
+
         # we trigger all the corresponding sale order -> test_lines is called on these so
         for so_id in all_so_ids:
             wf_service.trg_write(uid, 'sale.order', so_id, cr)
 
         # we trigger pos of all sale orders -> all_po_confirm is called on these po
         for po_id in all_po_for_all_so_ids:
+            wf_service.trg_write(uid, 'purchase.order', po_id, cr)
+
+        for po_id in not_confirmed_po:
             wf_service.trg_write(uid, 'purchase.order', po_id, cr)
 
         return True
@@ -1791,6 +1808,9 @@ stock moves which are already processed : '''
 
         wf_service = netsvc.LocalService("workflow")
 
+        # Delete FO/IR lines according to deleted PO lines
+        self.delete_lines_on_fo(cr, uid, ids, context=context)
+
         line_ids = []
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:
@@ -1819,12 +1839,20 @@ stock moves which are already processed : '''
         # from all so, list all corresponding po second level
         all_po_for_all_so_ids = so_obj.get_po_ids_from_so_ids(cr, uid, all_so_ids, context=context)
 
+        not_confirmed_po = self.search(cr, uid, [
+            ('id', 'not in', all_po_for_all_so_ids),
+            ('state', '=', 'confirmed_wait'),
+        ], context=context)
+
         # we trigger all the corresponding sale order -> test_lines is called on these so
         for so_id in all_so_ids:
             wf_service.trg_write(uid, 'sale.order', so_id, cr)
 
         # we trigger pos of all sale orders -> all_po_confirm is called on these po
         for po_id in all_po_for_all_so_ids:
+            wf_service.trg_write(uid, 'purchase.order', po_id, cr)
+
+        for po_id in not_confirmed_po:
             wf_service.trg_write(uid, 'purchase.order', po_id, cr)
 
         return True
@@ -1966,6 +1994,39 @@ stock moves which are already processed : '''
         o_line['analytic_distribution_id'] = distrib_id
 
         return o_line
+
+    def delete_lines_on_fo(self, cr, uid, ids, context=None):
+        '''
+        Cancel the FO line
+        '''
+        del_line_obj = self.pool.get('purchase.order.line.deleted')
+        proc_obj = self.pool.get('procurement.order')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        del_line_ids = del_line_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
+
+        proc_ids = []
+
+        for line in del_line_obj.browse(cr, uid, del_line_ids, context=context):
+            # Set the procurement orders to delete
+            # Set the list of linked purchase orders
+            if line.procurement_id:
+                proc_ids.append(line.procurement_id.id)
+
+            if not self.pool.get('sale.order.line.cancel').search(cr, uid, [('sync_order_line_db_id', '=', line.sync_order_line_db_id)], context=context):
+                self.pool.get('purchase.order.line').cancel_sol(cr, uid, [line.id], context=context, deleted_line=True)
+
+        # Cancel the listed procurement orders
+        for proc_id in proc_ids:
+            if not self.pool.get('purchase.order.line').search(cr, uid, [('procurement_id', '=', proc_id)], context=context):
+                proc_obj.action_cancel(cr, uid, [proc_id])
+
+        return ids
 
 purchase_order()
 
@@ -2516,7 +2577,7 @@ class purchase_order_line(osv.osv):
 
         return self.unlink(cr, uid, ids, context=context)
 
-    def cancel_sol(self, cr, uid, ids, context=None):
+    def cancel_sol(self, cr, uid, ids, context=None, deleted_line=False):
         '''
         Re-source the FO line
         '''
@@ -2531,8 +2592,19 @@ class purchase_order_line(osv.osv):
         sol_not_to_delete_ids = []
         ir_to_potentialy_cancel_ids = []
         sol_of_po_line_resourced_ids = []
-        for line in self.browse(cr, uid, ids, context=context):
-            sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
+
+        if deleted_line:
+            lines = self.pool.get('purchase.order.line.deleted').browse(cr, uid, ids, context=context)
+        else:
+            lines = self.browse(cr, uid, ids, context=context)
+
+        for line in lines:
+
+            if deleted_line:
+                sol_ids = [x.id for x in line.sol_ids]
+            else:
+                sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
+
             for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                 diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line.product_qty, sol.product_uom.id)
                 sol_to_update.setdefault(sol.id, 0.00)
@@ -2597,9 +2669,10 @@ class purchase_order_line(osv.osv):
 
     def fake_unlink(self, cr, uid, ids, context=None):
         '''
-        Cancel the line and re-source them
+        Add an entry to cancel (and resource if needed) the line when the
+        PO will be confirmed
         '''
-        proc_obj = self.pool.get('procurement.order')
+        del_line_obj = self.pool.get('purchase.order.line.deleted')
 
         if context is None:
             context = {}
@@ -2607,35 +2680,17 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        proc_ids = []
-        purchase_ids = []
-        line_to_cancel = []
+        del_line_obj.create_from_po_line(cr, uid, ids, context=context)
 
         for line in self.browse(cr, uid, ids, context=context):
-            # Set the procurement orders to delete
-            # Set the list of linked purchase orders
-            if line.procurement_id:
-                proc_ids.append(line.procurement_id.id)
-            if line.order_id.id not in purchase_ids:
-                purchase_ids.append(line.order_id.id)
-
-            if not self.pool.get('sale.order.line.cancel').search(cr, uid, [('sync_order_line_db_id', '=', line.sync_order_line_db_id)], context=context):
-                self.cancel_sol(cr, uid, [line.id], context=context)
             # we want to skip resequencing because unlink is performed on merged purchase order lines
             tmp_Resequencing = context.get('skipResequencing', False)
             context['skipResequencing'] = True
             self._update_merged_line(cr, uid, line.id, False, context=context)
             context['skipResequencing'] = tmp_Resequencing
 
-            line_to_cancel.append(line.id)
-
-        # Cancel the listed procurement orders
-        for proc_id in proc_ids:
-            if not self.search(cr, uid, [('procurement_id', '=', proc_id)], context=context):
-                proc_obj.action_cancel(cr, uid, [proc_id])
-
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
-        self.unlink(cr, uid, line_to_cancel, context=context)
+        self.unlink(cr, uid, ids, context=context)
 
         return ids
 
@@ -3164,6 +3219,77 @@ class product_product(osv.osv):
 
 product_product()
 
+
+class purchase_order_line_deleted(osv.osv):
+    _name = 'purchase.order.line.deleted'
+
+    _columns = {
+        'purchase_line_id': fields.integer(
+            string='Purchase Order Line ID',
+        ),
+        'sol_ids': fields.many2many(
+            'sale.order.line',
+            'sol_pol_rel',
+            'pol_id', 
+            'sol_id',
+            string='Field order lines',
+        ),
+        'product_uom': fields.many2one(
+            'product.uom',
+            string='Product UoM',
+        ),
+        'product_qty': fields.float(
+            digits=(16,2),
+            string='Product Qty',
+        ),
+        'has_to_be_resourced': fields.boolean(
+            string='Has to be resourced',
+        ),
+        'order_id': fields.many2one(
+            'purchase.order',
+            string='Order',
+        ),
+        'procurement_id': fields.many2one(
+            'procurement.order',
+            string='Procurement',
+        ),
+        'sync_order_line_db_id': fields.text(
+            string='Sync order line DB Id',
+            required=False,
+            readonly=True,
+        ),
+    }
+
+    def create_from_po_line(self, cr, uid, po_line_ids, context=None):
+        '''
+        Create records of purchase.order.line.deleted from a list of
+        Purchase order lines
+        '''
+        pol_obj = self.pool.get('purchase.order.line')
+
+        if context is None:
+            context = {}
+
+        if isinstance(po_line_ids, (int, long)):
+            po_line_ids = [po_line_ids]
+
+        res = []
+        for poline in pol_obj.browse(cr, uid, po_line_ids, context=context):
+            sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [poline.id], context=context)
+            res.append(self.create(cr, uid, {
+                'purchase_line_id': poline.id,
+                'sol_ids': [(6,0,sol_ids)],
+                'product_qty': poline.product_qty,
+                'has_to_be_resourced': poline.has_to_be_resourced,
+                'order_id': poline.order_id and poline.order_id.id or False,
+                'procurement_id': poline.procurement_id and poline.procurement_id.id or False,
+                'sync_order_line_db_id': poline.sync_order_line_db_id,
+            }, context=context))
+
+        return res
+
+purchase_order_line_deleted()
+
 class purchase_order_line_unlink_wizard(osv.osv_memory):
     _name = 'purchase.order.line.unlink.wizard'
 
@@ -3306,6 +3432,7 @@ class purchase_order_cancel_wizard(osv.osv_memory):
         return self.cancel_po(cr, uid, ids, context=context)
 
 purchase_order_cancel_wizard()
+
 
 class res_partner(osv.osv):
     _inherit = 'res.partner'

@@ -1507,6 +1507,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id,
             'so_back_update_dest_pol_id_procurement_order': line.so_back_update_dest_pol_id_sale_order_line.id,
             'sale_id': line.order_id.id,
+            'purchase_id': line.created_by_po and line.created_by_po.id or False,
         }
 
         if line.product_id:
@@ -1918,9 +1919,17 @@ class sale_order_line(osv.osv):
             default = {}
         # if the po link is not in default, we set both to False (both values are closely related)
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
-            default.update({'so_back_update_dest_po_id_sale_order_line': False,
-                            'so_back_update_dest_pol_id_sale_order_line': False, })
-        default.update({'sync_order_line_db_id': False, 'manually_corrected': False})
+            default.update({
+                'so_back_update_dest_po_id_sale_order_line': False,
+                'so_back_update_dest_pol_id_sale_order_line': False,
+            })
+
+        default.update({
+            'sync_order_line_db_id': False,
+            'manually_corrected': False,
+            'created_by_po': False,
+            'created_by_po_line': False,
+        })
 
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
@@ -2064,7 +2073,12 @@ class sale_order_line(osv.osv):
         if not default:
             default = {}
 
-        default.update({'sync_order_line_db_id': False, 'manually_corrected': False})
+        default.update({
+            'sync_order_line_db_id': False,
+            'manually_corrected': False,
+            'created_by_po': False,
+            'created_by_po_line': False,
+        })
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
