@@ -121,7 +121,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         for rline in lines:
                             if rline['packing'] == key[0] and rline['shipment'] == key[1] and rline['delivered_uom'] == key[2]:
                                 rline.update({
-                                    'delivered_qty': line['delivered_qty'] + data['delivered_qty'],
+                                    'delivered_qty': rline['delivered_qty'] + data['delivered_qty'],
                                 })
                     else:
                         keys.append(key)
