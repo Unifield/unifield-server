@@ -4,6 +4,7 @@ try:
     ROOT = cp.request.pool.get_controller("/openerp")
     SHORTCUTS = cp.request.pool.get_controller("/openerp/shortcuts")
     REQUESTS = cp.request.pool.get_controller("/openerp/requests")
+    UF_VERSION = cp.request.pool.get_controller("/openerp/unifield_version")
 
     shortcuts = SHORTCUTS.my()
     requests, total_request = REQUESTS.my()
@@ -54,6 +55,13 @@ version = release.version
                     <ul>
                         <li class="first last"><a href="${py.url('/openerp/pref/create')}"
                                                   target="_blank">${_("Edit Preferences")}</a></li>
+                    </ul>
+                </li>
+
+                <li>
+                    <a href="${py.url('/openerp/unifield_version')}" class="info"></a>
+                    <ul>
+                        <li class="first last"><a href="${py.url('/openerp')}" target="_blank">${_("Version")}</a></li>
                     </ul>
                 </li>
 
