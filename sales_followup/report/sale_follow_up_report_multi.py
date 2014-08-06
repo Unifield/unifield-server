@@ -66,6 +66,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             lines = []
             first_line = True
             bo_qty = line.product_uom_qty
+            keys = []
             for move in line.move_ids:
                 m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
                 ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and move.location_dest_id.usage == 'customer'
@@ -86,9 +87,12 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         first_line = False
 
                     if ppl:
+                        packing = move.picking_id.previous_step_id.name
+                        shipment = move.picking_id.shipment_id.name
+                        key = (packing, shipment, move.product_uom.name)
                         data.update({
-                            'packing': move.picking_id.previous_step_id.name,
-                            'shipment': move.picking_id.shipment_id.name,
+                            'packing': packing,
+                            'shipment': shipment,
                             'delivered_qty': move.product_qty,
                             'delivered_uom': move.product_uom.name,
                             'rts': move.picking_id.shipment_id.shipment_expected_date[0:10],
@@ -96,8 +100,10 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             'transport': move.picking_id.shipment_id
                         })
                     else:
+                        packing = move.picking_id.name
+                        key = (packing, False, move.product_uom.name)
                         data.update({
-                            'packing': move.picking_id.name,
+                            'packing': packing,
                             'delivery_qty': move.product_qty,
                             'delivered_uom': move.product_uom.name,
                             'rts': move.picking_id.min_date[0:10],
@@ -111,7 +117,15 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         line.product_uom.id,
                     )
 
-                    lines.append(data)
+                    if key in keys:
+                        for line in lines:
+                            if line['packing'] == key[0] and line['shipment'] == key[1] and line['delivered_uom'] == key[2]:
+                                line.update({
+                                    'delivered_qty': line['delivered_qty'] + data['delivered_qty'],
+                                })
+                    else:
+                        keys.append(key)
+                        lines.append(data)
 
             # No move found
             if first_line:
