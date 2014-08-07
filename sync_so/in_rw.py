@@ -64,9 +64,40 @@ class stock_picking(osv.osv):
                     rw_sdref_counterpart = line['rw_sdref_counterpart']
                     return sdref, rw_sdref_counterpart
         return False, False
+
+    def usb_update_in_shipped_available(self, cr, uid, source, in_info, context=None):
+        # UF-2422: Update new data for the IN before available, now shipped
+        if context is None:
+            context = {}
+
+        pick_dict = in_info.to_dict()
+        pick_name = pick_dict['name']
+        move_obj = self.pool.get('stock.move')
+        
+        existing_pick = self.search(cr, uid, [('name', '=', pick_name)], context=context)
+        if not existing_pick: # If not exist, just create the new IN
+            return self.usb_replicate_in(cr, uid, source, in_info, context)
+
+        # if existed already, just update the new values into the existing IN
+        if existing_pick.state != 'assigned':
+            message = "Sorry, the existing IN " + pick_name + " has already been processed. Cannot update any more!"
+            self._logger.info(message)
+            return message 
+        
+        self._logger.info("+++ RW: Update the existing IN with new data and status shipped available: %s from %s to %s" % (pick_name, source, cr.dbname))
+        
+        # UF-2422: Remove all current IN lines, then recreate new lines
+        move_obj.unlink(cr, uid, existing_pick.move_lines)
+        picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+        for line in picking_lines:
+            line['picking_id'] = existing_pick.id
+            move_obj.create(cr, uid, line, context=context)
+                
+        message = "The IN " + pick_name + " has been now updated and sent to shipped available."
+        self._logger.info(message)
+        return message
     
     def usb_replicate_in(self, cr, uid, source, in_info, context=None):
-        so_po_common = self.pool.get('so.po.common')
         if context is None:
             context = {}
 
