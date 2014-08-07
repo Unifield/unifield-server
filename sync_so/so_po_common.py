@@ -27,11 +27,16 @@ class so_po_common(osv.osv_memory):
     _name = "so.po.common"
     _description = "Common methods for SO - PO"
 
+    # exact copy-pasted from @msf_outgoing/msf_outgoing.py, class stock_picking 
+    CENTRAL_PLATFORM= "central_platform"
+    REMOTE_WAREHOUSE="remote_warehouse"
+
     def rw_view_remove_buttons(self, cr, uid, res, view_type, instance_type):
         rw_type = self.pool.get('stock.picking')._get_usb_entity_type(cr, uid)
         if view_type in ['tree','form'] and rw_type == instance_type:
             root = etree.fromstring(res['arch'])
             root.set('hide_new_button', 'True')
+            root.set('hide_delete_button', 'True')
             root.set('noteditable', 'True')
             root.set('hide_duplicate_button', 'True')
             res['arch'] = etree.tostring(root)
