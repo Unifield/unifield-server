@@ -1560,34 +1560,36 @@ class purchase_order(osv.osv):
                 for line in rfq.order_line:
                     if line.procurement_id:
                         self.pool.get('procurement.order').write(cr, uid, [line.procurement_id.id], {'price_unit': line.price_unit}, context=context)
-                    elif not rfq.tender_id:
-                        prep_lt = fields_tools.get_field_from_company(cr, uid, object='sale.order', field='preparation_lead_time', context=context)
-                        rts = datetime.strptime(rfq.sale_order_id.ready_to_ship_date, db_date_format)
-                        rts = rts - relativedelta(days=prep_lt or 0)
-                        rts = rts.strftime(db_date_format)
-                        vals = {'product_id': line.product_id.id,
-                                'product_uom': line.product_uom.id,
-                                'product_uos': line.product_uom.id,
-                                'product_qty': line.product_qty,
-                                'product_uos_qty': line.product_qty,
-                                'price_unit': line.price_unit,
-                                'procure_method': 'make_to_order',
-                                'is_rfq': True,
-                                'rfq_id': rfq.id,
-                                'rfq_line_id': line.id,
-                                'is_tender': False,
-                                'tender_id': False,
-                                'tender_line_id': False,
-                                'date_planned': rts,
-                                'origin': rfq.sale_order_id.name,
-                                'supplier': rfq.partner_id.id,
-                                'name': '[%s] %s' % (line.product_id.default_code, line.product_id.name),
-                                'location_id': rfq.sale_order_id.warehouse_id.lot_stock_id.id,
-                                'po_cft': 'rfq',
-                                }
-                        proc_id = proc_obj.create(cr, uid, vals, context=context)
-                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
-                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+#                    elif not rfq.tender_id:
+#                        prep_lt = fields_tools.get_field_from_company(cr, uid, object='sale.order', field='preparation_lead_time', context=context)
+#                        rts = datetime.strptime(rfq.sale_order_id.ready_to_ship_date, db_date_format)
+#                        rts = rts - relativedelta(days=prep_lt or 0)
+#                        rts = rts.strftime(db_date_format)
+#                        vals = {'product_id': line.product_id.id,
+#                                'product_uom': line.product_uom.id,
+#                                'product_uos': line.product_uom.id,
+#                                'product_qty': line.product_qty,
+#                                'product_uos_qty': line.product_qty,
+#                                'price_unit': line.price_unit,
+#                                'procure_method': 'make_to_order',
+#                                'is_rfq': True,
+#                                'rfq_id': rfq.id,
+#                                'rfq_line_id': line.id,
+#                                'is_tender': False,
+#                                'tender_id': False,
+#                                'tender_line_id': False,
+#                                'date_planned': rts,
+#                                'origin': rfq.sale_order_id.name,
+#                                'supplier': rfq.partner_id.id,
+#                                'name': '[%s] %s' % (line.product_id.default_code, line.product_id.name),
+#                                'location_id': rfq.sale_order_id.warehouse_id.lot_stock_id.id,
+#                                'po_cft': 'rfq',
+#                        }
+#                        proc_id = proc_obj.create(cr, uid, vals, context=context)
+#                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+#                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+        self.create_extra_lines_on_fo(cr, uid, ids, context=context)
+        self.delete_lines_on_fo(cr, uid, ids, context=context)
 
         return self.write(cr, uid, ids, {'state': 'done'}, context=context)
 

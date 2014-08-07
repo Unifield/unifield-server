@@ -1507,7 +1507,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id,
             'so_back_update_dest_pol_id_procurement_order': line.so_back_update_dest_pol_id_sale_order_line.id,
             'sale_id': line.order_id.id,
-            'purchase_id': line.created_by_po and line.created_by_po.id or False,
+            'purchase_id': line.created_by_po and not line.created_by_po.rfq_ok and line.created_by_po.id or False,
+            'rfq_id': line.created_by_po and line.created_by_po.rfq_ok and line.created_by_po.id or False,
+            'rfq_line_id': line.created_by_po_line and line.created_by_po_line.order_id.rfq_ok and line.created_by_po_line.id or False,
+            'is_rfq': line.created_by_po and line.created_by_po.rfq_ok,
+            'is_rfq_done': line.created_by_po and line.created_by_po.rfq_ok,
         }
 
         if line.product_id:
@@ -1619,7 +1623,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     if line.so_back_update_dest_po_id_sale_order_line or line.created_by_po:
                         display_log = False
 
-                    if line.created_by_po_line:
+                    if line.created_by_po_line and not line.created_by_po_line.order_id.rfq_ok:
                         pol_obj.write(cr, uid, [line.created_by_po_line.id], {'procurement_id': proc_id}, context=context)
 
                     line_values = {
@@ -1640,7 +1644,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                     if line.created_by_po:
                         wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
-                        proc_obj.write(cr, uid, [proc_id], {'state': 'running'}, context=context)
+                        if not line.created_by_po.rfq_ok:
+                            proc_obj.write(cr, uid, [proc_id], {'state': 'running'}, context=context)
 
             # the Fo is sourced we set the state
             o_write_vals['state'] = 'sourced'
