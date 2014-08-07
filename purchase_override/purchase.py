@@ -396,6 +396,7 @@ class purchase_order(osv.osv):
         '''
         line_obj = self.pool.get('purchase.order.line')
         wiz_obj = self.pool.get('purchase.order.cancel.wizard')
+        data_obj = self.pool.get('ir.model.data')
         wf_service = netsvc.LocalService("workflow")
 
         if context is None:
@@ -404,8 +405,10 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # Delete FO/IR lines according to deleted PO lines
-        self.delete_lines_on_fo(cr, uid, ids, context=context)
+        if context.get('rfq_ok', False):
+            view_id = data_obj.get_object_reference(cr, uid, 'tender_flow', 'rfq_cancel_wizard_form_view')[1]
+        else:
+            view_id = data_obj.get_object_reference(cr, uid, 'purchase_override', 'purchase_order_cancel_wizard_form_view')[1]
 
         for po in self.browse(cr, uid, ids, context=context):
             for l in po.order_line:
@@ -416,8 +419,12 @@ class purchase_order(osv.osv):
                             'res_id': wiz_id,
                             'view_type': 'form',
                             'view_mode': 'form',
+                            'view_id': [view_id],
                             'target': 'new',
                             'context': context}
+            
+            # Delete FO/IR lines according to deleted PO lines
+            self.delete_lines_on_fo(cr, uid, [po.id], context=context)
 
             wf_service.trg_validate(uid, 'purchase.order', po.id, 'purchase_cancel', cr)
 
@@ -2555,6 +2562,7 @@ class purchase_order_line(osv.osv):
         '''
         # Objects
         wiz_obj = self.pool.get('purchase.order.line.unlink.wizard')
+        data_obj = self.pool.get('ir.model.data')
 
         # Variables initialization
         if context is None:
@@ -2562,6 +2570,11 @@ class purchase_order_line(osv.osv):
 
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        if context.get('rfq_ok', False):
+            view_id = data_obj.get_object_reference(cr, uid, 'tender_flow', 'rfq_line_unlink_wizard_form_view')[1]
+        else:
+            view_id = data_obj.get_object_reference(cr, uid, 'purchase_override', 'purchase_order_line_unlink_wizard_form_view')[1]
 
         for line_id in ids:
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line_id], context=context)
@@ -2571,6 +2584,7 @@ class purchase_order_line(osv.osv):
                         'res_model': 'purchase.order.line.unlink.wizard',
                         'view_type': 'form',
                         'view_mode': 'form',
+                        'view_id': [view_id],
                         'res_id': wiz_id,
                         'target': 'new',
                         'context': context}
@@ -3328,7 +3342,10 @@ class purchase_order_line_unlink_wizard(osv.osv_memory):
         for po in po_obj.browse(cr, uid, list(po_ids), context=context):
             if all(x.state in ('cancel', 'done') for x in po.order_line):
                 wiz_id = order_wiz_obj.create(cr, uid, {'order_id': po.id}, context=context)
-                view_id = data_obj.get_object_reference(cr, uid, 'purchase_override', 'ask_po_cancel_wizard_form_view')[1]
+                if po.rfq_ok:
+                    view_id = data_obj.get_object_reference(cr, uid, 'tender_flow', 'ask_rfq_cancel_wizard_form_view')[1]
+                else:
+                    view_id = data_obj.get_object_reference(cr, uid, 'purchase_override', 'ask_po_cancel_wizard_form_view')[1]
                 context['view_id'] = False
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'purchase.order.cancel.wizard',
@@ -3375,7 +3392,10 @@ class purchase_order_cancel_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        view_id = data_obj.get_object_reference(cr, uid, 'purchase_override', 'ask_po_cancel_wizard_form_view')[1]
+        if self._name == 'rfq.cancel.wizard':
+            view_id = data_obj.get_object_reference(cr, uid, 'tender_flow', 'ask_rfq_cancel_wizard_form_view')[1]
+        else:
+            view_id = data_obj.get_object_reference(cr, uid, 'purchase_override', 'ask_po_cancel_wizard_form_view')[1]
         wiz_id = self.create(cr, uid, {'order_id': order_id}, context=context)
 
         return {'type': 'ir.actions.act_window',
