@@ -89,18 +89,22 @@ class stock_picking(osv.osv):
 
         # if existed already, just update the new values into the existing IN
         self._logger.info("+++ RW: Update the existing IN with new data and status shipped available: %s from %s to %s" % (pick_name, source, cr.dbname))
-        existing_pick = self.browse(cr, uid, existing_pick, context=context)
+        existing_pick = self.browse(cr, uid, existing_pick[0], context=context)
         if existing_pick.state != 'assigned':
             message = "Sorry, the existing IN " + pick_name + " may have already been processed. Cannot update any more!"
             self._logger.info(message)
             return message 
         
         # UF-2422: Remove all current IN lines, then recreate new lines
-        move_obj.unlink(cr, uid, existing_pick.move_lines)
+        for move in existing_pick.move_lines:
+            move_obj.write(cr, uid, move.id, {'state': 'draft'}, context=context)
+            move_obj.unlink(cr, uid, move.id)
+            
         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
         for line in picking_lines:
-            line['picking_id'] = existing_pick.id
-            move_obj.create(cr, uid, line, context=context)
+            vals = line[2]
+            vals['picking_id'] = existing_pick.id
+            move_obj.create(cr, uid, vals, context=context)
                 
         message = "The IN " + pick_name + " has been now updated and sent to shipped available."
         self._logger.info(message)
