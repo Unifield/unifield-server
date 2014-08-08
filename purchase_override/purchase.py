@@ -330,7 +330,7 @@ class purchase_order(osv.osv):
         'fnct_project_ref': fields.function(_get_project_ref, method=True, string='Project Ref.',
                                             type='char', size=256, store=False,),
         'dest_partner_ids': fields.many2many('res.partner', 'res_partner_purchase_order_rel', 'purchase_order_id', 'partner_id', 'Customers'),  # uf-2223
-        'dest_partner_names': fields.function(_get_dest_partner_names, type='string', string='Customers', method=True),  # uf-2223
+        'dest_partner_names': fields.function(_get_dest_partner_names, type='char', size=256,  string='Customers', method=True),  # uf-2223
         'split_po': fields.boolean('Created by split PO', readonly=True),
     }
 
