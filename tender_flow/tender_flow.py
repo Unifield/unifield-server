@@ -1311,7 +1311,7 @@ class procurement_order(osv.osv):
                     values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1]
         
         return values
-    
+
 procurement_order()
 
 
@@ -1320,7 +1320,7 @@ class purchase_order(osv.osv):
     add link to tender
     '''
     _inherit = 'purchase.order'
-    
+
     def _check_valid_till(self, cr, uid, ids, context=None):
         """ Checks if valid till has been completed
         """

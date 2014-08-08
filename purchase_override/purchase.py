@@ -1092,8 +1092,11 @@ stock moves which are already processed : '''
                     'type': 'make_to_order',
                     'supplier': l.order_id.partner_id.id,
                     'analytic_distribution_id': new_distrib,
-                    'created_by_po': l.order_id.id,
-                    'created_by_po_line': l.id,
+                    'created_by_po': not l.order_id.rfq_ok and l.order_id.id or False,
+                    'created_by_po_line': not l.order_id.rfq_ok and l.id or False,
+                    'created_by_rfq': l.order_id.rfq_ok and l.order_id.id or False,
+                    'created_by_rfq_line': l.order_id.rfq_ok and l.id or False,
+                    'po_cft': l.order_id.rfq_ok and 'rfq' or 'po',
                     'name': '[%s] %s' % (l.product_id.default_code, l.product_id.name)}
             sol_obj.create(cr, uid, vals, context=context)
             # Put the sale_id in the procurement order

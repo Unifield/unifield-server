@@ -159,7 +159,7 @@
         <record id="procurement.trans_rfq_done_cancel" model="workflow.transition">
             <field name="act_from" ref="procurement.act_rfq_done" />
             <field name="act_to" ref="procurement.act_cancel" />
-            <field name="condition">rfq_id and (rfq_line_id.state == 'cancel' or not rfq_line_id)</field>
+            <field name="condition">rfq_id and (not rfq_line_id or rfq_line_id.state == 'cancel')</field>
         </record>
 
         <record id="procurement.trans_rfq_done_confirm_mto" model="workflow.transition">

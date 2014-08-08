@@ -1507,12 +1507,16 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id,
             'so_back_update_dest_pol_id_procurement_order': line.so_back_update_dest_pol_id_sale_order_line.id,
             'sale_id': line.order_id.id,
-            'purchase_id': line.created_by_po and not line.created_by_po.rfq_ok and line.created_by_po.id or False,
-            'rfq_id': line.created_by_po and line.created_by_po.rfq_ok and line.created_by_po.id or False,
-            'rfq_line_id': line.created_by_po_line and line.created_by_po_line.order_id.rfq_ok and line.created_by_po_line.id or False,
-            'is_rfq': line.created_by_po and line.created_by_po.rfq_ok,
-            'is_rfq_done': line.created_by_po and line.created_by_po.rfq_ok,
+            'purchase_id': line.created_by_po.id or False,
         }
+
+        if line.created_by_rfq:
+            proc_data.update({
+                'purchase_id': False,
+                'is_rfq': True,
+                'is_rfq_done': True,
+                'po_cft': 'rfq',
+            })
 
         if line.product_id:
             proc_data['product_id'] = line.product_id.id
@@ -1642,10 +1646,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                     wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
 
-                    if line.created_by_po:
+                    if line.created_by_po or line.created_by_rfq:
                         wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
-                        if not line.created_by_po.rfq_ok:
-                            proc_obj.write(cr, uid, [proc_id], {'state': 'running'}, context=context)
+
+                    if line.created_by_po:
+                        proc_obj.write(cr, uid, [proc_id], {'state': 'running'}, context=context)
 
             # the Fo is sourced we set the state
             o_write_vals['state'] = 'sourced'
@@ -1724,6 +1729,8 @@ class sale_order_line(osv.osv):
                 'manually_corrected': fields.boolean(string='FO line is manually corrected by user'),
                 'created_by_po': fields.many2one('purchase.order', string='Created by PO'),
                 'created_by_po_line': fields.many2one('purchase.order.line', string='Created by PO line'),
+                'created_by_rfq': fields.many2one('purchase.order', string='Created by RfQ'),
+                'created_by_rfq_line': fields.many2one('purchase.order.line', string='Created by RfQ line'),
                 'dpo_line_id': fields.many2one('purchase.order.line', string='DPO line'),
                 }
 
@@ -1934,6 +1941,8 @@ class sale_order_line(osv.osv):
             'manually_corrected': False,
             'created_by_po': False,
             'created_by_po_line': False,
+            'created_by_rfq': False,
+            'created_by_rfq_line': False,
         })
 
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
@@ -2083,6 +2092,8 @@ class sale_order_line(osv.osv):
             'manually_corrected': False,
             'created_by_po': False,
             'created_by_po_line': False,
+            'created_by_rfq': False,
+            'created_by_rfq_line': False,
         })
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
