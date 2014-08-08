@@ -315,7 +315,7 @@ class stock_picking(osv.osv):
                 self._logger.info(message)
                 raise Exception(message)
 
-            same_in = self.search(cr, uid, [('id', 'in', in_id), ('shipment_ref', '=', shipment_ref)], context=context)
+            same_in = self.search(cr, uid, [('id', '=', in_id), ('shipment_ref', '=', shipment_ref)], context=context)
             if not same_in:
                 message = "Sorry, this seems to be an extra ship. This feature is not available now!"
                 self._logger.info(message)
