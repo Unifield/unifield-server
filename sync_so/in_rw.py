@@ -106,6 +106,7 @@ class stock_picking(osv.osv):
             vals['picking_id'] = existing_pick.id
             move_obj.create(cr, uid, vals, context=context)
                 
+        self.write(cr, uid, existing_pick.id, {'state': 'shipped'}, context=context)
         message = "The IN " + pick_name + " has been now updated and sent to shipped available."
         self._logger.info(message)
         return message
