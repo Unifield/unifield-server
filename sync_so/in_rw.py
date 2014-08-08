@@ -89,6 +89,7 @@ class stock_picking(osv.osv):
 
         # if existed already, just update the new values into the existing IN
         self._logger.info("+++ RW: Update the existing IN with new data and status shipped available: %s from %s to %s" % (pick_name, source, cr.dbname))
+        existing_pick = self.browse(cr, uid, existing_pick, context=context)
         if existing_pick.state != 'assigned':
             message = "Sorry, the existing IN " + pick_name + " may have already been processed. Cannot update any more!"
             self._logger.info(message)
