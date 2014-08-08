@@ -70,21 +70,29 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
+
+        rw_type = self._get_usb_entity_type(cr, uid)
+        if rw_type == self.CENTRAL_PLATFORM:
+            message = "Sorry, the given operation is only available for Remote Warehouse instance!"
+            self._logger.info(message)
+            raise Exception, message
+
         pick_dict = in_info.to_dict()
         pick_name = pick_dict['name']
         move_obj = self.pool.get('stock.move')
         
         existing_pick = self.search(cr, uid, [('name', '=', pick_name)], context=context)
         if not existing_pick: # If not exist, just create the new IN
+            message = "The IN " + pick_name + " will be created in " + cr.dbname
+            self._logger.info(message)
             return self.usb_replicate_in(cr, uid, source, in_info, context)
 
         # if existed already, just update the new values into the existing IN
+        self._logger.info("+++ RW: Update the existing IN with new data and status shipped available: %s from %s to %s" % (pick_name, source, cr.dbname))
         if existing_pick.state != 'assigned':
-            message = "Sorry, the existing IN " + pick_name + " has already been processed. Cannot update any more!"
+            message = "Sorry, the existing IN " + pick_name + " may have already been processed. Cannot update any more!"
             self._logger.info(message)
             return message 
-        
-        self._logger.info("+++ RW: Update the existing IN with new data and status shipped available: %s from %s to %s" % (pick_name, source, cr.dbname))
         
         # UF-2422: Remove all current IN lines, then recreate new lines
         move_obj.unlink(cr, uid, existing_pick.move_lines)
