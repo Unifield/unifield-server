@@ -52,6 +52,7 @@
     company_id: base.main_company
     currency_mode: current
     activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
 -
   I create a Down Payment account
 -
@@ -65,6 +66,7 @@
     currency_mode: current
     activation_date: !eval time.strftime('%Y-01-01')
     reconcile: 1
+    parent_id: 1
 -
   I create Supplier 401 Payable Account.
 -
@@ -78,6 +80,7 @@
     reconcile: 1
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
 -
   I create Supplier 1300 Receivable Account.
 -
@@ -91,6 +94,7 @@
     reconcile: 1
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
 -
   I create a 6101 Expense Account.
 -
@@ -105,6 +109,7 @@
     activation_date: !eval time.strftime('%Y-01-01')
     default_destination_id: analytic_distribution.analytic_account_destination_operation
     destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
+    parent_id: 1
 -
   I create a 6270 Expense Account.
 -
@@ -119,6 +124,7 @@
     activation_date: !eval time.strftime('%Y-01-01')
     default_destination_id: analytic_distribution.analytic_account_destination_operation
     destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
+    parent_id: 1
 -
   I create a 6301 Expense Account.
 -
@@ -133,6 +139,7 @@
     activation_date: !eval time.strftime('%Y-01-01')
     default_destination_id: analytic_distribution.analytic_account_destination_operation
     destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
+    parent_id: 1
 -
   I create Cash Advance 4204 Account.
 -
@@ -148,6 +155,7 @@
     activation_date: !eval time.strftime('%Y-01-01')
     default_destination_id: analytic_distribution.analytic_account_destination_national_staff
     destination_ids: [analytic_distribution.analytic_account_destination_national_staff]
+    parent_id: 1
 -
   I create an adjustement account
 -
@@ -163,6 +171,7 @@
     activation_date: !eval time.strftime('%Y-01-01')
     default_destination_id: analytic_distribution.analytic_account_destination_operation
     destination_ids: [analytic_distribution.analytic_account_destination_support, analytic_distribution.analytic_account_destination_operation]
+    parent_id: 1
 -
   I create a 10100 Cash Account.
 -
@@ -176,6 +185,7 @@
     user_type : account_account_type_cash0
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
 -
   I create a 10120-CHF Cash CHF Account.
 -
@@ -189,6 +199,7 @@
     user_type : account_account_type_cash0
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
 -
   I create a 10130-USD Cash USD Account.
 -
@@ -202,6 +213,7 @@
     user_type : account_account_type_cash0
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
 -
   I create a 10200 Bank Account.
 -
@@ -215,6 +227,7 @@
     user_type : account_account_type_cash0
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
 -
   I create a 10230-US Bank USD Account.
 -
@@ -228,6 +241,7 @@
     user_type : account_account_type_cash0
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
 -
   I create a 10300 Cheque Account
 -
@@ -241,6 +255,7 @@
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
     reconcile: True
+    parent_id: 1
 -
   I create a 10330-US Cheque USD Account
 -
@@ -254,3 +269,4 @@
     type_for_register: none
     activation_date: !eval time.strftime('%Y-01-01')
     reconcile: True
+    parent_id: 1

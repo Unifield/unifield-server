@@ -365,7 +365,7 @@ class account_move(osv.osv):
             context = {}
         res = super(account_move, self).validate(cr, uid, ids, context)
         for m in self.browse(cr, uid, ids):
-            if m.status and m.status == 'manual':
+            if m.status and m.status == 'manu':
                 for ml in m.line_id:
                     if ml.analytic_distribution_state == 'invalid' or (ml.analytic_distribution_state == 'none' and ml.account_id.is_analytic_addicted):
                         self.pool.get('account.move.line').write(cr, uid, [x.id for x in m.line_id], {'state': 'draft'}, context, check=False, update_check=False)

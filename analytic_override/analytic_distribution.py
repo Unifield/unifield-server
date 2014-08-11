@@ -93,6 +93,8 @@ class analytic_distribution1(osv.osv):
         account = self.pool.get('account.analytic.account').browse(cr, uid, [account_id], context=context)[0]
         if account.category == 'OC':
             vals = {'cost_center_id': account_id}
+        elif account.category == 'DEST':
+            vals = {'destination_id': account_id}
         else:
             vals = {'analytic_id': account_id}
         return self.pool.get('funding.pool.distribution.line').write(cr, uid, line_ids, vals)
