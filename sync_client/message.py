@@ -292,8 +292,9 @@ class message_received(osv.osv):
             cr.execute("SAVEPOINT exec_message")
             model, method = self.get_model_and_method(message.remote_call)
             arg = self.get_arg(message.arguments)
-            try:
+            try: 
                 fn = getattr(self.pool.get(model), method)
+                context.update({'identifier': message.identifier})
                 res = fn(cr, uid, message.source, *arg, context=context)
             except BaseException, e:
                 self._logger.exception("Message execution %d failed!" % message.id)

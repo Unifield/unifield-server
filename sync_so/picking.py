@@ -315,8 +315,13 @@ class stock_picking(osv.osv):
                 self._logger.info(message)
                 raise Exception(message)
 
-            self.write(cr, uid, in_id, {'already_shipped': True, 'shipment_ref': shipment_ref}, context)
+            same_in = self.search(cr, uid, [('id', '=', in_id), ('shipment_ref', '=', shipment_ref)], context=context)
+            if not same_in:
+                message = "Sorry, this seems to be an extra ship. This feature is not available now!"
+                self._logger.info(message)
+                raise Exception(message)
 
+            self.write(cr, uid, in_id, {'already_shipped': True, 'shipment_ref': shipment_ref}, context)
             in_name = self.browse(cr, uid, in_id, context=context)['name']
             message = "The INcoming " + in_name + "(" + po_name + ") has already been MANUALLY processed!"
             self._logger.info(message)

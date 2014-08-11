@@ -21,13 +21,26 @@
 
 from osv import osv, fields
 from sync_common import xmlid_to_sdref
-
-
-
+from lxml import etree
 
 class so_po_common(osv.osv_memory):
     _name = "so.po.common"
     _description = "Common methods for SO - PO"
+
+    # exact copy-pasted from @msf_outgoing/msf_outgoing.py, class stock_picking 
+    CENTRAL_PLATFORM= "central_platform"
+    REMOTE_WAREHOUSE="remote_warehouse"
+
+    def rw_view_remove_buttons(self, cr, uid, res, view_type, instance_type):
+        rw_type = self.pool.get('stock.picking')._get_usb_entity_type(cr, uid)
+        if view_type in ['tree','form'] and rw_type == instance_type:
+            root = etree.fromstring(res['arch'])
+            root.set('hide_new_button', 'True')
+            root.set('hide_delete_button', 'True')
+            root.set('noteditable', 'True')
+            root.set('hide_duplicate_button', 'True')
+            res['arch'] = etree.tostring(root)
+        return res
 
     # UTP-952: get the partner type, for the case of intermission and section
     def get_partner_type(self, cr, uid, partner_name, context=None):
@@ -225,6 +238,17 @@ class so_po_common(osv.osv_memory):
         header_result['location_id'] = location_id
 
         return header_result
+
+    def get_xml_id_counterpart(self, cr, uid, object_name, context):
+        identifier = context.get('identifier', False)
+        if identifier:
+            # for example: 'e45a954a-172a-11e4-af61-00259054f102/stock_picking/2_53'
+            del context['identifier']
+            object_name = object_name._name.replace('.', '_')
+            if identifier.find(object_name) > 0:
+                pos = identifier.rfind('_')
+                return identifier[:pos] # return this: e45a954a-172a-11e4-af61-00259054f102/stock_picking/2
+        return False
 
     def get_analytic_distribution_id(self, cr, uid, data_dict, context):
         # if it has been given in the sync message, then take into account if the value is False by intention,
@@ -443,18 +467,7 @@ class so_po_common(osv.osv_memory):
         '''
         line_id = line_obj.create(cr, uid, line, context=context)
         rw_xmlid = line.get('rw_xmlid', False)
-        if rw_xmlid:
-            # get xmlid and create a new one with the same res
-            self.pool.get('ir.model.data').create(cr, uid, {
-                    'noupdate' : False, # don't set to True otherwise import won't work
-                    'module' : 'sd',
-                    'last_modification' : fields.datetime.now(),
-                    'model' : line_obj._name,
-                    'res_id' : line_id,
-                    'version' : 1,
-                    'name' : rw_xmlid,
-                }, context=context)        
-
+        self.pool.get('ir.model.data').manual_create_sdref(cr, uid, line_obj, rw_xmlid, line_id, context=context)        
 
     def get_stock_move_lines(self, cr, uid, line_values, context):
         line_result = []
