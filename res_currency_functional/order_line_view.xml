@@ -82,7 +82,7 @@
                         <field name="procurement_id" invisible="1" />
                         <field name="from_fo" invisible="1" />
                         <group colspan="2" col="3">
-                            <field name="origin" on_change="on_change_origin(origin, procurement_id, parent.partner_type)" attrs="{'required': [('from_fo', '=', True)]}" />
+                            <field name="origin" on_change="on_change_origin(origin, procurement_id, parent.partner_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': [('tender_line_id', '!=', False)]}" />
                             <field name="select_fo" on_change="on_change_select_fo(select_fo)" nolabel="1" domain="[('state', 'in', ('sourced', 'progress', 'manual')), '|', ('split_type_sale_order', '=', parent.partner_type == 'esc' and 'esc_split_sale_order' or 'local_purchase_split_sale_order'), ('procurement_request', '=', True)]"/>
                         </group>
                     </field>
