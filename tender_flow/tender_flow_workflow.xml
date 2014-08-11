@@ -116,13 +116,13 @@
         <record id="procurement.trans_tender_done_confirm_mto" model="workflow.transition">
             <field name="act_from" ref="procurement.act_tender_done"/>
             <field name="act_to" ref="procurement.act_confirm_mto"/>
-            <field name="condition">tender_line_id.line_state != 'cancel'</field>
+            <field name="condition">tender_line_id and tender_line_id.line_state != 'cancel'</field>
         </record>
 
         <record id="procurement.trans_tender_done_cancel" model="workflow.transition">
             <field name="act_from" ref="procurement.act_tender_done" />
             <field name="act_to" ref="procurement.act_cancel" />
-            <field name="condition">tender_line_id.line_state == 'cancel'</field>
+            <field name="condition">not tender_line_id or tender_line_id.line_state == 'cancel'</field>
         </record>
         
         <record id="procurement.trans_confirm_mto_purchase" model="workflow.transition">

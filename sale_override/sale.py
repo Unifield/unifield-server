@@ -1518,6 +1518,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'po_cft': 'rfq',
             })
 
+        if line.created_by_tender:
+            proc_data.update({
+                'is_tender_done': True,
+                'po_cft': 'cft',
+            })
+
         if line.product_id:
             proc_data['product_id'] = line.product_id.id
 
@@ -1548,6 +1554,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         date_tools = self.pool.get('date.tools')
         proc_obj = self.pool.get('procurement.order')
         pol_obj = self.pool.get('purchase.order.line')
+        tl_obj = self.pool.get('tender.line')
 
         if context is None:
             context = {}
@@ -1644,9 +1651,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                     sol_obj.write(cr, uid, [line.id], line_values, context=context)
 
+                    if line.created_by_tender_line:
+                        tl_obj.write(cr, uid, [line.created_by_tender_line.id], {
+                            'sale_order_line_id': line.id,
+                        }, context=context)
+
                     wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
 
-                    if line.created_by_po or line.created_by_rfq:
+                    if line.created_by_po or line.created_by_rfq or line.created_by_tender:
                         wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
 
                     if line.created_by_po:

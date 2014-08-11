@@ -372,14 +372,17 @@ class tender(osv.osv):
         '''
         # done all related rfqs
         wf_service = netsvc.LocalService("workflow")
+        so_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
         proc_obj = self.pool.get('procurement.order')
         date_tools = self.pool.get('date.tools')                                
         fields_tools = self.pool.get('fields.tools')                            
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
 
-        # Delete lines on FO
-        self.delete_lines_on_fo(cr, uid, ids, context=context)
+        if context is None:
+            context= {}
+
+        sol_ids = set()
 
         for tender in self.browse(cr, uid, ids, context=context):
             rfq_list = []
@@ -416,29 +419,38 @@ class tender(osv.osv):
                         proc_obj.write(cr, uid, [proc_id], vals, context=context)
                     else: # Create procurement order to add the lines in a PO
                         create_vals = vals.copy()
-                        prep_lt = fields_tools.get_field_from_company(cr, uid, object='sale.order', field='preparation_lead_time', context=context)
-                        rts = datetime.strptime(tender.sale_order_id.ready_to_ship_date, db_date_format)       
-                        rts = rts - relativedelta(days=prep_lt or 0)                            
-                        rts = rts.strftime(db_date_format)                                      
-                        create_vals.update({'procure_method': 'make_to_order',
-                                            'is_tender': True,
-                                            'tender_id': tender.id,
-                                            'tender_line_id': line.id,
-                                            'tender_done': True,
-                                            'price_unit': line.price_unit,
-                                            'date_planned': rts,
-                                            'origin': tender.sale_order_id.name,
-                                            'supplier': line.purchase_order_line_id.order_id.partner_id.id,
-                                            'name': '[%s] %s' % (line.product_id.default_code, line.product_id.name),
-                                            'location_id': tender.sale_order_id.warehouse_id.lot_stock_id.id,
-                                            'po_cft': 'cft',
-                                            })
-                        proc_id = proc_obj.create(cr, uid, create_vals, context=context)
-                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
-                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+                        context['sale_id'] = tender.sale_order_id.id
+                        create_vals.update({
+                            'order_id': tender.sale_order_id.id,
+                            'product_uom_qty': line.qty,
+                            'type': 'make_to_order',
+                            'po_cft': 'cft',
+                            'supplier': line.supplier_id.id,
+                            'created_by_tender': tender.id,
+                            'created_by_tender_line': line.id,
+                            'name': '[%s] %s' % (line.product_id.default_code, line.product_id.name),
+                        })
+                        sol_obj.create(cr, uid, create_vals, context=context)
+
+                        if tender.sale_order_id.original_so_id_sale_order:
+                            context['sale_id'] = tender.sale_order_id.original_so_id_sale_order.id
+                            create_vals.update({
+                                'order_id': tender.sale_order_id.original_so_id_sale_order.id,
+                                'state': 'done',
+                            })
+                            sol_obj.create(cr, uid, create_vals, context=context)
+
+                        sol_ids.add(tender.sale_order_id.id)
+
+        if sol_ids:
+            so_obj.action_ship_proc_create(cr, uid, list(sol_ids), context=context)
                     
         # update product supplierinfo and pricelist
         self.update_supplier_info(cr, uid, ids, context=context, integrity_test=False,)
+
+        # Delete lines on FO
+        self.delete_lines_on_fo(cr, uid, ids, context=context)
+
         # change tender state
         self.write(cr, uid, ids, {'state':'done'}, context=context)
         return True
@@ -1636,7 +1648,11 @@ class sale_order_line(osv.osv):
     '''
     _inherit = 'sale.order.line'
     
-    _columns = {'tender_line_ids': fields.one2many('tender.line', 'sale_order_line_id', string="Tender Lines", readonly=True),}
+    _columns = {
+        'tender_line_ids': fields.one2many('tender.line', 'sale_order_line_id', string="Tender Lines", readonly=True),
+        'created_by_tender': fields.many2one('tender', string='Created by tender'),
+        'created_by_tender_line': fields.many2one('tender.line', string='Created by tender line'),
+    }
 
     def copy_data(self, cr, uid, ids, default=None, context=None):
         '''
