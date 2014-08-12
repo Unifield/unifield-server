@@ -274,17 +274,11 @@ class stock_picking(osv.osv):
                     message = "Sorry, the INT: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
                     return message
-                
-                header_result['rw_sdref_counterpart'] = pick_dict['id']
-                
                 pick_id = self.create(cr, uid, header_result , context=context)
                 self.action_assign(cr, uid, [pick_id])
-#                self.draft_force_assign(cr, uid, [pick_id]) # Fixed by JF: To send the IN to the right state 
                 
                 if 'rw_force_seq' in pick_dict and pick_dict.get('rw_force_seq', False):
                     self.alter_sequence_for_rw_pick(cr, uid, 'stock.picking.internal', pick_dict.get('rw_force_seq') + 1, context)
-                
-                
                 message = "The INT: " + pick_name + " has been well replicated in " + cr.dbname
             else:
                 message = "Sorry, the case without the origin FO or IR is not yet available!"
