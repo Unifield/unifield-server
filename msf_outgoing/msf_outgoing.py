@@ -2351,11 +2351,11 @@ class stock_picking(osv.osv):
                     Please refer to the code and explanation in sync_so/in_rw.py, method usb_replicate_in(), line 90 for further information on this issue
 
                 '''
-                if new_packing.type in ('in', 'internal'):
-                    seq_obj_name =  'stock.picking.' + vals['type']
-                    sequence_id = self.get_current_pick_sequence_for_rw(cr, uid, seq_obj_name, context)
-                    if sequence_id:
-                        for_update['rw_force_seq'] = sequence_id
+#                if new_packing.type in ('in', 'internal'):
+#                    seq_obj_name =  'stock.picking.' + vals['type']
+#                    sequence_id = self.get_current_pick_sequence_for_rw(cr, uid, seq_obj_name, context)
+#                    if sequence_id:
+#                        for_update['rw_force_seq'] = sequence_id
                 self.write(cr, uid, [new_packing_id], for_update, context=context)
 
         if 'subtype' in vals and vals['subtype'] == 'packing':
