@@ -946,10 +946,30 @@ class stock_picking(osv.osv):
         Create automatically invoice or NOT (regarding some criteria in is_invoice_needed)
         """
         res = super(stock_picking, self).action_done(cr, uid, ids, context=context)
+
         if res:
             if isinstance(ids, (int, long)):
                 ids = [ids]
             for sp in self.browse(cr, uid, ids):
+                # If the IN is linked to a PO and has a backorder not closed, change the subflow
+                # of the PO to the backorder
+                if sp.type == 'in' and sp.purchase_id:
+                    po_id = sp.purchase_id.id
+                    bo_id = False
+                    if sp.backorder_id and sp.backorder_id.state not in ('done', 'cancel'):
+                        bo_id = sp.backorder_id.id
+                    else:
+                        picking_ids = self.search(cr, uid, [
+                            ('purchase_id', '=', po_id),
+                            ('id', '!=', sp.id),
+                            ('state', 'not in', ['done', 'cancel']),
+                        ], limit=1, context=context)
+                        if picking_ids:
+                            bo_id = picking_ids[0]
+
+                    if bo_id:
+                        netsvc.LocalService("workflow").trg_change_subflow(uid, 'purchase.order', [po_id], 'stock.picking', [sp.id], bo_id, cr)
+
                 self._create_invoice(cr, uid, sp)
 
         return res
