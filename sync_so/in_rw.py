@@ -290,6 +290,15 @@ class stock_picking(osv.osv):
         self._logger.info(message)
         return message
 
+    def action_shipped_wkf(self, cr, uid, ids, context=None):
+        """ set the sync flag to true for re-syncing
+        """
+        res = super(stock_move, self).action_shipped_wkf(cr, uid, ids, context=context)
+        rw_type = self._get_usb_entity_type(cr, uid)
+        if rw_type == self.CENTRAL_PLATFORM:        
+            self.write(cr, uid, ids, {'already_replicated': False})
+        return res
+
     def rw_do_create_partial_in(self, cr, uid, pick_id, header_result, pack_data, context=None):
         # Objects
         processor_obj = self.pool.get('stock.incoming.processor')
