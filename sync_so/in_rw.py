@@ -266,6 +266,7 @@ class stock_picking(osv.osv):
                 picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                 header_result['move_lines'] = picking_lines
                 header_result['already_replicated'] = True
+                state = pick_dict['state']
                 
                 # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
                 existing_pick = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('type', '=', 'internal'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
@@ -274,7 +275,12 @@ class stock_picking(osv.osv):
                     self._logger.info(message)
                     return message
                 pick_id = self.create(cr, uid, header_result , context=context)
-                self.action_assign(cr, uid, [pick_id])
+                if state != 'draft': # if draft, do nothing
+                    wf_service = netsvc.LocalService("workflow")
+                    wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
+                    self.action_assign(cr, uid, [pick_id])                
+                
+#                self.action_assign(cr, uid, [pick_id])
                 
 #                if 'rw_force_seq' in pick_dict and pick_dict.get('rw_force_seq', False):
 #                    self.alter_sequence_for_rw_pick(cr, uid, 'stock.picking.internal', pick_dict.get('rw_force_seq') + 1, context)

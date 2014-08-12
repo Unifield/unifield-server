@@ -654,28 +654,60 @@ class stock_picking(osv.osv):
         wizard_obj = self.pool.get('outgoing.delivery.processor')
         wizard_line_obj = self.pool.get('outgoing.delivery.move.processor')
         proc_id = wizard_obj.create(cr, uid, {'picking_id': out_id})
-        wizard_obj.create_lines(cr, uid, proc_id, context=context)
+#        wizard_obj.create_lines(cr, uid, proc_id, context=context)
+        wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
 
         # Copy values from the OUT message move lines into the the wizard lines before making the partial OUT
         # If the line got split, based on line number and create new wizard line
-        for sline in picking_lines:
-            sline = sline[2]
-            line_number = sline['line_number']
-            
-            #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
-            
-            mline_ids = wizard_line_obj.search(cr, uid, [('wizard_id', '=', proc_id)], context=context)
-            brw_mline = wizard_line_obj.browse(cr, uid, mline_ids, context=context)
-            for mline in brw_mline:
-                if mline.line_number == line_number:
-                    # match the line, copy the content of picking line into the wizard line
-                    vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
-                            'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id']}
-                    if mline.quantity == 0.00:
-                        wizard_line_obj.write(cr, uid, mline.id, vals, context)
-                    elif id(mline) == id(brw_mline[-1]):
-                        wizard_line_obj.copy(cr, uid, mline.id, vals, context)
-                    break
+#        for sline in picking_lines:
+#            sline = sline[2]
+#            line_number = sline['line_number']
+#            
+#            #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
+#            
+#            mline_ids = wizard_line_obj.search(cr, uid, [('wizard_id', '=', proc_id)], context=context)
+#            brw_mline = wizard_line_obj.browse(cr, uid, mline_ids, context=context)
+#            for mline in brw_mline:
+#                if mline.line_number == line_number:
+#                    # match the line, copy the content of picking line into the wizard line
+#                    vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
+#                            'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id']}
+#                    if mline.quantity == 0.00:
+#                        wizard_line_obj.write(cr, uid, mline.id, vals, context)
+#                    elif id(mline) == id(brw_mline[-1]):
+#                        wizard_line_obj.copy(cr, uid, mline.id, vals, context)
+#                    break
+
+        move_already_checked = []
+        move_id = False
+        line_data = False
+        if wizard.picking_id.move_lines:
+            for sline in picking_lines:
+                sline = sline[2]            
+                line_number = sline['line_number']
+                if not sline['product_qty'] or sline['product_qty'] == 0.00:
+                    continue
+                
+                for move in wizard.picking_id.move_lines:
+                    if move.line_number == line_number:
+                        if move.id not in move_already_checked:
+                            move_id = move.id
+                            move_already_checked.append(move.id) # this move id will not be picked in the next search when creating lines
+                            line_data = wizard_line_obj._get_line_data(cr, uid, wizard, move, context=context)
+                            break
+
+                if move_id and line_data:
+                    vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
+                            'ordered_quantity': sline['product_qty'],
+                            'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
+                            'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],
+                            'cost':line_data['cost'],'currency':line_data['currency'],
+                            }
+                    wizard_line_obj.create(cr, uid, vals, context=context)
+
+        line_to_del = wizard_line_obj.search(cr, uid, [('wizard_id', '=', proc_id), ('quantity', '=', 0.00)], context=context)
+        if line_to_del:
+            wizard_line_obj.unlink(cr, uid, line_to_del, context=context)
 
         self.do_partial(cr, uid, [proc_id], 'outgoing.delivery.processor', context=context)
         return True
