@@ -164,9 +164,8 @@ class stock_picking(osv.osv):
                     in this class: msf_outgoing/msf_outgoing.py, method: stock.picking.create(), line 2337
                      
                 '''
-                if 'rw_force_seq' in pick_dict and pick_dict.get('rw_force_seq', False):
-                    self.alter_sequence_for_rw_pick(cr, uid, 'stock.picking.in', pick_dict.get('rw_force_seq') + 1, context)
-                
+#                if 'rw_force_seq' in pick_dict and pick_dict.get('rw_force_seq', False):
+#                    self.alter_sequence_for_rw_pick(cr, uid, 'stock.picking.in', pick_dict.get('rw_force_seq') + 1, context)
                 
                 message = "The IN: " + pick_name + " has been well replicated in " + cr.dbname
             else:
@@ -277,8 +276,8 @@ class stock_picking(osv.osv):
                 pick_id = self.create(cr, uid, header_result , context=context)
                 self.action_assign(cr, uid, [pick_id])
                 
-                if 'rw_force_seq' in pick_dict and pick_dict.get('rw_force_seq', False):
-                    self.alter_sequence_for_rw_pick(cr, uid, 'stock.picking.internal', pick_dict.get('rw_force_seq') + 1, context)
+#                if 'rw_force_seq' in pick_dict and pick_dict.get('rw_force_seq', False):
+#                    self.alter_sequence_for_rw_pick(cr, uid, 'stock.picking.internal', pick_dict.get('rw_force_seq') + 1, context)
                 message = "The INT: " + pick_name + " has been well replicated in " + cr.dbname
             else:
                 message = "Sorry, the case without the origin FO or IR is not yet available!"
@@ -293,7 +292,7 @@ class stock_picking(osv.osv):
     def action_shipped_wkf(self, cr, uid, ids, context=None):
         """ set the sync flag to true for re-syncing
         """
-        res = super(stock_move, self).action_shipped_wkf(cr, uid, ids, context=context)
+        res = super(stock_picking, self).action_shipped_wkf(cr, uid, ids, context=context)
         rw_type = self._get_usb_entity_type(cr, uid)
         if rw_type == self.CENTRAL_PLATFORM:        
             self.write(cr, uid, ids, {'already_replicated': False})
