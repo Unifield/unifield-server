@@ -67,7 +67,6 @@ class mysocket:
         if self.is_gzip:
             msg = zlib.compress(msg, zlib.Z_BEST_COMPRESSION)
         if len(msg) <= 10**8-1:
-            print len(msg), msg
             self.sock.sendall('%8d%s%s' % (len(msg), exception and "1" or "0", msg))
         else:
             n8size = len(msg)%10**8
