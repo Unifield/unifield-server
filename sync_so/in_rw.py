@@ -421,11 +421,15 @@ class stock_picking(osv.osv):
                 self.write(cr, uid, new_picking, {'associate_int_name': associate_int_name}, context)
         
         # Set the backorder reference to the IN !!!! THIS NEEDS TO BE CHECKED WITH SUPPLY PM!
+        in_name = self.browse(cr, uid, new_picking, context=context)['name']
         if new_picking != pick_id:
             self.write(cr, uid, pick_id, {'backorder_id': new_picking}, context)
             self.write(cr, uid, new_picking, {'already_replicated': True}, context=context)
+        else: # update the IN name which has been wrongly named when creating BO
+            pick_name = header_result['name']
+            if in_name != pick_name:
+                self.write(cr, uid, new_picking, {'name': pick_name}, context=context)
 
-        in_name = self.browse(cr, uid, new_picking, context=context)['name']
         message = "The INcoming " + in_name + " is partially processed!"
         self._logger.info(message)
         return message

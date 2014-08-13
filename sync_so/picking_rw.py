@@ -629,7 +629,15 @@ class stock_picking(osv.osv):
                     if state == 'done':   
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                         header_result['move_lines'] = picking_lines
-                        context['rw_backorder_name'] = pick_name
+                        
+                        # do not set if it is a full out closed!
+                        if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
+                            context['rw_backorder_name'] = pick_name
+                        else:
+                            context['rw_full_out'] = True
+
+                        # UF-2426: Cancel all the Check Availability before performing the partial                            
+                        self.cancel_assign(cr, uid, [pick_ids[0]])
                         self.rw_do_out_partial(cr, uid, pick_ids[0], picking_lines, context)
                         
                         message = "The OUT " + pick_name + " has been successfully closed in " + cr.dbname
@@ -654,30 +662,8 @@ class stock_picking(osv.osv):
         wizard_obj = self.pool.get('outgoing.delivery.processor')
         wizard_line_obj = self.pool.get('outgoing.delivery.move.processor')
         proc_id = wizard_obj.create(cr, uid, {'picking_id': out_id})
-#        wizard_obj.create_lines(cr, uid, proc_id, context=context)
         wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
-
-        # Copy values from the OUT message move lines into the the wizard lines before making the partial OUT
-        # If the line got split, based on line number and create new wizard line
-#        for sline in picking_lines:
-#            sline = sline[2]
-#            line_number = sline['line_number']
-#            
-#            #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
-#            
-#            mline_ids = wizard_line_obj.search(cr, uid, [('wizard_id', '=', proc_id)], context=context)
-#            brw_mline = wizard_line_obj.browse(cr, uid, mline_ids, context=context)
-#            for mline in brw_mline:
-#                if mline.line_number == line_number:
-#                    # match the line, copy the content of picking line into the wizard line
-#                    vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
-#                            'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id']}
-#                    if mline.quantity == 0.00:
-#                        wizard_line_obj.write(cr, uid, mline.id, vals, context)
-#                    elif id(mline) == id(brw_mline[-1]):
-#                        wizard_line_obj.copy(cr, uid, mline.id, vals, context)
-#                    break
-
+        
         move_already_checked = []
         move_id = False
         line_data = False
