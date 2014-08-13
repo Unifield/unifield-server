@@ -618,6 +618,11 @@ class stock_picking(osv.osv):
         sync_in = context.get('sync_message_execution', False)
         if context.get('rw_sync', False):
             sync_in = False
+
+        in_out_updated = True
+        if sync_in:
+            in_out_updated = False
+
         backorder_id = False
 
         internal_loc = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('cross_docking_location_ok', '=', False)])
@@ -694,6 +699,11 @@ class stock_picking(osv.osv):
 
                     remaining_out_qty = line.quantity
                     out_move = None
+
+                    # Sort the OUT moves to get the closest quantities as the IN quantity
+                    out_moves = sorted(out_moves, key=lambda x: abs(x.product_qty-line.quantity))
+
+
                     for lst_out_move in out_moves:
                         if remaining_out_qty <= 0.00:
                             break
@@ -716,7 +726,7 @@ class stock_picking(osv.osv):
                             out_values.update({
                                 'product_qty': remaining_out_qty,
                                 'product_uom': line.uom_id.id,
-                                'in_out_updated': sync_in and False or True,
+                                'in_out_updated': in_out_updated,
                             })
                             context['keepLineNumber'] = True
                             new_out_move_id = move_obj.copy(cr, uid, out_move.id, out_values, context=context)
@@ -731,7 +741,7 @@ class stock_picking(osv.osv):
                             out_values.update({
                                 'product_qty': remaining_out_qty,
                                 'product_uom': line.uom_id.id,
-                                'in_out_updated': sync_in and False or True,
+                                'in_out_updated': in_out_updated,
                             })
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
@@ -742,7 +752,7 @@ class stock_picking(osv.osv):
                             out_values.update({
                                 'product_qty': processed_qty,
                                 'product_uom': line.uom_id.id,
-                                'in_out_updated': sync_in and False or True
+                                'in_out_updated': in_out_updated,
                             })
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
