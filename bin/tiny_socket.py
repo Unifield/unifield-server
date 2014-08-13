@@ -66,17 +66,30 @@ class mysocket:
         msg = cPickle.dumps([msg,traceback])
         if self.is_gzip:
             msg = zlib.compress(msg, zlib.Z_BEST_COMPRESSION)
-        self.sock.sendall('%8d%s%s' % (len(msg), exception and "1" or "0", msg))
+        if len(msg) <= 10**8-1:
+            print len(msg), msg
+            self.sock.sendall('%8d%s%s' % (len(msg), exception and "1" or "0", msg))
+        else:
+            n8size = len(msg)%10**8
+            n16size = len(msg)/10**8
+            self.sock.sendall('%8d%s%16d%s%s' % (n8size, "3", n16size, exception and "1" or "0", msg))
             
     def myreceive(self):
-        buf=''
-        while len(buf) < 8:
-            chunk = self.sock.recv(8 - len(buf))
-            if not chunk:
-                raise socket.timeout
-            buf += chunk
-        size = int(buf)
-        buf = self.sock.recv(1)
+        def read(sock, size):
+            buf=''
+            while len(buf) < size:
+                chunk = sock.recv(size - len(buf))
+                if not chunk:
+                    raise socket.timeout
+                buf += chunk
+            return buf
+
+        size = int(read(self.sock, 8))
+        buf = read(self.sock,1)
+        if buf == "3":
+            newsize = int(read(self.sock, 16))
+            size = newsize*10**8+size
+            buf = read(self.sock,1)
         if buf != "0":
             exception = buf
         else:
