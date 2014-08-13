@@ -2873,8 +2873,10 @@ class stock_picking(osv.osv):
                    move_data[move.id]['original_qty'] != move_data[move.id]['processed_qty']:
                     need_new_picking = True
                     break
-
-            if need_new_picking:
+            out_full = context.get('rw_full_out', False)
+            if out_full:
+                del context['rw_full_out']
+            if need_new_picking and not out_full:
                 cp_vals = {
                     'name': sequence_obj.get(cr, uid, 'stock.picking.%s' % (picking.type)),
                     'move_lines' : [],
