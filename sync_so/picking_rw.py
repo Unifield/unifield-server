@@ -673,23 +673,43 @@ class stock_picking(osv.osv):
                 line_number = sline['line_number']
                 if not sline['product_qty'] or sline['product_qty'] == 0.00:
                     continue
-                
-                for move in wizard.picking_id.move_lines:
-                    if move.line_number == line_number:
-                        if move.id not in move_already_checked:
-                            move_id = move.id
-                            move_already_checked.append(move.id) # this move id will not be picked in the next search when creating lines
-                            line_data = wizard_line_obj._get_line_data(cr, uid, wizard, move, context=context)
-                            break
+ 
+#                upd0 = ' AND state = \'assigned\''
+                upd0 = ''
+                upd1 = {
+                    'picking_id': wizard.picking_id.id,
+                    'line_number': line_number,
+                    'product_qty': sline['product_qty'],
+                }
 
-                if move_id and line_data:
-                    vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
-                            'ordered_quantity': sline['product_qty'],
-                            'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
-                            'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],
-                            'cost':line_data['cost'],'currency':line_data['currency'],
-                            }
-                    wizard_line_obj.create(cr, uid, vals, context=context)
+                if move_already_checked:
+                    upd0 += ' AND id NOT IN %(already_checked)s '
+                    upd1['already_checked'] = tuple(move_already_checked)
+
+                query = '''
+                    SELECT id
+                    FROM stock_move
+                    WHERE
+                        picking_id = %(picking_id)s
+                        AND line_number = %(line_number)s
+                        ''' + upd0 + '''
+                    ORDER BY abs(product_qty-%(product_qty)s)
+                    LIMIT 1'''
+                cr.execute(query, upd1)
+
+                move_id = cr.fetchone()
+                if move_id:
+                    move = move_obj.browse(cr, uid, move_id[0], context=context)
+                    move_already_checked.append(move.id)
+                    line_data = wizard_line_obj._get_line_data(cr, uid, wizard, move, context=context)
+                    if line_data:
+                        vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
+                                'ordered_quantity': sline['product_qty'],
+                                'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
+                                'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],
+                                'cost':line_data['cost'],'currency':line_data['currency'],
+                                }
+                        wizard_line_obj.create(cr, uid, vals, context=context)
 
         line_to_del = wizard_line_obj.search(cr, uid, [('wizard_id', '=', proc_id), ('quantity', '=', 0.00)], context=context)
         if line_to_del:
