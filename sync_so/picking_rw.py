@@ -661,6 +661,7 @@ class stock_picking(osv.osv):
     def rw_do_out_partial(self, cr, uid, out_id, picking_lines, context=None):
         wizard_obj = self.pool.get('outgoing.delivery.processor')
         wizard_line_obj = self.pool.get('outgoing.delivery.move.processor')
+        move_obj = self.pool.get('stock.move')
         proc_id = wizard_obj.create(cr, uid, {'picking_id': out_id})
         wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
         
