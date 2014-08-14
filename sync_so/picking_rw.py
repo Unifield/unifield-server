@@ -160,7 +160,7 @@ class stock_picking(osv.osv):
 
     def cancel_moves_before_process(self, cr, uid, pick_ids, context):
         move_obj = self.pool.get('stock.move')
-        move_ids = move_obj.search(cr, uid, [('picking_id', 'in', pick_ids), ('state', '=', 'assigned')], context=context)
+        move_ids = move_obj.search(cr, uid, [('picking_id', 'in', pick_ids), ('state', 'in', ['assigned'])], context=context)
         move_obj.cancel_assign(cr, uid, move_ids, context=context)
 
     def search(self, cr, uid, args, offset=None, limit=None, order=None, context=None, count=False):
@@ -640,9 +640,10 @@ class stock_picking(osv.osv):
                             context['rw_backorder_name'] = pick_name
                         else:
                             context['rw_full_process'] = True
-
+                        
+                        self.action_assign(cr, uid, pick_ids, context=context)
                         # UF-2426: Cancel all the Check Availability before performing the partial
-                        self.cancel_moves_before_process(cr, uid, pick_ids, context)                            
+                        self.cancel_moves_before_process(cr, uid, pick_ids, context)
                         self.rw_do_out_partial(cr, uid, pick_ids[0], picking_lines, context)
                         
                         message = "The OUT " + pick_name + " has been successfully closed in " + cr.dbname
