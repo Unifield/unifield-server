@@ -676,16 +676,16 @@ class stock_picking(osv.osv):
                     continue
  
 #                upd0 = ' AND state = \'assigned\''
-                upd0 = ''
+#                upd0 = ''
                 upd1 = {
                     'picking_id': wizard.picking_id.id,
                     'line_number': line_number,
                     'product_qty': sline['product_qty'],
                 }
 
-                if move_already_checked:
-                    upd0 += ' AND id NOT IN %(already_checked)s '
-                    upd1['already_checked'] = tuple(move_already_checked)
+#                if move_already_checked:
+#                    upd0 += ' AND id NOT IN %(already_checked)s '
+#                    upd1['already_checked'] = tuple(move_already_checked)
 
                 query = '''
                     SELECT id
@@ -693,15 +693,22 @@ class stock_picking(osv.osv):
                     WHERE
                         picking_id = %(picking_id)s
                         AND line_number = %(line_number)s
-                        ''' + upd0 + '''
-                    ORDER BY abs(product_qty-%(product_qty)s)
-                    LIMIT 1'''
+                    ORDER BY abs(product_qty-%(product_qty)s)'''
                 cr.execute(query, upd1)
 
-                move_id = cr.fetchone()
+                move_ids = cr.fetchall()
+                move_diff = set(move_ids) - set(move_already_checked)
+                if move_ids and move_diff:
+                    move_id = list(move_diff)[0]
+                elif move_ids:
+                    move_id = move_ids[0]
+                else:
+                    move_id = False
+                
                 if move_id:
                     move = move_obj.browse(cr, uid, move_id[0], context=context)
-                    move_already_checked.append(move.id)
+                    if move.id not in move_already_checked:
+                        move_already_checked.append(move.id)
                     line_data = wizard_line_obj._get_line_data(cr, uid, wizard, move, context=context)
                     if line_data:
                         vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
