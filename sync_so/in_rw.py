@@ -278,7 +278,7 @@ class stock_picking(osv.osv):
                 if state != 'draft': # if draft, do nothing
                     wf_service = netsvc.LocalService("workflow")
                     wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
-                    self.action_assign(cr, uid, [pick_id])                
+                    self.action_assign(cr, uid, [pick_id], context=context)                
                 
 #                self.action_assign(cr, uid, [pick_id])
                 
@@ -446,10 +446,6 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        so_po_common = self.pool.get('so.po.common')
-        move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')
-
         message = "Unknown error, please check the log file."
         
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
@@ -470,11 +466,14 @@ class stock_picking(osv.osv):
                     if state in ('done', 'assigned'):
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                         header_result['move_lines'] = picking_lines
-                        #self.force_assign(cr, uid, pick_ids)
-                        move_ids = move_obj.search(cr, uid, [('picking_id', 'in', pick_ids), ('state', '=', 'assigned')], context=context)
-                        move_obj.cancel_assign(cr, uid, move_ids)
-                        self.action_assign(cr, uid, pick_ids)
+                        context = self.cancel_moves_before_process(cr, uid, pick_ids, context=context)
                         context['rw_backorder_name'] = pick_name
+                        #UF-2426: Inform the do_partial that this is a full process if there is no back order
+                        if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
+                            context['rw_backorder_name'] = pick_name
+                        else:
+                            context['rw_full_process'] = True                        
+                        
                         self.rw_do_create_partial_int_moves(cr, uid, pick_ids[0], picking_lines, context)
                         
                         message = "The Internal Moves: " + pick_name + " has been successfully created in " + cr.dbname
@@ -499,26 +498,54 @@ class stock_picking(osv.osv):
         # Objects
         wizard_obj = self.pool.get('internal.picking.processor')
         in_processor = wizard_obj.create(cr, uid, {'picking_id': pick_id})
-        wizard_obj.create_lines(cr, uid, in_processor, context=context)
         wizard_line_obj = self.pool.get('internal.move.processor')
+        move_obj = self.pool.get('stock.move')
+        wizard = wizard_obj.browse(cr, uid, in_processor, context=context)
         
         # Copy values from the OUT message move lines into the the wizard lines before making the partial OUT
         # If the line got split, based on line number and create new wizard line
+        move_already_checked = []
         for sline in picking_lines:
-            sline = sline[2]
+            sline = sline[2]            
             line_number = sline['line_number']
+            if not sline['product_qty'] or sline['product_qty'] == 0.00:
+                continue
+            upd1 = {
+                'picking_id': wizard.picking_id.id,
+                'line_number': line_number,
+                'product_qty': sline['product_qty'],
+            }
+            query = '''
+                SELECT id
+                FROM stock_move
+                WHERE
+                    picking_id = %(picking_id)s
+                    AND line_number = %(line_number)s
+                ORDER BY abs(product_qty-%(product_qty)s)'''
+            cr.execute(query, upd1)
+
+            move_ids = cr.fetchall()
+            move_diff = set(move_ids) - set(move_already_checked)
+            if move_ids and move_diff:
+                move_id = list(move_diff)[0]
+            elif move_ids:
+                move_id = move_ids[0]
+            else:
+                move_id = False
             
-            #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
-            #### WORK IN PROGRESS
-            
-            wizard = wizard_obj.browse(cr, uid, in_processor, context=context)
-            for mline in wizard.move_ids:
-                if mline.line_number == line_number:
-                    # match the line, copy the content of picking line into the wizard line
-                    vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
-                            'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id']}
-                    wizard_line_obj.write(cr, uid, mline.id, vals, context)
-                    break
+            if move_id:
+                move = move_obj.browse(cr, uid, move_id[0], context=context)
+                if move.id not in move_already_checked:
+                    move_already_checked.append(move.id)
+                line_data = wizard_line_obj._get_line_data(cr, uid, wizard, move, context=context)
+                if line_data:
+                    vals = {'line_number': line_number,'product_id': sline['product_id'], 'location_id': sline['location_id'],
+                            'ordered_quantity': sline['product_qty'],'quantity': sline['product_qty'],
+                            'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
+                            'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],
+                            'cost':line_data['cost'],'currency':line_data['currency'],
+                            }
+                    wizard_line_obj.create(cr, uid, vals, context=context)
 
         wizard_obj.do_partial(cr, uid, [in_processor], context=context)
         

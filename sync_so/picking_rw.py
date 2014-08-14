@@ -158,6 +158,11 @@ class stock_picking(osv.osv):
                  'rw_force_seq': -1,
                  }
 
+    def cancel_moves_before_process(self, cr, uid, pick_ids, context):
+        move_obj = self.pool.get('stock.move')
+        move_ids = move_obj.search(cr, uid, [('picking_id', 'in', pick_ids), ('state', '=', 'assigned')], context=context)
+        move_obj.cancel_assign(cr, uid, move_ids, context=context)
+
     def search(self, cr, uid, args, offset=None, limit=None, order=None, context=None, count=False):
         '''
         Change the order if we are on RW synchronisation
@@ -431,7 +436,7 @@ class stock_picking(osv.osv):
                 if state != 'draft': # if draft, do nothing
                     wf_service = netsvc.LocalService("workflow")
                     wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
-                    self.action_assign(cr, uid, [pick_id])
+                    self.action_assign(cr, uid, [pick_id], context=context)
     
 #                    if state == 'assigned' and self.browse(cr, uid, pick_id, context=context).state == 'confirmed':
 #                        self.force_assign(cr, uid, [pick_id])
@@ -634,10 +639,10 @@ class stock_picking(osv.osv):
                         if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
                             context['rw_backorder_name'] = pick_name
                         else:
-                            context['rw_full_out'] = True
+                            context['rw_full_process'] = True
 
-                        # UF-2426: Cancel all the Check Availability before performing the partial                            
-                        self.cancel_assign(cr, uid, [pick_ids[0]])
+                        # UF-2426: Cancel all the Check Availability before performing the partial
+                        self.cancel_moves_before_process(cr, uid, pick_ids, context)                            
                         self.rw_do_out_partial(cr, uid, pick_ids[0], picking_lines, context)
                         
                         message = "The OUT " + pick_name + " has been successfully closed in " + cr.dbname
@@ -674,19 +679,11 @@ class stock_picking(osv.osv):
                 line_number = sline['line_number']
                 if not sline['product_qty'] or sline['product_qty'] == 0.00:
                     continue
- 
-#                upd0 = ' AND state = \'assigned\''
-#                upd0 = ''
                 upd1 = {
                     'picking_id': wizard.picking_id.id,
                     'line_number': line_number,
                     'product_qty': sline['product_qty'],
                 }
-
-#                if move_already_checked:
-#                    upd0 += ' AND id NOT IN %(already_checked)s '
-#                    upd1['already_checked'] = tuple(move_already_checked)
-
                 query = '''
                     SELECT id
                     FROM stock_move
@@ -718,10 +715,6 @@ class stock_picking(osv.osv):
                                 'cost':line_data['cost'],'currency':line_data['currency'],
                                 }
                         wizard_line_obj.create(cr, uid, vals, context=context)
-
-        line_to_del = wizard_line_obj.search(cr, uid, [('wizard_id', '=', proc_id), ('quantity', '=', 0.00)], context=context)
-        if line_to_del:
-            wizard_line_obj.unlink(cr, uid, line_to_del, context=context)
 
         self.do_partial(cr, uid, [proc_id], 'outgoing.delivery.processor', context=context)
         return True
