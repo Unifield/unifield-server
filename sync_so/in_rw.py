@@ -466,8 +466,7 @@ class stock_picking(osv.osv):
                     if state in ('done', 'assigned'):
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                         header_result['move_lines'] = picking_lines
-                        context = self.cancel_moves_before_process(cr, uid, pick_ids, context=context)
-                        context['rw_backorder_name'] = pick_name
+                        self.cancel_moves_before_process(cr, uid, pick_ids, context=context)
                         #UF-2426: Inform the do_partial that this is a full process if there is no back order
                         if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
                             context['rw_backorder_name'] = pick_name
