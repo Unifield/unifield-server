@@ -534,11 +534,16 @@ class stock_picking(osv.osv):
             
             if move_id:
                 move = move_obj.browse(cr, uid, move_id[0], context=context)
-                if move.id not in move_already_checked:
-                    move_already_checked.append(move.id)
                 line_data = wizard_line_obj._get_line_data(cr, uid, wizard, move, context=context)
                 if line_data:
-                    vals = {'line_number': line_number,'product_id': sline['product_id'], 'location_id': sline['location_id'],
+                    if move.id not in move_already_checked:
+                        move_already_checked.append(move.id)
+                        # the location_dest_id needs to be updated into the move directly if it has been changed
+                        if move.location_dest_id and move.location_dest_id.id != sline['location_dest_id']:
+                            move_obj.write(cr, uid, move.id, {'location_dest_id': sline['location_dest_id']}, context=context)
+                    
+                    vals = {'line_number': line_number,'product_id': sline['product_id'], 
+                            'location_id': sline['location_id'],'location_dest_id': sline['location_dest_id'],
                             'ordered_quantity': sline['product_qty'],'quantity': sline['product_qty'],
                             'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
                             'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],

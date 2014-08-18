@@ -709,7 +709,8 @@ class stock_picking(osv.osv):
                         move_already_checked.append(move.id)
                     line_data = wizard_line_obj._get_line_data(cr, uid, wizard, move, context=context)
                     if line_data:
-                        vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
+                        vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],
+                                'location_id': sline['location_id'],'location_dest_id': sline['location_dest_id'],
                                 'ordered_quantity': sline['product_qty'],
                                 'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
                                 'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],
@@ -809,7 +810,8 @@ class stock_picking(osv.osv):
                             break
 
                 if move_id and line_data:
-                    vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
+                    vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],
+                            'location_id': sline['location_id'],'location_dest_id': sline['location_dest_id'],
                             'ordered_quantity': sline['product_qty'],
                             'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
                             'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],
@@ -982,7 +984,8 @@ class stock_picking(osv.osv):
                             break
                 
                 if move_id and line_data:
-                    vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
+                    vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],
+                            'location_id': sline['location_id'],'location_dest_id': sline['location_dest_id'],
                             'ordered_quantity': sline['product_qty'],
                             'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
                             'from_pack': sline['from_pack'], 'to_pack': sline['to_pack'],'pack_type': sline['pack_type'],
