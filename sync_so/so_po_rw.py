@@ -56,6 +56,12 @@ class sale_order_rw(osv.osv):
             if rec_id:
                 header_result['partner_id'] = rec_id
 
+        # If there is a location requestor for IR, retrieve it
+        if po_dict.get('location_requestor_id'):
+            rec_id = self.pool.get('stock.location').find_sd_ref(cr, uid, xmlid_to_sdref(po_dict.get('location_requestor_id')['id']), context=context)
+            if rec_id:
+                header_result['location_requestor_id'] = rec_id
+
         default = {}
         default.update(header_result)
         context['offline_synchronization'] = True
