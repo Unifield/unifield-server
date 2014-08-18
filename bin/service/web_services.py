@@ -39,6 +39,7 @@ import tools
 import locale
 import logging
 from cStringIO import StringIO
+from tempfile import NamedTemporaryFile
 
 class db(netsvc.ExportService):
     def __init__(self, name="db"):
@@ -238,19 +239,17 @@ class db(netsvc.ExportService):
         cmd.append('--dbname=' + db_name)
         args2 = tuple(cmd)
 
+
         buf=base64.decodestring(data)
-        if os.name == "nt":
-            tmpfile = (os.environ['TMP'] or 'C:\\') + os.tmpnam()
-            file(tmpfile, 'wb').write(buf)
-            args2=list(args2)
-            args2.append(tmpfile)
-            args2=tuple(args2)
-            res = tools.exec_pg_command(*args2)
-        else:
-            stdin, stdout = tools.exec_pg_command_pipe(*args2)
-            stdin.write(base64.decodestring(data))
-            stdin.close()
-            res = stdout.close()
+        tmpfile = NamedTemporaryFile('w+b', delete=False)
+        tmpfile.write(buf)
+        tmpfile.close()
+
+        args2=list(args2)
+        args2.append(tmpfile.name)
+        args2=tuple(args2)
+        res = tools.exec_pg_command(*args2)
+        os.remove(tmpfile.name)
         if res:
             raise Exception, "Couldn't restore database"
         logger.notifyChannel("web-services", netsvc.LOG_INFO,
