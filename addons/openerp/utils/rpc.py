@@ -28,6 +28,7 @@ import common
 
 from tiny_socket import TinySocket
 from tiny_socket import TinySocketError
+from cherrypy import config
 
 class NotLoggedIn(openobject.errors.TinyError, openobject.errors.AuthenticationError): pass
 
@@ -69,6 +70,7 @@ class RPCGateway(object):
     def __init__(self, session):
         if not isinstance(session, RPCSession):
             raise TypeError("RPCSession argument expected, got %s" % type(session))
+        self.socket_timeout = config.get('openerp.server.timeout')
         self.session = session
 
     def __rpc__(self, obj, method, args=(), auth=True):
@@ -188,6 +190,7 @@ class NETRPCGateway(RPCGateway):
         sock = TinySocket()
         try:
             sock.connect(self.session.host, self.session.port)
+            sock.sock.settimeout(self.socket_timeout)
             if auth:
                 args = (self.session.db, self.session.uid, self.session.password) + args
             sock.send((obj, method) + args)
@@ -354,12 +357,14 @@ class RPCSession(object):
         if not self.is_logged():
             raise NotLoggedIn(_('Not logged...'), _('Authorization Error'))
 
+        self.socket_timeout = config.get('openerp.server.timeout')
         return self.gateway.execute(obj, method, *args)
 
     def execute_noauth(self, obj, method, *args):
         return self.gateway.execute_noauth(obj, method, *args)
 
     def execute_db(self, method, *args):
+        self.gateway.socket_timeout = config.get('openerp.server.timeout') * 10
         return self.execute_noauth('db', method, *args)
 
 
