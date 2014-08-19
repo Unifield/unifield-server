@@ -170,7 +170,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
           
-        if context.get('rw_sync_in_progress', False):
+        if context.get('rw_sync_in_progress', False) and not order:
             order = 'id'
     
         return super(stock_picking, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
