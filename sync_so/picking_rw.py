@@ -253,16 +253,17 @@ class stock_picking(osv.osv):
         we format the data, gathering ids corresponding to objects
         '''
         # objects
-        prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         location_obj = self.pool.get('stock.location')
 
-        # product
-        product_name = data['product_id']['name']
-        product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
-        if not product_ids:
-            raise Exception, "The corresponding product does not exist here. Product name: %s" % product_name
-        product_id = product_ids[0]
+        # Get the product from ID
+        product_id = False
+        if data['product_id'] and data['product_id']['id']:
+            prod_obj = self.pool.get('product.product')
+            product_id = prod_obj.find_sd_ref(cr, uid, xmlid_to_sdref(data['product_id']['id']), context=context)
+            
+        if not product_id:
+            raise Exception, "Product id not found for the given line %s " % data['product_id']
 
         asset_id = False
         if data['asset_id'] and data['asset_id']['id']:
