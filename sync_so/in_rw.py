@@ -462,21 +462,24 @@ class stock_picking(osv.osv):
                     search_condition.append(('name', '=', pick_name))
                 pick_ids = self.search(cr, uid, search_condition, context=context)
                 if pick_ids:
+                    pick_id = pick_ids[0]
                     state = pick_dict['state']
                     if state in ('done', 'assigned'):
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                         header_result['move_lines'] = picking_lines
-                        self.cancel_moves_before_process(cr, uid, pick_ids, context=context)
+                        self.cancel_moves_before_process(cr, uid, [pick_id], context=context)
                         #UF-2426: Inform the do_partial that this is a full process if there is no back order
                         if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
                             context['rw_backorder_name'] = pick_name
                         else:
-                            context['rw_full_process'] = True                        
-                        
-                        self.rw_do_create_partial_int_moves(cr, uid, pick_ids[0], picking_lines, context)
+                            context['rw_full_process'] = True
+                                                    
+                        # try to perform a check available after cancel all moves? not really sure!
+                        self.action_assign(cr, uid, [pick_id], context=context)                
+                        self.rw_do_create_partial_int_moves(cr, uid, pick_id, picking_lines, context)
                         
                         message = "The Internal Moves: " + pick_name + " has been successfully created in " + cr.dbname
-                        self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
+                        self.write(cr, uid, pick_id, {'already_replicated': True}, context=context)
         
                 else:
                     message = "The IN: " + pick_name + " not found in " + cr.dbname
