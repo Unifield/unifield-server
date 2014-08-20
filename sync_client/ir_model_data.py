@@ -283,6 +283,10 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
         ids = self.search(cr, uid, [('module','=','sd'),('name','=',sdref)], context=context)
         if not ids:
             raise ValueError("Cannot find sdref %s!" % sdref)
+
+        if context.get('offline_synchronization', False) and 'touched' in vals:
+            del vals['touched']
+
         self.write(cr, uid, ids, vals, context=context)
         return True
 
