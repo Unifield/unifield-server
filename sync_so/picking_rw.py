@@ -861,13 +861,18 @@ class stock_picking(osv.osv):
                         
                     # perform right a way the validate Picking to set pack and size of pack
                     pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'ppl'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
-                    if pick_ids:
+                    pick_id = False
+                    for pick in pick_ids:
+                        if not self.pool.get('ppl.processor').search(cr, uid, [('picking_id', '=', pick)]):
+                            pick_id = pick
+                            break
+                    if pick_id:
                         state = pick_dict['state']
                         if state in ('done','draft','assigned'):   
-                            self.rw_create_ppl_step_1_only(cr, uid, pick_ids[0], picking_lines, context)
+                            self.rw_create_ppl_step_1_only(cr, uid, pick_id, picking_lines, context)
                             
                             message = "The pre-packing list: " + pick_name + " has been replicated in " + cr.dbname
-                            self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
+                            self.write(cr, uid, pick_id, {'already_replicated': True}, context=context)
             
                     else:
                         message = "Cannot replicate the packing " + pick_name + " because no relevant document found at " + cr.dbname
