@@ -216,6 +216,9 @@ class stock_picking(osv.osv):
             header_result['type'] = pick_dict.get('type')
         if 'subtype' in pick_dict:
             header_result['subtype'] = pick_dict.get('subtype')
+
+        if 'from_wkf' in pick_dict:
+            header_result['from_wkf'] = pick_dict.get('from_wkf')
             
         if 'transport_order_id' in pick_dict:
             header_result['transport_order_id'] = pick_dict.get('transport_order_id')
