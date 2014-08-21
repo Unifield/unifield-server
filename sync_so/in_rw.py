@@ -467,15 +467,19 @@ class stock_picking(osv.osv):
                     if state in ('done', 'assigned'):
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                         header_result['move_lines'] = picking_lines
+
                         self.cancel_moves_before_process(cr, uid, [pick_id], context=context)
                         #UF-2426: Inform the do_partial that this is a full process if there is no back order
                         if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
                             context['rw_backorder_name'] = pick_name
                         else:
                             context['rw_full_process'] = True
-                                                    
+
+                        pick_dates = self.read(cr, uid, pick_id, ['date_done', 'date'])
+                        context['rw_date'] = pick_dates['date_done'] and pick_dates['date_done'][0:10] or pick_dates['date'][0:10]
                         # try to perform a check available after cancel all moves? not really sure!
-                        self.action_assign(cr, uid, [pick_id], context=context)                
+                        self.action_assign(cr, uid, [pick_id], context=context)
+                        context['rw_date'] = False
                         self.rw_do_create_partial_int_moves(cr, uid, pick_id, picking_lines, context)
                         
                         message = "The Internal Moves: " + pick_name + " has been successfully created in " + cr.dbname
@@ -526,17 +530,18 @@ class stock_picking(osv.osv):
                 ORDER BY abs(product_qty-%(product_qty)s)'''
             cr.execute(query, upd1)
 
-            move_ids = cr.fetchall()
-            move_diff = set(move_ids) - set(move_already_checked)
+            move_ids = [x[0] for x in cr.fetchall()]
+            #move_diff = set(move_ids) - set(move_already_checked)
+            move_diff = [x for x in move_ids if x not in move_already_checked]
             if move_ids and move_diff:
                 move_id = list(move_diff)[0]
             elif move_ids:
                 move_id = move_ids[0]
             else:
                 move_id = False
-            
+
             if move_id:
-                move = move_obj.browse(cr, uid, move_id[0], context=context)
+                move = move_obj.browse(cr, uid, move_id, context=context)
                 line_data = wizard_line_obj._get_line_data(cr, uid, wizard, move, context=context)
                 if line_data:
                     if move.id not in move_already_checked:
@@ -544,8 +549,8 @@ class stock_picking(osv.osv):
                         # the location_dest_id needs to be updated into the move directly if it has been changed
                         if move.location_dest_id and move.location_dest_id.id != sline['location_dest_id']:
                             move_obj.write(cr, uid, move.id, {'location_dest_id': sline['location_dest_id']}, context=context)
-                    
-                    vals = {'line_number': line_number,'product_id': sline['product_id'], 
+
+                    vals = {'line_number': line_number,'product_id': sline['product_id'],
                             'location_id': sline['location_id'],'location_dest_id': sline['location_dest_id'],
                             'ordered_quantity': sline['product_qty'],'quantity': sline['product_qty'],
                             'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
