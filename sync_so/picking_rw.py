@@ -297,10 +297,19 @@ class stock_picking(osv.osv):
                  'rw_force_seq': -1,
                  }
 
-    def cancel_moves_before_process(self, cr, uid, pick_ids, context):
+    def cancel_moves_before_process(self, cr, uid, pick_ids, context=None):
+        if context is None:
+            context = {}
+
+        tmp_sme = context.get('sync_message_execution')
+        context['sync_message_execution'] = False
+
         move_obj = self.pool.get('stock.move')
         move_ids = move_obj.search(cr, uid, [('picking_id', 'in', pick_ids), ('state', 'in', ['assigned'])], context=context)
-        move_obj.cancel_assign(cr, uid, move_ids, context=context)
+        for move_id in move_ids:
+            move_obj.cancel_assign(cr, uid, [move_id], context=context)
+
+        context['sync_message_execution'] = tmp_sme
 
     def search(self, cr, uid, args, offset=None, limit=None, order=None, context=None, count=False):
         '''
@@ -791,13 +800,15 @@ class stock_picking(osv.osv):
                         else:
                             context['rw_full_process'] = True
 
+                        # UF-2426: Cancel all the Check Availability before performing the partial
+                        self.cancel_moves_before_process(cr, uid, pick_ids, context)
+
                         if header_result.get('date_done', False):
                             context['rw_date'] = header_result.get('date_done')
                         self.action_assign(cr, uid, pick_ids, context=context)
                         if header_result.get('date_done', False):
                             context['rw_date'] = False
-                        # UF-2426: Cancel all the Check Availability before performing the partial
-                        self.cancel_moves_before_process(cr, uid, pick_ids, context)
+
                         self.rw_do_out_partial(cr, uid, pick_ids[0], picking_lines, context)
                         
                         message = "The OUT " + pick_name + " has been successfully closed in " + cr.dbname
@@ -848,8 +859,8 @@ class stock_picking(osv.osv):
                     ORDER BY abs(product_qty-%(product_qty)s)'''
                 cr.execute(query, upd1)
 
-                move_ids = cr.fetchall()
-                move_diff = set(move_ids) - set(move_already_checked)
+                move_ids = [x[0] for x in cr.fetchall()]
+                move_diff = [x for x in move_ids if x not in move_already_checked]
                 if move_ids and move_diff:
                     move_id = list(move_diff)[0]
                 elif move_ids:
@@ -858,7 +869,7 @@ class stock_picking(osv.osv):
                     move_id = False
                 
                 if move_id:
-                    move = move_obj.browse(cr, uid, move_id[0], context=context)
+                    move = move_obj.browse(cr, uid, move_id, context=context)
                     if move.id not in move_already_checked:
                         move_already_checked.append(move.id)
                     line_data = wizard_line_obj._get_line_data(cr, uid, wizard, move, context=context)
@@ -942,6 +953,10 @@ class stock_picking(osv.osv):
         return message
 
     def rw_do_create_picking_partial(self, cr, uid, pick_id, picking_lines, context=None):
+        """
+
+        :rtype : object
+        """
         wizard_obj = self.pool.get('create.picking.processor')
         wizard_line_obj = self.pool.get('create.picking.move.processor')
         proc_id = wizard_obj.create(cr, uid, {'picking_id': pick_id}, context=context)
