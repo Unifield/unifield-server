@@ -278,7 +278,11 @@ class stock_picking(osv.osv):
                 if state != 'draft': # if draft, do nothing
                     wf_service = netsvc.LocalService("workflow")
                     wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
-                    self.action_assign(cr, uid, [pick_id], context=context)                
+                    if header_result.get('date_done', False):
+                        context['rw_date'] = header_result.get('date_done')
+                    self.action_assign(cr, uid, [pick_id], context=context)
+                    if header_result.get('date_done', False):
+                        context['rw_date'] = False
                 
 #                self.action_assign(cr, uid, [pick_id])
                 
@@ -475,11 +479,15 @@ class stock_picking(osv.osv):
                         else:
                             context['rw_full_process'] = True
 
-                        pick_dates = self.read(cr, uid, pick_id, ['date_done', 'date'])
-                        context['rw_date'] = pick_dates['date_done'] and pick_dates['date_done'][0:10] or pick_dates['date'][0:10]
+                        if header_result.get('date_done', False):
+                            context['rw_date'] = header_result.get('date_done')
+
                         # try to perform a check available after cancel all moves? not really sure!
                         self.action_assign(cr, uid, [pick_id], context=context)
-                        context['rw_date'] = False
+
+                        if header_result.get('date_done', False):
+                            context['rw_date'] = False
+
                         self.rw_do_create_partial_int_moves(cr, uid, pick_id, picking_lines, context)
                         
                         message = "The Internal Moves: " + pick_name + " has been successfully created in " + cr.dbname

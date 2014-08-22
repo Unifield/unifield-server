@@ -223,6 +223,9 @@ class stock_picking(osv.osv):
         if 'associate_int_name' in pick_dict:
             header_result['associate_int_name'] = pick_dict.get('associate_int_name')
 
+        if 'date_done' in pick_dict:
+            header_result['date_done'] = pick_dict.get('date_done')
+
         partner_id = so_po_common.get_partner_id(cr, uid, source, context)
         if 'partner_id' in pick_dict:
             partner_id = so_po_common.get_partner_id(cr, uid, pick_dict['partner_id'], context)
@@ -437,7 +440,11 @@ class stock_picking(osv.osv):
                 if state != 'draft': # if draft, do nothing
                     wf_service = netsvc.LocalService("workflow")
                     wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
+                    if header_result.get('date_done', False):
+                        context['rw_date'] = header_result.get('date_done')
                     self.action_assign(cr, uid, [pick_id], context=context)
+                    if header_result.get('date_done', False):
+                        context['rw_date'] = False
     
 #                    if state == 'assigned' and self.browse(cr, uid, pick_id, context=context).state == 'confirmed':
 #                        self.force_assign(cr, uid, [pick_id])
@@ -641,8 +648,12 @@ class stock_picking(osv.osv):
                             context['rw_backorder_name'] = pick_name
                         else:
                             context['rw_full_process'] = True
-                        
+
+                        if header_result.get('date_done', False):
+                            context['rw_date'] = header_result.get('date_done')
                         self.action_assign(cr, uid, pick_ids, context=context)
+                        if header_result.get('date_done', False):
+                            context['rw_date'] = False
                         # UF-2426: Cancel all the Check Availability before performing the partial
                         self.cancel_moves_before_process(cr, uid, pick_ids, context)
                         self.rw_do_out_partial(cr, uid, pick_ids[0], picking_lines, context)
@@ -764,7 +775,11 @@ class stock_picking(osv.osv):
                         header_result['move_lines'] = picking_lines
 #                        self.force_assign(cr, uid, pick_ids)
                         context['rw_backorder_name'] = pick_name
+                        if header_result.get('date_done', False):
+                            context['rw_date'] = header_result.get('date_done')
                         self.rw_do_create_picking_partial(cr, uid, pick_ids[0], picking_lines, context)
+                        if header_result.get('date_done', False):
+                            context['rw_date'] = False
                         
                         message = "The Picking " + pick_name + " has been successfully replicated in " + cr.dbname
                         self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
@@ -788,6 +803,7 @@ class stock_picking(osv.osv):
         wizard_obj = self.pool.get('create.picking.processor')
         wizard_line_obj = self.pool.get('create.picking.move.processor')
         proc_id = wizard_obj.create(cr, uid, {'picking_id': pick_id}, context=context)
+
         wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
 
         # Check how many lines the wizard has, to make it mirror with the lines received from the sync        
@@ -795,6 +811,7 @@ class stock_picking(osv.osv):
         move_already_checked = []
         move_id = False
         line_data = False
+
         if wizard.picking_id.move_lines:
             for sline in picking_lines:
                 sline = sline[2]            
@@ -818,6 +835,7 @@ class stock_picking(osv.osv):
                             'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],
                             'cost':line_data['cost'],'currency':line_data['currency'],
                             }
+
                     wizard_line_obj.create(cr, uid, vals, context=context)
 
         line_to_del = wizard_line_obj.search(cr, uid, [('wizard_id', '=', proc_id), ('quantity', '=', 0.00)], context=context)
