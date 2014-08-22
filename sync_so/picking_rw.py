@@ -43,11 +43,13 @@ class shipment(osv.osv):
         'already_rw_validated': fields.boolean(
             string='Already validated through the RW - for rw sync. only',
         ),
+        'already_replicated': fields.boolean(string='Already replicated - for sync only'),
     }
 
     _defaults = {
         'already_rw_delivered': False,
         'already_rw_validated': False,
+        'already_replicated': True,
     }
 
     def usb_set_state_shipment(self, cr, uid, source, out_info, state, context=None):
@@ -99,110 +101,20 @@ class shipment(osv.osv):
         '''
         return self.usb_set_state_shipment(cr, uid, source, out_info, state='shipped', context=context)
 
-    def usb_create_shipment(self, cr, uid, source, ship_info, context=None):
-        ship_dict = ship_info.to_dict()
-        if not ship_dict['shipment_id']:
-            message = "Sorry the Shipment is invalid in the sync message! The message cannot be processed"
-            self._logger.info(message)
-            raise Exception, message
-        shipment_name = ship_dict['shipment_id']['name']
-            
-        self._logger.info("+++ RW: Create Shipment: %s from %s to %s" % (shipment_name, source, cr.dbname))
-        if context is None:
-            context = {}
-
-        message = "Unknown error, please check the log file."
-        header_result = {}
+    def retrieve_shipment_header_data(self, cr, uid, source, header_result, pick_dict, context):
+        so_po_common = self.pool.get('so.po.common')
         
-        # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
-        origin = ship_dict['origin']
-        rw_type = self._get_usb_entity_type(cr, uid)
-        if rw_type == self.CENTRAL_PLATFORM:
-            if origin:
-                self.retrieve_picking_header_data(cr, uid, source, header_result, ship_dict, context)
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'packing'),('shipment_id', '!=', False), ('state', 'in', ['draft', 'assigned'])], order='id asc', context=context)
-                if pick_ids:
-                    state = ship_dict['state']
-                    if state in ('done','draft','assigned'):   
-                        context['rw_shipment_name'] = shipment_name
-                        picking_lines = self.get_picking_lines(cr, uid, source, ship_dict, context)
-                        self.rw_do_create_shipment(cr, uid, pick_ids[0], picking_lines, context)
-                        
-                        old_pick = self.browse(cr, uid, pick_ids[0], context)
-                        message = "The shipment: " + shipment_name + " has been created from the Packing list: " + old_pick.name
-                        self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
-                else:
-                    message = "Cannot generate the Shipment: " + shipment_name + " because no relevant document found at " + cr.dbname
-                    self._logger.info(message)
-                    raise Exception, message
-            else:
-                message = "Sorry, the case without the origin FO or IR is not yet available!"
-                self._logger.info(message)
-                raise Exception, message
-                
-        elif rw_type == self.REMOTE_WAREHOUSE: 
-            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
-                
-        self._logger.info(message)
-        return message
-
-    def rw_do_create_shipment(self, cr, uid, pick_id, picking_lines, context=None): 
         '''
-        Create the shipment from an existing draft shipment, then perform the ship
+        Need to get all header values for the Ship!
         '''
-        # from the picking Id, search for the shipment
-        pick = self.browse(cr, uid, pick_id, context=context)
         
-        # Objects
-        order_line_obj = self.pool.get('sale.order.line')
-        ship_proc_obj = self.pool.get('shipment.processor')
-        ship_proc_vals = {
-            'shipment_id': pick.shipment_id.id,
-            'address_id': pick.shipment_id.address_id.id,
-        }
-        
-        # Get this Shipment dest location, if a stock move is with this location then it's a returned pack --> do not process
-        returned_pack_loc = self.pool.get('stock.location').find_sd_ref(cr, uid, xmlid_to_sdref('sd.msf_outgoing_stock_location_dispatch'), context=context)        
-
-        wizard_line_obj = self.pool.get('shipment.family.processor')
-        proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
-        ship_proc_obj.create_lines(cr, uid, proc_id, context=context)
-
-        wizard = ship_proc_obj.browse(cr, uid, proc_id, context=context)
-        # Reset the selected packs for shipment, because by a wizard, it sets total pack!
-        for family in wizard.family_ids:
-            wizard_line_obj.write(cr, uid, [family.id], {'selected_number': 0,}, context=context)
-        shipment = wizard.shipment_id
-
-        # Create only the pack family that has been shipped, not all!
-        for sline in picking_lines:
-            sline = sline[2]
-            to_pack = sline['to_pack']
-            from_pack = sline['from_pack']
-            location_dest_id = sline['location_dest_id']
-            if location_dest_id == returned_pack_loc:
-                continue
+        '''
+        if 'name' in pick_dict:
+            header_result['name'] = pick_dict.get('name')
+        if 'state' in pick_dict:
+            header_result['state'] = pick_dict.get('state')
             
-            sale_order_id = False
-            #get sale order from this sline:
-            if sline['sale_line_id']:
-                sale_order_id = order_line_obj.read(cr, uid, sline['sale_line_id'], ['order_id'])['order_id']
-                if sale_order_id:
-                    sale_order_id = sale_order_id[0]
-                    
-            for family in wizard.family_ids:
-                family_sale_id = family.sale_order_id and family.sale_order_id.id or False
-                if family.from_pack <= from_pack and family.to_pack >= to_pack and sale_order_id == family_sale_id:
-                    family_vals = {
-                        'selected_number': to_pack - from_pack + 1,
-                    }
-                    wizard_line_obj.write(cr, uid, [family.id], family_vals, context=context)
-                     
-        self.pool.get('shipment').do_create_shipment(cr, uid, [proc_id], context=context)
-        return True
-
-    '''
- 'shipper_address/id',
+'shipper_address/id',
  'address_id/id',
  'date_of_departure',
  'shipment_expected_date',
@@ -244,10 +156,88 @@ class shipment(osv.osv):
  'consignee_name'  ,
  'transport_order_id/id'
 ['shipper_address/id','address_id/id','date_of_departure','shipment_expected_date','invoice_id/id', 'consignee_date', 'shipper_name', 'carrier_address', 'registration', 'planned_date_of_arrival', 'partner_id', 'carrier_name', 'carrier_other', 'consignee_email', 'shipment_actual_date', 'shipper_date', 'parent_id/id', 'state', 'driver_name'   , 'cargo_manifest_reference', 'carrier_signature', 'shipper_phone'     , 'carrier_phone'      , 'consignee_signature' , 'sequence_id'          , 'carrier_email'         , 'date', 'shipper_signature', 'carrier_date', 'name'         , 'consignee_other', 'consignee_phone' , 'consignee_address', 'in_ref', 'transit_via', 'transport_type', 'shipper_email', 'partner_id2/id'   , 'shipper_other'  , 'consignee_name'  , 'transport_order_id/id','picking_ids/id']
-    
-    '''
+            
+        '''
+        if 'name' in pick_dict:
+            header_result['name'] = pick_dict.get('name')
+        if 'state' in pick_dict:
+            header_result['state'] = pick_dict.get('state')
+        
+        return header_result
 
 
+    def usb_create_shipment(self, cr, uid, source, ship_info, context=None):
+        ship_dict = ship_info.to_dict()
+        shipment_name = ship_dict['name']
+            
+        self._logger.info("+++ RW: Create Shipment: %s from %s to %s" % (shipment_name, source, cr.dbname))
+        if context is None:
+            context = {}
+
+        search_name = shipment_name
+        if 'parent_id' in ship_dict:
+            search_name = ship_dict['parent_id']['name']
+
+        message = "Unknown error, please check the log file."
+        header_result = {}
+        
+        # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
+        pick_obj = self.pool.get('stock.picking')
+        rw_type = pick_obj._get_usb_entity_type(cr, uid)
+        if rw_type == pick_obj.CENTRAL_PLATFORM:
+            self.retrieve_shipment_header_data(cr, uid, source, header_result, ship_dict, context)
+            ship_ids = self.search(cr, uid, [('name', '=', search_name), ('state', 'in', ['draft'])], order='id asc', context=context)
+            if ship_ids:
+                context['rw_shipment_name'] = shipment_name
+                self.rw_do_create_shipment(cr, uid, ship_ids[0], ship_dict, context)
+                message = "The shipment: " + shipment_name + " has been successfully created."
+            else:
+                message = "Cannot generate the Shipment: " + shipment_name + " because no relevant document found at " + cr.dbname
+                self._logger.info(message)
+                raise Exception, message
+                
+        elif rw_type == self.REMOTE_WAREHOUSE: 
+            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
+                
+        self._logger.info(message)
+        return message
+
+    def rw_do_create_shipment(self, cr, uid, ship_id, ship_dict, context=None): 
+        '''
+        Create the shipment from an existing draft shipment, then perform the ship
+        '''
+        # from the picking Id, search for the shipment
+        ship = self.browse(cr, uid, ship_id, context=context)
+        
+        # Objects
+        order_line_obj = self.pool.get('sale.order.line')
+        ship_proc_obj = self.pool.get('shipment.processor')
+        ship_proc_vals = {
+            'shipment_id': ship.id,
+            'address_id': ship.address_id.id,
+        }
+        wizard_line_obj = self.pool.get('shipment.family.processor')
+        proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
+        ship_proc_obj.create_lines(cr, uid, proc_id, context=context)
+        wizard = ship_proc_obj.browse(cr, uid, proc_id, context=context)
+
+        pack_families = ship_dict.get('pack_family_memory_ids', False)
+        if not pack_families:
+            raise Exception, "This Ship " + ship.name + " is empty!"
+        
+        # Reset the selected packs for shipment, because by a wizard, it sets total pack!
+        for family in wizard.family_ids:
+            ppl_name = family.ppl_id and family.ppl_id.name or False
+            for line in pack_families:
+                if ppl_name == line['ppl_id']['name']:
+                    selected_number = line['to_pack'] - line['from_pack'] + 1
+                    wizard_line_obj.write(cr, uid, [family.id], {'selected_number': selected_number}, context=context)
+                    break        
+
+        self.pool.get('shipment').do_create_shipment(cr, uid, [proc_id], context=context)
+        return True
+
+ 
 shipment()
 
 class stock_move(osv.osv):
@@ -1009,11 +999,15 @@ class stock_picking(osv.osv):
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         origin = pick_dict['origin']
         rw_type = self._get_usb_entity_type(cr, uid)
+        pack_name = pick_dict['previous_step_id'] and pick_dict['previous_step_id']['name'] or None
         if rw_type == self.CENTRAL_PLATFORM:
             if origin:
                 header_result = {}
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['confirmed', 'assigned'])], order='id desc', context=context)
+                search_name = [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['confirmed', 'assigned'])]
+                if pack_name:
+                    search_name.append(('name', '=', pack_name))
+                pick_ids = self.search(cr, uid, search_name, context=context)
                 if pick_ids:
                     state = pick_dict['state']
                     if state in ('done', 'assigned'):   
@@ -1097,12 +1091,16 @@ class stock_picking(osv.osv):
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         origin = pick_dict['origin']
         shipment_name = pick_dict['shipment_id'] and pick_dict['shipment_id']['name'] or None
+        ppl_name = pick_dict['previous_step_id'] and pick_dict['previous_step_id']['name'] or None
         
         rw_type = self._get_usb_entity_type(cr, uid)
         if rw_type == self.CENTRAL_PLATFORM:
             if origin:
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'ppl'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
+                search_name = [('origin', '=', origin), ('subtype', '=', 'ppl'), ('state', 'in', ['confirmed', 'assigned'])]
+                if ppl_name:
+                    search_name.append(('name', '=', ppl_name))
+                pick_ids = self.search(cr, uid, search_name, context=context)
                 if pick_ids:
                     state = pick_dict['state']
                     if state in ('done','draft','assigned'):   
@@ -1205,111 +1203,5 @@ class stock_picking(osv.osv):
 
         self.do_ppl_step2(cr, uid, [proc_id], context=context)
         return True
-
-
-    def usb_create_shipment(self, cr, uid, source, out_info, context=None):
-        pick_dict = out_info.to_dict()
-        
-        if not pick_dict['shipment_id']:
-            message = "Sorry the Shipment is invalid in the sync message! The message cannot be processed"
-            self._logger.info(message)
-            raise Exception, message
-        
-        shipment_name = pick_dict['shipment_id']['name']
-            
-        self._logger.info("+++ RW: Create Shipment: %s from %s to %s" % (shipment_name, source, cr.dbname))
-        if context is None:
-            context = {}
-
-        message = "Unknown error, please check the log file."
-        header_result = {}
-        
-        # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
-        origin = pick_dict['origin']
-        rw_type = self._get_usb_entity_type(cr, uid)
-        if rw_type == self.CENTRAL_PLATFORM:
-            if origin:
-                self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'packing'),('shipment_id', '!=', False), ('state', 'in', ['draft', 'assigned'])], order='id asc', context=context)
-                if pick_ids:
-                    state = pick_dict['state']
-                    if state in ('done','draft','assigned'):   
-                        context['rw_shipment_name'] = shipment_name
-                        picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
-                        self.rw_do_create_shipment(cr, uid, pick_ids[0], picking_lines, context)
-                        
-                        old_pick = self.browse(cr, uid, pick_ids[0], context)
-                        message = "The shipment: " + shipment_name + " has been created from the Packing list: " + old_pick.name
-                        self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
-                else:
-                    message = "Cannot generate the Shipment: " + shipment_name + " because no relevant document found at " + cr.dbname
-                    self._logger.info(message)
-                    raise Exception, message
-            else:
-                message = "Sorry, the case without the origin FO or IR is not yet available!"
-                self._logger.info(message)
-                raise Exception, message
-                
-        elif rw_type == self.REMOTE_WAREHOUSE: 
-            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
-                
-        self._logger.info(message)
-        return message
-
-
-    def rw_do_create_shipment(self, cr, uid, pick_id, picking_lines, context=None): 
-        '''
-        Create the shipment from an existing draft shipment, then perform the ship
-        '''
-        # from the picking Id, search for the shipment
-        pick = self.browse(cr, uid, pick_id, context=context)
-        
-        # Objects
-        order_line_obj = self.pool.get('sale.order.line')
-        ship_proc_obj = self.pool.get('shipment.processor')
-        ship_proc_vals = {
-            'shipment_id': pick.shipment_id.id,
-            'address_id': pick.shipment_id.address_id.id,
-        }
-        
-        # Get this Shipment dest location, if a stock move is with this location then it's a returned pack --> do not process
-        returned_pack_loc = self.pool.get('stock.location').find_sd_ref(cr, uid, xmlid_to_sdref('sd.msf_outgoing_stock_location_dispatch'), context=context)        
-
-        wizard_line_obj = self.pool.get('shipment.family.processor')
-        proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
-        ship_proc_obj.create_lines(cr, uid, proc_id, context=context)
-
-        wizard = ship_proc_obj.browse(cr, uid, proc_id, context=context)
-        # Reset the selected packs for shipment, because by a wizard, it sets total pack!
-        for family in wizard.family_ids:
-            wizard_line_obj.write(cr, uid, [family.id], {'selected_number': 0,}, context=context)
-        shipment = wizard.shipment_id
-
-        # Create only the pack family that has been shipped, not all!
-        for sline in picking_lines:
-            sline = sline[2]
-            to_pack = sline['to_pack']
-            from_pack = sline['from_pack']
-            location_dest_id = sline['location_dest_id']
-            if location_dest_id == returned_pack_loc:
-                continue
-            
-            sale_order_id = False
-            #get sale order from this sline:
-            if sline['sale_line_id']:
-                sale_order_id = order_line_obj.read(cr, uid, sline['sale_line_id'], ['order_id'])['order_id']
-                if sale_order_id:
-                    sale_order_id = sale_order_id[0]
-                    
-            for family in wizard.family_ids:
-                family_sale_id = family.sale_order_id and family.sale_order_id.id or False
-                if family.from_pack <= from_pack and family.to_pack >= to_pack and sale_order_id == family_sale_id:
-                    family_vals = {
-                        'selected_number': to_pack - from_pack + 1,
-                    }
-                    wizard_line_obj.write(cr, uid, [family.id], family_vals, context=context)
-                     
-        self.pool.get('shipment').do_create_shipment(cr, uid, [proc_id], context=context)
-        return True
-
+    
 stock_picking()
