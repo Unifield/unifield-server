@@ -953,6 +953,10 @@ class shipment(osv.osv):
             vals = {'shipment_actual_date': today,}
             if context.get('source_shipment_address_id', False):
                 vals['address_id'] = context['source_shipment_address_id']
+                
+            if pick_obj._get_usb_entity_type(cr, uid) == pick_obj.REMOTE_WAREHOUSE:
+                vals['already_replicated'] = False
+                
             shipment.write(vals)
             # corresponding packing objects
             packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id)], context=context)
