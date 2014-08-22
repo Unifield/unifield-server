@@ -1534,7 +1534,7 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context):
             compare_date = context.get('rw_date', False)
             if compare_date:
-                compare_date = datetime.strptime(compare_date, '%Y-%m-%d')
+                compare_date = datetime.strptime(compare_date[0:10], '%Y-%m-%d')
             else:
                 compare_date = datetime.today()
             # FEFO logic
