@@ -1532,6 +1532,11 @@ class stock_move(osv.osv):
         loc_obj = self.pool.get('stock.location')
         prodlot_obj = self.pool.get('stock.production.lot')
         for move in self.browse(cr, uid, ids, context):
+            compare_date = context.get('rw_date', False)
+            if compare_date:
+                compare_date = datetime.strptime(compare_date, '%Y-%m-%d')
+            else:
+                compare_date = datetime.today()
             # FEFO logic
             if move.state == 'assigned' and not move.prodlot_id:  # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
                 needed_qty = move.product_qty
@@ -1554,7 +1559,7 @@ class stock_move(osv.osv):
                         if not move.location_dest_id.id == loc['location_id']:
                             # we ignore the batch that are outdated
                             expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
-                            if datetime.strptime(expired_date, "%Y-%m-%d") >= datetime.today():
+                            if datetime.strptime(expired_date, "%Y-%m-%d") >= compare_date:
                                 existed_moves = []
                                 if not move.move_dest_id:
                                     # Search if a stock move with the same location_id and same product_id and same prodlot_id exist
@@ -1596,7 +1601,7 @@ class stock_move(osv.osv):
                                         self.write(cr, uid, move.id, {'product_qty': needed_qty})
                     # if the batch is outdated, we remove it
                     if not context.get('yml_test', False):
-                        if move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= datetime.today():
+                        if move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= compare_date:
                             # Don't remove the batch if the move is a chained move
                             if not self.search(cr, uid, [('move_dest_id', '=', move.id)], context=context):
                                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)
