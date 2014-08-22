@@ -969,6 +969,9 @@ function set_to_default(field_id, model){
         'model': model,
         'field': field_id
     }).addCallback(function(obj){
+        if (!obj.value) {
+            obj.value = null;
+        }
         jQuery('[id="' + field_id + '"]')
                 .val(obj.value);
         // jQuery().change doesn't trigger Mochikit's handler?
