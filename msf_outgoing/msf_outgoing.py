@@ -471,7 +471,7 @@ class shipment(osv.osv):
             self.log(cr, uid, shipment.id, _('The new Shipment %s has been created.') % (shipment_name,))
             # The shipment is automatically shipped, no more pack states in between.
             self.ship(cr, uid, [shipment_id], context=context)
-        picking_obj.browse(cr, uid, new_packing_id, context=context)['already_replicated']
+            
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         view_id = view_id and view_id[1] or False
 
@@ -2926,11 +2926,6 @@ class stock_picking(osv.osv):
                 if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type != 'return'):
                     self.action_move(cr, uid, [picking.id])
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
-
-                    '''
-                    UF-2377: AGAIN IN RW, THE CALL TO trg_write not working!!!!!!!????????
-                    '''
-
                     update_vals = {'state':'done', 'date_done':time.strftime('%Y-%m-%d %H:%M:%S')}
                     if self._get_usb_entity_type(cr, uid) == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                         update_vals.update({'already_replicated': False})
@@ -2938,9 +2933,6 @@ class stock_picking(osv.osv):
 
                     # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
                     self._hook_create_sync_messages(cr, uid, [picking.id], context)
-
-
-
 
                 delivered_pack_id = picking.id
 
@@ -3452,6 +3444,12 @@ class stock_picking(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         wf_service = netsvc.LocalService("workflow")
 
+
+        date_tools = self.pool.get('date.tools')
+        db_datetime_format = date_tools.get_db_datetime_format(cr, uid, context=context)
+        today = time.strftime(db_datetime_format)
+
+
         if context is None:
             context = {}
 
@@ -3482,6 +3480,7 @@ class stock_picking(osv.osv):
                 'shipment_id': False,
                 'origin': picking.origin,
                 'move_lines': [],
+                'date': today, # Set date as today for the new PACK object
             }
 
             # Change the context for copy
@@ -3587,7 +3586,7 @@ class stock_picking(osv.osv):
             obj = self.browse(cr, uid, new_packing_id, context)
             if obj and obj.shipment_id and obj.shipment_id.id:
                 shipment_id = obj.shipment_id.id
-
+                
                 if context.get('rw_shipment_name', False) and context.get('sync_message_execution', False): # RW Sync - update the shipment name same as on RW instance
                     new_name = context.get('rw_shipment_name')
                     if new_name != obj.shipment_id.name:
