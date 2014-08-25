@@ -367,6 +367,7 @@ class wizard_register_import(osv.osv_memory):
                     except IndexError, e:
                         bc = 0.0
                     if (not bd and not bc) or (bd == 0.0 and bc == 0.0):
+                        errors.append(_('Line %s: Neither Amount IN or Amount OUT are present.') % (current_line_num,))
                         continue
                     if bd and bc and (bc != 0.0 or bd != 0.0):
                         errors.append(_('Line %s: Double amount, IN and OUT. Use only one!') % (current_line_num,))
