@@ -38,6 +38,7 @@
                     <field name="is_esc" invisible="1" />
                     <field name="esc_update_ts" attrs="{'invisible': [('is_esc', '=', False)]}" /> <!-- UTP-746 -->
                     <field name="active" />
+
                     <newline />
 
                     <group name="import" string=" Import Lines " colspan="4" col="7" attrs="{'invisible': [('state', '!=', 'draft')]}">

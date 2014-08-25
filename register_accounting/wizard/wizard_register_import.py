@@ -86,7 +86,7 @@ class wizard_register_import(osv.osv_memory):
     def create_entries(self, cr, uid, ids, remaining_percent=50.0, context=None):
         """
         Create register lines with/without analytic distribution.
-        If all neeeded info for analytic distribution are present: attempt to create analytic distribution.
+        If all needed info for analytic distribution are present: attempt to create analytic distribution.
         If this one is invalid, delete it!
         """
         # Checks
@@ -399,7 +399,7 @@ class wizard_register_import(osv.osv_memory):
                     r_description = line[cols['description']]
                     # Check document/posting dates
                     if line[cols['document_date']] > line[cols['posting_date']]:
-                        errors.append(_("Line %s. Document date '%s' should be inferior or equal to Posting date '%s'.") % (current_line_num, line[cols['document_date']], line[cols['posting_date']],))
+                        errors.append(_("Line %s. Document date '%s' should be earlier than or equal to Posting date '%s'.") % (current_line_num, line[cols['document_date']], line[cols['posting_date']],))
                         continue
                     # Check that a period exist and is open
                     period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, r_date, context)
@@ -432,7 +432,7 @@ class wizard_register_import(osv.osv_memory):
                             tp_label = _('Employee')
                             partner_type = 'employee'
                         elif type_for_register in ['transfer', 'transfer_same']:
-                            tp_ids = self.pool.get('account.bank.statement').search(cr, uid, [('name', '=', line[cols['third_party']])])
+                            tp_ids = self.pool.get('account.journal').search(cr, uid, [('code', '=', line[cols['third_party']])])
                             tp_label = _('Journal')
                             partner_type = 'journal'
                         else:
@@ -445,7 +445,7 @@ class wizard_register_import(osv.osv_memory):
                             partner_type = 'employee'
                             # If really not, raise an error for this line
                             if not tp_ids:
-                                errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, line[cols['third_party']],))
+                                errors.append(_('Line %s. Third party not found: %s') % (current_line_num, line[cols['third_party']],))
                                 continue
                         r_partner = tp_ids[0]
 
