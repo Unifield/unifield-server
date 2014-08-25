@@ -94,10 +94,10 @@ class stock_mission_report(osv.osv):
         'last_update': fields.datetime(string='Last update'),
         'move_ids': fields.many2many('stock.move', 'mission_move_rel', 'mission_id', 'move_id', string='Noves'),
         'export_ok': fields.boolean(string='Export file possible ?'),
-        'ns_nv_vals': fields.text(string='XML values'),
-        's_nv_vals': fields.text(string='XML values'),
-        'ns_v_vals': fields.text(string='XML values'),
-        's_v_vals': fields.text(string='XML values'),
+        'ns_nv_vals': fields.binary(string='XML values'),
+        's_nv_vals': fields.binary(string='XML values'),
+        'ns_v_vals': fields.binary(string='XML values'),
+        's_v_vals': fields.binary(string='XML values'),
     }
 
     _defaults = {
