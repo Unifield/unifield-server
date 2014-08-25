@@ -633,7 +633,7 @@ class wizard_register_import_lines(osv.osv):
         'employee_id': fields.many2one('hr.employee', "Employee", required=False, readonly=True),
         'period_id': fields.many2one('account.period', "Period", required=True, readonly=True),
         'wizard_id': fields.integer("Wizard", required=True, readonly=True),
-        'transfer_journal_id': fields.many2one('account.bank.statement', 'Transfer Journal', required=False, readonly=True,),
+        'transfer_journal_id': fields.many2one('account.journal', 'Transfer Journal', required=False, readonly=True,),
         'cheque_number': fields.text("Cheque Number", required=False, readonly=True),
         'free_1_id': fields.many2one('account.analytic.account', string="Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
