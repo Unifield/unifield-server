@@ -628,18 +628,21 @@ class stock_picking(osv.osv):
             return
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
-        message_id = 2010 # Default it's an OUT message
+        
+        rule_obj = self.pool.get("sync.client.message_rule")
+        # Default it's an OUT message
+        remote_call = "stock.picking.usb_convert_pick_to_out"
         already_replicated = False
         if not out: # convert to PICK --> do not resend this object again
-            message_id = 2011
             already_replicated = True
-
+            remote_call = "stock.picking.usb_convert_out_to_pick"
+        rule = rule_obj.get_rule_by_remote_call(cr, uid, remote_call, context)
+        
         so_po_common = self.pool.get('so.po.common')
         super(stock_picking, self)._hook_create_rw_out_sync_messages(cr, uid, ids, context=context)
         for pick in self.browse(cr, uid, ids, context=context):
             partner = pick.partner_id
-            so_po_common.create_message_with_object_and_partner(cr, uid, message_id, pick.id, partner.name, context, True)
+            so_po_common.create_message_with_object_and_partner(cr, uid, rule.sequence_number, pick.id, partner.name, context, True)
         
         # If the PICK got successfully converted to OUT, then reupdate the value already_replicated, for sync purpose
         self.write(cr, uid, ids, {'already_replicated': already_replicated}, context=context)
@@ -930,6 +933,10 @@ class stock_picking(osv.osv):
                         context['rw_backorder_name'] = pick_name
                         if header_result.get('date_done', False):
                             context['rw_date'] = header_result.get('date_done')
+                            
+                        self.cancel_moves_before_process(cr, uid, [pick_ids[0]], context=context)
+#                        self.action_assign(cr, uid, [pick_ids[0]], context=context)
+                            
                         self.rw_do_create_picking_partial(cr, uid, pick_ids[0], picking_lines, context)
                         if header_result.get('date_done', False):
                             context['rw_date'] = False
