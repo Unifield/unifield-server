@@ -633,9 +633,22 @@ class ppl_move_processor(osv.osv):
         """
         res = super(ppl_move_processor, self)._get_line_data(cr, uid, wizard, move, context=context)
 
+        # For Remote Warehouse purpose
+        from_pack = move.from_pack
+        to_pack = move.to_pack
+        if from_pack == 0 or to_pack == 0:
+            from_pack == 1
+            to_pack == 1
+
         res.update({
             'quantity': move.product_qty,
             'ordered_quantity': move.product_qty,
+            'from_pack': from_pack,
+            'to_pack': to_pack,
+            'length': move.length,
+            'width': move.width,
+            'height': move.height,
+            'weight': move.weight,
         })
 
         return res
@@ -668,7 +681,7 @@ class ppl_move_processor(osv.osv):
                 raise osv.except_osv(
                     _('Error'),
                     _('Selected quantity (%0.1f %s) exceeds the initial quantity (%0.1f %s)') %
-                    (new_qty, line.uom_id.name, line.quantity_ordered, line.uom_id.name),
+                    (new_qty, line.uom_id.name, line.ordered_quantity, line.uom_id.name),
                 )
             elif new_qty == line.ordered_quantity:
                 # Cannot select more than initial quantity
