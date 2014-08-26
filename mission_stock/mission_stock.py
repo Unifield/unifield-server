@@ -94,11 +94,17 @@ class stock_mission_report(osv.osv):
         'last_update': fields.datetime(string='Last update'),
         'move_ids': fields.many2many('stock.move', 'mission_move_rel', 'mission_id', 'move_id', string='Noves'),
         'export_ok': fields.boolean(string='Export file possible ?'),
-        'ns_nv_vals': fields.binary(string='XML values'),
-        's_nv_vals': fields.binary(string='XML values'),
-        'ns_v_vals': fields.binary(string='XML values'),
-        's_v_vals': fields.binary(string='XML values'),
+        'ns_nv_vals': fields.text(string='XML values'),
+        's_nv_vals': fields.text(string='XML values'),
+        'ns_v_vals': fields.text(string='XML values'),
+        's_v_vals': fields.text(string='XML values'),
     }
+
+    def __init__(self, pool, cr):
+        a = super(stock_mission_report, self).__init__(pool, cr)
+        for col in ['ns_nv_vals', 's_nv_vals', 'ns_v_vals', 's_v_vals']:
+            self._columns[col]._prefetch = False
+        return a
 
     _defaults = {
         'full_view': lambda *a: False,
