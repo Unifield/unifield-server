@@ -432,7 +432,7 @@ class Entity(osv.osv):
         if rule_ids:
             for rule in rule_pool.browse(cr, uid, rule_ids, context=context):
                 order = "id asc"
-                if 'usb_create_partial_int_moves' in rule.remote_call:
+                if 'usb_create_partial_int_moves' in rule.remote_call or 'usb_create_partial_in' in rule.remote_call:
                     # For this INT sync, create messages ordered by the date_done to make sure that the first INTs will be synced first
                     order = 'date_done asc'
                 messages_count += message_pool.create_from_rule(cr, uid, rule, order, context=context)
