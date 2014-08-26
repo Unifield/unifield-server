@@ -937,8 +937,8 @@ class stock_picking(osv.osv):
                         if header_result.get('date_done', False):
                             context['rw_date'] = header_result.get('date_done')
                             
-                        self.cancel_moves_before_process(cr, uid, [pick_ids[0]], context=context)
-#                        self.action_assign(cr, uid, [pick_ids[0]], context=context)
+                        #self.cancel_moves_before_process(cr, uid, [pick_ids[0]], context=context)
+                        self.action_assign(cr, uid, [pick_ids[0]], context=context)
                             
                         self.rw_do_create_picking_partial(cr, uid, pick_ids[0], picking_lines, context)
                         if header_result.get('date_done', False):
