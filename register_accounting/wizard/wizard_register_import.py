@@ -229,6 +229,7 @@ class wizard_register_import(osv.osv_memory):
         created = 0
         processed = 0
         errors = []
+        cheque_numbers = []
 
         try:
             # Update wizard
@@ -262,8 +263,8 @@ class wizard_register_import(osv.osv_memory):
                 cols = {
                     'document_date': 0,
                     'posting_date':  1,
-                    'description':   2,
-                    'cheque_number': 3,   
+                    'cheque_number': 2,   
+                    'description':   3,
                     'reference':     4,
                     'account':       5,
                     'third_party':   6,
@@ -376,6 +377,7 @@ class wizard_register_import(osv.osv_memory):
                     # Get amount
                     r_debit = bd
                     r_credit = bc
+
                     # Mandatory columns
                     if not line[cols['document_date']]:
                         errors.append(_('Line %s: Document date is missing.') % (current_line_num,))
@@ -424,6 +426,20 @@ class wizard_register_import(osv.osv_memory):
 
                     # cheque_number
                     r_cheque_number = line[cols['cheque_number']]
+                    # cheque unicity
+                    register_type = wiz.register_id.journal_id.type
+                    if register_type == 'cheque':
+                        if r_cheque_number:
+                            if r_cheque_number in cheque_numbers:
+                                errors.append(_('Line %s. Cheque number %s is duplicated from another line') % (current_line_num,r_cheque_number,))
+                            absl = self.pool.get('account.bank.statement.line')
+                            cheque_number_id = absl.search(cr, uid, [('cheque_number','=',r_cheque_number)],context=context)
+                            if cheque_number_id:
+                               errors.append(_('Line %s. Cheque number %s has already been entered into the system.') % (current_line_num,r_cheque_number,))    
+                            cheque_numbers.append(r_cheque_number)
+                        else:
+                            errors.append(_('Line %s. Cheque number is missing') % (current_line_num,))
+ 
                     # Check that Third party exists (if not empty)
                     tp_label = _('Partner')
                     partner_type = 'partner'
