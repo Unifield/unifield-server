@@ -839,7 +839,6 @@ class supplier_catalogue_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             new_vals = vals.copy()
             cat_state = cat_obj.read(cr, uid, new_vals.get('catalogue_id', line.catalogue_id.id), ['state'], context=context)['state']
-            #TODO above statement is slow
             if 'product_id' in new_vals and 'line_uom_id' in new_vals and new_vals['product_id'] != prod_id and new_vals['line_uom_id'] != uom_id:
                 new_vals['to_correct_ok'] = False
             # If product is changed
@@ -891,21 +890,12 @@ class supplier_catalogue_line(osv.osv):
                               where id in (select partner_info_id 
                                           from supplier_catalogue_line 
                                           where catalogue_id = %s)''' % (ids[0]))
-                #context.update({'product_change': True})
-                #if line.partner_info_id:
-                #    self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=context)
-                
-                #utp1033
                 cr.execute('''delete from product_supplierinfo 
                               where id in (select supplier_info_id 
                                           from supplier_catalogue_line
                                           where catalogue_id = %s)
                               and id not in (select suppinfo_id from 
                                             pricelist_partnerinfo ) ''' % (ids[0]))
-                #if line.supplier_info_id and len(line.supplier_info_id.pricelist_ids) == 0:
-                #    # Remove the supplier info
-                #    self.pool.get('product.supplierinfo').unlink(cr, uid, line.supplier_info_id.id, context=context)
-                #context.update({'product_change': False})
 
             res = super(supplier_catalogue_line, self).write(cr, uid, [line.id], new_vals, context=context)
 
