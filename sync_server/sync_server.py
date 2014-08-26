@@ -146,6 +146,8 @@ class entity(osv.osv):
 
         'parent_left' : fields.integer("Left Parent", select=1),
         'parent_right' : fields.integer("Right Parent", select=1),
+        
+        'msg_ids_tmp':fields.text('List of temporary ids of message to be pulled'),
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -613,6 +615,11 @@ class sync_manager(osv.osv):
                               }
                               
         """
+        
+        # UTP-1179: store temporarily this ids of messages to be sent to this entity 
+        msg_ids_tmp = self.pool.get("sync.server.message").search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], context=context)
+        self.pool.get('sync.server.entity').write(cr, uid, entity.id, {'msg_ids_tmp': msg_ids_tmp}, context=context)
+               
         package = self.pool.get("sync.server.update").get_package(cr, uid, entity, last_seq, offset, max_size, max_seq, recover=recover, context=context)
         return (True, package or False, not package)
     

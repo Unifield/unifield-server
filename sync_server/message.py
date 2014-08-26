@@ -129,7 +129,9 @@ class message(osv.osv):
         """
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Pulling messages...'))
 
-        ids = self.search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], limit=size, context=context)
+        # UTP-1179: Instead of recalculating the ids to send, retrieve it from the entity list
+        # ORIGINAL STATEMENT: ids = self.search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], limit=size, context=context)
+        ids = self.search(cr, uid, [('id', 'in', entity.msg_ids_tmp), ('sent', '=', False)], limit=size, context=context)
         if not ids:
             return False
 
