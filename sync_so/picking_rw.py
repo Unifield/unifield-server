@@ -225,6 +225,9 @@ class shipment(osv.osv):
         if not pack_families:
             raise Exception, "This Ship " + ship.name + " is empty!"
         
+        for family in wizard.family_ids:
+            wizard_line_obj.write(cr, uid, [family.id], {'selected_number': 0,}, context=context)
+        
         # Reset the selected packs for shipment, because by a wizard, it sets total pack!
         for family in wizard.family_ids:
             ppl_name = family.ppl_id and family.ppl_id.name or False
