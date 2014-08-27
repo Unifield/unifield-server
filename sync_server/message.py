@@ -131,6 +131,10 @@ class message(osv.osv):
 
         # UTP-1179: Instead of recalculating the ids to send, retrieve it from the entity list
         # ORIGINAL STATEMENT: ids = self.search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], limit=size, context=context)
+        
+        # The list of msg_ids_tmp needs to be calculated with the given size to make sure that it will retrieve the right number of ids
+        # and remove what are retrieved at this around
+        # Also the msg_ids_tmp is a text type --> need to convert to list
         ids = self.search(cr, uid, [('id', 'in', entity.msg_ids_tmp), ('sent', '=', False)], limit=size, context=context)
         if not ids:
             return False

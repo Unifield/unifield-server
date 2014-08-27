@@ -616,7 +616,8 @@ class sync_manager(osv.osv):
                               
         """
         
-        # UTP-1179: store temporarily this ids of messages to be sent to this entity 
+        # UTP-1179: store temporarily this ids of messages to be sent to this entity at the moment of getting the update
+        # to avoid having messages that are not belonging to the same "sequence" of the update  
         msg_ids_tmp = self.pool.get("sync.server.message").search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], context=context)
         self.pool.get('sync.server.entity').write(cr, uid, entity.id, {'msg_ids_tmp': msg_ids_tmp}, context=context)
                
