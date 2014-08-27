@@ -121,6 +121,9 @@ class purchase_order_rw(osv.osv):
             rec_id = self.pool.get('res.partner').find_sd_ref(cr, uid, xmlid_to_sdref(so_dict.get('partner_id')['id']), context=context)
             if rec_id:
                 header_result['partner_id'] = rec_id
+                partner = self.pool.get('res.partner').browse(cr, uid, rec_id, context=context)
+                if partner.property_product_pricelist_purchase:
+                    header_result['pricelist_id'] = partner.property_product_pricelist_purchase.id
         
         header_result['cross_docking_ok'] = so_dict.get('cross_docking_ok', False)
         # check whether this FO has already been sent before! if it's the case, then just update the existing PO, and not creating a new one
