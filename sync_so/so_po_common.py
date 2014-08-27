@@ -255,7 +255,11 @@ class so_po_common(osv.osv_memory):
         # --> be careful when modifying the statement below
         analytic_id = data_dict.get('analytic_distribution_id', False)
         if analytic_id:
-            return self.pool.get('analytic.distribution').find_sd_ref(cr, uid, xmlid_to_sdref(analytic_id['id']), context=context)
+            ana_id = self.pool.get('analytic.distribution').find_sd_ref(cr, uid, xmlid_to_sdref(analytic_id['id']), context=context)
+            if ana_id:
+                return ana_id
+            # UTP-1177: If the AD is given but not valid, stop the process of the message and set the message not run 
+            raise Exception, "Sorry the given analytic distribution " + analytic_id + " is not available. Cannot proceed this message!"
         return False
 
     def retrieve_so_header_data(self, cr, uid, source, header_result, header_info, context):
