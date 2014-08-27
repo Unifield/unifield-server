@@ -399,9 +399,7 @@ class hq_entries_validation(osv.osv_memory):
                     cor_ids = [cor_ids]
                 cor_ids += res_reverse
                 for ana_line in ana_line_obj.browse(cr, uid, cor_ids, context=context):
-                    #seq_journal = line.journal_id.sequence_id.id
                     prefix = ana_line.instance_id.move_prefix
-                    #seqnum = self.pool.get('ir.sequence').get_id(cr, uid, seq_journal, context={'fiscalyear_id': line.period_id.fiscalyear_id.id})
                     seqnum = ana_line.entry_sequence.split('-')[2]
                     entry_seq = "%s-%s-%s" % (prefix, ana_line.journal_id.code, seqnum)
                     cr.execute('UPDATE account_analytic_line SET entry_sequence = %s WHERE id = %s', (entry_seq, ana_line.id))
