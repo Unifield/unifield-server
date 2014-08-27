@@ -102,6 +102,13 @@ class local_message_rule(osv.osv):
             return self.browse(cr, uid, rules, context=context)[0]
         return False
 
+    def get_rule_by_remote_call(self, cr, uid, remote_call, context=None):
+        rules = self.search(cr, uid, [('remote_call', '=', remote_call)], context=context)
+        if rules:
+            return self.browse(cr, uid, rules, context=context)[0]
+        return False
+
+
     _order = 'sequence_number asc'
 local_message_rule()
 
@@ -129,7 +136,7 @@ class message_to_send(osv.osv):
     """
         Creation from rule
     """
-    def create_from_rule(self, cr, uid, rule, context=None):
+    def create_from_rule(self, cr, uid, rule, order=None, context=None):
         context = dict(context or {})
         context['active_test'] = False
 
@@ -138,7 +145,7 @@ class message_to_send(osv.osv):
             obj_ids = getattr(self.pool.get(rule.model), rule.filter_method)(cr, uid, rule, context=context)
         else:
             domain = rule.domain and eval(rule.domain) or []
-            obj_ids = self.pool.get(rule.model).search_ext(cr, uid, domain, context=context)
+            obj_ids = self.pool.get(rule.model).search_ext(cr, uid, domain, order=order, context=context)
 
         dest = self.pool.get(rule.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
         args = {}

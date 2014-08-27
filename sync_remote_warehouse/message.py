@@ -14,7 +14,8 @@ class MessageToSend(osv.osv):
         packet = []
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context)
         # UF-2377: The order of message created and put into the zip file must respect the order of creation of rw messages
-        for message in self.browse(cr, uid, self.search(cr, uid, [('sent','=',False)], order='id asc', context=context), context=context):
+        message_to_send_ids = self.search(cr, uid, [('sent', '=', False)], order='id asc', context=context)
+        for message in self.browse(cr, uid, message_to_send_ids, context=context):
             packet.append({
                 'id' : message.identifier,
                 'remote_call' : message.remote_call,

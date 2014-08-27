@@ -163,7 +163,7 @@ class usb_synchronisation(osv.osv_memory):
                 'description': 'USB Synchronization file @%s' % time.strftime('%Y-%m-%d_%H%M'),
                 'res_model': 'res.company',
                 'res_id': self.pool.get('res.users').browse(cr, uid, uid).company_id.id,
-                'datas': base64.encodestring(synchro.get('push_file')),
+                'datas': base64.encodestring(base64.decodestring(synchro.get('push_file'))),
             })
         # Delete all previous attachment except last 10
         number = 5 # default value

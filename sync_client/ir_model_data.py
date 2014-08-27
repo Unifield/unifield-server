@@ -270,7 +270,7 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
     # TODO replace this deprecated method with get_sd_ref(field='id') in your call
     # Beware that the result is a dict, not a list anymore
     def get(self, cr, uid, model, ids, context=None):
-        # UTP-1181: Just add the warning into log file, and not raise Exception to stop the process
+        # Just add the warning into log file, and not raise Exception to stop the process
         self._logger.warning("ir.model.data get() method should not be used anymore!")
         result = []
         for id in (ids if hasattr(ids, '__iter__') else [ids]):
@@ -283,6 +283,10 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
         ids = self.search(cr, uid, [('module','=','sd'),('name','=',sdref)], context=context)
         if not ids:
             raise ValueError("Cannot find sdref %s!" % sdref)
+
+        if context.get('offline_synchronization', False) and 'touched' in vals:
+            del vals['touched']
+
         self.write(cr, uid, ids, vals, context=context)
         return True
 

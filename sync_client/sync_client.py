@@ -616,7 +616,7 @@ class Entity(osv.osv):
 
         messages_count = 0
         for rule in rule_obj.browse(cr, uid, rule_obj.search(cr, uid, [('type', '!=', 'USB')], context=context), context=context):
-            messages_count += messages.create_from_rule(cr, uid, rule, context=context)
+            messages_count += messages.create_from_rule(cr, uid, rule, None, context=context)
 
         return messages_count
 
