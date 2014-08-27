@@ -135,8 +135,12 @@ class message(osv.osv):
         # The list of msg_ids_tmp needs to be calculated with the given size to make sure that it will retrieve the right number of ids
         # and remove what are retrieved at this around
         # Also the msg_ids_tmp is a text type --> need to convert to list
-        ids = self.search(cr, uid, [('id', 'in', entity.msg_ids_tmp), ('sent', '=', False)], limit=size, context=context)
-        if not ids:
+        if entity.msg_ids_tmp:
+            # convert the string into list of ids, then get only those not sent
+            msg_ids_tmp = entity.msg_ids_tmp[1:-1]
+            msg_ids_tmp = map(int, msg_ids_tmp.split(',')) 
+            ids = self.search(cr, uid, [('id', 'in', msg_ids_tmp), ('sent', '=', False)], limit=size, context=context)
+        else:
             return False
 
         packet = []
