@@ -671,10 +671,14 @@ class sync_manager(osv.osv):
         # UTP-1179: store temporarily this ids of messages to be sent to this entity at the moment of getting the update
         # to avoid having messages that are not belonging to the same "sequence" of the update  
         msg_ids_tmp = self.pool.get("sync.server.message").search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], context=context)
+        
+        len_ids = 0
         if msg_ids_tmp:
+            len_ids = len(msg_ids_tmp)
             self.pool.get('sync.server.entity').write(cr, 1, entity.id, {'msg_ids_tmp': msg_ids_tmp}, context=context)
-            return (True, len(msg_ids_tmp))
-        return (True, 0)
+            
+        self._logger.info("::::::::The instance " + entity.name + " pulled " + str(len_ids) + " messages.")        
+        return (True, len_ids)
 
     @check_validated
     def reset_message_ids(self, cr, uid, entity, context=None):
