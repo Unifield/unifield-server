@@ -114,6 +114,7 @@
         "msf_currency_revaluation",
     ],
     "update_xml": [
+        "security/ir.model.access.csv",
         "report.xml",
         "purchase_double_validation_workflow.xml",
         "usability.xml",

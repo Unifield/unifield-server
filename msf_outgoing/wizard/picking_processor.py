@@ -246,11 +246,17 @@ class stock_move_processor(osv.osv):
             loc_cust = line.move_id.location_dest_id.usage == 'customer'
             valid_pt = line.move_id.picking_id.type == 'out' and line.move_id.picking_id.subtype == 'picking' and line.move_id.picking_id.state != 'draft'
 
+            # UF-2426: point 1) If the source location is given in line, use it, not from the move
+            if line.location_id and line.location_id.id:
+                location_id = line.location_id.id
+            else:
+                location_id = line.move_id.location_id.id
+
             res[line.id] = {
                 'ordered_product_id': line.move_id.product_id.id,
                 'ordered_uom_id': line.move_id.product_uom.id,
                 'ordered_uom_category': line.move_id.product_uom.category_id.id,
-                'location_id': line.move_id.location_id.id,
+                'location_id': location_id,
                 'location_supplier_customer_mem_out': loc_supplier or loc_cust or valid_pt,
                 'type_check': line.move_id.picking_id.type,
             }
