@@ -294,7 +294,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
                     else:
                         # check for a valid journal code
-                        aj_id = aj_obj.search(cr, uid, [('type','in',['intermission','migration','correction']),('code','=',line[cols['Journal Code']])])[0]
+                        aj_id = aj_obj.search(cr, uid, [('type','in',['hr', 'intermission','migration','correction']),('code','=',line[cols['Journal Code']])])[0]
                         if aj_id:
                             if num == 0:   # Assume 1st line is the journal code for the entire spreadsheet
                                 file_journal_id = aj_id
@@ -303,7 +303,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                                     errors.append(_('Line %s. Only a single Journal Code can be specified per file') % (current_line_num,))
                                     continue
                         else:
-                            errors.append(_('Line %s. Journal Code is not of type OD, INT or MIG') % (current_line_num,))
+                            errors.append(_('Line %s. Journal Code is not of type HR, INT, MIG or OD') % (current_line_num,))
                             continue
 
                     # Check G/L account
