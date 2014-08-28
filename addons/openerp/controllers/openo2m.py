@@ -139,6 +139,9 @@ class OpenO2M(Form):
             cherrypy.request._terp_view_target = 'new'
             res = self.button_action(current)
             if res:
+                tw.ConcurrencyInfo.update(
+                    current.model, rpc.RPCProxy(current.model).read([current.id], ['__last_update'], ctx)
+                )
                 return res
         if params.close:
             return """
