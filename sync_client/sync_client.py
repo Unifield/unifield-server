@@ -33,12 +33,15 @@ import traceback
 from psycopg2 import OperationalError
 
 import logging
-from sync_common import sync_log
 
 from threading import Thread, RLock, Lock
 import pooler
 
 import functools
+
+import netsvc
+
+logger = netsvc.Logger()
 
 MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
@@ -888,6 +891,11 @@ class Connection(osv.osv):
             return True
         try:
             con = self._get_connection_manager(cr, uid, context=context)
+            sync_args = {
+                'client_name': cr.dbname,
+                'server_name': con.database,
+            }
+            logger.notifyChannel('[SYNC]', netsvc.LOG_INFO, 'Client \'%(client_name)s\' attempts to connect to sync. server \'%(server_name)s\'' % sync_args)
             connector = self.connector_factory(con)
             if not getattr(self, '_password', False):
                 self._password = con.login
@@ -903,6 +911,7 @@ class Connection(osv.osv):
         except BaseException, e:
             raise osv.except_osv(_("Error"), _(unicode(e)))
 
+        logger.notifyChannel('[SYNC]', netsvc.LOG_INFO, 'Client \'%(client_name)s\' succesfully connected to sync. server \'%(server_name)s\'' % sync_args)
         return True
 
     def action_connect(self, cr, uid, ids, context=None):
@@ -920,14 +929,21 @@ class Connection(osv.osv):
         return rpc.Object(cnx, model)
 
     def disconnect(self, cr, uid, context=None):
+        con = self._get_connection_manager(cr, uid, context=context)
+        sync_args = {
+            'client_name': cr.dbname,
+            'server_name': con.database,
+        }
         entity = self.pool.get('sync.client.entity')
         if entity.is_syncing():
             try:
                 entity._renew_sync_lock()
             except StandardError:
+                logger.notifyChannel('[SYNC]', netsvc.LOG_WARNING, 'Error during the disconnection of client \'%(client_name)s\'' % sync_args)
                 return False
             entity.sync_cursor.close()
         self._uid = False
+        logger.notifyChannel('[SYNC]', netsvc.LOG_INFO, 'Client \'%(client_name)s\' succesfully disconnected from the sync. server \'%(server_name)s\'' % sync_args)
         return True
 
     def action_disconnect(self, cr, uid, ids, context=None):
