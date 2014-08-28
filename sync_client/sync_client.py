@@ -324,7 +324,6 @@ class Entity(osv.osv):
     @sync_process('data_push')
     def push_update(self, cr, uid, context=None):
         context = context or {}
-        logger = context.get('logger')
 
         entity = self.get_entity(cr, uid, context)
 
@@ -336,18 +335,19 @@ class Entity(osv.osv):
             updates_count = self.create_update(cr, uid, context=context)
             cr.commit()
             cont = updates_count > 0
-            self._logger.info("init")
+            self._logger.info("Push data :: Updates created: %d" % updates_count)
         if cont or entity.state == 'update_send':
             updates_count = self.send_update(cr, uid, context=context)
             cr.commit()
             cont = True
-            self._logger.info("sent update")
+            self._logger.info("Push data :: Updates sent: %d" % updates_count)
         if cont or entity.state == 'update_validate':
             server_sequence = self.validate_update(cr, uid, context=context)
             cr.commit()
-            if logger and server_sequence:
-                logger.append(_("Update's server sequence: %d") % server_sequence)
-            self._logger.info("update validated")
+            if server_sequence:
+                self._logger.info(_("Push data :: New server's sequence number: %d") % server_sequence)
+
+
 
         return True
 
@@ -446,7 +446,6 @@ class Entity(osv.osv):
     @sync_process('data_pull')
     def pull_update(self, cr, uid, recover=False, context=None):
         context = context or {}
-        logger = context.get('logger')
 
         entity = self.get_entity(cr, uid, context=context)
         if entity.state not in ('init', 'update_pull'):
@@ -458,8 +457,10 @@ class Entity(osv.osv):
 
         updates_count = self.retrieve_update(cr, uid, max_packet_size, recover=recover, context=context)
         updates_executed = self.execute_updates(cr, uid, context=context)
-        if updates_executed == 0 and updates_count > 0 and logger:
-            logger.append(_("Warning: no update to execute, this case should never occurs."))
+        if updates_executed == 0 and updates_count > 0:
+            self._logger.warning("No update to execute, this case should never occurs.")
+
+        self._logger.info("Pull data :: Number of data pull: %s" % updates_count)
         return True
 
     def set_last_sequence(self, cr, uid, context=None):
@@ -467,6 +468,7 @@ class Entity(osv.osv):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         res = proxy.get_max_sequence(entity.identifier)
         if res and res[0]:
+            self._logger.info("Pull data :: Last sequence: %s" % res[1])
             return self.write(cr, uid, entity.id, {'max_update' : res[1]}, context=context)
         elif res and not res[0]:
             raise Exception, res[1]
@@ -585,7 +587,6 @@ class Entity(osv.osv):
     @sync_process('msg_push')
     def push_message(self, cr, uid, context=None):
         context = context or {}
-        logger = context.get('logger')
         entity = self.get_entity(cr, uid, context)
 
         if entity.state not in ['init', 'msg_push']:
@@ -595,8 +596,10 @@ class Entity(osv.osv):
             self.create_message(cr, uid, context=context)
             cr.commit()
 
-        self.send_message(cr, uid, context=context)
+        nb_msg = self.send_message(cr, uid, context=context)
         cr.commit()
+
+        self._logger.info("Push messages :: Number of messages pushed: %d" % nb_msg)
 
         return True
 
@@ -669,7 +672,8 @@ class Entity(osv.osv):
             raise SkipStep
 
         self.get_message(cr, uid, context=context)
-        self.execute_message(cr, uid, context=context)
+        msg_count = self.execute_message(cr, uid, context=context)
+        self._logger.info("Pull message :: Number of messages pulled: %s" % msg_count)
         return True
 
     def get_message(self, cr, uid, context=None):
@@ -759,10 +763,12 @@ class Entity(osv.osv):
 
     @sync_process()
     def sync(self, cr, uid, context=None):
+        self._logger.info("Start synchronization")
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)
         self.push_update(cr, uid, context=context)
         self.push_message(cr, uid, context=context)
+        self._logger.info("Synchronization succesfully done")
         return True
 
     def get_upgrade_status(self, cr, uid, context=None):
