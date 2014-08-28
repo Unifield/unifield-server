@@ -151,7 +151,7 @@ class hq_report_oca(report_sxw.report_sxw):
                                                                        ('instance_id', 'in', data['form']['instance_ids']),
                                                                        ('analytic_distribution_id', '=', False),
                                                                        ('journal_id.type', 'not in', ['hq', 'migration'])], context=context)
-        
+        print 'move_line_ids: ', move_line_ids
         for move_line in pool.get('account.move.line').browse(cr, uid, move_line_ids, context=context):
             journal = move_line.journal_id
             account = move_line.account_id
@@ -223,7 +223,7 @@ class hq_report_oca(report_sxw.report_sxw):
         analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
                                                                                ('journal_id.type', 'not in', ['hq', 'engagement', 'migration'])], context=context)
-        
+        print 'analytic_line_ids: ', analytic_line_ids
         for analytic_line in pool.get('account.analytic.line').browse(cr, uid, analytic_line_ids, context=context):
             journal = analytic_line.move_id and analytic_line.move_id.journal_id
             account = analytic_line.general_account_id
@@ -231,7 +231,7 @@ class hq_report_oca(report_sxw.report_sxw):
             func_currency = move_line.functional_currency_id
             rate = ""
             if func_currency:
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(move_line.functional_currency_id.id, analytic_line.date))
+                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, analytic_line.date))
                 if cr.rowcount:
                     rate = cr.fetchall()[0][0]
             # For first report: as is
@@ -318,6 +318,8 @@ class hq_report_oca(report_sxw.report_sxw):
         second_fileobj.close()
         writer = csv.writer(third_fileobj, quoting=csv.QUOTE_ALL)
         for line in third_report:
+            line.pop()   
+            line.pop()
             writer.writerow(map(self._enc,line))
         third_fileobj.close()
         out_zipfile = zipfile.ZipFile(zip_buffer, "w")
