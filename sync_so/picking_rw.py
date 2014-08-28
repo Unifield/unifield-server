@@ -43,11 +43,13 @@ class shipment(osv.osv):
         'already_rw_validated': fields.boolean(
             string='Already validated through the RW - for rw sync. only',
         ),
+        'already_replicated': fields.boolean(string='Already replicated - for sync only'),
     }
 
     _defaults = {
         'already_rw_delivered': False,
         'already_rw_validated': False,
+        'already_replicated': True,
     }
 
     def usb_set_state_shipment(self, cr, uid, source, out_info, state, context=None):
@@ -99,6 +101,96 @@ class shipment(osv.osv):
         '''
         return self.usb_set_state_shipment(cr, uid, source, out_info, state='shipped', context=context)
 
+    def retrieve_shipment_header_data(self, cr, uid, source, header_result, pick_dict, context):
+        so_po_common = self.pool.get('so.po.common')
+
+        '''
+        Need to get all header values for the Ship!
+        '''
+
+        if 'name' in pick_dict:
+            header_result['name'] = pick_dict.get('name')
+        if 'state' in pick_dict:
+            header_result['state'] = pick_dict.get('state')
+
+        return header_result
+
+
+    def usb_create_shipment(self, cr, uid, source, ship_info, context=None):
+        ship_dict = ship_info.to_dict()
+        shipment_name = ship_dict['name']
+            
+        self._logger.info("+++ RW: Create Shipment: %s from %s to %s" % (shipment_name, source, cr.dbname))
+        if context is None:
+            context = {}
+
+        search_name = shipment_name
+        if 'parent_id' in ship_dict:
+            search_name = ship_dict['parent_id']['name']
+
+        message = "Unknown error, please check the log file."
+        header_result = {}
+        
+        # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
+        pick_obj = self.pool.get('stock.picking')
+        rw_type = pick_obj._get_usb_entity_type(cr, uid)
+        if rw_type == pick_obj.CENTRAL_PLATFORM:
+            self.retrieve_shipment_header_data(cr, uid, source, header_result, ship_dict, context)
+            ship_ids = self.search(cr, uid, [('name', '=', search_name), ('state', 'in', ['draft'])], order='id asc', context=context)
+            if ship_ids:
+                context['rw_shipment_name'] = shipment_name
+                self.rw_do_create_shipment(cr, uid, ship_ids[0], ship_dict, context)
+                message = "The shipment: " + shipment_name + " has been successfully created."
+            else:
+                message = "Cannot generate the Shipment: " + shipment_name + " because no relevant document found at " + cr.dbname
+                self._logger.info(message)
+                raise Exception, message
+                
+        elif rw_type == self.REMOTE_WAREHOUSE: 
+            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
+                
+        self._logger.info(message)
+        return message
+
+    def rw_do_create_shipment(self, cr, uid, ship_id, ship_dict, context=None): 
+        '''
+        Create the shipment from an existing draft shipment, then perform the ship
+        '''
+        # from the picking Id, search for the shipment
+        ship = self.browse(cr, uid, ship_id, context=context)
+        
+        # Objects
+        order_line_obj = self.pool.get('sale.order.line')
+        ship_proc_obj = self.pool.get('shipment.processor')
+        ship_proc_vals = {
+            'shipment_id': ship.id,
+            'address_id': ship.address_id.id,
+        }
+        wizard_line_obj = self.pool.get('shipment.family.processor')
+        proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
+        ship_proc_obj.create_lines(cr, uid, proc_id, context=context)
+        wizard = ship_proc_obj.browse(cr, uid, proc_id, context=context)
+
+        pack_families = ship_dict.get('pack_family_memory_ids', False)
+        if not pack_families:
+            raise Exception, "This Ship " + ship.name + " is empty!"
+        
+        for family in wizard.family_ids:
+            wizard_line_obj.write(cr, uid, [family.id], {'selected_number': 0,}, context=context)
+        
+        # Reset the selected packs for shipment, because by a wizard, it sets total pack!
+        for family in wizard.family_ids:
+            ppl_name = family.ppl_id and family.ppl_id.name or False
+            for line in pack_families:
+                if ppl_name == line['ppl_id']['name']:
+                    selected_number = line['to_pack'] - line['from_pack'] + 1
+                    wizard_line_obj.write(cr, uid, [family.id], {'selected_number': selected_number}, context=context)
+                    break        
+
+        self.pool.get('shipment').do_create_shipment(cr, uid, [proc_id], context=context)
+        return True
+
+ 
 shipment()
 
 class stock_move(osv.osv):
@@ -143,9 +235,6 @@ stock_move()
 class stock_picking(osv.osv):
     '''
     Stock.picking override for Remote Warehouse tasks
-    
-    WORK IN PROGRESS
-    
     '''
     _inherit = "stock.picking"
     _logger = logging.getLogger('------sync.stock.picking')
@@ -153,12 +242,27 @@ class stock_picking(osv.osv):
     _columns = {'already_replicated': fields.boolean(string='Already replicated - for sync only'),
                 'for_shipment_replicate': fields.boolean(string='To be synced for RW for Shipment - for sync only'),
                 'associate_int_name': fields.char('Name of INT associated with the IN', size=256),
+                'rw_sdref_counterpart': fields.char('SDRef of the stock picking at the other instance', size=256),
                 'rw_force_seq': fields.integer('Force sequence on stock picking in Remote warehouse'),
                 }
     _defaults = {'already_replicated': True,
                  'for_shipment_replicate': False,
                  'rw_force_seq': -1,
                  }
+
+    def cancel_moves_before_process(self, cr, uid, pick_ids, context=None):
+        if context is None:
+            context = {}
+
+        tmp_sme = context.get('sync_message_execution')
+        context['sync_message_execution'] = False
+
+        move_obj = self.pool.get('stock.move')
+        move_ids = move_obj.search(cr, uid, [('picking_id', 'in', pick_ids), ('state', 'in', ['assigned'])], context=context)
+        for move_id in move_ids:
+            move_obj.cancel_assign(cr, uid, [move_id], context=context)
+
+        context['sync_message_execution'] = tmp_sme
 
     def search(self, cr, uid, args, offset=None, limit=None, order=None, context=None, count=False):
         '''
@@ -167,12 +271,14 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
           
-        if context.get('rw_sync_in_progress', False):
+        if context.get('rw_sync_in_progress', False) and not order:
             order = 'id'
     
         return super(stock_picking, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
 
     def retrieve_picking_header_data(self, cr, uid, source, header_result, pick_dict, context):
+        so_po_common = self.pool.get('so.po.common')
+        
         if 'name' in pick_dict:
             header_result['name'] = pick_dict.get('name')
         if 'state' in pick_dict:
@@ -188,6 +294,9 @@ class stock_picking(osv.osv):
             backorder_id = self.find_sd_ref(cr, uid, xmlid_to_sdref(pick_dict['backorder_id']['id']), context=context)
             if backorder_id:
                 header_result['backorder_id'] = backorder_id
+                
+        # get the sdref of the given IN and store it into the new field rw_sdref_counterpart for later retrieval
+        header_result['rw_sdref_counterpart'] = so_po_common.get_xml_id_counterpart(cr, uid, self, context=context)        
 
         if pick_dict['reason_type_id'] and pick_dict['reason_type_id']['id']:
             header_result['reason_type_id'] = self.pool.get('stock.reason.type').find_sd_ref(cr, uid, xmlid_to_sdref(pick_dict['reason_type_id']['id']), context=context)
@@ -208,6 +317,9 @@ class stock_picking(osv.osv):
             header_result['type'] = pick_dict.get('type')
         if 'subtype' in pick_dict:
             header_result['subtype'] = pick_dict.get('subtype')
+
+        if 'from_wkf' in pick_dict:
+            header_result['from_wkf'] = pick_dict.get('from_wkf')
             
         if 'transport_order_id' in pick_dict:
             header_result['transport_order_id'] = pick_dict.get('transport_order_id')
@@ -215,14 +327,13 @@ class stock_picking(osv.osv):
         if 'associate_int_name' in pick_dict:
             header_result['associate_int_name'] = pick_dict.get('associate_int_name')
 
-        so_po_common = self.pool.get('so.po.common')
+        if 'date_done' in pick_dict:
+            header_result['date_done'] = pick_dict.get('date_done')
 
         partner_id = so_po_common.get_partner_id(cr, uid, source, context)
         if 'partner_id' in pick_dict:
             partner_id = so_po_common.get_partner_id(cr, uid, pick_dict['partner_id'], context)
         
-        address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
-        price_list = so_po_common.get_price_list_id(cr, uid, partner_id, context)
         location_id = so_po_common.get_location(cr, uid, partner_id, context)
         address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context)
         header_result['partner_ref'] = source + "." + pick_dict.get('name')
@@ -230,6 +341,18 @@ class stock_picking(osv.osv):
         header_result['partner_id2'] = partner_id
         header_result['address_id'] = address_id
         header_result['location_id'] = location_id
+        
+        # For RW instances, order line ids need to be retrieved and store in the IN and OUT to keep references (via procurement) when making the INcoming via cross docking
+        if pick_dict['sale_id'] and pick_dict['sale_id']['id']:
+            order_id = pick_dict['sale_id']['id']
+            order_id = self.pool.get('sale.order').find_sd_ref(cr, uid, xmlid_to_sdref(order_id), context=context)
+            header_result['sale_id'] = order_id
+
+        if pick_dict['purchase_id'] and pick_dict['purchase_id']['id']:
+            order_id = pick_dict['purchase_id']['id']
+            order_id = self.pool.get('purchase.order').find_sd_ref(cr, uid, xmlid_to_sdref(order_id), context=context)
+            header_result['purchase_id'] = order_id
+        
         return header_result
 
     def get_picking_line(self, cr, uid, data, context=None):
@@ -237,16 +360,17 @@ class stock_picking(osv.osv):
         we format the data, gathering ids corresponding to objects
         '''
         # objects
-        prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         location_obj = self.pool.get('stock.location')
 
-        # product
-        product_name = data['product_id']['name']
-        product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
-        if not product_ids:
-            raise Exception, "The corresponding product does not exist here. Product name: %s" % product_name
-        product_id = product_ids[0]
+        # Get the product from ID
+        product_id = False
+        if data['product_id'] and data['product_id']['id']:
+            prod_obj = self.pool.get('product.product')
+            product_id = prod_obj.find_sd_ref(cr, uid, xmlid_to_sdref(data['product_id']['id']), context=context)
+            
+        if not product_id:
+            raise Exception, "Product id not found for the given line %s " % data['product_id']
 
         asset_id = False
         if data['asset_id'] and data['asset_id']['id']:
@@ -301,6 +425,7 @@ class stock_picking(osv.osv):
                   'state': state,
 
                   'original_qty_partial': data['original_qty_partial'], 
+                  'product_uos_qty': data['product_uos_qty']  or 0.0, 
 
                   'prodlot_id': batch_id,
                   'expired_date': expired_date,
@@ -342,7 +467,6 @@ class stock_picking(osv.osv):
         '''
         package the data to get info concerning already processed or not
         '''
-        result = {}
         line_result = []
         if out_info.get('move_lines', False):
             for line in out_info['move_lines']:
@@ -398,10 +522,6 @@ class stock_picking(osv.osv):
         origin = pick_dict['origin']
             
         self._logger.info("+++ RW: Replicate the PICK: %s from %s to %s" % (pick_name, source, cr.dbname))
-        so_po_common = self.pool.get('so.po.common')
-        move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')
-
         rw_type = self._get_usb_entity_type(cr, uid)
         if rw_type == self.REMOTE_WAREHOUSE or 'OUT-CONSO' in pick_name: # if it's a OUT-CONSO, just executing it
             if origin:
@@ -424,7 +544,11 @@ class stock_picking(osv.osv):
                 if state != 'draft': # if draft, do nothing
                     wf_service = netsvc.LocalService("workflow")
                     wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
-                    self.action_assign(cr, uid, [pick_id])
+                    if header_result.get('date_done', False):
+                        context['rw_date'] = header_result.get('date_done')
+                    self.action_assign(cr, uid, [pick_id], context=context)
+                    if header_result.get('date_done', False):
+                        context['rw_date'] = False
     
 #                    if state == 'assigned' and self.browse(cr, uid, pick_id, context=context).state == 'confirmed':
 #                        self.force_assign(cr, uid, [pick_id])
@@ -457,18 +581,21 @@ class stock_picking(osv.osv):
             return
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
-        message_id = 2010 # Default it's an OUT message
+        
+        rule_obj = self.pool.get("sync.client.message_rule")
+        # Default it's an OUT message
+        remote_call = "stock.picking.usb_convert_pick_to_out"
         already_replicated = False
         if not out: # convert to PICK --> do not resend this object again
-            message_id = 2011
             already_replicated = True
-
+            remote_call = "stock.picking.usb_convert_out_to_pick"
+        rule = rule_obj.get_rule_by_remote_call(cr, uid, remote_call, context)
+        
         so_po_common = self.pool.get('so.po.common')
-        res = super(stock_picking, self)._hook_create_rw_out_sync_messages(cr, uid, ids, context=context)
+        super(stock_picking, self)._hook_create_rw_out_sync_messages(cr, uid, ids, context=context)
         for pick in self.browse(cr, uid, ids, context=context):
             partner = pick.partner_id
-            so_po_common.create_message_with_object_and_partner(cr, uid, message_id, pick.id, partner.name, context, True)
+            so_po_common.create_message_with_object_and_partner(cr, uid, rule.sequence_number, pick.id, partner.name, context, True)
         
         # If the PICK got successfully converted to OUT, then reupdate the value already_replicated, for sync purpose
         self.write(cr, uid, ids, {'already_replicated': already_replicated}, context=context)
@@ -507,10 +634,6 @@ class stock_picking(osv.osv):
         self._logger.info("+++ RW: PICK converted to OUT %s syncs from %s to %s" % (pick_name, source, cr.dbname))
         if context is None:
             context = {}
-
-        so_po_common = self.pool.get('so.po.common')
-        move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')
 
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         message = "Unknown error, please check the log file"
@@ -556,10 +679,6 @@ class stock_picking(osv.osv):
         self._logger.info("+++ RW: Convert OUT back to PICK (%s), from %s to %s" % (pick_name, source, cr.dbname))
         if context is None:
             context = {}
-
-        so_po_common = self.pool.get('so.po.common')
-        move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')
 
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         message = "Unknown error, please check the log file."
@@ -616,10 +735,6 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        so_po_common = self.pool.get('so.po.common')
-        move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')
-
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         message = "Unknown error, please check the log file."
         origin = pick_dict['origin']
@@ -634,8 +749,22 @@ class stock_picking(osv.osv):
                     if state == 'done':   
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                         header_result['move_lines'] = picking_lines
-#                        self.force_assign(cr, uid, pick_ids)
-                        context['rw_backorder_name'] = pick_name
+                        
+                        # do not set if it is a full out closed!
+                        if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
+                            context['rw_backorder_name'] = pick_name
+                        else:
+                            context['rw_full_process'] = True
+
+                        # UF-2426: Cancel all the Check Availability before performing the partial
+                        self.cancel_moves_before_process(cr, uid, pick_ids, context)
+
+                        if header_result.get('date_done', False):
+                            context['rw_date'] = header_result.get('date_done')
+                        self.action_assign(cr, uid, pick_ids, context=context)
+                        if header_result.get('date_done', False):
+                            context['rw_date'] = False
+
                         self.rw_do_out_partial(cr, uid, pick_ids[0], picking_lines, context)
                         
                         message = "The OUT " + pick_name + " has been successfully closed in " + cr.dbname
@@ -657,38 +786,58 @@ class stock_picking(osv.osv):
         return message
     
     def rw_do_out_partial(self, cr, uid, out_id, picking_lines, context=None):
-        # Objects
-        picking_obj = self.pool.get('stock.picking')
-        sequence_obj = self.pool.get('ir.sequence')
-        uom_obj = self.pool.get('product.uom')
-        move_obj = self.pool.get('stock.move')
-        wf_service = netsvc.LocalService("workflow")
-
         wizard_obj = self.pool.get('outgoing.delivery.processor')
         wizard_line_obj = self.pool.get('outgoing.delivery.move.processor')
+        move_obj = self.pool.get('stock.move')
         proc_id = wizard_obj.create(cr, uid, {'picking_id': out_id})
-        wizard_obj.create_lines(cr, uid, proc_id, context=context)
+        wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
+        
+        move_already_checked = []
+        move_id = False
+        line_data = False
+        if wizard.picking_id.move_lines:
+            for sline in picking_lines:
+                sline = sline[2]            
+                line_number = sline['line_number']
+                if not sline['product_qty'] or sline['product_qty'] == 0.00:
+                    continue
+                upd1 = {
+                    'picking_id': wizard.picking_id.id,
+                    'line_number': line_number,
+                    'product_qty': sline['product_qty'],
+                }
+                query = '''
+                    SELECT id
+                    FROM stock_move
+                    WHERE
+                        picking_id = %(picking_id)s
+                        AND line_number = %(line_number)s
+                    ORDER BY abs(product_qty-%(product_qty)s)'''
+                cr.execute(query, upd1)
 
-        # Copy values from the OUT message move lines into the the wizard lines before making the partial OUT
-        # If the line got split, based on line number and create new wizard line
-        for sline in picking_lines:
-            sline = sline[2]
-            line_number = sline['line_number']
-            
-            #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
-            
-            mline_ids = wizard_line_obj.search(cr, uid, [('wizard_id', '=', proc_id)], context=context)
-            brw_mline = wizard_line_obj.browse(cr, uid, mline_ids, context=context)
-            for mline in brw_mline:
-                if mline.line_number == line_number:
-                    # match the line, copy the content of picking line into the wizard line
-                    vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
-                            'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id']}
-                    if mline.quantity == 0.00:
-                        wizard_line_obj.write(cr, uid, mline.id, vals, context)
-                    elif id(mline) == id(brw_mline[-1]):
-                        wizard_line_obj.copy(cr, uid, mline.id, vals, context)
-                    break
+                move_ids = [x[0] for x in cr.fetchall()]
+                move_diff = [x for x in move_ids if x not in move_already_checked]
+                if move_ids and move_diff:
+                    move_id = list(move_diff)[0]
+                elif move_ids:
+                    move_id = move_ids[0]
+                else:
+                    move_id = False
+                
+                if move_id:
+                    move = move_obj.browse(cr, uid, move_id, context=context)
+                    if move.id not in move_already_checked:
+                        move_already_checked.append(move.id)
+                    line_data = wizard_line_obj._get_line_data(cr, uid, wizard, move, context=context)
+                    if line_data:
+                        vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],
+                                'location_id': sline['location_id'],'location_dest_id': sline['location_dest_id'],
+                                'ordered_quantity': sline['product_qty'],
+                                'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
+                                'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],
+                                'cost':line_data['cost'],'currency':line_data['currency'],
+                                }
+                        wizard_line_obj.create(cr, uid, vals, context=context)
 
         self.do_partial(cr, uid, [proc_id], 'outgoing.delivery.processor', context=context)
         return True
@@ -704,10 +853,6 @@ class stock_picking(osv.osv):
         self._logger.info("+++ RW: Replicate Picking: %s from %s to %s" % (pick_name, source, cr.dbname))
         if context is None:
             context = {}
-
-        so_po_common = self.pool.get('so.po.common')
-        move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')
 
         message = "Unknown error, please check the log file."
         
@@ -739,7 +884,15 @@ class stock_picking(osv.osv):
                         header_result['move_lines'] = picking_lines
 #                        self.force_assign(cr, uid, pick_ids)
                         context['rw_backorder_name'] = pick_name
+                        if header_result.get('date_done', False):
+                            context['rw_date'] = header_result.get('date_done')
+                            
+                        #self.cancel_moves_before_process(cr, uid, [pick_ids[0]], context=context)
+                        self.action_assign(cr, uid, [pick_ids[0]], context=context)
+                            
                         self.rw_do_create_picking_partial(cr, uid, pick_ids[0], picking_lines, context)
+                        if header_result.get('date_done', False):
+                            context['rw_date'] = False
                         
                         message = "The Picking " + pick_name + " has been successfully replicated in " + cr.dbname
                         self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
@@ -760,13 +913,14 @@ class stock_picking(osv.osv):
         return message
 
     def rw_do_create_picking_partial(self, cr, uid, pick_id, picking_lines, context=None):
-        # Objects
-        picking_obj = self.pool.get('stock.picking')
-        sequence_obj = self.pool.get('ir.sequence')
+        """
 
+        :rtype : object
+        """
         wizard_obj = self.pool.get('create.picking.processor')
         wizard_line_obj = self.pool.get('create.picking.move.processor')
         proc_id = wizard_obj.create(cr, uid, {'picking_id': pick_id}, context=context)
+
         wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
 
         # Check how many lines the wizard has, to make it mirror with the lines received from the sync        
@@ -774,6 +928,7 @@ class stock_picking(osv.osv):
         move_already_checked = []
         move_id = False
         line_data = False
+
         if wizard.picking_id.move_lines:
             for sline in picking_lines:
                 sline = sline[2]            
@@ -790,12 +945,14 @@ class stock_picking(osv.osv):
                             break
 
                 if move_id and line_data:
-                    vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
+                    vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],
+                            'location_id': sline['location_id'],'location_dest_id': sline['location_dest_id'],
                             'ordered_quantity': sline['product_qty'],
                             'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
                             'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],
                             'cost':line_data['cost'],'currency':line_data['currency'],
                             }
+
                     wizard_line_obj.create(cr, uid, vals, context=context)
 
         line_to_del = wizard_line_obj.search(cr, uid, [('wizard_id', '=', proc_id), ('quantity', '=', 0.00)], context=context)
@@ -812,21 +969,20 @@ class stock_picking(osv.osv):
         self._logger.info("+++ RW: Replicate the PPL: %s from %s to %s" % (pick_name, source, cr.dbname))
         if context is None:
             context = {}
-
-        so_po_common = self.pool.get('so.po.common')
-        move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')
-
         message = "Unknown error, please check the log file."
         
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         origin = pick_dict['origin']
         rw_type = self._get_usb_entity_type(cr, uid)
+        pack_name = pick_dict['previous_step_id'] and pick_dict['previous_step_id']['name'] or None
         if rw_type == self.CENTRAL_PLATFORM:
             if origin:
                 header_result = {}
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['confirmed', 'assigned'])], order='id desc', context=context)
+                search_name = [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['confirmed', 'assigned'])]
+                if pack_name:
+                    search_name.append(('name', '=', pack_name))
+                pick_ids = self.search(cr, uid, search_name, context=context)
                 if pick_ids:
                     state = pick_dict['state']
                     if state in ('done', 'assigned'):   
@@ -844,13 +1000,18 @@ class stock_picking(osv.osv):
                         
                     # perform right a way the validate Picking to set pack and size of pack
                     pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'ppl'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
-                    if pick_ids:
+                    pick_id = False
+                    for pick in pick_ids:
+                        if not self.pool.get('ppl.processor').search(cr, uid, [('picking_id', '=', pick)]):
+                            pick_id = pick
+                            break
+                    if pick_id:
                         state = pick_dict['state']
                         if state in ('done','draft','assigned'):   
-                            self.rw_create_ppl_step_1_only(cr, uid, pick_ids[0], picking_lines, context)
+                            self.rw_create_ppl_step_1_only(cr, uid, pick_id, picking_lines, context)
                             
                             message = "The pre-packing list: " + pick_name + " has been replicated in " + cr.dbname
-                            self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
+                            self.write(cr, uid, pick_id, {'already_replicated': True}, context=context)
             
                     else:
                         message = "Cannot replicate the packing " + pick_name + " because no relevant document found at " + cr.dbname
@@ -875,10 +1036,6 @@ class stock_picking(osv.osv):
     def rw_do_validate_picking(self, cr, uid, pick_id, picking_lines, context=None):
         # Objects
         wizard_obj = self.pool.get('validate.picking.processor')
-        wizard_line_obj = self.pool.get('validate.move.processor')
-        move_obj = self.pool.get('stock.move')
-        
-        
         proc_id = wizard_obj.create(cr, uid, {'picking_id': pick_id}, context=context)
         wizard = wizard_obj.browse(cr, uid, proc_id, context=context)
         line_obj = self.pool.get(wizard._columns['move_ids']._obj)
@@ -903,23 +1060,22 @@ class stock_picking(osv.osv):
         self._logger.info("+++ RW: Replicate the Packing list: %s from %s to %s" % (pick_name, source, cr.dbname))
         if context is None:
             context = {}
-
-        so_po_common = self.pool.get('so.po.common')
-        move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')
-
         message = "Unknown error, please check the log file."
         header_result = {}
         
         # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
         origin = pick_dict['origin']
         shipment_name = pick_dict['shipment_id'] and pick_dict['shipment_id']['name'] or None
+        ppl_name = pick_dict['previous_step_id'] and pick_dict['previous_step_id']['name'] or None
         
         rw_type = self._get_usb_entity_type(cr, uid)
         if rw_type == self.CENTRAL_PLATFORM:
             if origin:
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'ppl'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
+                search_name = [('origin', '=', origin), ('subtype', '=', 'ppl'), ('state', 'in', ['confirmed', 'assigned'])]
+                if ppl_name:
+                    search_name.append(('name', '=', ppl_name))
+                pick_ids = self.search(cr, uid, search_name, context=context)
                 if pick_ids:
                     state = pick_dict['state']
                     if state in ('done','draft','assigned'):   
@@ -977,7 +1133,8 @@ class stock_picking(osv.osv):
                             break
                 
                 if move_id and line_data:
-                    vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
+                    vals = {'line_number': line_number,'product_id': sline['product_id'], 'quantity': sline['product_qty'],
+                            'location_id': sline['location_id'],'location_dest_id': sline['location_dest_id'],
                             'ordered_quantity': sline['product_qty'],
                             'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
                             'from_pack': sline['from_pack'], 'to_pack': sline['to_pack'],'pack_type': sline['pack_type'],
@@ -1012,9 +1169,6 @@ class stock_picking(osv.osv):
         Prepare the wizard for 2 steps of creating packing: pack family and size/weight of the pack
         '''
         wizard_obj = self.pool.get('ppl.processor')
-        wizard_line_obj = self.pool.get('ppl.move.processor')
-        family_obj = self.pool.get('ppl.family.processor')
-        
         proc_id = wizard_obj.search(cr, uid, [('picking_id','=', pick_id)], context=context)
         if proc_id:
             proc_id = proc_id[0]
@@ -1024,119 +1178,5 @@ class stock_picking(osv.osv):
 
         self.do_ppl_step2(cr, uid, [proc_id], context=context)
         return True
-
-
-    def usb_create_shipment(self, cr, uid, source, out_info, context=None):
-        pick_dict = out_info.to_dict()
-        
-        if not pick_dict['shipment_id']:
-            message = "Sorry the Shipment is invalid in the sync message! The message cannot be processed"
-            self._logger.info(message)
-            raise Exception, message
-        
-        shipment_name = pick_dict['shipment_id']['name']
-            
-        self._logger.info("+++ RW: Create Shipment: %s from %s to %s" % (shipment_name, source, cr.dbname))
-        if context is None:
-            context = {}
-
-        so_po_common = self.pool.get('so.po.common')
-        move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')
-
-        message = "Unknown error, please check the log file."
-        header_result = {}
-        
-        # Look for the original PICK based on the origin of OUT and check if this PICK still exists and not closed or converted
-        origin = pick_dict['origin']
-        rw_type = self._get_usb_entity_type(cr, uid)
-        if rw_type == self.CENTRAL_PLATFORM:
-            if origin:
-                self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'packing'),('shipment_id', '!=', False), ('state', 'in', ['draft', 'assigned'])], order='id asc', context=context)
-                if pick_ids:
-                    state = pick_dict['state']
-                    if state in ('done','draft','assigned'):   
-                        context['rw_shipment_name'] = shipment_name
-                        num_of_packs = pick_dict['shipment_id']['num_of_packs']
-                        picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
-                        self.rw_do_create_shipment(cr, uid, pick_ids[0], picking_lines, num_of_packs, context)
-                        
-                        old_pick = self.browse(cr, uid, pick_ids[0], context)
-                        message = "The shipment: " + shipment_name + " has been created from the Packing list: " + old_pick.name
-                        self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
-        
-                else:
-                    message = "Cannot generate the Shipment: " + shipment_name + " because no relevant document found at " + cr.dbname
-                    self._logger.info(message)
-                    raise Exception, message
-            else:
-                message = "Sorry, the case without the origin FO or IR is not yet available!"
-                self._logger.info(message)
-                raise Exception, message
-                
-        elif rw_type == self.REMOTE_WAREHOUSE: 
-            message = "Sorry, the given operation is not available for Remote Warehouse instance!"
-                
-        self._logger.info(message)
-        return message
-
-
-    def rw_do_create_shipment(self, cr, uid, pick_id, picking_lines, num_of_packs, context=None): 
-        '''
-        Create the shipment from an existing draft shipment, then perform the ship
-        '''
-        # from the picking Id, search for the shipment
-        pick = self.browse(cr, uid, pick_id, context=context)
-        
-        # Objects
-        order_line_obj = self.pool.get('sale.order.line')
-        ship_proc_obj = self.pool.get('shipment.processor')
-        ship_proc_vals = {
-            'shipment_id': pick.shipment_id.id,
-            'address_id': pick.shipment_id.address_id.id,
-        }
-        
-        # Get this Shipment dest location, if a stock move is with this location then it's a returned pack --> do not process
-        returned_pack_loc = self.pool.get('stock.location').find_sd_ref(cr, uid, xmlid_to_sdref('sd.msf_outgoing_stock_location_dispatch'), context=context)        
-
-        wizard_line_obj = self.pool.get('shipment.family.processor')
-        proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
-        ship_proc_obj.create_lines(cr, uid, proc_id, context=context)
-
-        wizard = ship_proc_obj.browse(cr, uid, proc_id, context=context)
-        # Reset the selected packs for shipment, because by a wizard, it sets total pack!
-        for family in wizard.family_ids:
-            wizard_line_obj.write(cr, uid, [family.id], {'selected_number': 0,}, context=context)
-        shipment = wizard.shipment_id
-
-        # Create only the pack family that has been shipped, not all!
-        for sline in picking_lines:
-            sline = sline[2]
-            to_pack = sline['to_pack']
-            from_pack = sline['from_pack']
-            location_dest_id = sline['location_dest_id']
-            if location_dest_id == returned_pack_loc:
-                continue
-            
-            sale_order_id = False
-            #get sale order from this sline:
-            if sline['sale_line_id']:
-                sale_order_id = order_line_obj.read(cr, uid, sline['sale_line_id'], ['order_id'])['order_id']
-                if sale_order_id:
-                    sale_order_id = sale_order_id[0]
-                    
-            for family in wizard.family_ids:
-                family_sale_id = family.sale_order_id and family.sale_order_id.id or False
-                if family.from_pack <= from_pack and family.to_pack >= to_pack and sale_order_id == family_sale_id:
-                    family_vals = {
-                        'selected_number': to_pack - from_pack + 1,
-                    }
-                    wizard_line_obj.write(cr, uid, [family.id], family_vals, context=context)
-                    print family.id, " - ", family_vals['selected_number']
-                     
-        self.pool.get('shipment').do_create_shipment(cr, uid, [proc_id], context=context)
-        return True
-
+    
 stock_picking()
-

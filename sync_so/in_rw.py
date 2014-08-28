@@ -53,10 +53,65 @@ class stock_picking(osv.osv):
     '''
     _inherit = "stock.picking"
     _logger = logging.getLogger('------sync.stock.picking')
+
+
+    # Retrieve the value of sdref and rw_sdref_counterpart from the given backorder_idS
+    def rw_get_backorders_values(self, cr, uid, pick_dict, context=None):
+        if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
+            if pick_dict.get('backorder_ids', False):
+                for line in pick_dict['backorder_ids']:
+                    sdref = line['id'][3:]
+                    rw_sdref_counterpart = line['rw_sdref_counterpart']
+                    return sdref, rw_sdref_counterpart
+        return False, False
+
+    def usb_update_in_shipped_available(self, cr, uid, source, in_info, context=None):
+        # UF-2422: Update new data for the IN before available, now shipped
+        if context is None:
+            context = {}
+
+
+        rw_type = self._get_usb_entity_type(cr, uid)
+        if rw_type == self.CENTRAL_PLATFORM:
+            message = "Sorry, the given operation is only available for Remote Warehouse instance!"
+            self._logger.info(message)
+            raise Exception, message
+
+        pick_dict = in_info.to_dict()
+        pick_name = pick_dict['name']
+        move_obj = self.pool.get('stock.move')
+        
+        existing_pick = self.search(cr, uid, [('name', '=', pick_name)], context=context)
+        if not existing_pick: # If not exist, just create the new IN
+            message = "The IN " + pick_name + " will be created in " + cr.dbname
+            self._logger.info(message)
+            return self.usb_replicate_in(cr, uid, source, in_info, context)
+
+        # if existed already, just update the new values into the existing IN
+        self._logger.info("+++ RW: Update the existing IN with new data and status shipped available: %s from %s to %s" % (pick_name, source, cr.dbname))
+        existing_pick = self.browse(cr, uid, existing_pick[0], context=context)
+        if existing_pick.state != 'assigned':
+            message = "Sorry, the existing IN " + pick_name + " may have already been processed. Cannot update any more!"
+            self._logger.info(message)
+            return message 
+        
+        # UF-2422: Remove all current IN lines, then recreate new lines
+        for move in existing_pick.move_lines:
+            move_obj.write(cr, uid, move.id, {'state': 'draft'}, context=context)
+            move_obj.unlink(cr, uid, move.id)
+            
+        picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
+        for line in picking_lines:
+            vals = line[2]
+            vals['picking_id'] = existing_pick.id
+            move_obj.create(cr, uid, vals, context=context)
+                
+        self.write(cr, uid, existing_pick.id, {'state': 'shipped'}, context=context)
+        message = "The IN " + pick_name + " has been now updated and sent to shipped available."
+        self._logger.info(message)
+        return message
     
     def usb_replicate_in(self, cr, uid, source, in_info, context=None):
-        '''
-        '''
         if context is None:
             context = {}
 
@@ -65,7 +120,6 @@ class stock_picking(osv.osv):
         origin = pick_dict['origin']
             
         self._logger.info("+++ RW: Replicate the Incoming Shipment: %s from %s to %s" % (pick_name, source, cr.dbname))
-        so_po_common = self.pool.get('so.po.common')
         move_obj = self.pool.get('stock.move')
 
         rw_type = self._get_usb_entity_type(cr, uid)
@@ -83,8 +137,15 @@ class stock_picking(osv.osv):
                     message = "Sorry, the IN: " + pick_name + " existed already in " + cr.dbname
                     self._logger.info(message)
                     return message
-                del header_result['state']                
+                del header_result['state']
                 pick_id = self.create(cr, uid, header_result , context=context)
+                # update this object as backorder of previous object
+                
+                if pick_id: # If successfully created, then get the sdref of the CP IN and store into this replicated IN in RW
+                    sdref, temp = self.rw_get_backorders_values(cr, uid, pick_dict, context=context)
+                    bo_of_other = self.search(cr, uid, [('rw_sdref_counterpart', '=', sdref)], context=context)
+                    if bo_of_other:# The original IN of this backorder IN exists, update that original IN
+                        self.write(cr, uid, bo_of_other, {'backorder_id': pick_id}, context=context)
 
                 todo_moves = []
                 for move in self.browse(cr, uid, pick_id, context=context).move_lines:
@@ -93,7 +154,6 @@ class stock_picking(osv.osv):
                 move_obj.force_assign(cr, uid, todo_moves)
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
-#                self.draft_force_assign(cr, uid, [pick_id]) # Fixed by JF: To send the IN to the right state 
                 if pick_dict['state'] == 'shipped':
                     self.write(cr, uid, pick_id, {'state': 'shipped'}, context=context)
 
@@ -104,9 +164,8 @@ class stock_picking(osv.osv):
                     in this class: msf_outgoing/msf_outgoing.py, method: stock.picking.create(), line 2337
                      
                 '''
-                if 'rw_force_seq' in pick_dict and pick_dict.get('rw_force_seq', False):
-                    self.alter_sequence_for_rw_pick(cr, uid, 'stock.picking.in', pick_dict.get('rw_force_seq') + 1, context)
-                
+#                if 'rw_force_seq' in pick_dict and pick_dict.get('rw_force_seq', False):
+#                    self.alter_sequence_for_rw_pick(cr, uid, 'stock.picking.in', pick_dict.get('rw_force_seq') + 1, context)
                 
                 message = "The IN: " + pick_name + " has been well replicated in " + cr.dbname
             else:
@@ -128,14 +187,11 @@ class stock_picking(osv.osv):
         
         pick_dict = out_info.to_dict()
         pick_name = pick_dict['name']
+        so_po_common = self.pool.get('so.po.common')
             
         self._logger.info("+++ RW: Create partial INcoming Shipment: %s from %s to %s" % (pick_name, source, cr.dbname))
         if context is None:
             context = {}
-
-        so_po_common = self.pool.get('so.po.common')
-        move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')
 
         message = "Unknown error, please check the log file."
         
@@ -146,7 +202,23 @@ class stock_picking(osv.osv):
             if origin:
                 header_result = {}
                 self.retrieve_picking_header_data(cr, uid, source, header_result, pick_dict, context)
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('type', '=', 'in'), ('subtype', '=', 'standard'), ('state', 'in', ['assigned'])], context=context)
+                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('type', '=', 'in'), ('subtype', '=', 'standard'), ('state', 'in', ['assigned', 'shipped'])], context=context)
+                if pick_ids and len(pick_ids) > 1:
+                    '''
+                    Search for the right IN to do partial reception, using the backorder_idS to look for that right original IN
+                    The value is stored in the rw_sdref_counterpart of the RW, from this value, the real IN Id from the CP will be retrieved
+                    '''
+                    # Check if it is a full reception
+                    exact_ids = self.search(cr, uid, [('name', '=', pick_name), ('state', 'in', ['assigned', 'shipped'])], context=context)
+                    if exact_ids:
+                        pick_ids = exact_ids
+                    else:
+                        temp, rw_sdref_counterpart = self.rw_get_backorders_values(cr, uid, pick_dict, context=context)
+                        if rw_sdref_counterpart:
+                            real_in_id = self.find_sd_ref(cr, uid, xmlid_to_sdref(rw_sdref_counterpart), context=context)
+                            if real_in_id: # found the real IN id of the original IN for performing the partial incoming reception
+                                pick_ids = [real_in_id]
+                
                 if pick_ids:
                     state = pick_dict['state']
                     if state in ('done', 'assigned'):
@@ -184,11 +256,7 @@ class stock_picking(osv.osv):
         pick_dict = out_info.to_dict()
         pick_name = pick_dict['name']
         origin = pick_dict['origin']
-            
         self._logger.info("+++ RW: Replicate the INT from an IR: %s from %s to %s" % (pick_name, source, cr.dbname))
-        so_po_common = self.pool.get('so.po.common')
-        move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')
 
         rw_type = self._get_usb_entity_type(cr, uid)
         if rw_type == self.REMOTE_WAREHOUSE:
@@ -198,6 +266,7 @@ class stock_picking(osv.osv):
                 picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                 header_result['move_lines'] = picking_lines
                 header_result['already_replicated'] = True
+                state = pick_dict['state']
                 
                 # Check if the PICK is already there, then do not create it, just inform the existing of it, and update the possible new name
                 existing_pick = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'standard'), ('type', '=', 'internal'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
@@ -206,13 +275,19 @@ class stock_picking(osv.osv):
                     self._logger.info(message)
                     return message
                 pick_id = self.create(cr, uid, header_result , context=context)
-                self.action_assign(cr, uid, [pick_id])
-#                self.draft_force_assign(cr, uid, [pick_id]) # Fixed by JF: To send the IN to the right state 
+                if state != 'draft': # if draft, do nothing
+                    wf_service = netsvc.LocalService("workflow")
+                    wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
+                    if header_result.get('date_done', False):
+                        context['rw_date'] = header_result.get('date_done')
+                    self.action_assign(cr, uid, [pick_id], context=context)
+                    if header_result.get('date_done', False):
+                        context['rw_date'] = False
                 
-                if 'rw_force_seq' in pick_dict and pick_dict.get('rw_force_seq', False):
-                    self.alter_sequence_for_rw_pick(cr, uid, 'stock.picking.internal', pick_dict.get('rw_force_seq') + 1, context)
+#                self.action_assign(cr, uid, [pick_id])
                 
-                
+#                if 'rw_force_seq' in pick_dict and pick_dict.get('rw_force_seq', False):
+#                    self.alter_sequence_for_rw_pick(cr, uid, 'stock.picking.internal', pick_dict.get('rw_force_seq') + 1, context)
                 message = "The INT: " + pick_name + " has been well replicated in " + cr.dbname
             else:
                 message = "Sorry, the case without the origin FO or IR is not yet available!"
@@ -224,6 +299,15 @@ class stock_picking(osv.osv):
         self._logger.info(message)
         return message
 
+    def action_shipped_wkf(self, cr, uid, ids, context=None):
+        """ set the sync flag to true for re-syncing
+        """
+        res = super(stock_picking, self).action_shipped_wkf(cr, uid, ids, context=context)
+        rw_type = self._get_usb_entity_type(cr, uid)
+        if rw_type == self.CENTRAL_PLATFORM:        
+            self.write(cr, uid, ids, {'already_replicated': False})
+        return res
+
     def rw_do_create_partial_in(self, cr, uid, pick_id, header_result, pack_data, context=None):
         # Objects
         processor_obj = self.pool.get('stock.incoming.processor')
@@ -233,16 +317,11 @@ class stock_picking(osv.osv):
         self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context)
         partial_datas = {}
         partial_datas[pick_id] = {}
-        line_numbers = {}
         context['InShipOut'] = "IN"  # asking the IN object to be logged
         context['rw_sync'] = True
         
-        so_po_common = self.pool.get('so.po.common')
-        po_obj = self.pool.get('purchase.order')
         move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')        
         move_proc = self.pool.get('stock.move.in.processor')
-        
         
         for l in pack_data:
             data = l[2]
@@ -346,11 +425,15 @@ class stock_picking(osv.osv):
                 self.write(cr, uid, new_picking, {'associate_int_name': associate_int_name}, context)
         
         # Set the backorder reference to the IN !!!! THIS NEEDS TO BE CHECKED WITH SUPPLY PM!
+        in_name = self.browse(cr, uid, new_picking, context=context)['name']
         if new_picking != pick_id:
             self.write(cr, uid, pick_id, {'backorder_id': new_picking}, context)
             self.write(cr, uid, new_picking, {'already_replicated': True}, context=context)
+        else: # update the IN name which has been wrongly named when creating BO
+            pick_name = header_result['name']
+            if in_name != pick_name:
+                self.write(cr, uid, new_picking, {'name': pick_name}, context=context)
 
-        in_name = self.browse(cr, uid, new_picking, context=context)['name']
         message = "The INcoming " + in_name + " is partially processed!"
         self._logger.info(message)
         return message
@@ -366,10 +449,6 @@ class stock_picking(osv.osv):
         self._logger.info("+++ RW: Create Partial Internal Moves: %s from %s to %s" % (pick_name, source, cr.dbname))
         if context is None:
             context = {}
-
-        so_po_common = self.pool.get('so.po.common')
-        move_obj = self.pool.get('stock.move')
-        pick_tools = self.pool.get('picking.tools')
 
         message = "Unknown error, please check the log file."
         
@@ -387,19 +466,32 @@ class stock_picking(osv.osv):
                     search_condition.append(('name', '=', pick_name))
                 pick_ids = self.search(cr, uid, search_condition, context=context)
                 if pick_ids:
+                    pick_id = pick_ids[0]
                     state = pick_dict['state']
                     if state in ('done', 'assigned'):
                         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
                         header_result['move_lines'] = picking_lines
-                        #self.force_assign(cr, uid, pick_ids)
-                        move_ids = move_obj.search(cr, uid, [('picking_id', 'in', pick_ids), ('state', '=', 'assigned')], context=context)
-                        move_obj.cancel_assign(cr, uid, move_ids)
-                        self.action_assign(cr, uid, pick_ids)
-                        context['rw_backorder_name'] = pick_name
-                        self.rw_do_create_partial_int_moves(cr, uid, pick_ids[0], picking_lines, context)
+
+                        self.cancel_moves_before_process(cr, uid, [pick_id], context=context)
+                        #UF-2426: Inform the do_partial that this is a full process if there is no back order
+                        if 'backorder_ids' in pick_dict and pick_dict['backorder_ids']:
+                            context['rw_backorder_name'] = pick_name
+                        else:
+                            context['rw_full_process'] = True
+
+                        if header_result.get('date_done', False):
+                            context['rw_date'] = header_result.get('date_done')
+
+                        # try to perform a check available after cancel all moves? not really sure!
+                        self.action_assign(cr, uid, [pick_id], context=context)
+
+                        if header_result.get('date_done', False):
+                            context['rw_date'] = False
+
+                        self.rw_do_create_partial_int_moves(cr, uid, pick_id, picking_lines, context)
                         
                         message = "The Internal Moves: " + pick_name + " has been successfully created in " + cr.dbname
-                        self.write(cr, uid, pick_ids[0], {'already_replicated': True}, context=context)
+                        self.write(cr, uid, pick_id, {'already_replicated': True}, context=context)
         
                 else:
                     message = "The IN: " + pick_name + " not found in " + cr.dbname
@@ -420,26 +512,60 @@ class stock_picking(osv.osv):
         # Objects
         wizard_obj = self.pool.get('internal.picking.processor')
         in_processor = wizard_obj.create(cr, uid, {'picking_id': pick_id})
-        wizard_obj.create_lines(cr, uid, in_processor, context=context)
         wizard_line_obj = self.pool.get('internal.move.processor')
+        move_obj = self.pool.get('stock.move')
+        wizard = wizard_obj.browse(cr, uid, in_processor, context=context)
         
         # Copy values from the OUT message move lines into the the wizard lines before making the partial OUT
         # If the line got split, based on line number and create new wizard line
+        move_already_checked = []
         for sline in picking_lines:
-            sline = sline[2]
+            sline = sline[2]            
             line_number = sline['line_number']
-            
-            #### CHECK HOW TO COPY THE LINE IN WIZARD IF THE OUT HAS BEEN SPLIT!
-            #### WORK IN PROGRESS
-            
-            wizard = wizard_obj.browse(cr, uid, in_processor, context=context)
-            for mline in wizard.move_ids:
-                if mline.line_number == line_number:
-                    # match the line, copy the content of picking line into the wizard line
-                    vals = {'product_id': sline['product_id'], 'quantity': sline['product_qty'],'location_id': sline['location_id'],
-                            'product_uom': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id']}
-                    wizard_line_obj.write(cr, uid, mline.id, vals, context)
-                    break
+            if not sline['product_qty'] or sline['product_qty'] == 0.00:
+                continue
+            upd1 = {
+                'picking_id': wizard.picking_id.id,
+                'line_number': line_number,
+                'product_qty': sline['product_qty'],
+            }
+            query = '''
+                SELECT id
+                FROM stock_move
+                WHERE
+                    picking_id = %(picking_id)s
+                    AND line_number = %(line_number)s
+                ORDER BY abs(product_qty-%(product_qty)s)'''
+            cr.execute(query, upd1)
+
+            move_ids = [x[0] for x in cr.fetchall()]
+            #move_diff = set(move_ids) - set(move_already_checked)
+            move_diff = [x for x in move_ids if x not in move_already_checked]
+            if move_ids and move_diff:
+                move_id = list(move_diff)[0]
+            elif move_ids:
+                move_id = move_ids[0]
+            else:
+                move_id = False
+
+            if move_id:
+                move = move_obj.browse(cr, uid, move_id, context=context)
+                line_data = wizard_line_obj._get_line_data(cr, uid, wizard, move, context=context)
+                if line_data:
+                    if move.id not in move_already_checked:
+                        move_already_checked.append(move.id)
+                        # the location_dest_id needs to be updated into the move directly if it has been changed
+                        if move.location_dest_id and move.location_dest_id.id != sline['location_dest_id']:
+                            move_obj.write(cr, uid, move.id, {'location_dest_id': sline['location_dest_id']}, context=context)
+
+                    vals = {'line_number': line_number,'product_id': sline['product_id'],
+                            'location_id': sline['location_id'],'location_dest_id': sline['location_dest_id'],
+                            'ordered_quantity': sline['product_qty'],'quantity': sline['product_qty'],
+                            'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
+                            'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],
+                            'cost':line_data['cost'],'currency':line_data['currency'],
+                            }
+                    wizard_line_obj.create(cr, uid, vals, context=context)
 
         wizard_obj.do_partial(cr, uid, [in_processor], context=context)
         

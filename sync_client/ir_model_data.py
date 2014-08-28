@@ -193,6 +193,23 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
 
         return res
 
+    '''
+    Create manually a record in this table for a given sdref and res_id, currently used in RW
+    '''
+    def manual_create_sdref(self, cr, uid, obj, sdref, res_id, context=None):
+        if res_id and sdref:
+            self.create(cr, uid, {
+                    'noupdate' : False, # don't set to True otherwise import won't work
+                    'module' : 'sd',
+                    'last_modification' : fields.datetime.now(),
+                    'model' : obj._name,
+                    'res_id' : res_id,
+                    'version' : 1,
+                    'name' : sdref,
+                }, context=context)
+            return True
+        return False              
+
     def create(self, cr, uid, values, context=None):
         context = dict(context or {})
         # Silently purge old sdrefs for replacement
@@ -253,10 +270,8 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
     # TODO replace this deprecated method with get_sd_ref(field='id') in your call
     # Beware that the result is a dict, not a list anymore
     def get(self, cr, uid, model, ids, context=None):
-        if tools.config.options['log_level'] <= logging.DEBUG:
-            raise DeprecationWarning("ir.model.data get() method should not be used anymore!")
-        else:
-            self._logger.warning("ir.model.data get() method should not be used anymore!")
+        # Just add the warning into log file, and not raise Exception to stop the process
+        self._logger.warning("ir.model.data get() method should not be used anymore!")
         result = []
         for id in (ids if hasattr(ids, '__iter__') else [ids]):
             data_ids = self.search(cr, uid, [('model', '=', model._name), ('res_id', '=', id), ('module', '=', 'sd')], limit=1, context=context)
@@ -268,6 +283,10 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
         ids = self.search(cr, uid, [('module','=','sd'),('name','=',sdref)], context=context)
         if not ids:
             raise ValueError("Cannot find sdref %s!" % sdref)
+
+        if context.get('offline_synchronization', False) and 'touched' in vals:
+            del vals['touched']
+
         self.write(cr, uid, ids, vals, context=context)
         return True
 

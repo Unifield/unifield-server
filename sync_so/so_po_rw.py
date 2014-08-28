@@ -22,7 +22,6 @@
 import logging
 
 from osv import osv, fields
-import so_po_common
 from sync_client import get_sale_purchase_logger
 from sync_common import xmlid_to_sdref
 
@@ -30,8 +29,8 @@ class sale_order_rw(osv.osv):
     _inherit = "sale.order"
     _logger = logging.getLogger('------sync.sale.order')
 
-    def usb_replicate_fo(self, cr, uid, source, po_info, context=None):
-        po_dict = po_info.to_dict()
+    def usb_replicate_fo(self, cr, uid, source, sync_values, context=None):
+        po_dict = sync_values.to_dict()
         fo_name = po_dict.get('name', False)
         self._logger.info("+++ RW: Replicate the FO/IR: %s from %s to %s" % (fo_name, source, cr.dbname))
         if not context:
@@ -57,13 +56,28 @@ class sale_order_rw(osv.osv):
             if rec_id:
                 header_result['partner_id'] = rec_id
 
+        # If there is a location requestor for IR, retrieve it
+        if po_dict.get('location_requestor_id'):
+            rec_id = self.pool.get('stock.location').find_sd_ref(cr, uid, xmlid_to_sdref(po_dict.get('location_requestor_id')['id']), context=context)
+            if rec_id:
+                header_result['location_requestor_id'] = rec_id
+
         default = {}
         default.update(header_result)
         context['offline_synchronization'] = True
 
-        so_id = self.create(cr, uid, default , context=context)
+        existing_ids = self.search(cr, uid, [('name', '=', fo_name),('state', '=', 'rw')], context=context)
+        if existing_ids:
+            message = "Sorry, the FO: " + fo_name  + " existed already in " + cr.dbname
+            self._logger.info(message)
+            return message            
 
-        order_line = so_po_common.get_lines(cr, uid, source, po_info, False, False, False, True, context)
+        so_id = self.create(cr, uid, default , context=context)
+        rw_xmlid = so_po_common.get_xml_id_counterpart(cr, uid, self, context=context)        
+        # get xmlid and create a new one with the same res
+        self.pool.get('ir.model.data').manual_create_sdref(cr, uid, self, rw_xmlid, so_id, context=context)
+
+        order_line = so_po_common.get_lines(cr, uid, source, sync_values, False, False, False, True, context)
         context['offline_synchronization'] = True
         line_obj = self.pool.get('sale.order.line')
         for line in order_line:
@@ -84,9 +98,8 @@ class purchase_order_rw(osv.osv):
     _inherit = "purchase.order"
     _logger = logging.getLogger('------sync.purchase.order')
 
-
-    def usb_replicate_po(self, cr, uid, source, so_info, context=None):
-        so_dict = so_info.to_dict()
+    def usb_replicate_po(self, cr, uid, source, sync_values, context=None):
+        so_dict = sync_values.to_dict()
         po_name = so_dict.get('name', False)
         self._logger.info("+++ RW: Replicate the PO: %s from %s to %s" % (po_name, source, cr.dbname))
         if not context:
@@ -108,24 +121,31 @@ class purchase_order_rw(osv.osv):
             rec_id = self.pool.get('res.partner').find_sd_ref(cr, uid, xmlid_to_sdref(so_dict.get('partner_id')['id']), context=context)
             if rec_id:
                 header_result['partner_id'] = rec_id
-
-        '''
+                partner = self.pool.get('res.partner').browse(cr, uid, rec_id, context=context)
+                if partner.property_product_pricelist_purchase:
+                    header_result['pricelist_id'] = partner.property_product_pricelist_purchase.id
         
-        CHECK EXISTING OF DOCUMENTS: Check with combination of Name+partner_id: If existed already, just inform and set the message as run with error!
-        
-        '''
+        header_result['cross_docking_ok'] = so_dict.get('cross_docking_ok', False)
         # check whether this FO has already been sent before! if it's the case, then just update the existing PO, and not creating a new one
-        po_id = self.check_existing_po(cr, uid, source, so_dict)
+        partner_ref = source + "." + sync_values.name
+        existing_ids = self.search(cr, uid, [('name', '=', po_name), ('partner_ref', '=', partner_ref), ('state', '=', 'rw')], context=context)
+        if existing_ids:
+            message = "Sorry, the FO: " + po_name  + " with Supplier Ref " + partner_ref + " existed already in " + cr.dbname
+            self._logger.info(message)
+            return message
+                    
         default = {}
         default.update(header_result)
 
         # create a new PO, then send it to Validated state
         po_id = self.create(cr, uid, default , context=context)
-
+        rw_xmlid = so_po_common.get_xml_id_counterpart(cr, uid, self, context=context)        
+        # get xmlid and create a new one with the same res
+        self.pool.get('ir.model.data').manual_create_sdref(cr, uid, self, rw_xmlid, po_id, context=context)
 
         context['offline_synchronization'] = True
         line_obj = self.pool.get('purchase.order.line')
-        order_line = so_po_common.get_lines(cr, uid, source, so_info, False, False, False, False, context)
+        order_line = so_po_common.get_lines(cr, uid, source, sync_values, False, False, False, False, context)
         for line in order_line:
             line = line[2]
             line.update({'order_id': po_id})
@@ -137,3 +157,5 @@ class purchase_order_rw(osv.osv):
         return message
     
 purchase_order_rw()
+
+
