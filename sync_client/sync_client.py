@@ -455,9 +455,16 @@ class Entity(osv.osv):
 
         if entity.state == 'init':
             self.set_last_sequence(cr, uid, context=context)
-        max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
+        sync_server_obj = self.pool.get("sync.client.sync_server_connection")
+        max_packet_size = sync_server_obj._get_connection_manager(cr, uid, context=context).max_size
+        
+        # UTP-1177: Retrieve the message ids and save into the entity at the Server side
+        proxy = sync_server_obj.get_connection(cr, uid, "sync.server.sync_manager")
+        res = proxy.get_message_ids(entity.identifier)
+        if not res[0]: raise Exception, res[1]
 
         updates_count = self.retrieve_update(cr, uid, max_packet_size, recover=recover, context=context)
+        self._logger.info("::::::::The instance " + entity.name + " pulled: " + str(res[1]) + " messages and " + str(updates_count) + " updates.")        
         updates_executed = self.execute_updates(cr, uid, context=context)
         if updates_executed == 0 and updates_count > 0 and logger:
             logger.append(_("Warning: no update to execute, this case should never occurs."))
@@ -660,16 +667,18 @@ class Entity(osv.osv):
     def pull_message(self, cr, uid, recover=False, context=None):
         context = context or {}
         logger = context.get('logger')
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
 
         entity = self.get_entity(cr, uid, context=context)
         if recover:
-            proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
             proxy.message_recover_from_seq(entity.identifier, entity.message_last)
 
         if not entity.state == 'init':
             raise SkipStep
 
         self.get_message(cr, uid, context=context)
+        # UTP-1177: Reset the message ids of the entity at the server side
+        proxy.reset_message_ids(entity.identifier)
         self.execute_message(cr, uid, context=context)
         return True
 
