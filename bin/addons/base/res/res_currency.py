@@ -103,7 +103,12 @@ class res_currency(osv.osv):
                 currency_name = from_currency['name']
             else:
                 currency_name = to_currency['name']
-            raise osv.except_osv(_('Error'), _('No rate found \n' \
+            if 'currency_table_id' in context:
+                rct_obj = self.pool.get('res.currency.table')
+                rct_browse = rct_obj.browse(cr, uid, context['currency_table_id'])
+                raise osv.except_osv(_('Error'), _('Report can not be edited due to missing FX rates in specific currency table %s') % rct_browse.name)
+            else:
+                raise osv.except_osv(_('Error'), _('No rate found \n' \
                     'for the currency: %s \n' \
                     'at the date: %s') % (currency_name, date))
         return to_currency['rate']/from_currency['rate']
