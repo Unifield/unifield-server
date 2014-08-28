@@ -279,8 +279,10 @@ class financing_contract_contract(osv.osv):
                     'reporting_type': source_format.reporting_type,
                     'overhead_type': source_format.overhead_type,
                     'overhead_percentage': source_format.overhead_percentage,
+                    'reporting_currency': donor.reporting_currency.id,
                 }
                 res = {'value': format_vals}
+
         return res
 
     def onchange_currency_table(self, cr, uid, ids, currency_table_id, reporting_currency_id, context=None):
