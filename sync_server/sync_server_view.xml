@@ -53,6 +53,7 @@
                         <separator string="Configuration" colspan="2"/>
                         <field name="name"/>
                         <field name="identifier"/>
+                        <field name="hardware_id" />
                         <field name="email"/>
                         <field name="parent_id"/>
                         <field name="user_id"/>

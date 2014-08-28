@@ -126,6 +126,7 @@ class register_entity(osv.osv_memory):
             data = {'name' : entity.name,
                     'parent_name' : entity.parent_id and entity.parent_id.name or '',
                     'identifier' : entity.identifier,
+                    'hardware_id' : self.pool.get('sync.client.entity')._hardware_id,
                     'email' : entity.email,
                     'group_names' : [group.name for group in entity.group_ids],
                     }
@@ -167,7 +168,8 @@ class update_entity(osv.osv_memory):
         entity = entity_obj.get_entity(cr, uid, context=context)
         uuid = entity.identifier
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
-        res = proxy.update(uuid, context)
+        hardware_id = self.pool.get('sync.client.entity')._hardware_id
+        res = proxy.update(uuid, hardware_id, context)
         if res and not res[0]:
             raise osv.except_osv(_('Error !'), res[1])
         if res and res[0]:
@@ -176,8 +178,7 @@ class update_entity(osv.osv_memory):
                 'name' : res[1]['name'],
                 'parent': res[1]['parent'],
                 'email' : res[1]['email']}, context=context)
-            print "groups", res[1]['groups']
-            res = proxy.ack_update(uuid, security, context)
+            res = proxy.ack_update(uuid, hardware_id, security, context)
             if res and not res[0]:
                 raise osv.except_osv(_('Error !'), res[1])
         return True
@@ -202,7 +203,7 @@ class activate_entity(osv.osv_memory):
             raise osv.except_osv(_('Error !'), _('Instance name cannot be empty'))
         
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
-        res = proxy.activate_entity(name, uuid, context)
+        res = proxy.activate_entity(name, uuid, entity_obj._hardware_id, context)
         if res and not res[0]:
             raise osv.except_osv(_('Error !'), res[1])
         if res and res[0]:
@@ -212,8 +213,7 @@ class activate_entity(osv.osv_memory):
                 'parent': res[1]['parent'],
                 'email' : res[1]['email'], 
                 'identifier' : uuid}, context=context)
-            print "groups", res[1]['groups']
-            res = proxy.ack_update(uuid, security, context)
+            res = proxy.ack_update(uuid, entity_obj._hardware_id, security, context)
             if res and not res[0]:
                 raise osv.except_osv(_('Error !'), res[1])
         return True

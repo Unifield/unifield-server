@@ -29,6 +29,8 @@ import rpc
 import uuid
 import tools
 import sys
+import os
+import hashlib
 import traceback
 from psycopg2 import OperationalError
 
@@ -155,7 +157,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 if need_connection and make_log:
                     entity = self.get_entity(cr, uid, context=context)
                     proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
-                    proxy.end_synchronization(entity.identifier)
+                    proxy.end_synchronization(entity.identifier, self._hardware_id)
             except SkipStep:
                 # res failed but without exception
                 assert is_step, "Cannot have a SkipTest error outside a sync step process!"
@@ -211,12 +213,30 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
 
 already_syncing_error = osv.except_osv(_('Already Syncing...'), _('OpenERP can only perform one synchronization at a time - you must wait for the current synchronization to finish before you can synchronize again.'))
 
+def get_hardware_id(): 
+        mac = []
+        if sys.platform == 'win32': 
+            for line in os.popen("ipconfig /all"): 
+                if line.lstrip().startswith('Physical Address'): 
+                    mac.append(line.split(':')[1].strip().replace('-',':')) 
+        else: 
+            for line in os.popen("/sbin/ifconfig"): 
+                if line.find('Ether') > -1: 
+                    mac.append(line.split()[4]) 
+        print mac
+        return hashlib.md5(''.join(mac)).hexdigest()
+
 class Entity(osv.osv):
     """ OpenERP entity name and unique identifier """
     _name = "sync.client.entity"
     _description = "Synchronization Instance"
 
     _logger = logging.getLogger('sync.client')
+    
+    _hardware_id = get_hardware_id()
+    
+    
+    
 
     def _auto_init(self,cr,context=None):
         res = super(Entity, self)._auto_init(cr, context=context)
@@ -330,7 +350,7 @@ class Entity(osv.osv):
         entity = self.get_entity(cr, uid, context)
 
         if entity.state not in ('init', 'update_send', 'update_validate'):
-           raise SkipStep
+            raise SkipStep
 
         cont = False
         if cont or entity.state == 'init':
@@ -359,7 +379,7 @@ class Entity(osv.osv):
 
         def set_rules(identifier):
             proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-            res = proxy.get_model_to_sync(identifier)
+            res = proxy.get_model_to_sync(identifier, self._hardware_id)
             if not res[0]:
                 raise Exception, res[1]
             self.pool.get('sync.client.rule').save(cr, uid, res[1], context=context)
@@ -393,7 +413,7 @@ class Entity(osv.osv):
             return updates.create_package(cr, uid, entity.session_id, max_packet_size)
 
         def send_package(ids, packet):
-            res = proxy.receive_package(entity.identifier, packet)
+            res = proxy.receive_package(entity.identifier, self._hardware_id, packet)
             if not res[0]:
                 raise Exception, res[1]
             updates.write(cr, uid, ids, {'sent' : True}, context=context)
@@ -432,7 +452,7 @@ class Entity(osv.osv):
         session_id = entity.session_id
         update_ids = updates.search(cr, uid, [('session_id', '=', session_id)], context=context)
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-        res = proxy.confirm_update(entity.identifier, session_id)
+        res = proxy.confirm_update(entity.identifier, self._hardware_id, session_id)
         if not res[0]:
             raise Exception, res[1]
         updates.sync_finished(cr, uid, update_ids, context=context)
@@ -466,7 +486,7 @@ class Entity(osv.osv):
     def set_last_sequence(self, cr, uid, context=None):
         entity = self.get_entity(cr, uid, context=context)
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-        res = proxy.get_max_sequence(entity.identifier)
+        res = proxy.get_max_sequence(entity.identifier, self._hardware_id)
         if res and res[0]:
             return self.write(cr, uid, entity.id, {'max_update' : res[1]}, context=context)
         elif res and not res[0]:
@@ -489,7 +509,7 @@ class Entity(osv.osv):
         logger_index = None
         while not last:
             proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-            res = proxy.get_update(entity.identifier, last_seq, offset, max_packet_size, max_seq, recover)
+            res = proxy.get_update(entity.identifier, self._hardware_id, last_seq, offset, max_packet_size, max_seq, recover)
             if res and res[0]:
                 updates_count += updates.unfold_package(cr, uid, res[1], context=context)
                 if logger and updates_count:
@@ -608,7 +628,7 @@ class Entity(osv.osv):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         uuid = self.pool.get('sync.client.entity').get_entity(cr, uid).identifier
 
-        res = proxy.get_message_rule(uuid)
+        res = proxy.get_message_rule(uuid, self._hardware_id)
         if res and not res[0]: raise Exception, res[1]
         self.pool.get('sync.client.message_rule').save(cr, uid, res[1], context=context)
 
@@ -637,7 +657,7 @@ class Entity(osv.osv):
             if not packet:
                 break
             messages_count += len(packet)
-            res = proxy.send_message(uuid, packet)
+            res = proxy.send_message(uuid, self._hardware_id, packet)
             if not res[0]:
                 raise Exception, res[1]
             messages.packet_sent(cr, uid, packet, context=context)
@@ -664,7 +684,7 @@ class Entity(osv.osv):
         entity = self.get_entity(cr, uid, context=context)
         if recover:
             proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-            proxy.message_recover_from_seq(entity.identifier, entity.message_last)
+            proxy.message_recover_from_seq(entity.identifier, self._hardware_id, entity.message_last)
 
         if not entity.state == 'init':
             raise SkipStep
@@ -685,14 +705,14 @@ class Entity(osv.osv):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         instance_uuid = self.get_entity(cr, uid, context).identifier
         while True:
-            res = proxy.get_message(instance_uuid, max_packet_size)
+            res = proxy.get_message(instance_uuid, self._hardware_id, max_packet_size)
             if not res[0]: raise Exception, res[1]
 
             packet = res[1]
             if not packet: break
             messages_count += len(packet)
             messages.unfold_package(cr, uid, packet, context=context)
-            res = proxy.message_received(instance_uuid, [data['id'] for data in packet])
+            res = proxy.message_received(instance_uuid, self._hardware_id, [data['id'] for data in packet])
             if not res[0]: raise Exception, res[1]
             cr.commit()
 

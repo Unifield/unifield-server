@@ -1,3 +1,4 @@
 import register_entity
 import manage_entity
 import sync_manager
+import view_entity_id

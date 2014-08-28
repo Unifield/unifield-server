@@ -46,11 +46,12 @@ class entity_manager(osv.osv_memory):
     def retrieve(self, cr, uid, ids, context=None):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
+        hardware_id = self.pool.get('sync.client.entity')._hardware_id
         try:
-            res = proxy.get_entity(uuid, context)
+            res = proxy.get_entity(uuid, hardware_id, context)
             if res and not res[0]: raise StandardError, res[1]
             my_infos = res[1]
-            res = proxy.get_children(uuid, context)
+            res = proxy.get_children(uuid, hardware_id, context)
             if res and not res[0]: raise StandardError, res[1]
             my_infos.update({'entity_ids' : [(0,0, data) for data in res[1]], 'state' : 'ready' })
         except StandardError, e:
@@ -86,12 +87,13 @@ class child_entity(osv.osv_memory):
     
     def validation(self, cr, uid, ids, context=None):
         uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
+        hardware_id = self.pool.get('sync.client.entity')._hardware_id
         uuid_validate = [] 
         for entity in self.browse(cr, uid, ids, context=context):
             uuid_validate.append(entity.identifier)
         
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
-        res = proxy.validate(uuid, uuid_validate, context)
+        res = proxy.validate(uuid, hardware_id, uuid_validate, context)
         if res and res[0]:
             self.write(cr, uid, ids, {'state' : 'validated'}, context=context)
         elif res and not res[0]:
@@ -100,12 +102,13 @@ class child_entity(osv.osv_memory):
     
     def invalidation(self, cr, uid, ids, context=None):
         uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
+        hardware_id = self.pool.get('sync.client.entity')._hardware_id
         uuid_validate = [] 
         for entity in self.browse(cr, uid, ids, context=context):
             uuid_validate.append(entity.identifier)
         
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
-        res = proxy.invalidate(uuid, uuid_validate, context)
+        res = proxy.invalidate(uuid, hardware_id, uuid_validate, context)
         if res and res[0]:
             self.write(cr, uid, ids, {'state' : 'invalidated'}, context=context)
         elif res and not res[0]:

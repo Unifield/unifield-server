@@ -38,6 +38,7 @@ Synchronization Engine - Client Module
         'log_sale_purchase_view.xml',
         'wizard/sync_wiz_view.xml',
         'wizard/monitoring_view.xml',
+        'wizard/view_entity_id.xml',
         'monitor_view.xml',
         'data/cron.xml',
         'security/ir.model.access.csv'

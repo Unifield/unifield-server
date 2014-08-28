@@ -199,7 +199,7 @@ class entity(osv.osv):
             return (False, (_("Cannot continue while OpenERP Server version is different than database %s version! Try to login/logout again and restart OpenERP Server.") % cr.dbname))
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         try:
-            res = proxy.get_next_revisions(self.get_uuid(cr, uid, context=context), current_revision)
+            res = proxy.get_next_revisions(self.get_uuid(cr, uid, context=context), self._hardware_id, current_revision)
         except osv.except_osv, e:
             if all(substr in e.value
                    for substr in 
