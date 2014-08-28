@@ -300,6 +300,17 @@ class purchase_order(osv.osv):
 
         return res
 
+    def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the system configuration VAT management is set to True
+        '''
+        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok
+        res = {}
+        for id in ids:
+            res[id] = vat_ok
+
+        return res
+
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),
@@ -368,6 +379,7 @@ class purchase_order(osv.osv):
             store=False,
             multi='so_info',
         ),
+        'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
     }
 
     _defaults = {
@@ -386,6 +398,7 @@ class purchase_order(osv.osv):
         'parent_order_name': False,
         'canceled_end': False,
         'split_po': False,
+        'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
     def _check_po_from_fo(self, cr, uid, ids, context=None):
@@ -2050,8 +2063,26 @@ class purchase_order_line1(osv.osv):
     '''
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
-    _columns = {'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
-                }
+
+    def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the system configuration VAT management is set to True
+        '''
+        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok
+        res = {}
+        for id in ids:
+            res[id] = vat_ok
+
+        return res
+
+    _columns = {
+        'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
+        'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+    }
+
+    _defaults = {
+        'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
+    }
 
 purchase_order_line1()
 

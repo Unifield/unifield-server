@@ -25,16 +25,17 @@
                     <xpath expr="/form/notebook/page[@string='Sales Order']/group[2]" position="replace" >
                     </xpath>
                     <xpath expr="/form/notebook" position="after" >
+                            <field name="vat_ok" invisible="1" />
                             <group col="13" colspan="10">
                                 <field name="currency_id" readonly="1"/>
-                                <field name="amount_untaxed" sum="Untaxed amount"/>
-                                <field name="amount_tax"/>
+                                <field name="amount_untaxed" sum="Untaxed amount" attrs="{'invisible': [('vat_ok', '=', False)]}" />
+                                <field name="amount_tax" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
                                 <field name="amount_total"/>
                                 <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
                                 <newline/>
                                 <field name="functional_currency_id" readonly="1"/>
-                                <field name="functional_amount_untaxed"/>
-                                <field name="functional_amount_tax"/>
+                                <field name="functional_amount_untaxed" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
+                                <field name="functional_amount_tax" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
                                 <field name="functional_amount_total"/>
                             </group>
                             <group col="14" colspan="4">
@@ -63,6 +64,15 @@
                                    domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]" />
                             <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" 
                                     attrs="{'invisible': ['|', ('no_line', '=', True), ('state', 'not in', ['draft', 'validated'])]}" />
+                        </group>
+                    </xpath>
+
+                    <xpath expr="/form//field[@name='order_line']//separator[@string='Taxes']" position="replace" />
+                    <xpath expr="/form//field[@name='order_line']//field[@name='tax_id']" position="replace">
+                        <field name="vat_ok" invisible="1" />
+                        <group colspan="4" col="4" attrs="{'invisible': [('vat_ok', '=', False)]}">
+                            <separator colspan="5" string="Taxes"/>
+                            <field colspan="4" name="tax_id" nolabel="1" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase')]"/>
                         </group>
                     </xpath>
 

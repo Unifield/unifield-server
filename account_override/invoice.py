@@ -174,6 +174,17 @@ class account_invoice(osv.osv):
             'virtual_partner_id': inv.partner_id.id or False}
         return res
 
+    def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the system configuration VAT management is set to True
+        '''
+        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok
+        res = {}
+        for id in ids:
+            res[id] = vat_ok
+
+        return res
+
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
@@ -205,6 +216,7 @@ class account_invoice(osv.osv):
         'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False,
             states={'draft':[('readonly',False)]}),
         'register_posting_date': fields.date(string="Register posting date for Direct Invoice", required=False),
+        'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
     }
 
     _defaults = {
@@ -215,6 +227,7 @@ class account_invoice(osv.osv):
         'is_inkind_donation': lambda obj, cr, uid, c: c.get('is_inkind_donation', False),
         'is_intermission': lambda obj, cr, uid, c: c.get('is_intermission', False),
         'is_direct_invoice': lambda *a: False,
+        'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
     def onchange_company_id(self, cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id):
@@ -240,7 +253,7 @@ class account_invoice(osv.osv):
             # TODO: it's very bad to set a domain by onchange method, no time to rewrite UniField !
             res['domain']['journal_id'] = [('id', 'in', journal_ids)]
         return res
-
+        
     def onchange_partner_id(self, cr, uid, ids, ctype, partner_id,\
         date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False, is_intermission=False, is_debit_note=False, is_direct_invoice=False):
         """
@@ -900,6 +913,17 @@ class account_invoice_line(osv.osv):
             res[inv_line.id] = ''
             if inv_line.product_id:
                 res[inv_line.id] = inv_line.product_id.default_code
+
+        return res
+    def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the system configuration VAT management is set to True
+        '''
+        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok
+        res = {}
+        for id in ids:
+            res[id] = vat_ok
+
         return res
 
     _columns = {
@@ -913,12 +937,14 @@ class account_invoice_line(osv.osv):
             store=False),
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
         'reference': fields.char(string="Reference", size=64),
+        'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
     }
 
     _defaults = {
         'price_unit': lambda *a: 0.00,
         'from_yml_test': lambda *a: False,
         'is_corrected': lambda *a: False,
+        'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
     _order = 'line_number'

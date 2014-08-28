@@ -285,6 +285,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
+    def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the system configuration VAT management is set to True
+        '''
+        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok
+        res = {}
+        for id in ids:
+            res[id] = vat_ok
+
+        return res
+
     _columns = {
         # we increase the size of client_order_ref field from 64 to 128
         'client_order_ref': fields.char('Customer Reference', size=128),
@@ -341,6 +352,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'order_id',
             string='FO/IR sourced',
         ),
+        'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
     }
 
     _defaults = {
@@ -355,6 +367,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'split_type_sale_order': 'original_sale_order',
         'active': True,
         'no_line': lambda *a: True,
+        'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
     def _check_empty_line(self, cr, uid, ids, context=None):
@@ -1729,6 +1742,17 @@ class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
 
+    def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the system configuration VAT management is set to True
+        '''
+        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok
+        res = {}
+        for id in ids:
+            res[id] = vat_ok
+
+        return res
+
     _columns = {'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Sale Price Computation'), readonly=True, states={'draft': [('readonly', False)]}),
                 'is_line_split': fields.boolean(string='This line is a split line?'),  # UTP-972: Use boolean to indicate if the line is a split line
                 'partner_id': fields.related('order_id', 'partner_id', relation="res.partner", readonly=True, type="many2one", string="Customer"),
@@ -1755,10 +1779,12 @@ class sale_order_line(osv.osv):
                     string='Cancel split',
                     help='If the line has been canceled/removed on the splitted FO',
                 ),
-    }
+                'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+                }
 
     _defaults = {
         'is_line_split': False,  # UTP-972: By default set False, not split
+        'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
     def ask_unlink(self, cr, uid, ids, context=None):

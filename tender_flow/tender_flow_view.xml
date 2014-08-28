@@ -267,7 +267,7 @@
                         <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='fiscal_position']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])], 'invisible': [('vat_ok', '=', False)]}</attribute>
                     </xpath>
                 </data>
             </field>

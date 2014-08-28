@@ -130,8 +130,13 @@
                         <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
                         <attribute name="invisible">1</attribute>
                     </xpath>
+                    <xpath expr="/form/notebook//separator[@string='Conditions']" position="replace">
+                        <group colspan="2" col="2" attrs="{'invisible': [('vat_ok', '=', False)]}">
+                            <separator string="Conditions" colspan="2"/>
+                        </group>
+                    </xpath>
                     <xpath expr="/form/notebook//field[@name='fiscal_position']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')], 'invisible': [('vat_ok', '=', False)]}</attribute>
                     </xpath>
                     <xpath expr="//field[@name='create_date']" position="replace" />
                     <xpath expr="//field[@name='date_confirm']" position="replace" />

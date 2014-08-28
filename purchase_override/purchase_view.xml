@@ -24,6 +24,15 @@
                         <field name="fnct_project_ref" readonly="1" />
                         <separator colspan="4" string="Notes" />
                     </xpath>
+
+                    <xpath expr="/form//group" position="before">
+                        <field name="vat_ok" invisible="1" />
+                    </xpath>
+
+                    <xpath expr="/form//group" position="attributes">
+                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
+                    </xpath>
+
                 </data>
             </field>
         </record>

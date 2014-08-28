@@ -31,3 +31,4 @@ import currency_setup
 import fixed_asset
 import payroll
 import commitment_import
+import vat_setup
