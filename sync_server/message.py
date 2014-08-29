@@ -94,6 +94,7 @@ class message(osv.osv):
                 'source': entity.id,
             }, context=context)
 
+        self._logger.info("[%s] Message push :: Number of message pushed: %s" % (entity.name, len(package)))
         return (True, "Message received")
 
     def _get_destination(self, cr, uid, dest, context=None):
@@ -144,6 +145,7 @@ class message(osv.osv):
             }
             packet.append(message)
 
+        self._logger.info("[%s] Message pull :: Number of message pulled: %s" % (entity.name, len(packet)))
         return packet
 
     def set_message_as_received(self, cr, uid, entity, message_uuids, context=None):
