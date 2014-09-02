@@ -199,9 +199,12 @@ class stock_warehouse_orderpoint(osv.osv):
     _inherit = 'stock.warehouse.orderpoint'
 
     _columns = {
-         'name': fields.char('Reference', size=128, required=True, select=True),
-         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", 
+        'name': fields.char('Reference', size=128, required=True, select=True),
+        'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade", 
                                         domain="[('is_replenishment', '=', warehouse_id)]"),
+        'line_ids': fields.one2many('stock.warehouse.orderpoint.line', 'supply_id',
+                                    string="Products",
+                                    help='Define the min/max quantity to order for each products'),
     }
     
     def _check_product_uom(self, cr, uid, ids, context=None):
@@ -347,6 +350,118 @@ class stock_warehouse_orderpoint(osv.osv):
         
         
 stock_warehouse_orderpoint()
+
+
+class stock_warehouse_orderpoint_line(osv.osv):
+    _name = 'stock.warehouse.orderpoint.line'
+    _description = 'Minimu Stock Rule Line'
+    _rec_name = 'product_id'
+
+    _columns = {
+        'product_id': fields.many2one('product.product', string='Product', required=True),
+        'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
+        'product_min_qty': fields.float('Min Quantity', required=True),
+        'product_max_qty': fields.float('Max Quantity', required=True),
+        'qty_multiple': fields.integer('Qty Multiple', required=True),
+        'supply_id': fields.many2one('stock.warehouse.orderpoint', string='Supply', ondelete='cascade', required=True)
+    }
+
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(stock_warehouse_orderpoint_line, default_get).default_get(
+            cr, uid, fields, context=context)
+        # TODO stock.warehouse.orderpoint product_min_qty, product_max_qty,
+        # qty_multiple
+        return res
+
+    def _check_product_qty(self, cr, uid, ids, context=None):
+        """
+        check if the quantity is larger than 0.00
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not context.get('noraise'):
+            for line in self.read(cr, uid, ids, ['product_qty'],
+                context=context):
+                if line['product_qty'] <= 0.00:
+                    raise osv.except_osv(_('Error'),
+                        _('Lines must have a quantity larger than 0.00'))
+                    return False
+
+        return True
+
+    def create(self, cr, uid, vals, context=None):
+        res = super(stock_warehouse_orderpoint_line, self).create(cr, uid, vals,
+            context=context)
+        self._check_product_qty(cr, uid, res, context=context)
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        res = super(stock_warehouse_orderpoint_line, self).write(cr, uid, ids,
+            vals, context=context)
+        self._check_product_qty(cr, uid, ids, context=context)
+        return res
+
+    def _check_uniqueness(self, cr, uid, ids, context=None):
+        """
+        check if the product is not already in the current rule
+        """
+        for line in self.browse(cr, uid, ids, context=context):
+            domain = [
+                ('id', '!=', line.id), 
+                ('product_id', '=', line.product_id.id),
+                ('supply_id', '=', line.supply_id.id),
+            ]
+            lines = self.search(cr, uid, domain, context=context)
+            if lines:
+                return False
+
+        return True
+
+    _constraints = [
+        (_check_uniqueness,
+         'You cannot have two times the same product on the same supply rule',
+         ['product_id']),
+    ]
+
+    def onchange_product_id(self, cr, uid, ids, product_id, uom_id, product_qty,
+        context=None):
+        """
+        find uom for changed product.
+        :param product_id: changed id of product
+        :rtype: dict (of values)
+        """
+        res = {}
+
+        if product_id:
+            prod = self.pool.get('product.product').browse(cr, uid, product_id,
+                context=context)
+            v = {'product_uom_id': prod.uom_id.id}
+            res.update({'value': v})
+
+        if product_qty:
+            uom_id = res.get('value', {}).get('product_uom_id', uom_id)
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid,
+                uom_id, product_qty, 'product_qty', result=res)
+
+        return res
+
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, product_qty,
+        context=None):
+        """
+        check the round of qty according to uom
+        """
+        res = {}
+
+        if product_qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid,
+                uom_id, product_qty, 'product_qty', result=res)
+
+        return res
+
+stock_warehouse_orderpoint_line()
 
 
 class product_uom(osv.osv):
