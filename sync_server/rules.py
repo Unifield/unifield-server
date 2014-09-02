@@ -41,23 +41,23 @@ _field2type = {
 
 class ir_model_field(osv.osv):
     _inherit = 'ir.model.fields'
-    
+
     def _modify_search_args(self, args):
         for index, arg in enumerate(args):
             if isinstance(arg, (list, tuple)) and arg[0] == 'model_id' and arg[1] == 'in' and isinstance(arg[2], (list, tuple)) and isinstance(arg[2][0], tuple) and len(arg[2][0]) == 3 and arg[2][0][0] ==6:
                 args[index] = ('model_id', 'in', arg[2][0][2])
         return args
-   
+
     def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):
         args = self._modify_search_args(args)
         return super(ir_model_field, self).name_search(cr, uid, name, args=args, operator=operator, context=context, limit=limit)
-        
+
     def search(self, cr, uid, args, offset=0, limit=80, order='', context=None, count=False):
-        args = self._modify_search_args(args) 
+        args = self._modify_search_args(args)
         return super(ir_model_field, self).search(cr, uid, args, offset, limit, order, context, count)
-     
+
 ir_model_field()
-       
+
 def check_domain(self, cr, uid, rec, context=None):
     error = False
     message = "* Domain syntax... "
@@ -78,7 +78,7 @@ class sync_rule(osv.osv):
 
     _name = "sync_server.sync_rule"
     _description = "Synchronization Rule"
-    
+
     _logger = logging.getLogger('sync.server')
 
     def _get_model_id(self, cr, uid, ids, field, args, context=None):
@@ -94,14 +94,14 @@ class sync_rule(osv.osv):
         if model_ids:
             self.write(cr, uid, ids, {'model_ref' : model_ids[0]}, context=context)
         return True
-    
+
     def _get_all_model(self, cr, uid, ids, field, args, context=None):
         res = dict.fromkeys(ids)
         for rule_data in self.read(cr, uid, ids, ['model_id'], context=context):
             if rule_data.get('model_id'):
                 res[rule_data['id']] = self.pool.get(rule_data.get('model_id')).get_model_ids(cr, uid, context=context)
         return res
-    
+
 
     _columns = {
         'name': fields.char('Rule Name', size=64, required = True),
@@ -142,42 +142,42 @@ class sync_rule(osv.osv):
     }
 
     _order = 'sequence_number asc,model_id asc'
-    
+
     #TODO add a last update to send only rule that were updated before => problem of dates
     def _get_rule(self, cr, uid, entity, context=None):
         rules_ids = self._compute_rules_to_send(cr, uid, entity, context)
         return (True, self._serialize_rule(cr, uid, rules_ids, context))
-        
+
     def get_groups(self, cr, uid, ids, context=None):
         groups = []
         for entity in self.pool.get("sync.server.entity").browse(cr, uid, ids, context=context):
             groups.extend([group.id for group in entity.group_ids])
         return groups
-    
+
     def _get_ancestor_groups(self, cr, uid, entity, context=None):
         ancestor_list = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context)
         return self.get_groups(cr, uid, ancestor_list, context=context)
-        
+
     def _get_children_groups(self, cr, uid, entity, context=None):
         children_list = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
         return self.get_groups(cr, uid, children_list, context=context)
-    
+
     def _get_rules_per_group(self, cr, uid, entity, context=None):
         cr.execute("""SELECT g.id, array_agg(r.id)
-                      FROM sync_server_entity_group g 
-                           JOIN sync_server_group_type t ON (g.type_id=t.id or t.name = 'USB') 
+                      FROM sync_server_entity_group g
+                           JOIN sync_server_group_type t ON (g.type_id=t.id or t.name = 'USB')
                            JOIN sync_server_sync_rule r
                                 ON (((r.group_id = g.id AND NOT r.applies_to_type)
                                      OR (r.type_id = t.id AND r.applies_to_type))
                                     AND r.active)
-                      WHERE g.id IN %s                  
+                      WHERE g.id IN %s
                       GROUP BY g.id""", (tuple(x.id for x in entity.group_ids),))
         return dict(cr.fetchall())
 
     def _get_groups_per_rule(self, cr, uid, entity, context=None):
         cr.execute("""SELECT r.id, array_agg(g.id)
-                      FROM sync_server_entity_group g 
-                           JOIN sync_server_group_type t ON (g.type_id=t.id) 
+                      FROM sync_server_entity_group g
+                           JOIN sync_server_group_type t ON (g.type_id=t.id)
                            JOIN sync_server_sync_rule r
                                 ON (((r.group_id = g.id AND NOT r.applies_to_type)
                                      OR (r.type_id = t.id AND r.applies_to_type))
@@ -190,7 +190,7 @@ class sync_rule(osv.osv):
         rules_ids = self._get_rules_per_group(cr, uid, entity, context)
         ancestor_group = self._get_ancestor_groups(cr, uid, entity, context)
         children_group = self._get_children_groups(cr, uid, entity, context)
-        
+
         rules_to_send = set()
         for group_id, rule_ids in rules_ids.items():
             for rule in self.browse(cr, uid, rule_ids):
@@ -202,17 +202,17 @@ class sync_rule(osv.osv):
                         rules_to_send.add(rule.id)
                 else:
                     rules_to_send.add(rule.id)
-                    
+
         return list(rules_to_send)
-    
+
     def _compute_rules_to_receive(self, cr, uid, entity, context=None):
         rules_ids = self._get_rules_per_group(cr, uid, entity, context)
         rules_to_send = set()
         for group_id, rule_ids in rules_ids.items():
             rules_to_send.update(rule_ids)
-                    
+
         return list(rules_to_send)
-    
+
     _rules_serialization_mapping = {
         'id' : 'server_id',
         'name' : 'name',
@@ -243,17 +243,17 @@ class sync_rule(osv.osv):
                 ))
         return rules_data
 
-    
+
     """
         Usability Part
     """
-    
+
     def on_change_included_fields(self, cr, uid, ids, fields, model_ref, context=None):
         values = self.invalidate(cr, uid, ids, model_ref, context=context)['value']
         sel = self._compute_included_field(cr, uid, ids, fields[0][2], context)
         values.update( {'included_fields' : sel})
         return {'value': values}
-    
+
     def _compute_included_field(self, cr, uid, ids, fields, context=None):
         sel = []
         for field in self.pool.get('ir.model.fields').read(cr, uid, fields, ['name','model','ttype']):
@@ -261,7 +261,7 @@ class sync_rule(osv.osv):
             if field['ttype'] in ('many2one','one2many', 'many2many'): name += '/id'
             sel.append(name)
         return (str(sel) if sel else '')
-    
+
     def compute_forced_value(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'active' : False, 'status' : 'invalid' }, context=context)
         sel = {}
@@ -289,7 +289,7 @@ class sync_rule(osv.osv):
             self.write(cr, uid, rule.id, {'forced_values' : (str(sel) if sel else '')}, context=context)
         if errors:
             raise osv.except_osv(_("Warning"), "\n".join(errors))
-        
+
         return True
 
     def compute_fallback_value(self, cr, uid, ids, context=None):
@@ -299,49 +299,49 @@ class sync_rule(osv.osv):
         for rule in self.browse(cr, uid, ids, context=context):
             for value in rule.fallback_values_sel:
                 field = self.pool.get('ir.model.fields').read(cr, uid, value.name.id, ['name','model','ttype'], context=context)
-                
+
                 xml_ids = value.value.get_xml_id(context=context)
                 name = str(field['name'])
-                if field['ttype'] == 'many2one': 
+                if field['ttype'] == 'many2one':
                     name += '/id'
                 sel[name] = xml_ids[value.value.id]
 
             self.write(cr, uid, rule.id, {'fallback_values' : (str(sel) if sel else '')}, context=context)
         if errors:
             raise osv.except_osv(_("Warning"), "\n".join(errors))
-        
-        return True 
-    
+
+        return True
+
     def invalidate(self, cr, uid, ids, model_ref, context=None):
         model = ''
         model_ids = []
         if model_ref:
             model = self.pool.get('ir.model').browse(cr, uid, model_ref, context=context).model
             model_ids = self.pool.get(model).get_model_ids(cr, uid, context=context)
-        
+
         return { 'value' : {'active' : False, 'status' : 'invalid', 'model_id' : model, 'model_ids' : model_ids} }
-    
+
     def create(self, cr, uid, values, context=None):
         if values.get('model_id'):
             model_ids = self.pool.get('ir.model').search(cr, uid, [('model','=',values.get('model_id'))], context=context)
             if model_ids:
                 values['model_ref'] = model_ids[0]
-            
+
         return super(sync_rule, self).create(cr, uid, values, context=context)
-    
+
     def write(self, cr, uid, ids, values, context=None):
         if 'included_fields_sel' in values and values.get('included_fields_sel')[0][2]:
             values['included_fields'] = self._compute_included_field(cr, uid, ids, values['included_fields_sel'][0][2], context)
-        
+
         if not isinstance(ids, (list, tuple)):
             ids = [ids]
-               
+
         for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','included_fields'], context=context):
             dirty = False
             for k in rule_data.keys():
                 if k in values and values[k] != rule_data[k]:
                     dirty = True
-                    
+
             if dirty:
                 values.update({'active' : False, 'status' : 'invalid'})
 
@@ -387,7 +387,7 @@ class sync_rule(osv.osv):
             message += "pass.\n"
         finally:
             if error: message += "Example: ['name', 'order_line/product_id/id', 'order_line/product_id/name', 'order_line/product_uom_qty']\n"
-            
+
         return (message, error)
 
     def check_forced_values(self, cr, uid, rec, context=None):
@@ -406,7 +406,7 @@ class sync_rule(osv.osv):
             message += "pass.\n"
         finally:
             if error: message += "Example: {'field_name' : 'str_value', 'field_name' : 10, 'field_name' : True}\n"
-            
+
         return (message, error)
 
 
@@ -481,14 +481,14 @@ class sync_rule(osv.osv):
             mess, err = self.check_owner_field(cr, uid, rec, context)
             error = err or error
             message.append(mess)
-            
+
             message.append("* Sequence is unique... ")
             if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
                 message.append("failed!\n")
                 error = True
             else:
                 message.append("pass.\n")
-            
+
             message_header = 'This rule is valid:\n\n' if not error else 'This rule cannot be validated for the following reason:\n\n'
             message_body = ''.join(message)
             message_data = {'state': 'valid' if not error else 'invalid',
@@ -515,7 +515,7 @@ class message_rule(osv.osv):
 
     _name = "sync_server.message_rule"
     _description = "Message Rule"
-    
+
     _logger = logging.getLogger('sync.server')
 
     def _get_model_id(self, cr, uid, ids, field, args, context=None):
@@ -531,7 +531,7 @@ class message_rule(osv.osv):
         if model_ids:
             self.write(cr, uid, ids, {'model_ref' : model_ids[0]}, context=context)
         return True
-    
+
     _columns = {
         'name': fields.char('Rule Name', size=64, required = True),
         'model_id': fields.function(_get_model_id, string = 'Model', fnct_inv=_get_model_name, type = 'char', size = 64, method = True, store = True),
@@ -546,7 +546,7 @@ class message_rule(osv.osv):
         'remote_call': fields.text('Method to call', required = True),
         'arguments': fields.text('Arguments of the method', required = True),
         'destination_name': fields.char('Field to extract destination', size=256, required = True),
-        'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True, readonly = True),
+        'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True ),
         'active': fields.boolean('Active'),
     }
 
@@ -563,7 +563,7 @@ class message_rule(osv.osv):
         rules_ids = self._get_rules(cr, uid, entity, context)
         rules_data = self._serialize_rule(cr, uid, rules_ids, context)
         return rules_data
-    
+
     def _get_rules(self, cr, uid, entity, context=None):
         rules_ids = []
         for group in entity.group_ids:
@@ -575,8 +575,8 @@ class message_rule(osv.osv):
             if ids:
                 rules_ids.extend(ids)
         return list(set(rules_ids))
-    
-    _rules_serialization_mapping = {            
+
+    _rules_serialization_mapping = {
         'name' : 'name',
         'id': 'server_id',
         'model_id': 'model',
@@ -611,16 +611,16 @@ class message_rule(osv.osv):
         model = ''
         if model_ref:
             model = self.pool.get('ir.model').browse(cr, uid, model_ref, context=context).model
-        
+
         return { 'value' : {'active' : False, 'status' : 'invalid', 'model_id' : model} }
-    
+
     def write(self, cr, uid, ids, values, context=None):
         if 'included_fields_sel' in values:
             values['included_fields'] = self._compute_included_field(cr, uid, ids, values['included_fields_sel'][0][2], context)
-            
+
         if not isinstance(ids, (list, tuple)):
             ids = [ids]
-            
+
         for rule_data in self.read(cr, uid, ids, ['model_id', 'domain', 'sequence_number','remote_call', 'arguments', 'destination_name'], context=context):
             dirty = False
             for k in rule_data.keys():
@@ -644,7 +644,7 @@ class message_rule(osv.osv):
                 base_field = field.split('/')[0]
                 if not isinstance(field, str): raise TypeError
                 model_ids = self.pool.get(rec.model_id).get_model_ids(cr, uid, context=context)
-                if not len(self.pool.get('ir.model.fields').search(cr, uid,  [('model_id','in', model_ids),('name','=',base_field)], context=context)): 
+                if not len(self.pool.get('ir.model.fields').search(cr, uid,  [('model_id','in', model_ids),('name','=',base_field)], context=context)):
                     field_error = field
                     raise KeyError
         except TypeError:
@@ -660,7 +660,7 @@ class message_rule(osv.osv):
             message += "pass.\n"
         finally:
             if error: message += "Example: ['name', 'order_line/product_id/id', 'order_line/product_id/name', 'order_line/product_uom_qty']\n"
-            
+
         return (message, error)
 
     def validate(self, cr, uid, ids, context=None):
@@ -678,7 +678,7 @@ class message_rule(osv.osv):
                 error = True
             else:
                 message.append("pass.\n")
-                
+
             if not rec.filter_method:
                 mess, err = self.check_domain(cr, uid, rec, context)
                 error = err or error
@@ -686,7 +686,7 @@ class message_rule(osv.osv):
             elif not hasattr(self.pool.get(rec.model_id), rec.filter_method):
                 message.append('Filter Method %s does not exist on object %s' % (rec.filter_method, rec.model_id))
                 error = True
-                
+
             # Remote Call Possible
             call_tree = rec.remote_call.split('.')
             call_class = '.'.join(call_tree[:-1])
@@ -703,11 +703,11 @@ class message_rule(osv.osv):
             else:
                 message.append("pass.\n")
             # Arguments of the call syntax and existence
-            
+
             mess, err = self.check_arguments(cr, uid, rec, title="* Checking arguments..." , context=context)
             error = err or error
             message.append(mess)
-            
+
             # Sequence is unique
             message.append("* Sequence is unique... ")
             if self.search(cr, uid, [('sequence_number','=',rec.sequence_number)], context=context, count = True) > 1:
@@ -715,7 +715,7 @@ class message_rule(osv.osv):
                 error = True
             else:
                 message.append("pass.\n")
-                
+
             message_header = 'This rule is valid:\n\n' if not error else 'This rule cannot be validated for the following reason:\n\n'
             message_body = ' '.join(message)
             message_data = {'state': 'valid' if not error else 'invalid',
@@ -747,7 +747,7 @@ class forced_values(osv.osv):
 forced_values()
 
 class fallback_values(osv.osv):
-    _name = "sync_server.sync_rule.fallback_values" 
+    _name = "sync_server.sync_rule.fallback_values"
 
     def _get_fallback_value(self, cr, uid, context=None):
         model = self.pool.get('ir.model')
@@ -762,20 +762,20 @@ class fallback_values(osv.osv):
     }
 
 fallback_values()
-   
-    
+
+
 class validation_message(osv.osv):
     _name = 'sync_server.rule.validation.message'
-    
+
     _rec_name = 'state'
-    
+
     _columns = {
                 'message' : fields.text('Message'),
                 'sync_rule' : fields.many2one('sync_server.sync_rule', 'Sync Rule'),
                 'message_rule' : fields.many2one('sync_server.message_rule', 'Mesage Rule'),
                 'state' : fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True, readonly = True),
     }
-    
+
     def validate(self, cr, uid, ids, context=None):
         for wizard in self.browse(cr, uid, ids, context=context):
             if wizard.sync_rule:
@@ -784,5 +784,5 @@ class validation_message(osv.osv):
                 self.pool.get('sync_server.message_rule').write(cr, uid, wizard.message_rule.id, {'status' : wizard.state }, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
-            
-validation_message()      
+
+validation_message()
