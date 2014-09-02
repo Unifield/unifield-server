@@ -50,7 +50,7 @@ class wizard_account_invoice(osv.osv):
         'residual': fields.float('Residual', digits_compute=dp.get_precision('Account')),
         'amount_total': fields.float('Total', digits_compute=dp.get_precision('Account'), readonly=True),
         'register_posting_date': fields.date(string="Register posting date", required=True),
-        'reference': fields.char(string="Reference", size=64,required=True),
+        'reference': fields.char(string="Reference", size=64),
     }
     _defaults = {
         'currency_id': lambda cr, uid, ids, c: c.get('currency'),
@@ -58,7 +58,6 @@ class wizard_account_invoice(osv.osv):
         'date_invoice': lambda *a: time.strftime('%Y-%m-%d'),
         'document_date': lambda *a: time.strftime('%Y-%m-%d'),
         'state': lambda *a: 'draft',
-        'reference': lambda *a: ' ',
     }
 
     def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
