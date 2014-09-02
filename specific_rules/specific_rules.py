@@ -354,7 +354,7 @@ stock_warehouse_orderpoint()
 
 class stock_warehouse_orderpoint_line(osv.osv):
     _name = 'stock.warehouse.orderpoint.line'
-    _description = 'Minimu Stock Rule Line'
+    _description = 'Minimum Stock Rule Line'
     _rec_name = 'product_id'
 
     _columns = {
@@ -365,13 +365,6 @@ class stock_warehouse_orderpoint_line(osv.osv):
         'qty_multiple': fields.integer('Qty Multiple', required=True),
         'supply_id': fields.many2one('stock.warehouse.orderpoint', string='Supply', ondelete='cascade', required=True)
     }
-
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(stock_warehouse_orderpoint_line, default_get).default_get(
-            cr, uid, fields, context=context)
-        # TODO stock.warehouse.orderpoint product_min_qty, product_max_qty,
-        # qty_multiple
-        return res
 
     def _check_product_qty(self, cr, uid, ids, context=None):
         """
@@ -395,7 +388,19 @@ class stock_warehouse_orderpoint_line(osv.osv):
     def create(self, cr, uid, vals, context=None):
         res = super(stock_warehouse_orderpoint_line, self).create(cr, uid, vals,
             context=context)
-        self._check_product_qty(cr, uid, res, context=context)
+        if res:
+            self._check_product_qty(cr, uid, res, context=context)
+            
+            # set stock.warehouse.orderpoint header default values:
+            # product_min_qty, product_max_qty, qty_multiple
+            self_br = self.browse(cr, uid, res, context=context)
+            if self_br.supply_id:
+                vals = {
+                    'product_min_qty': self_br.supply_id.product_min_qty or 0.,
+                    'product_max_qty': self_br.supply_id.product_max_qty or 0.,
+                    'qty_multiple': self_br.supply_id.qty_multiple or 0,
+                }
+                self.write(cr, uid, res, vals, context=context)
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
