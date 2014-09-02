@@ -2042,6 +2042,9 @@ class stock_move(osv.osv):
                     'move_dest_id': new_id,
                     'move_history_ids': [(4, new_id)]
                 })
+                # UF-2424: If it's an internal move, just remove the asset_id 
+                if ptype == 'internal' and move.product_id.subtype == 'asset':
+                    move_obj.write(cr, uid, [new_id], {'asset_id': False})                
                 new_moves.append(self.browse(cr, uid, [new_id])[0])
             if pickid:
                 self._create_chained_picking_internal_request(cr, uid, context=context, picking=pickid)
