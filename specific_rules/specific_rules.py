@@ -431,7 +431,8 @@ class stock_warehouse_orderpoint_line(osv.osv):
          ['product_id']),
     ]
 
-    def onchange_product_id(self, cr, uid, ids, product_id, uom_id, product_qty,
+    def onchange_product_id(self, cr, uid, ids,
+        product_id, uom_id, product_min_qty, product_max_qty,
         context=None):
         """
         find uom for changed product.
@@ -446,23 +447,32 @@ class stock_warehouse_orderpoint_line(osv.osv):
             v = {'product_uom_id': prod.uom_id.id}
             res.update({'value': v})
 
-        if product_qty:
+        uom_id = False
+        if product_min_qty:
             uom_id = res.get('value', {}).get('product_uom_id', uom_id)
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid,
-                uom_id, product_qty, 'product_qty', result=res)
+                uom_id, product_qty, 'product_min_qty', result=res)
+        if product_max_qty:
+            if not uom_id:
+                uom_id = res.get('value', {}).get('product_uom_id', uom_id)
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid,
+                uom_id, product_qty, 'product_max_qty', result=res)
 
         return res
 
-    def onchange_uom_qty(self, cr, uid, ids, uom_id, product_qty,
-        context=None):
+    def onchange_uom_qty(self, cr, uid, ids,
+        uom_id, product_min_qty, product_max_qty, context=None):
         """
         check the round of qty according to uom
         """
         res = {}
 
-        if product_qty:
+        if product_min_qty:
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid,
-                uom_id, product_qty, 'product_qty', result=res)
+                uom_id, product_qty, 'product_min_qty', result=res)
+        if product_max_qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid,
+                uom_id, product_qty, 'product_max_qty', result=res)
 
         return res
 
