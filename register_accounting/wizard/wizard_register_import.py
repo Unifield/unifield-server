@@ -397,7 +397,7 @@ class wizard_register_import(osv.osv_memory):
                     acct = self.pool.get('account.account').browse(cr, uid, r_account, context=context)
                     if acct.restricted_area == True:
 			if acct.code == '10210':  # uftp-78
-                            pass
+                            pass  
                         else:
                             errors.append(_('Line %s. G/L account %s is restricted.') % (current_line_num, account_code,))
                             continue
