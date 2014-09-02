@@ -38,6 +38,109 @@ from sale_override import SALE_ORDER_SPLIT_SELECTION
 from sale_override import SALE_ORDER_LINE_STATE_SELECTION
 
 
+class sale_order_sourcing_progress(osv.osv):
+    _name = 'sale.order.sourcing.progress'
+    _rec_name = 'order_id'
+
+    def _get_percent(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the percentage of sourced lines
+        '''
+        mem_obj = self.pool.get('sale.order.sourcing.progress.mem')
+        res = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for sp in self.browse(cr, uid, ids, context=context):
+            nb_lines = sp.order_id and len(sp.order_id.order_line) or 0
+            res[sp.id] = {
+                'percent_completed': 0.00,
+                'line_completed': '0/0',
+            }
+            if sp.order_id and sp.order_id.sourcing_trace_ok:
+                mem_id = mem_obj.search(cr, uid, [
+                    ('order_id', '=', sp.order_id.id),
+                ], context=context)
+                if mem_id:
+                    mem_res = mem_obj.read(cr, uid, mem_id, ['percent_completed', 'line_completed'], context=context)[0]
+                    res[sp.id] = {
+                        'percent_completed': mem_res['percent_completed'],
+                        'line_completed': mem_res['line_completed'] or '0/%s' % nb_lines,
+                    }
+                else:
+                    res[sp.id] = {
+                        'percent_completed': 0.00,
+                        'line_completed': '0/%s' % nb_lines,
+                    }
+            elif sp.order_id and sp.order_id.state == 'split_so':
+                res[sp.id] = {
+                    'percent_completed': 100.00,
+                    'line_completed': '%s/%s' % (nb_lines, nb_lines),
+                }
+            else:
+                res[sp.id] = {
+                    'percent_completed': 0.00,
+                    'line_completed': '0/0',
+                }
+
+        return res
+
+    _columns = {
+        'order_id': fields.many2one(
+            'sale.order',
+            string='Order',
+            required=True,
+        ),
+        'percent_completed': fields.function(
+            _get_percent,
+            method=True,
+            digits=(16, 2),
+            string='% completed',
+            readonly=True,
+            store=False,
+            multi='memory',
+        ),
+        'line_completed': fields.function(
+            _get_percent,
+            method=True,
+            type='char',
+            size=64,
+            string='# Lines',
+            readonly=True,
+            store=False,
+            multi='memory',
+        ),
+    }
+
+sale_order_sourcing_progress()
+
+
+class sale_order_sourcing_progress_mem(osv.osv_memory):
+    _name = 'sale.order.sourcing.progress.mem'
+    _rec_name = 'order_id'
+
+    _columns = {
+        'order_id': fields.many2one(
+            'sale.order',
+            string='Order',
+            required=True,
+        ),
+        'percent_completed': fields.float(
+            digits=(16, 2),
+            string='% completed',
+            readonly=True,
+        ),
+        'line_completed': fields.char(
+            string='# Lines',
+            size=64,
+            readonly=True,
+        ),
+    }
+
+sale_order_sourcing_progress_mem()
+
+
 class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
@@ -1213,6 +1316,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         config_obj = self.pool.get('unifield.setup.configuration')
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
+        prog_obj = self.pool.get('sale.order.sourcing.progress.mem')
 
         if context is None:
             context = {}
@@ -1224,12 +1328,20 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
 
         for order in self.browse(cr, uid, ids, context=context):
+            # Create a sourcing progress object
+            prog_id = prog_obj.create(cr, uid, {
+                'order_id': order.original_so_id_sale_order and order.original_so_id_sale_order.id or order.id,
+                'percent_completed': 0.00,
+            }, context=context)
+
             proc_ids = []
             move_ids = []
             picking_id = False
 
             prep_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='preparation_lead_time', context=context)
 
+            line_total = len(order.order_line)
+            line_done = 0
             for line in order.order_line:
                 proc_id = False
 
@@ -1334,6 +1446,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                 proc_obj.write(cr, uid, [proc_id], values, context=context)
 
                     wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+
+                line_done += 1
+                if prog_id:
+                    prog_obj.write(cr, uid, [prog_id], {
+                        'percent_completed': (float(line_done)/float(line_total))*100,
+                        'line_completed': '%s/%s' % (line_done, line_total),
+                    }, context=context)
 
             # compute overall_qty
             if move_ids:
@@ -1539,6 +1658,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         date_tools = self.pool.get('date.tools')
         proc_obj = self.pool.get('procurement.order')
         pol_obj = self.pool.get('purchase.order.line')
+        prog_obj = self.pool.get('sale.order.sourcing.progress.mem')
 
         if context is None:
             context = {}
@@ -1555,6 +1675,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self.analytic_distribution_checks(cr, uid, order_brw_list)
 
         for order in order_brw_list:
+            prog_id = prog_obj.create(cr, uid, {
+                'order_id': order.original_so_id_sale_order and order.original_so_id_sale_order.id or order.id,
+                'percent_completed': 0.00,
+            }, context=context)
+
             o_write_vals = {}
             # 2/ Check if there is lines in order
             if len(order.order_line) < 1:
@@ -1599,12 +1724,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if (order.partner_id.partner_type == 'internal' and order.order_type == 'regular') or \
                order.order_type in ['donation_exp', 'donation_st', 'loan']:
                 o_write_vals['order_policy'] = 'manual'
-                for line in order.order_line:
-                    lines.append(line.id)
+                lines = sol_obj.search(cr, uid, [('order_id', '=', order.id)], context=context)
 
             # flag to prevent the display of the sale order log message
             # if the method is called after po update, we do not display log message
             display_log = True
+            line_total = len(order.order_line)
+            line_done = 0
             for line in order.order_line:
                 # these lines are valid for all types (stock and order)
                 # when the line is sourced, we already get a procurement for the line
@@ -1640,6 +1766,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     if line.created_by_po:
                         wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
                         proc_obj.write(cr, uid, [proc_id], {'state': 'running'}, context=context)
+
+                line_done += 1
+                if prog_id:
+                    prog_obj.write(cr, uid, [prog_id], {
+                        'percent_completed': (float(line_done)/float(line_total))*100,
+                        'line_completed': '%s/%s' % (line_done, line_total),
+                    }, context=context)
 
             # the Fo is sourced we set the state
             o_write_vals['state'] = 'sourced'

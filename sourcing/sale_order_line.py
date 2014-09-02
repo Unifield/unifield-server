@@ -1042,6 +1042,9 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 'sourcing_trace_ok': True,
                 'sourcing_trace': 'Sourcing in progress',
             }, context=context)
+            self.pool.get('sale.order.sourcing.progress').create(cr, uid, {
+                'order_id': order_id,
+            }, context=context)
             thread = threading.Thread(target=self.confirmOrder, args=(cr, uid, order_id, state_to_use, context))
             thread.start()
 
