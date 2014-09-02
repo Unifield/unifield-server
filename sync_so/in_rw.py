@@ -561,7 +561,7 @@ class stock_picking(osv.osv):
                     vals = {'line_number': line_number,'product_id': sline['product_id'],
                             'location_id': sline['location_id'],'location_dest_id': sline['location_dest_id'],
                             'ordered_quantity': sline['product_qty'],'quantity': sline['product_qty'],
-                            'uom_id': sline['product_uom'], 'asset_id': sline['asset_id'], 'prodlot_id': sline['prodlot_id'],
+                            'uom_id': sline['product_uom'], 'prodlot_id': sline['prodlot_id'],
                             'move_id': move_id, 'wizard_id': wizard.id, 'composition_list_id':line_data['composition_list_id'],
                             'cost':line_data['cost'],'currency':line_data['currency'],
                             }
