@@ -22,7 +22,6 @@
 from osv import fields
 from osv import osv
 from tools.translate import _
-import time
 
 from sourcing.sale_order_line import _SELECTION_PO_CFT
 
@@ -232,40 +231,27 @@ class multiple_sourcing_wizard(osv.osv_memory):
                 }
         return result
     
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        result = super(multiple_sourcing_wizard, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-        
-        return result
-    
     def change_location(self, cr, uid, ids, location_id, context=None):
         res = {'value': {}}
         if not location_id:
             return res
 
-        if context and context[0] and context[0][2]:
-            active_ids = context[0][2]
-
-            line_obj = self.pool.get('sale.order.line')
-            context = {}
-            for line in self.pool.get('sale.order.line').browse(cr, uid, active_ids, context=context):
-                line_obj.write(cr, uid, [line.id], {'type': 'make_to_stock',
-                                                            'po_cft': False,
-                                                            'supplier': False,
-                                                            'location_id': location_id}, # UTP-1021: Update loc and ask the view to refresh 
-                                                             context=context)                
-                
-# dict: {'line_ids': [1, 2], 'error_on_lines': False, 'company_id': 1, 'po_cft': False, 'type': 'make_to_stock'}
-# context = dict: {'lang': u'en_MF', 'tz': False, 'search_view': 1352, 'active_model': 'sale.order.line', 
-# '_terp_view_name': u'Source lines', 'active_id': 1, 'client': 'web', 'active_ids': [1, 2], 'department_id': False}
-
-        # THIS IS JUST TESTING!!!!!
-
-        if location_id == 25:
-            res = {'value':
-                   {'po_cft':'dpo',}}
-        else:
-            res = {'value':
-                   {'line_ids': [1, 2], 'error_on_lines': False, 'po_cft':False,}}
+        if not context or not context[0] or not context[0][2]:
+            return res
+            
+        line_obj = self.pool.get('sale.order.line')
+        active_ids = context[0][2]
+        
+        context = {}             
+        context.update({'from_multiple_line_sourcing': False})
+        for line in self.pool.get('sale.order.line').browse(cr, uid, active_ids, context=context):
+            line_obj.write(cr, uid, [line.id], {'type': 'make_to_stock',
+                                                        'po_cft': False,
+                                                        'supplier': False,
+                                                        'location_id': location_id}, # UTP-1021: Update loc and ask the view to refresh 
+                                                         context=context)                
+        res = {'value':
+               {'line_ids': active_ids, 'error_on_lines': False, 'po_cft':False,}}
         return res
       
 
